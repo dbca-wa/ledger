@@ -4,7 +4,7 @@ import os
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROJECT_DIR = os.path.join(BASE_DIR, 'dink')
+PROJECT_DIR = os.path.join(BASE_DIR, 'ledger')
 
 
 # Application definitions
@@ -37,7 +37,7 @@ MIDDLEWARE_CLASSES = [
     'dpaw_utils.middleware.SSOLoginMiddleware',
 ]
 
-ROOT_URLCONF = 'dink.urls'
+ROOT_URLCONF = 'ledger.urls'
 
 TEMPLATES = [
     {
@@ -55,7 +55,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'dink.wsgi.application'
+WSGI_APPLICATION = 'ledger.wsgi.application'
 
 
 # Database
@@ -113,7 +113,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'dink.log'),
+            'filename': os.path.join(BASE_DIR, 'logs', 'ledger.log'),
             'formatter': 'verbose',
             'maxBytes': '5242880'
         },
