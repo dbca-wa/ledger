@@ -1,4 +1,4 @@
-# DINK
+# Ledger
 
 This project is the hub of the Department's online commerce activities.
 It provides CRM and online payments functionality.
@@ -17,7 +17,7 @@ Python library requirements should be installed using `pip`:
 A `.env` file should be created in the project root and used to set
 required environment variables at run time. Example content:
 
-    DJANGO_SETTINGS_MODULE="dink.settings"
+    DJANGO_SETTINGS_MODULE="ledger.settings"
     DEBUG=True
     DATABASE_URL="postgres://USER:PASSWORD@HOST:PORT/NAME"
     SECRET_KEY="ThisIsASecretKey"
