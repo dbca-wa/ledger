@@ -44,7 +44,7 @@ MIDDLEWARE_CLASSES = [
     'dpaw_utils.middleware.SSOLoginMiddleware',
 ]
 AUTHENTICATION_BACKENDS = (
-    #'oscar.apps.customer.auth_backends.EmailBackend',
+    'rollcall.auth_backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 TEMPLATES = [
