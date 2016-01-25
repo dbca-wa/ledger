@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'rollcall',  # Defines custom user model.
 ]
-AUTH_USER_MODEL = 'rollcall.User'
+AUTH_USER_MODEL = 'rollcall.EmailUser'
 SITE_ID = 1
 MIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',

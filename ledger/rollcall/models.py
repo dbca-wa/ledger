@@ -3,7 +3,7 @@ from django.contrib.postgres.fields import JSONField
 from oscar.apps.customer.abstract_models import AbstractUser
 
 
-class User(AbstractUser):
+class EmailUser(AbstractUser):
     """A subclass of the django-oscar AbstractUser model, which uses email
     instead of username as an index.
     Also includes a field named extra_data to store ad-hoc unstructured data
