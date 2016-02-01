@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 from django.contrib.postgres.fields import JSONField
+from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.customer.abstract_models import AbstractUser
 
 
+@python_2_unicode_compatible
 class EmailUser(AbstractUser):
     """A subclass of the django-oscar AbstractUser model, which uses email
     instead of username as an index.
@@ -16,3 +18,6 @@ class EmailUser(AbstractUser):
         (attempts to update unused models).
         """
         pass
+
+    def __str__(self):
+        return self.email

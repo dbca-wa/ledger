@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'rollcall',  # Defines custom user model.
+    'addressbook',
 ]
 AUTH_USER_MODEL = 'rollcall.EmailUser'
 SITE_ID = 1
