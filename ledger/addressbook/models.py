@@ -5,7 +5,7 @@ from django.utils.encoding import python_2_unicode_compatible
 
 @python_2_unicode_compatible
 class Address(models.Model):
-    """Generic address model, intended to provide billing an shipping
+    """Generic address model, intended to provide billing and shipping
     addresses.
     Taken from django-oscar address AbstrastAddress class.
     """
@@ -39,7 +39,7 @@ class Address(models.Model):
     locality = models.CharField(max_length=255, blank=True)
     state = models.CharField(
         max_length=255, choices=STATE_CHOICES, blank=True)
-    postcode = models.IntegerField(blank=True)
+    postcode = models.IntegerField(null=True, blank=True)
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
 
@@ -64,7 +64,7 @@ class Address(models.Model):
         search_fields = filter(
             bool, [self.first_name, self.last_name,
                    self.line1, self.line2, self.line3, self.locality,
-                   self.state, self.postcode])
+                   self.state, str(self.postcode)])
         self.search_text = ' '.join(search_fields)
 
     @property
@@ -79,8 +79,7 @@ class Address(models.Model):
         """Name (including title)
         """
         return self.join_fields(
-            ('title', 'first_name', 'last_name'),
-            separator=u' ')
+            ('title', 'first_name', 'last_name'), separator=u' ')
 
     @property
     def name(self):
@@ -92,13 +91,13 @@ class Address(models.Model):
         title, first_name and last_name into a single line.
         """
         fields = [self.line1, self.line2, self.line3,
-                  self.locality, self.state, self.postcode]
+                  self.locality, self.state, str(self.postcode)]
         if include_salutation:
             fields = [self.salutation] + fields
         fields = [f.strip() for f in fields if f]
         return fields
 
-    def join_fields(self, fields, separator=u", "):
+    def join_fields(self, fields, separator=u', '):
         """Join a sequence of fields using the specified separator.
         """
         field_values = []
