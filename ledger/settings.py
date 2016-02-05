@@ -1,4 +1,4 @@
-from confy import database
+from confy import env, database
 import os
 import sys
 
@@ -11,10 +11,10 @@ sys.path.insert(0, PROJECT_DIR)
 
 
 # Application definitions
-SECRET_KEY = os.environ['SECRET_KEY']
-DEBUG = True if os.environ.get('DEBUG', False) else False
-CSRF_COOKIE_SECURE = True if os.environ.get('CSRF_COOKIE_SECURE', False) else False
-SESSION_COOKIE_SECURE = True if os.environ.get('SESSION_COOKIE_SECURE', False) else False
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env('DEBUG', False)
+CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
+SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
     ALLOWED_HOSTS = []  # FIXME in production
 ROOT_URLCONF = 'ledger.urls'
