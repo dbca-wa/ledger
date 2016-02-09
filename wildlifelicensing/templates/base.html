@@ -1,10 +1,29 @@
+{% load bootstrap3 %}
+
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% load static %}
+
+{% load compress %}
+
+{% compress css %}
+	<link type="text/less" href="{% static 'less/base.less' %}" rel="stylesheet">
+{% endcompress %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>
+	    {% block title %}
+	    {% endblock %}
+    </title>
 </head>
 <body>
+	{% block header %}
+		{% include 'header.html' %}
+	{% endblock %}
     {% block content %}
     {% endblock %}
 </body>
