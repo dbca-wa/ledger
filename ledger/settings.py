@@ -27,11 +27,11 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'social.apps.django_app.default',
     'django_extensions',
     'rollcall',  # Defines custom user model.
     'addressbook',
 ]
-AUTH_USER_MODEL = 'rollcall.EmailUser'
 SITE_ID = 1
 MIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',
@@ -44,10 +44,48 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
 ]
+
+# Authentication settings
 AUTHENTICATION_BACKENDS = (
-    'rollcall.auth_backends.EmailBackend',
+    'social.backends.email.EmailAuth',
+    #'rollcall.auth_backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
+AUTH_USER_MODEL = 'rollcall.EmailUser'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/done/'
+URL_PATH = ''
+SOCIAL_AUTH_STRATEGY = 'social.strategies.django_strategy.DjangoStrategy'
+SOCIAL_AUTH_STORAGE = 'social.apps.django_app.default.models.DjangoStorage'
+#SOCIAL_AUTH_EMAIL_FORM_URL = '/signup-email'
+SOCIAL_AUTH_EMAIL_FORM_HTML = 'email_signup.html'
+SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'rollcall.mail.send_validation'
+SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/email-sent/'
+
+SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
+SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
+SOCIAL_AUTH_PIPELINE = (
+    'social.pipeline.social_auth.social_details',
+    'social.pipeline.social_auth.social_uid',
+    'social.pipeline.social_auth.auth_allowed',
+    'social.pipeline.social_auth.social_user',
+    'social.pipeline.user.get_username',
+    'rollcall.pipeline.require_email',
+    'social.pipeline.mail.mail_validation',
+    'social.pipeline.social_auth.associate_by_email',
+    'social.pipeline.social_auth.associate_user',
+    'social.pipeline.social_auth.load_extra_data',
+    'social.pipeline.debug.debug'
+)
+
+
+# Email settings
+ADMINS = ('asi@dpaw.wa.gov.au',)
+EMAIL_HOST = env('EMAIL_HOST', 'email.host')
+EMAIL_PORT = env('EMAIL_PORT', 25)
+EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
+
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
