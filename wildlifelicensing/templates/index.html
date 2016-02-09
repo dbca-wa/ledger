@@ -1,4 +1,11 @@
 {% extends 'base.html' %}
+
+{% load static %}
+
+{% block extra_less %}
+    <link type="text/less" href="{% static 'less/index.less' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-    <h1>Home Of Wildlife Licensing</h1>
+	
 {% endblock %}
