@@ -1,23 +1,26 @@
 {% load bootstrap3 %}
 
-{% bootstrap_css %}
-{% bootstrap_javascript %}
-
 {% load static %}
 
 {% load compress %}
-
-{% compress css %}
-	<link type="text/less" href="{% static 'less/base.less' %}" rel="stylesheet">
-{% endcompress %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    {% bootstrap_css %}
+    {% compress css %}
+        <link type="text/less" href="{% static 'less/base.less' %}" rel="stylesheet">
+        {% block extra_less %}
+        
+        {% endblock %}
+    {% endcompress %}
+    {% block extra_css %}
+    {% endblock %}
     <title>
-	    {% block title %}
-	    {% endblock %}
+        {% block title %}
+            Wildlife Licensing - Department of Parks and Wildlife
+        {% endblock %}
     </title>
 </head>
 <body>
