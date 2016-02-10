@@ -1,11 +1,68 @@
 {% extends 'base.html' %}
 
+{% load bootstrap3 %}
+
 {% load static %}
 
 {% block extra_less %}
     <link type="text/less" href="{% static 'less/index.less' %}" rel="stylesheet">
 {% endblock %}
 
+{% block menu %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <nav>
+                    <a href="">Home</a> /
+                    <a href="">About</a> /
+                    <a href="">Contact Us</a>
+                </nav>
+            </div>
+       </div>
+    </div>
+{% endblock %}
+
 {% block content %}
-	
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <h2>
+                    Welcome to DPaW Wildlife Licensing
+                </h2>
+                {% lorem 3 p %} 
+            </div>
+            <div class="col-md-4">
+                <div class="wl-login-container">
+                    <h3>
+                        Login to Wildlife Licensing
+                    </h3>
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        {% bootstrap_form form %}
+                        <button type="submit" class="btn btn-default pull-right">Login</button>
+                    </form>
+                    {% if False %}
+                        <div class="alert alert-danger" role="alert">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            <span class="sr-only">Error:</span>
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <a href="">Forgot your password?</a>
+                    <hr>
+                    <h3>
+                        Register for Wildlife Licensing
+                    </h3>
+                    <p>
+                        {% lorem %}
+                    </p>
+                    <p>
+                        <a href="">Click here to register for Wildlife Licensing</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
