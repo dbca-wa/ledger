@@ -2,11 +2,16 @@ import os
 
 from ledger.settings import *
 
-
 INSTALLED_APPS += [
-                   'compressor',
-                   'bootstrap3',
-                   ]
+    'compressor',
+    'bootstrap3',
+]
+
+PROJECT_APPS = [
+    'wildlifelicensing.apps.accounts'
+]
+
+INSTALLED_APPS += PROJECT_APPS
 
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'wildlifelicensing', 'templates'))
 
@@ -23,3 +28,9 @@ COMPRESS_PRECOMPILERS = (
 STATICFILES_DIRS = [
     os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),
 ]
+
+LOGIN_URL = '/'
+LOGIN_REDIRECT_URL = '/'
+
+EMAIL_HOST = 'alerts.corporateict.domain'
+EMAIL_PORT = 25
