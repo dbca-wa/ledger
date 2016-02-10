@@ -1,5 +1,3 @@
-/.pydevproject
-/.project
 .env
 
 # Byte-compiled / optimized / DLL files
@@ -55,6 +53,7 @@ coverage.xml
 
 # Django stuff:
 *.log
+staticfiles/
 
 # Sphinx documentation
 docs/_build/
@@ -62,3 +61,8 @@ docs/_build/
 # PyBuilder
 target/
 .idea/
+
+# Eclipse project files
+/.pydevproject
+/.project
+
