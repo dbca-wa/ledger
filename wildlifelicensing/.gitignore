@@ -53,16 +53,10 @@ coverage.xml
 
 # Django stuff:
 *.log
-staticfiles/
 
 # Sphinx documentation
 docs/_build/
 
 # PyBuilder
 target/
-.idea/
-
-# Eclipse project files
-/.pydevproject
-/.project
 
