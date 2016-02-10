@@ -39,7 +39,7 @@
                     <form method="post" action="{% url 'login' %}">
                         {% csrf_token %}
                         {% bootstrap_form form %}
-                        <button type="submit" class="btn btn-default pull-right">Login</button>
+                        {% bootstrap_button 'Login' button_class='pull-right' %}
                     </form>
                     {% if False %}
                         <div class="alert alert-danger" role="alert">
