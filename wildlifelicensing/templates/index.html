@@ -41,16 +41,7 @@
                         {% bootstrap_form form %}
                         {% bootstrap_button 'Login' button_class='pull-right' %}
                     </form>
-                    {% if False %}
-                        <div class="alert alert-danger" role="alert">
-                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                            <span class="sr-only">Error:</span>
-                            {% for error in form.non_field_errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                    <a href="">Forgot your password?</a>
+                    <a href="{% url 'password_reset' %}">Forgot your password?</a>
                     <hr>
                     <h3>
                         Register for Wildlife Licensing
