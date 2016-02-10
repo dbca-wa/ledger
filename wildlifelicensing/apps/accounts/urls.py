@@ -4,6 +4,8 @@ from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
+    url('^login/', auth_views.login, {'template_name': 'index.html'}, name='login'),
+
     url(r'create/?$', views.UserCreateView.as_view(), name='user_create'),
 
     url(r'^password_reset/done/$',
