@@ -36,7 +36,7 @@
                     <h3>
                         Login to Wildlife Licensing
                     </h3>
-                    <form method="post" action="{% url 'accounts:login' %}">
+                    <form method="post" action="{% url "social:complete" backend="email" %}">
                         {% csrf_token %}
                         {% bootstrap_form form %}
                         {% bootstrap_button 'Login' button_class='pull-right' %}

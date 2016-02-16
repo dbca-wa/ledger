@@ -80,3 +80,12 @@ REQUIRE_EXCLUDE = ("build.txt",)
 # require.environments.Environment and defines some "args" function that
 # returns a list with the command arguments to execute.
 REQUIRE_ENVIRONMENT = "auto"
+
+# Social auth settings
+SOCIAL_AUTH_EMAIL_FORM_URL = '/'
+SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'wildlifelicensing.apps.accounts.mail.send_validation'
+SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/accounts/validation-sent/'
+SOCIAL_AUTH_PASSWORDLESS = True
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
+SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
+SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/accounts/create'
