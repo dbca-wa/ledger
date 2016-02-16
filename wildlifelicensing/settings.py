@@ -42,6 +42,15 @@ LOGIN_REDIRECT_URL = '/'
 EMAIL_HOST = 'alerts.corporateict.domain'
 EMAIL_PORT = 25
 
+BOOTSTRAP3 = {
+    'jquery_url': 'https://static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min',
+    'base_url': 'https://static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'css_url': None,
+    'theme_url': None,
+    'javascript_url': None,
+    'javascript_in_head': False,
+    'include_jquery': False,
+}
 
 # The baseUrl to pass to the r.js optimizer, relative to STATIC_ROOT.
 REQUIRE_BASE_URL = "js"
