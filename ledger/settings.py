@@ -30,9 +30,11 @@ INSTALLED_APPS = [
     'social.apps.django_app.default',
     'django_extensions',
     'rollcall',  # Defines custom user model.
+    'passwordless',   # Passwordless auth pipeline.
     'addressbook',
 ]
 SITE_ID = 1
+SITE_URL = env('SITE_URL', 'http://localhost:8000')
 MIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -48,20 +50,16 @@ MIDDLEWARE_CLASSES = [
 # Authentication settings
 AUTHENTICATION_BACKENDS = (
     'social.backends.email.EmailAuth',
-    #'rollcall.auth_backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 AUTH_USER_MODEL = 'rollcall.EmailUser'
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/done/'
-URL_PATH = ''
 SOCIAL_AUTH_STRATEGY = 'social.strategies.django_strategy.DjangoStrategy'
 SOCIAL_AUTH_STORAGE = 'social.apps.django_app.default.models.DjangoStorage'
-#SOCIAL_AUTH_EMAIL_FORM_URL = '/signup-email'
-SOCIAL_AUTH_EMAIL_FORM_HTML = 'email_signup.html'
-SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'rollcall.mail.send_validation'
-SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/email-sent/'
-
+SOCIAL_AUTH_EMAIL_FORM_URL = '/login-form/'
+SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'passwordless.mail.send_validation'
+SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/validation-sent/'
+SOCIAL_AUTH_PASSWORDLESS = True
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/done/'
 SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
 SOCIAL_AUTH_PIPELINE = (
@@ -70,12 +68,12 @@ SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.auth_allowed',
     'social.pipeline.social_auth.social_user',
     'social.pipeline.user.get_username',
-    'rollcall.pipeline.require_email',
     'social.pipeline.mail.mail_validation',
-    'social.pipeline.social_auth.associate_by_email',
+    'passwordless.pipeline.user_by_email',
+    'social.pipeline.user.create_user',
     'social.pipeline.social_auth.associate_user',
     'social.pipeline.social_auth.load_extra_data',
-    'social.pipeline.debug.debug'
+    'social.pipeline.user.user_details'
 )
 
 
@@ -89,7 +87,9 @@ EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(PROJECT_DIR, 'templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
