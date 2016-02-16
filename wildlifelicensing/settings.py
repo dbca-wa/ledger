@@ -2,14 +2,7 @@ import os
 
 from ledger.settings import *
 
-BOOTSTRAP3 = {
-    'jquery_url': 'https://static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js',
-    'base_url': 'https://static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
-    'css_url': None,
-    'theme_url': None,
-    'javascript_url': None,
-    'include_jquery': False,
-}
+ROOT_URLCONF = 'wildlifelicensing.urls'
 
 INSTALLED_APPS += [
     'compressor',
@@ -23,9 +16,9 @@ PROJECT_APPS = [
     'wildlifelicensing.apps.officers',
 ]
 
-INSTALLED_APPS += PROJECT_APPS
+INSTALLED_APPS = PROJECT_APPS + INSTALLED_APPS
 
-TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'wildlifelicensing', 'templates'))
+TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR, 'wildlifelicensing', 'templates')]
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
