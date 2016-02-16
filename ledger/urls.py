@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'', include('passwordless.urls')),
     url(r'', include('social.apps.django_app.urls', namespace='social')),
     url(r'^', include(wl_urls.urlpattern)),
+
 ]
