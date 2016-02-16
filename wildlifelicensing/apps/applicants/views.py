@@ -2,4 +2,4 @@ from django.views.generic import TemplateView
 
 
 class DashboardView(TemplateView):
-    template_name = 'applicants-dashboard.html'
+    template_name = 'applicants_dashboard.html'

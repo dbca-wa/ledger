@@ -6,32 +6,42 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    {% bootstrap_css %}
-    {% compress css %}
-        <link type="text/less" href="{% static 'less/base.less' %}" rel="stylesheet">
-        {% block extra_less %}
-        
+    <head>
+        <meta charset="UTF-8">
+            {% bootstrap_css %}
+            {% compress css %}
+                <link type="text/less" href="{% static 'less/base.less' %}" rel="stylesheet">
+            {% block extra_less %}
+            {% endblock %}
+            {% endcompress %}
+            {% block extra_css %}
+            {% endblock %}
+            <title>
+                {% block title %}
+                    Wildlife Licensing - Department of Parks and Wildlife
+                {% endblock %}
+            </title>
+            <script type="text/javascript" src="{% static 'js/require.js' %}"></script>
+            <script type="text/javascript">
+                require(["{% static 'js/config.js' %}"], function (config) {
+                    require(['js/base']);
+                    {% block requirements %}
+                    {% endblock %}
+                });
+            </script>
+        </meta>
+    </head>
+    <body>
+        <header>
+            {% block header %}
+                {% include 'header.html' %}
+            {% endblock %}
+        </header>
+        {% block menu %}
         {% endblock %}
-    {% endcompress %}
-    {% block extra_css %}
-    {% endblock %}
-    <title>
-        {% block title %}
-            Wildlife Licensing - Department of Parks and Wildlife
+        {% block breadcrumbs %}
         {% endblock %}
-    </title>
-</head>
-<body>
-    {% block header %}
-        {% include 'header.html' %}
-    {% endblock %}
-    {% block menu %}
-    {% endblock %}
-    {% block breadcrumbs %}
-    {% endblock %}
-    {% block content %}
-    {% endblock %}
-</body>
+        {% block content %}
+        {% endblock %}
+    </body>
 </html>
