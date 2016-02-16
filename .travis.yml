@@ -1,0 +1,24 @@
+sudo: false
+language: python
+cache: pip
+python:
+    - "2.7"
+addons:
+    postgresql: "9.4"
+services:
+    - postgresql
+branches:
+    only:
+        - master
+env:
+    global:
+        - SECRET_KEY=SecretKeyForTravis
+        - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
+install:
+    - psql -U postgres -c "create extension postgis"
+    - pip install -r requirements.txt
+before_script:
+    - psql -c 'create database travis_ci_test;' -U postgres
+    - python manage.py migrate --noinput
+script:
+    - python manage.py test -k -v 0

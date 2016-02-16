@@ -20,4 +20,6 @@ import wildlifelicensing.urls as wl_urls
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include(wl_urls.urlpattern)),
+    url(r'', include('passwordless.urls')),
+    url(r'', include('social.apps.django_app.urls', namespace='social'))
 ]
