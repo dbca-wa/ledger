@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 
 from wildlifelicensing.apps.accounts.urls import urlpatterns as accounts_urls
 
-urlpattern = [
+urlpatterns = [
     url(r'^$', TemplateView.as_view(template_name="index.html"), {'form': AuthenticationForm}, name='home'),
-    url(r'^accounts/', include(accounts_urls))
+    url(r'^accounts/', include(accounts_urls, namespace='accounts'))
 ]

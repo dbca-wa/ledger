@@ -2,6 +2,8 @@ import os
 
 from ledger.settings import *
 
+ROOT_URLCONF = 'wildlifelicensing.urls'
+
 INSTALLED_APPS += [
     'compressor',
     'bootstrap3',

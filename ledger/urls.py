@@ -15,12 +15,9 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-import wildlifelicensing.urls as wl_urls
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'', include('passwordless.urls')),
+    url(r'', include('passwordless.urls', namespace='passwordless')),
     url(r'', include('social.apps.django_app.urls', namespace='social')),
-    url(r'^', include(wl_urls.urlpattern)),
-
 ]
