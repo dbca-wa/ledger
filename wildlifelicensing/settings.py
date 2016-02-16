@@ -11,9 +11,9 @@ PROJECT_APPS = [
     'wildlifelicensing.apps.accounts'
 ]
 
-INSTALLED_APPS += PROJECT_APPS
+INSTALLED_APPS = PROJECT_APPS + INSTALLED_APPS
 
-TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'wildlifelicensing', 'templates'))
+TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR, 'wildlifelicensing', 'templates')]
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
