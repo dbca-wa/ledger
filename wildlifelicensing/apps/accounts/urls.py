@@ -11,6 +11,6 @@ urlpatterns = [
 
     url('^logout/', auth_views.logout, {'next_page': 'home'}, name='logout'),
 
-    url(r'create/?$', views.UserCreateView.as_view(), name='user_create'),
+    url(r'create/?$', views.CustomerCreateView.as_view(), name='customer_create'),
 
 ]

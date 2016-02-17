@@ -4,10 +4,10 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import redirect
-from django.views.generic import View, RedirectView, TemplateView
-from django.views.generic.edit import CreateView
+from django.views.generic import View, RedirectView, TemplateView, FormView
+from braces.views import LoginRequiredMixin
 
-from .models import Customer
+from .forms import CustomerCreateForm
 
 
 class DashBoardView(TemplateView):
@@ -39,8 +39,15 @@ class ValidationSentView(View):
         return redirect('home')
 
 
-class UserCreateView(CreateView):
-    template_name = 'user_create.html'
-    model = Customer
+class CustomerCreateView(LoginRequiredMixin, FormView):
+    template_name = 'customer_create.html'
     success_url = reverse_lazy('home')
-    fields = ['email']
+    form_class = CustomerCreateForm
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            messages.error(request, "Please correct the error belows.")
+            return self.form_invalid(form)
