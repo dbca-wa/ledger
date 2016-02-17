@@ -8,18 +8,9 @@
     <link type="text/less" href="{% static 'less/index.less' %}" rel="stylesheet">
 {% endblock %}
 
-{% block menu %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <nav>
-                    <a href="">Home</a> /
-                    <a href="">About</a> /
-                    <a href="">Contact Us</a>
-                </nav>
-            </div>
-       </div>
-    </div>
+{% block left_menu_items %}
+    <li><a href="">About</a></li>
+    <li><a href="">Contact Us</a></li>
 {% endblock %}
 
 {% block content %}
@@ -32,26 +23,32 @@
                 {% lorem 3 p %} 
             </div>
             <div class="col-md-4">
-                <div class="wl-login-container">
-                    <h3>
-                        Login to Wildlife Licensing
-                    </h3>
-                    <form method="post" action="{% url "social:complete" backend="email" %}">
-                        {% csrf_token %}
-                        {% bootstrap_form form %}
-                        {% bootstrap_button 'Login' button_class='pull-right' %}
-                    </form>
-                    <hr>
-                    <h3>
-                        Register for Wildlife Licensing
-                    </h3>
-                    <p>
-                        {% lorem %}
-                    </p>
-                    <p>
-                        <a href="">Click here to register for Wildlife Licensing</a>
-                    </p>
-                </div>
+                {% if not request.user.is_authenticated %}
+                    <div id="wl-login-container">
+                        <h3>
+                            Access Wildlife Licensing
+                        </h3>
+                        {% bootstrap_messages %}
+                        <form method="post" action="{% url "social:complete" backend="email" %}">
+                            {% csrf_token %}
+                            {% bootstrap_form form %}
+                            <div id="submit-container">
+                                {% bootstrap_button 'Submit' button_class='btn-primary' %}
+                            </div>
+                        </form>
+                        <p>First time here?</p>
+                        <p>Submit your email to begin the registration process.</p>
+                        <hr>
+                        <h4>
+                            Wildlife Licensing Password-less Logins
+                        </h4>
+                        <p>
+                            At the Department of Parks and Wildlife (DPaW), we employ a password-less authentication system, meaning you never need to remember
+                            a site-specific password. When you need to login to a DPaW site, such as Wildlife Licensing, simply enter your email and an 
+                            authentication link will be sent to your registered email address. From there, simply follow the link to login to the site.
+                        </p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
