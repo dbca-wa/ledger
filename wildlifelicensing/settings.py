@@ -12,7 +12,7 @@ INSTALLED_APPS += [
 
 PROJECT_APPS = [
     'wildlifelicensing.apps.accounts',
-    'wildlifelicensing.apps.applicants',
+    'wildlifelicensing.apps.customers',
     'wildlifelicensing.apps.officers',
 ]
 

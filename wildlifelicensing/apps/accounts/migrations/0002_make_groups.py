@@ -6,7 +6,7 @@ from django.db import migrations
 
 def create_groups(apps, schema_editor):
     Group = apps.get_model('auth', 'Group')
-    Group.objects.create(name='Applicants')
+    Group.objects.create(name='Customers')
     Group.objects.create(name='Officers')
     Group.objects.create(name='Assessors')
     Group.objects.create(name='Assessor Management')

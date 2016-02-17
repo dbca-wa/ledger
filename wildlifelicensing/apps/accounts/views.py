@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.views.generic import View, RedirectView, TemplateView
 from django.views.generic.edit import CreateView
 
-from rollcall.models import EmailUser
+from .models import Customer
 
 
 class DashBoardView(TemplateView):
@@ -16,8 +16,8 @@ class DashBoardView(TemplateView):
     def get(self, *args, **kwargs):
         redirect_url = None
         if self.request.user.is_authenticated:
-            if self.request.user.groups.filter(name='Applicants').exists():
-                redirect_url = 'applicants:dashboard'
+            if self.request.user.groups.filter(name='Customers').exists():
+                redirect_url = 'customers:dashboard'
             elif self.request.user.groups.filter(name='Officers').exists():
                 redirect_url = 'officers:dashboard'
         if redirect_url:
@@ -41,6 +41,6 @@ class ValidationSentView(View):
 
 class UserCreateView(CreateView):
     template_name = 'user_create.html'
-    model = EmailUser
+    model = Customer
     success_url = reverse_lazy('home')
     fields = ['email']
