@@ -65,3 +65,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         if self.first_name:
             return self.first_name
         return self.email
+
+    @property
+    def username(self):
+        return self.email
