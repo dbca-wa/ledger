@@ -26,6 +26,9 @@ class Document(models.Model):
     def __str__(self):
         return self.name or self.filename
 
+    class Meta:
+        db_table = 'wl_accounts_document'
+
 
 @python_2_unicode_compatible
 class Customer(EmailUser):
@@ -57,3 +60,6 @@ class Customer(EmailUser):
 
     def __str__(self):
         return self.email
+
+    class Meta:
+        db_table = 'wl_accounts_customer'
