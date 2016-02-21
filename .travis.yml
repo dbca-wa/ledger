@@ -22,3 +22,5 @@ before_script:
     - python manage.py migrate --noinput
 script:
     - python manage.py test -k -v 0
+after_success:
+    - coveralls
