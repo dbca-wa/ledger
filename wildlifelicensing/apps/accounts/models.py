@@ -1,37 +1,15 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from rollcall.models import EmailUser
+from django.conf import settings
 from addressbook.models import Address
 from django.utils.encoding import python_2_unicode_compatible
 
-
-@python_2_unicode_compatible
-class Document(models.Model):
-    name = models.CharField(max_length=100, blank=True,
-                            verbose_name='name', help_text='')
-    description = models.TextField(blank=True,
-                                   verbose_name='description', help_text='')
-    file = models.FileField(upload_to='%Y/%m/%d')
-    uploaded_date = models.DateTimeField(auto_now_add=True)
-
-    @property
-    def path(self):
-        return self.file.path
-
-    @property
-    def filename(self):
-        return self.path.basename(self.path)
-
-    def __str__(self):
-        return self.name or self.filename
-
-    class Meta:
-        db_table = 'wl_accounts_document'
+from wildlifelicensing.apps.main.models import Document
 
 
 @python_2_unicode_compatible
-class Customer(EmailUser):
+class Customer(models.Model):
     TITLE_CHOICES = (
         ('Mr', 'Mr'),
         ('Miss', 'Miss'),
@@ -39,6 +17,7 @@ class Customer(EmailUser):
         ('Ms', 'Ms'),
         ('Dr', 'Dr')
     )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=False, blank=False, on_delete=models.PROTECT)
     title = models.CharField(max_length=100, choices=TITLE_CHOICES, blank=False, default=TITLE_CHOICES[0][0],
                              verbose_name='title', help_text="")
     dob = models.DateField(auto_now=False, auto_now_add=False, null=False, blank=False,
@@ -59,7 +38,9 @@ class Customer(EmailUser):
     documents = models.ManyToManyField(Document)
 
     def __str__(self):
-        return self.email
+        if self.organisation:
+            return '{} ({})'.format(self.user, self.organisation)
+        return '{}'.format(self.user)
 
     class Meta:
         db_table = 'wl_accounts_customer'

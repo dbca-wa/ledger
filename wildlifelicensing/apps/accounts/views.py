@@ -1,13 +1,20 @@
 from __future__ import unicode_literals
 
+import logging
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import redirect
-from django.views.generic import View, RedirectView, TemplateView
-from django.views.generic.edit import CreateView
+from django.views.generic import View, RedirectView, TemplateView, FormView
+from django.contrib.auth.models import Group
 
+from braces.views import LoginRequiredMixin
+
+from addressbook.models import Address
+from .forms import CustomerCreateForm
 from .models import Customer
+
+logger = logging.getLogger(__name__)
 
 
 class DashBoardView(TemplateView):
@@ -39,8 +46,41 @@ class ValidationSentView(View):
         return redirect('home')
 
 
-class UserCreateView(CreateView):
-    template_name = 'user_create.html'
-    model = Customer
+class CustomerCreateView(LoginRequiredMixin, FormView):
+    template_name = 'customer_create.html'
     success_url = reverse_lazy('home')
-    fields = ['email']
+    form_class = CustomerCreateForm
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            # save top level user details
+            user = request.user
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.save()
+
+            # address
+            address_data = form.get_address_data()
+            address = Address(**address_data)
+            address.save()
+
+            # customer
+            customer_data = form.get_customer_data()
+            customer = Customer(**customer_data)
+            customer.user = user
+            customer.residential_address = address
+            customer.save()
+
+            # add this user to the Customer group
+            group = Group.objects.filter(name='Customers').first()
+            if group:
+                user.groups.add(group)
+            else:
+                logger.error('Customers group not found!')
+
+            return redirect('home')
+
+        else:
+            messages.error(request, "Please correct the error belows.")
+            return self.form_invalid(form)
