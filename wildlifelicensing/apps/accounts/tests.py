@@ -48,7 +48,7 @@ class AccountsTestCase(TestCase):
         # check that the content contains a link
         self.assertIn('http', received_email.body)
 
-        login_verification_url = re.search("(?P<url>https?://[^\s]+)", received_email.body).group("url")
+        login_verification_url = re.search('(?P<url>https?://[^\s]+)', received_email.body).group('url')
 
         response = self.client.get(login_verification_url, follow=True)
 
@@ -100,7 +100,7 @@ class AccountsTestCase(TestCase):
         # check that the content contains a link
         self.assertIn('http', received_email.body)
 
-        login_verification_url = re.search("(?P<url>https?://[^\s]+)", received_email.body).group("url")
+        login_verification_url = re.search('(?P<url>https?://[^\s]+)', received_email.body).group('url')
 
         response = self.client.get(login_verification_url, follow=True)
 
