@@ -42,3 +42,12 @@ class CustomerCreateForm(forms.Form):
                            'line1', 'locality', 'state', 'postcode']:
             self.fields[field_name].required = True
             self.fields[field_name].widget.is_required = True
+
+    def _get_cleaned_data_for_fields(self, field_dict):
+        return {k: v for (k, v) in self.cleaned_data.items() if k in field_dict.keys()}
+
+    def get_customer_data(self):
+        return self._get_cleaned_data_for_fields(self.customer_fields)
+
+    def get_address_data(self):
+        return self._get_cleaned_data_for_fields(self.address_fields)

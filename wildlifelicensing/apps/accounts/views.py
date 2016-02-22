@@ -7,7 +7,9 @@ from django.shortcuts import redirect
 from django.views.generic import View, RedirectView, TemplateView, FormView
 from braces.views import LoginRequiredMixin
 
+from addressbook.models import Address
 from .forms import CustomerCreateForm
+from .models import Customer
 
 
 class DashBoardView(TemplateView):
@@ -47,7 +49,26 @@ class CustomerCreateView(LoginRequiredMixin, FormView):
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
-            return self.form_valid(form)
+            # save top level user details
+            user = request.user
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.save()
+
+            # address
+            address_data = form.get_address_data()
+            address = Address(**address_data)
+            address.save()
+
+            # customer
+            customer_data = form.get_customer_data()
+            customer = Customer(**customer_data)
+            customer.user = user
+            customer.residential_address = address
+            customer.save()
+
+            return redirect('home')
+
         else:
             messages.error(request, "Please correct the error belows.")
             return self.form_invalid(form)
