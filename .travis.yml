@@ -17,10 +17,11 @@ env:
 install:
     - psql -U postgres -c "create extension postgis"
     - pip install -r requirements.txt
+    - pip install coveralls
 before_script:
     - psql -c 'create database travis_ci_test;' -U postgres
     - python manage.py migrate --noinput
 script:
-    - python manage.py test -k -v 0
+    - coverage run --source="." manage.py test
 after_success:
     - coveralls
