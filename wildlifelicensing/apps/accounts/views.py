@@ -1,15 +1,20 @@
 from __future__ import unicode_literals
 
+import logging
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import redirect
 from django.views.generic import View, RedirectView, TemplateView, FormView
+from django.contrib.auth.models import Group
+
 from braces.views import LoginRequiredMixin
 
 from addressbook.models import Address
 from .forms import CustomerCreateForm
 from .models import Customer
+
+logger = logging.getLogger(__name__)
 
 
 class DashBoardView(TemplateView):
@@ -66,6 +71,13 @@ class CustomerCreateView(LoginRequiredMixin, FormView):
             customer.user = user
             customer.residential_address = address
             customer.save()
+
+            # add this user to the Customer group
+            group = Group.objects.filter(name='Customers').first()
+            if group:
+                user.groups.add(group)
+            else:
+                logger.error('Customers group not found!')
 
             return redirect('home')
 
