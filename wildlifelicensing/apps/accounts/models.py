@@ -17,7 +17,7 @@ class Customer(models.Model):
         ('Ms', 'Ms'),
         ('Dr', 'Dr')
     )
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=False, blank=False, on_delete=models.PROTECT)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, blank=False, on_delete=models.PROTECT)
     title = models.CharField(max_length=100, choices=TITLE_CHOICES, blank=False, default=TITLE_CHOICES[0][0],
                              verbose_name='title', help_text="")
     dob = models.DateField(auto_now=False, auto_now_add=False, null=False, blank=False,

@@ -48,7 +48,7 @@ class AccountsTestCase(TestCase):
         # check that the content contains a link
         self.assertIn('http', received_email.body)
 
-        login_verification_url = re.search("(?P<url>https?://[^\s]+)", received_email.body).group("url")
+        login_verification_url = re.search('(?P<url>https?://[^\s]+)', received_email.body).group('url')
 
         response = self.client.get(login_verification_url, follow=True)
 
@@ -100,12 +100,12 @@ class AccountsTestCase(TestCase):
         # check that the content contains a link
         self.assertIn('http', received_email.body)
 
-        login_verification_url = re.search("(?P<url>https?://[^\s]+)", received_email.body).group("url")
+        login_verification_url = re.search('(?P<url>https?://[^\s]+)', received_email.body).group('url')
 
         response = self.client.get(login_verification_url, follow=True)
 
         # check response status is 302 - REDIRECT and redirects to validation complete which in turn redirects to home
-        self.assertRedirects(response, reverse('accounts:user_create'), status_code=302, target_status_code=200)
+        self.assertRedirects(response, reverse('accounts:customer_create'), status_code=302, target_status_code=200)
 
         # check user is logged in
         self.assertIn('_auth_user_id', self.client.session)
