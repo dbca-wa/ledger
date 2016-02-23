@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     'rollcall',  # Defines custom user model.
     'passwordless',   # Passwordless auth pipeline.
     'addressbook',
-    'wildlife_licence',
+    'licence',
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')

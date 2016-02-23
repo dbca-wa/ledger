@@ -1,0 +1,98 @@
+{% load bootstrap3 %}
+
+{% load static %}
+
+{% load compress %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+            {% bootstrap_css %}
+            {% compress css %}
+                <link type="text/less" href="{% static 'less/base.less' %}" rel="stylesheet">
+            {% block extra_less %}
+            {% endblock %}
+            {% endcompress %}
+            {% block extra_css %}
+            {% endblock %}
+            <title>
+                {% block title %}
+                    Wildlife Licensing - Department of Parks and Wildlife
+                {% endblock %}
+            </title>
+            <script type="text/javascript" src="{% static 'js/require.js' %}"></script>
+            <script type="text/javascript">
+                require(["{% static 'js/config.js' %}"], function (config) {
+                    require(['js/base']);
+                    {% block requirements %}
+                    {% endblock %}
+                });
+            </script>
+        </meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+    </head>
+    <body>
+        <header>
+            {% block header %}
+                {% include 'header.html' %}
+            {% endblock %}
+        </header>
+        {% block menu %}
+            <div class="container-fluid">
+                <nav class="navbar navbar-default">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                                <span class="sr-only">Toggle navigation</span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                            <a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'img/dpaw_small.png' %}">Wildlife Licensing</div></a>
+                        </div>
+                        <div id="navbar" class="navbar-collapse collapse">
+                            <ul class="nav navbar-nav">
+                                {% block left_menu_items %}
+                                {% endblock %}
+                            </ul>
+                            <ul class="nav navbar-nav navbar-right">
+                                {% if request.user.is_authenticated %}
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                            Welcome 
+                                            <strong>
+                                                {% if request.user.first_name %}
+                                                    {{ request.user.first_name }}
+                                                {% elif request.user.last_name %}
+                                                    {{ request.user.last_name }}
+                                                {% else %}
+                                                    {{ request.user.email }}
+                                                {% endif %}
+                                            </strong>
+                                            <span class="caret"></span>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li role="separator" class="divider"></li>
+                                            {% if request.user.is_superuser %}
+                                                <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                <li role="separator" class="divider"></li>
+                                            {% endif %}
+                                            <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+                                        </ul>
+                                    </li>
+                                {% endif %}
+                                {% block right_menu_items %}
+                                {% endblock %}
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        {% endblock %}
+        {% block breadcrumbs %}
+        {% endblock %}
+        {% block content %}
+        {% endblock %}
+    </body>
+</html>
