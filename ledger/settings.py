@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rollcall',  # Defines custom user model.
     'passwordless',   # Passwordless auth pipeline.
     'addressbook',
+    'wildlife_licence',
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
@@ -45,6 +46,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
+    'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
 ]
 
 # Authentication settings
