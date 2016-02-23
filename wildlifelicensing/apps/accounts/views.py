@@ -70,6 +70,8 @@ class CustomerCreateView(LoginRequiredMixin, FormView):
             customer = Customer(**customer_data)
             customer.user = user
             customer.residential_address = address
+            customer.postal_address = address
+            customer.billing_address = address
             customer.save()
 
             # add this user to the Customer group
