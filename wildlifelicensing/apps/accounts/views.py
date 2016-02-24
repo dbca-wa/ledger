@@ -13,6 +13,7 @@ from braces.views import LoginRequiredMixin
 from addressbook.models import Address
 from .forms import CustomerCreateForm
 from .models import Customer
+from .mixins import is_customer, is_officer
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +23,13 @@ class DashBoardView(TemplateView):
 
     def get(self, *args, **kwargs):
         redirect_url = None
-        if self.request.user.is_authenticated:
-            if self.request.user.groups.filter(name='Customers').exists():
+        if self.request.user.is_authenticated():
+            if is_customer(self.request.user):
                 redirect_url = 'customers:dashboard'
-            elif self.request.user.groups.filter(name='Officers').exists():
+            elif is_officer(self.request.user):
                 redirect_url = 'officers:dashboard'
+            else:
+                redirect_url = 'accounts:customer_create'
         if redirect_url:
             return redirect(redirect_url)
         else:
@@ -35,7 +38,13 @@ class DashBoardView(TemplateView):
 
 class VerificationView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
-        return reverse('social:complete', args=('email',)) + '?verification_code={}'.format(kwargs['token'])
+        redirect_url = '{}?verification_code={}'.format(
+            reverse('social:complete', args=('email',)),
+            kwargs['token']
+        )
+        if self.request.user and hasattr(self.request.user, 'email'):
+            redirect_url += '&email={}'.format(self.request.user.email)
+        return redirect_url
 
 
 class ValidationSentView(View):
