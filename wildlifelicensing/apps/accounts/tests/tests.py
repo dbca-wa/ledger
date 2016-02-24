@@ -1,17 +1,19 @@
 from __future__ import unicode_literals
+
 import re
 
 from django.conf import settings
 from django.core import mail
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 from django.test import Client
+from django.test import TestCase
 from social.apps.django_app.default.models import UserSocialAuth
 
 from rollcall.models import EmailUser
-
+from wildlifelicensing.apps.accounts.mixins import is_officer
 from wildlifelicensing.apps.accounts.models import Customer
-from .utils_test import is_client_authenticated, login, belongs_to
+from .helpers import is_client_authenticated, belongs_to, SocialClient, add_to_group, create_default_customer, \
+    create_default_officer
 
 REGISTERED_USER_EMAIL = 'registered_user@test.net'
 NEW_USER_EMAIL = 'new_user@test.net'
@@ -56,11 +58,11 @@ class AccountsTestCase(TestCase):
 
         response = self.client.get(login_verification_url, follow=True)
 
-        # check response status is 302 - REDIRECT and redirects to validation complete which in turn redirects to home
-        self.assertRedirects(response, reverse('home'), status_code=302, target_status_code=200)
-
         # check user is logged in
         self.assertTrue(is_client_authenticated(self.client))
+
+        # check response status is 302 - REDIRECT and redirects to validation complete which in turn redirects to home
+        self.assertRedirects(response, reverse('accounts:customer_create'), status_code=302, target_status_code=200)
 
         # check that the another user wasn't created
         self.assertEqual(EmailUser.objects.count(), original_user_count)
@@ -83,7 +85,7 @@ class AccountsTestCase(TestCase):
         original_user_count = EmailUser.objects.count()
 
         # check user is not logged in at this point
-        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertFalse(is_client_authenticated(self.client))
 
         response = self.client.post(reverse('social:complete', kwargs={'backend': "email"}), {'email': NEW_USER_EMAIL})
 
@@ -117,6 +119,13 @@ class AccountsTestCase(TestCase):
         # check that the another user wasn't created
         self.assertEqual(EmailUser.objects.count(), original_user_count + 1)
 
+        # accessing the verification URL twice should produce the same result
+        response = self.client.get(login_verification_url, follow=True)
+        self.assertTrue(is_client_authenticated(self.client))
+        self.assertRedirects(response, reverse('accounts:customer_create'), status_code=302, target_status_code=200)
+        self.assertTrue(is_client_authenticated(self.client))
+        self.assertEqual(EmailUser.objects.count(), original_user_count + 1)
+
 
 class CustomerRegistrationTest(TestCase):
     DEFAULT_CUSTOMER_DATA = {
@@ -137,7 +146,7 @@ class CustomerRegistrationTest(TestCase):
     def setUp(self):
         self.url = reverse('accounts:customer_create')
 
-    def test_anonymous_access(self):
+    def test_anonymous_no_access(self):
         """
         Test that an non auth cannot access the view should redirect LOGIN_URL
         """
@@ -151,18 +160,22 @@ class CustomerRegistrationTest(TestCase):
         """
         A new authenticated user should see the page
         """
-        client = login('user@test.com')
+        client = SocialClient()
+        client.login('user@test.com')
         self.assertTrue(is_client_authenticated(client))
         response = client.get(self.url)
         self.assertEqual(200, response.status_code)
 
     def test_customer_creation_happy_path(self):
+        email = 'customer@test.com'
         self.assertFalse(Customer.objects.exists())
-        client = login('user@test.com')
+        client = SocialClient()
+        client.login('customer@test.com')
         response = client.get(self.url)
         self.assertEqual(200, response.status_code)
         form_data = self.DEFAULT_CUSTOMER_DATA
         response = client.post(self.url, data=form_data, follow=True)
+
         # a successful submission should redirect to the customer dashboard
         self.assertRedirects(response, reverse('customers:dashboard'), status_code=302, target_status_code=200)
         self.assertEqual(1, Customer.objects.count())
@@ -192,3 +205,55 @@ class CustomerRegistrationTest(TestCase):
 
         # test that the user belongs to the Customers group
         self.assertTrue(belongs_to(customer.user, 'Customers'))
+
+        # once the customer is created a logout/login should redirect you to the customer dashboard
+        client.logout()
+        client = SocialClient()
+        response = client.login('customer@test.com')
+        self.assertRedirects(response, reverse('customers:dashboard'), status_code=302, target_status_code=200)
+
+
+class TestHomeViewRedirect(TestCase):
+    """
+    Test that the 'home' url redirection
+    """
+    def setUp(self):
+        pass
+
+    def test_anonymous(self):
+        """
+        Anonymous user should be redirected to the 'home' page with the login form
+        """
+        client = Client()
+        self.assertFalse(is_client_authenticated(client))
+        response = client.get(reverse('home'))
+        self.assertEquals(200, response.status_code)
+        self.assertTrue('form' in response.context)
+        self.assertTrue('email' in response.context['form'].declared_fields.keys())
+
+    def test_officer(self):
+        """
+        A WL officer should be redirected to the officer dashboard
+        """
+        officer = create_default_officer()
+        self.assertIsNotNone(officer)
+        client = SocialClient()
+        response = client.login(officer.email)
+        # add user to the officers group
+        officer = add_to_group(response.context['user'], 'Officers')
+        # user is now an officer
+        self.assertTrue(is_officer(officer))
+        # should redirect to officer dashboard
+        response = client.get(reverse('home'))
+        self.assertRedirects(response, reverse('officers:dashboard'), status_code=302, target_status_code=200)
+
+    def test_customer(self):
+        """
+        A customer should be redirected to the customer dashboard
+        """
+        customer = create_default_customer()
+        self.assertIsNotNone(customer)
+        client = SocialClient()
+        client.login(customer.email)
+        response = client.get(reverse('home'))
+        self.assertRedirects(response, reverse('customers:dashboard'), status_code=302, target_status_code=200)
