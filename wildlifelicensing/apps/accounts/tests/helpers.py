@@ -7,6 +7,7 @@ from django.test import Client
 from django.contrib.auth.models import Group
 
 from wildlifelicensing.apps.accounts.models import Customer
+from wildlifelicensing.apps.accounts import helpers as accounts_helpers
 
 
 class TestData(object):
@@ -53,7 +54,7 @@ def is_client_authenticated(client):
 
 
 def belongs_to(user, group_name):
-    return user.groups.filter(name__iexact=group_name).exists()
+    return accounts_helpers.belongs_to(user, group_name)
 
 
 def add_to_group(user, group_name):
