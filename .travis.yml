@@ -16,9 +16,8 @@ env:
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
 install:
     # JavaScript test requirements
-    - add-apt-repository -y ppa:chris-lea/node.js
     - apt-get -y update
-    - apt-get -y install nodejs
+    - apt-get -y install nodejs npm
     - npm install -g less
     - psql -U postgres -c "create extension postgis"
     - pip install -r requirements.txt
