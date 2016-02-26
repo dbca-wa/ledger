@@ -35,6 +35,9 @@ INSTALLED_APPS = [
     'bootstrap3',
     'wildlifelicensing',
     'wildlifelicensing.apps.main',
+    'wildlifelicensing.apps.accounts',
+    'wildlifelicensing.apps.customers',
+    'wildlifelicensing.apps.officers',
     'rollcall',  # Defines custom user model.
     'passwordless',   # Passwordless auth pipeline.
     'addressbook',

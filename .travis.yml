@@ -15,9 +15,6 @@ env:
         - SECRET_KEY=SecretKeyForTravis
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
 install:
-    # JavaScript test requirements
-    - npm install -g npm
-    - npm install -g less
     - psql -U postgres -c "create extension postgis"
     - pip install -r requirements.txt
     - pip install coveralls
