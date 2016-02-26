@@ -15,14 +15,13 @@
                     Wildlife Licensing - Department of Parks and Wildlife
                 {% endblock %}
             </title>
-            <script type="text/javascript" src="{% static 'js/require.js' %}"></script>
-            <script type="text/javascript">
-                require(["{% static 'js/config.js' %}"], function (config) {
-                    require(['js/base']);
-                    {% block requirements %}
-                    {% endblock %}
-                });
-            </script>
+
+            <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/js/almond.js"></script>
+            <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
+            <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+            <script type="text/javascript" src="{% static 'js/wl.js' %}"></script>
+            {% block extra_js %}
+            {% endblock %}
         </meta>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>

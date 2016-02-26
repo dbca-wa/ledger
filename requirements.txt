@@ -5,6 +5,5 @@ python-social-auth>=0.2.14
 mixer>=5.4.1
 coverage>=4.0.3
 django_bootstrap3>=6.2.2
-django-require>=1.0.9
 django-braces>=1.8.1
 django-hosts>=1.4
