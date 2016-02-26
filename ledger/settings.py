@@ -33,15 +33,11 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_hosts',
     'bootstrap3',
-    'wildlifelicensing',
-    'wildlifelicensing.apps.main',
-    'wildlifelicensing.apps.accounts',
-    'wildlifelicensing.apps.customers',
-    'wildlifelicensing.apps.officers',
-    'rollcall',  # Defines custom user model.
-    'passwordless',   # Passwordless auth pipeline.
-    'addressbook',
+    'customers',   #  Defines custom user model, passwordless auth pipeline.
     'licence',
+    'wildlifelicensing',
+    'wildlifelicensing.dashboard',
+    'wildlifelicensing.officers',
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
@@ -65,14 +61,14 @@ AUTHENTICATION_BACKENDS = (
     'social.backends.email.EmailAuth',
     'django.contrib.auth.backends.ModelBackend',
 )
-AUTH_USER_MODEL = 'rollcall.EmailUser'
+AUTH_USER_MODEL = 'customers.Customer'
 SOCIAL_AUTH_STRATEGY = 'social.strategies.django_strategy.DjangoStrategy'
 SOCIAL_AUTH_STORAGE = 'social.apps.django_app.default.models.DjangoStorage'
-SOCIAL_AUTH_EMAIL_FORM_URL = '/login-form/'
-SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'passwordless.mail.send_validation'
-SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/validation-sent/'
+SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/login-form/'
+SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'customers.mail.send_validation'
+SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/ledger/validation-sent/'
 SOCIAL_AUTH_PASSWORDLESS = True
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/done/'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/ledger/done/'
 SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
 SOCIAL_AUTH_PIPELINE = (
@@ -82,12 +78,16 @@ SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.social_user',
     'social.pipeline.user.get_username',
     'social.pipeline.mail.mail_validation',
-    'passwordless.pipeline.user_by_email',
+    'customers.pipeline.user_by_email',
     'social.pipeline.user.create_user',
     'social.pipeline.social_auth.associate_user',
     'social.pipeline.social_auth.load_extra_data',
     'social.pipeline.user.user_details'
 )
+
+SESSION_COOKIE_DOMAIN = env('SESSION_COOKIE_DOMAIN', None)
+if SESSION_COOKIE_DOMAIN:
+    SESSION_COOKIE_NAME = (SESSION_COOKIE_DOMAIN + ".ledger_sessionid").replace(".", "_")
 
 
 # Email settings

@@ -17,7 +17,7 @@ from django.conf.urls import url, include
 from django.contrib import admin
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'', include('passwordless.urls')),
-    url(r'', include('social.apps.django_app.urls', namespace='social'))
+    url(r'^ledger/admin/', admin.site.urls),
+    url(r'^ledger/', include('customers.urls', namespace='customers')),
+    url(r'^ledger/', include('social.apps.django_app.urls', namespace='social'))
 ]
