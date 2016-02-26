@@ -18,6 +18,8 @@ SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
     ALLOWED_HOSTS = []  # FIXME in production
 ROOT_URLCONF = 'ledger.urls'
+ROOT_HOSTCONF = 'ledger.hosts'
+DEFAULT_HOST = env('DEFAULT_HOST', 'ledger')
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -29,6 +31,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'social.apps.django_app.default',
     'django_extensions',
+    'django_hosts',
+    'bootstrap3',
+    'wildlifelicensing',
+    'wildlifelicensing.apps.main',
     'rollcall',  # Defines custom user model.
     'passwordless',   # Passwordless auth pipeline.
     'addressbook',
@@ -37,6 +43,7 @@ INSTALLED_APPS = [
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
 MIDDLEWARE_CLASSES = [
+    'django_hosts.middleware.HostsRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -47,6 +54,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
+    'django_hosts.middleware.HostsResponseMiddleware'
 ]
 
 # Authentication settings
@@ -103,6 +111,19 @@ TEMPLATES = [
         },
     },
 ]
+
+
+BOOTSTRAP3 = {
+    'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min',
+    'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'css_url': None,
+    'theme_url': None,
+    'javascript_url': None,
+    'javascript_in_head': False,
+    'include_jquery': False,
+    'required_css_class': 'required-form-field',
+    'set_placeholder': False,
+}
 
 
 # Database

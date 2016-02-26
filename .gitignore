@@ -1,5 +1,6 @@
 /.settings/org.eclipse.core.resources.prefs
 .env
+venv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -55,6 +56,9 @@ coverage.xml
 # Django stuff:
 *.log
 staticfiles/
+
+# vim
+*.swp
 
 # Sphinx documentation
 docs/_build/

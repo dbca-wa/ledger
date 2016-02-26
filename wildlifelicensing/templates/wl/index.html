@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'wl/base.html' %}
 
 {% load bootstrap3 %}
 
 {% load static %}
 
-{% block extra_less %}
-    <link type="text/less" href="{% static 'less/index.less' %}" rel="stylesheet">
+{% block extra_css %}
+    <link type="text/css" href="{% static 'css/index.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block left_menu_items %}

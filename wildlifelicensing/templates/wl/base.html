@@ -2,18 +2,12 @@
 
 {% load static %}
 
-{% load compress %}
-
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
             {% bootstrap_css %}
-            {% compress css %}
-                <link type="text/less" href="{% static 'less/base.less' %}" rel="stylesheet">
-            {% block extra_less %}
-            {% endblock %}
-            {% endcompress %}
+            <link type="text/css" href="{% static 'css/base.css' %}" rel="stylesheet">
             {% block extra_css %}
             {% endblock %}
             <title>
@@ -35,7 +29,7 @@
     <body>
         <header>
             {% block header %}
-                {% include 'header.html' %}
+                {% include 'wl/header.html' %}
             {% endblock %}
         </header>
         {% block menu %}

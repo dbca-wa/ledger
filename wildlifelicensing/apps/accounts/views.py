@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class DashBoardView(TemplateView):
-    template_name = 'index.html'
+    template_name = 'wl/index.html'
 
     def get(self, *args, **kwargs):
         redirect_url = None
