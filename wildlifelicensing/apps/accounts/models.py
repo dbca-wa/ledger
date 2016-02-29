@@ -37,6 +37,10 @@ class Customer(models.Model):
 
     documents = models.ManyToManyField(Document)
 
+    @property
+    def email(self):
+        return self.user.email
+
     def __str__(self):
         if self.organisation:
             return '{} ({})'.format(self.user, self.organisation)
