@@ -8,6 +8,7 @@ INSTALLED_APPS += [
     'compressor',
     'bootstrap3',
     'require',
+    'jsonify',
 ]
 
 PROJECT_APPS = [
@@ -33,6 +34,8 @@ COMPRESS_PRECOMPILERS = (
 )
 
 STATICFILES_STORAGE = 'require.storage.OptimizedStaticFilesStorage'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 STATICFILES_DIRS = [
     os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),
