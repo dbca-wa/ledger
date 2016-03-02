@@ -4,43 +4,125 @@
 {% block extra_css %}
     <link rel="stylesheet"
           href="http://static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css">
+    <link rel="stylesheet"
+          href="http://static.dpaw.wa.gov.au/static/libs/bootstrap-select/1.9.4/css/bootstrap-select.min.css">
 {% endblock %}
 
 {% block requirements %}
     require(['js/officers_dashboard'], function (app) {
-        var options = {
-            applicationsTableSelector: '#applications-table',
-            licensesTableSelector: '#licenses-table',
-            returnsTableSelector: '#returns-table'
-        };
-        app(options);
+    var options = {
+    applicationsTableSelector: '#applications-table',
+    licensesTableSelector: '#licenses-table',
+    returnsTableSelector: '#returns-table'
+    };
+    app(options);
     });
 {% endblock %}
 
 {% block content %}
     <div class="container">
         <div class="row">
-            <div id="applications-panel">
-                <div class="row">
-                    <h1>Applications</h1>
+            <div class="col-md-12">
+                <form class="form-inline">
+                    <div class="form-group">
+                        <label>License Type: </label>
+                        <select class="selectpicker" title="License Type"
+                                id="global-filter-license-type">
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingOne">
+                    <h4 class="panel-title">
+                        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"
+                           aria-expanded="true" aria-controls="collapseOne">
+                            <h3>Applications</h3>
+                        </a>
+                    </h4>
                 </div>
-                <div class="row">
-                    <table id="applications-table"
-                           class="table table-striped table-bordered dataTable no-footer"></table>
+                <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div id="filter-panel">
+                                <div class="col-md-6 col-md-offset-3">
+                                    <form class="form-inline">
+                                        <div class="form-group">
+                                            <label>License Type: </label>
+                                            <select class="form-control" title="License Type"
+                                                    id="applications-filter-license-type">
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Status: </label>
+                                            <select class="form-control" title="License Type"
+                                                    id="applications-filter-status">
+                                            </select>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <table id="applications-table" class="table table-striped table-bordered dataTable"></table>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingTwo">
+                    <h4 class="panel-title">
+                        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                           href="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                            <h3>Licenses</h3>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapseTwo" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingTwo">
+                    <div class="panel-body">
+                        <table id="licenses-table" class="table table-striped table-bordered dataTable"></table>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingThree">
+                    <h4 class="panel-title">
+                        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                           href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                            <h3>Returns</h3>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapseThree" class="panel-collapse collapse in" role="tabpanel"
+                     aria-labelledby="headingThree">
+                    <div class="panel-body">
+                        <table id="returns-table" class="table table-striped table-bordered dataTable"></table>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div id="licenses-panel">
-                <h1>Licenses</h1>
-                <table id="licenses-table" class="table table-striped table-bordered dataTable"></table>
-            </div>
-        </div>
-        <div class="row">
-            <div id="returns-panel">
-                <h1>Returns</h1>
-                <table id="returns-table" class="table table-striped table-bordered dataTable"></table>
-            </div>
-        </div>
-    </div>
+
+        {#        <div class="row">#}
+        {#            <div id="applications-panel">#}
+        {#                <div class="row">#}
+        {#                    <h1>Applications</h1>#}
+        {#                </div>#}
+        {#                <div class="row">#}
+        {#                    <table id="applications-table" class="table table-striped table-bordered dataTable"></table>#}
+        {#                </div>#}
+        {#            </div>#}
+        {#        </div>#}
+        {#        <div class="row">#}
+        {#            <div id="licenses-panel">#}
+        {#                <h1>Licenses</h1>#}
+        {#                <table id="licenses-table" class="table table-striped table-bordered dataTable"></table>#}
+        {#            </div>#}
+        {#        </div>#}
+        {#        <div class="row">#}
+        {#            <div id="returns-panel">#}
+        {#                <h1>Returns</h1>#}
+        {#                <table id="returns-table" class="table table-striped table-bordered dataTable"></table>#}
+        {#            </div>#}
+        {#        </div>#}
+        {#    </div>#}
 {% endblock %}

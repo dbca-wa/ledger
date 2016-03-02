@@ -3,7 +3,8 @@ define(
     [
         'jQuery',
         'datatables.net',
-        'dataTableBootstrap'
+        'dataTableBootstrap',
+        'bootstrapSelect'
     ],
     function ($) {
         'use strict';
@@ -20,10 +21,13 @@ define(
 
         function decorateTable(table) {
 
-            table.populate = function (data) {
+            table.populate = function (data, append) {
                 if (data) {
                     if (typeof data === 'string') {
                         data = $.parseJSON(json);
+                    }
+                    if (!append) {
+                        table.clear();
                     }
                     table.rows.add(data).draw();
                 }
