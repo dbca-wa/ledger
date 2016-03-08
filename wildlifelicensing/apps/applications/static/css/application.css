@@ -1,0 +1,24 @@
+.affix-top {
+
+}
+
+.affix {
+    top: 20px;
+}
+
+.affix-bottom {
+
+}
+
+#sectionList > ul > .active {
+    font-weight: bold;
+}
+
+.add-group {
+    margin-top: -10px;
+    text-align: right;
+}
+
+.remove-group {
+    text-align: right;
+}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% block extra_css %}
+    <link href="{% static 'css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(['js/application'], function(application) {
+        application('body', '#sectionList', '#sectionList', {{ form.sections|jsonify }});
+    });
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-9 col-md-offset-3">
+                <h1>Application for a licence to take (i.e. capture, collect, disturb, study) fauna for scientific purposes</h1>
+            </div>
+        </div>
+        <div class="row">
+            <nav class="col-md-3">
+                <div id="sectionList">
+                    <ul class="nav nav-stacked">
+                        {% for section in form.get_sections %}
+                            <li><a href="#{{ section.name|slugify }}">{{ section.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </nav>
+            <div class="col-md-9">
+                <form method="POST">
+                    {% for section in form.get_sections %}
+                        <h3 id="{{ section.name|slugify }}">{{ section.name }}</h3>
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                {% for item in section.get_items %}
+                                    {% if item.type == 'field' %}
+                                        {% if item.disabled %}
+                                            {% bootstrap_field item.as_bound_field set_disabled=True form_group_class='form-group disabled' %}
+                                        {% else %}
+                                            {% bootstrap_field item.as_bound_field %}
+                                        {% endif %}
+                                    {% elif item.type == 'group' %}
+                                        <h4>{{ item.get_name }}(s)</h4>
+                                        <div id="{{ item.get_name|slugify }}-0" class="panel panel-default">
+                                            <div class="panel-body">
+                                                {% for field in item.get_fields %}
+                                                       {% if field.disabled %}
+                                                           {% bootstrap_field field.as_bound_field set_disabled=True form_group_class='form-group disabled' %}
+                                                       {% else %}
+                                                           {% bootstrap_field field.as_bound_field %}
+                                                       {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="add-group">
+                                            <a id="add-{{ item.get_name|slugify }}" target="{{ item.get_name|slugify }}">
+                                                Add {{ item.get_name }}
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    {% bootstrap_button 'Submit' button_class='btn-primary pull-right' %}
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
