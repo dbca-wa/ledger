@@ -256,7 +256,7 @@ define(
             $('.selectpicker').selectpicker('refresh');
         }
 
-        return function (options) {
+        return function (options, data) {
             var defaults = {
                 applicationsTableSelector: '#applications-table',
                 globalLicenseTypeFilterSelector: '#global-filter-license-type',
@@ -266,7 +266,7 @@ define(
             options = $.extend({}, options, defaults);
             $(function () {
                 $('.selectpicker').selectpicker();
-                tableData = generateData();
+                tableData = data || generateData();
                 initTables(options, tableData);
                 initFilters(options, tableData);
             })

@@ -9,42 +9,69 @@ define(
         function getData() {
             return [
                 {
-                    text: "Parent 1",
+                    text: "Pending applications",
+                    tags: ['15'],
+                    href: '/officers/dashboard',
                     nodes: [
                         {
-                            text: "Child 1",
-                            nodes: [
-                                {
-                                    text: "Grandchild 1"
-                                },
-                                {
-                                    text: "Grandchild 2"
-                                }
-                            ]
+                            text: "Reg3",
+                            href: '/officers/dashboard',
+                            tags: ['5']
                         },
                         {
-                            text: "Child 2"
+                            text: "Reg17",
+                            href: '/officers/dashboard',
+                            tags: ['10'],
+                            nodes: [
+                                {
+                                    text: 'Graham Thompson',
+                                    href: '/officers/dashboard',
+                                    tags: ['9']
+                                },
+                                {
+                                    text: 'Pauline Goodreid',
+                                    href: '/officers/dashboard',
+                                    tags: ['1']
+                                }
+                            ]
                         }
                     ]
                 },
                 {
-                    text: "Parent 2"
-                },
-                {
-                    text: "Parent 3"
-                },
-                {
-                    text: "Parent 4"
-                },
-                {
-                    text: "Parent 5"
+                    text: "Pending returns",
+                    tags: ['6'],
+                    href: '/officers/dashboard',
+                    state: {
+                        expanded: false
+                    },
+                    nodes: [
+                        {
+                            text: "Reg3",
+                            href: '/officers/dashboard',
+                            tags: ['1']
+                        },
+                        {
+                            text: "Reg17",
+                            href: '/officers/dashboard',
+                            tags: ['5']
+                        }
+                    ]
                 }
             ];
         }
 
         return function (treeSelector) {
             $(function () {
-                $(treeSelector).treeview({data: getData()});
+                var $tree = $(treeSelector);
+                $tree.treeview(
+                    {
+                        data: getData(),
+                        showBorder: false,
+                        enableLinks: true,
+                        emptyIcon: 'glyphicon glyphicon-stop',
+                        showTags: true
+                    });
+                $tree.treeview('collapseAll', {silent: true});
             });
         }
     }
