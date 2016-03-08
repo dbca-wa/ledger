@@ -92,7 +92,6 @@ define(
             tableData,
             applicationsTable, licensesTable, returnsTable;
 
-
         function generateData() {
             // generate rows from randomly picking values from the mockData
             var nbRows = 30,
@@ -156,6 +155,13 @@ define(
         }
 
         function filterTable(filterData) {
+            /**
+             * {
+             *  type: <global|applications>,
+             *  column: 'license_type',
+             *  value: 'reg3'
+             *  }
+             */
             var filter = function (row) {
                 return filterData.value === 'all' ? true : row[filterData.column] === filterData.value;
             };
@@ -220,6 +226,7 @@ define(
             });
             $appsLicenseTypeFilter.on('change', function (event) {
                 var data = $(event.target).find(':selected').data();
+                $appsStatusTypeFilter.val('All');
                 filterTable(data)
             });
 
@@ -242,6 +249,7 @@ define(
             });
             $appsStatusTypeFilter.on('change', function (event) {
                 var data = $(event.target).find(':selected').data();
+                $appsLicenseTypeFilter.val('All');
                 filterTable(data)
             });
 
