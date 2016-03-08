@@ -4,9 +4,10 @@ define(
         'jQuery',
         'lodash',
         'js/wl.dataTable',
+        'moment',
         'bootstrapSelect'
     ],
-    function ($, _, dt) {
+    function ($, _, dt, moment) {
         var tableOptions = {
                 paging: true,
                 info: true,
@@ -27,7 +28,8 @@ define(
                 },
                 {
                     title: 'Date',
-                    data: 'date'
+                    data: 'date',
+                    type: 'date'
                 },
                 {
                     title: 'Status',
@@ -83,7 +85,7 @@ define(
                 }
             ],
             mockData = {
-                dates: ['01/01/2016', '12/11/2015', '23/04/2015', '01/03/2016'],
+                dates: ['2016-01-01', '2015-12-11', '2015-04-04', '2015-01-30', '2017-12-24'],
                 customers: ['Serge Le Breton', 'Pauline Goodreid', 'Paul Gioia', 'Graham Thompson', 'Tony Prior'],
                 statusApplication: ['pending', 'draft', 'issued'],
                 licenseTypes: ['reg3', 'reg17', 'reg40', 'reg666'],
@@ -160,11 +162,16 @@ define(
              *  type: <global|applications>,
              *  column: 'license_type',
              *  value: 'reg3'
+             *  filter: function (row) { return true;}
              *  }
              */
-            var filter = function (row) {
-                return filterData.value === 'all' ? true : row[filterData.column] === filterData.value;
-            };
+            var defaultColumnFilter = function (row) {
+                    return filterData.value === 'all' ? true : row[filterData.column] === filterData.value;
+                },
+                filter = defaultColumnFilter;
+            if (typeof filterData.filter === 'function') {
+                filter = filterData.filter;
+            }
             if (tableData) {
                 if (filterData.type === 'global' || filterData.type === 'applications') {
                     applicationsTable.populate(_.filter(tableData.applications, filter));
@@ -183,6 +190,7 @@ define(
                 $globalLicenseTypeFilter = $(options.globalLicenseTypeFilterSelector),
                 $appsLicenseTypeFilter = $(options.applicationsLicenseFilterSelector),
                 $appsStatusTypeFilter = $(options.applicationsStatusFilterSelector),
+                $returnsDuedateFilter = $(options.returnsDueDateFilterSelector),
                 $node;
 
             //global license type filter
@@ -253,6 +261,30 @@ define(
                 filterTable(data)
             });
 
+            // returns due date filter
+            $node = $(itemTemplate({title: 'All'}));
+            $node.data({
+                type: 'returns',
+                column: 'due_date',
+                value: 'all'
+            });
+            $returnsDuedateFilter.append($node);
+
+            $node = $(itemTemplate({title: 'Overdue'}));
+            $node.data({
+                type: 'returns',
+                filter: function (row) {
+                    var now = moment();
+                    return moment(row['due_date']).isBefore(now);
+                }
+            });
+            $returnsDuedateFilter.append($node);
+            $returnsDuedateFilter.on('change', function (event) {
+                var data = $(event.target).find(':selected').data();
+                filterTable(data);
+            });
+
+            // necessary when option added dynamically
             $('.selectpicker').selectpicker('refresh');
         }
 
@@ -262,6 +294,7 @@ define(
                 globalLicenseTypeFilterSelector: '#global-filter-license-type',
                 applicationsLicenseFilterSelector: '#applications-filter-license-type',
                 applicationsStatusFilterSelector: '#applications-filter-status',
+                returnsDueDateFilterSelector: '#returns-filter-dueDate'
             };
             options = $.extend({}, options, defaults);
             $(function () {

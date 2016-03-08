@@ -3,7 +3,7 @@ define(
     [
         'jQuery',
         'datatables.net',
-        'dataTableBootstrap',
+        'datatables.bootstrap',
         'bootstrapSelect'
     ],
     function ($) {

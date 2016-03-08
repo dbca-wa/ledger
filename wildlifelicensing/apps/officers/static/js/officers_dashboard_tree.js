@@ -15,22 +15,22 @@ define(
                     nodes: [
                         {
                             text: "Reg3",
-                            href: '/officers/dashboard',
+                            href: '/officers/dashboard/#applications',
                             tags: ['5']
                         },
                         {
                             text: "Reg17",
-                            href: '/officers/dashboard',
+                            href: '/officers/dashboard/#applications',
                             tags: ['10'],
                             nodes: [
                                 {
                                     text: 'Graham Thompson',
-                                    href: '/officers/dashboard',
+                                    href: '/officers/dashboard/#applications',
                                     tags: ['9']
                                 },
                                 {
                                     text: 'Pauline Goodreid',
-                                    href: '/officers/dashboard',
+                                    href: '/officers/dashboard/#applications',
                                     tags: ['1']
                                 }
                             ]
@@ -38,7 +38,7 @@ define(
                     ]
                 },
                 {
-                    text: "Pending returns",
+                    text: "Overdue returns",
                     tags: ['6'],
                     href: '/officers/dashboard',
                     state: {
@@ -47,12 +47,12 @@ define(
                     nodes: [
                         {
                             text: "Reg3",
-                            href: '/officers/dashboard',
+                            href: '/officers/dashboard/#returns',
                             tags: ['1']
                         },
                         {
                             text: "Reg17",
-                            href: '/officers/dashboard',
+                            href: '/officers/dashboard/#returns',
                             tags: ['5']
                         }
                     ]
