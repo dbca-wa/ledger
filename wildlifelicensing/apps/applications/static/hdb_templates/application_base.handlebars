@@ -1,0 +1,19 @@
+<div class="row">
+	<div class="col-md-12">
+		<h1>{{heading}}</h1>
+	</div>
+</div>
+<div class="row">
+	{{#if hasMenu}}
+		<nav class="col-md-2">
+			<div id="sectionList">
+            	<ul class="nav nav-stacked">
+				</ul>
+            </div>
+        </nav>
+    {{/if}}	
+	<div class="col-md-{{#if hasMenu}}10{{else}}12{{/if}}">
+		<div id="{{childrenAnchorPointID}}">
+		<div>
+	</div>
+</div>

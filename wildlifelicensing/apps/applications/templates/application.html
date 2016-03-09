@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% block requirements %}
+    require(['js/application'], function(application) {
+    	application('#mainContainer', {{ form.structure|jsonify }} );
+        //application('body', '#sectionList', '#sectionList', {{ form.sections|jsonify }});
+    });
+{% endblock %}
+
+{% block content %}
+    <div id="mainContainer" class="container" />
+{% endblock %}

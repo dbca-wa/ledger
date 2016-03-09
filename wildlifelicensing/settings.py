@@ -8,6 +8,7 @@ INSTALLED_APPS += [
     'compressor',
     'bootstrap3',
     'require',
+    'jsonify',
 ]
 
 PROJECT_APPS = [
@@ -15,6 +16,7 @@ PROJECT_APPS = [
     'wildlifelicensing.apps.accounts',
     'wildlifelicensing.apps.customers',
     'wildlifelicensing.apps.officers',
+    'wildlifelicensing.apps.applications',
 ]
 
 INSTALLED_APPS = PROJECT_APPS + INSTALLED_APPS
