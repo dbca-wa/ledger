@@ -1,11 +1,10 @@
 define(
-    'js/officers_dashboard',
     [
         'jQuery',
         'lodash',
         'js/wl.dataTable',
         'moment',
-        'bootstrapSelect'
+        'bootstrap.select'
     ],
     function ($, _, dt, moment) {
         var tableOptions = {

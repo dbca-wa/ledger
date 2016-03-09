@@ -1,8 +1,7 @@
 define(
-    'js/officers_dashboard_tree',
     [
         'jQuery',
-        'bsTreeView'  // jquery plugin. Just for side-effects.
+        'bootstrap.treeView'  // jquery plugin. Just for side-effects.
     ],
     function ($) {
 
@@ -11,26 +10,26 @@ define(
                 {
                     text: "Pending applications",
                     tags: ['15'],
-                    href: '/officers/dashboard',
+                    href: '/dashboard/tables',
                     nodes: [
                         {
                             text: "Reg3",
-                            href: '/officers/dashboard/#applications',
+                            href: '/dashboard/tables/#applications',
                             tags: ['5']
                         },
                         {
                             text: "Reg17",
-                            href: '/officers/dashboard/#applications',
+                            href: '/dashboard/tables/#applications',
                             tags: ['10'],
                             nodes: [
                                 {
                                     text: 'Graham Thompson',
-                                    href: '/officers/dashboard/#applications',
+                                    href: '/dashboard/tables/#applications',
                                     tags: ['9']
                                 },
                                 {
                                     text: 'Pauline Goodreid',
-                                    href: '/officers/dashboard/#applications',
+                                    href: '/dashboard/tables/#applications',
                                     tags: ['1']
                                 }
                             ]
@@ -40,19 +39,19 @@ define(
                 {
                     text: "Overdue returns",
                     tags: ['6'],
-                    href: '/officers/dashboard',
+                    href: '/dashboard',
                     state: {
                         expanded: false
                     },
                     nodes: [
                         {
                             text: "Reg3",
-                            href: '/officers/dashboard/#returns',
+                            href: '/dashboard/tables/#returns',
                             tags: ['1']
                         },
                         {
                             text: "Reg17",
-                            href: '/officers/dashboard/#returns',
+                            href: '/dashboard/tables/#returns',
                             tags: ['5']
                         }
                     ]

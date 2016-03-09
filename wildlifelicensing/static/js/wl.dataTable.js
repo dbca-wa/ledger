@@ -3,8 +3,7 @@ define(
     [
         'jQuery',
         'datatables.net',
-        'datatables.bootstrap',
-        'bootstrapSelect'
+        'datatables.bootstrap'
     ],
     function ($) {
         'use strict';
