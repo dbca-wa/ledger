@@ -59,12 +59,19 @@ define(
             ];
         }
 
-        return function (treeSelector) {
+        return function (options) {
+            var defaults = {
+                treeSelector: '#applications-table',
+                treeData: []
+            };
+
+            options = $.extend({}, defaults, options);
+            console.log("treeData", options.treeData);
             $(function () {
-                var $tree = $(treeSelector);
+                var $tree = $(options.treeSelector);
                 $tree.treeview(
                     {
-                        data: getData(),
+                        data: options.treeData,
                         showBorder: false,
                         enableLinks: true,
                         emptyIcon: 'glyphicon glyphicon-stop',

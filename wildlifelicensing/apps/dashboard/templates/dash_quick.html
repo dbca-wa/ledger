@@ -6,14 +6,18 @@
 
 {% block requirements %}
     require(['js/dash_quick'], function (app) {
-        app('#dashboard-tree');
+        var options = {
+            treeSelector: '#dashboard-tree',
+            treeData: {{ dataJSON|safe }}
+        };
+        app(options);
     });
 {% endblock %}
 
 {% block content %}
     <div class="container">
         <div class="row">
-            <h1>Quick glance dashboard</h1>
+            <h1>Quick glance dashboard: </h1>
             <div id="dashboard-tree"></div>
         </div>
     </div>
