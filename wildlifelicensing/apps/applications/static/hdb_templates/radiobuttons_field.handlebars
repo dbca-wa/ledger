@@ -2,8 +2,8 @@
     <label for="{{id}}">{{label}}</label>
     {{#each options}}
         <div class="radio">
-            <label for="{{../name}}_{{this.value}}">
-                <input id="{{../name}}_{{this.value}}" name="{{../name}}" type="radio" value="{{this.value}}" />
+            <label for="{{../id}}_{{this.value}}">
+                <input id="{{../id}}_{{this.value}}" name="{{../name}}" type="radio" value="{{this.value}}" />
                 {{this.label}}
             </label>
         </div>
@@ -15,6 +15,4 @@
         <span class="glyphicon glyphicon-remove form-control-feedback"></span>
         <span class='text-danger'>{{errors}}</span>
     {{/if}}
-</div>
-<div id="{{childrenAnchorPointID}}" {{#if isHiddenInitially}}style="display:none"{{/if}}>
 </div>

@@ -1,6 +1,6 @@
 <div class="form-group {{#if errors}} has-error has-feedback {{/if}}">
     <label for="{{id}}">{{label}} </label>
-    <textarea rows="3" id="{{id}}" name={{name}}abstract" rows="10" class="form-control"></textarea>
+    <textarea rows="3" id="{{id}}" name="{{name}}" class="form-control"></textarea>
     {{#if help_text}}
         <p class="help-block">{{help_text}}</p>
     {{/if}}
@@ -9,5 +9,3 @@
         <span class='text-danger'>{{errors}}</span>
     {{/if}}
  </div>
-<div id="{{childrenAnchorPointID}}" {{#if isHiddenInitially}}style="display:none"{{/if}}>
-</div>

@@ -1,75 +1,111 @@
 define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
     var templates = {};
-     
-    function appendTemplate(templateName, context, parentSelector) {     
+
+    function getTemplate(templateName) {
         if (templates[templateName] === undefined) {
-          $.ajax({
-              url: '/static/hdb_templates/' + templateName + '.handlebars',
-              success: function(data) {
-                  templates[templateName] = Handlebars.compile(data);
-                  $(parentSelector).append(templates[templateName](context))
-              },
-              async: false
-          });
+            $.ajax({
+                url: '/static/hdb_templates/' + templateName + '.handlebars',
+                success: function(data) {
+                    templates[templateName] = Handlebars.compile(data);
+                },
+                async: false
+            });
+        }
+
+        return templates[templateName]
+    }
+
+    function layoutItem(item, parentAnchorPointSelector, parentItemID, depth, index, repetitionIndex) {
+        var row = $('<div>').addClass('row');
+
+        item.id = parentItemID + '-' + index;
+
+        // if this item is a repeat, insert after previous item, else append to parentAnchorPoint 
+        if(repetitionIndex !== undefined) {
+            row.insertAfter($('#' + item.id + '-repeat-' + (repetitionIndex-1)));
         } else {
-            $(parentSelector).append(templates[templateName](context))
+            $(parentAnchorPointSelector).append(row);
+        }
+
+        // if this is a repeatable item (such as a group), add repetitionIndex to item ID
+        if(item.isRepeatable) {
+            if(repetitionIndex === undefined) {
+                repetitionIndex = 0;
+            }
+            item.id += '-repeat-' + repetitionIndex;
+        }
+
+        colClass = 'col-md-' + String(12-depth);
+        colOffsetClass = 'col-md-offset-' + String(depth);
+        var col = $('<div>').addClass(colClass).addClass(colOffsetClass);
+        row.append(col);
+
+        item.childrenAnchorPointID = item.id + '-children';
+
+        col.append(getTemplate(item.type)(item));
+
+        if(item.children !== undefined) {
+            var childrenAnchorPoint;
+
+            // if no children anchor point was defined in the template, create one under current item
+            if($('#' + item.childrenAnchorPointID).length) {
+                childrenAnchorPoint = $('#' + item.childrenAnchorPointID);
+            } else {
+                childrenAnchorPoint = $('<div>');
+                childrenAnchorPoint.attr('id', item.id + '-children');
+                col.append(childrenAnchorPoint);
+            }
+
+            if(item.condition !== undefined) {
+                var inputSelector = col.find('input, select');
+
+                // hide initially if current value does not equal condition
+                if(inputSelector.val() !== item.condition) {
+                    childrenAnchorPoint.hide();
+                }
+
+                inputSelector.change(function(e) {
+                    if ($(this).val() === item.condition) {
+                        childrenAnchorPoint.slideDown('medium');
+                    } else {
+                        childrenAnchorPoint.slideUp('medium');
+                    }
+                });
+            }
+            layoutChildren(item.children, childrenAnchorPoint, item.id, depth + 1);
+        }
+
+        if(item.type === 'section') {
+            var link = $('<a>');
+            link.attr('href', '#' + item.id);
+            link.text(item.label);
+            $('#sectionList ul').append($('<li>').append(link));
+        } else if(item.type === 'group' && item.isRepeatable && repetitionIndex === 0) {
+            var addGroupDiv = $('<div>').addClass('add-group');
+            var addGroupLink = $('<a>').text('Add ' + item.label);
+            addGroupLink.click(function(e) {
+                layoutItem(item, parentAnchorPointSelector, parentItemID, depth - 1, index, ++repetitionIndex);
+            });
+            col.append(addGroupDiv.append(addGroupLink));
         }
     }
 
-    function layoutChildren(children, childrenAnchorPointID, depth, hasMenu) {
+    function layoutChildren(children, childrenAnchorPointID, itemID, depth) {
         $.each(children, function(index, child) {
-            var row = $('<div></div>').addClass('row');
-            $('#' + childrenAnchorPointID).append(row);
-            
-            colClass = 'col-md-' + String(12-depth);
-            colOffsetClass = 'col-md-offset-' + String(depth);
-            col = $('<div></div>').addClass(colClass).addClass(colOffsetClass);
-
-            // need to render childrenAnchorPointID in template, so add to context 
-            if(child.childrenAnchorPointID !== undefined) {
-                child.context.childrenAnchorPointID = child.childrenAnchorPointID;
-                child.context.isHiddenInitially = child.children !== undefined;
-            }
-
-            appendTemplate(child.type, child.context, col);
-
-            row.append(col);
-            
-            if(child.children !== undefined) {
-                if(child.condition !== undefined) {
-                    var inputSelector = col.find('input, select');
-                    inputSelector.change(function(e) {
-                        if ($(this).val() === child.condition) {
-                            $('#' + child.childrenAnchorPointID).slideDown('fast');
-                        } else {
-                            $('#' + child.childrenAnchorPointID).hide();
-                        }
-                    });
-                }
-                layoutChildren(child.children, child.childrenAnchorPointID, depth + 1);
-            }
-
-            if(child.type === 'section' && hasMenu !== undefined && hasMenu) {
-                var link = $('<a>');
-                link.attr('href', '#' + child.context.id);
-                link.text(child.context.label);
-                $('#sectionList ul').append($('<li>').append(link));
-            }
+            layoutItem(child, childrenAnchorPointID, itemID, depth, index);
         });
     }
 
     return function(mainContainerSelector, formStructure) {
-        appendTemplate('application_base', {
-                                            hasMenu: formStructure.hasMenu,
-                                            heading: formStructure.heading, 
-                                            childrenAnchorPointID: formStructure.childrenAnchorPointID
-                                            }, 
-                                            mainContainerSelector);
+        $(mainContainerSelector).append(getTemplate('application_base')({
+            heading: formStructure.heading, 
+            childrenAnchorPointID: formStructure.childrenAnchorPointID
+        }));
 
-        layoutChildren(formStructure.children, formStructure.childrenAnchorPointID, 0, formStructure.hasMenu);
+        layoutChildren(formStructure.children, '#' + formStructure.childrenAnchorPointID, 'item', 0);
 
         var sectionList = $('#sectionList');
-        sectionList.scrollspy({ target: 'body' });
+        $('body').scrollspy({ target: '#sectionList' });
         sectionList.affix({ offset: { top: 200 }});
     };
 });
