@@ -1,4 +1,4 @@
-define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
+define(['jQuery', 'handlebars', 'parsley', 'bootstrap'], function($, Handlebars) {
     var templates = {};
 
     function getTemplate(templateName) {
@@ -103,5 +103,18 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
         var sectionList = $('#sectionList');
         $('body').scrollspy({ target: '#sectionList' });
         sectionList.affix({ offset: { top: 200 }});
+
+        $('form').parsley({
+    		successClass: "has-success",
+    	    errorClass: "has-error",
+    	    classHandler: function(el) {
+    	        return el.$element.closest(".form-group");
+    	    },
+    	    errorsContainer: function(el) {
+    	        return el.$element.parents('.form-group');
+    	    },
+    	    errorsWrapper: '<span class="help-block">',
+    	    errorTemplate: '<div></div>'
+        });
     };
 });
