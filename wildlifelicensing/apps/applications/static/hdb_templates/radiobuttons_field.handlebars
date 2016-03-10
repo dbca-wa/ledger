@@ -1,9 +1,12 @@
 <div class="form-group {{#if errors}} has-error has-feedback {{/if}}">
+    <label for="{{id}}">{{label}}</label>
     {{#each options}}
-        <label>
-            <input type="radio" name="{{name}}" value="{{this.value}}" checked>
-            {{this.label}}
-        </label>
+        <div class="radio">
+            <label for="{{../name}}_{{this.value}}">
+                <input id="{{../name}}_{{this.value}}" name="{{../name}}" type="radio" value="{{this.value}}" />
+                {{this.label}}
+            </label>
+        </div>
     {{/each}}
     {{#if help_text}}
         <p class="help-block">{{help_text}}</p>

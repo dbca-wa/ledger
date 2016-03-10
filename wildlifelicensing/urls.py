@@ -12,6 +12,6 @@ urlpatterns = [
     url(r'^accounts/', include('wildlifelicensing.apps.accounts.urls', namespace='accounts')),
     url(r'^customers/', include('wildlifelicensing.apps.customers.urls', namespace='customers')),
     url(r'^officers/', include('wildlifelicensing.apps.officers.urls', namespace='officers')),
-    url(r'^applications/', include('wildlifelicensing.apps.applications.urls', namespace='applications')),
+    url(r'^', include('wildlifelicensing.apps.applications.urls', namespace='applications')),
     url(r'', include('social.apps.django_app.urls', namespace='social')),
 ]
