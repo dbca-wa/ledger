@@ -6,10 +6,13 @@
 
 {% load jsonify %}
 
+{% block extra_css %}
+    <link href="{% static 'css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
 {% block requirements %}
     require(['js/application'], function(application) {
-    	application('#mainContainer', {{ form.structure|jsonify }} );
-        //application('body', '#sectionList', '#sectionList', {{ form.sections|jsonify }});
+        application('#mainContainer', {{ structure|jsonify }} );
     });
 {% endblock %}
 

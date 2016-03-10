@@ -1,0 +1,17 @@
+<div class="form-group {{#if errors}} has-error has-feedback {{/if}}">
+    {{#each options}}
+        <label>
+            <input type="radio" name="{{name}}" value="{{this.value}}" checked>
+            {{this.label}}
+        </label>
+    {{/each}}
+    {{#if help_text}}
+        <p class="help-block">{{help_text}}</p>
+    {{/if}}
+    {{#if errors}}
+        <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+        <span class='text-danger'>{{errors}}</span>
+    {{/if}}
+</div>
+<div id="{{childrenAnchorPointID}}" {{#if isHiddenInitially}}style="display:none"{{/if}}>
+</div>

@@ -1,13 +1,13 @@
 <div class="form-group {{#if errors}} has-error has-feedback {{/if}}">
     <label for="{{id}}">{{label}} </label>
     <select id={{id}} name={{name}} class="form-control">
-    	{{#each options}}
-    		<option value="{{this.value}}" class="form-control">{{this.label}}</option>
-    	{{/each}}
+        {{#each options}}
+            <option value="{{this.value}}" class="form-control">{{this.label}}</option>
+        {{/each}}
     </select>
-	{{#if help_text}}
-		<p class="help-block">{{help_text}}</p>
-	{{/if}}
+    {{#if help_text}}
+        <p class="help-block">{{help_text}}</p>
+    {{/if}}
     {{#if errors}}
         <span class="glyphicon glyphicon-remove form-control-feedback"></span>
         <span class='text-danger'>{{errors}}</span>
