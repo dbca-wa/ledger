@@ -16,15 +16,15 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
     }
 
     function layoutItem(item, parentAnchorPointSelector, parentItemID, depth, index, repetitionIndex) {
-        var row = $('<div>').addClass('row');
+        var itemDiv = $('<div>');
 
         item.id = parentItemID + '-' + index;
 
-        // if this item is a repeat, insert after previous item, else append to parentAnchorPoint 
+        // if this item is a repeat, insert after previous item, else append to parentAnchorPoint
         if(repetitionIndex !== undefined) {
-            row.insertAfter($('#' + item.id + '-repeat-' + (repetitionIndex-1)));
+            itemDiv.insertAfter($('#' + item.id + '-repeat-' + (repetitionIndex-1)));
         } else {
-            $(parentAnchorPointSelector).append(row);
+            $(parentAnchorPointSelector).append(itemDiv);
         }
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
@@ -35,14 +35,9 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
             item.id += '-repeat-' + repetitionIndex;
         }
 
-        colClass = 'col-md-' + String(12-depth);
-        colOffsetClass = 'col-md-offset-' + String(depth);
-        var col = $('<div>').addClass(colClass).addClass(colOffsetClass);
-        row.append(col);
-
         item.childrenAnchorPointID = item.id + '-children';
 
-        col.append(getTemplate(item.type)(item));
+        itemDiv.append(getTemplate(item.type)(item));
 
         if(item.children !== undefined) {
             var childrenAnchorPoint;
@@ -52,12 +47,13 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
                 childrenAnchorPoint = $('#' + item.childrenAnchorPointID);
             } else {
                 childrenAnchorPoint = $('<div>');
+                childrenAnchorPoint.addClass('children-anchor-point');
                 childrenAnchorPoint.attr('id', item.id + '-children');
-                col.append(childrenAnchorPoint);
+                itemDiv.append(childrenAnchorPoint);
             }
 
             if(item.condition !== undefined) {
-                var inputSelector = col.find('input, select');
+                var inputSelector = itemDiv.find('input, select');
 
                 // hide initially if current value does not equal condition
                 if(inputSelector.val() !== item.condition) {
@@ -86,7 +82,7 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
             addGroupLink.click(function(e) {
                 layoutItem(item, parentAnchorPointSelector, parentItemID, depth - 1, index, ++repetitionIndex);
             });
-            col.append(addGroupDiv.append(addGroupLink));
+            itemDiv.append(addGroupDiv.append(addGroupLink));
         }
     }
 
