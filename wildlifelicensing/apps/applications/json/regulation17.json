@@ -1,5 +1,6 @@
 {
-    "heading": "Application form",
+    "type": "application",
+    "label": "Application form",
     "childrenAnchorPointID": "baseChildrenAnchorPoint",
     "children": [
         {
@@ -123,7 +124,8 @@
                 },
                 {
                     "type": "group",
-                    "label": "Authorised Persion",
+                    "label": "Authorised Person",
+                    "name": "authorised_persons",
                     "isRepeatable": true,
                     "children": [
                         {
@@ -137,7 +139,7 @@
                             "name": "ap_given_names"
                         },
                         {
-                            "type": "text_field",
+                            "type": "date_field",
                             "label": "Date of birth",
                             "name": "ap_dob"
                         },

@@ -1,4 +1,4 @@
-define(['jQuery', 'handlebars', 'parsley', 'bootstrap'], function($, Handlebars) {
+define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicker'], function($, Handlebars) {
     var templates = {};
 
     function getTemplate(templateName) {
@@ -15,7 +15,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap'], function($, Handlebars)
         return templates[templateName]
     }
 
-    function layoutItem(item, parentAnchorPointSelector, parentItemID, depth, index, repetitionIndex) {
+    function layoutItem(item, parentAnchorPointSelector, parentItemID, index, repetitionIndex) {
         var itemDiv = $('<div>');
 
         item.id = parentItemID + '-' + index;
@@ -68,7 +68,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap'], function($, Handlebars)
                     }
                 });
             }
-            layoutChildren(item.children, childrenAnchorPoint, item.id, depth + 1);
+            layoutChildren(item.children, childrenAnchorPoint, item.id);
         }
 
         if(item.type === 'section') {
@@ -80,23 +80,22 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap'], function($, Handlebars)
             var addGroupDiv = $('<div>').addClass('add-group');
             var addGroupLink = $('<a>').text('Add ' + item.label);
             addGroupLink.click(function(e) {
-                layoutItem(item, parentAnchorPointSelector, parentItemID, depth - 1, index, ++repetitionIndex);
+                layoutItem(item, parentAnchorPointSelector, parentItemID, index, ++repetitionIndex);
             });
             itemDiv.append(addGroupDiv.append(addGroupLink));
         }
     }
 
-    function layoutChildren(children, childrenAnchorPointID, itemID, depth) {
+    function layoutChildren(children, childrenAnchorPointID, itemID) {
         $.each(children, function(index, child) {
-            layoutItem(child, childrenAnchorPointID, itemID, depth, index);
+            layoutItem(child, childrenAnchorPointID, itemID, index);
         });
     }
 
-    return function(mainContainerSelector, formStructure) {
-        $(mainContainerSelector).append(getTemplate('application_base')({
-            heading: formStructure.heading, 
-            childrenAnchorPointID: formStructure.childrenAnchorPointID
-        }));
+    return function(mainContainerSelector, formStructure, postURL, csrfToken) {
+        formStructure.postURL = postURL;
+        formStructure.csrfToken = csrfToken;
+        $(mainContainerSelector).append(getTemplate('application')(formStructure));
 
         layoutChildren(formStructure.children, '#' + formStructure.childrenAnchorPointID, 'item', 0);
 
@@ -104,17 +103,21 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap'], function($, Handlebars)
         $('body').scrollspy({ target: '#sectionList' });
         sectionList.affix({ offset: { top: 200 }});
 
+        $('.date').datetimepicker({
+            format: 'DD/MM/YYYY'
+        });
+
         $('form').parsley({
-    		successClass: "has-success",
-    	    errorClass: "has-error",
-    	    classHandler: function(el) {
-    	        return el.$element.closest(".form-group");
-    	    },
-    	    errorsContainer: function(el) {
-    	        return el.$element.parents('.form-group');
-    	    },
-    	    errorsWrapper: '<span class="help-block">',
-    	    errorTemplate: '<div></div>'
+            successClass: "has-success",
+            errorClass: "has-error",
+            classHandler: function(el) {
+                return el.$element.closest(".form-group");
+            },
+            errorsContainer: function(el) {
+                return el.$element.parents('.form-group');
+            },
+            errorsWrapper: '<span class="help-block">',
+            errorTemplate: '<div></div>'
         });
     };
 });

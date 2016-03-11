@@ -26,3 +26,7 @@
 .remove-group {
     text-align: right;
 }
+
+#mainContainer {
+    padding-bottom: 20px;
+}

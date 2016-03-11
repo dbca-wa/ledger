@@ -3,7 +3,7 @@
     {{#each options}}
         <div class="radio">
             <label for="{{../id}}_{{this.value}}">
-                <input id="{{../id}}_{{this.value}}" name="{{../name}}" type="radio" value="{{this.value}}" required=""/>
+                <input id="{{../id}}_{{this.value}}" name="{{../name}}" type="radio" value="{{this.value}}" {{#if ../required}}required{{/if}}/>
                 {{this.label}}
             </label>
         </div>
