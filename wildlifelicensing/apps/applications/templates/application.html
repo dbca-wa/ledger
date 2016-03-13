@@ -12,7 +12,7 @@
 
 {% block requirements %}
     require(['js/application'], function(application) {
-        application('#mainContainer', {{ structure|jsonify }}, '{% url 'applications:application_preview' application_type %}', '{{ csrf_token }}');
+        application('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}');
     });
 {% endblock %}
 

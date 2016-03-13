@@ -2,8 +2,22 @@ import json
 import os
 
 from django.views.generic.base import TemplateView
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, redirect
 from django.core.context_processors import csrf
+from django.contrib import messages
+
+from models import Application
+from utils import create_data_from_form
+
+
+class ApplicationsView(TemplateView):
+    template_name = 'applications.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ApplicationsView, self).get_context_data(**kwargs)
+        context['applications'] = {'regulation17': 'Application for a licence to take fauna for scientific purposes'}
+
+        return context
 
 
 class ApplicationView(TemplateView):
@@ -18,58 +32,41 @@ class ApplicationView(TemplateView):
 
         return render_to_response(self.template_name, context)
 
-
-class ApplicationPreviewView(TemplateView):
-    template_name = 'application_preview.html'
-
     def post(self, request, *args, **kwargs):
         with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
             form_stucture = json.load(data_file)
 
-        context = {'structure': form_stucture}
+        request.session['application_data'] = create_data_from_form(form_stucture, request.POST)  
+        
+        print request.POST.get('submit')
+        
+        if 'draft' in request.POST:
+            Application.objects.create(data=request.session.get('application_data'), state='draft')
+
+            messages.warning(request, 'The application was saved to draft.')
+
+            return redirect('applications:applications')
+        else:
+            return redirect('applications:application_preview', args[0])
+
+
+class ApplicationPreviewView(TemplateView):
+    template_name = 'application_preview.html'
+
+    def get(self, request, *args, **kwargs):
+        with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
+            form_stucture = json.load(data_file)
+
+        context = {'structure': form_stucture, 'application_type': args[0]}
         context.update(csrf(request))
 
-        context['data'] = self._create_data_from_form(form_stucture, request.POST)
+        context['data'] = request.session.get('application_data')
 
         return render_to_response(self.template_name, context)
 
-    def _create_data_from_form(self, item, post_data, post_data_index=None):
-        item_data = {}
+    def post(self, request, *args, **kwargs):
+        Application.objects.create(data=request.session.get('application_data'), state='lodged')
 
-        if 'name' in item and item.get('type', '') != 'group':
-            if item.get('type', '') == 'checkbox_field':
-                if post_data_index is not None:
-                    post_data_list = post_data.getlist(item['name'])
-                    if len(post_data_list) > 0:
-                        item_data[item['name']] = post_data_list[post_data_index]
-                    else:
-                        item_data[item['name']] = False
-                else:
-                    item_data[item['name']] = post_data.get(item['name'], 'off') == 'on'
-            else:
-                if post_data_index is not None:
-                    item_data[item['name']] = post_data.getlist(item['name'])[post_data_index]
-                else:
-                    item_data[item['name']] = post_data.get(item['name'])
+        messages.success(request, 'The application was successfully lodged.')
 
-        if 'children' in item:
-            if item.get('type', '') == 'group':
-                # check how many groups there are
-                num_groups = 0
-                for group_item in item.get('children'):
-                    if group_item['type'] != 'section' and group_item['type'] != 'group':
-                        num_groups = len(post_data.getlist(group_item['name']))
-                        break
-
-                groups = []
-                for group_index in range(0, num_groups): 
-                    group_data = {}
-                    for child in item['children']:
-                        group_data.update(self._create_data_from_form(child, post_data, group_index))
-                    groups.append(group_data)
-                item_data[item['name']] = groups
-            else:
-                for child in item['children']:
-                    item_data.update(self._create_data_from_form(child, post_data))
-
-        return item_data
+        return redirect('applications:applications')

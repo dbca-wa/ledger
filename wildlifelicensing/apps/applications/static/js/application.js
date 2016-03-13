@@ -92,8 +92,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         });
     }
 
-    return function(mainContainerSelector, formStructure, postURL, csrfToken) {
-        formStructure.postURL = postURL;
+    return function(mainContainerSelector, formStructure, csrfToken) {
         formStructure.csrfToken = csrfToken;
         $(mainContainerSelector).append(getTemplate('application')(formStructure));
 

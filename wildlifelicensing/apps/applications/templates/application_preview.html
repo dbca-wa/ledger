@@ -7,12 +7,12 @@
 {% load jsonify %}
 
 {% block extra_css %}
-    <link href="{% static 'css/application_preview.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block requirements %}
     require(['js/application_preview'], function(application_preview) {
-        application_preview('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}');
+        application_preview('#mainContainer', {{ structure|jsonify }}, {{ data|jsonify }}, '{% url 'applications:application_preview' application_type %}', '{{ csrf_token }}');
     });
 {% endblock %}
 

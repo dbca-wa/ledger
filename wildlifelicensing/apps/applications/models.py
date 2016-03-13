@@ -8,6 +8,8 @@ from rollcall.models import EmailUser
 
 
 class Application(models.Model):
-    models.ForeignKey(LicenceType)
-    models.ForeignKey(EmailUser)
-    JSONField('questions')
+    STATES = (('draft', 'Draft'), ('lodged', 'Lodged'))
+#    licence_type = models.ForeignKey(LicenceType)
+#    user = models.ForeignKey(EmailUser)
+    state = models.CharField('Application State', max_length=20, choices=STATES)
+    data = JSONField()

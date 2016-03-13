@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="col-md-12 application-heading">
+    <div class="col-md-12">
         <h1>{{label}}</h1>
     </div>
 </div>
@@ -11,12 +11,11 @@
             </div>
         </nav>
     <div class="col-md-10">
-        <form method="post">
+        <form method="post" action="{{postURL}}">
             <input type="hidden" name="csrfmiddlewaretoken" value="{{csrfToken}}">
             <div id="{{childrenAnchorPointID}}">
             </div>
-            <button type="submit" class="btn btn-primary pull-right" name="preview">Preview and Lodge Application</button>
-            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>
+            <button type="submit" class="btn btn-primary pull-right">Lodge Application</button>
         </form>
     </div>
 </div>
