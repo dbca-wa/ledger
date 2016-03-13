@@ -84,67 +84,84 @@ define(
                 }
             ],
             data,
-            applicationsTable, licensesTable, returnsTable;
+            applicationsTable, licensesTable, returnsTable,
+            $applicationsLicenseTypeFilter,
+            $applicationsStatusTypeFilter,
+            $licensesLicenseTypeFilter,
+            $licensesStatusTypeFilter,
+            $returnsDueDateFilter,
+            $returnsLicenseTypeFilter;
 
-        function initTables(options, data) {
+        function initTables(options) {
             applicationsTable = dt.initTable(
                 options.applicationsTableSelector,
                 tableOptions,
                 applicationsColumns
             );
-            applicationsTable.populate(data.applications.tableData);
+            filterApplications();
 
             licensesTable = dt.initTable(
                 options.licensesTableSelector,
                 tableOptions,
                 licensesColumns
             );
-            licensesTable.populate(data.licenses.tableData);
+            filterLicenses();
 
             returnsTable = dt.initTable(
                 options.returnsTableSelector,
                 tableOptions,
                 returnsColumns
             );
-            returnsTable.populate(data.returns.tableData);
+            filterReturns();
         }
 
-        function filterTable(filterData) {
-            /**
-             * {
-             *  type: <global|applications>,
-             *  column: 'license_type',
-             *  value: 'reg3'
-             *  filter: function (row) { return true;}
-             *  }
-             */
-            var defaultColumnFilter = function (row) {
-                    return filterData.value.toLowerCase() === 'all' ? true : row[filterData.column] === filterData.value;
-                },
-                filter = defaultColumnFilter;
-            if (typeof filterData.filter === 'function') {
-                filter = filterData.filter;
-            }
-            if (data) {
-                if (filterData.type === 'global' || filterData.type === 'applications') {
-                    applicationsTable.populate(_.filter(data.applications.tableData, filter));
-                }
-                if (filterData.type === 'global' || filterData.type === 'licenses') {
-                    licensesTable.populate(_.filter(data.licenses.tableData, filter));
-                }
-                if (filterData.type === 'global' || filterData.type === 'returns') {
-                    returnsTable.populate(_.filter(data.returns.tableData, filter));
+        function filterTable(table, filters) {
+            function andFilter(filters) {
+                return function (row) {
+                    for (var i = 0; i < filters.length; i++) {
+                        if (!filters[i](row)) {
+                            return false;
+                        }
+                    }
+                    return true;
                 }
             }
+
+            if (table === 'applications') {
+                applicationsTable.populate(_.filter(data.applications.tableData, andFilter(filters)));
+            }
+            if (table === 'licenses') {
+                licensesTable.populate(_.filter(data.licenses.tableData, andFilter(filters)));
+            }
+            if (table === 'returns') {
+                returnsTable.populate(_.filter(data.returns.tableData, andFilter(filters)));
+            }
+
         }
 
-        function initFilters(options, data) {
+        function filterApplications() {
+            filterTable('applications', [
+                $applicationsLicenseTypeFilter.find(':selected').data().filter,
+                $applicationsStatusTypeFilter.find(':selected').data().filter
+            ]);
+        }
+
+        function filterLicenses() {
+            filterTable('licenses', [
+                $licensesLicenseTypeFilter.find(':selected').data().filter,
+                $licensesStatusTypeFilter.find(':selected').data().filter
+            ]);
+        }
+
+        function filterReturns() {
+            filterTable('returns', [
+                $returnsLicenseTypeFilter.find(':selected').data().filter,
+                $returnsDueDateFilter.find(':selected').data().filter
+            ]);
+        }
+
+        function initFilters(data) {
             var optionTemplate = _.template('<option><%= value %></option>'),
-                $applicationsLicenseTypeFilter = $(options.applicationsLicenseFilterSelector),
-                $applicationsStatusTypeFilter = $(options.applicationsStatusFilterSelector),
-                $licensesLicenseTypeFilter = $(options.licensesLicenseFilterSelector),
-                $licensesStatusTypeFilter = $(options.licensesStatusFilterSelector),
-                $returnsDueDateFilter = $(options.returnsDueDateFilterSelector),
                 $node;
 
             // applications license type
@@ -153,14 +170,13 @@ define(
                 $applicationsLicenseTypeFilter.append($node);
                 $node.data({
                     type: 'applications',
-                    column: 'license_type',
-                    value: value
+                    filter: function (row) {
+                        return value.toLowerCase() === 'all' ? true : row['license_type'] === value;
+                    }
                 });
             });
-            $applicationsLicenseTypeFilter.on('change', function (event) {
-                var data = $(event.target).find(':selected').data();
-                $applicationsStatusTypeFilter.val('All');
-                filterTable(data)
+            $applicationsLicenseTypeFilter.on('change', function () {
+                filterApplications();
             });
             // applications status
             _.forEach(data.applications.filters.status.values, function (value) {
@@ -168,30 +184,29 @@ define(
                 $applicationsStatusTypeFilter.append($node);
                 $node.data({
                     type: 'applications',
-                    column: 'status',
-                    value: value
+                    filter: function (row) {
+                        return value.toLowerCase() === 'all' ? true : row['status'] === value;
+                    }
                 });
             });
             $applicationsStatusTypeFilter.on('change', function (event) {
                 var data = $(event.target).find(':selected').data();
-                $applicationsLicenseTypeFilter.val('All');
-                filterTable(data)
+                filterApplications(data);
             });
 
-            // applications license type
+            // licenses license type
             _.forEach(data.licenses.filters.licenseType.values, function (value) {
                 $node = $(optionTemplate({value: value}));
                 $licensesLicenseTypeFilter.append($node);
                 $node.data({
                     type: 'licenses',
-                    column: 'license_type',
-                    value: value
+                    filter: function (row) {
+                        return value.toLowerCase() === 'all' ? true : row['license_type'] === value;
+                    }
                 });
             });
-            $licensesLicenseTypeFilter.on('change', function (event) {
-                var data = $(event.target).find(':selected').data();
-                $licensesStatusTypeFilter.val('All');
-                filterTable(data)
+            $licensesLicenseTypeFilter.on('change', function () {
+                filterLicenses(data);
             });
             // licenses status
             _.forEach(data.licenses.filters.status.values, function (value) {
@@ -199,41 +214,88 @@ define(
                 $licensesStatusTypeFilter.append($node);
                 $node.data({
                     type: 'licenses',
-                    column: 'status',
-                    value: value
+                    filter: function (row) {
+                        return value.toLowerCase() === 'all' ? true : row['status'] === value;
+                    }
                 });
             });
-            $licensesStatusTypeFilter.on('change', function (event) {
-                var data = $(event.target).find(':selected').data();
-                $licensesLicenseTypeFilter.val('All');
-                filterTable(data)
+            $licensesStatusTypeFilter.on('change', function () {
+                filterLicenses();
             });
 
+            // returns license type
+            _.forEach(data.returns.filters.licenseType.values, function (value) {
+                $node = $(optionTemplate({value: value}));
+                $returnsLicenseTypeFilter.append($node);
+                $node.data({
+                    type: 'returns',
+                    filter: function (row) {
+                        return value.toLowerCase() === 'all' ? true : row['license_type'] === value;
+                    }
+                });
+            });
+            $returnsLicenseTypeFilter.on('change', function () {
+                filterReturns()
+            });
             // returns due date filter
             $node = $(optionTemplate({value: 'All'}));
             $node.data({
                 type: 'returns',
-                column: 'due_date',
-                value: 'all'
+                filter: function () {
+                    return true;
+                }
             });
             $returnsDueDateFilter.append($node);
 
-            $node = $(optionTemplate({value: 'Overdue'}));
+            $node = $(optionTemplate({value: 'overdue'}));
             $node.data({
                 type: 'returns',
                 filter: function (row) {
                     var now = moment();
-                    return moment(row['due_date']).isBefore(now);
+                    return row['status'] === 'pending' && moment(row['due_date']).isBefore(now);
                 }
             });
             $returnsDueDateFilter.append($node);
-            $returnsDueDateFilter.on('change', function (event) {
-                var data = $(event.target).find(':selected').data();
-                filterTable(data);
+            $returnsDueDateFilter.on('change', function () {
+                filterReturns();
             });
 
             // necessary when option added dynamically
             $('.selectpicker').selectpicker('refresh');
+
+        }
+
+        function setFilters(data) {
+            if (data.model) {
+                if (data.model === 'application') {
+                    //TODO expand the accordeon
+                    if (data.status) {
+                        $applicationsStatusTypeFilter.val(data.status);
+                    }
+                    if (data.license_type) {
+                        $applicationsLicenseTypeFilter.val(data.license_type);
+                    }
+                }
+                if (data.model === 'license') {
+                    //TODO expand the accordeon
+                    if (data.status) {
+                        $licensesStatusTypeFilter.val(data.status);
+                    }
+                    if (data.license_type) {
+                        $licensesLicenseTypeFilter.val(data.license_type);
+                    }
+                }
+                if (data.model === 'return') {
+                    //TODO expand the accordeon
+                    if (data.due_date) {
+                        $returnsDueDateFilter.val(data.due_date);
+                    }
+                    if (data.license_type) {
+                        $returnsLicenseTypeFilter.val(data.license_type);
+                    }
+                }
+            }
+
         }
 
         return function (options) {
@@ -241,10 +303,14 @@ define(
                 applicationsTableSelector: '#applications-table',
                 licensesTableSelector: '#licenses-table',
                 returnsTableSelector: '#returns-table',
+
                 applicationsLicenseFilterSelector: '#applications-filter-license-type',
                 applicationsStatusFilterSelector: '#applications-filter-status',
+
                 licensesLicenseFilterSelector: '#licenses-filter-license-type',
                 licensesStatusFilterSelector: '#licenses-filter-status',
+
+                returnsLicenseFilterSelector: '#returns-filter-license-type',
                 returnsDueDateFilterSelector: '#returns-filter-dueDate',
                 data: {
                     'applications': {
@@ -280,7 +346,7 @@ define(
                                 'selected': 'All'
                             },
                             'dueDate': {
-                                'values': ['All', 'Overdue'],
+                                'values': ['All', 'overdue'],
                                 'selected': 'All'
                             }
                         }
@@ -289,10 +355,20 @@ define(
             };
             options = $.extend({}, defaults, options);
             $(function () {
-                $('.selectpicker').selectpicker();
                 data = options.data;
+                $applicationsLicenseTypeFilter = $(options.applicationsLicenseFilterSelector);
+                $applicationsStatusTypeFilter = $(options.applicationsStatusFilterSelector);
+                $licensesLicenseTypeFilter = $(options.licensesLicenseFilterSelector);
+                $licensesStatusTypeFilter = $(options.licensesStatusFilterSelector);
+                $returnsDueDateFilter = $(options.returnsDueDateFilterSelector);
+                $returnsLicenseTypeFilter = $(options.returnsLicenseFilterSelector);
+
+                initFilters(data);
+                if (data.query) {
+                    // set filter according to query data
+                    setFilters(data.query);
+                }
                 initTables(options, data);
-                initFilters(options, data);
             })
         };
     }

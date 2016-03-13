@@ -1,3 +1,8 @@
 .pad-bottom-20 {
     margin-bottom: 20px;
 }
+
+.treeview .node-dashboard-tree {
+    color: #529B6B;
+    font-size: 1.2em;
+}

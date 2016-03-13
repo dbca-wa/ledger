@@ -1,6 +1,7 @@
 import json
 import datetime
 import itertools
+import urllib
 
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
@@ -21,6 +22,10 @@ def _get_mock_data(request):
     return mock_data
 
 
+def _build_url(base, query):
+    return base + '?' + urllib.urlencode(query)
+
+
 class DashBoardRoutingView(TemplateView):
     template_name = 'index.html'
 
@@ -31,7 +36,7 @@ class DashBoardRoutingView(TemplateView):
             return super(DashBoardRoutingView, self).get(*args, **kwargs)
 
 
-class DashboardQuickView(LoginRequiredMixin, TemplateView):
+class DashboardQuickView(TemplateView):
     template_name = 'dash_quick.html'
 
     @staticmethod
@@ -63,33 +68,49 @@ class DashboardQuickView(LoginRequiredMixin, TemplateView):
 
         date_format = '%Y-%m-%d'
         today = datetime.date.today()
+        url = reverse_lazy('dashboard:tables')
 
         # pending applications
+        query = {
+            'model': 'application',
+            'status': 'pending',
+        }
         pending_applications = [app for app in mock_data['applications'] if app['status'].lower() == 'pending']
-        pending_applications_node = _create_node('Pending applications', href=reverse_lazy('dashboard:tables'),
+        pending_applications_node = _create_node('Pending applications', href=_build_url(url, query),
                                                  count=len(pending_applications))
         data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
         for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            node = _create_node(k, href=reverse_lazy('dashboard:tables'), count=len(list(g)))
+            query['license_type'] = k
+            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
             _add_node(pending_applications_node, node)
 
         # pending licenses
+        query = {
+            'model': 'license',
+            'status': 'pending',
+        }
         pending_licenses = [lic for lic in mock_data['licenses'] if lic['status'] == 'pending']
-        pending_licenses_node = _create_node('Pending licenses', href=reverse_lazy('dashboard:tables'),
+        pending_licenses_node = _create_node('Pending licenses', href=_build_url(url, query),
                                              count=len(pending_licenses))
         data = sorted(pending_licenses, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
         for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            node = _create_node(k, href=reverse_lazy('dashboard:tables'), count=len(list(g)))
+            query['license_type'] = k
+            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
             _add_node(pending_licenses_node, node)
 
         # overdue license
+        query = {
+            'model': 'return',
+            'due_date': 'overdue'
+        }
         overdue_returns = [ret for ret in mock_data['returns'] if
                            datetime.datetime.strptime(ret['due_date'], date_format).date() < today]
-        overdue_returns_node = _create_node('Overdue returns', href=reverse_lazy('dashboard:tables'),
+        overdue_returns_node = _create_node('Overdue returns', href=_build_url(url, query),
                                             count=len(overdue_returns))
         data = sorted(overdue_returns, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
         for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            node = _create_node(k, href=reverse_lazy('dashboard:tables'), count=len(list(g)))
+            query['license-type'] = k
+            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
             _add_node(overdue_returns_node, node)
 
         return [pending_applications_node, pending_licenses_node, overdue_returns_node]
@@ -101,7 +122,7 @@ class DashboardQuickView(LoginRequiredMixin, TemplateView):
         return super(DashboardQuickView, self).get_context_data(**kwargs)
 
 
-class DashboardTableView(LoginRequiredMixin, TemplateView):
+class DashboardTableView(TemplateView):
     template_name = 'dash_tables.html'
 
     def get_context_data(self, **kwargs):
@@ -114,7 +135,6 @@ class DashboardTableView(LoginRequiredMixin, TemplateView):
                     'filters': {
                         'licenseType': {
                             'values': ['All'] + DATA_SAMPLES['licenseTypes'],
-                            'selected': 'All'
                         },
                         'status': {
                             'values': ['All'] + DATA_SAMPLES['statusApplication'],
@@ -149,7 +169,8 @@ class DashboardTableView(LoginRequiredMixin, TemplateView):
                             'selected': 'All'
                         }
                     }
-                }
+                },
+                'query': self.request.GET.dict()
             }
             kwargs['dataJSON'] = json.dumps(data)
         return super(DashboardTableView, self).get_context_data(**kwargs)
