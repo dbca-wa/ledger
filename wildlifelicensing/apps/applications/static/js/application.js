@@ -1,4 +1,4 @@
-define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicker', 'bootstrap-typeahead'], function($, Handlebars) {
+define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicker'], function($, Handlebars) {
     var templates = {};
 
     function getTemplate(templateName) {
