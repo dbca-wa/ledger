@@ -1,4 +1,4 @@
-define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicker'], function($, Handlebars) {
+define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicker', 'bootstrap-typeahead'], function($, Handlebars) {
     var templates = {};
 
     function getTemplate(templateName) {
@@ -92,9 +92,16 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         });
     }
 
-    return function(mainContainerSelector, formStructure, csrfToken) {
+    return function(mainContainerSelector, formStructure, csrfToken, userSelectionRequired) {
         formStructure.csrfToken = csrfToken;
         $(mainContainerSelector).append(getTemplate('application')(formStructure));
+
+        if(userSelectionRequired) {
+            var itemDiv = $('<div>');
+            $('#' + formStructure.childrenAnchorPointID).append(itemDiv);
+            itemDiv.append(getTemplate('applicant_section')({}));
+            $('#applicantInput').typeahead({source:['Serge', 'Andrew', 'Tony'] });
+        }
 
         layoutChildren(formStructure.children, '#' + formStructure.childrenAnchorPointID, 'item', 0);
 

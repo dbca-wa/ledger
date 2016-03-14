@@ -12,7 +12,7 @@
 
 {% block requirements %}
     require(['js/application'], function(application) {
-        application('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}');
+        application('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}', false);
     });
 {% endblock %}
 

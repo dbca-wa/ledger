@@ -12,7 +12,7 @@
 
 {% block requirements %}
     require(['js/application_preview'], function(application_preview) {
-        application_preview('#mainContainer', {{ structure|jsonify }}, {{ data|jsonify }}, '{% url 'applications:application_preview' application_type %}', '{{ csrf_token }}');
+        application_preview('#mainContainer', {{ structure|jsonify }}, {{ data|jsonify }}, '{{ csrf_token }}');
     });
 {% endblock %}
 

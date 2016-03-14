@@ -1,4 +1,20 @@
 define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
+    var templates = {};
+
+    function getTemplate(templateName) {
+        if (templates[templateName] === undefined) {
+            $.ajax({
+                url: '/static/hdb_templates/' + templateName + '.handlebars',
+                success: function(data) {
+                    templates[templateName] = Handlebars.compile(data);
+                },
+                async: false
+            });
+        }
+
+        return templates[templateName]
+    }
+
     function layoutItem(item, data, parentAnchorPointSelector, parentItemID, index, repetitionIndex) {
         var itemDiv = $('<div>');
 
@@ -21,13 +37,26 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
 
         item.childrenAnchorPointID = item.id + '-children';
 
-        itemDiv.append($('<label>').text(item.label));//getTemplate(item.type)(item));
-        itemDiv.append($('<p>').text(data[item.name]));
+        if(item.type === 'section' || item.type === 'group') {
+            itemDiv.append(getTemplate(item.type)(item));
+        } else if (item.type === 'radiobuttons_field' || item.type === 'select_field') {
+            itemDiv.append($('<label>').text(item.label));
+            $.each(item.options, function(index, option) {
+                if(option.value === data[item.name]) {
+                    itemDiv.append($('<p>').text(option.label));
+                }
+            });
+        } 
+        else {
+            itemDiv.append($('<label>').text(item.label));
+            itemDiv.append($('<p>').text(data[item.name]));
+        }
 
         if(item.children !== undefined) {
             var childrenAnchorPoint;
 
-            // if no children anchor point was defined in the template, create one under current item
+            // get child anchor point selector and if no children anchor point was defined in the 
+            // template, create one under current item
             if($('#' + item.childrenAnchorPointID).length) {
                 childrenAnchorPoint = $('#' + item.childrenAnchorPointID);
             } else {
@@ -37,23 +66,10 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
                 itemDiv.append(childrenAnchorPoint);
             }
 
-//            if(item.condition !== undefined) {
-//                var inputSelector = itemDiv.find('input, select');
-//
-//                // hide initially if current value does not equal condition
-//                if(inputSelector.val() !== item.condition) {
-//                    childrenAnchorPoint.hide();
-//                }
-//
-//                inputSelector.change(function(e) {
-//                    if ($(this).val() === item.condition) {
-//                        childrenAnchorPoint.slideDown('medium');
-//                    } else {
-//                        childrenAnchorPoint.slideUp('medium');
-//                    }
-//                });
-//            }
-            layoutChildren(item.children, data, childrenAnchorPoint, item.id);
+            // only show children items when the item has no condition or the condition is met
+            if(item.condition === undefined || item.condition === data[item.name]) {
+                layoutChildren(item.children, data, childrenAnchorPoint, item.id);
+            }
         }
 
         if(item.type === 'section') {
@@ -77,18 +93,9 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
         });
     }
 
-    return function(mainContainerSelector, formStructure, formData, postURL, csrfToken) {
-        formStructure.postURL = postURL;
+    return function(mainContainerSelector, formStructure, formData, csrfToken) {
         formStructure.csrfToken = csrfToken;
-
-        $.ajax({
-            url: '/static/hdb_templates/application_preview.handlebars',
-            success: function(data) {
-                var template = Handlebars.compile(data);
-                $(mainContainerSelector).append(template(formStructure));
-            },
-            async: false
-        });
+        $(mainContainerSelector).append(getTemplate('application_preview')(formStructure));
 
         layoutChildren(formStructure.children, formData, '#' + formStructure.childrenAnchorPointID, 'item', 0);
 
