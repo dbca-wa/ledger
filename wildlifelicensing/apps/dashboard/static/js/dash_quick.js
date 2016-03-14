@@ -20,7 +20,11 @@ define(
                         data: options.treeData,
                         showBorder: false,
                         enableLinks: true,
-                        emptyIcon: 'glyphicon glyphicon-stop',
+                        expandIcon: 'glyphicon glyphicon-arrow-down',
+                        collapseIcon: 'glyphicon glyphicon-arrow-up',
+                        emptyIcon: 'glyphicon glyphicon-minus',
+                        highlightSelected: true,
+                        onhoverColor: '#FFFFFF',
                         showTags: true
                     });
                 $tree.treeview('collapseAll', {silent: true});
