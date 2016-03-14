@@ -1,0 +1,26 @@
+<ul>
+    {% for stack in form.get_stacks %}
+        {% if stack.label %}
+            <li>
+                <h1{% if stack.css_class %} class="{{ stack.css_class }}"{% endif %}>{{ stack.label }}</h1>
+            </li>
+        {% endif %}
+        <li>
+            <ul>
+                {% for field in stack %}
+                    <li>
+                        {% if field.is_group %}
+                            <ul>
+                                {% for f in field %}
+                                    <li>{{ f }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
+</ul>
