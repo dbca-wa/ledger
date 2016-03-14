@@ -1,0 +1,22 @@
+<div class="row">
+    <div class="col-md-12 application-heading">
+        <h1>{{label}}</h1>
+    </div>
+</div>
+<div class="row">
+    <nav class="col-md-2">
+        <div id="sectionList">
+            <ul class="nav nav-stacked">
+                </ul>
+            </div>
+        </nav>
+    <div class="col-md-10">
+        <form method="post">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{csrfToken}}">
+            <div id="{{childrenAnchorPointID}}">
+            </div>
+            <button type="submit" class="btn btn-primary pull-right" name="preview">Preview and Lodge Application</button>
+            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>
+        </form>
+    </div>
+</div>
