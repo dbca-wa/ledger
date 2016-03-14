@@ -4,6 +4,7 @@ define(
         'lodash',
         'js/wl.dataTable',
         'moment',
+        'bootstrap',
         'bootstrap.select'
     ],
     function ($, _, dt, moment) {
