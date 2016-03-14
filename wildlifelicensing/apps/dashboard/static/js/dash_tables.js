@@ -268,7 +268,9 @@ define(
         function setFilters(data) {
             if (data.model) {
                 if (data.model === 'application') {
-                    //TODO expand the accordeon
+                    $('#applications-collapse').collapse('show');
+                    $('#licenses-collapse').collapse('hide');
+                    $('#returns-collapse').collapse('hide');
                     if (data.status) {
                         $applicationsStatusTypeFilter.val(data.status);
                     }
@@ -277,7 +279,9 @@ define(
                     }
                 }
                 if (data.model === 'license') {
-                    //TODO expand the accordeon
+                    $('#applications-collapse').collapse('hide');
+                    $('#licenses-collapse').collapse('show');
+                    $('#returns-collapse').collapse('hide');
                     if (data.status) {
                         $licensesStatusTypeFilter.val(data.status);
                     }
@@ -286,7 +290,9 @@ define(
                     }
                 }
                 if (data.model === 'return') {
-                    //TODO expand the accordeon
+                    $('#applications-collapse').collapse('hide');
+                    $('#licenses-collapse').collapse('hide');
+                    $('#returns-collapse').collapse('show');
                     if (data.due_date) {
                         $returnsDueDateFilter.val(data.due_date);
                     }
