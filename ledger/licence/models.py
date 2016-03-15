@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from dpaw_utils.models import ActiveMixin, AuditMixin
-from addressbook.models import Address
+from customers.models import Address
 
 
 @python_2_unicode_compatible

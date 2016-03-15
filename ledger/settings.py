@@ -18,6 +18,8 @@ SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
     ALLOWED_HOSTS = []  # FIXME in production
 ROOT_URLCONF = 'ledger.urls'
+ROOT_HOSTCONF = 'ledger.hosts'
+DEFAULT_HOST = env('DEFAULT_HOST', 'ledger')
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -29,14 +31,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'social.apps.django_app.default',
     'django_extensions',
-    'rollcall',  # Defines custom user model.
-    'passwordless',   # Passwordless auth pipeline.
-    'addressbook',
+    'django_hosts',
+    'bootstrap3',
+    'customers',   #  Defines custom user model, passwordless auth pipeline.
     'licence',
+    'wildlifelicensing',
+    'wildlifelicensing.dashboard',
+    'wildlifelicensing.officers',
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
 MIDDLEWARE_CLASSES = [
+    'django_hosts.middleware.HostsRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -47,6 +53,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
+    'django_hosts.middleware.HostsResponseMiddleware'
 ]
 
 # Authentication settings
@@ -54,14 +61,14 @@ AUTHENTICATION_BACKENDS = (
     'social.backends.email.EmailAuth',
     'django.contrib.auth.backends.ModelBackend',
 )
-AUTH_USER_MODEL = 'rollcall.EmailUser'
+AUTH_USER_MODEL = 'customers.Customer'
 SOCIAL_AUTH_STRATEGY = 'social.strategies.django_strategy.DjangoStrategy'
 SOCIAL_AUTH_STORAGE = 'social.apps.django_app.default.models.DjangoStorage'
-SOCIAL_AUTH_EMAIL_FORM_URL = '/login-form/'
-SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'passwordless.mail.send_validation'
-SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/validation-sent/'
+SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/login-form/'
+SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'customers.mail.send_validation'
+SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/ledger/validation-sent/'
 SOCIAL_AUTH_PASSWORDLESS = True
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/done/'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/ledger/done/'
 SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
 SOCIAL_AUTH_PIPELINE = (
@@ -71,12 +78,16 @@ SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.social_user',
     'social.pipeline.user.get_username',
     'social.pipeline.mail.mail_validation',
-    'passwordless.pipeline.user_by_email',
+    'customers.pipeline.user_by_email',
     'social.pipeline.user.create_user',
     'social.pipeline.social_auth.associate_user',
     'social.pipeline.social_auth.load_extra_data',
     'social.pipeline.user.user_details'
 )
+
+SESSION_COOKIE_DOMAIN = env('SESSION_COOKIE_DOMAIN', None)
+if SESSION_COOKIE_DOMAIN:
+    SESSION_COOKIE_NAME = (SESSION_COOKIE_DOMAIN + ".ledger_sessionid").replace(".", "_")
 
 
 # Email settings
@@ -103,6 +114,19 @@ TEMPLATES = [
         },
     },
 ]
+
+
+BOOTSTRAP3 = {
+    'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
+    'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'css_url': None,
+    'theme_url': None,
+    'javascript_url': None,
+    'javascript_in_head': False,
+    'include_jquery': False,
+    'required_css_class': 'required-form-field',
+    'set_placeholder': False,
+}
 
 
 # Database
