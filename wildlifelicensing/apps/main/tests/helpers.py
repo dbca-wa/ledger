@@ -6,8 +6,8 @@ from django.core.urlresolvers import reverse
 from django.test import Client
 from django.contrib.auth.models import Group
 
-from wildlifelicensing.apps.accounts.models import Customer
-from wildlifelicensing.apps.accounts import helpers as accounts_helpers
+from ledger.customers.models import Customer
+from wildlifelicensing.apps.main import helpers as accounts_helpers
 
 
 class TestData(object):

@@ -9,7 +9,7 @@ from django_hosts.resolvers import reverse
 
 
 def send_validation(strategy, backend, code):
-    url = reverse('customers:token_login', kwargs={"token":code.code}, host='ledger')
+    url = reverse('dashboard:verification', args=(code.code,), host='wildlifelicensing')
     url = strategy.request.build_absolute_uri(url)
     send_mail('Passwordless Login', 'Use this URL to login {0}'.format(url),
               settings.EMAIL_FROM, [code.email], fail_silently=False)

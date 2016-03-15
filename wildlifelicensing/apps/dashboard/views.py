@@ -24,9 +24,9 @@ class DashBoardView(TemplateView):
         redirect_url = None
         if self.request.user.is_authenticated:
             if self.request.user.groups.filter(name='Customers').exists():
-                redirect_url = 'customers:dashboard'
+                redirect_url = None
             elif self.request.user.groups.filter(name='Officers').exists():
-                redirect_url = 'officers:dashboard'
+                redirect_url = None
         if redirect_url:
             return redirect(redirect_url)
         else:
@@ -35,7 +35,13 @@ class DashBoardView(TemplateView):
 
 class VerificationView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
-        return reverse('social:complete', args=('email',)) + '?verification_code={}'.format(kwargs['token'])
+        redirect_url = '{}?verification_code={}'.format(
+            reverse('social:complete', args=('email',)),
+            kwargs['token']
+        )
+        if self.request.user and hasattr(self.request.user, 'email'):
+            redirect_url += '&email={}'.format(self.request.user.email)
+        return redirect_url
 
 
 class ValidationSentView(View):
@@ -46,41 +52,4 @@ class ValidationSentView(View):
         return redirect('home')
 
 
-class CustomerCreateView(LoginRequiredMixin, FormView):
-    template_name = 'customer_create.html'
-    success_url = reverse_lazy('home')
-    form_class = CustomerCreateForm
 
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        if form.is_valid():
-            # save top level user details
-            user = request.user
-            user.first_name = form.cleaned_data['first_name']
-            user.last_name = form.cleaned_data['last_name']
-            user.save()
-
-            # address
-            address_data = form.get_address_data()
-            address = Address(**address_data)
-            address.save()
-
-            # customer
-            customer_data = form.get_customer_data()
-            customer = Customer(**customer_data)
-            customer.user = user
-            customer.residential_address = address
-            customer.save()
-
-            # add this user to the Customer group
-            group = Group.objects.filter(name='Customers').first()
-            if group:
-                user.groups.add(group)
-            else:
-                logger.error('Customers group not found!')
-
-            return redirect('home')
-
-        else:
-            messages.error(request, "Please correct the error belows.")
-            return self.form_invalid(form)

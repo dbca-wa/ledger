@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from .models import Customer
+from ledger.customers.models import Customer
 
 
 def belongs_to(user, group_name):

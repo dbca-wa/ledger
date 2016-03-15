@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth import logout as auth_logout
+from django.contrib import messages
 
 
 # Example views, most of them are just template rendering
@@ -19,9 +20,10 @@ def login_form(request):
 
 
 def validation_sent(request):
-    return render(request, 'customers/validation_sent.html', {
-        'email': request.session['email_validation_address']
-    })
+    messages.success(request,
+                     "An email has been sent to you. "
+                     "Check your mailbox and click on the link to complete the login process.")
+    return redirect('/')
 
 
 def logout(request):
