@@ -3,8 +3,7 @@ from __future__ import unicode_literals
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 
-from licence.models import LicenceType
-from rollcall.models import EmailUser
+from ledger.licence.models import LicenceType
 
 
 class Application(models.Model):

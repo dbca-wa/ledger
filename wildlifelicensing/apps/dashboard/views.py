@@ -3,9 +3,9 @@ import datetime
 import itertools
 import urllib
 
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 from django.shortcuts import redirect
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from braces.views import LoginRequiredMixin
 
 from .models import generate_mock_data, DATA_SAMPLES
@@ -27,7 +27,7 @@ def _build_url(base, query):
 
 
 class DashBoardRoutingView(TemplateView):
-    template_name = 'index.html'
+    template_name = 'wl/index.html'
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
@@ -174,6 +174,7 @@ class DashboardTableView(TemplateView):
             }
             kwargs['dataJSON'] = json.dumps(data)
         return super(DashboardTableView, self).get_context_data(**kwargs)
+
 
 # TODO This should be handle by the ledger view (see ledger/accounts/mail.py)
 class VerificationView(RedirectView):
