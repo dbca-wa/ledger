@@ -37,4 +37,4 @@ class Licence(ActiveMixin, AuditMixin):
     expire_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
-        return '{} {} {}'.format(self.customer_role, self.licence_type, self.status)
+        return '{} {}'.format(self.licence_type, self.status)
