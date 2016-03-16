@@ -2,8 +2,6 @@ from confy import env, database
 import os
 import sys
 
-from django_hosts.resolvers import reverse
-
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
