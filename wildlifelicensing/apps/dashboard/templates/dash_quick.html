@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block requirements %}
+    require(['js/dash_quick'], function (app) {
+        var options = {
+            treeSelector: '#dashboard-tree',
+            treeData: {{ dataJSON|safe }}
+        };
+        app(options);
+    });
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h1>Quick glance dashboard: </h1>
+            <div id="dashboard-tree"></div>
+        </div>
+    </div>
+{% endblock %}
