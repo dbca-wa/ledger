@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.test import Client
 from django.contrib.auth.models import Group
 
-from ledger.customers.models import Customer
+from accounts.models import EmailUser
 from wildlifelicensing.apps.main import helpers as accounts_helpers
 
 
@@ -69,7 +69,7 @@ def create_default_customer():
     client = SocialClient()
     client.login(TestData.DEFAULT_CUSTOMER['email'])
     response = client.post(reverse('accounts:customer_create'), data=TestData.DEFAULT_CUSTOMER['data'])
-    customer = Customer.objects.filter(user__email=TestData.DEFAULT_CUSTOMER['email']).first()
+    customer = EmailUser.objects.filter(user__email=TestData.DEFAULT_CUSTOMER['email']).first()
     is_ok = customer is not None and (response.status_code == 200 or response.status_code == 302)
     if is_ok:
         return customer

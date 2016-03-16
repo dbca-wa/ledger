@@ -16,7 +16,7 @@ def create_groups(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('customers', '0001_initial'),
+        ('accounts', '0001_initial'),
     ]
 
     operations = [

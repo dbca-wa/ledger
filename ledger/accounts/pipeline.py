@@ -1,5 +1,5 @@
 #from django.contrib.auth.models import User
-from .models import Customer
+from .models import EmailUser
 
 
 # Custom pipeline to retrieve the user by the email in the details and log it
@@ -11,7 +11,7 @@ def user_by_email(backend, details, *args, **kwargs):
     request_data = backend.strategy.request_data()
     if request_data.get('verification_code') and details.get('email'):
         try:
-            user = Customer.objects.get(email=details['email'])
-        except Customer.DoesNotExist:
+            user = EmailUser.objects.get(email=details['email'])
+        except EmailUser.DoesNotExist:
             user = None
         return {'user': user}

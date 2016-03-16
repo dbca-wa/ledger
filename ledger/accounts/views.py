@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth import logout as auth_logout
 from django.contrib import messages
+from django.views.generic import RedirectView
 
 
 # Example views, most of them are just template rendering
@@ -36,6 +37,21 @@ def logout(request):
 # link could point directly to PSA view but it's handy to proxy it and do
 # additional computation if needed.
 def token_login(request, token):
-    url = reverse('social:complete', args=('email',))
-    url += '?verification_code={}'.format(token)
-    return redirect(url)
+    redirect_url = '{}?verification_code={}'.format(
+        reverse('social:complete', args=('email',)),
+        token
+    )
+    if request.user and hasattr(request.user, 'email'):
+        redirect_url += '&email={}'.format(request.user.email)
+    return redirect(redirect_url)
+
+
+class VerificationView(RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        redirect_url = '{}?verification_code={}'.format(
+            reverse('social:complete', args=('email',)),
+            kwargs['token']
+        )
+        if self.request.user and hasattr(self.request.user, 'email'):
+            redirect_url += '&email={}'.format(self.request.user.email)
+        return redirect_url

@@ -6,13 +6,13 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 
 
-class UserManager(BaseUserManager):
-    """A custom Manager for the Customer model.
+class EmailUserManager(BaseUserManager):
+    """A custom Manager for the EmailUser model.
     """
     use_in_migrations = True
 
     def _create_user(self, email, password, is_staff, is_superuser, **extra_fields):
-        """Creates and saves an Customer with the given email and password.
+        """Creates and saves an EmailUser with the given email and password.
         """
         if not email:
             raise ValueError('Email must be set')
@@ -32,7 +32,7 @@ class UserManager(BaseUserManager):
 
 
 @python_2_unicode_compatible
-class CustomerDocument(models.Model):
+class Document(models.Model):
     name = models.CharField(max_length=100, blank=True,
                             verbose_name='name', help_text='')
     description = models.TextField(blank=True,
@@ -161,7 +161,7 @@ class Address(models.Model):
 
 
 @python_2_unicode_compatible
-class Customer(AbstractBaseUser, PermissionsMixin):
+class EmailUser(AbstractBaseUser, PermissionsMixin):
     """Custom authentication model for the ledger project.
     Password and email are required. Other fields are optional.
     """
@@ -203,16 +203,11 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
     billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
 
-    documents = models.ManyToManyField(CustomerDocument)
-
-    def __str__(self):
-        if self.organisation:
-            return '{} ({})'.format(self.user, self.organisation)
-        return '{}'.format(self.user)
+    documents = models.ManyToManyField(Document)
 
     extra_data = JSONField(default=dict)
 
-    objects = UserManager()
+    objects = EmailUserManager()
     USERNAME_FIELD = 'email'
 
     def __str__(self):

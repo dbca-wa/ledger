@@ -4,11 +4,11 @@ from django.forms import modelform_factory
 
 from social.apps.django_app.default.models import UserSocialAuth
 
-from customers.models import Customer, Address
+from accounts.models import EmailUser, Address
 
 
-@admin.register(Customer)
-class CustomerAdmin(UserAdmin):
+@admin.register(EmailUser)
+class EmailUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -24,7 +24,7 @@ class CustomerAdmin(UserAdmin):
     )
 
     # need to override add_form/form because the UserAdmin uses custom forms requiring passwords
-    add_form = modelform_factory(Customer, fields=[])
+    add_form = modelform_factory(EmailUser, fields=[])
     form = add_form
 
     list_display = ('email', 'first_name', 'last_name', 'is_staff')

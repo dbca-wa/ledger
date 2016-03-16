@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_hosts',
     'bootstrap3',
-    'customers',   #  Defines custom user model, passwordless auth pipeline.
+    'accounts',   #  Defines custom user model, passwordless auth pipeline.
     'licence',
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main'
@@ -64,11 +64,11 @@ AUTHENTICATION_BACKENDS = (
     'social.backends.email.EmailAuth',
     'django.contrib.auth.backends.ModelBackend',
 )
-AUTH_USER_MODEL = 'customers.Customer'
+AUTH_USER_MODEL = 'accounts.EmailUser'
 SOCIAL_AUTH_STRATEGY = 'social.strategies.django_strategy.DjangoStrategy'
 SOCIAL_AUTH_STORAGE = 'social.apps.django_app.default.models.DjangoStorage'
 SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/login-form/'
-SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'customers.mail.send_validation'
+SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'accounts.mail.send_validation'
 SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/ledger/validation-sent/'
 SOCIAL_AUTH_PASSWORDLESS = True
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
@@ -81,7 +81,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.social_user',
     'social.pipeline.user.get_username',
     'social.pipeline.mail.mail_validation',
-    'customers.pipeline.user_by_email',
+    'accounts.pipeline.user_by_email',
     'social.pipeline.user.create_user',
     'social.pipeline.social_auth.associate_user',
     'social.pipeline.social_auth.load_extra_data',

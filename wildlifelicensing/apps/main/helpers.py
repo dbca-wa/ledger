@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ledger.customers.models import Customer
+from accounts.models import EmailUser
 
 
 def belongs_to(user, group_name):
@@ -16,13 +16,13 @@ def is_customer(user):
     """
     Test if the user is a customer
     Rules:
-        Must have a Customer object linked to this user
+        Must have a EmailUser object linked to this user
         and
         Must belong to group Customers
     :param user:
     :return:
     """
-    return Customer.objects.filter(user=user).exists() and belongs_to(user, 'Customers')
+    return EmailUser.objects.filter(user=user).exists() and belongs_to(user, 'Customers')
 
 
 def is_officer(user):

@@ -1,38 +1,38 @@
 from django.test import TestCase
 from mixer.backend.django import mixer
-from customers.models import Customer, Address
+from accounts.models import EmailUser, Address
 
 
-class CustomerTest(TestCase):
+class EmailUserTest(TestCase):
 
     def setUp(self):
-        super(CustomerTest, self).setUp()
-        self.user = mixer.blend(Customer)
+        super(EmailUserTest, self).setUp()
+        self.user = mixer.blend(EmailUser)
 
     def test_str(self):
-        """Test the Customer __str__ method returns email
+        """Test the EmailUser __str__ method returns email
         """
         self.assertEqual(self.user.email, str(self.user))
 
     def test_create_user_no_email(self):
         """
         """
-        self.assertRaises(ValueError, Customer.objects.create_user)
+        self.assertRaises(ValueError, EmailUser.objects.create_user)
 
     def test_create_user(self):
-        """Test the Customer create_user method
+        """Test the EmailUser create_user method
         """
-        u = Customer.objects.create_user('test@email.com')
-        self.assertTrue(isinstance(u, Customer))
+        u = EmailUser.objects.create_user('test@email.com')
+        self.assertTrue(isinstance(u, EmailUser))
 
     def test_create_superuser(self):
-        """Test the Customer create_superuser method
+        """Test the EmailUser create_superuser method
         """
-        u = Customer.objects.create_superuser('superuser@email.com', '')
-        self.assertTrue(isinstance(u, Customer))
+        u = EmailUser.objects.create_superuser('superuser@email.com', '')
+        self.assertTrue(isinstance(u, EmailUser))
 
     def test_get_full_name(self):
-        """Test the Customer get_full_name method
+        """Test the EmailUser get_full_name method
         """
         n = self.user.get_full_name()
         self.assertEqual(n, '{} {}'.format(self.user.first_name, self.user.last_name))
