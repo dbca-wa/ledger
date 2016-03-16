@@ -1,6 +1,6 @@
 from django.test import TestCase
 from mixer.backend.django import mixer
-from accounts.models import EmailUser, Address
+from ledger.accounts.models import EmailUser, Address
 
 
 class EmailUserTest(TestCase):

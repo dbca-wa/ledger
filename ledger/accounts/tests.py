@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.test import Client
 from social.apps.django_app.default.models import UserSocialAuth
 
-from accounts.models import EmailUser
+from ledger.accounts.models import EmailUser
 
 REGISTERED_USER_EMAIL = 'registered_user@test.net'
 NEW_USER_EMAIL = 'new_user@test.net'
@@ -70,7 +70,7 @@ class AccountsTestCase(TestCase):
 
         response = self.client.get(reverse('accounts:logout', host='ledger'))
 
-        # check response status is 302 - REDIRECT 
+        # check response status is 302 - REDIRECT
         self.assertRedirects(response, reverse('accounts:home', host='ledger'), status_code=302, target_status_code=200)
 
         # check user is not logged out

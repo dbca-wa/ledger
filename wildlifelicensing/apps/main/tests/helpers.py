@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.test import Client
 from django.contrib.auth.models import Group
 
-from accounts.models import EmailUser
+from ledger.accounts.models import EmailUser
 from wildlifelicensing.apps.main import helpers as accounts_helpers
 
 

@@ -4,7 +4,7 @@ from django.forms import modelform_factory
 
 from social.apps.django_app.default.models import UserSocialAuth
 
-from accounts.models import EmailUser, Address
+from ledger.accounts.models import EmailUser, Address
 
 
 @admin.register(EmailUser)
