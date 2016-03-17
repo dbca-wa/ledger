@@ -39,7 +39,7 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
 
         if(item.type === 'section' || item.type === 'group') {
             itemDiv.append(getTemplate(item.type)(item));
-        } else if (item.type === 'radiobuttons_field' || item.type === 'select_field') {
+        } else if (item.type === 'radiobuttons' || item.type === 'select') {
             itemDiv.append($('<label>').text(item.label));
             $.each(item.options, function(index, option) {
                 if(option.value === data[item.name]) {

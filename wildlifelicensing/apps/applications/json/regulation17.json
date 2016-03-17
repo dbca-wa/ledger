@@ -8,9 +8,10 @@
             "label": "Project Type",
             "children": [
                 {
-                    "type": "select_field",
+                    "type": "select",
                     "label": "Which of the following describes your project?",
                     "name": "project_type",
+                    "defaultBlank": true,
                     "options": [
                         {"value": "survey", "label": "Survey"},
                         {"value": "monitoring", "label": "Monitorying"},
@@ -24,7 +25,7 @@
             "label": "Approvals and Permits",
             "children": [
                 {
-                    "type": "select_field",
+                    "type": "select",
                     "label": "Does this project require any other approvals, permits, licenses, etc under any other state or federal legislation?",
                     "name": "requires_permits",
                     "options": [
@@ -35,14 +36,15 @@
                     "condition": "yes",
                     "children": [
                         {
-                            "type": "file_field",
+                            "type": "file",
                             "label": "Please provide detail and attach any applications made or permissions granted.",
                             "name": "permits"
                         },
                         {
-                            "type": "checkbox_field",
+                            "type": "declaration",
                             "label": "I acknowledge that should other permissions/approvals be required it may affect the processing time for this Regulation 17 licence",
-                            "name": "permits_acknowledgement"
+                            "name": "permits_acknowledgement",
+                            "required": true
                         }
                     ]
                 }
@@ -53,7 +55,7 @@
             "label": "Financial Basis",
             "children": [
                 {
-                    "type": "radiobuttons_field",
+                    "type": "radiobuttons",
                     "label": "How is your project funded?",
                     "name": "financial_basis",
                     "options": [
@@ -64,7 +66,7 @@
                     "condition": "other",
                     "children": [
                         {
-                            "type": "text_area_field",
+                            "type": "text_area",
                             "label": "Affiliated Organisation / Client / Sponsor",
                             "name": "financial_details"
                         }
@@ -77,28 +79,27 @@
             "label": "Project Details",
             "children": [
                 {
-                    "type": "text_field",
+                    "type": "text",
                     "label": "Project title",
-                    "name": "project_title",
-                    "required": true
+                    "name": "project_title"
                 },
                 {
-                    "type": "file_field",
+                    "type": "file",
                     "label": "Project Proposal",
                     "name": "project_proposal"
                 },
                 {
-                    "type": "text_area_field",
+                    "type": "text_area",
                     "label": "Background summary",
                     "name": "background_summary"
                 },
                 {
-                    "type": "text_area_field",
+                    "type": "text_area",
                     "label": "Main Objectives",
                     "name": "main_objectives"
                 },
                 {
-                    "type": "text_area_field",
+                    "type": "text_area",
                     "label": "Conservation outcomes",
                     "name": "conservation_outcomes"
                 }
@@ -109,17 +110,17 @@
             "label": "Personal Details",
             "children": [
                 {
-                    "type": "text_field",
+                    "type": "text",
                     "label": "Provide relevant qualifications and/or experience details specific to this project (if not already provided in your profile)",
                     "name": "qualifications"
                 },
                 {
-                    "type": "file_field",
+                    "type": "file",
                     "label": "Qualification Attachment(s)",
                     "name": "qualification_attachment"
                 },
                 {
-                    "type": "checkbox_field",
+                    "type": "declaration",
                     "label": "I acknowledge that I am legally responsible for the actions of anyone involved in the take of fauna activities under this licence.",
                     "name": "authorised_persons_acknowledgement"
                 },
@@ -130,24 +131,25 @@
                     "isRepeatable": true,
                     "children": [
                         {
-                            "type": "text_field",
+                            "type": "text",
                             "label": "Surname",
                             "name": "ap_surname"
                         },
                         {
-                            "type": "text_field",
+                            "type": "text",
                             "label": "Given name(s)",
                             "name": "ap_given_names"
                         },
                         {
-                            "type": "date_field",
+                            "type": "date",
                             "label": "Date of birth",
                             "name": "ap_dob"
                         },
                         {
-                            "type": "select_field",
+                            "type": "select",
                             "label": "Association to applicant",
                             "name": "ap_association",
+                            "defaultBlank": true,
                             "options": [
                                 {"value": "volunteer", "label": "Volunteer"},
                                 {"value": "contractor", "label": "Contractor"},
@@ -158,16 +160,17 @@
                             "condition": "other",
                             "children": [
                                 {
-                                    "type": "text_field",
+                                    "type": "text",
                                     "label": "Details",
                                     "name": "ap_association_other_details"
                                 }
                             ]
                         },
                         {
-                            "type": "select_field",
+                            "type": "select",
                             "label": "Role",
                             "name": "ap_role",
+                            "defaultBlank": true,
                             "options": [
                                 {"value": "handler", "label": "Handler"},
                                 {"value": "scribe", "label": "Scribe"},
@@ -176,7 +179,7 @@
                             "condition": "handler",
                             "children": [
                                 {
-                                    "type": "select_field",
+                                    "type": "select",
                                     "label": "Handler Type",
                                     "name": "ap_handler_type",
                                     "options": [
@@ -190,19 +193,19 @@
                             ]
                         },
                         {
-                            "type": "file_field",
+                            "type": "file",
                             "label": "Provide relevant qualification / experience (relative to activity)",
                             "name": "ap_qualification"
                         }
                     ]
                 },
                 {
-                    "type": "text_area_field",
+                    "type": "text_area",
                     "label": "If a list of authorised persons is not currently available, please explain:",
                     "name": "ap_unavailable_explanation"
                 },
                 {
-                    "type": "checkbox_field",
+                    "type": "declaration",
                     "label": "I acknowledge that I will make changes in this system to authorised persons throughout license duration if changes are required",
                     "name": "ap_change_acknowledgement"
                 }

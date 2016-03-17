@@ -6,13 +6,15 @@
 
 {% load jsonify %}
 
-{% block extra_css %}
+{% block extra_css %}    
+    <link href="https://static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min.css" rel="stylesheet"/>
+    <link href="https://static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
     <link href="{% static 'css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block requirements %}
     require(['js/application'], function(application) {
-        application('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}', false);
+        application('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}', true{% if data %}, {{ data|jsonify }}{% endif %});
     });
 {% endblock %}
 

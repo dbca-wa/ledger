@@ -17,13 +17,14 @@
                 <h1>Select application</h1>
             </div>
         </div>
-		<div class="row">
-            <div class="col-md-12">
-            	<ul>
-            		{% for key, value in applications.items %}
-            			<li><a href="{% url 'applications:application' key %}">{{ value }}</a></li>
-            		{% endfor %}
-            	</ul>
+            <div class="row">
+                <div class="col-md-12">
+                    <ul>
+                        {% for key, value in applications.items %}
+                            <li><a href="{% url 'applications:application' key %}">{{ value }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
