@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/application'], function(application) {
+    require(["{% static 'js/application.js' %}"], function(application) {
         application('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}', false);
     });
 {% endblock %}
