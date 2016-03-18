@@ -1,0 +1,12 @@
+<div class="form-group">
+    <label for="{{id}}">{{label}}</label>
+    <div class='input-group date' id='{{id}}-datetimepicker'>
+        <input id="{{id}}" name="{{name}}" class="form-control" placeholder="DD/MM/YYYY" {{#if required}}required{{/if}}/>
+        <span class="input-group-addon">
+            <span class="glyphicon glyphicon-calendar"></span>
+        </span>
+    </div>
+    {{#if help_text}}
+        <p class="help-block">{{help_text}}</p>
+    {{/if}}
+</div>

@@ -1,0 +1,36 @@
+.application-heading {
+	text-align: center;
+}
+
+.affix-top {
+
+}
+
+.affix {
+    top: 20px;
+}
+
+.affix-bottom {
+
+}
+
+#sectionList > ul > .active {
+    font-weight: bold;
+}
+
+.children-anchor-point {
+    padding-left: 20px;
+}
+
+.add-group {
+    margin-top: -10px;
+    text-align: right;
+}
+
+.remove-group {
+    text-align: right;
+}
+
+#mainContainer {
+    padding-bottom: 20px;
+}

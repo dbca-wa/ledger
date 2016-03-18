@@ -1,0 +1,21 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% block extra_css %}
+    <link href="{% static 'css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(["{% static 'js/application.js' %}"], function(application) {
+        application('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}', false);
+    });
+{% endblock %}
+
+{% block content %}
+    <div id="mainContainer" class="container" />
+{% endblock %}
