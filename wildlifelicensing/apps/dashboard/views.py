@@ -6,8 +6,10 @@ import urllib
 from django.views.generic import TemplateView, RedirectView
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse_lazy, reverse
+from django.db.models.query import Q
 from braces.views import LoginRequiredMixin
 from django_datatables_view.base_datatable_view import BaseDatatableView
+
 
 from .models import generate_mock_data, DATA_SAMPLES
 from wildlifelicensing.apps.applications.models import Application
@@ -75,16 +77,16 @@ class DashboardQuickView(TemplateView):
         # pending applications
         query = {
             'model': 'application',
-            'status': 'pending',
+            'state': 'lodged',
         }
-        pending_applications = [app for app in mock_data['applications'] if app['status'].lower() == 'pending']
+        pending_applications = Application.objects.filter(state='lodged')
         pending_applications_node = _create_node('Pending applications', href=_build_url(url, query),
                                                  count=len(pending_applications))
-        data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            query['license_type'] = k
-            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-            _add_node(pending_applications_node, node)
+        # data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
+        # for k, g in itertools.groupby(data, lambda x: x['license_type']):
+        #     query['license_type'] = k
+        #     node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
+        #     _add_node(pending_applications_node, node)
 
         # pending licenses
         query = {
@@ -132,14 +134,12 @@ class DashboardTableView(TemplateView):
         if 'dataJSON' not in kwargs:
             data = {
                 'applications': {
-                    'tableData': mock_data['applications'],
-                    'collapsed': False,
                     'filters': {
                         'licenseType': {
-                            'values': ['All'] + DATA_SAMPLES['licenseTypes'],
+                            'values': ['All'],
                         },
                         'status': {
-                            'values': ['All'] + DATA_SAMPLES['statusApplication'],
+                            'values': ['All'] + [state[1] for state in Application.STATES],
                             'selected': 'All'
                         }
                     }
@@ -182,6 +182,10 @@ class ApplicationDataTableView(BaseDatatableView):
     model = Application
     columns = ['state']
     order_columns = ['state']
+
+    def get(self, request, *args, **kwargs):
+        print(request.GET)
+        return super(ApplicationDataTableView, self).get(request, *args, **kwargs)
 
 
 # TODO This should be handle by the ledger view (see ledger/accounts/mail.py)

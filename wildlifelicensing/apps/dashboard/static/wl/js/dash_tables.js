@@ -5,7 +5,8 @@ define(
         'js/wl.dataTable',
         'moment',
         'bootstrap',
-        'bootstrap.select'
+        'bootstrap.select',
+        'datatables.yadcf'
     ],
     function ($, _, dt, moment) {
         var tableOptions = {
@@ -109,7 +110,11 @@ define(
                 options.applicationsTableSelector,
                 applicationTableOptions,
                 applicationsColumns
-            );
+            ).yadcf([
+                {
+                    column_number: 0
+                }
+            ]);
 
             licensesTable = dt.initTable(
                 options.licensesTableSelector,
