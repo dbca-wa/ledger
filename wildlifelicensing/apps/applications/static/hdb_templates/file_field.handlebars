@@ -1,0 +1,11 @@
+<div class="form-group {{#if errors}} has-error has-feedback {{/if}}">
+    <label for="{{id}}">{{label}}</label>
+    <input id="{{id}}" name="{{name}}" type="file" class="form-control" {{#if file_types }}accept="{{fileTypes}}"{{/if}} {{#if required}}required{{/if}}>
+    {{#if help_text}}
+        <p class="help-block">{{ help_text }}</p>
+    {{/if}}
+    {{#if errors}}
+        <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+        <span class='text-danger'>{{errors}}</span>
+    {{/if}}
+</div>
