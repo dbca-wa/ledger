@@ -6,11 +6,11 @@
           href="http://static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css">
     <link rel="stylesheet"
           href="http://static.dpaw.wa.gov.au/static/libs/bootstrap-select/1.9.4/css/bootstrap-select.min.css">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'wl/css/dashboard.css' %}">
 {% endblock %}
 
 {% block requirements %}
-    require(['js/dash_tables'], function (app) {
+    require(["{%  static 'wl/js/dash_tables.js' %}"], function (app) {
         var options = {
             applicationsTableSelector: '#applications-table',
             globalLicenseTypeFilterSelector: '#global-filter-license-type',
