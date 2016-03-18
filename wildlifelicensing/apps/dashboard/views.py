@@ -7,8 +7,10 @@ from django.views.generic import TemplateView, RedirectView
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse_lazy, reverse
 from braces.views import LoginRequiredMixin
+from django_datatables_view.base_datatable_view import BaseDatatableView
 
 from .models import generate_mock_data, DATA_SAMPLES
+from wildlifelicensing.apps.applications.models import Application
 
 MOCK_DATA_SESSION_KEY = 'mock-data'
 
@@ -37,7 +39,7 @@ class DashBoardRoutingView(TemplateView):
 
 
 class DashboardQuickView(TemplateView):
-    template_name = 'dash_quick.html'
+    template_name = 'wl/dash_quick.html'
 
     @staticmethod
     def _build_tree_nodes(mock_data):
@@ -123,7 +125,7 @@ class DashboardQuickView(TemplateView):
 
 
 class DashboardTableView(TemplateView):
-    template_name = 'dash_tables.html'
+    template_name = 'wl/dash_tables.html'
 
     def get_context_data(self, **kwargs):
         mock_data = _get_mock_data(self.request)
@@ -174,6 +176,12 @@ class DashboardTableView(TemplateView):
             }
             kwargs['dataJSON'] = json.dumps(data)
         return super(DashboardTableView, self).get_context_data(**kwargs)
+
+
+class ApplicationDataTableView(BaseDatatableView):
+    model = Application
+    columns = ['state']
+    order_columns = ['state']
 
 
 # TODO This should be handle by the ledger view (see ledger/accounts/mail.py)

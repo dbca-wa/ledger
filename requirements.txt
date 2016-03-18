@@ -7,3 +7,4 @@ coverage>=4.0.3
 django_bootstrap3>=6.2.2
 django-braces>=1.8.1
 django-hosts>=1.4
+django-datatables-view==1.13.0

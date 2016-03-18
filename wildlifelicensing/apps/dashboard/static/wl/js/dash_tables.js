@@ -16,26 +16,8 @@ define(
                 processing: true,
                 deferRender: true,
                 autowidth: true
+
             },
-            applicationsColumns = [
-                {
-                    title: 'Type',
-                    data: 'license_type'
-                },
-                {
-                    title: 'Customer',
-                    data: 'customer'
-                },
-                {
-                    title: 'Date',
-                    data: 'date',
-                    type: 'date'
-                },
-                {
-                    title: 'Status',
-                    data: 'status'
-                }
-            ],
             licensesColumns = [
                 {
                     title: 'License #',
@@ -94,12 +76,40 @@ define(
             $returnsLicenseTypeFilter;
 
         function initTables(options) {
+            var applicationTableOptions = $.extend({}, tableOptions, {
+                    serverSide: true,
+                    ajax: {
+                        url: options.ajax.applications,
+                        error: function () {
+                            console.log("error");
+                            //TODO Stop the data table 'Processing' and show an error.
+                        }
+                    }
+                }),
+                applicationsColumns = [
+                    //{
+                    //    title: 'Type',
+                    //    data: 'license_type'
+                    //},
+                    //{
+                    //    title: 'Customer',
+                    //    data: 'customer'
+                    //},
+                    //{
+                    //    title: 'Date',
+                    //    data: 'date',
+                    //    type: 'date'
+                    //},
+                    {
+                        title: 'Status'
+                    }
+                ];
+
             applicationsTable = dt.initTable(
                 options.applicationsTableSelector,
-                tableOptions,
+                applicationTableOptions,
                 applicationsColumns
             );
-            filterApplications();
 
             licensesTable = dt.initTable(
                 options.licensesTableSelector,
@@ -319,10 +329,12 @@ define(
 
                 returnsLicenseFilterSelector: '#returns-filter-license-type',
                 returnsDueDateFilterSelector: '#returns-filter-dueDate',
+                ajax: {
+                    applications: "/dashboard/data/applications"
+                },
                 data: {
                     'applications': {
                         'tableData': [],
-                        'collapsed': false,
                         'filters': {
                             'licenseType': {
                                 'values': ['All'],
@@ -336,7 +348,6 @@ define(
                     },
                     'licenses': {
                         'tableData': [],
-                        'collapsed': false,
                         'filters': {
                             'licenseType': {
                                 'values': ['All'],
@@ -346,7 +357,6 @@ define(
                     },
                     'returns': {
                         'tableData': [],
-                        'collapsed': false,
                         'filters': {
                             'licenseType': {
                                 'values': ['All'],
