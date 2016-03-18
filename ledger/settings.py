@@ -32,10 +32,12 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_hosts',
     'bootstrap3',
+    'jsonify',
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
     'wildlifelicensing.apps.dashboard',
-    'wildlifelicensing.apps.main'
+    'wildlifelicensing.apps.main',
+    'wildlifelicensing.apps.applications',
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
