@@ -14,7 +14,7 @@
                     "defaultBlank": true,
                     "options": [
                         {"value": "survey", "label": "Survey"},
-                        {"value": "monitoring", "label": "Monitorying"},
+                        {"value": "monitoring", "label": "Monitoring"},
                         {"value": "research", "label": "Research"}
                     ]
                 }
@@ -182,6 +182,7 @@
                                     "type": "select",
                                     "label": "Handler Type",
                                     "name": "ap_handler_type",
+                                    "defaultBlank": true,
                                     "options": [
                                         {"value": "biopsy", "label": "Biopsy"},
                                         {"value": "chipping", "label": "Chipping"},

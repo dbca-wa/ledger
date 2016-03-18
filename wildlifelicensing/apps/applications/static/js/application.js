@@ -21,17 +21,15 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
 
         item.id = parentItemID + '-' + index;
 
-        // if this item is a repeat, insert after previous item, else append to parentAnchorPoint
-        if(repetitionIndex !== undefined) {
-            itemDiv.insertAfter($('#' + item.id + '-repeat-' + (repetitionIndex-1)));
-        } else {
-            $(parentAnchorPointSelector).append(itemDiv);
-        }
+        $(parentAnchorPointSelector).append(itemDiv);
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
             repetitionIndex = repetitionIndex !== undefined ? repetitionIndex: 0;
             item.id += '-repeat-' + repetitionIndex;
+            if(repetitionIndex > 0) {
+                item.isRemovable = true;
+            }
         }
 
         item.childrenAnchorPointID = item.id + '-children';
@@ -99,13 +97,37 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             link.attr('href', '#' + item.id);
             link.text(item.label);
             $('#sectionList ul').append($('<li>').append(link));
-        } else if(item.type === 'group' && item.isRepeatable && repetitionIndex === 0) {
-            var addGroupDiv = $('<div>').addClass('add-group');
-            var addGroupLink = $('<a>').text('Add ' + item.label);
-            addGroupLink.click(function(e) {
-                layoutItem(item, parentAnchorPointSelector, parentItemID, index, ++repetitionIndex);
+        } else if(item.type === 'group' && item.isRepeatable) { 
+            if(repetitionIndex === 0) {
+                var addGroupDiv = $('<div>').addClass('add-group');
+                var addGroupLink = $('<a>').text('Add ' + item.label);
+                itemDiv.after(addGroupDiv.append(addGroupLink));
+
+                var repeatItemsAnchorPoint = $('<div>').attr('id', item.name + '-repeated-items');
+                itemDiv.after(repeatItemsAnchorPoint);
+
+                addGroupLink.click(function(e) {
+                    layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
+                });
+            }
+
+            if(repeatItemsAnchorPoint === undefined) {
+                repeatItemsAnchorPoint = $('#'+ item.name + "-repeated-items")
+            }
+
+            if(applicationData != undefined && item.name in applicationData && repetitionIndex < applicationData[item.name].length - 1) {
+                layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
+            }
+
+            itemDiv.find('#' + item.id + '-copy').click(function(e) {
+                var itemDivClone = itemDiv.clone(true, true);
+                itemDivClone.find('.hidden').removeClass('hidden');
+                itemDiv.after(itemDivClone);
             });
-            itemDiv.append(addGroupDiv.append(addGroupLink));
+
+            itemDiv.find('#' + item.id + '-remove').click(function(e) {
+                itemDiv.remove();
+            });
         }
     }
 
