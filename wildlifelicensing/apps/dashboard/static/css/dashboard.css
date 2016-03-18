@@ -3,6 +3,6 @@
 }
 
 .treeview .node-dashboard-tree {
-    color: #529B6B;
+    color: inherit;
     font-size: 1.2em;
 }
