@@ -1,5 +1,5 @@
 from django.contrib import admin
-from licence.models import LicenceType, Licence
+from ledger.licence.models import LicenceType, Licence
 
 
 @admin.register(LicenceType)

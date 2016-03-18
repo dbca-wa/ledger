@@ -1,3 +1,0 @@
-require(['jquery'], function ($) {
-    // do jquery/bootstrap stuff here...
-});
