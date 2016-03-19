@@ -2,7 +2,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
     var templates = {};
     var applicationData = {}
 
-    function getTemplate(templateName) {
+    function _getTemplate(templateName) {
         if (templates[templateName] === undefined) {
             $.ajax({
                 url: '/static/hdb_templates/' + templateName + '.handlebars',
@@ -16,12 +16,12 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         return templates[templateName]
     }
 
-    function layoutItem(item, parentAnchorPointSelector, parentItemID, index, repetitionIndex) {
-        var itemDiv = $('<div>');
+    function _layoutItem(item, parentAnchorPointSelector, parentItemID, index, repetitionIndex) {
+        var itemContainer = $('<div>');
 
         item.id = parentItemID + '-' + index;
 
-        $(parentAnchorPointSelector).append(itemDiv);
+        $(parentAnchorPointSelector).append(itemContainer);
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
@@ -53,7 +53,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             }
         }
 
-        itemDiv.append(getTemplate(item.type)(item));
+        itemContainer.append(_getTemplate(item.type)(item));
 
         // unset item value and data if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.value = undefined;
@@ -69,11 +69,11 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                 childrenAnchorPoint = $('<div>');
                 childrenAnchorPoint.addClass('children-anchor-point');
                 childrenAnchorPoint.attr('id', item.id + '-children');
-                itemDiv.append(childrenAnchorPoint);
+                itemContainer.append(childrenAnchorPoint);
             }
 
             if(item.condition !== undefined) {
-                var inputSelector = itemDiv.find('input, select');
+                var inputSelector = itemContainer.find('input, select');
 
                 // hide children initially if current item value does not equal condition
                 if(inputSelector.val() !== item.condition) {
@@ -88,7 +88,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                     }
                 });
             }
-            layoutChildren(item.children, childrenAnchorPoint, item.id);
+            _layoutChildren(item.children, childrenAnchorPoint, item.id);
         }
 
         // if item is a section, need to add to side menu list
@@ -101,13 +101,13 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             if(repetitionIndex === 0) {
                 var addGroupDiv = $('<div>').addClass('add-group');
                 var addGroupLink = $('<a>').text('Add ' + item.label);
-                itemDiv.after(addGroupDiv.append(addGroupLink));
+                itemContainer.after(addGroupDiv.append(addGroupLink));
 
                 var repeatItemsAnchorPoint = $('<div>').attr('id', item.name + '-repeated-items');
-                itemDiv.after(repeatItemsAnchorPoint);
+                itemContainer.after(repeatItemsAnchorPoint);
 
                 addGroupLink.click(function(e) {
-                    layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
+                    _layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
                 });
             }
 
@@ -116,37 +116,51 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             }
 
             if(applicationData != undefined && item.name in applicationData && repetitionIndex < applicationData[item.name].length - 1) {
-                layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
+                _layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
             }
 
-            itemDiv.find('#' + item.id + '-copy').click(function(e) {
-                var itemDivClone = itemDiv.clone(true, true);
-                itemDivClone.find('.hidden').removeClass('hidden');
-                itemDiv.after(itemDivClone);
-            });
-
-            itemDiv.find('#' + item.id + '-remove').click(function(e) {
-                itemDiv.remove();
-            });
+            _setupCloneRemoveEvents(itemContainer);
         }
     }
 
-    function layoutChildren(children, childrenAnchorPointID, itemID) {
+    function _setupCloneRemoveEvents(itemSelector) {
+    	itemSelector.find("[id$='copy']").click(function(e) {
+            var itemClone = itemSelector.clone();
+            itemSelector.find('select').each(function() {
+            	selectSelectorClone = itemClone.find("[name='" + $(this).attr('name') + "']");
+            	selectSelectorClone.val($(this).val());
+            });
+            itemClone.find('.hidden').removeClass('hidden');
+            itemSelector.after(itemClone);
+            _setupCloneRemoveEvents(itemClone);
+        });
+
+    	itemSelector.find("[id$='remove']").click(function(e) {
+    		itemSelector.remove();
+        });
+
+        // initialise all datapickers
+    	itemSelector.find('.date').datetimepicker({
+            format: 'DD/MM/YYYY'
+        });
+    }
+
+    function _layoutChildren(children, childrenAnchorPointID, itemID) {
         $.each(children, function(index, child) {
-            layoutItem(child, childrenAnchorPointID, itemID, index);
+            _layoutItem(child, childrenAnchorPointID, itemID, index);
         });
     }
 
     return function(mainContainerSelector, formStructure, csrfToken, userSelectionRequired, data) {
         formStructure.csrfToken = csrfToken;
-        $(mainContainerSelector).append(getTemplate('application')(formStructure));
+        $(mainContainerSelector).append(_getTemplate('application')(formStructure));
 
         applicationData = data;
 
         if(userSelectionRequired) {
-            var itemDiv = $('<div>');
-            $('#' + formStructure.childrenAnchorPointID).append(itemDiv);
-            itemDiv.append(getTemplate('applicant_section')({}));
+            var itemContainer = $('<div>');
+            $('#' + formStructure.childrenAnchorPointID).append(itemContainer);
+            itemContainer.append(_getTemplate('applicant_section')({}));
 
             $('#applicantInput').select2({
                 ajax: {
@@ -177,7 +191,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             });
         }
 
-        layoutChildren(formStructure.children, '#' + formStructure.childrenAnchorPointID, 'item', 0);
+        _layoutChildren(formStructure.children, '#' + formStructure.childrenAnchorPointID, 'item', 0);
 
         // initialise side-menu
         var sectionList = $('#sectionList');
