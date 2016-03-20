@@ -1,12 +1,12 @@
 <h4>{{label}}</h4>
-<div id="{{id}}" class="panel panel-default">
+<div class="panel panel-default">
     <div class="panel-body">
-        <div id="{{childrenAnchorPointID}}">
+        <div class="children-anchor-point" style="padding-left: 0px">
         </div>
         {{#if isRepeatable }}
-            <a id="{{id}}-copy">Copy {{label}}</a>
+            <a class="copy">Copy {{label}}</a>
         {{/if}}
-        <div id="{{id}}-remove" class="pull-right {{#unless isRemovable}}hidden{{/unless}}">
+        <div class="remove pull-right {{#unless isRemovable}}hidden{{/unless}}">
             <a>Remove</a>
         </div>
     </div>

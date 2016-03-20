@@ -1,6 +1,5 @@
 define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicker', 'select2', 'js/handlebars_helpers'], function($, Handlebars) {
     var templates = {};
-    var applicationData = {}
 
     function _getTemplate(templateName) {
         if (templates[templateName] === undefined) {
@@ -16,59 +15,36 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         return templates[templateName]
     }
 
-    function _layoutItem(item, parentAnchorPointSelector, parentItemID, index, repetitionIndex) {
+    function _layoutItem(item, index, isRepeat, itemData) {
         var itemContainer = $('<div>');
 
-        item.id = parentItemID + '-' + index;
-
-        $(parentAnchorPointSelector).append(itemContainer);
+        if(item.type == 'section') {
+        	item.index = index;
+        }
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
-            repetitionIndex = repetitionIndex !== undefined ? repetitionIndex: 0;
-            item.id += '-repeat-' + repetitionIndex;
-            if(repetitionIndex > 0) {
-                item.isRemovable = true;
-            }
+        	item.isRemovable = isRepeat;
         }
 
-        item.childrenAnchorPointID = item.id + '-children';
-
-        // if there is application data available, add it to the item context so it can be reproduced in the template
-        if((applicationData != undefined && item.name in applicationData) || item.data) {
-            var data = item.name in applicationData ? applicationData[item.name] : item.data;
-
-            // for groups, need to ascertain the relevant data and append to the group's children
-            if (item.type === 'group') {
-                repetitionIndex = repetitionIndex !== undefined ? repetitionIndex: 0;
-
-                // if the repetitionIndex is less than the amount of data in the array of objects for this group, set the data value of each child element
-                if(repetitionIndex < data.length) {
-                    $.each(item.children, function(index, child) {
-                        child.data = data[repetitionIndex][child.name];
-                    });
-                }
-            } else {
-                item.value = data;
-            }
+        if(itemData != undefined && item.name in itemData) {
+        	item.value = itemData[item.name];
         }
-
+        
         itemContainer.append(_getTemplate(item.type)(item));
 
-        // unset item value and data if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
+        // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.value = undefined;
-        item.data = undefined;
 
         if(item.children !== undefined) {
             var childrenAnchorPoint;
 
             // if no children anchor point was defined within the template, create one under current item
-            if($('#' + item.childrenAnchorPointID).length) {
-                childrenAnchorPoint = $('#' + item.childrenAnchorPointID);
+            if(itemContainer.find('.children-anchor-point').length) {
+                childrenAnchorPoint = itemContainer.find('.children-anchor-point');
             } else {
                 childrenAnchorPoint = $('<div>');
                 childrenAnchorPoint.addClass('children-anchor-point');
-                childrenAnchorPoint.attr('id', item.id + '-children');
                 itemContainer.append(childrenAnchorPoint);
             }
 
@@ -88,54 +64,71 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                     }
                 });
             }
-            _layoutChildren(item.children, childrenAnchorPoint, item.id);
+
+            $.each(item.children, function(childIndex, child) {
+            	if(child.isRepeatable) {
+            		var childData;
+            		if(itemData !== undefined) {
+            			childData = itemData[child.name][0];
+            		}
+            		childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
+            		
+                    var repeatItemsAnchorPoint = $('<div>');
+                    childrenAnchorPoint.append(repeatItemsAnchorPoint);
+
+            		var addGroupDiv = $('<div>').addClass('add-group');
+                    var addGroupLink = $('<a>').text('Add ' + child.label, itemData);
+                    addGroupLink.click(function(e) {
+                    	repeatItem = _layoutItem(child, childIndex, true, itemData);
+                    	repeatItem.find('.hidden').removeClass('hidden');
+                    	repeatItemsAnchorPoint.append(repeatItem);
+                    });
+                    childrenAnchorPoint.append(addGroupDiv.append(addGroupLink))
+
+	            	if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
+	            		$.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
+	            			repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
+	            		});
+	            	}
+            	} else {
+            		childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
+            	}
+            });
         }
 
         // if item is a section, need to add to side menu list
         if(item.type === 'section') {
             var link = $('<a>');
-            link.attr('href', '#' + item.id);
+            link.attr('href', '#section-' + index);
             link.text(item.label);
             $('#sectionList ul').append($('<li>').append(link));
-        } else if(item.type === 'group' && item.isRepeatable) { 
-            if(repetitionIndex === 0) {
-                var addGroupDiv = $('<div>').addClass('add-group');
-                var addGroupLink = $('<a>').text('Add ' + item.label);
-                itemContainer.after(addGroupDiv.append(addGroupLink));
+        } 
 
-                var repeatItemsAnchorPoint = $('<div>').attr('id', item.name + '-repeated-items');
-                itemContainer.after(repeatItemsAnchorPoint);
-
-                addGroupLink.click(function(e) {
-                    _layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
-                });
-            }
-
-            if(repeatItemsAnchorPoint === undefined) {
-                repeatItemsAnchorPoint = $('#'+ item.name + "-repeated-items")
-            }
-
-            if(applicationData != undefined && item.name in applicationData && repetitionIndex < applicationData[item.name].length - 1) {
-                _layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
-            }
-
-            _setupCloneRemoveEvents(itemContainer);
+        if(item.isRepeatable) {
+        	_setupCopyRemoveEvents(item, itemContainer, index, true);
         }
+
+        return itemContainer;
     }
 
-    function _setupCloneRemoveEvents(itemSelector) {
-    	itemSelector.find("[id$='copy']").click(function(e) {
-            var itemClone = itemSelector.clone();
-            itemSelector.find('select').each(function() {
-            	selectSelectorClone = itemClone.find("[name='" + $(this).attr('name') + "']");
-            	selectSelectorClone.val($(this).val());
+    function _setupCopyRemoveEvents(item, itemSelector, index, isRepeat) {
+    	itemSelector.find('.copy').click(function(e) {
+            var itemCopy = _layoutItem(item, index, true);
+            
+            itemSelector.find('input, select').each(function() {
+            	inputCopy = itemCopy.find("[name='" + $(this).attr('name') + "']");
+            	inputCopy.val($(this).val());
+
+            	if(!$(this).parent().parent().find('.children-anchor-point').is(':hidden')) {
+            		inputCopy.parent().parent().find('.children-anchor-point').show();
+            	}
             });
-            itemClone.find('.hidden').removeClass('hidden');
-            itemSelector.after(itemClone);
-            _setupCloneRemoveEvents(itemClone);
+            itemCopy.find('.hidden').removeClass('hidden');
+            itemSelector.after(itemCopy);
+            _setupCopyRemoveEvents(item, itemCopy, index, true);
         });
 
-    	itemSelector.find("[id$='remove']").click(function(e) {
+    	itemSelector.find('.remove').click(function(e) {
     		itemSelector.remove();
         });
 
@@ -145,17 +138,9 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         });
     }
 
-    function _layoutChildren(children, childrenAnchorPointID, itemID) {
-        $.each(children, function(index, child) {
-            _layoutItem(child, childrenAnchorPointID, itemID, index);
-        });
-    }
-
     return function(mainContainerSelector, formStructure, csrfToken, userSelectionRequired, data) {
         formStructure.csrfToken = csrfToken;
         $(mainContainerSelector).append(_getTemplate('application')(formStructure));
-
-        applicationData = data;
 
         if(userSelectionRequired) {
             var itemContainer = $('<div>');
@@ -178,12 +163,12 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                     }
                 },
                 initSelection: function(element, callback) {
-                    if(applicationData != undefined && 'applicant' in applicationData) {
-                        $.ajax('/applicants/' + applicationData.applicant, {
+                    if(data != undefined && 'applicant' in data) {
+                        $.ajax('/applicants/' + data.applicant, {
                             dataType: 'json'
-                        }).done(function(data) {
+                        }).done(function(applicantData) {
                             // set initial selection to first (and theoretically only) element
-                            callback(data[0]);
+                            callback(applicantData[0]);
                         });
                     }
                 },
@@ -191,8 +176,14 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             });
         }
 
-        _layoutChildren(formStructure.children, '#' + formStructure.childrenAnchorPointID, 'item', 0);
-
+        var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
+        
+        console.log(data);
+        
+        $.each(formStructure.children, function(index, child) {
+        	childrenAnchorPoint.append(_layoutItem(child, index, false, data));
+        });
+        
         // initialise side-menu
         var sectionList = $('#sectionList');
         $('body').scrollspy({ target: '#sectionList' });

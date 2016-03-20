@@ -1,9 +1,9 @@
 <div class="form-group">
-    <label for="{{id}}">{{label}}</label>
+    <label >{{label}}</label>
     {{#each options}}
         <div class="radio">
-            <label for="{{../id}}_{{this.value}}">
-                <input id="{{../id}}_{{this.value}}" name="{{../name}}" type="radio" value="{{this.value}}" {{#if ../required}}required{{/if}} {{#isEqual this.value ../value }}checked{{/isEqual}}>{{this.label}}/>
+            <label >
+                <input name="{{../name}}" type="radio" value="{{this.value}}" {{#if ../required}}required{{/if}} {{#isEqual this.value ../value }}checked{{/isEqual}}>{{this.label}}/>
                 {{this.label}}
             </label>
         </div>

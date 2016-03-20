@@ -1,11 +1,11 @@
 <div class="form-group">
-    <label for="{{id}}">{{label}}</label>
+    <label>{{label}}</label>
     {{#if value }}
         <p>
             Currently: {{value}}
         </p>
     {{/if}}
-    <input id="{{id}}" name="{{name}}" type="file" class="form-control" {{#if file_types }}accept="{{fileTypes}}"{{/if}} {{#if required}}required{{/if}}
+    <input name="{{name}}" type="file" class="form-control" {{#if file_types }}accept="{{fileTypes}}"{{/if}} {{#if required}}required{{/if}}
         {{#if fileTypes }}accept="{{fileTypes}}"{{/if}} {{#if value}}value="{{value}}"{{/if}}>
     {{#if help_text}}
         <p class="help-block">{{ help_text }}</p>
