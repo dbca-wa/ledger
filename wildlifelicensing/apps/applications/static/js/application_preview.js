@@ -1,8 +1,8 @@
-define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
+define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function($, Handlebars) {
     var templates = {};
     var applicationData = {}
 
-    function getTemplate(templateName) {
+    function _getTemplate(templateName) {
         if (templates[templateName] === undefined) {
             $.ajax({
                 url: '/static/hdb_templates/' + templateName + '.handlebars',
@@ -16,110 +16,100 @@ define(['jQuery', 'handlebars', 'bootstrap'], function($, Handlebars) {
         return templates[templateName]
     }
 
-    function layoutItem(item, parentAnchorPointSelector, parentItemID, index, repetitionIndex) {
-        var itemDiv = $('<div>');
+    function _layoutItem(item, index, isRepeat, itemData) {
+        var itemContainer = $('<div>');
 
-        item.id = parentItemID + '-' + index;
-
-        $(parentAnchorPointSelector).append(itemDiv);
+        if(item.type == 'section') {
+            item.index = index;
+        }
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
-            repetitionIndex = repetitionIndex !== undefined ? repetitionIndex: 0;
-            item.id += '-repeat-' + repetitionIndex;
+            item.isRemovable = isRepeat;
         }
 
-        item.childrenAnchorPointID = item.id + '-children';
+        if(itemData != undefined && item.name in itemData) {
+            item.value = itemData[item.name];
+        }
 
-
-        var data = item.name in applicationData ? applicationData[item.name] : item.data;
-
-        if(item.type === 'section') {
-            itemDiv.append(getTemplate(item.type)(item));
-        } else if(item.type === 'group') {
-            // need to save this state as is unset because we don't want copy link in template being rendered
-            var isItemRepeatable = item.isRepeatable;
-            item.isRepeatable = false;
-            itemDiv.append(getTemplate(item.type)(item));
-            item.isRepeatable = isItemRepeatable;
-
-            repetitionIndex = repetitionIndex !== undefined ? repetitionIndex: 0;
-
-            // if the repetitionIndex is less than the amount of data in the array of objects for this group, set the data value of each child element
-            if(repetitionIndex < data.length) {
-                $.each(item.children, function(index, child) {
-                    child.data = data[repetitionIndex][child.name];
-                });
-            }
+        if(item.type === 'section' || item.type === 'group') {
+            item.isPreviewMode = true;
+            itemContainer.append(_getTemplate(item.type)(item));
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
-            itemDiv.append($('<label>').text(item.label));
+            itemContainer.append($('<label>').text(item.label));
             $.each(item.options, function(index, option) {
-                if(option.value === data) {
-                    itemDiv.append($('<p>').text(option.label));
+                if(option.value === item.value) {
+                    itemContainer.append($('<p>').text(option.label));
                 }
             });
-        } 
-        else {
-            itemDiv.append($('<label>').text(item.label));
-            itemDiv.append($('<p>').text(data));
+        } else {
+            itemContainer.append($('<label>').text(item.label));
+            itemContainer.append($('<p>').text(item.value));
         }
 
-        // unset item data
-        item.data = undefined;
+        // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
+        item.value = undefined;
 
         if(item.children !== undefined) {
             var childrenAnchorPoint;
 
-            // get child anchor point selector and if no children anchor point was defined in the 
-            // template, create one under current item
-            if($('#' + item.childrenAnchorPointID).length) {
-                childrenAnchorPoint = $('#' + item.childrenAnchorPointID);
+            // if no children anchor point was defined within the template, create one under current item
+            if(itemContainer.find('.children-anchor-point').length) {
+                childrenAnchorPoint = itemContainer.find('.children-anchor-point');
             } else {
                 childrenAnchorPoint = $('<div>');
                 childrenAnchorPoint.addClass('children-anchor-point');
-                childrenAnchorPoint.attr('id', item.id + '-children');
-                itemDiv.append(childrenAnchorPoint);
+                itemContainer.append(childrenAnchorPoint);
             }
 
-            // only show children items when the item has no condition or the condition is met
-            if(item.condition === undefined || item.condition === applicationData[item.name]) {
-                layoutChildren(item.children, childrenAnchorPoint, item.id);
-            }
+            $.each(item.children, function(childIndex, child) {
+                if(child.isRepeatable) {
+                    // only show children items when the item has no condition or the condition is met
+                    if(item.condition === undefined || item.condition === itemData[item.name]) {
+                        var childData;
+                        if(itemData !== undefined) {
+                            childData = itemData[child.name][0];
+                        }
+                        childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
+                    }
+
+                    var repeatItemsAnchorPoint = $('<div>');
+                    childrenAnchorPoint.append(repeatItemsAnchorPoint);
+
+                    if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
+                        $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
+                            repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
+                        });
+                    }
+                } else {
+                    // only show children items when the item has no condition or the condition is met
+                    if(item.condition === undefined || item.condition === itemData[item.name]) {
+                        childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
+                    }
+                }
+            });
         }
 
+        // if item is a section, need to add to side menu list
         if(item.type === 'section') {
             var link = $('<a>');
-            link.attr('href', '#' + item.id);
+            link.attr('href', '#section-' + index);
             link.text(item.label);
             $('#sectionList ul').append($('<li>').append(link));
-        } else if(item.type === 'group' && item.isRepeatable) {
-            if(repetitionIndex === 0) {
-                var repeatItemsAnchorPoint = $('<div>').attr('id', item.name + '-repeated-items');
-                itemDiv.after(repeatItemsAnchorPoint);
-            }
-
-            if(repeatItemsAnchorPoint === undefined) {
-                repeatItemsAnchorPoint = $('#'+ item.name + "-repeated-items")
-            }
-
-            if(applicationData != undefined && item.name in applicationData && repetitionIndex < applicationData[item.name].length - 1) {
-                layoutItem(item, repeatItemsAnchorPoint, parentItemID, index, ++repetitionIndex);
-            }
         }
-    }
 
-    function layoutChildren(children, childrenAnchorPointID, itemID) {
-        $.each(children, function(index, child) {
-            layoutItem(child, childrenAnchorPointID, itemID, index);
-        });
+        return itemContainer;
     }
 
     return function(mainContainerSelector, formStructure, formData, csrfToken) {
         applicationData = formData;
         formStructure.csrfToken = csrfToken;
-        $(mainContainerSelector).append(getTemplate('application_preview')(formStructure));
+        $(mainContainerSelector).append(_getTemplate('application_preview')(formStructure));
 
-        layoutChildren(formStructure.children, '#' + formStructure.childrenAnchorPointID, 'item', 0);
+        var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
+        $.each(formStructure.children, function(index, child) {
+            childrenAnchorPoint.append(_layoutItem(child, index, false, formData));
+        });
 
         var sectionList = $('#sectionList');
         $('body').scrollspy({ target: '#sectionList' });

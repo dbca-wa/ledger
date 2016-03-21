@@ -2,7 +2,7 @@ def create_data_from_form(item, post_data, file_data, post_data_index=None):
     item_data = {}
 
     if 'name' in item and item.get('type', '') != 'group':
-        if item.get('type', '') == 'checkbox':
+        if item.get('type', '') == 'declaration':
             if post_data_index is not None:
                 post_data_list = post_data.getlist(item['name'])
                 if len(post_data_list) > 0:
@@ -38,6 +38,6 @@ def create_data_from_form(item, post_data, file_data, post_data_index=None):
             item_data[item['name']] = groups
         else:
             for child in item['children']:
-                item_data.update(create_data_from_form(child, post_data, file_data))
+                item_data.update(create_data_from_form(child, post_data, file_data, post_data_index))
 
     return item_data

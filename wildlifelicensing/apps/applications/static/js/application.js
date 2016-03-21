@@ -19,7 +19,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         var itemContainer = $('<div>');
 
         if(item.type == 'section') {
-        	item.index = index;
+            item.index = index;
         }
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
@@ -28,9 +28,9 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         }
 
         if(itemData != undefined && item.name in itemData) {
-        	item.value = itemData[item.name];
+            item.value = itemData[item.name];
         }
-        
+
         itemContainer.append(_getTemplate(item.type)(item));
 
         // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
@@ -66,33 +66,33 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             }
 
             $.each(item.children, function(childIndex, child) {
-            	if(child.isRepeatable) {
-            		var childData;
-            		if(itemData !== undefined) {
-            			childData = itemData[child.name][0];
-            		}
-            		childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
-            		
+                if(child.isRepeatable) {
+                    var childData;
+                    if(itemData !== undefined) {
+                        childData = itemData[child.name][0];
+                    }
+                    childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
+
                     var repeatItemsAnchorPoint = $('<div>');
                     childrenAnchorPoint.append(repeatItemsAnchorPoint);
 
-            		var addGroupDiv = $('<div>').addClass('add-group');
+                    var addGroupDiv = $('<div>').addClass('add-group');
                     var addGroupLink = $('<a>').text('Add ' + child.label, itemData);
                     addGroupLink.click(function(e) {
-                    	repeatItem = _layoutItem(child, childIndex, true, itemData);
-                    	repeatItem.find('.hidden').removeClass('hidden');
-                    	repeatItemsAnchorPoint.append(repeatItem);
+                        repeatItem = _layoutItem(child, childIndex, true, itemData);
+                        repeatItem.find('.hidden').removeClass('hidden');
+                        repeatItemsAnchorPoint.append(repeatItem);
                     });
                     childrenAnchorPoint.append(addGroupDiv.append(addGroupLink))
 
-	            	if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
-	            		$.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
-	            			repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
-	            		});
-	            	}
-            	} else {
-            		childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
-            	}
+                    if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
+                        $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
+                            repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
+                        });
+                    }
+                } else {
+                    childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
+                }
             });
         }
 
@@ -102,10 +102,10 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             link.attr('href', '#section-' + index);
             link.text(item.label);
             $('#sectionList ul').append($('<li>').append(link));
-        } 
+        }
 
         if(item.isRepeatable) {
-        	_setupCopyRemoveEvents(item, itemContainer, index, true);
+            _setupCopyRemoveEvents(item, itemContainer, index, true);
         }
 
         return itemContainer;
@@ -116,20 +116,20 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             var itemCopy = _layoutItem(item, index, true);
             
             itemSelector.find('input, select').each(function() {
-            	inputCopy = itemCopy.find("[name='" + $(this).attr('name') + "']");
-            	inputCopy.val($(this).val());
+                inputCopy = itemCopy.find("[name='" + $(this).attr('name') + "']");
+                inputCopy.val($(this).val());
 
-            	if(!$(this).parent().parent().find('.children-anchor-point').is(':hidden')) {
-            		inputCopy.parent().parent().find('.children-anchor-point').show();
-            	}
+                if(!$(this).parent().parent().find('.children-anchor-point').is(':hidden')) {
+                    inputCopy.parent().parent().find('.children-anchor-point').show();
+                }
             });
             itemCopy.find('.hidden').removeClass('hidden');
             itemSelector.after(itemCopy);
             _setupCopyRemoveEvents(item, itemCopy, index, true);
         });
 
-    	itemSelector.find('.remove').click(function(e) {
-    		itemSelector.remove();
+        itemSelector.find('.remove').click(function(e) {
+            itemSelector.remove();
         });
 
         // initialise all datapickers
@@ -174,16 +174,19 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                 },
                 minimumInputLength: 3
             });
+
+            var link = $('<a>');
+            link.attr('href', '#applicant');
+            link.text('Applicant');
+            $('#sectionList ul').append($('<li>').append(link));
         }
 
         var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
-        
-        console.log(data);
-        
+
         $.each(formStructure.children, function(index, child) {
-        	childrenAnchorPoint.append(_layoutItem(child, index, false, data));
+            childrenAnchorPoint.append(_layoutItem(child, index, false, data));
         });
-        
+
         // initialise side-menu
         var sectionList = $('#sectionList');
         $('body').scrollspy({ target: '#sectionList' });
