@@ -1,0 +1,14 @@
+<div class="form-group">
+    <label>{{label}}</label>
+    {{#if value }}
+        <p>
+            Currently: {{value}}
+        </p>
+        <input name="{{name}}-existing" type="hidden" value="{{value}}"/>
+    {{/if}}
+    <input name="{{name}}" type="file" class="form-control" {{#if file_types }}accept="{{fileTypes}}"{{/if}} {{#if required}}required{{/if}}
+        {{#if fileTypes }}accept="{{fileTypes}}"{{/if}} >
+    {{#if help_text}}
+        <p class="help-block">{{ help_text }}</p>
+    {{/if}}
+</div>
