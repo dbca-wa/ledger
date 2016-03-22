@@ -1,28 +1,12 @@
 import json
-import datetime
-import itertools
 import urllib
 
-from django.views.generic import TemplateView, RedirectView
+from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import redirect
-from django.core.urlresolvers import reverse_lazy, reverse
-from braces.views import LoginRequiredMixin
+from django.views.generic import TemplateView
 from django_datatables_view.base_datatable_view import BaseDatatableView
 
-
-from .models import generate_mock_data, DATA_SAMPLES
 from wildlifelicensing.apps.applications.models import Application
-
-MOCK_DATA_SESSION_KEY = 'mock-data'
-
-
-def _get_mock_data(request):
-    if MOCK_DATA_SESSION_KEY in request.session:
-        mock_data = request.session[MOCK_DATA_SESSION_KEY]
-    else:
-        mock_data = generate_mock_data()
-        request.session[MOCK_DATA_SESSION_KEY] = mock_data
-    return mock_data
 
 
 def _build_url(base, query):
@@ -43,7 +27,7 @@ class DashboardQuickView(TemplateView):
     template_name = 'wl/dash_quick.html'
 
     @staticmethod
-    def _build_tree_nodes(mock_data):
+    def _build_tree_nodes():
 
         def _create_node(title, href=None, count=None):
             node_template = {
@@ -62,15 +46,6 @@ class DashboardQuickView(TemplateView):
 
             return result
 
-        def _add_node(parent, child):
-            if 'nodes' not in parent or type(parent['nodes']) != list:
-                parent['nodes'] = [child]
-            else:
-                parent['nodes'].append(child)
-            return parent
-
-        date_format = '%Y-%m-%d'
-        today = datetime.date.today()
         url = reverse_lazy('dashboard:tables')
 
         # pending applications
@@ -81,47 +56,27 @@ class DashboardQuickView(TemplateView):
         pending_applications = Application.objects.filter(state='lodged')
         pending_applications_node = _create_node('Pending applications', href=_build_url(url, query),
                                                  count=len(pending_applications))
-        # data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        # for k, g in itertools.groupby(data, lambda x: x['license_type']):
-        #     query['license_type'] = k
-        #     node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-        #     _add_node(pending_applications_node, node)
-
         # pending licenses
         query = {
             'model': 'license',
             'status': 'pending',
         }
-        pending_licenses = [lic for lic in mock_data['licenses'] if lic['status'] == 'pending']
+        pending_licenses = []
         pending_licenses_node = _create_node('Pending licenses', href=_build_url(url, query),
                                              count=len(pending_licenses))
-        data = sorted(pending_licenses, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            query['license_type'] = k
-            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-            _add_node(pending_licenses_node, node)
-
         # overdue license
         query = {
             'model': 'return',
             'due_date': 'overdue'
         }
-        overdue_returns = [ret for ret in mock_data['returns'] if
-                           datetime.datetime.strptime(ret['due_date'], date_format).date() < today]
+        overdue_returns = []
         overdue_returns_node = _create_node('Overdue returns', href=_build_url(url, query),
                                             count=len(overdue_returns))
-        data = sorted(overdue_returns, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            query['license-type'] = k
-            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-            _add_node(overdue_returns_node, node)
-
         return [pending_applications_node, pending_licenses_node, overdue_returns_node]
 
     def get_context_data(self, **kwargs):
-        mock_data = _get_mock_data(self.request)
         if 'dataJSON' not in kwargs:
-            kwargs['dataJSON'] = json.dumps(self._build_tree_nodes(mock_data))
+            kwargs['dataJSON'] = json.dumps(self._build_tree_nodes())
         return super(DashboardQuickView, self).get_context_data(**kwargs)
 
 
@@ -129,45 +84,36 @@ class DashboardTableView(TemplateView):
     template_name = 'wl/dash_tables.html'
 
     def get_context_data(self, **kwargs):
-        mock_data = _get_mock_data(self.request)
+        license_types = [('all', 'All')]
         if 'dataJSON' not in kwargs:
             data = {
                 'applications': {
                     'filters': {
                         'licenseType': {
-                            'values': ['All'],
+                            'values': license_types,
                         },
                         'status': {
-                            'values': ['All'] + [state[1] for state in Application.STATES],
-                            'selected': 'All'
+                            'values': [('all', 'All')] + list(Application.STATES),
                         }
                     }
                 },
                 'licenses': {
-                    'tableData': mock_data['licenses'],
-                    'collapsed': False,
                     'filters': {
                         'licenseType': {
-                            'values': ['All'] + DATA_SAMPLES['licenseTypes'],
-                            'selected': 'All'
+                            'values': license_types
                         },
                         'status': {
-                            'values': ['All'] + DATA_SAMPLES['statusLicense'],
-                            'selected': 'All'
+                            'values': [('all', 'All')],
                         }
                     }
                 },
                 'returns': {
-                    'tableData': mock_data['returns'],
-                    'collapsed': False,
                     'filters': {
                         'licenseType': {
-                            'values': ['All'] + DATA_SAMPLES['licenseTypes'],
-                            'selected': 'All'
+                            'values': license_types,
                         },
                         'dueDate': {
-                            'values': ['All', 'Overdue'],
-                            'selected': 'All'
+                            'values': [('all', 'All'), ('overdue', 'Overdue')],
                         }
                     }
                 },
@@ -183,7 +129,4 @@ class ApplicationDataTableView(BaseDatatableView):
     order_columns = ['state']
 
     def get(self, request, *args, **kwargs):
-        print(request.GET)
         return super(ApplicationDataTableView, self).get(request, *args, **kwargs)
-
-
