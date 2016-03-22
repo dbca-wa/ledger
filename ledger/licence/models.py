@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from dpaw_utils.models import ActiveMixin, AuditMixin
-from addressbook.models import Address
+from ledger.accounts.models import Address
 
 
 @python_2_unicode_compatible
@@ -37,4 +37,4 @@ class Licence(ActiveMixin, AuditMixin):
     expire_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
-        return '{} {} {}'.format(self.customer_role, self.licence_type, self.status)
+        return '{} {}'.format(self.licence_type, self.status)

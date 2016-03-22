@@ -5,8 +5,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
-from licence.models import LicenceType
-from rollcall.models import EmailUser
+from ledger.licence.models import LicenceType
 
 from wildlifelicensing.apps.main.models import Document
 

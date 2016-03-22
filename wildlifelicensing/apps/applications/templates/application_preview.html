@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'wl/base.html' %}
 
 {% load static %}
 
@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/application_preview'], function(application_preview) {
+    require(["{% static 'js/application_preview.js' %}"], function(application_preview) {
         application_preview('#mainContainer', {{ structure|jsonify }}, {{ data|jsonify }}, '{{ csrf_token }}');
     });
 {% endblock %}
