@@ -201,12 +201,23 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+class RevisionedMixin(models.Model):
+    """
+    A model tracked by reversion through the save method.
+    """
+    def save(self):
+        with revisions.create_revision():
+            super(RevisionedMixin, self).save()
+
+    class Meta:
+        abstract = True
+
 @python_2_unicode_compatible
-class Persona(models.Model):
+class Persona(RevisionedMixin):
     user = models.ForeignKey(EmailUser, verbose_name='User')
     name = models.CharField('Name', max_length=100, blank=True, default='')
     email = models.EmailField('Email')
-    postal_address = models.ForeignKey(Address, verbose_name='Postal Address')
+    postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT)
     institution = models.CharField('Institution', max_length=200, blank=True, default='', help_text='Company, Tertiary Institution, Government Department, etc')
 
     def __str__(self):
@@ -215,6 +226,3 @@ class Persona(models.Model):
         else:
             return '{}'.format(self.email)
 
-    def save(self):
-        with revisions.create_revision():
-            super(Persona, self).save()
