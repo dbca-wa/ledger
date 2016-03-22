@@ -5,8 +5,7 @@ define(
         'js/wl.dataTable',
         'moment',
         'bootstrap',
-        'bootstrap.select',
-        'datatables.yadcf'
+        'bootstrap.select'
     ],
     function ($, _, dt, moment) {
         var tableOptions = {

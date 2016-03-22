@@ -76,16 +76,16 @@ class DashboardQuickView(TemplateView):
         # pending applications
         query = {
             'model': 'application',
-            'status': 'pending',
+            'state': 'lodged',
         }
-        pending_applications = [app for app in mock_data['applications'] if app['status'].lower() == 'pending']
+        pending_applications = Application.objects.filter(state='lodged')
         pending_applications_node = _create_node('Pending applications', href=_build_url(url, query),
                                                  count=len(pending_applications))
-        data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            query['license_type'] = k
-            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-            _add_node(pending_applications_node, node)
+        # data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
+        # for k, g in itertools.groupby(data, lambda x: x['license_type']):
+        #     query['license_type'] = k
+        #     node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
+        #     _add_node(pending_applications_node, node)
 
         # pending licenses
         query = {
