@@ -1,3 +1,10 @@
 from django.contrib import admin
 
-# Register your models here.
+from reversion.admin import VersionAdmin
+
+from models import Application
+
+
+@admin.register(Application)
+class ApplicationAdmin(VersionAdmin):
+    pass
