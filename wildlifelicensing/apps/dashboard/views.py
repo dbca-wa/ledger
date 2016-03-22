@@ -37,7 +37,7 @@ class DashBoardRoutingView(TemplateView):
 
 
 class DashboardQuickView(TemplateView):
-    template_name = 'dash_quick.html'
+    template_name = 'wl/dash_quick.html'
 
     @staticmethod
     def _build_tree_nodes(mock_data):
@@ -123,7 +123,7 @@ class DashboardQuickView(TemplateView):
 
 
 class DashboardTableView(TemplateView):
-    template_name = 'dash_tables.html'
+    template_name = 'wl/dash_tables.html'
 
     def get_context_data(self, **kwargs):
         mock_data = _get_mock_data(self.request)
@@ -174,15 +174,3 @@ class DashboardTableView(TemplateView):
             }
             kwargs['dataJSON'] = json.dumps(data)
         return super(DashboardTableView, self).get_context_data(**kwargs)
-
-
-# TODO This should be handle by the ledger view (see ledger/accounts/mail.py)
-class VerificationView(RedirectView):
-    def get_redirect_url(self, *args, **kwargs):
-        redirect_url = '{}?verification_code={}'.format(
-            reverse('social:complete', args=('email',)),
-            kwargs['token']
-        )
-        if self.request.user and hasattr(self.request.user, 'email'):
-            redirect_url += '&email={}'.format(self.request.user.email)
-        return redirect_url
