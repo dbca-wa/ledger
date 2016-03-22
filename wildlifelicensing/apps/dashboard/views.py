@@ -6,7 +6,6 @@ import urllib
 from django.views.generic import TemplateView, RedirectView
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse_lazy, reverse
-from django.db.models.query import Q
 from braces.views import LoginRequiredMixin
 from django_datatables_view.base_datatable_view import BaseDatatableView
 
@@ -77,16 +76,16 @@ class DashboardQuickView(TemplateView):
         # pending applications
         query = {
             'model': 'application',
-            'state': 'lodged',
+            'status': 'pending',
         }
-        pending_applications = Application.objects.filter(state='lodged')
+        pending_applications = [app for app in mock_data['applications'] if app['status'].lower() == 'pending']
         pending_applications_node = _create_node('Pending applications', href=_build_url(url, query),
                                                  count=len(pending_applications))
-        # data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        # for k, g in itertools.groupby(data, lambda x: x['license_type']):
-        #     query['license_type'] = k
-        #     node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-        #     _add_node(pending_applications_node, node)
+        data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
+        for k, g in itertools.groupby(data, lambda x: x['license_type']):
+            query['license_type'] = k
+            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
+            _add_node(pending_applications_node, node)
 
         # pending licenses
         query = {
@@ -188,13 +187,3 @@ class ApplicationDataTableView(BaseDatatableView):
         return super(ApplicationDataTableView, self).get(request, *args, **kwargs)
 
 
-# TODO This should be handle by the ledger view (see ledger/accounts/mail.py)
-class VerificationView(RedirectView):
-    def get_redirect_url(self, *args, **kwargs):
-        redirect_url = '{}?verification_code={}'.format(
-            reverse('social:complete', args=('email',)),
-            kwargs['token']
-        )
-        if self.request.user and hasattr(self.request.user, 'email'):
-            redirect_url += '&email={}'.format(self.request.user.email)
-        return redirect_url
