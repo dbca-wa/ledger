@@ -43,8 +43,7 @@
                         {
                             "type": "declaration",
                             "label": "I acknowledge that should other permissions/approvals be required it may affect the processing time for this Regulation 17 licence",
-                            "name": "permits_acknowledgement",
-                            "required": true
+                            "name": "permits_acknowledgement"
                         }
                     ]
                 }
