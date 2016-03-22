@@ -8,20 +8,20 @@ from django.shortcuts import render_to_response, redirect
 from django.core.context_processors import csrf
 from django.core.files import File
 from django.contrib import messages
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http.response import JsonResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-from rollcall.models import EmailUser
-from wildlifelicensing.apps.main.models import Document
+from ledger.accounts.models import EmailUser
+from ledger.accounts.models import Document
 
 from models import Application
-from utils import create_data_from_form
-from bottle import request
+from utils import create_data_from_form, get_all_filenames_from_application_data
 
 
-class ApplicationsView(TemplateView):
-    template_name = 'applications.html'
+class ApplicationsView(LoginRequiredMixin, TemplateView):
+    template_name = 'wl/applications.html'
+    login_url = '/'
 
     def get_context_data(self, **kwargs):
         context = super(ApplicationsView, self).get_context_data(**kwargs)
@@ -30,14 +30,15 @@ class ApplicationsView(TemplateView):
         return context
 
 
-class ApplicationView(TemplateView):
-    template_name = 'application.html'
+class ApplicationView(LoginRequiredMixin, TemplateView):
+    template_name = 'wl/application.html'
+    login_url = '/'
 
     def get(self, request, *args, **kwargs):
         with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
-            form_stucture = json.load(data_file)
+            form_structure = json.load(data_file)
 
-        context = {'structure': form_stucture, 'application_type': args[0]}
+        context = {'structure': form_structure, 'application_type': args[0]}
         context.update(csrf(request))
 
         if request.GET.get('editing', '') == 'true':
@@ -53,9 +54,9 @@ class ApplicationView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
-            form_stucture = json.load(data_file)
+            form_structure = json.load(data_file)
 
-        request.session['application_data'] = create_data_from_form(form_stucture, request.POST, request.FILES)
+        request.session['application_data'] = create_data_from_form(form_structure, request.POST, request.FILES)
 
         # if application is created on behalf of a user, get user ID from POST, otherwise use authenticated user
         if 'applicant' in request.POST:
@@ -68,15 +69,35 @@ class ApplicationView(TemplateView):
 
             application = Application.objects.create(data=request.session.get('application_data'), applicant=applicant, state='draft')
 
+            if 'application_files' in request.session and os.path.exists(request.session['application_files']):
+                try:
+                    for filename in get_all_filenames_from_application_data(form_structure, request.session.get('application_data')):
+                        # need to be sure file is in tmp directory (as it could be a freshly attached file)
+                        if os.path.exists(os.path.join(request.session['application_files'], filename)):
+                            document = Document.objects.create(name=filename)
+                            with open(os.path.join(request.session['application_files'], filename), 'rb') as doc_file:
+                                document.file.save(filename, File(doc_file), save=True)
+                                application.documents.add(document)
+                except Exception as e:
+                    messages.error(request, 'There was a problem appending applications files: %s' % e)
+                finally:
+                    try:
+                        shutil.rmtree(request.session['application_files'])
+                    except (shutil.Error, OSError) as e:
+                        messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
+
             for f in request.FILES:
                 application.documents.add(Document.objects.create(name=f, file=request.FILES[f]))
 
             messages.warning(request, 'The application was saved to draft.')
 
+            delete_application_session_data(request.session)
+
             return redirect('applications:applications')
         else:
             if len(request.FILES) > 0:
-                request.session['application_files'] = tempfile.mkdtemp()
+                if 'application_files' not in request.session:
+                    request.session['application_files'] = tempfile.mkdtemp()
                 for f in request.FILES:
                     with open(os.path.join(request.session['application_files'], str(request.FILES[f])), 'wb+') as destination:
                         for chunk in request.FILES[f].chunks():
@@ -85,8 +106,9 @@ class ApplicationView(TemplateView):
             return redirect('applications:application_preview', args[0])
 
 
-class ApplicationPreviewView(TemplateView):
-    template_name = 'application_preview.html'
+class ApplicationPreviewView(LoginRequiredMixin, TemplateView):
+    template_name = 'wl/application_preview.html'
+    login_url = '/'
 
     def get(self, request, *args, **kwargs):
         with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
@@ -103,6 +125,9 @@ class ApplicationPreviewView(TemplateView):
         if 'edit' in request.POST:
             return redirect(reverse('applications:application', args=(args[0],)) + '?editing=true')
 
+        with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
+            form_structure = json.load(data_file)
+
         applicant = EmailUser.objects.get(id=request.session['applicant'])
 
         application = Application.objects.create(data=request.session.get('application_data'), applicant=applicant, state='lodged')
@@ -110,7 +135,7 @@ class ApplicationPreviewView(TemplateView):
         # if attached files were saved temporarily, add each to application as part of a Document
         if 'application_files' in request.session and os.path.exists(request.session['application_files']):
             try:
-                for filename in os.listdir(request.session['application_files']):
+                for filename in get_all_filenames_from_application_data(form_structure, request.session.get('application_data')):
                     document = Document.objects.create(name=filename)
                     with open(os.path.join(request.session['application_files'], filename), 'rb') as doc_file:
                         document.file.save(filename, File(doc_file), save=True)
@@ -131,7 +156,9 @@ class ApplicationPreviewView(TemplateView):
         return redirect('applications:applications')
 
 
-class ApplicantsView(View):
+class ApplicantsView(LoginRequiredMixin, View):
+    login_url = '/'
+
     def get(self, request, *args, **kwargs):
         if len(args) > 0:
             email_users = EmailUser.objects.filter(id=args[0])

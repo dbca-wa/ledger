@@ -16,7 +16,7 @@
                 {% endblock %}
             </title>
 
-            <script type="text/javascript" src="https://static.dpaw.wa.gov.au/static/libs/require.js/2.1.9/require.min.js"></script>
+            <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/require.js/2.1.9/require.min.js"></script>
             <script type="text/javascript">
                 require(["{% static 'wl/js/config.js' %}"], function (config) {
                     require(['js/base']);
@@ -51,6 +51,8 @@
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
+                                    <li><a href="{% url 'dashboard:quick' %}">Dashboard</a></li>
+                                    <li><a href="{% url 'applications:applications' %}">Applications</a></li>
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">

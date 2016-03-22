@@ -4,7 +4,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
     function _getTemplate(templateName) {
         if (templates[templateName] === undefined) {
             $.ajax({
-                url: '/static/hdb_templates/' + templateName + '.handlebars',
+                url: '/static/wl/hdb_templates/' + templateName + '.handlebars',
                 success: function(data) {
                     templates[templateName] = Handlebars.compile(data);
                 },
