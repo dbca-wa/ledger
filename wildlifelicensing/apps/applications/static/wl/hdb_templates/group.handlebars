@@ -1,0 +1,15 @@
+<h4>{{label}}</h4>
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="children-anchor-point" style="padding-left: 0px">
+        </div>
+        {{#unless isPreviewMode }}
+            {{#if isRepeatable }}
+                <a class="copy">Copy {{label}}</a>
+            {{/if}}
+            <div class="remove pull-right {{#unless isRemovable}}hidden{{/unless}}">
+                <a>Remove</a>
+            </div>
+        {{/unless}}
+    </div>
+</div>
