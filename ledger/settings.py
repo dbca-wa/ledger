@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'django_hosts',
     'bootstrap3',
     'jsonify',
+    'reversion',
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
     'wildlifelicensing.apps.dashboard',
@@ -53,7 +54,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
-    'django_hosts.middleware.HostsResponseMiddleware'
+    'django_hosts.middleware.HostsResponseMiddleware',
 ]
 
 # Authentication settings

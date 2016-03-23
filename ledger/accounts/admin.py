@@ -2,9 +2,11 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib import admin
 from django.forms import modelform_factory
 
+from reversion.admin import VersionAdmin
+
 from social.apps.django_app.default.models import UserSocialAuth
 
-from ledger.accounts.models import EmailUser, Address
+from ledger.accounts.models import EmailUser, Address, Persona
 
 
 @admin.register(EmailUser)
@@ -54,6 +56,10 @@ class EmailUserAdmin(UserAdmin):
 
 
 @admin.register(Address)
-class AddressAdmin(admin.ModelAdmin):
+class AddressAdmin(VersionAdmin):
     pass
 
+
+@admin.register(Persona)
+class PersonaAdmin(VersionAdmin):
+    pass
