@@ -12,7 +12,7 @@ from ledger.accounts.models import Address, RevisionedMixin
 @python_2_unicode_compatible
 class LicenceType(RevisionedMixin, ActiveMixin):
     name = models.CharField(max_length=256)
-    code = models.SlugField(max_length=64, blank=True)
+    code = models.CharField(max_length=64)
     description = models.TextField(blank=True)
     replaced_by = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
