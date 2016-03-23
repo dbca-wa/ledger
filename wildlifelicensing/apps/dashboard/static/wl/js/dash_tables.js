@@ -3,22 +3,21 @@ define(
         'jQuery',
         'lodash',
         'js/wl.dataTable',
-        'bootstrap',
-        'bootstrap.select'
+        'bootstrap'
     ],
     function ($, _, dt) {
-        var tableOptions = {
+        var moduleOptions,
+            tableOptions = {
                 paging: true,
                 info: true,
                 searching: true,
                 scrollCollapse: true,
                 processing: true,
                 deferRender: true,
-                serverside: true,
+                serverSide: true,
                 autowidth: true
 
             },
-            data,
             applicationsTable,
             $applicationsLicenceTypeFilter,
             $applicationsStatusTypeFilter;
@@ -27,6 +26,10 @@ define(
             var applicationTableOptions = $.extend({}, tableOptions, {
                     ajax: {
                         url: options.ajax.applications,
+                        data: function (d) {
+                            // add filters to the query
+                            d.filters = $(moduleOptions.selectors.applicationsFilterForm).serializeArray();
+                        },
                         error: function () {
                             console.log("error");
                             //TODO Stop the data table 'Processing' and show an error.
@@ -52,11 +55,9 @@ define(
             );
         }
 
-        function filterApplications() {
-        }
-
-        function initFilters(data) {
-            var optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),
+        function initFilters(options) {
+            var data = options.data,
+                optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),
                 $node;
 
             function createOptionNode(tuple) {
@@ -73,7 +74,7 @@ define(
                 $applicationsLicenceTypeFilter.append($node);
             });
             $applicationsLicenceTypeFilter.on('change', function () {
-                filterApplications();
+                applicationsTable.ajax.reload();
             });
             // applications status
             _.forEach(data.applications.filters.status.values, function (value) {
@@ -81,11 +82,8 @@ define(
                 $applicationsStatusTypeFilter.append($node);
             });
             $applicationsStatusTypeFilter.on('change', function () {
-                filterApplications();
+                applicationsTable.ajax.reload();
             });
-
-            // necessary when option added dynamically
-            $('.selectpicker').selectpicker('refresh');
 
         }
 
@@ -129,20 +127,19 @@ define(
                     }
                 }
             };
-            options = $.extend({}, defaults, options);
+            moduleOptions = $.extend({}, defaults, options);
             $(function () {
-                data = options.data;
-                $applicationsLicenceTypeFilter = $(options.selectors.applicationsLicenceFilter);
-                $applicationsStatusTypeFilter = $(options.selectors.applicationsStatusFilter);
+                $applicationsLicenceTypeFilter = $(moduleOptions.selectors.applicationsLicenceFilter);
+                $applicationsStatusTypeFilter = $(moduleOptions.selectors.applicationsStatusFilter);
 
-                $(options.selectors.applicationsAccordion).collapse('show');
+                $(moduleOptions.selectors.applicationsAccordion).collapse('show');
 
-                initFilters(data);
-                if (data.query) {
+                initFilters(moduleOptions);
+                if (moduleOptions.data.query) {
                     // set filter according to query data
-                    setFilters(data.query);
+                    setFilters(moduleOptions.data.query);
                 }
-                initTables(options);
+                initTables(moduleOptions);
             })
         };
     }

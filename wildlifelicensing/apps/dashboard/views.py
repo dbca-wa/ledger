@@ -127,6 +127,10 @@ class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
         else:
             return self.model.objects.all()
 
+    def filter_queryset(self, qs):
+        print(self.request.GET)
+        return qs
+
     def render_column(self, application, column):
         def render_applicant(applicant):
             return '{last}, {first} ({email})'.format(
