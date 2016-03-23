@@ -12,7 +12,7 @@ def create_licence_types(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('licence', '0003_auto_20160323_1407'),
+        ('licence', '0003_auto_20160323_1434'),
     ]
 
     operations = [
