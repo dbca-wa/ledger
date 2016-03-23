@@ -67,7 +67,6 @@ class DashboardTreeViewBase(TemplateView):
         pending_applications = Application.objects.filter(state='lodged')
         pending_applications_node = self._create_node('Pending applications', href=_build_url(url, query),
                                                       count=len(pending_applications))
-        print('super node', pending_applications_node)
         return [pending_applications_node]
 
     def get_context_data(self, **kwargs):
@@ -91,7 +90,6 @@ class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
         target_url = reverse_lazy('dashboard:tables')
         my_applications = Application.objects.filter(applicant=self.request.user)
         my_applications_node = self._create_node('My applications', href=target_url, count=len(my_applications))
-        print('Node', my_applications_node)
         return [my_applications_node]
 
 
