@@ -58,6 +58,7 @@ MIDDLEWARE_CLASSES = [
 ]
 
 # Authentication settings
+LOGIN_URL = '/'
 AUTHENTICATION_BACKENDS = (
     'social.backends.email.EmailAuth',
     'django.contrib.auth.backends.ModelBackend',

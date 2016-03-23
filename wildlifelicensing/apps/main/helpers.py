@@ -18,11 +18,11 @@ def is_customer(user):
     Rules:
         Must have a EmailUser object linked to this user
         and
-        Must belong to group Customers
+        Not an officer
     :param user:
     :return:
     """
-    return EmailUser.objects.filter(user=user).exists() and belongs_to(user, 'Customers')
+    return EmailUser.objects.filter(user=user).exists() and not is_officer(user)
 
 
 def is_officer(user):

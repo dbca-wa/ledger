@@ -6,7 +6,12 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django_datatables_view.base_datatable_view import BaseDatatableView
 
+from braces.views import LoginRequiredMixin
+
 from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
+from wildlifelicensing.apps.main.helpers import is_officer
+from .forms import LoginForm
 
 
 def _build_url(base, query):
@@ -18,13 +23,16 @@ class DashBoardRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            return redirect('dashboard:quick')
+            if is_officer(self.request.user):
+                return redirect('dashboard:tree_officer')
+            return redirect('dashboard:tree_customer')
         else:
+            kwargs['form'] = LoginForm
             return super(DashBoardRoutingView, self).get(*args, **kwargs)
 
 
-class DashboardQuickView(TemplateView):
-    template_name = 'wl/dash_quick.html'
+class DashboardTreeViewBase(TemplateView):
+    template_name = 'wl/dash_tree.html'
 
     @staticmethod
     def _build_tree_nodes():
@@ -56,28 +64,24 @@ class DashboardQuickView(TemplateView):
         pending_applications = Application.objects.filter(state='lodged')
         pending_applications_node = _create_node('Pending applications', href=_build_url(url, query),
                                                  count=len(pending_applications))
-        # pending licenses
-        query = {
-            'model': 'license',
-            'status': 'pending',
-        }
-        pending_licenses = []
-        pending_licenses_node = _create_node('Pending licenses', href=_build_url(url, query),
-                                             count=len(pending_licenses))
-        # overdue license
-        query = {
-            'model': 'return',
-            'due_date': 'overdue'
-        }
-        overdue_returns = []
-        overdue_returns_node = _create_node('Overdue returns', href=_build_url(url, query),
-                                            count=len(overdue_returns))
-        return [pending_applications_node, pending_licenses_node, overdue_returns_node]
+        return [pending_applications_node]
 
     def get_context_data(self, **kwargs):
         if 'dataJSON' not in kwargs:
             kwargs['dataJSON'] = json.dumps(self._build_tree_nodes())
-        return super(DashboardQuickView, self).get_context_data(**kwargs)
+        if 'title' not in kwargs and hasattr(self, 'title'):
+            kwargs['title'] = self.title
+        return super(DashboardTreeViewBase, self).get_context_data(**kwargs)
+
+
+class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
+    template_name = 'wl/dash_tree.html'
+    title = 'Quick glance dashboard'
+
+
+class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
+    template_name = 'wl/dash_tree.html'
+    title = 'My Dashboard'
 
 
 class DashboardTableView(TemplateView):
