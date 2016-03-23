@@ -9,5 +9,5 @@ urlpatterns = [
     url(r'^admin/', wildlife_licensing_admin_site.urls),
     url(r'^$', DashBoardRoutingView.as_view(), {'form': LoginForm}, name='home'),
     url(r'', include('wildlifelicensing.apps.dashboard.urls', namespace='dashboard')),
-    url(r'', include('wildlifelicensing.apps.applications.urls', namespace='applications')),
+    url(r'^applications/', include('wildlifelicensing.apps.applications.urls', namespace='applications')),
 ] + ledger_patterns

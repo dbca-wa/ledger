@@ -13,8 +13,8 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/application'], function(application) {
-        application('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}', false{% if data %}, {{ data|jsonify }}{% endif %});
+    require(['js/enter_details'], function(enter_details) {
+        enter_details('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}'{% if data %}, {{ data|jsonify }}{% endif %});
     });
 {% endblock %}
 

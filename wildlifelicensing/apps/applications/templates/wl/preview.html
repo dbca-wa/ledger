@@ -11,8 +11,8 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/application_preview'], function(application_preview) {
-        application_preview('#mainContainer', {{ structure|jsonify }}, {{ data|jsonify }}, '{{ csrf_token }}');
+    require(['js/preview'], function(preview) {
+        preview('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}', {{ data|jsonify }});
     });
 {% endblock %}
 

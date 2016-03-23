@@ -1,6 +1,5 @@
 define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function($, Handlebars) {
     var templates = {};
-    var applicationData = {}
 
     function _getTemplate(templateName) {
         if (templates[templateName] === undefined) {
@@ -101,14 +100,13 @@ define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function(
         return itemContainer;
     }
 
-    return function(mainContainerSelector, formStructure, formData, csrfToken) {
-        applicationData = formData;
+    return function(mainContainerSelector, formStructure, csrfToken, data) {
         formStructure.csrfToken = csrfToken;
         $(mainContainerSelector).append(_getTemplate('application_preview')(formStructure));
 
         var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
         $.each(formStructure.children, function(index, child) {
-            childrenAnchorPoint.append(_layoutItem(child, index, false, formData));
+            childrenAnchorPoint.append(_layoutItem(child, index, false, data));
         });
 
         var sectionList = $('#sectionList');

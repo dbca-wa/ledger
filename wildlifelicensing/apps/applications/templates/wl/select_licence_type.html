@@ -14,14 +14,14 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h1>Select application</h1>
+                <h1>Select Licence Type</h1>
             </div>
         </div>
             <div class="row">
                 <div class="col-md-12">
                     <ul>
-                        {% for key, value in applications.items %}
-                            <li><a href="{% url 'applications:application_persona' key %}">{{ value }}</a></li>
+                        {% for key, value in licence_types.items %}
+                            <li><a href="{% url 'applications:create_select_persona' key %}">{{ value }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>

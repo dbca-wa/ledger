@@ -138,48 +138,9 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         });
     }
 
-    return function(mainContainerSelector, formStructure, csrfToken, userSelectionRequired, data) {
+    return function(mainContainerSelector, formStructure, csrfToken, data) {
         formStructure.csrfToken = csrfToken;
         $(mainContainerSelector).append(_getTemplate('application')(formStructure));
-
-        if(userSelectionRequired) {
-            var itemContainer = $('<div>');
-            $('#' + formStructure.childrenAnchorPointID).append(itemContainer);
-            itemContainer.append(_getTemplate('applicant_section')({}));
-
-            $('#applicantInput').select2({
-                ajax: {
-                    url: "/applicants/",
-                    dataType: 'json',
-                    data: function (term) {
-                        return {
-                            term: term
-                        };
-                    },
-                    results: function (data) {
-                        return {
-                            results: data
-                        }
-                    }
-                },
-                initSelection: function(element, callback) {
-                    if(data != undefined && 'applicant' in data) {
-                        $.ajax('/applicants/' + data.applicant, {
-                            dataType: 'json'
-                        }).done(function(applicantData) {
-                            // set initial selection to first (and theoretically only) element
-                            callback(applicantData[0]);
-                        });
-                    }
-                },
-                minimumInputLength: 3
-            });
-
-            var link = $('<a>');
-            link.attr('href', '#applicant');
-            link.text('Applicant');
-            $('#sectionList ul').append($('<li>').append(link));
-        }
 
         var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
 
