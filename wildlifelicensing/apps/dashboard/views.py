@@ -99,36 +99,16 @@ class DashboardTableView(TemplateView):
     template_name = 'wl/dash_tables.html'
 
     def get_context_data(self, **kwargs):
-        license_types = [('all', 'All')] + [(lt.pk, lt.name) for lt in LicenceType.objects.all()]
+        licence_types = [('all', 'All')] + [(lt.pk, lt.name) for lt in LicenceType.objects.all()]
         if 'dataJSON' not in kwargs:
             data = {
                 'applications': {
                     'filters': {
-                        'licenseType': {
-                            'values': license_types,
+                        'licenceType': {
+                            'values': licence_types,
                         },
                         'status': {
                             'values': [('all', 'All')] + list(Application.STATES),
-                        }
-                    }
-                },
-                'licences': {
-                    'filters': {
-                        'licenseType': {
-                            'values': license_types
-                        },
-                        'status': {
-                            'values': [('all', 'All')],
-                        }
-                    }
-                },
-                'returns': {
-                    'filters': {
-                        'licenseType': {
-                            'values': license_types,
-                        },
-                        'dueDate': {
-                            'values': [('all', 'All'), ('overdue', 'Overdue')],
                         }
                     }
                 },
@@ -144,7 +124,6 @@ class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
     order_columns = ['licence_type', 'applicant', 'state']
 
     def get_initial_queryset(self):
-        print('init query set', self.request.user)
         if is_customer(self.request.user):
             return self.model.objects.filter(applicant=self.request.user)
         else:
