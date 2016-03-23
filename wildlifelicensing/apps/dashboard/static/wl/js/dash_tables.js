@@ -88,6 +88,12 @@ define(
                 }),
                 applicationsColumns = [
                     {
+                        title: 'License Type'
+                    },
+                    {
+                        title: 'Applicant'
+                    },
+                    {
                         title: 'Status'
                     }
                 ];

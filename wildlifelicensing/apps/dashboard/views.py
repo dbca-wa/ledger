@@ -1,5 +1,6 @@
 import json
 import urllib
+import logging
 
 from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import redirect
@@ -8,10 +9,13 @@ from django_datatables_view.base_datatable_view import BaseDatatableView
 
 from braces.views import LoginRequiredMixin
 
+from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_officer
+from wildlifelicensing.apps.main.helpers import is_officer, is_customer
 from .forms import LoginForm
+
+logger = logging.getLogger(__name__)
 
 
 def _build_url(base, query):
@@ -35,25 +39,24 @@ class DashboardTreeViewBase(TemplateView):
     template_name = 'wl/dash_tree.html'
 
     @staticmethod
-    def _build_tree_nodes():
+    def _create_node(title, href=None, count=None):
+        node_template = {
+            'text': 'Title',
+            'href': '#',
+            'tags': [],
+            'nodes': None
+        }
+        result = {}
+        result.update(node_template)
+        result['text'] = str(title)
+        if href is not None:
+            result['href'] = str(href)
+        if count is not None:
+            result['tags'].append(str(count))
 
-        def _create_node(title, href=None, count=None):
-            node_template = {
-                'text': 'Title',
-                'href': '#',
-                'tags': [],
-                'nodes': None
-            }
-            result = {}
-            result.update(node_template)
-            result['text'] = str(title)
-            if href is not None:
-                result['href'] = str(href)
-            if count is not None:
-                result['tags'].append(str(count))
+        return result
 
-            return result
-
+    def _build_tree_nodes(self):
         url = reverse_lazy('dashboard:tables')
 
         # pending applications
@@ -62,8 +65,9 @@ class DashboardTreeViewBase(TemplateView):
             'state': 'lodged',
         }
         pending_applications = Application.objects.filter(state='lodged')
-        pending_applications_node = _create_node('Pending applications', href=_build_url(url, query),
-                                                 count=len(pending_applications))
+        pending_applications_node = self._create_node('Pending applications', href=_build_url(url, query),
+                                                      count=len(pending_applications))
+        print('super node', pending_applications_node)
         return [pending_applications_node]
 
     def get_context_data(self, **kwargs):
@@ -83,12 +87,19 @@ class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'My Dashboard'
 
+    def _build_tree_nodes(self):
+        target_url = reverse_lazy('dashboard:tables')
+        my_applications = Application.objects.filter(applicant=self.request.user)
+        my_applications_node = self._create_node('My applications', href=target_url, count=len(my_applications))
+        print('Node', my_applications_node)
+        return [my_applications_node]
+
 
 class DashboardTableView(TemplateView):
     template_name = 'wl/dash_tables.html'
 
     def get_context_data(self, **kwargs):
-        license_types = [('all', 'All')]
+        license_types = [('all', 'All')] + [(lt.pk, lt.name) for lt in LicenceType.objects.all()]
         if 'dataJSON' not in kwargs:
             data = {
                 'applications': {
@@ -127,10 +138,32 @@ class DashboardTableView(TemplateView):
         return super(DashboardTableView, self).get_context_data(**kwargs)
 
 
-class ApplicationDataTableView(BaseDatatableView):
+class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
     model = Application
-    columns = ['state']
-    order_columns = ['state']
+    columns = ['licence_type', 'applicant', 'state']
+    order_columns = ['licence_type', 'applicant', 'state']
 
-    def get(self, request, *args, **kwargs):
-        return super(ApplicationDataTableView, self).get(request, *args, **kwargs)
+    def get_initial_queryset(self):
+        print('init query set', self.request.user)
+        if is_customer(self.request.user):
+            return self.model.objects.filter(applicant=self.request.user)
+        else:
+            return self.model.objects.all()
+
+    def render_column(self, application, column):
+        def render_applicant(applicant):
+            return '{last}, {first} ({email})'.format(
+                last=applicant.last_name,
+                first=applicant.first_name,
+                email=applicant.email
+            )
+
+        if column == 'licence_type':
+            licence_type = application.licence_type
+            result = '{}'.format(licence_type) if licence_type is not None else 'unknown'
+        elif column == 'applicant':
+            user = application.applicant
+            result = render_applicant(user) if user is not None else 'unknown'
+        else:
+            result = super(ApplicationDataTableView, self).render_column(application, column)
+        return result
