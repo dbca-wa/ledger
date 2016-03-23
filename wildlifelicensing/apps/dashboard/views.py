@@ -112,7 +112,7 @@ class DashboardTableView(TemplateView):
                         }
                     }
                 },
-                'licenses': {
+                'licences': {
                     'filters': {
                         'licenseType': {
                             'values': license_types

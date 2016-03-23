@@ -12,7 +12,6 @@ define(
             };
 
             options = $.extend({}, defaults, options);
-            console.log("treeData", options.treeData);
             $(function () {
                 var $tree = $(options.treeSelector);
                 $tree.treeview(

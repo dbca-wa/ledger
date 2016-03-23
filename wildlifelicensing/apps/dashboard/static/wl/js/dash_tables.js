@@ -15,10 +15,11 @@ define(
                 scrollCollapse: true,
                 processing: true,
                 deferRender: true,
+                serverside: true,
                 autowidth: true
 
             },
-            licensesColumns = [
+            licencesColumns = [
                 {
                     title: 'License #',
                     data: 'license_no'
@@ -67,17 +68,16 @@ define(
                 }
             ],
             data,
-            applicationsTable, licensesTable, returnsTable,
+            applicationsTable, licencesTable, returnsTable,
             $applicationsLicenseTypeFilter,
             $applicationsStatusTypeFilter,
-            $licensesLicenseTypeFilter,
-            $licensesStatusTypeFilter,
+            $licencesLicenseTypeFilter,
+            $licencesStatusTypeFilter,
             $returnsDueDateFilter,
             $returnsLicenseTypeFilter;
 
         function initTables(options) {
             var applicationTableOptions = $.extend({}, tableOptions, {
-                    serverSide: true,
                     ajax: {
                         url: options.ajax.applications,
                         error: function () {
@@ -104,10 +104,10 @@ define(
                 applicationsColumns
             );
 
-            licensesTable = dt.initTable(
-                options.licensesTableSelector,
+            licencesTable = dt.initTable(
+                options.licencesTableSelector,
                 tableOptions,
-                licensesColumns
+                licencesColumns
             );
             filterLicenses();
 
@@ -157,20 +157,20 @@ define(
                 filterApplications();
             });
 
-            // licenses
-            _.forEach(data.licenses.filters.licenseType.values, function (value) {
+            // licences
+            _.forEach(data.licences.filters.licenseType.values, function (value) {
                 $node = createOptionNode(value);
-                $licensesLicenseTypeFilter.append($node);
+                $licencesLicenseTypeFilter.append($node);
             });
-            $licensesLicenseTypeFilter.on('change', function () {
+            $licencesLicenseTypeFilter.on('change', function () {
                 filterLicenses();
             });
-            // licenses status
-            _.forEach(data.licenses.filters.status.values, function (value) {
+            // licences status
+            _.forEach(data.licences.filters.status.values, function (value) {
                 $node = createOptionNode(value);
-                $licensesStatusTypeFilter.append($node);
+                $licencesStatusTypeFilter.append($node);
             });
-            $licensesStatusTypeFilter.on('change', function () {
+            $licencesStatusTypeFilter.on('change', function () {
                 filterLicenses();
             });
 
@@ -200,7 +200,7 @@ define(
             if (data.model) {
                 if (data.model === 'application') {
                     $('#applications-collapse').collapse('show');
-                    $('#licenses-collapse').collapse('hide');
+                    $('#licences-collapse').collapse('hide');
                     $('#returns-collapse').collapse('hide');
                     if (data.status) {
                         $applicationsStatusTypeFilter.val(data.status);
@@ -211,18 +211,18 @@ define(
                 }
                 if (data.model === 'license') {
                     $('#applications-collapse').collapse('hide');
-                    $('#licenses-collapse').collapse('show');
+                    $('#licences-collapse').collapse('show');
                     $('#returns-collapse').collapse('hide');
                     if (data.status) {
-                        $licensesStatusTypeFilter.val(data.status);
+                        $licencesStatusTypeFilter.val(data.status);
                     }
                     if (data.license_type) {
-                        $licensesLicenseTypeFilter.val(data.license_type);
+                        $licencesLicenseTypeFilter.val(data.license_type);
                     }
                 }
                 if (data.model === 'return') {
                     $('#applications-collapse').collapse('hide');
-                    $('#licenses-collapse').collapse('hide');
+                    $('#licences-collapse').collapse('hide');
                     $('#returns-collapse').collapse('show');
                     if (data.due_date) {
                         $returnsDueDateFilter.val(data.due_date);
@@ -237,14 +237,14 @@ define(
         return function (options) {
             var defaults = {
                 applicationsTableSelector: '#applications-table',
-                licensesTableSelector: '#licenses-table',
+                licencesTableSelector: '#licences-table',
                 returnsTableSelector: '#returns-table',
 
                 applicationsLicenseFilterSelector: '#applications-filter-license-type',
                 applicationsStatusFilterSelector: '#applications-filter-status',
 
-                licensesLicenseFilterSelector: '#licenses-filter-license-type',
-                licensesStatusFilterSelector: '#licenses-filter-status',
+                licencesLicenseFilterSelector: '#licences-filter-license-type',
+                licencesStatusFilterSelector: '#licences-filter-status',
 
                 returnsLicenseFilterSelector: '#returns-filter-license-type',
                 returnsDueDateFilterSelector: '#returns-filter-dueDate',
@@ -265,7 +265,7 @@ define(
                             }
                         }
                     },
-                    'licenses': {
+                    'licences': {
                         'tableData': [],
                         'filters': {
                             'licenseType': {
@@ -294,8 +294,8 @@ define(
                 data = options.data;
                 $applicationsLicenseTypeFilter = $(options.applicationsLicenseFilterSelector);
                 $applicationsStatusTypeFilter = $(options.applicationsStatusFilterSelector);
-                $licensesLicenseTypeFilter = $(options.licensesLicenseFilterSelector);
-                $licensesStatusTypeFilter = $(options.licensesStatusFilterSelector);
+                $licencesLicenseTypeFilter = $(options.licencesLicenseFilterSelector);
+                $licencesStatusTypeFilter = $(options.licencesStatusFilterSelector);
                 $returnsDueDateFilter = $(options.returnsDueDateFilterSelector);
                 $returnsLicenseTypeFilter = $(options.returnsLicenseFilterSelector);
 
