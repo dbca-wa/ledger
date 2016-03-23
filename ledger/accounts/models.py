@@ -209,8 +209,17 @@ class RevisionedMixin(models.Model):
         with revisions.create_revision():
             super(RevisionedMixin, self).save()
 
+    @property
+    def created_date(self):
+        return revisions.get_for_object(self).last().revision.date_created
+
+    @property
+    def modified_date(self):
+        return revisions.get_for_object(self).first().revision.date_created
+
     class Meta:
         abstract = True
+
 
 @python_2_unicode_compatible
 class Persona(RevisionedMixin):
@@ -225,4 +234,3 @@ class Persona(RevisionedMixin):
             return '{} ({})'.format(self.name, self.email)
         else:
             return '{}'.format(self.email)
-
