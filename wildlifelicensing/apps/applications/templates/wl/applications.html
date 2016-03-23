@@ -21,7 +21,7 @@
                 <div class="col-md-12">
                     <ul>
                         {% for key, value in applications.items %}
-                            <li><a href="{% url 'applications:application' key %}">{{ value }}</a></li>
+                            <li><a href="{% url 'applications:application_persona' key %}">{{ value }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>

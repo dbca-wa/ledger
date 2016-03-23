@@ -4,7 +4,7 @@ import tempfile
 import shutil
 
 from django.views.generic.base import TemplateView, View
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render, redirect
 from django.core.context_processors import csrf
 from django.core.files import File
 from django.contrib import messages
@@ -17,6 +17,9 @@ from ledger.accounts.models import Document
 
 from models import Application
 from utils import create_data_from_form, get_all_filenames_from_application_data
+from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
+from ledger.accounts.forms import AddressForm, PersonaForm
+from bottle import Request
 
 
 class ApplicationsView(LoginRequiredMixin, TemplateView):
@@ -28,6 +31,49 @@ class ApplicationsView(LoginRequiredMixin, TemplateView):
         context['applications'] = {'regulation17': 'Application for a licence to take fauna for scientific purposes'}
 
         return context
+
+
+class PersonaCreationSelectionView(LoginRequiredMixin, TemplateView):
+    template_name = 'wl/persona_creation_selection.html'
+    login_url = '/'
+
+    def get(self, request, *args, **kwargs):
+        context = {}
+
+        if request.user.persona_set.count() > 0:
+            context['persona_selection_form'] = PersonaSelectionForm(user=request.user)
+
+        context['persona_creation_form'] = PersonaForm()
+        context['address_form'] = AddressForm()
+
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        if 'select' in request.POST:
+            persona_selection_form = PersonaSelectionForm(request.POST, user=request.user)
+
+            if persona_selection_form.is_valid():
+                request.session['applicant_persona'] = persona_selection_form.cleaned_data.get('persona').id
+            else:
+                return render(request, self.template_name, {'persona_selection_form': persona_selection_form,
+                                                            'persona_creation_form': PersonaForm(),
+                                                            'address_form': AddressForm()})
+        elif 'create' in request.POST:
+            persona_form = PersonaForm(request.POST)
+            address_form = AddressForm(request.POST)
+
+            if persona_form.is_valid() and address_form.is_valid():
+                persona = persona_form.save(commit=False)
+                persona.postal_address = address_form.save()
+                persona.user = request.user
+                persona.save()
+
+                request.session['applicant_persona'] = persona.id
+            else:
+                return render(request, self.template_name, {'persona_selection_form': PersonaSelectionForm(user=request.user),
+                                                            'persona_creation_form': persona_form, 'address_form': address_form})
+
+        return redirect('applications:application', args[0])
 
 
 class ApplicationView(LoginRequiredMixin, TemplateView):
@@ -50,7 +96,7 @@ class ApplicationView(LoginRequiredMixin, TemplateView):
             # left in the session, delete it
             delete_application_session_data(request.session)
 
-        return render_to_response(self.template_name, context)
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
@@ -119,7 +165,7 @@ class ApplicationPreviewView(LoginRequiredMixin, TemplateView):
 
         context['data'] = request.session.get('application_data')
 
-        return render_to_response(self.template_name, context)
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         if 'edit' in request.POST:

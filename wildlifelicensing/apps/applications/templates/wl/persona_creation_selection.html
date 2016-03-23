@@ -1,0 +1,40 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+
+{% block extra_css %}
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {% if persona_selection_form %}
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>Select Existing Persona</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        {% bootstrap_form persona_selection_form %}
+                        <button type="submit" class="btn btn-primary pull-right" name="select">Use Persona</button>
+                    </form>
+                </div>
+            </div>
+            <hr>
+        {% endif %}
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Create Persona</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    {% bootstrap_form persona_creation_form %}
+                    <h4>Postal Address</h4>
+                    {% bootstrap_form address_form %}
+                    <button type="submit" class="btn btn-primary pull-right" name="create">Create Persona</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
