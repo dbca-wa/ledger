@@ -73,13 +73,13 @@ class Address(models.Model):
 
     # Addresses consist of 1+ lines, only the first of which is
     # required.
-    line1 = models.CharField(max_length=255)
-    line2 = models.CharField(max_length=255, blank=True)
-    line3 = models.CharField(max_length=255, blank=True)
-    locality = models.CharField(max_length=255, blank=True)
+    line1 = models.CharField('Line 1', max_length=255)
+    line2 = models.CharField('Line 2', max_length=255, blank=True)
+    line3 = models.CharField('Line 3', max_length=255, blank=True)
+    locality = models.CharField('Suburb / Town', max_length=255)
     state = models.CharField(
-        max_length=255, choices=STATE_CHOICES, blank=True)
-    postcode = models.IntegerField(null=True, blank=True)
+        max_length=255, choices=STATE_CHOICES)
+    postcode = models.IntegerField()
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
 

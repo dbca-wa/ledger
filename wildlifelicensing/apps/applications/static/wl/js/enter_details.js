@@ -83,7 +83,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                         repeatItem.find('.hidden').removeClass('hidden');
                         repeatItemsAnchorPoint.append(repeatItem);
                     });
-                    childrenAnchorPoint.append(addGroupDiv.append(addGroupLink))
+                    childrenAnchorPoint.append(addGroupDiv.append(addGroupLink));
 
                     if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
                         $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
@@ -114,7 +114,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
     function _setupCopyRemoveEvents(item, itemSelector, index, isRepeat) {
     	itemSelector.find('.copy').click(function(e) {
             var itemCopy = _layoutItem(item, index, true);
-            
+
             itemSelector.find('input, select').each(function() {
                 inputCopy = itemCopy.find("[name='" + $(this).attr('name') + "']");
                 inputCopy.val($(this).val());
@@ -138,48 +138,9 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         });
     }
 
-    return function(mainContainerSelector, formStructure, csrfToken, userSelectionRequired, data) {
+    return function(mainContainerSelector, formStructure, csrfToken, data) {
         formStructure.csrfToken = csrfToken;
         $(mainContainerSelector).append(_getTemplate('application')(formStructure));
-
-        if(userSelectionRequired) {
-            var itemContainer = $('<div>');
-            $('#' + formStructure.childrenAnchorPointID).append(itemContainer);
-            itemContainer.append(_getTemplate('applicant_section')({}));
-
-            $('#applicantInput').select2({
-                ajax: {
-                    url: "/applicants/",
-                    dataType: 'json',
-                    data: function (term) {
-                        return {
-                            term: term
-                        };
-                    },
-                    results: function (data) {
-                        return {
-                            results: data
-                        }
-                    }
-                },
-                initSelection: function(element, callback) {
-                    if(data != undefined && 'applicant' in data) {
-                        $.ajax('/applicants/' + data.applicant, {
-                            dataType: 'json'
-                        }).done(function(applicantData) {
-                            // set initial selection to first (and theoretically only) element
-                            callback(applicantData[0]);
-                        });
-                    }
-                },
-                minimumInputLength: 3
-            });
-
-            var link = $('<a>');
-            link.attr('href', '#applicant');
-            link.text('Applicant');
-            $('#sectionList ul').append($('<li>').append(link));
-        }
 
         var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
 
@@ -190,7 +151,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         // initialise side-menu
         var sectionList = $('#sectionList');
         $('body').scrollspy({ target: '#sectionList' });
-        sectionList.affix({ offset: { top: 200 }});
+        sectionList.affix({ offset: { top: sectionList.offset().top }});
 
         // initialise all datapickers
         $('.date').datetimepicker({
