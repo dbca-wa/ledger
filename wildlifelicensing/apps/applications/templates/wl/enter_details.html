@@ -13,8 +13,13 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/enter_details'], function(enter_details) {
-        enter_details('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}'{% if data %}, {{ data|jsonify }}{% endif %});
+    require(['js/application_details'], function(applicationDetails) {
+        applicationDetails.layoutFormItems('#formContainer', {{ structure|jsonify }}{% if data %}, {{ data|jsonify }}{% endif %});
+
+        $('#mainContainer').removeClass('hidden');
+
+        // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
+        applicationDetails.initialiseSidebarMenu('#sectionList');
     });
 {% endblock %}
 
@@ -34,13 +39,31 @@
 {% endblock %}
 
 {% block content %}
-    <div id="mainContainer" class="container" />
+    <div id="mainContainer" class="container hidden">
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="vertical-buffer">Selected Persona: <em>{{ persona.name }}</em></label>
             </div>
             <div class="col-md-10 col-sm-2">
                 <h2>{{ licence_type.name }}</h2>
+            </div>
+        </div>
+        <div class="row">
+            <nav class="hidden-xs col-sm-3 col-md-2">
+                <div id="sectionList">
+                    <ul class="nav nav-stacked">
+                    </ul>
+                </div>
+            </nav>
+            <div class="col-xs-12 col-sm-9 col-md-10">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div id="formContainer">
+                    </div>
+                    <a class="btn btn-default" href="{% url 'applications:enter_details' licence_type.code %}">Change Persona</a>
+                    <button type="submit" class="btn btn-primary pull-right" name="lodge">Preview and Lodge Application</button>
+                    <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>
+                </form>
             </div>
         </div>
     </div>

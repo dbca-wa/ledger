@@ -100,18 +100,18 @@ define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function(
         return itemContainer;
     }
 
-    return function(mainContainerSelector, formStructure, csrfToken, data) {
-        formStructure.csrfToken = csrfToken;
-        $(mainContainerSelector).append(_getTemplate('application_preview')(formStructure));
+    return {
+        layoutPreviewItems: function(formContainerSelector, formStructure, data) {
+            var formContainer = $(formContainerSelector);
 
-        var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
-        $.each(formStructure.children, function(index, child) {
-            childrenAnchorPoint.append(_layoutItem(child, index, false, data));
-        });
-
-        var sectionList = $('#sectionList');
-        $('body').scrollspy({ target: '#sectionList' });
-        sectionList.affix({ offset: { top: sectionList.offset().top }});
-
-    };
+            $.each(formStructure, function(index, child) {
+                formContainer.append(_layoutItem(child, index, false, data));
+            });
+        },
+        initialiseSidebarMenu(sidebarMenuSelector) {
+            var sectionList = $(sidebarMenuSelector);
+            $('body').scrollspy({ target: '#sectionList' });
+            sectionList.affix({ offset: { top: sectionList.offset().top }});
+        }
+    }
 });
