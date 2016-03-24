@@ -11,8 +11,13 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/preview'], function(preview) {
-        preview('#mainContainer', {{ structure|jsonify }}, '{{ csrf_token }}', {{ data|jsonify }});
+    require(['jQuery', 'js/application_preview'], function($, applicationPreview) {
+        applicationPreview.layoutPreviewItems('#formContainer', {{ structure|jsonify }}, {{ data|jsonify }});
+
+        $('#mainContainer').removeClass('hidden');
+
+        // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
+        applicationPreview.initialiseSidebarMenu('#sectionList');
     });
 {% endblock %}
 
@@ -33,13 +38,30 @@
 {% endblock %}
 
 {% block content %}
-    <div id="mainContainer" class="container" />
+    <div id="mainContainer" class="container hidden">
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="vertical-buffer">Selected Persona: <em>{{ persona.name }}</em></label>
             </div>
             <div class="col-md-10 col-sm-2">
                 <h2>{{ licence_type.name }}</h2>
+            </div>
+        </div>
+        <div class="row">
+            <nav class="hidden-xs col-sm-3 col-md-2">
+                <div id="sectionList">
+                    <ul class="nav nav-stacked">
+                    </ul>
+                </div>
+            </nav>
+            <div class="col-xs-12 col-sm-9 col-md-10">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div id="formContainer">
+                    </div>
+                    <a class="btn btn-default" href="{% url 'applications:enter_details' licence_type.code %}">Edit Application Details</a>
+                    <button type="submit" class="btn btn-primary pull-right" name="lodge">Lodge Application</button>
+                </form>
             </div>
         </div>
     </div>

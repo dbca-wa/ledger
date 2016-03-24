@@ -138,44 +138,45 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         });
     }
 
-    return function(mainContainerSelector, formStructure, csrfToken, data) {
-        formStructure.csrfToken = csrfToken;
-        $(mainContainerSelector).append(_getTemplate('application')(formStructure));
+    return {
+        layoutFormItems: function(formContainerSelector, formStructure, data) {
+            var formContainer = $(formContainerSelector);
 
-        var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
+            $.each(formStructure, function(index, child) {
+                formContainer.append(_layoutItem(child, index, false, data));
+            });
 
-        $.each(formStructure.children, function(index, child) {
-            childrenAnchorPoint.append(_layoutItem(child, index, false, data));
-        });
 
-        // initialise side-menu
-        var sectionList = $('#sectionList');
-        $('body').scrollspy({ target: '#sectionList' });
-        sectionList.affix({ offset: { top: sectionList.offset().top }});
 
-        // initialise all datapickers
-        $('.date').datetimepicker({
-            format: 'DD/MM/YYYY'
-        });
+            // initialise all datapickers
+            $('.date').datetimepicker({
+                format: 'DD/MM/YYYY'
+            });
 
-        // initialise parsley form validation
-        $('form').parsley({
-            successClass: "has-success",
-            errorClass: "has-error",
-            classHandler: function(el) {
-                return el.$element.closest(".form-group");
-            },
-            errorsContainer: function(el) {
-                return el.$element.parents('.form-group');
-            },
-            errorsWrapper: '<span class="help-block">',
-            errorTemplate: '<div></div>'
-        }).on('field:validate', function(el) {
-            // skip validation of invisible fields
-            if (!el.$element.is(':visible')) {
-                el.value = false;
-                return true;
-            }
-        });
-    };
+            // initialise parsley form validation
+            $('form').parsley({
+                successClass: "has-success",
+                errorClass: "has-error",
+                classHandler: function(el) {
+                    return el.$element.closest(".form-group");
+                },
+                errorsContainer: function(el) {
+                    return el.$element.parents('.form-group');
+                },
+                errorsWrapper: '<span class="help-block">',
+                errorTemplate: '<div></div>'
+            }).on('field:validate', function(el) {
+                // skip validation of invisible fields
+                if (!el.$element.is(':visible')) {
+                    el.value = false;
+                    return true;
+                }
+            });
+        },
+        initialiseSidebarMenu(sidebarMenuSelector) {
+            var sectionList = $(sidebarMenuSelector);
+            $('body').scrollspy({ target: '#sectionList' });
+            sectionList.affix({ offset: { top: sectionList.offset().top }});
+        }
+    }
 });
