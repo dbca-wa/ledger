@@ -24,6 +24,10 @@ def _build_url(base, query):
     return base + '?' + urllib.urlencode(query)
 
 
+def _get_user_applications(user):
+    return Application.objects.filter(applicant_persona__user=user)
+
+
 class DashBoardRoutingView(TemplateView):
     template_name = 'wl/index.html'
 
@@ -77,7 +81,7 @@ class DashboardTreeViewBase(TemplateView):
             'model': 'application',
             'status': 'lodged',
         }
-        pending_applications = Application.objects.filter(state='lodged')
+        pending_applications = Application.objects.filter(status='lodged')
         pending_applications_node = self._create_node('New applications', href=_build_url(url, query),
                                                       count=len(pending_applications))
         return [pending_applications_node]
@@ -105,12 +109,12 @@ class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
               - status
         :return:
         """
-        my_applications = Application.objects.filter(applicant=self.request.user)
+        my_applications = _get_user_applications(self.request.user)
         target_url = reverse_lazy('dashboard:tables')
         my_applications_node = self._create_node('My applications', href=target_url, count=len(my_applications))
         # one children node per status
-        for status in [s[0] for s in Application.STATES]:
-            applications = my_applications.filter(state=status)
+        for status in [s[0] for s in Application.STATUS_CHOICES]:
+            applications = my_applications.filter(status=status)
             if applications.count() > 0:
                 query = {
                     'model': 'application',
@@ -126,7 +130,7 @@ class DashboardTableView(TemplateView):
     template_name = 'wl/dash_tables.html'
 
     def get_context_data(self, **kwargs):
-        licence_types = [('all', 'All')] + [(lt.pk, lt.name) for lt in LicenceType.objects.all()]
+        licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
         if 'dataJSON' not in kwargs:
             data = {
                 'applications': {
@@ -135,7 +139,7 @@ class DashboardTableView(TemplateView):
                             'values': licence_types,
                         },
                         'status': {
-                            'values': [('all', 'All')] + list(Application.STATES),
+                            'values': [('all', 'All')] + list(Application.STATUS_CHOICES),
                         }
                     }
                 },
@@ -147,8 +151,8 @@ class DashboardTableView(TemplateView):
 
 class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
     model = Application
-    columns = ['licence_type', 'applicant', 'state']
-    order_columns = ['licence_type', 'applicant', 'state']
+    columns = ['licence_type', 'applicant_persona', 'status']
+    order_columns = ['licence_type', 'applicant_persona', 'status']
 
     def _parse_filters(self):
         """
@@ -176,7 +180,7 @@ class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
 
     def get_initial_queryset(self):
         if is_customer(self.request.user):
-            return self.model.objects.filter(applicant=self.request.user)
+            return _get_user_applications(self.request.user)
         else:
             return self.model.objects.all()
 
@@ -187,23 +191,28 @@ class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
             # if the value is 'all' no filter to apply
             if filter_value != 'all':
                 if filter_name == 'status':
-                    query &= Q(state=filter_value)
+                    query &= Q(status=filter_value)
         return qs.filter(query)
 
     def render_column(self, application, column):
-        def render_applicant(applicant):
-            return '{last}, {first} ({email})'.format(
-                last=applicant.last_name,
-                first=applicant.first_name,
-                email=applicant.email
+        def render_applicant_column(persona):
+            user_details = '{last}, {first}, {email}'.format(
+                last=persona.user.last_name,
+                first=persona.user.first_name,
+                email=persona.email
             )
+            persona_details = '{}'.format(persona)
+            if is_officer(self.request.user):
+                return user_details + ' [{}]'.format(persona_details)
+            else:
+                return persona_details
 
         if column == 'licence_type':
-            licence_type = application.licence_type
+            licence_type = application.licence_type.code
             result = '{}'.format(licence_type) if licence_type is not None else 'unknown'
-        elif column == 'applicant':
-            user = application.applicant
-            result = render_applicant(user) if user is not None else 'unknown'
+        elif column == 'applicant_persona':
+            result = render_applicant_column(
+                application.applicant_persona) if application.applicant_persona is not None else 'unknown'
         else:
             result = super(ApplicationDataTableView, self).render_column(application, column)
         return result
