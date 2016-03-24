@@ -26,7 +26,6 @@ define(
                         onhoverColor: '#FFFFFF',
                         showTags: true
                     });
-                $tree.treeview('collapseAll', {silent: true});
             });
         }
     }
