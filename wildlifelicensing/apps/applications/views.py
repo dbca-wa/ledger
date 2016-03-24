@@ -3,13 +3,12 @@ import os
 import tempfile
 import shutil
 
-from django.views.generic.base import TemplateView, View
+from django.views.generic.base import TemplateView
 from django.shortcuts import render, redirect
 from django.core.context_processors import csrf
 from django.core.files import File
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http.response import JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from ledger.accounts.models import Persona
@@ -93,10 +92,13 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
+        licence_type = LicenceType.objects.get(code=args[0])
+        persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+
         with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
             form_structure = json.load(data_file)
 
-        context = {'structure': form_structure, 'application_type': args[0]}
+        context = {'licence_type': licence_type, 'persona': persona, 'structure': form_structure}
         context.update(csrf(request))
 
         if request.GET.get('editing', '') == 'true':
@@ -114,8 +116,9 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
         if 'draft' in request.POST:
             applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
-            application = Application.objects.create(data=request.session.get('application_data'),
-                                                     applicant_persona=applicant_persona, state='draft')
+            licence_type = LicenceType.objects.get(code=args[0])
+            application = Application.objects.create(data=request.session.get('application_data'), licence_type=licence_type,
+                                                     applicant_persona=applicant_persona, status='draft')
 
             if 'application_files' in request.session and os.path.exists(request.session.get('application').get('files')):
                 try:
@@ -141,7 +144,7 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
 
             delete_application_session_data(request.session)
 
-            return redirect('dashb:select_licence_type')
+            return redirect('applications:select_licence_type')
         else:
             if len(request.FILES) > 0:
                 if 'files' not in request.session.get('application'):
@@ -163,7 +166,10 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
             form_stucture = json.load(data_file)
 
-        context = {'structure': form_stucture, 'application_type': args[0]}
+        licence_type = LicenceType.objects.get(code=args[0])
+        persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+
+        context = {'structure': form_stucture, 'licence_type': licence_type, 'persona': persona}
         context.update(csrf(request))
 
         context['data'] = request.session.get('application').get('data')
@@ -182,7 +188,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         licence_type = LicenceType.objects.get(code=args[0])
 
         application = Application.objects.create(data=request.session.get('application').get('data'), licence_type=licence_type,
-                                                 applicant_persona=applicant_persona, state='lodged')
+                                                 applicant_persona=applicant_persona, status='lodged')
 
         # if attached files were saved temporarily, add each to application as part of a Document
         if 'files' in request.session.get('application') and os.path.exists(request.session.get('application').get('files')):

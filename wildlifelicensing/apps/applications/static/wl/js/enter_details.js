@@ -83,7 +83,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                         repeatItem.find('.hidden').removeClass('hidden');
                         repeatItemsAnchorPoint.append(repeatItem);
                     });
-                    childrenAnchorPoint.append(addGroupDiv.append(addGroupLink))
+                    childrenAnchorPoint.append(addGroupDiv.append(addGroupLink));
 
                     if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
                         $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
@@ -114,7 +114,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
     function _setupCopyRemoveEvents(item, itemSelector, index, isRepeat) {
     	itemSelector.find('.copy').click(function(e) {
             var itemCopy = _layoutItem(item, index, true);
-            
+
             itemSelector.find('input, select').each(function() {
                 inputCopy = itemCopy.find("[name='" + $(this).attr('name') + "']");
                 inputCopy.val($(this).val());
@@ -151,7 +151,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         // initialise side-menu
         var sectionList = $('#sectionList');
         $('body').scrollspy({ target: '#sectionList' });
-        sectionList.affix({ offset: { top: 200 }});
+        sectionList.affix({ offset: { top: sectionList.offset().top }});
 
         // initialise all datapickers
         $('.date').datetimepicker({

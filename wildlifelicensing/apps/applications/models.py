@@ -10,10 +10,11 @@ from ledger.licence.models import LicenceType
 
 
 class Application(models.Model):
-    STATES = (('draft', 'Draft'), ('lodged', 'Lodged'))
+    STATUS_CHOICES = (('draft', 'Draft'), ('lodged', 'Lodged'))
+
     licence_type = models.ForeignKey(LicenceType)
     applicant_persona = models.ForeignKey(Persona)
-    state = models.CharField('Application State', max_length=20, choices=STATES)
+    status = models.CharField('Application State', max_length=20, choices=STATUS_CHOICES)
     data = JSONField()
     documents = models.ManyToManyField(Document)
 

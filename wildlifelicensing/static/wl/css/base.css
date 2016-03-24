@@ -34,3 +34,13 @@
 .required-form-field label {
   font-weight: 900;
 }
+
+.vertical-buffer {
+    margin-top: 20px;
+}
+
+.wl-breadcrumbs {
+    background-color: white;
+    margin-top: -20px;
+    padding-left: 0px;
+}

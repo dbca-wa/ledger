@@ -10,6 +10,19 @@
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
 
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li class="active">Licence Applications</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="row">

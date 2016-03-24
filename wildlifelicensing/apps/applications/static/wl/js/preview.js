@@ -111,7 +111,7 @@ define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function(
 
         var sectionList = $('#sectionList');
         $('body').scrollspy({ target: '#sectionList' });
-        sectionList.affix({ offset: { top: 200 }});
+        sectionList.affix({ offset: { top: sectionList.offset().top }});
 
     };
 });
