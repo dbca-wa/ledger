@@ -16,7 +16,6 @@ define(
                 deferRender: true,
                 serverSide: true,
                 autowidth: true
-
             },
             applicationsTable,
             $applicationsLicenceTypeFilter,
@@ -25,7 +24,7 @@ define(
         function initTables(options) {
             var applicationTableOptions = $.extend({}, tableOptions, {
                     ajax: {
-                        url: options.ajax.applications,
+                        url: options.data.applications.ajax.url,
                         data: function (d) {
                             // add filters to the query
                             d.filters = $(moduleOptions.selectors.applicationsFilterForm).serializeArray();
@@ -36,17 +35,7 @@ define(
                         }
                     }
                 }),
-                applicationsColumns = [
-                    {
-                        title: 'Licence Type'
-                    },
-                    {
-                        title: 'Applicant'
-                    },
-                    {
-                        title: 'Status'
-                    }
-                ];
+                applicationsColumns = options.data.applications.columnDefinitions;
 
             applicationsTable = dt.initTable(
                 options.selectors.applicationsTable,
@@ -110,12 +99,22 @@ define(
                     applicationsLicenceFilter: '#applications-filter-licence-type',
                     applicationsStatusFilter: '#applications-filter-status'
                 },
-                ajax: {
-                    applications: "/dashboard/data/applications"
-                },
                 data: {
                     'applications': {
-                        'tableData': [],
+                        ajax: {
+                            url: "/dashboard/data/applications"
+                        },
+                        'columnDefinitions': [
+                            {
+                                title: 'Licence Type'
+                            },
+                            {
+                                title: 'Applicant'
+                            },
+                            {
+                                title: 'Status'
+                            }
+                        ],
                         'filters': {
                             'licenceType': {
                                 'values': ['All']
