@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('licence', '0004_make_licence_types'),
+        ('licence', '0003_auto_20160323_1434'),
         ('main', '0001_make_groups'),
     ]
 
