@@ -6,6 +6,7 @@ require.config({
         'bootstrap-datetimepicker': '//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.7.14/js/bootstrap-datetimepicker.min',
         'select2': '//static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min',
         'handlebars': '//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.amd.min',
+        'handlebars.runtime': '//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.runtime.amd.min',
         'moment': '//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min',
         'parsley': '//static.dpaw.wa.gov.au/static/libs/parsley.js/2.3.5/parsley.min',
         'datatables.net': '//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/js/jquery.dataTables.min',

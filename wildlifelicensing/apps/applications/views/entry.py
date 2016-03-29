@@ -145,7 +145,7 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
 
             delete_application_session_data(request.session)
 
-            return redirect('applications:select_licence_type')
+            return redirect('dashboard:home')
         else:
             if len(request.FILES) > 0:
                 if 'files' not in request.session.get('application'):

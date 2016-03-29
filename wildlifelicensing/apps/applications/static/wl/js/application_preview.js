@@ -1,20 +1,4 @@
-define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function($, Handlebars) {
-    var templates = {};
-
-    function _getTemplate(templateName) {
-        if (templates[templateName] === undefined) {
-            $.ajax({
-                url: '/static/wl/hdb_templates/' + templateName + '.handlebars',
-                success: function(data) {
-                    templates[templateName] = Handlebars.compile(data);
-                },
-                async: false
-            });
-        }
-
-        return templates[templateName]
-    }
-
+define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, index, isRepeat, itemData) {
         var itemContainer = $('<div>');
 
@@ -33,7 +17,7 @@ define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function(
 
         if(item.type === 'section' || item.type === 'group') {
             item.isPreviewMode = true;
-            itemContainer.append(_getTemplate(item.type)(item));
+            itemContainer.append(Handlebars.templates[item.type](item));
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
             itemContainer.append($('<label>').text(item.label));
             $.each(item.options, function(index, option) {
