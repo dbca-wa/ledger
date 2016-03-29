@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/application_details'], function(applicationDetails) {
+    require(['js/application_entry'], function(applicationDetails) {
         applicationDetails.layoutFormItems('#formContainer', {{ structure|jsonify }}{% if data %}, {{ data|jsonify }}{% endif %});
 
         $('#mainContainer').removeClass('hidden');
@@ -43,13 +43,14 @@
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="vertical-buffer">Selected Persona: <em>{{ persona.name }}</em></label>
+                <a href="{% url 'applications:create_select_persona' licence_type.code %}">Change Persona</a>
             </div>
             <div class="col-md-10 col-sm-2">
                 <h2>{{ licence_type.name }}</h2>
             </div>
         </div>
         <div class="row">
-            <nav class="hidden-xs col-sm-3 col-md-2">
+            <nav class="hidden-xs col-sm-3 col-md-2 vertical-buffer">
                 <div id="sectionList">
                     <ul class="nav nav-stacked">
                     </ul>
@@ -60,7 +61,6 @@
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
-                    <a class="btn btn-default" href="{% url 'applications:enter_details' licence_type.code %}">Change Persona</a>
                     <button type="submit" class="btn btn-primary pull-right" name="lodge">Preview and Lodge Application</button>
                     <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>
                 </form>

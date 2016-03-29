@@ -89,14 +89,6 @@ define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function(
             });
         }
 
-        // if item is a section, need to add to side menu list
-        if(item.type === 'section') {
-            var link = $('<a>');
-            link.attr('href', '#section-' + index);
-            link.text(item.label);
-            $('#sectionList ul').append($('<li>').append(link));
-        }
-
         return itemContainer;
     }
 
@@ -109,6 +101,13 @@ define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function(
             });
         },
         initialiseSidebarMenu(sidebarMenuSelector) {
+            $('.section').each(function(index, value) {
+                var link = $('<a>');
+                link.attr('href', '#section-' + index);
+                link.text($(this).text());
+                $('#sectionList ul').append($('<li>').append(link));
+            });
+
             var sectionList = $(sidebarMenuSelector);
             $('body').scrollspy({ target: '#sectionList' });
             sectionList.affix({ offset: { top: sectionList.offset().top }});

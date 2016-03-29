@@ -96,14 +96,6 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             });
         }
 
-        // if item is a section, need to add to side menu list
-        if(item.type === 'section') {
-            var link = $('<a>');
-            link.attr('href', '#section-' + index);
-            link.text(item.label);
-            $('#sectionList ul').append($('<li>').append(link));
-        }
-
         if(item.isRepeatable) {
             _setupCopyRemoveEvents(item, itemContainer, index, true);
         }
@@ -146,8 +138,6 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                 formContainer.append(_layoutItem(child, index, false, data));
             });
 
-
-
             // initialise all datapickers
             $('.date').datetimepicker({
                 format: 'DD/MM/YYYY'
@@ -174,6 +164,13 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             });
         },
         initialiseSidebarMenu(sidebarMenuSelector) {
+            $('.section').each(function(index, value) {
+                var link = $('<a>');
+                link.attr('href', '#section-' + index);
+                link.text($(this).text());
+                $('#sectionList ul').append($('<li>').append(link));
+            });
+
             var sectionList = $(sidebarMenuSelector);
             $('body').scrollspy({ target: '#sectionList' });
             sectionList.affix({ offset: { top: sectionList.offset().top }});
