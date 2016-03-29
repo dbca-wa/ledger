@@ -115,7 +115,7 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
             applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
             licence_type = LicenceType.objects.get(code=args[0])
-            application = Application.objects.create(data=request.session.get('application_data'), licence_type=licence_type,
+            application = Application.objects.create(data=request.session.get('application').get('data'), licence_type=licence_type,
                                                      applicant_persona=applicant_persona, status='draft')
 
             if 'application_files' in request.session and os.path.exists(request.session.get('application').get('files')):
