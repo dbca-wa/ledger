@@ -25,12 +25,14 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
     template_name = 'wl/select_licence_type.html'
     login_url = '/'
 
-    def get_context_data(self, **kwargs):
-        context = super(SelectLicenceTypeView, self).get_context_data(**kwargs)
+    def get(self, request, *args, **kwargs):
+        # if we've arrived at the licence type selection page and there is hangover application data left in the session, delete it
+        delete_application_session_data(request.session)
+        request.session['application'] = {}
 
-        context['licence_types'] = dict([(licence_type.code, licence_type.name) for licence_type in LicenceType.objects.all()])
+        context = {'licence_types': dict([(licence_type.code, licence_type.name) for licence_type in LicenceType.objects.all()])}
 
-        return context
+        return render(request, self.template_name, context)
 
 
 class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
@@ -40,15 +42,11 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = {}
 
-        if request.GET.get('editing', '') == 'true':
-            selected_persona_id = request.session.get('application').get('persona')
-            context['persona_selection_form'] = PersonaSelectionForm(user=request.user, initial=selected_persona_id)
+        if 'persona' in request.session.get('application'):
+            selected_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+            context['persona_selection_form'] = PersonaSelectionForm(user=request.user, selected_persona=selected_persona)
+            print PersonaSelectionForm
         else:
-            # if we've arrived at the application entry page and there is hangover data
-            # left in the session, delete it
-            delete_application_session_data(request.session)
-            request.session['application'] = {}
-
             if request.user.persona_set.count() > 0:
                 context['persona_selection_form'] = PersonaSelectionForm(user=request.user)
 
@@ -101,7 +99,7 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
         context = {'licence_type': licence_type, 'persona': persona, 'structure': form_structure}
         context.update(csrf(request))
 
-        if request.GET.get('editing', '') == 'true':
+        if 'data' in request.session.get('application'):
             context['data'] = request.session.get('application').get('data')
 
         return render(request, self.template_name, context)
@@ -117,7 +115,7 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
             applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
             licence_type = LicenceType.objects.get(code=args[0])
-            application = Application.objects.create(data=request.session.get('application_data'), licence_type=licence_type,
+            application = Application.objects.create(data=request.session.get('application').get('data'), licence_type=licence_type,
                                                      applicant_persona=applicant_persona, status='draft')
 
             if 'application_files' in request.session and os.path.exists(request.session.get('application').get('files')):
@@ -177,9 +175,6 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        if 'edit' in request.POST:
-            return redirect(reverse('applications:enter_details', args=(args[0],)) + '?editing=true')
-
         with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
             form_structure = json.load(data_file)
 

@@ -89,29 +89,28 @@ define(['jQuery', 'handlebars', 'bootstrap', 'js/handlebars_helpers'], function(
             });
         }
 
-        // if item is a section, need to add to side menu list
-        if(item.type === 'section') {
-            var link = $('<a>');
-            link.attr('href', '#section-' + index);
-            link.text(item.label);
-            $('#sectionList ul').append($('<li>').append(link));
-        }
-
         return itemContainer;
     }
 
-    return function(mainContainerSelector, formStructure, csrfToken, data) {
-        formStructure.csrfToken = csrfToken;
-        $(mainContainerSelector).append(_getTemplate('application_preview')(formStructure));
+    return {
+        layoutPreviewItems: function(formContainerSelector, formStructure, data) {
+            var formContainer = $(formContainerSelector);
 
-        var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
-        $.each(formStructure.children, function(index, child) {
-            childrenAnchorPoint.append(_layoutItem(child, index, false, data));
-        });
+            $.each(formStructure, function(index, child) {
+                formContainer.append(_layoutItem(child, index, false, data));
+            });
+        },
+        initialiseSidebarMenu(sidebarMenuSelector) {
+            $('.section').each(function(index, value) {
+                var link = $('<a>');
+                link.attr('href', '#section-' + index);
+                link.text($(this).text());
+                $('#sectionList ul').append($('<li>').append(link));
+            });
 
-        var sectionList = $('#sectionList');
-        $('body').scrollspy({ target: '#sectionList' });
-        sectionList.affix({ offset: { top: sectionList.offset().top }});
-
-    };
+            var sectionList = $(sidebarMenuSelector);
+            $('body').scrollspy({ target: '#sectionList' });
+            sectionList.affix({ offset: { top: sectionList.offset().top }});
+        }
+    }
 });
