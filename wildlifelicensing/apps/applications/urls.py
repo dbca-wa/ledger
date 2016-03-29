@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from views import SelectLicenceTypeView, CreateSelectPersonaView, EnterDetails, PreviewView
+from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeView, CreateSelectPersonaView, EnterDetails, PreviewView
 
 urlpatterns = [
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
