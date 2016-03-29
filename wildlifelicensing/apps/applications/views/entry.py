@@ -8,21 +8,22 @@ from django.shortcuts import render, redirect
 from django.core.context_processors import csrf
 from django.core.files import File
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from ledger.accounts.models import Persona
 from ledger.accounts.models import Document
 
-from models import Application
-from utils import create_data_from_form, get_all_filenames_from_application_data
+from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data
 from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
 from ledger.accounts.forms import AddressForm, PersonaForm
 from ledger.licence.models import LicenceType
 
+APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+
 
 class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
-    template_name = 'wl/select_licence_type.html'
+    template_name = 'wl/entry/select_licence_type.html'
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
@@ -36,7 +37,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
 
 
 class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
-    template_name = 'wl/create_select_persona.html'
+    template_name = 'wl/entry/create_select_persona.html'
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
@@ -86,14 +87,14 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
 
 
 class EnterDetails(LoginRequiredMixin, TemplateView):
-    template_name = 'wl/enter_details.html'
+    template_name = 'wl/entry/enter_details.html'
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
         licence_type = LicenceType.objects.get(code=args[0])
         persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
-        with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_structure = json.load(data_file)
 
         context = {'licence_type': licence_type, 'persona': persona, 'structure': form_structure}
@@ -105,7 +106,7 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_structure = json.load(data_file)
 
         request.session['application']['data'] = create_data_from_form(form_structure, request.POST, request.FILES)
@@ -157,11 +158,11 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
 
 
 class PreviewView(LoginRequiredMixin, TemplateView):
-    template_name = 'wl/preview.html'
+    template_name = 'wl/entry/preview.html'
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_stucture = json.load(data_file)
 
         licence_type = LicenceType.objects.get(code=args[0])
@@ -175,7 +176,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (os.path.abspath(os.path.dirname(__file__)), args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_structure = json.load(data_file)
 
         applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
