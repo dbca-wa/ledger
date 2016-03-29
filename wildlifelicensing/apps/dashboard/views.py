@@ -79,9 +79,9 @@ class DashboardTreeViewBase(TemplateView):
         # pending applications
         query = {
             'model': 'application',
-            'status': 'lodged',
+            'customer_status': 'pending',
         }
-        pending_applications = Application.objects.filter(status='lodged')
+        pending_applications = Application.objects.filter(customer_status='pending')
         pending_applications_node = self._create_node('New applications', href=_build_url(url, query),
                                                       count=len(pending_applications))
         return [pending_applications_node]
@@ -113,12 +113,12 @@ class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
         target_url = reverse_lazy('dashboard:tables')
         my_applications_node = self._create_node('My applications', href=target_url, count=len(my_applications))
         # one children node per status
-        for status in [s[0] for s in Application.STATUS_CHOICES]:
-            applications = my_applications.filter(status=status)
+        for status in [s[0] for s in Application.CUSTOMER_STATUS_CHOICES]:
+            applications = my_applications.filter(customer_status=status)
             if applications.count() > 0:
                 query = {
                     'model': 'application',
-                    'status': status,
+                    'customer_status': status,
                 }
                 href = _build_url(target_url, query)
                 node = self._create_node(status, href=href, count=applications.count())
@@ -139,7 +139,7 @@ class DashboardTableView(TemplateView):
                             'values': licence_types,
                         },
                         'status': {
-                            'values': [('all', 'All')] + list(Application.STATUS_CHOICES),
+                            'values': [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES),
                         }
                     }
                 },
@@ -191,7 +191,7 @@ class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
             # if the value is 'all' no filter to apply
             if filter_value != 'all':
                 if filter_name == 'status':
-                    query &= Q(status=filter_value)
+                    query &= Q(customer_status=filter_value)
         return qs.filter(query)
 
     def render_column(self, application, column):

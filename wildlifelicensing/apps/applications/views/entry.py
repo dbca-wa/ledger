@@ -12,12 +12,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from ledger.accounts.models import Persona
 from ledger.accounts.models import Document
+from ledger.accounts.forms import AddressForm, PersonaForm
+
+from wildlifelicensing.apps.main.models import WildlifeLicenceType
 
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data
 from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
-from ledger.accounts.forms import AddressForm, PersonaForm
-from ledger.licence.models import LicenceType
+
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -31,7 +33,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
         delete_application_session_data(request.session)
         request.session['application'] = {}
 
-        context = {'licence_types': dict([(licence_type.code, licence_type.name) for licence_type in LicenceType.objects.all()])}
+        context = {'licence_types': dict([(licence_type.code, licence_type.name) for licence_type in WildlifeLicenceType.objects.all()])}
 
         return render(request, self.template_name, context)
 
@@ -91,7 +93,7 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        licence_type = LicenceType.objects.get(code=args[0])
+        licence_type = WildlifeLicenceType.objects.get(code=args[0])
         persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
@@ -115,9 +117,9 @@ class EnterDetails(LoginRequiredMixin, TemplateView):
         if 'draft' in request.POST:
             applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
-            licence_type = LicenceType.objects.get(code=args[0])
+            licence_type = WildlifeLicenceType.objects.get(code=args[0])
             application = Application.objects.create(data=request.session.get('application').get('data'), licence_type=licence_type,
-                                                     applicant_persona=applicant_persona, status='draft')
+                                                     applicant_persona=applicant_persona, customer_status='draft', processing_status='draft')
 
             if 'application_files' in request.session and os.path.exists(request.session.get('application').get('files')):
                 try:
@@ -165,7 +167,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_stucture = json.load(data_file)
 
-        licence_type = LicenceType.objects.get(code=args[0])
+        licence_type = WildlifeLicenceType.objects.get(code=args[0])
         persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
         context = {'structure': form_stucture, 'licence_type': licence_type, 'persona': persona}
@@ -181,10 +183,10 @@ class PreviewView(LoginRequiredMixin, TemplateView):
 
         applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
-        licence_type = LicenceType.objects.get(code=args[0])
+        licence_type = WildlifeLicenceType.objects.get(code=args[0])
 
         application = Application.objects.create(data=request.session.get('application').get('data'), licence_type=licence_type,
-                                                 applicant_persona=applicant_persona, status='lodged')
+                                                 applicant_persona=applicant_persona, customer_status='pending', processing_status='new')
 
         # if attached files were saved temporarily, add each to application as part of a Document
         if 'files' in request.session.get('application') and os.path.exists(request.session.get('application').get('files')):
@@ -207,7 +209,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         else:
             messages.success(request, 'The application was successfully lodged.')
 
-        return redirect('applications:select_licence_type')
+        return redirect('dashboard:home')
 
 
 def delete_application_session_data(session):
