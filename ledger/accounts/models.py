@@ -205,9 +205,9 @@ class RevisionedMixin(models.Model):
     """
     A model tracked by reversion through the save method.
     """
-    def save(self):
+    def save(self, **kwargs):
         with revisions.create_revision():
-            super(RevisionedMixin, self).save()
+            super(RevisionedMixin, self).save(**kwargs)
 
     @property
     def created_date(self):

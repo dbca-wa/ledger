@@ -78,7 +78,7 @@ class DashboardTreeViewBase(TemplateView):
         # pending applications
         query = {
             'model': 'application',
-            'status': 'lodged',
+            'customer_status': 'pending',
         }
         pending_applications = Application.objects.filter(status='lodged')
         pending_applications_node = self._create_node('New applications', href=_build_url(self.url, query),
@@ -261,7 +261,7 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
             # if the value is 'all' no filter to apply
             if filter_value != 'all':
                 if filter_name == 'status':
-                    query &= Q(status=filter_value)
+                    query &= Q(customer_status=filter_value)
         return qs.filter(query)
 
     def render_column(self, application, column):
