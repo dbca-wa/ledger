@@ -1,29 +1,31 @@
+from __future__ import unicode_literals
 import json
-import datetime
-import itertools
 import urllib
+import logging
 
-from django.views.generic import TemplateView, RedirectView
+from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import redirect
-from django.core.urlresolvers import reverse_lazy, reverse
+from django.views.generic import TemplateView
+from django_datatables_view.base_datatable_view import BaseDatatableView
+from django.db.models import Q
+
 from braces.views import LoginRequiredMixin
 
-from .models import generate_mock_data, DATA_SAMPLES
+from ledger.licence.models import LicenceType
+from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
+from wildlifelicensing.apps.main.helpers import is_officer, is_customer
+from .forms import LoginForm
 
-MOCK_DATA_SESSION_KEY = 'mock-data'
-
-
-def _get_mock_data(request):
-    if MOCK_DATA_SESSION_KEY in request.session:
-        mock_data = request.session[MOCK_DATA_SESSION_KEY]
-    else:
-        mock_data = generate_mock_data()
-        request.session[MOCK_DATA_SESSION_KEY] = mock_data
-    return mock_data
+logger = logging.getLogger(__name__)
 
 
 def _build_url(base, query):
     return base + '?' + urllib.urlencode(query)
+
+
+def _get_user_applications(user):
+    return Application.objects.filter(applicant_persona__user=user)
 
 
 class DashBoardRoutingView(TemplateView):
@@ -31,142 +33,113 @@ class DashBoardRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            return redirect('dashboard:quick')
+            if is_officer(self.request.user):
+                return redirect('dashboard:tree_officer')
+            return redirect('dashboard:tree_customer')
         else:
+            kwargs['form'] = LoginForm
             return super(DashBoardRoutingView, self).get(*args, **kwargs)
 
 
-class DashboardQuickView(TemplateView):
-    template_name = 'wl/dash_quick.html'
+class DashboardTreeViewBase(TemplateView):
+    template_name = 'wl/dash_tree.html'
 
     @staticmethod
-    def _build_tree_nodes(mock_data):
-
-        def _create_node(title, href=None, count=None):
-            node_template = {
-                'text': 'Title',
-                'href': '#',
-                'tags': [],
-                'nodes': None
+    def _create_node(title, href=None, count=None):
+        node_template = {
+            'text': 'Title',
+            'href': '#',
+            'tags': [],
+            'nodes': None,
+            'state': {
+                'expanded': True
             }
-            result = {}
-            result.update(node_template)
-            result['text'] = str(title)
-            if href is not None:
-                result['href'] = str(href)
-            if count is not None:
-                result['tags'].append(str(count))
+        }
+        result = {}
+        result.update(node_template)
+        result['text'] = str(title)
+        if href is not None:
+            result['href'] = str(href)
+        if count is not None:
+            result['tags'].append(str(count))
 
-            return result
+        return result
 
-        def _add_node(parent, child):
-            if 'nodes' not in parent or type(parent['nodes']) != list:
-                parent['nodes'] = [child]
-            else:
-                parent['nodes'].append(child)
-            return parent
+    @staticmethod
+    def _add_node(parent, child):
+        if 'nodes' not in parent or type(parent['nodes']) != list:
+            parent['nodes'] = [child]
+        else:
+            parent['nodes'].append(child)
+        return parent
 
-        date_format = '%Y-%m-%d'
-        today = datetime.date.today()
+    def _build_tree_nodes(self):
         url = reverse_lazy('dashboard:tables')
 
         # pending applications
         query = {
             'model': 'application',
-            'status': 'pending',
+            'status': 'lodged',
         }
-        pending_applications = [app for app in mock_data['applications'] if app['status'].lower() == 'pending']
-        pending_applications_node = _create_node('Pending applications', href=_build_url(url, query),
-                                                 count=len(pending_applications))
-        data = sorted(pending_applications, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            query['license_type'] = k
-            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-            _add_node(pending_applications_node, node)
-
-        # pending licenses
-        query = {
-            'model': 'license',
-            'status': 'pending',
-        }
-        pending_licenses = [lic for lic in mock_data['licenses'] if lic['status'] == 'pending']
-        pending_licenses_node = _create_node('Pending licenses', href=_build_url(url, query),
-                                             count=len(pending_licenses))
-        data = sorted(pending_licenses, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            query['license_type'] = k
-            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-            _add_node(pending_licenses_node, node)
-
-        # overdue license
-        query = {
-            'model': 'return',
-            'due_date': 'overdue'
-        }
-        overdue_returns = [ret for ret in mock_data['returns'] if
-                           datetime.datetime.strptime(ret['due_date'], date_format).date() < today]
-        overdue_returns_node = _create_node('Overdue returns', href=_build_url(url, query),
-                                            count=len(overdue_returns))
-        data = sorted(overdue_returns, lambda x, y: cmp(x['license_type'].lower(), y['license_type'].lower()))
-        for k, g in itertools.groupby(data, lambda x: x['license_type']):
-            query['license-type'] = k
-            node = _create_node(k, href=_build_url(url, query), count=len(list(g)))
-            _add_node(overdue_returns_node, node)
-
-        return [pending_applications_node, pending_licenses_node, overdue_returns_node]
+        pending_applications = Application.objects.filter(status='lodged')
+        pending_applications_node = self._create_node('New applications', href=_build_url(url, query),
+                                                      count=len(pending_applications))
+        return [pending_applications_node]
 
     def get_context_data(self, **kwargs):
-        mock_data = _get_mock_data(self.request)
         if 'dataJSON' not in kwargs:
-            kwargs['dataJSON'] = json.dumps(self._build_tree_nodes(mock_data))
-        return super(DashboardQuickView, self).get_context_data(**kwargs)
+            kwargs['dataJSON'] = json.dumps(self._build_tree_nodes())
+        if 'title' not in kwargs and hasattr(self, 'title'):
+            kwargs['title'] = self.title
+        return super(DashboardTreeViewBase, self).get_context_data(**kwargs)
+
+
+class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
+    template_name = 'wl/dash_tree.html'
+    title = 'Quick glance dashboard'
+
+
+class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
+    template_name = 'wl/dash_tree.html'
+    title = 'My Dashboard'
+
+    def _build_tree_nodes(self):
+        """
+            +My applications
+              - status
+        :return:
+        """
+        my_applications = _get_user_applications(self.request.user)
+        target_url = reverse_lazy('dashboard:tables')
+        my_applications_node = self._create_node('My applications', href=target_url, count=len(my_applications))
+        # one children node per status
+        for status in [s[0] for s in Application.STATUS_CHOICES]:
+            applications = my_applications.filter(status=status)
+            if applications.count() > 0:
+                query = {
+                    'model': 'application',
+                    'status': status,
+                }
+                href = _build_url(target_url, query)
+                node = self._create_node(status, href=href, count=applications.count())
+                self._add_node(my_applications_node, node)
+        return [my_applications_node]
 
 
 class DashboardTableView(TemplateView):
     template_name = 'wl/dash_tables.html'
 
     def get_context_data(self, **kwargs):
-        mock_data = _get_mock_data(self.request)
+        licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
         if 'dataJSON' not in kwargs:
             data = {
                 'applications': {
-                    'tableData': mock_data['applications'],
-                    'collapsed': False,
                     'filters': {
-                        'licenseType': {
-                            'values': ['All'] + DATA_SAMPLES['licenseTypes'],
+                        'licenceType': {
+                            'values': licence_types,
                         },
                         'status': {
-                            'values': ['All'] + DATA_SAMPLES['statusApplication'],
-                            'selected': 'All'
-                        }
-                    }
-                },
-                'licenses': {
-                    'tableData': mock_data['licenses'],
-                    'collapsed': False,
-                    'filters': {
-                        'licenseType': {
-                            'values': ['All'] + DATA_SAMPLES['licenseTypes'],
-                            'selected': 'All'
-                        },
-                        'status': {
-                            'values': ['All'] + DATA_SAMPLES['statusLicense'],
-                            'selected': 'All'
-                        }
-                    }
-                },
-                'returns': {
-                    'tableData': mock_data['returns'],
-                    'collapsed': False,
-                    'filters': {
-                        'licenseType': {
-                            'values': ['All'] + DATA_SAMPLES['licenseTypes'],
-                            'selected': 'All'
-                        },
-                        'dueDate': {
-                            'values': ['All', 'Overdue'],
-                            'selected': 'All'
+                            'values': [('all', 'All')] + list(Application.STATUS_CHOICES),
                         }
                     }
                 },
@@ -174,3 +147,72 @@ class DashboardTableView(TemplateView):
             }
             kwargs['dataJSON'] = json.dumps(data)
         return super(DashboardTableView, self).get_context_data(**kwargs)
+
+
+class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
+    model = Application
+    columns = ['licence_type', 'applicant_persona', 'status']
+    order_columns = ['licence_type', 'applicant_persona', 'status']
+
+    def _parse_filters(self):
+        """
+        The additional filters are sent in the query param with the following form (example):
+        'filters[0][name]': '['licence_type']'
+        'filters[0][value]: ['all']'
+        'filters[1][name]': '['status']'
+        'filters[1][value]: ['draft']'
+        .....
+        :return: a dict {
+            'licence_type': 'all',
+            'status': 'draft',
+            ....
+        }
+        """
+        result = {}
+        querydict = self._querydict
+        counter = 0
+        filter_key = 'filters[{0}][name]'.format(counter)
+        while filter_key in querydict:
+            result[querydict.get(filter_key)] = querydict.get('filters[{0}][value]'.format(counter))
+            counter += 1
+            filter_key = 'filters[{0}][name]'.format(counter)
+        return result
+
+    def get_initial_queryset(self):
+        if is_customer(self.request.user):
+            return _get_user_applications(self.request.user)
+        else:
+            return self.model.objects.all()
+
+    def filter_queryset(self, qs):
+        filters = self._parse_filters()
+        query = Q()
+        for filter_name, filter_value in filters.items():
+            # if the value is 'all' no filter to apply
+            if filter_value != 'all':
+                if filter_name == 'status':
+                    query &= Q(status=filter_value)
+        return qs.filter(query)
+
+    def render_column(self, application, column):
+        def render_applicant_column(persona):
+            user_details = '{last}, {first}, {email}'.format(
+                last=persona.user.last_name,
+                first=persona.user.first_name,
+                email=persona.email
+            )
+            persona_details = '{}'.format(persona)
+            if is_officer(self.request.user):
+                return user_details + ' [{}]'.format(persona_details)
+            else:
+                return persona_details
+
+        if column == 'licence_type':
+            licence_type = application.licence_type.code
+            result = '{}'.format(licence_type) if licence_type is not None else 'unknown'
+        elif column == 'applicant_persona':
+            result = render_applicant_column(
+                application.applicant_persona) if application.applicant_persona is not None else 'unknown'
+        else:
+            result = super(ApplicationDataTableView, self).render_column(application, column)
+        return result

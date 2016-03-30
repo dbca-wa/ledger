@@ -6,10 +6,10 @@
 {% endblock %}
 
 {% block requirements %}
-    require(["{%  static 'wl/js/dash_quick.js' %}"], function (app) {
+    require(["{%  static 'wl/js/dash_tree.js' %}"], function (app) {
         var options = {
             treeSelector: '#dashboard-tree',
-            treeData: {{ dataJSON|safe }}
+            treeData: {% if dataJSON  %} {{ dataJSON|safe }} {% else %} [] {% endif %}
         };
         app(options);
     });
@@ -18,7 +18,7 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <h1>Quick glance dashboard: </h1>
+            <h1>{{  title }}</h1>
             <div id="dashboard-tree"></div>
         </div>
     </div>

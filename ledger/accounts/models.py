@@ -5,6 +5,8 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 
+from reversion import revisions
+
 
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
@@ -58,13 +60,6 @@ class Address(models.Model):
     addresses.
     Taken from django-oscar address AbstrastAddress class.
     """
-    TITLE_CHOICES = (
-        ('Mr', 'Mr'),
-        ('Miss', 'Miss'),
-        ('Mrs', 'Mrs'),
-        ('Ms', 'Ms'),
-        ('Dr', 'Dr')
-    )
     STATE_CHOICES = (
         ('ACT', 'ACT'),
         ('NSW', 'NSW'),
@@ -76,19 +71,15 @@ class Address(models.Model):
         ('WA', 'WA')
     )
 
-    title = models.CharField(
-        max_length=64, choices=TITLE_CHOICES, blank=True)
-    first_name = models.CharField(max_length=255, blank=True)
-    last_name = models.CharField(max_length=255, blank=True)
     # Addresses consist of 1+ lines, only the first of which is
     # required.
-    line1 = models.CharField(max_length=255)
-    line2 = models.CharField(max_length=255, blank=True)
-    line3 = models.CharField(max_length=255, blank=True)
-    locality = models.CharField(max_length=255, blank=True)
+    line1 = models.CharField('Line 1', max_length=255)
+    line2 = models.CharField('Line 2', max_length=255, blank=True)
+    line3 = models.CharField('Line 3', max_length=255, blank=True)
+    locality = models.CharField('Suburb / Town', max_length=255)
     state = models.CharField(
-        max_length=255, choices=STATE_CHOICES, blank=True)
-    postcode = models.IntegerField(null=True, blank=True)
+        max_length=255, choices=STATE_CHOICES)
+    postcode = models.IntegerField()
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
 
@@ -100,7 +91,7 @@ class Address(models.Model):
 
     def clean(self):
         # Strip all whitespace
-        for field in ['first_name', 'last_name', 'line1', 'line2', 'line3',
+        for field in ['line1', 'line2', 'line3',
                       'locality', 'state']:
             if self.__dict__[field]:
                 self.__dict__[field] = self.__dict__[field].strip()
@@ -111,8 +102,7 @@ class Address(models.Model):
 
     def _update_search_text(self):
         search_fields = filter(
-            bool, [self.first_name, self.last_name,
-                   self.line1, self.line2, self.line3, self.locality,
+            bool, [self.line1, self.line2, self.line3, self.locality,
                    self.state, str(self.postcode)])
         self.search_text = ' '.join(search_fields)
 
@@ -123,26 +113,12 @@ class Address(models.Model):
         """
         return u', '.join(self.active_address_fields())
 
-    @property
-    def salutation(self):
-        """Name (including title)
-        """
-        return self.join_fields(
-            ('title', 'first_name', 'last_name'), separator=u' ')
-
-    @property
-    def name(self):
-        return self.join_fields(('first_name', 'last_name'), separator=u' ')
-
     # Helper methods
-    def active_address_fields(self, include_salutation=True):
-        """Return the non-empty components of the address, but merging the
-        title, first_name and last_name into a single line.
+    def active_address_fields(self):
+        """Return the non-empty components of the address.
         """
         fields = [self.line1, self.line2, self.line3,
                   self.locality, self.state, str(self.postcode)]
-        if include_salutation:
-            fields = [self.salutation] + fields
         fields = [f.strip() for f in fields if f]
         return fields
 
@@ -151,11 +127,7 @@ class Address(models.Model):
         """
         field_values = []
         for field in fields:
-            # Title is special case
-            if field == 'title':
-                value = self.get_title_display()
-            else:
-                value = getattr(self, field)
+            value = getattr(self, field)
             field_values.append(value)
         return separator.join(filter(bool, field_values))
 
@@ -229,4 +201,36 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+class RevisionedMixin(models.Model):
+    """
+    A model tracked by reversion through the save method.
+    """
+    def save(self):
+        with revisions.create_revision():
+            super(RevisionedMixin, self).save()
 
+    @property
+    def created_date(self):
+        return revisions.get_for_object(self).last().revision.date_created
+
+    @property
+    def modified_date(self):
+        return revisions.get_for_object(self).first().revision.date_created
+
+    class Meta:
+        abstract = True
+
+
+@python_2_unicode_compatible
+class Persona(RevisionedMixin):
+    user = models.ForeignKey(EmailUser, verbose_name='User')
+    name = models.CharField('Name', max_length=100, blank=True, default='')
+    email = models.EmailField('Email')
+    postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT)
+    institution = models.CharField('Institution', max_length=200, blank=True, default='', help_text='Company, Tertiary Institution, Government Department, etc')
+
+    def __str__(self):
+        if len(self.name) > 0:
+            return '{} ({})'.format(self.name, self.email)
+        else:
+            return '{}'.format(self.email)

@@ -1,0 +1,70 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(['js/application_entry'], function(applicationDetails) {
+        applicationDetails.layoutFormItems('#formContainer', {{ structure|jsonify }}{% if data %}, {{ data|jsonify }}{% endif %});
+
+        $('#mainContainer').removeClass('hidden');
+
+        // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
+        applicationDetails.initialiseSidebarMenu('#sectionList');
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
+                    <li><a href="{% url 'applications:create_select_persona' licence_type.code %}">Select Persona</a></li>
+                    <li class="active">Enter Application Details</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div id="mainContainer" class="container hidden">
+        <div class="row">
+            <div class="col-md-2 col-sm-3">
+                <label class="vertical-buffer">Selected Persona: <em>{{ persona.name }}</em></label>
+                <a href="{% url 'applications:create_select_persona' licence_type.code %}">Change Persona</a>
+            </div>
+            <div class="col-md-10 col-sm-2">
+                <h2>{{ licence_type.name }}</h2>
+            </div>
+        </div>
+        <div class="row">
+            <nav class="hidden-xs col-sm-3 col-md-2 vertical-buffer">
+                <div id="sectionList">
+                    <ul class="nav nav-stacked">
+                    </ul>
+                </div>
+            </nav>
+            <div class="col-xs-12 col-sm-9 col-md-10">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div id="formContainer">
+                    </div>
+                    <button type="submit" class="btn btn-primary pull-right" name="lodge">Preview and Lodge Application</button>
+                    <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

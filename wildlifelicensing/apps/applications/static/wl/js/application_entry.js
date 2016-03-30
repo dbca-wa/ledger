@@ -83,7 +83,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                         repeatItem.find('.hidden').removeClass('hidden');
                         repeatItemsAnchorPoint.append(repeatItem);
                     });
-                    childrenAnchorPoint.append(addGroupDiv.append(addGroupLink))
+                    childrenAnchorPoint.append(addGroupDiv.append(addGroupLink));
 
                     if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
                         $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
@@ -96,14 +96,6 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             });
         }
 
-        // if item is a section, need to add to side menu list
-        if(item.type === 'section') {
-            var link = $('<a>');
-            link.attr('href', '#section-' + index);
-            link.text(item.label);
-            $('#sectionList ul').append($('<li>').append(link));
-        }
-
         if(item.isRepeatable) {
             _setupCopyRemoveEvents(item, itemContainer, index, true);
         }
@@ -114,7 +106,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
     function _setupCopyRemoveEvents(item, itemSelector, index, isRepeat) {
     	itemSelector.find('.copy').click(function(e) {
             var itemCopy = _layoutItem(item, index, true);
-            
+
             itemSelector.find('input, select').each(function() {
                 inputCopy = itemCopy.find("[name='" + $(this).attr('name') + "']");
                 inputCopy.val($(this).val());
@@ -138,83 +130,50 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         });
     }
 
-    return function(mainContainerSelector, formStructure, csrfToken, userSelectionRequired, data) {
-        formStructure.csrfToken = csrfToken;
-        $(mainContainerSelector).append(_getTemplate('application')(formStructure));
+    return {
+        layoutFormItems: function(formContainerSelector, formStructure, data) {
+            var formContainer = $(formContainerSelector);
 
-        if(userSelectionRequired) {
-            var itemContainer = $('<div>');
-            $('#' + formStructure.childrenAnchorPointID).append(itemContainer);
-            itemContainer.append(_getTemplate('applicant_section')({}));
-
-            $('#applicantInput').select2({
-                ajax: {
-                    url: "/applicants/",
-                    dataType: 'json',
-                    data: function (term) {
-                        return {
-                            term: term
-                        };
-                    },
-                    results: function (data) {
-                        return {
-                            results: data
-                        }
-                    }
-                },
-                initSelection: function(element, callback) {
-                    if(data != undefined && 'applicant' in data) {
-                        $.ajax('/applicants/' + data.applicant, {
-                            dataType: 'json'
-                        }).done(function(applicantData) {
-                            // set initial selection to first (and theoretically only) element
-                            callback(applicantData[0]);
-                        });
-                    }
-                },
-                minimumInputLength: 3
+            $.each(formStructure, function(index, child) {
+                formContainer.append(_layoutItem(child, index, false, data));
             });
 
-            var link = $('<a>');
-            link.attr('href', '#applicant');
-            link.text('Applicant');
-            $('#sectionList ul').append($('<li>').append(link));
+            // initialise all datapickers
+            $('.date').datetimepicker({
+                format: 'DD/MM/YYYY'
+            });
+
+            // initialise parsley form validation
+            $('form').parsley({
+                successClass: "has-success",
+                errorClass: "has-error",
+                classHandler: function(el) {
+                    return el.$element.closest(".form-group");
+                },
+                errorsContainer: function(el) {
+                    return el.$element.parents('.form-group');
+                },
+                errorsWrapper: '<span class="help-block">',
+                errorTemplate: '<div></div>'
+            }).on('field:validate', function(el) {
+                // skip validation of invisible fields
+                if (!el.$element.is(':visible')) {
+                    el.value = false;
+                    return true;
+                }
+            });
+        },
+        initialiseSidebarMenu(sidebarMenuSelector) {
+            $('.section').each(function(index, value) {
+                var link = $('<a>');
+                link.attr('href', '#section-' + index);
+                link.text($(this).text());
+                $('#sectionList ul').append($('<li>').append(link));
+            });
+
+            var sectionList = $(sidebarMenuSelector);
+            $('body').scrollspy({ target: '#sectionList' });
+            sectionList.affix({ offset: { top: sectionList.offset().top }});
         }
-
-        var childrenAnchorPoint  = $('#' + formStructure.childrenAnchorPointID);
-
-        $.each(formStructure.children, function(index, child) {
-            childrenAnchorPoint.append(_layoutItem(child, index, false, data));
-        });
-
-        // initialise side-menu
-        var sectionList = $('#sectionList');
-        $('body').scrollspy({ target: '#sectionList' });
-        sectionList.affix({ offset: { top: 200 }});
-
-        // initialise all datapickers
-        $('.date').datetimepicker({
-            format: 'DD/MM/YYYY'
-        });
-
-        // initialise parsley form validation
-        $('form').parsley({
-            successClass: "has-success",
-            errorClass: "has-error",
-            classHandler: function(el) {
-                return el.$element.closest(".form-group");
-            },
-            errorsContainer: function(el) {
-                return el.$element.parents('.form-group');
-            },
-            errorsWrapper: '<span class="help-block">',
-            errorTemplate: '<div></div>'
-        }).on('field:validate', function(el) {
-            // skip validation of invisible fields
-            if (!el.$element.is(':visible')) {
-                el.value = false;
-                return true;
-            }
-        });
-    };
+    }
 });

@@ -1,4 +1,13 @@
-def create_data_from_form(item, post_data, file_data, post_data_index=None):
+def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):
+    data = {}
+
+    for item in form_structure:
+        data.update(_create_data_from_item(item, post_data, file_data, post_data_index))
+
+    return data
+
+
+def _create_data_from_item(item, post_data, file_data, post_data_index=None):
     item_data = {}
 
     if 'name' in item and item.get('type', '') != 'group':
@@ -38,12 +47,12 @@ def create_data_from_form(item, post_data, file_data, post_data_index=None):
             for group_index in range(0, num_groups):
                 group_data = {}
                 for child in item['children']:
-                    group_data.update(create_data_from_form(child, post_data, file_data, group_index))
+                    group_data.update(_create_data_from_item(child, post_data, file_data, group_index))
                 groups.append(group_data)
             item_data[item['name']] = groups
         else:
             for child in item['children']:
-                item_data.update(create_data_from_form(child, post_data, file_data, post_data_index))
+                item_data.update(_create_data_from_item(child, post_data, file_data, post_data_index))
 
     return item_data
 

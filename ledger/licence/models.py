@@ -2,24 +2,28 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-from dpaw_utils.models import ActiveMixin, AuditMixin
-from ledger.accounts.models import Address
+from django.contrib.postgres.fields import ArrayField
+
+from dpaw_utils.models import ActiveMixin
+
+from ledger.accounts.models import Address, RevisionedMixin
 
 
 @python_2_unicode_compatible
-class LicenceType(ActiveMixin, AuditMixin):
+class LicenceType(RevisionedMixin, ActiveMixin):
     name = models.CharField(max_length=256)
-    code = models.CharField(max_length=64, blank=True)
+    code = models.CharField(max_length=64)
     description = models.TextField(blank=True)
     replaced_by = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
+    keywords = ArrayField(models.CharField(max_length=50), blank=True, default=[])
 
     def __str__(self):
         return self.name
 
 
 @python_2_unicode_compatible
-class Licence(ActiveMixin, AuditMixin):
+class Licence(RevisionedMixin, ActiveMixin):
     STATUS_CHOICES = (
         ('submitted', 'Submitted'),
         ('granted', 'Granted'),
