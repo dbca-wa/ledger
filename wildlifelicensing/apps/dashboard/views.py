@@ -187,7 +187,8 @@ class DashboardTableOfficerView(DashboardTableBaseView):
                 }
             },
             'ajax': {
-                # TODO why the reverse throw a ImproperlyConfigured exception
+                # TODO: using reverse here (in static data) will throw a ImproperlyConfigured exception due to circular import
+                # TODO: find a way to init it at construction time.
                 # 'url': reverse('dashboard:applications_data_officer')
                 'url': '/dashboard/data/applications/officer/'
             }
@@ -222,7 +223,8 @@ class DashboardTableCustomerView(DashboardTableBaseView):
                 }
             },
             'ajax': {
-                # TODO why the reverse throw a ImproperlyConfigured exception
+                # TODO: using reverse here (in static data) will throw a ImproperlyConfigured exception due to circular import
+                # TODO: find a way to init it at construction time.
                 # 'url': reverse('dashboard:applications_data_customer')
                 'url': '/dashboard/data/applications/customer/'
             }
@@ -290,7 +292,6 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return Q(processing_status=status_value)
 
     def filter_queryset(self, qs):
-        logger.debug("Filter queryset")
         query = Q()
         # part 1: filter from top level filters
         filters = self._parse_filters()
