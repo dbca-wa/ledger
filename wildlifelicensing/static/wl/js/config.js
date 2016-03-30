@@ -11,7 +11,6 @@ require.config({
         'datatables.net': '//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/js/jquery.dataTables.min',
         'datatables.bootstrap': '//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/js/dataTables.bootstrap.min',
         'lodash':'//static.dpaw.wa.gov.au/static/libs/lodash.js/4.5.1/lodash.min',
-        'bootstrap.select': '//static.dpaw.wa.gov.au/static/libs/bootstrap-select/1.9.4/js/bootstrap-select.min',
         'bootstrap.treeView': '//static.dpaw.wa.gov.au/static/libs/bootstrap-treeview/1.2.0/bootstrap-treeview.min'
     },
     shim: {
@@ -34,9 +33,6 @@ require.config({
             deps: ['jQuery']
         },
         'datatables.bootstrap': {
-            deps: ['jQuery']
-        },
-        'bootstrap.select': {
             deps: ['jQuery']
         },
         'bootstrap.treeView': {

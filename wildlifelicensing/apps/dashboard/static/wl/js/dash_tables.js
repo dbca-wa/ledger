@@ -3,10 +3,11 @@ define(
         'jQuery',
         'lodash',
         'js/wl.dataTable',
+        'js/deepmerge',
         'bootstrap'
     ],
-    function ($, _, dt) {
-        var moduleOptions,
+    function ($, _, dt, merge) {
+        var options,
             tableOptions = {
                 paging: true,
                 info: true,
@@ -21,13 +22,13 @@ define(
             $applicationsLicenceTypeFilter,
             $applicationsStatusTypeFilter;
 
-        function initTables(options) {
+        function initTables() {
             var applicationTableOptions = $.extend({}, tableOptions, {
                     ajax: {
                         url: options.data.applications.ajax.url,
                         data: function (d) {
                             // add filters to the query
-                            d.filters = $(moduleOptions.selectors.applicationsFilterForm).serializeArray();
+                            d.filters = $(options.selectors.applicationsFilterForm).serializeArray();
                         },
                         error: function () {
                             console.log("error");
@@ -44,7 +45,7 @@ define(
             );
         }
 
-        function initFilters(options) {
+        function initFilters() {
             var data = options.data,
                 optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),
                 $node;
@@ -90,7 +91,7 @@ define(
             }
         }
 
-        return function (options) {
+        return function (moduleOptions) {
             var defaults = {
                 selectors: {
                     applicationsTable: '#applications-table',
@@ -105,40 +106,31 @@ define(
                             url: "/dashboard/data/applications"
                         },
                         'columnDefinitions': [
-                            {
-                                title: 'Licence Type'
-                            },
-                            {
-                                title: 'Applicant'
-                            },
-                            {
-                                title: 'Status'
-                            }
                         ],
                         'filters': {
                             'licenceType': {
-                                'values': ['All']
+                                'values': []
                             },
                             'status': {
-                                'values': ['All']
+                                'values': []
                             }
                         }
                     }
                 }
             };
-            moduleOptions = $.extend({}, defaults, options);
+            options = merge(defaults, moduleOptions);
             $(function () {
-                $applicationsLicenceTypeFilter = $(moduleOptions.selectors.applicationsLicenceFilter);
-                $applicationsStatusTypeFilter = $(moduleOptions.selectors.applicationsStatusFilter);
+                $applicationsLicenceTypeFilter = $(options.selectors.applicationsLicenceFilter);
+                $applicationsStatusTypeFilter = $(options.selectors.applicationsStatusFilter);
 
-                $(moduleOptions.selectors.applicationsAccordion).collapse('show');
+                $(options.selectors.applicationsAccordion).collapse('show');
 
-                initFilters(moduleOptions);
-                if (moduleOptions.data.query) {
+                initFilters();
+                if (options.data.query) {
                     // set filter according to query data
-                    setFilters(moduleOptions.data.query);
+                    setFilters(options.data.query);
                 }
-                initTables(moduleOptions);
+                initTables();
             })
         };
     }
