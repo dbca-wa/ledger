@@ -14,7 +14,7 @@
 
 {% block requirements %}
     require(['js/personas_table'], function (personasTable) {
-        personasTable.initPersonasTable('#personas', {{ data|jsonify }});
+        personasTable.initPersonasTable('#personas', {{ data|jsonify }}, '{% url 'main:edit_persona_prefix' %}');
     });
 {% endblock %}
 
