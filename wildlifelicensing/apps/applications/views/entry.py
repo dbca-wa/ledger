@@ -48,7 +48,6 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
         if 'persona' in request.session.get('application'):
             selected_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
             context['persona_selection_form'] = PersonaSelectionForm(user=request.user, selected_persona=selected_persona)
-            print PersonaSelectionForm
         else:
             if request.user.persona_set.count() > 0:
                 context['persona_selection_form'] = PersonaSelectionForm(user=request.user)

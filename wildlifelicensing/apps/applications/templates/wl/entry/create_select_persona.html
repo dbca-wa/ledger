@@ -45,8 +45,14 @@
                                 <form method="post">
                                     {% csrf_token %}
                                     {% bootstrap_form persona_creation_form %}
-                                    <h4>Postal Address</h4>
-                                    {% bootstrap_form address_form %}
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">Postal Address</h4>
+                                        </div>
+                                        <div class="panel-body">
+                                            {% bootstrap_form address_form %}
+                                        </div>
+                                    </div>
                                     <button type="submit" class="btn btn-primary pull-right" name="create">Create Persona</button>
                                 </form>
                             </div>
@@ -61,8 +67,14 @@
                 <form method="post">
                     {% csrf_token %}
                     {% bootstrap_form persona_creation_form %}
-                    <h4>Postal Address</h4>
-                    {% bootstrap_form address_form %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">Postal Address</h4>
+                        </div>
+                        <div class="panel-body">
+                            {% bootstrap_form address_form %}
+                        </div>
+                    </div>
                     <button type="submit" class="btn btn-primary pull-right" name="create">Create Persona</button>
                 </form>
             </div>
