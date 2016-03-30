@@ -232,8 +232,32 @@ class DashboardTableCustomerView(DashboardTableBaseView):
 
 class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
     model = Application
-    columns = ['licence_type.code', 'applicant_persona', 'processing_status']
-    order_columns = ['licence_type', 'applicant_persona', 'processing_status']
+    columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+    order_columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+
+    def _build_search_query(self, fields_to_search, search):
+        query = Q()
+        for field in fields_to_search:
+            query |= Q(**{"{0}__icontains".format(field): search})
+        return query
+
+    def _build_user_search_query(self, search):
+        fields_to_search = ['applicant_persona__user__last_name', 'applicant_persona__user__first_name',
+                            'applicant_persona__user__email']
+        return self._build_search_query(fields_to_search, search)
+
+    def _build_persona_search_query(self, search):
+        fields_to_search = ['applicant_persona__email', 'applicant_persona__name']
+        return self._build_search_query(fields_to_search, search)
+
+    columns_helpers = {
+        'applicant_persona.user': {
+            'search': _build_user_search_query
+        },
+        'applicant_persona': {
+            'search': _build_persona_search_query
+        }
+    }
 
     def _parse_filters(self):
         """
@@ -266,13 +290,19 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return Q(processing_status=status_value)
 
     def filter_queryset(self, qs):
-        filters = self._parse_filters()
+        logger.debug("Filter queryset")
         query = Q()
+        # part 1: filter from top level filters
+        filters = self._parse_filters()
         for filter_name, filter_value in filters.items():
             # if the value is 'all' no filter to apply
             if filter_value != 'all':
                 if filter_name == 'status':
                     query &= self._build_status_filter(filter_value)
+        # part 2: filter from the global search
+        search = self.request.GET.get('search[value]', None)
+        if search:
+            query &= self._build_global_search_query(search)
         return qs.filter(query)
 
     def render_column(self, application, column):
@@ -291,8 +321,23 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
             result = super(ApplicationDataTableBaseView, self).render_column(application, column)
         return result
 
+    def _build_global_search_query(self, search):
+        query = Q()
+        col_data = super(ApplicationDataTableBaseView, self).extract_datatables_column_data()
+        for col_no, col in enumerate(col_data):
+            if col['searchable']:
+                col_name = self.columns[col_no]
+                # special cases
+                if col_name in self.columns_helpers and 'search' in self.columns_helpers[col_name]:
+                    func = self.columns_helpers[col_name]['search']
+                    q = func(self, search)
+                    query |= q
+                else:
+                    query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
+        return query
 
-class ApplicationDataTableOfficerView(ApplicationDataTableBaseView):
+
+class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTableBaseView):
     columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
     order_columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
 
