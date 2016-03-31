@@ -14,7 +14,7 @@ from braces.views import LoginRequiredMixin
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_officer, is_customer
+from wildlifelicensing.apps.main.helpers import is_officer
 from .forms import LoginForm
 
 logger = logging.getLogger(__name__)
@@ -43,6 +43,7 @@ class DashBoardRoutingView(TemplateView):
 
 class DashboardTreeViewBase(TemplateView):
     template_name = 'wl/dash_tree.html'
+    url = reverse_lazy('dashboard:tables_officer')
 
     @staticmethod
     def _create_node(title, href=None, count=None):
@@ -74,15 +75,13 @@ class DashboardTreeViewBase(TemplateView):
         return parent
 
     def _build_tree_nodes(self):
-        url = reverse_lazy('dashboard:tables')
-
         # pending applications
         query = {
             'model': 'application',
             'customer_status': 'pending',
         }
-        pending_applications = Application.objects.filter(customer_status='pending')
-        pending_applications_node = self._create_node('New applications', href=_build_url(url, query),
+        pending_applications = Application.objects.filter(processing_status='lodged')
+        pending_applications_node = self._create_node('New applications', href=_build_url(self.url, query),
                                                       count=len(pending_applications))
         return [pending_applications_node]
 
@@ -97,11 +96,13 @@ class DashboardTreeViewBase(TemplateView):
 class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'Quick glance dashboard'
+    url = reverse_lazy('dashboard:tables_officer')
 
 
 class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'My Dashboard'
+    url = reverse_lazy('dashboard:tables_customer')
 
     def _build_tree_nodes(self):
         """
@@ -110,49 +111,155 @@ class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
         :return:
         """
         my_applications = _get_user_applications(self.request.user)
-        target_url = reverse_lazy('dashboard:tables')
-        my_applications_node = self._create_node('My applications', href=target_url, count=len(my_applications))
+        my_applications_node = self._create_node('My applications', href=self.url, count=len(my_applications))
         # one children node per status
         for status in [s[0] for s in Application.CUSTOMER_STATUS_CHOICES]:
             applications = my_applications.filter(customer_status=status)
             if applications.count() > 0:
                 query = {
                     'model': 'application',
-                    'customer_status': status,
+                    'status': status,
                 }
-                href = _build_url(target_url, query)
+                href = _build_url(self.url, query)
                 node = self._create_node(status, href=href, count=applications.count())
                 self._add_node(my_applications_node, node)
         return [my_applications_node]
 
 
-class DashboardTableView(TemplateView):
+class DashboardTableBaseView(TemplateView):
     template_name = 'wl/dash_tables.html'
+    licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
+    applications_statuses = []
+    data = {
+        'applications': {
+            'columnDefinitions': [
+            ],
+            'filters': {
+                'licenceType': {
+                    'values': licence_types,
+                },
+                'status': {
+                    'values': applications_statuses,
+                }
+            },
+            'ajax': {
+                'url': ''
+            }
+        }
+    }
 
     def get_context_data(self, **kwargs):
-        licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
         if 'dataJSON' not in kwargs:
-            data = {
-                'applications': {
-                    'filters': {
-                        'licenceType': {
-                            'values': licence_types,
-                        },
-                        'status': {
-                            'values': [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES),
-                        }
-                    }
+            # add the request query to the data
+            self.data['query'] = self.request.GET.dict()
+            kwargs['dataJSON'] = json.dumps(self.data)
+        return super(DashboardTableBaseView, self).get_context_data(**kwargs)
+
+
+class DashboardTableOfficerView(DashboardTableBaseView):
+    applications_statuses = [('all', 'All')] + list(Application.PROCESSING_STATUS_CHOICES)
+    data = {
+        'applications': {
+            'columnDefinitions': [
+                {
+                    'title': 'Licence Type',
+                    'name': 'license_type',
                 },
-                'query': self.request.GET.dict()
+                {
+                    'title': 'User',
+                    'name': 'applicant_persona__user'
+                },
+                {
+                    'title': 'Persona',
+                    'name': 'applicant_persona'
+                },
+                {
+                    'title': 'Status',
+                    'name': 'status'
+                }
+            ],
+            'filters': {
+                'licenceType': {
+                    'values': DashboardTableBaseView.licence_types,
+                },
+                'status': {
+                    'values': applications_statuses,
+                }
+            },
+            'ajax': {
+                # TODO: using reverse here (in static data) will throw a ImproperlyConfigured exception due to circular import
+                # TODO: find a way to init it at construction time.
+                # 'url': reverse('dashboard:applications_data_officer')
+                'url': '/dashboard/data/applications/officer/'
             }
-            kwargs['dataJSON'] = json.dumps(data)
-        return super(DashboardTableView, self).get_context_data(**kwargs)
+        }
+    }
 
 
-class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
+class DashboardTableCustomerView(DashboardTableBaseView):
+    applications_statuses = [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
+    data = {
+        'applications': {
+            'columnDefinitions': [
+                {
+                    'title': 'Licence Type',
+                    'name': 'license_type',
+                },
+                {
+                    'title': 'Persona',
+                    'name': 'applicant_persona'
+                },
+                {
+                    'title': 'Status',
+                    'name': 'status'
+                }
+            ],
+            'filters': {
+                'licenceType': {
+                    'values': DashboardTableBaseView.licence_types,
+                },
+                'status': {
+                    'values': applications_statuses,
+                }
+            },
+            'ajax': {
+                # TODO: using reverse here (in static data) will throw a ImproperlyConfigured exception due to circular import
+                # TODO: find a way to init it at construction time.
+                # 'url': reverse('dashboard:applications_data_customer')
+                'url': '/dashboard/data/applications/customer/'
+            }
+        }
+    }
+
+
+class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
     model = Application
-    columns = ['licence_type', 'applicant_persona', 'status']
-    order_columns = ['licence_type', 'applicant_persona', 'status']
+    columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+    order_columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+
+    def _build_search_query(self, fields_to_search, search):
+        query = Q()
+        for field in fields_to_search:
+            query |= Q(**{"{0}__icontains".format(field): search})
+        return query
+
+    def _build_user_search_query(self, search):
+        fields_to_search = ['applicant_persona__user__last_name', 'applicant_persona__user__first_name',
+                            'applicant_persona__user__email']
+        return self._build_search_query(fields_to_search, search)
+
+    def _build_persona_search_query(self, search):
+        fields_to_search = ['applicant_persona__email', 'applicant_persona__name']
+        return self._build_search_query(fields_to_search, search)
+
+    columns_helpers = {
+        'applicant_persona.user': {
+            'search': _build_user_search_query
+        },
+        'applicant_persona': {
+            'search': _build_persona_search_query
+        }
+    }
 
     def _parse_filters(self):
         """
@@ -179,40 +286,72 @@ class ApplicationDataTableView(LoginRequiredMixin, BaseDatatableView):
         return result
 
     def get_initial_queryset(self):
-        if is_customer(self.request.user):
-            return _get_user_applications(self.request.user)
-        else:
-            return self.model.objects.all()
+        return self.model.objects.all()
+
+    def _build_status_filter(self, status_value):
+        return Q(processing_status=status_value)
 
     def filter_queryset(self, qs):
-        filters = self._parse_filters()
         query = Q()
+        # part 1: filter from top level filters
+        filters = self._parse_filters()
         for filter_name, filter_value in filters.items():
             # if the value is 'all' no filter to apply
             if filter_value != 'all':
                 if filter_name == 'status':
-                    query &= Q(customer_status=filter_value)
+                    query &= self._build_status_filter(filter_value)
+        # part 2: filter from the global search
+        search = self.request.GET.get('search[value]', None)
+        if search:
+            query &= self._build_global_search_query(search)
         return qs.filter(query)
 
     def render_column(self, application, column):
-        def render_applicant_column(persona):
-            user_details = '{last}, {first}, {email}'.format(
-                last=persona.user.last_name,
-                first=persona.user.first_name,
-                email=persona.email
-            )
-            persona_details = '{}'.format(persona)
-            if is_officer(self.request.user):
-                return user_details + ' [{}]'.format(persona_details)
-            else:
-                return persona_details
-
         if column == 'licence_type':
-            licence_type = application.licence_type.code
-            result = '{}'.format(licence_type) if licence_type is not None else 'unknown'
+            result = '{}'.format(application.licence_type.code)
+        elif column == 'applicant_persona.user':
+            user = application.applicant_persona.user
+            result = '{last}, {first}, {email}'.format(
+                last=user.last_name,
+                first=user.first_name,
+                email=user.email
+            )
         elif column == 'applicant_persona':
-            result = render_applicant_column(
-                application.applicant_persona) if application.applicant_persona is not None else 'unknown'
+            result = '{}'.format(application.applicant_persona)
         else:
-            result = super(ApplicationDataTableView, self).render_column(application, column)
+            result = super(ApplicationDataTableBaseView, self).render_column(application, column)
         return result
+
+    def _build_global_search_query(self, search):
+        query = Q()
+        col_data = super(ApplicationDataTableBaseView, self).extract_datatables_column_data()
+        for col_no, col in enumerate(col_data):
+            if col['searchable']:
+                col_name = self.columns[col_no]
+                # special cases
+                if col_name in self.columns_helpers and 'search' in self.columns_helpers[col_name]:
+                    func = self.columns_helpers[col_name]['search']
+                    q = func(self, search)
+                    query |= q
+                else:
+                    query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
+        return query
+
+
+class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTableBaseView):
+    columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+    order_columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+
+    def get_initial_queryset(self):
+        return self.model.objects.all()
+
+
+class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
+    columns = ['licence_type.code', 'applicant_persona', 'processing_status']
+    order_columns = ['licence_type.code', 'applicant_persona', 'processing_status']
+
+    def get_initial_queryset(self):
+        return _get_user_applications(self.request.user)
+
+    def _build_status_filter(self, status_value):
+        return Q(customer_status=status_value)
