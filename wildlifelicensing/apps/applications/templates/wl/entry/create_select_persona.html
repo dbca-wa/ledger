@@ -4,7 +4,6 @@
 
 {% load bootstrap3 %}
 
-
 {% block extra_css %}
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
@@ -15,7 +14,9 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
+                    {% if not application_pk %}
+                        <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
+                    {% endif %}
                     <li class="active">{% if persona_selection_form %}Select{% else %}Create{% endif %} Persona</li>
                 </ol>
             </div>

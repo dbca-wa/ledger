@@ -3,8 +3,8 @@ import os
 import tempfile
 import shutil
 
-from django.views.generic.base import TemplateView, RedirectView
-from django.shortcuts import render, redirect
+from django.views.generic.base import TemplateView
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.context_processors import csrf
 from django.core.files import File
 from django.contrib import messages
@@ -45,6 +45,9 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = {}
 
+        if len(args) > 1:
+            context['application_pk'] = args[1]
+
         if 'persona' in request.session.get('application'):
             selected_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
             context['persona_selection_form'] = PersonaSelectionForm(user=request.user, selected_persona=selected_persona)
@@ -84,7 +87,7 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
                 return render(request, self.template_name, {'persona_selection_form': PersonaSelectionForm(user=request.user),
                                                             'persona_creation_form': persona_form, 'address_form': address_form})
 
-        return redirect('applications:enter_details', args[0])
+        return redirect('applications:enter_details', *args)
 
 
 class EnterDetailsView(LoginRequiredMixin, TemplateView):
@@ -92,6 +95,13 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
+        if len(args) > 1 and 'application' not in request.session:
+            application = get_object_or_404(Application, pk=args[1])
+            request.session['application'] = {}
+            request.session['application']['persona'] = application.applicant_persona.id
+            request.session['application']['data'] = application.data
+            request.session.modified = True
+
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
         persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
@@ -99,7 +109,9 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
             form_structure = json.load(data_file)
 
         context = {'licence_type': licence_type, 'persona': persona, 'structure': form_structure}
-        context.update(csrf(request))
+
+        if len(args) > 1:
+            context['application_pk'] = args[1]
 
         if 'data' in request.session.get('application'):
             context['data'] = request.session.get('application').get('data')
@@ -114,13 +126,19 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
         request.session.modified = True
 
         if 'draft' in request.POST:
-            applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+            if len(args) > 1:
+                application = get_object_or_404(Application, pk=args[1])
+            else:
+                application = Application()
 
-            licence_type = WildlifeLicenceType.objects.get(code=args[0])
-            application = Application.objects.create(data=request.session.get('application').get('data'), licence_type=licence_type,
-                                                     applicant_persona=applicant_persona, customer_status='draft', processing_status='draft')
+            application.data = request.session.get('application').get('data')
+            application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
+            application.applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+            application.customer_status = 'draft'
+            application.processing_status = 'draft'
+            application.save()
 
-            if 'application_files' in request.session and os.path.exists(request.session.get('application').get('files')):
+            if 'files' in request.session.get('application') and os.path.exists(request.session.get('application').get('files')):
                 try:
                     for filename in get_all_filenames_from_application_data(form_structure, request.session.get('application').get('data')):
                         # need to be sure file is in tmp directory (as it could be a freshly attached file)
@@ -155,7 +173,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
                         for chunk in request.FILES[f].chunks():
                             destination.write(chunk)
 
-            return redirect('applications:preview', args[0])
+            return redirect('applications:preview', *args)
 
 
 class PreviewView(LoginRequiredMixin, TemplateView):
@@ -170,7 +188,9 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         persona = Persona.objects.get(id=request.session.get('application').get('persona'))
 
         context = {'structure': form_stucture, 'licence_type': licence_type, 'persona': persona}
-        context.update(csrf(request))
+
+        if len(args) > 1:
+            context['application_pk'] = args[1]
 
         context['data'] = request.session.get('application').get('data')
 
@@ -180,12 +200,17 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_structure = json.load(data_file)
 
-        applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+        if len(args) > 1:
+            application = get_object_or_404(Application, pk=args[1])
+        else:
+            application = Application()
 
-        licence_type = WildlifeLicenceType.objects.get(code=args[0])
-
-        application = Application.objects.create(data=request.session.get('application').get('data'), licence_type=licence_type,
-                                                 applicant_persona=applicant_persona, customer_status='pending', processing_status='new')
+        application.data = request.session.get('application').get('data')
+        application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
+        application.applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+        application.customer_status = 'pending'
+        application.processing_status = 'new'
+        application.save()
 
         # if attached files were saved temporarily, add each to application as part of a Document
         if 'files' in request.session.get('application') and os.path.exists(request.session.get('application').get('files')):
@@ -207,6 +232,8 @@ class PreviewView(LoginRequiredMixin, TemplateView):
                     messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
         else:
             messages.success(request, 'The application was successfully lodged.')
+
+        delete_application_session_data(request.session)
 
         return redirect('dashboard:home')
 
