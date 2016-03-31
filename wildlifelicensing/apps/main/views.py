@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.base import TemplateView
 
 from preserialize.serialize import serialize
@@ -53,12 +53,7 @@ class EditPersonasView(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        persona = None
-
-        try:
-            persona = Persona.objects.get(pk=args[0])
-        except Persona.DoesNotExist:
-            return HttpResponse('Persona not found', status=404)
+        persona = get_object_or_404(Persona, pk=args[0])
 
         if persona.user != request.user:
             return HttpResponse('Unauthorized', status=401)
@@ -67,12 +62,7 @@ class EditPersonasView(LoginRequiredMixin, TemplateView):
                                                     'address_form': AddressForm(instance=persona.postal_address)})
 
     def post(self, request, *args, **kwargs):
-        persona = None
-
-        try:
-            persona = Persona.objects.get(pk=args[0])
-        except Persona.DoesNotExist:
-            return HttpResponse('Persona not found', status=404)
+        persona = get_object_or_404(Persona, pk=args[0])
 
         if persona.user != request.user:
             return HttpResponse('Unauthorized', status=401)

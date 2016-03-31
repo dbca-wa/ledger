@@ -3,7 +3,7 @@ import os
 import tempfile
 import shutil
 
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, RedirectView
 from django.shortcuts import render, redirect
 from django.core.context_processors import csrf
 from django.core.files import File
@@ -87,7 +87,7 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
         return redirect('applications:enter_details', args[0])
 
 
-class EnterDetails(LoginRequiredMixin, TemplateView):
+class EnterDetailsView(LoginRequiredMixin, TemplateView):
     template_name = 'wl/entry/enter_details.html'
     login_url = '/'
 

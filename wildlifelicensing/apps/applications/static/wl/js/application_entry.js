@@ -119,8 +119,8 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         layoutFormItems: function(formContainerSelector, formStructure, data) {
             var formContainer = $(formContainerSelector);
 
-            $.each(formStructure, function(index, child) {
-                formContainer.append(_layoutItem(child, index, false, data));
+            $.each(formStructure, function(index, item) {
+                formContainer.append(_layoutItem(item, index, false, data));
             });
 
             // initialise all datapickers
@@ -148,7 +148,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                 }
             });
         },
-        initialiseSidebarMenu(sidebarMenuSelector) {
+        initialiseSidebarMenu: function(sidebarMenuSelector) {
             $('.section').each(function(index, value) {
                 var link = $('<a>');
                 link.attr('href', '#section-' + index);

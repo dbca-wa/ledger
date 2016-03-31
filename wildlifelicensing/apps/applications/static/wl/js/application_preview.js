@@ -80,11 +80,11 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         layoutPreviewItems: function(formContainerSelector, formStructure, data) {
             var formContainer = $(formContainerSelector);
 
-            $.each(formStructure, function(index, child) {
-                formContainer.append(_layoutItem(child, index, false, data));
+            $.each(formStructure, function(index, item) {
+                formContainer.append(_layoutItem(item, index, false, data));
             });
         },
-        initialiseSidebarMenu(sidebarMenuSelector) {
+        initialiseSidebarMenu: function(sidebarMenuSelector) {
             $('.section').each(function(index, value) {
                 var link = $('<a>');
                 link.attr('href', '#section-' + index);

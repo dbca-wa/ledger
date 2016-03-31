@@ -42,8 +42,9 @@
     <div id="mainContainer" class="container hidden">
         <div class="row">
             <div class="col-md-2 col-sm-3">
-                <label class="vertical-buffer">Selected Persona: <em>{{ persona.name }}</em></label>
-                <a href="{% url 'applications:create_select_persona' licence_type.code %}">Change Persona</a>
+                <label class="vertical-buffer">Selected Persona:</label>
+                <p>{{ persona.name }}</p>
+                <p><em><a href="{% url 'applications:create_select_persona' licence_type.code %}">Change Persona</a></em></p>
             </div>
             <div class="col-md-10 col-sm-2">
                 <h2>{{ licence_type.name }}</h2>
