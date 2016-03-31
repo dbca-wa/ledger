@@ -12,7 +12,7 @@
 {% block requirements %}
     require(["{%  static 'wl/js/dash_tables.js' %}"], function (app) {
         var options = {
-            data: {{ dataJSON|safe }}
+            data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}
         };
         app(options);
     });

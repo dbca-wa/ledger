@@ -3,7 +3,7 @@ import json
 import urllib
 import logging
 
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django_datatables_view.base_datatable_view import BaseDatatableView
@@ -75,15 +75,29 @@ class DashboardTreeViewBase(TemplateView):
         return parent
 
     def _build_tree_nodes(self):
-        # pending applications
+        """
+            +All applications
+              - status
+        """
         query = {
             'model': 'application',
-            'customer_status': 'pending',
+            'customer_status': 'new',
         }
-        pending_applications = Application.objects.filter(processing_status='lodged')
-        pending_applications_node = self._create_node('New applications', href=_build_url(self.url, query),
-                                                      count=len(pending_applications))
-        return [pending_applications_node]
+        all_applications = Application.objects.all()
+        all_applications_node = self._create_node('All applications', href=self.url,
+                                                  count=len(all_applications))
+        for s_value, s_title in Application.PROCESSING_STATUS_CHOICES:
+            applications = all_applications.filter(processing_status=s_value)
+            if applications.count() > 0:
+                query = {
+                    'model': 'application',
+                    'status': s_value,
+                }
+                href = _build_url(self.url, query)
+                node = self._create_node(s_title, href=href, count=applications.count())
+                self._add_node(all_applications_node, node)
+
+        return [all_applications_node]
 
     def get_context_data(self, **kwargs):
         if 'dataJSON' not in kwargs:
@@ -162,6 +176,10 @@ class DashboardTableOfficerView(DashboardTableBaseView):
         'applications': {
             'columnDefinitions': [
                 {
+                    'title': 'ID',
+                    'name': 'id'
+                },
+                {
                     'title': 'Licence Type',
                     'name': 'license_type',
                 },
@@ -176,6 +194,16 @@ class DashboardTableOfficerView(DashboardTableBaseView):
                 {
                     'title': 'Status',
                     'name': 'status'
+                },
+                {
+                    'title': 'Assignee',
+                    'name': 'assigned_officer'
+                },
+                {
+                    'title': 'Action',
+                    'name': 'action',
+                    'searchable': False,
+                    'orderable': False
                 }
             ],
             'filters': {
@@ -252,11 +280,34 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         fields_to_search = ['applicant_persona__email', 'applicant_persona__name']
         return self._build_search_query(fields_to_search, search)
 
+    def _render_user_column(self, obj):
+        user = obj.applicant_persona.user
+        if user.last_name:
+            return '{last}, {first}, {email}'.format(
+                last=user.last_name,
+                first=user.first_name,
+                email=user.email
+            )
+        else:
+            return '{email}'.format(
+                email=user.email
+            )
+
+    def _render_persona_column(self, obj):
+        persona = obj.applicant_persona
+        if persona is None:
+            return 'unknown'
+        else:
+            # return the string rep
+            return '{}'.format(persona)
+
     columns_helpers = {
         'applicant_persona.user': {
+            'render': _render_user_column,
             'search': _build_user_search_query
         },
         'applicant_persona': {
+            'render': _render_persona_column,
             'search': _build_persona_search_query
         }
     }
@@ -307,17 +358,9 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return qs.filter(query)
 
     def render_column(self, application, column):
-        if column == 'licence_type':
-            result = '{}'.format(application.licence_type.code)
-        elif column == 'applicant_persona.user':
-            user = application.applicant_persona.user
-            result = '{last}, {first}, {email}'.format(
-                last=user.last_name,
-                first=user.first_name,
-                email=user.email
-            )
-        elif column == 'applicant_persona':
-            result = '{}'.format(application.applicant_persona)
+        if column in self.columns_helpers and 'render' in self.columns_helpers[column]:
+            func = self.columns_helpers[column]['render']
+            return func(self, application)
         else:
             result = super(ApplicationDataTableBaseView, self).render_column(application, column)
         return result
@@ -339,8 +382,39 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
 
 class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTableBaseView):
-    columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
-    order_columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+    columns = ['id', 'licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status',
+               'assigned_officer', 'action']
+    order_columns = ['id', 'licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status',
+                     'assigned_officer', '']
+
+    def _render_action_column(self, obj):
+        return '<a href="{0}">Process</a>'.format(
+            reverse('applications:process', args={obj.pk}),
+        )
+
+    def _build_assignee_search_query(self, search):
+        fields_to_search = ['assigned_officer__user__last_name', 'assigned_officer__user__first_name',
+                            'assigned_officer__user__email']
+        return self._build_search_query(fields_to_search, search)
+
+    def _render_assignee_column(self, obj):
+        user = obj.assigned_officer
+        if user is None:
+            return ''
+        else:
+            return '{email}'.format(
+                email=user.email
+            )
+
+    columns_helpers = dict(ApplicationDataTableBaseView.columns_helpers.items(), **{
+        'assigned_officer': {
+            'search': _build_assignee_search_query,
+            'render': _render_assignee_column
+        },
+        'action': {
+            'render': _render_action_column,
+        },
+    })
 
     def get_initial_queryset(self):
         return self.model.objects.all()

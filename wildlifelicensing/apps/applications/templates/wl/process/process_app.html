@@ -1,0 +1,72 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
+          rel="stylesheet"/>
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(["js/process/process_app"], function (app) {
+        var options = {
+            data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}
+        };
+        app(options);
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><a href="{% url 'dashboard:tables_officer' %}">Tables</a></li>
+                    <li class="active">Process Application</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+                <div class="row">
+                    <div class="panel panel-default" id="status-panel">
+                        <table class="table table-hover">
+                            <tbody>
+                            <tr>
+                                <td>Assignee</td>
+                                <td>
+                                    <select id="select-assignee"></select>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="jumbotron">
+                        <div class="container">
+                            <h1>Action Panel</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+                <div class="jumbotron">
+                    <div class="container">
+                        <h1>Application Preview</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
