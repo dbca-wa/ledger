@@ -3,10 +3,9 @@ define(
         'jQuery',
         'lodash',
         'js/wl.dataTable',
-        'js/deepmerge',
         'bootstrap'
     ],
-    function ($, _, dt, merge) {
+    function ($, _, dt) {
         var options,
             tableOptions = {
                 paging: true,
@@ -118,7 +117,13 @@ define(
                     }
                 }
             };
-            options = merge(defaults, moduleOptions);
+            // merge the defaults options, and the options passed in parameter.
+            // This is a deep merge but the array are not merged
+            options = _.mergeWith({}, defaults, moduleOptions, function (objValue, srcValue) {
+                if (_.isArray(objValue)) {
+                    return srcValue;
+                }
+            });
             $(function () {
                 $applicationsLicenceTypeFilter = $(options.selectors.applicationsLicenceFilter);
                 $applicationsStatusTypeFilter = $(options.selectors.applicationsStatusFilter);

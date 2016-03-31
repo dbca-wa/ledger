@@ -32,3 +32,7 @@ def is_officer(user):
     :return:
     """
     return belongs_to(user, 'Officers')
+
+
+def get_all_officers():
+    return EmailUser.objects.filter(groups__name='Officers')
