@@ -240,6 +240,12 @@ class DashboardTableCustomerView(DashboardTableBaseView):
                 {
                     'title': 'Status',
                     'name': 'status'
+                },
+                {
+                    'title': 'Action',
+                    'name': 'action',
+                    'searchable': False,
+                    'orderable': False
                 }
             ],
             'filters': {
@@ -421,11 +427,26 @@ class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTable
 
 
 class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
-    columns = ['licence_type.code', 'applicant_persona', 'processing_status']
-    order_columns = ['licence_type.code', 'applicant_persona', 'processing_status']
+    columns = ['licence_type.code', 'applicant_persona', 'customer_status', 'action']
+    order_columns = ['licence_type.code', 'applicant_persona', 'customer_status', '']
 
     def get_initial_queryset(self):
         return _get_user_applications(self.request.user)
 
     def _build_status_filter(self, status_value):
         return Q(customer_status=status_value)
+
+    def _render_action_column(self, obj):
+        if obj.customer_status == 'draft':
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('applications:enter_details', args={obj.licence_type.code, obj.pk}),
+                'Continue application'
+            )
+        else:
+            return 'Locked'
+
+    columns_helpers = dict(ApplicationDataTableBaseView.columns_helpers.items(), **{
+        'action': {
+            'render': _render_action_column,
+        },
+    })

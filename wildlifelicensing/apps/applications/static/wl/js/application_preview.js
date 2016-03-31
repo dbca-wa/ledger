@@ -77,11 +77,11 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
     }
 
     return {
-        layoutPreviewItems: function(formContainerSelector, formStructure, data) {
-            var formContainer = $(formContainerSelector);
+        layoutPreviewItems: function(containerSelector, formStructure, data) {
+            var container = $(containerSelector);
 
             $.each(formStructure, function(index, item) {
-                formContainer.append(_layoutItem(item, index, false, data));
+                container.append(_layoutItem(item, index, false, data));
             });
         },
         initialiseSidebarMenu: function(sidebarMenuSelector) {

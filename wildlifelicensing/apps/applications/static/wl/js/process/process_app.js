@@ -9,21 +9,36 @@ define(
         var options;
 
         function initAssignee() {
-            var $select = $(options.selectors.selectAssignee),
-                 template = _.template('<option value="<%= value %>"><%= title %></option>');
-            _.forEach(options.data.selectAssignee.values, function (option) {
-                $select.append($(template({
-                    value:option[0],
-                    title:option[1]
-                })));
+            $('#assignee').select2({
+                ajax: {
+                    url: "/applications/list_staff/",
+                    dataType: 'json',
+                    data: function (name) {
+                        return {
+                            name: name
+                        };
+                    },
+                    results: function (data) {
+                        return {
+                            results: data
+                        }
+                    }
+                },
+                initSelection: function(element, callback) {
+                    $.ajax('/applications/list_staff/', {
+                        dataType: 'json'
+                    }).done(function(data) {
+                        // set initial selection to first (and theoretically only) element
+                        callback(data[0]);
+                    });
+                }
             });
-            $select.val(options.data.selectAssignee.selected);
         }
 
         return function (moduleOptions) {
             var defaults = {
                 selectors: {
-                    selectAssignee: '#select-assignee'
+                    selectAssignee: '#assignee'
                 },
                 data: {
                     selectAssignee: {
@@ -42,7 +57,6 @@ define(
             $(function () {
                 initAssignee();
                 // things to do when the dom is ready
-                $('select').select2()
             });
         }
     });

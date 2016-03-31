@@ -5,7 +5,7 @@
 {% load bootstrap3 %}
 
 {% block extra_css %}
-    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
           rel="stylesheet"/>
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
@@ -37,19 +37,16 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
                 <div class="row">
-                    <div class="panel panel-default" id="status-panel">
-                        <table class="table table-hover">
-                            <tbody>
-                            <tr>
-                                <td>Assignee</td>
-                                <td>
-                                    <select id="select-assignee"></select>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="form-group">
+                                 <label>Currently assigned to</label>
+                                 <input type="hidden" id="assignee" class="form-control"></input>
+                                 <a href="" class="pull-right">Assign to me</a>
+                            </div>
+                         </div>
                     </div>
                 </div>
                 <div class="row">
@@ -60,7 +57,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+            <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
                 <div class="jumbotron">
                     <div class="container">
                         <h1>Application Preview</h1>
