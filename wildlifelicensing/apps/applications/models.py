@@ -24,6 +24,7 @@ class Application(RevisionedMixin):
     data = JSONField()
     documents = models.ManyToManyField(Document)
     applicant_persona = models.ForeignKey(Persona)
+    lodged_date = models.DateTimeField(blank=True, null=True)
 
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
     processing_status = models.CharField('Processing Status', max_length=20, choices=PROCESSING_STATUS_CHOICES)

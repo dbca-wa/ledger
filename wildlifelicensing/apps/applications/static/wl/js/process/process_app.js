@@ -8,10 +8,12 @@ define(
     function ($, _) {
         var options;
 
-        function initAssignee() {
-            $('#assignee').select2({
+        function initAssignee(options) {
+            var $assignee = $(options.selectors.selectAssignee);
+
+            $assignee.select2({
                 ajax: {
-                    url: "/applications/list_staff/",
+                    url: "/applications/list_officers/",
                     dataType: 'json',
                     data: function (name) {
                         return {
@@ -25,28 +27,46 @@ define(
                     }
                 },
                 initSelection: function(element, callback) {
-                    $.ajax('/applications/list_staff/', {
-                        dataType: 'json'
-                    }).done(function(data) {
-                        // set initial selection to first (and theoretically only) element
-                        callback(data[0]);
-                    });
+                    if(options.data.application.assigned_officer) {
+                        callback({id: options.data.application.assigned_officer.id, text: options.data.application.assigned_officer.first_name + ' ' +
+                                 options.data.application.assigned_officer.last_name});
+                    } else {
+                        callback({id: 0, text: 'Unassigned'});
+                    }
                 }
+            });
+
+            $assignee.on('change', function(e) {
+                $.post('/applications/assign_officer/', {
+                        applicationID: options.data.application.id,
+                        csrfmiddlewaretoken: options.data.csrf_token,
+                        userID: e.val
+                    }
+                );
+            });
+
+            $(options.selectors.assignToMeLink).click(function() {
+                $.post('/applications/assign_officer/', {
+                        applicationID: options.data.application.id,
+                        csrfmiddlewaretoken: options.data.csrf_token,
+                        userID: options.data.user.id
+                    }, 
+                    function(data) {
+                        $assignee.select2('data', data);
+                    }
+                );
             });
         }
 
         return function (moduleOptions) {
             var defaults = {
                 selectors: {
-                    selectAssignee: '#assignee'
+                    selectAssignee: '#assignee',
+                    assignToMeLink: '#assignToMe'
                 },
-                data: {
-                    selectAssignee: {
-                        values: [],
-                        selected: ''
-                    }
-                }
+                data: {}
             };
+
             // merge the defaults options, and the options passed in parameter.
             // This is a deep merge but the array are not merged
             options = _.mergeWith({}, defaults, moduleOptions, function (objValue, srcValue) {
@@ -54,8 +74,9 @@ define(
                     return srcValue;
                 }
             });
+
             $(function () {
-                initAssignee();
+                initAssignee(options);
                 // things to do when the dom is ready
             });
         }

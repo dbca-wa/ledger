@@ -3,9 +3,10 @@ import os
 import tempfile
 import shutil
 
+from datetime import datetime
+
 from django.views.generic.base import TemplateView
 from django.shortcuts import render, redirect, get_object_or_404
-from django.core.context_processors import csrf
 from django.core.files import File
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -48,14 +49,20 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
         if len(args) > 1:
             context['application_pk'] = args[1]
 
+        persona_exists = request.user.persona_set.count() > 0
+
         if 'persona' in request.session.get('application'):
             selected_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
             context['persona_selection_form'] = PersonaSelectionForm(user=request.user, selected_persona=selected_persona)
         else:
-            if request.user.persona_set.count() > 0:
+            if persona_exists:
                 context['persona_selection_form'] = PersonaSelectionForm(user=request.user)
 
-        context['persona_creation_form'] = PersonaForm()
+        if persona_exists:
+            context['persona_creation_form'] = PersonaForm()
+        else:
+            context['persona_creation_form'] = PersonaForm(initial_display_name='Default', initial_email=request.user.email)
+
         context['address_form'] = AddressForm()
 
         return render(request, self.template_name, context)
@@ -208,6 +215,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         application.data = request.session.get('application').get('data')
         application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
         application.applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+        application.lodged_date = datetime.now()
         application.customer_status = 'pending'
         application.processing_status = 'new'
         application.save()

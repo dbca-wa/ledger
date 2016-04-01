@@ -46,7 +46,7 @@
     <div id="mainContainer" class="container hidden">
         <div class="row">
             <div class="col-md-2 col-sm-3">
-                <label class="vertical-buffer">Selected Persona:</label>
+                <label class="top-buffer">Selected Persona:</label>
                 <p>{{ persona.name }}</p>
                 {% if application_pk %}
                     <p><em><a href="{% url 'applications:create_select_persona_existing_application' licence_type.code application_pk %}">Change Persona</a></em></p>
@@ -59,7 +59,7 @@
             </div>
         </div>
         <div class="row">
-            <nav class="hidden-xs col-sm-3 col-md-2 vertical-buffer">
+            <nav class="hidden-xs col-sm-3 col-md-2 top-buffer">
                 <div id="sectionList">
                     <ul class="nav nav-stacked">
                     </ul>

@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeView, CreateSelectPersonaView, EnterDetailsView, PreviewView
 
-from wildlifelicensing.apps.applications.views.process import ProcessView, ListStaffView
+from wildlifelicensing.apps.applications.views.process import ProcessView, ListOfficersView, AssignOfficerView
 
 urlpatterns = [
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
@@ -16,6 +16,7 @@ urlpatterns = [
 
     # process
     url(r'^process/(?P<id>[\w-]+)', ProcessView.as_view(), name='process'),
-    url('^list_staff/$', ListStaffView.as_view(), name='list_staff'),
-    url('^list_staff/([0-9]+)/$', ListStaffView.as_view(), name='list_staff'),
+    url('^list_officers/$', ListOfficersView.as_view(), name='list_officers'),
+    url('^list_officers/([0-9]+)/$', ListOfficersView.as_view(), name='list_officers'),
+    url('^assign_officer/$', AssignOfficerView.as_view(), name='assign_officer'),
 ]

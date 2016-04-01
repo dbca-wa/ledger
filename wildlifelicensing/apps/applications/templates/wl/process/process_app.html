@@ -4,6 +4,8 @@
 
 {% load bootstrap3 %}
 
+{% load jsonify %}
+
 {% block extra_css %}
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
@@ -12,11 +14,13 @@
 {% endblock %}
 
 {% block requirements %}
-    require(["js/process/process_app"], function (app) {
+    require(['js/process/process_app', 'js/application_preview'], function (app, applicationPreview) {
         var options = {
-            data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}
+            data: {% if dataJSON %} {{ dataJSON|jsonify }} {% else %} {} {% endif %}
         };
         app(options);
+
+        applicationPreview.layoutPreviewItems('#previewContainer', {{ dataJSON|jsonify }}.form_structure, {{ dataJSON|jsonify}}.application.data)
     });
 {% endblock %}
 
@@ -37,30 +41,84 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
+            <div class="col-md-3">
                 <div class="row">
                     <div class="panel panel-default">
                         <div class="panel-body">
+                            <label>Applicant</label>
+                            {% with applicant=dataJSON.application.applicant_persona %}
+                                <p>{{ applicant.user.first_name }} {{ applicant.user.last_name }}</p>
+                                <p>{{ applicant.postal_address.search_text }}</p>
+                            {% endwith %}
+                            <label>Lodged on</label>
+                            <p>{{ dataJSON.application.lodged_date }}</p>
+                            <label>Processing Status</label>
+                            <p>{{ dataJSON.application.processing_status }}</p>
                             <div class="form-group">
                                  <label>Currently assigned to</label>
                                  <input type="hidden" id="assignee" class="form-control"></input>
-                                 <a href="" class="pull-right">Assign to me</a>
+                                 <a id="assignToMe" href="#" class="pull-right">Assign to me</a>
                             </div>
                          </div>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="jumbotron">
-                        <div class="container">
-                            <h1>Action Panel</h1>
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="processing-option">
+                                <div>
+                                    <label>
+                                        <input id="idCheck" type="checkbox" disabled>
+                                        Identity Check
+                                    </label> 
+                                </div>
+                                <button type="button" class="btn btn-xs btn-success">Accept</button>
+                                <button type="button" class="btn btn-xs btn-danger">Reject</button>
+                            </div>
+                            <div class="processing-option">
+                                <div>
+                                    <label>
+                                        <input id="characterCheck" type="checkbox" disabled>
+                                        Character Check
+                                    </label> 
+                                </div>
+                                <button type="button" class="btn btn-xs btn-success">Accept</button>
+                                <button type="button" class="btn btn-xs btn-danger">Reject</button>
+                            </div>
+                            <div class="processing-option">
+                                <div>
+                                    <label>
+                                        <input id="reviewed" type="checkbox" disabled>
+                                        Application Review
+                                    </label> 
+                                </div>
+                                <button type="button" class="btn btn-xs btn-success">Accept</button>
+                                <button type="button" class="btn btn-xs btn-warning">Request Amendments</button>
+                                <button type="button" class="btn btn-xs btn-danger">Reject</button>
+                            </div>
+                            <div class="processing-option">
+                                <div>
+                                    <label>
+                                        <input id="departmentalAssessment" type="checkbox" disabled>
+                                        Departmental Assessment
+                                    </label> 
+                                    <div class="form-group">
+                                        Send for assessment
+                                        <select class="form-control"></select>
+                                    </div>
+                                    <button type="button" class="btn btn-xs btn-success">Assessment Complete</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                <div class="jumbotron">
-                    <div class="container">
-                        <h1>Application Preview</h1>
+            <div class="col-md-9">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div id="previewContainer">
+                            <h2>{{ dataJSON.application.licence_type.name }}</h2>
+                        </div>
                     </div>
                 </div>
             </div>

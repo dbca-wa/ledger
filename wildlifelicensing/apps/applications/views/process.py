@@ -1,63 +1,79 @@
-import json
+from django.contrib.auth.models import Group
+from django.core.context_processors import csrf
 from django.db.models import Q
-from django.http import HttpResponse
-from django.http.response import JsonResponse
+import os
+import json
+
+from django.http import JsonResponse
 from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404
+
+from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import get_all_officers
 from wildlifelicensing.apps.applications.models import Application
+
+APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 
 class ProcessView(OfficerRequiredMixin, TemplateView):
     template_name = 'wl/process/process_app.html'
 
-    def _build_data(self, application):
+    def _build_data(self, request, application):
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code)) as data_file:
+            form_structure = json.load(data_file)
+
         data = {
-            'selectAssignee': {
-                'values': [['', 'Unassigned']],
-                'selected': ''
-            }
-        }
-        officers = get_all_officers()
-        data['selectAssignee']['values'] += [[user.email, str(user)] for user in officers]
-        if application.assigned_officer is not None:
-            assignee = application.assigned_officer.email
-        else:
-            assignee = ''
-        data['selectAssignee']['selected'] = assignee
+                'user': serialize(request.user),
+                'application': serialize(application),
+                'form_structure': form_structure,
+                'csrf_token': str(csrf(request).get('csrf_token'))
+                }
+
         return data
 
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=kwargs['id'])
         if 'dataJSON' not in kwargs:
-            kwargs['dataJSON'] = json.dumps(self._build_data(application))
+            kwargs['dataJSON'] = self._build_data(self.request, application)
         return super(ProcessView, self).get_context_data(**kwargs)
 
 
-class ListStaffView(View):
+class ListOfficersView(View):
     def get(self, request, *args, **kwargs):
-        if len(args) > 0:
-            staff_email_users = EmailUser.objects.filter(id=args[0])
+        if 'name' in request.GET and len(request.GET.get('name')) > 0:
+            q = Q(last_name__istartswith=request.GET.get('name')) | Q(first_name__istartswith=request.GET.get('name'))
+
+            q = q & Q(groups=get_object_or_404(Group, name='Officers'))
+
+            officer_email_users = EmailUser.objects.filter(q)
+            officers = []
         else:
-            q = Q(last_name__istartswith=request.GET.get('name', '')) | \
-                Q(first_name__istartswith=request.GET.get('name', '')) | \
-                Q(email__istartswith=request.GET.get('name', ''))
+            officers = [{'id': 0, 'text': 'Unassigned'}]
+            officer_email_users = EmailUser.objects.filter(groups=get_object_or_404(Group, name='Officers'))
 
-            staff_email_users = EmailUser.objects.filter(q).exclude(groups=None)
+        for user in officer_email_users:
+            officers.append({'id': user.id, 'text': '%s %s' % (user.first_name, user.last_name)})
 
-        staff = [{'id': 0, 'text': 'Unassigned'}]
-        for user in staff_email_users:
-            staff.append({'id': user.id, 'text': '%s %s (%s)' % (user.first_name, user.last_name, user.email)})
-
-        return JsonResponse(staff, safe=False)
+        return JsonResponse(officers, safe=False)
 
 
-class AssignStaffView(View):
+class AssignOfficerView(View):
     def post(self, request, *args, **kwargs):
-        get_object_or_404(Application, pk=args[0]).assigned_officer = get_object_or_404(EmailUser, pk=args[1])
 
-        return HttpResponse('')
+        application = get_object_or_404(Application, pk=request.POST['applicationID'])
+
+        try:
+            application.assigned_officer = EmailUser.objects.get(pk=request.POST['userID'])
+        except EmailUser.DoesNotExist:
+            application.assigned_officer = None
+
+        application.save()
+
+        if application.assigned_officer is not None:
+            return JsonResponse({'id': application.assigned_officer.id, 'text': '%s %s' % \
+                                 (application.assigned_officer.first_name, application.assigned_officer.last_name)}, safe=False)
+        else:
+            return JsonResponse({'id': 0, 'text': 'Unassigned'})
