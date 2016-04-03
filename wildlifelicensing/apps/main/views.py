@@ -3,11 +3,14 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import FormView
 
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import Persona
+from ledger.accounts.models import Persona, Document
 from ledger.accounts.forms import AddressForm, PersonaForm
+
+from forms import IdentityForm
 
 
 class ListPersonasView(LoginRequiredMixin, TemplateView):
@@ -80,3 +83,27 @@ class EditPersonasView(LoginRequiredMixin, TemplateView):
         messages.success(request, "The persona '%s' was updated." % persona.name)
 
         return redirect('main:list_personas')
+
+
+class IdentityView(LoginRequiredMixin, FormView):
+    template_name = 'wl/identity.html'
+    login_url = '/'
+    form_class  = IdentityForm
+    success_url = '.'
+
+    def form_valid(self, form):
+        if self.request.user.identity is not None:
+            self.request.user.identity.delete()
+
+        self.request.user.identity = Document.objects.create(file=self.request.FILES['identity_file'])
+        self.request.user.save()
+
+        return super(IdentityView, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super(IdentityView, self).get_context_data(**kwargs)
+
+        if self.request.user.identity is not None:
+            context['existing_id_image_url'] = self.request.user.identity.file.url
+
+        return context

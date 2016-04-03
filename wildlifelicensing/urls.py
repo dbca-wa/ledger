@@ -1,4 +1,5 @@
-from django.conf.urls import url, include
+from django.conf.urls import url, include, static
+from django.conf import settings
 
 from wildlifelicensing.admin import wildlife_licensing_admin_site
 from wildlifelicensing.apps.dashboard.views import DashBoardRoutingView
@@ -12,3 +13,6 @@ urlpatterns = [
     url(r'', include('wildlifelicensing.apps.dashboard.urls', namespace='dashboard')),
     url(r'^applications/', include('wildlifelicensing.apps.applications.urls', namespace='applications')),
 ] + ledger_patterns
+
+if settings.DEBUG:
+    urlpatterns += static.static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

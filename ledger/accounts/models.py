@@ -175,6 +175,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
     billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
 
+    identity = models.ForeignKey(Document, null=True, blank=True, related_name='identity_document')
+
     documents = models.ManyToManyField(Document)
 
     extra_data = JSONField(default=dict)

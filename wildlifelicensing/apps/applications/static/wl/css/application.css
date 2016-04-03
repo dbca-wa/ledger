@@ -31,6 +31,11 @@
     padding-bottom: 20px;
 }
 
-.processing-option {
-    margin-bottom: 15px;
+hr {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.ok {
+	color: #1F45FC;
 }

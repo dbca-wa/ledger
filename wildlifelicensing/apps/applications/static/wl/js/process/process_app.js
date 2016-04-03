@@ -58,6 +58,13 @@ define(
             });
         }
 
+        function initActions(options) {
+        	$('.processing-action-group').find('button').click(function(e) {
+        		$(this).parent().parent().find('span').removeClass('hidden');
+        		$(this).parent().hide();
+        	});
+        }
+
         return function (moduleOptions) {
             var defaults = {
                 selectors: {
@@ -77,7 +84,7 @@ define(
 
             $(function () {
                 initAssignee(options);
-                // things to do when the dom is ready
+                initActions(options);
             });
         }
     });
