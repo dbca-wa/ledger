@@ -32,10 +32,12 @@
 }
 
 hr {
-	margin-top: 10px;
-	margin-bottom: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
+a { cursor: pointer; }
+
 .ok {
-	color: #1F45FC;
+    color: #1F45FC;
 }

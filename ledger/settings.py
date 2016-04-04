@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_hosts',
     'bootstrap3',
-    'jsonify',
     'reversion',
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',

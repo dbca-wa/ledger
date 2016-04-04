@@ -12,4 +12,4 @@ class Condition(RevisionedMixin):
 
 class WildlifeLicenceType(LicenceType):
     default_conditions = models.ManyToManyField(Condition)
-
+    identification_required = models.BooleanField(default=False)

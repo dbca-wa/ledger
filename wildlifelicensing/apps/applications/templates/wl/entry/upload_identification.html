@@ -1,0 +1,54 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% block extra_css %}
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
+                    <li class="active">Upload Identification</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Upload Identification</h2>
+                <p>This type of licence required photographic identification. This requires uploading scanned or photograhed image of a valid Australian drivers licence, passport, or proof-of-age card.
+                If you cannot provide identification at this point, you can skip this step of the application process. You can then, at any time, upload your photo ID by selecting the Manage ID
+                option under the right-hand menu on the top menu bar. Alternatively, you can present your photo ID in person at any Wildlife Licensing office branch.</p>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% with field=form.identification_file %}
+                        <div class="form-group {% if field.errors %} has-error has-feedback {% endif %}">
+                            <label for="{{ field.auto_id }}">{{ field.label }}</label> 
+                            <input id="{{ field.auto_id }}" name="{{ field.name }}" type="file" class="form-control" {% if file_types %}accept="{{ file_types }}"{% endif %}>
+                            {% if field.help_text %}
+                                <p class="help-block">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+                                <span class='text-danger'>{{ field.errors|join:'<br />' }}</span>
+                            {% endif %}
+                        </div>
+                    {% endwith %}
+                    <button type="submit" class="btn btn-primary pull-right">Upload</button>
+                    <a class="btn btn-info pull-right" href="{% url 'applications:create_select_persona' licence_type.code %}" style="margin-right: 20px;">Skip this step</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -25,9 +25,13 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code)) as data_file:
             form_structure = json.load(data_file)
 
+        def format_application_statuses(instance, attrs):
+            attrs['processing_status'] = dict(Application.PROCESSING_STATUS_CHOICES)[attrs['processing_status']]
+            return attrs
+
         data = {
                 'user': serialize(request.user),
-                'application': serialize(application),
+                'application': serialize(application, posthook=format_application_statuses),
                 'form_structure': form_structure,
                 'csrf_token': str(csrf(request).get('csrf_token'))
                 }

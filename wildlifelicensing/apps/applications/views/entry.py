@@ -6,6 +6,7 @@ import shutil
 from datetime import datetime
 
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import FormView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files import File
 from django.contrib import messages
@@ -16,6 +17,7 @@ from ledger.accounts.models import Document
 from ledger.accounts.forms import AddressForm, PersonaForm
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
+from wildlifelicensing.apps.main.forms import IdentificationForm
 
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data
@@ -37,6 +39,34 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
         context = {'licence_types': dict([(licence_type.code, licence_type.name) for licence_type in WildlifeLicenceType.objects.all()])}
 
         return render(request, self.template_name, context)
+
+
+class CheckIdentityRequiredView(LoginRequiredMixin, FormView):
+    template_name = 'wl/entry/upload_identification.html'
+    login_url = '/'
+    form_class = IdentificationForm
+
+    def get(self, *args, **kwargs):
+        licence_type = get_object_or_404(WildlifeLicenceType, code=args[1])
+
+        if licence_type.identification_required and self.request.user.identification is None:
+            return super(CheckIdentityRequiredView, self).get(*args, **kwargs)
+        else:
+            return redirect('applications:create_select_persona', args[1], **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(CheckIdentityRequiredView, self).get_context_data(**kwargs)
+        context['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
+        return context
+
+    def form_valid(self, form):
+        if self.request.user.identification is not None:
+            self.request.user.identification.delete()
+
+        self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
+        self.request.user.save()
+
+        return redirect('applications:create_select_persona', *self.args)
 
 
 class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
