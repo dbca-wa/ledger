@@ -15,7 +15,7 @@ from braces.views import LoginRequiredMixin
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_officer
+from wildlifelicensing.apps.main.helpers import is_officer, get_all_officers
 from .forms import LoginForm
 
 logger = logging.getLogger(__name__)
@@ -215,6 +215,9 @@ class DashboardTableOfficerView(DashboardTableBaseView):
         ]
         data['applications']['filters']['status']['values'] = \
             [('all', 'All')] + list(Application.PROCESSING_STATUS_CHOICES)
+        data['applications']['filters']['assignee'] = {
+            'values': [('all', 'All')] + [(user.pk, str(user),) for user in get_all_officers()]
+        }
         data['applications']['ajax']['url'] = reverse('dashboard:applications_data_officer')
         return data
 
@@ -339,6 +342,8 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
             if filter_value != 'all':
                 if filter_name == 'status':
                     query &= self._build_status_filter(filter_value)
+                elif filter_name == 'assignee':
+                    query &= Q(assigned_officer__pk=filter_value)
         # part 2: filter from the global search
         search = self.request.GET.get('search[value]', None)
         if search:
@@ -381,18 +386,16 @@ class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTable
         )
 
     def _build_assignee_search_query(self, search):
-        fields_to_search = ['assigned_officer__user__last_name', 'assigned_officer__user__first_name',
-                            'assigned_officer__user__email']
+        fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name',
+                            'assigned_officer__email']
         return self._build_search_query(fields_to_search, search)
 
     def _render_assignee_column(self, obj):
-        user = obj.assigned_officer
-        if user is None:
+        assignee = obj.assigned_officer
+        if assignee is None:
             return ''
         else:
-            return '{email}'.format(
-                email=user.email
-            )
+            return '{}'.format(assignee)
 
     def _render_lodged_date(selfself, obj):
         return _render_date(obj.lodged_date)

@@ -19,7 +19,8 @@ define(
             },
             applicationsTable,
             $applicationsLicenceTypeFilter,
-            $applicationsStatusTypeFilter;
+            $applicationsStatusTypeFilter,
+            $applicationsAssigneeTypeFilter;
 
         function initTables() {
             var applicationTableOptions = $.extend({}, tableOptions, {
@@ -44,7 +45,7 @@ define(
             );
         }
 
-        function initFilters() {
+        function initApplicationsFilters() {
             var data = options.data,
                 optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),
                 $node;
@@ -56,7 +57,7 @@ define(
                 }));
             }
 
-            // applications licence type
+            // licence type
             _.forEach(data.applications.filters.licenceType.values, function (value) {
 
                 $node = createOptionNode(value);
@@ -65,12 +66,21 @@ define(
             $applicationsLicenceTypeFilter.on('change', function () {
                 applicationsTable.ajax.reload();
             });
-            // applications status
+            // status
             _.forEach(data.applications.filters.status.values, function (value) {
                 $node = createOptionNode(value);
                 $applicationsStatusTypeFilter.append($node);
             });
             $applicationsStatusTypeFilter.on('change', function () {
+                applicationsTable.ajax.reload();
+            });
+
+            // assignee filter
+            _.forEach(data.applications.filters.assignee.values, function (value) {
+                $node = createOptionNode(value);
+                $applicationsAssigneeTypeFilter.append($node);
+            });
+            $applicationsAssigneeTypeFilter.on('change', function () {
                 applicationsTable.ajax.reload();
             });
 
@@ -97,7 +107,8 @@ define(
                     applicationsAccordion: '#applications-collapse',
                     applicationsFilterForm: '#applications-filter-form',
                     applicationsLicenceFilter: '#applications-filter-licence-type',
-                    applicationsStatusFilter: '#applications-filter-status'
+                    applicationsStatusFilter: '#applications-filter-status',
+                    applicationsAssigneeFilter: '#applications-filter-assignee'
                 },
                 data: {
                     'applications': {
@@ -111,6 +122,9 @@ define(
                                 'values': []
                             },
                             'status': {
+                                'values': []
+                            },
+                            'assignee': {
                                 'values': []
                             }
                         }
@@ -127,10 +141,11 @@ define(
             $(function () {
                 $applicationsLicenceTypeFilter = $(options.selectors.applicationsLicenceFilter);
                 $applicationsStatusTypeFilter = $(options.selectors.applicationsStatusFilter);
+                $applicationsAssigneeTypeFilter = $(options.selectors.applicationsAssigneeFilter);
 
                 $(options.selectors.applicationsAccordion).collapse('show');
 
-                initFilters();
+                initApplicationsFilters();
                 if (options.data.query) {
                     // set filter according to query data
                     setFilters(options.data.query);
