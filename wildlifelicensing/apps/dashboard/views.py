@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import json
 import urllib
 import logging
+import datetime
 
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.shortcuts import redirect
@@ -26,6 +27,15 @@ def _build_url(base, query):
 
 def _get_user_applications(user):
     return Application.objects.filter(applicant_persona__user=user)
+
+
+# render date in dd/mm/yyyy format
+def _render_date(date):
+    if isinstance(date, datetime.datetime) or isinstance(date, datetime.date):
+        return date.strftime("%d/%m/%Y")
+    if not date:
+        return ''
+    return 'not a valid date object'
 
 
 class DashBoardRoutingView(TemplateView):
@@ -185,12 +195,12 @@ class DashboardTableOfficerView(DashboardTableBaseView):
                 'name': 'applicant_persona__user'
             },
             {
-                'title': 'Persona',
-                'name': 'applicant_persona'
-            },
-            {
                 'title': 'Status',
                 'name': 'status'
+            },
+            {
+                'title': 'Lodged on',
+                'name': 'lodged_date'
             },
             {
                 'title': 'Assignee',
@@ -360,9 +370,9 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
 
 class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTableBaseView):
-    columns = ['id', 'licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status',
+    columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
                'assigned_officer', 'action']
-    order_columns = ['id', 'licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status',
+    order_columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
                      'assigned_officer', '']
 
     def _render_action_column(self, obj):
@@ -384,6 +394,9 @@ class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTable
                 email=user.email
             )
 
+    def _render_lodged_date(selfself, obj):
+        return _render_date(obj.lodged_date)
+
     columns_helpers = dict(ApplicationDataTableBaseView.columns_helpers.items(), **{
         'assigned_officer': {
             'search': _build_assignee_search_query,
@@ -391,6 +404,9 @@ class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTable
         },
         'action': {
             'render': _render_action_column,
+        },
+        'lodged_date': {
+            'render': _render_lodged_date
         },
     })
 
