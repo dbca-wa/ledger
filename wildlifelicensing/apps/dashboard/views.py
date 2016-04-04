@@ -142,128 +142,104 @@ class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
 
 class DashboardTableBaseView(TemplateView):
     template_name = 'wl/dash_tables.html'
-    licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
-    applications_statuses = []
-    data = {
-        'applications': {
-            'columnDefinitions': [
-            ],
-            'filters': {
-                'licenceType': {
-                    'values': licence_types,
+
+    def _build_data(self):
+        licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
+        data = {
+            'applications': {
+                'columnDefinitions': [],
+                'filters': {
+                    'licenceType': {
+                        'values': licence_types,
+                    },
+                    'status': {
+                        'values': [],
+                    }
                 },
-                'status': {
-                    'values': applications_statuses,
+                'ajax': {
+                    'url': ''
                 }
-            },
-            'ajax': {
-                'url': ''
             }
         }
-    }
+        return data
 
     def get_context_data(self, **kwargs):
         if 'dataJSON' not in kwargs:
+            data = self._build_data()
             # add the request query to the data
-            self.data['query'] = self.request.GET.dict()
-            kwargs['dataJSON'] = json.dumps(self.data)
+            data['query'] = self.request.GET.dict()
+            kwargs['dataJSON'] = json.dumps(data)
         return super(DashboardTableBaseView, self).get_context_data(**kwargs)
 
 
 class DashboardTableOfficerView(DashboardTableBaseView):
-    applications_statuses = [('all', 'All')] + list(Application.PROCESSING_STATUS_CHOICES)
-    data = {
-        'applications': {
-            'columnDefinitions': [
-                {
-                    'title': 'ID',
-                    'name': 'id'
-                },
-                {
-                    'title': 'Licence Type',
-                    'name': 'license_type',
-                },
-                {
-                    'title': 'User',
-                    'name': 'applicant_persona__user'
-                },
-                {
-                    'title': 'Persona',
-                    'name': 'applicant_persona'
-                },
-                {
-                    'title': 'Status',
-                    'name': 'status'
-                },
-                {
-                    'title': 'Assignee',
-                    'name': 'assigned_officer'
-                },
-                {
-                    'title': 'Action',
-                    'name': 'action',
-                    'searchable': False,
-                    'orderable': False
-                }
-            ],
-            'filters': {
-                'licenceType': {
-                    'values': DashboardTableBaseView.licence_types,
-                },
-                'status': {
-                    'values': applications_statuses,
-                }
+    def _build_data(self):
+        data = super(DashboardTableOfficerView, self)._build_data()
+        data['applications']['columnDefinitions'] = [
+            {
+                'title': 'ID',
+                'name': 'id'
             },
-            'ajax': {
-                # TODO: using reverse here (in static data) will throw a ImproperlyConfigured exception due to circular import
-                # TODO: find a way to init it at construction time.
-                # 'url': reverse('dashboard:applications_data_officer')
-                'url': '/dashboard/data/applications/officer/'
+            {
+                'title': 'Licence Type',
+                'name': 'license_type',
+            },
+            {
+                'title': 'User',
+                'name': 'applicant_persona__user'
+            },
+            {
+                'title': 'Persona',
+                'name': 'applicant_persona'
+            },
+            {
+                'title': 'Status',
+                'name': 'status'
+            },
+            {
+                'title': 'Assignee',
+                'name': 'assigned_officer'
+            },
+            {
+                'title': 'Action',
+                'name': 'action',
+                'searchable': False,
+                'orderable': False
             }
-        }
-    }
+        ]
+        data['applications']['filters']['status']['values'] = \
+            [('all', 'All')] + list(Application.PROCESSING_STATUS_CHOICES)
+        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_officer')
+        return data
 
 
 class DashboardTableCustomerView(DashboardTableBaseView):
-    applications_statuses = [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
-    data = {
-        'applications': {
-            'columnDefinitions': [
-                {
-                    'title': 'Licence Type',
-                    'name': 'license_type',
-                },
-                {
-                    'title': 'Persona',
-                    'name': 'applicant_persona'
-                },
-                {
-                    'title': 'Status',
-                    'name': 'status'
-                },
-                {
-                    'title': 'Action',
-                    'name': 'action',
-                    'searchable': False,
-                    'orderable': False
-                }
-            ],
-            'filters': {
-                'licenceType': {
-                    'values': DashboardTableBaseView.licence_types,
-                },
-                'status': {
-                    'values': applications_statuses,
-                }
+    def _build_data(self):
+        data = super(DashboardTableCustomerView, self)._build_data()
+        data['applications']['columnDefinitions'] = [
+            {
+                'title': 'Licence Type',
+                'name': 'license_type',
             },
-            'ajax': {
-                # TODO: using reverse here (in static data) will throw a ImproperlyConfigured exception due to circular import
-                # TODO: find a way to init it at construction time.
-                # 'url': reverse('dashboard:applications_data_customer')
-                'url': '/dashboard/data/applications/customer/'
+            {
+                'title': 'Persona',
+                'name': 'applicant_persona'
+            },
+            {
+                'title': 'Status',
+                'name': 'status'
+            },
+            {
+                'title': 'Action',
+                'name': 'action',
+                'searchable': False,
+                'orderable': False
             }
-        }
-    }
+        ]
+        data['applications']['filters']['status']['values'] = \
+            [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
+        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_customer')
+        return data
 
 
 class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
