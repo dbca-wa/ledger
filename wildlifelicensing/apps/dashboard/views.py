@@ -29,6 +29,10 @@ def _get_user_applications(user):
     return Application.objects.filter(applicant_persona__user=user)
 
 
+def _get_processing_statuses_but_draft():
+    return [s for s in Application.PROCESSING_STATUS_CHOICES if s[0] != 'draft']
+
+
 # render date in dd/mm/yyyy format
 def _render_date(date):
     if isinstance(date, datetime.datetime) or isinstance(date, datetime.date):
@@ -86,24 +90,14 @@ class DashboardTreeViewBase(TemplateView):
 
     def _build_tree_nodes(self):
         """
-            +All applications
-              - status
+        Subclass should implement the nodes with the help of _create_node and _build_node
         """
-        all_applications = Application.objects.all()
-        all_applications_node = self._create_node('All applications', href=self.url,
-                                                  count=len(all_applications))
-        for s_value, s_title in Application.PROCESSING_STATUS_CHOICES:
-            applications = all_applications.filter(processing_status=s_value)
-            if applications.count() > 0:
-                query = {
-                    'model': 'application',
-                    'status': s_value,
-                }
-                href = _build_url(self.url, query)
-                node = self._create_node(s_title, href=href, count=applications.count())
-                self._add_node(all_applications_node, node)
-
-        return [all_applications_node]
+        parent_node = self._create_node('Parent node', href='#', count=2)
+        child1 = self._create_node('Child#1', href='#', count=1)
+        self._add_node(parent_node, child1)
+        child2 = self._create_node('Child#2', href='#', count=1)
+        self._add_node(parent_node, child2)
+        return [parent_node]
 
     def get_context_data(self, **kwargs):
         if 'dataJSON' not in kwargs:
@@ -115,8 +109,48 @@ class DashboardTreeViewBase(TemplateView):
 
 class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
-    title = 'Quick glance dashboard'
+    title = 'Dashboard'
     url = reverse_lazy('dashboard:tables_officer')
+
+    def _build_tree_nodes(self):
+        """
+            +Applications assigned to me
+              - status
+            +All applications
+              - status
+        """
+        # The draft status is excluded from the officer status list
+        statuses = _get_processing_statuses_but_draft()
+        all_applications = Application.objects.all()
+        all_applications_node = self._create_node('All applications', href=self.url,
+                                                  count=all_applications.count())
+        for s_value, s_title in statuses:
+            applications = all_applications.filter(processing_status=s_value)
+            if applications.count() > 0:
+                query = {
+                    'application_status': s_value,
+                }
+                href = _build_url(self.url, query)
+                node = self._create_node(s_title, href=href, count=applications.count())
+                self._add_node(all_applications_node, node)
+
+        user_applications = all_applications.filter(assigned_officer=self.request.user)
+        query = {
+            'application_assignee': self.request.user.pk
+        }
+        user_applications_node = self._create_node('My assigned applications', href=_build_url(self.url, query),
+                                                   count=user_applications.count())
+        for s_value, s_title in statuses:
+            applications = user_applications.filter(processing_status=s_value)
+            if applications.count() > 0:
+                query.update({
+                    'application_status': s_value
+                })
+                href = _build_url(self.url, query)
+                node = self._create_node(s_title, href=href, count=applications.count())
+                self._add_node(user_applications_node, node)
+
+        return [user_applications_node, all_applications_node]
 
 
 class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
@@ -131,14 +165,13 @@ class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
         :return:
         """
         my_applications = _get_user_applications(self.request.user)
-        my_applications_node = self._create_node('My applications', href=self.url, count=len(my_applications))
+        my_applications_node = self._create_node('My applications', href=self.url, count=my_applications.count())
         # one children node per status
         for status in [s[0] for s in Application.CUSTOMER_STATUS_CHOICES]:
             applications = my_applications.filter(customer_status=status)
             if applications.count() > 0:
                 query = {
-                    'model': 'application',
-                    'status': status,
+                    'application_status': status,
                 }
                 href = _build_url(self.url, query)
                 node = self._create_node(status, href=href, count=applications.count())
@@ -214,7 +247,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
             }
         ]
         data['applications']['filters']['status']['values'] = \
-            [('all', 'All')] + list(Application.PROCESSING_STATUS_CHOICES)
+            [('all', 'All')] + _get_processing_statuses_but_draft()
         data['applications']['filters']['assignee'] = {
             'values': [('all', 'All')] + [(user.pk, str(user),) for user in get_all_officers()]
         }

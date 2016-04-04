@@ -86,17 +86,13 @@ define(
 
         }
 
-        function setFilters(data) {
-            if (data.model) {
-                if (data.model === 'application') {
-                    $('#applications-collapse').collapse('show');
-                    if (data.status) {
-                        $applicationsStatusTypeFilter.val(data.status);
-                    }
-                    if (data.licence_type) {
-                        $applicationsLicenceTypeFilter.val(data.licence_type);
-                    }
-                }
+        function setFilters(query) {
+            $('#applications-collapse').collapse('show');
+            if (query['application_status']) {
+                $applicationsStatusTypeFilter.val(query['application_status']);
+            }
+            if (query['application_assignee']) {
+                $applicationsAssigneeTypeFilter.val(query['application_assignee'])
             }
         }
 
@@ -115,8 +111,7 @@ define(
                         ajax: {
                             url: "/dashboard/data/applications"
                         },
-                        'columnDefinitions': [
-                        ],
+                        'columnDefinitions': [],
                         'filters': {
                             'licenceType': {
                                 'values': []
