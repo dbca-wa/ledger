@@ -194,7 +194,7 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'ledger.log'),
             'formatter': 'verbose',
-            'maxBytes': '5242880'
+            'maxBytes': 5242880
         },
     },
     'loggers': {
