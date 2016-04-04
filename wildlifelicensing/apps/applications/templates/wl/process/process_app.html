@@ -47,8 +47,17 @@
                         <div class="panel-body">
                             <label>Applicant</label>
                             {% with applicant=dataJSON.application.applicant_persona %}
-                                <p>{{ applicant.user.first_name }} {{ applicant.user.last_name }}</p>
+                                <p>
+                                    {{ applicant.user.first_name }} {{ applicant.user.last_name }}
+                                    {% if request.user.identification %}
+                                        <span class="pull-right">
+                                            <a data-toggle="modal" data-target="#idModal">
+                                                Show ID
+                                            </a>
+                                        </span>
+                                    {% endif %}
                                 <p>{{ applicant.postal_address.search_text }}</p>
+                                
                             {% endwith %}
                             <label>Lodged on</label>
                             <p>{{ dataJSON.application.lodged_date }}</p>
@@ -57,7 +66,7 @@
                             <div class="form-group">
                                  <label>Currently assigned to</label>
                                  <input type="hidden" id="assignee" class="form-control"></input>
-                                 <a id="assignToMe" href="#" class="pull-right">Assign to me</a>
+                                 <a id="assignToMe" class="pull-right">Assign to me</a>
                             </div>
                          </div>
                     </div>
@@ -127,4 +136,24 @@
             </div>
         </div>
     </div>
+    {% block modals %}
+        {% if request.user.identification %}
+            <div class="modal fade" id="idModal" tabindex="-1">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="myModalLabel">Identification for {{ request.user.first_name }} {{ request.user.last_name }}</h4>
+                        </div>
+                        <div class="modal-body" style="text-align: center">
+                            <img src="{{ request.user.identification.file.url }}" />
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endblock %}
 {% endblock %}

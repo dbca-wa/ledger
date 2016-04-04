@@ -86,7 +86,7 @@ class EditPersonasView(LoginRequiredMixin, TemplateView):
 
 
 class IdentificationView(LoginRequiredMixin, FormView):
-    template_name = 'wl/identification.html'
+    template_name = 'wl/manage_identification.html'
     login_url = '/'
     form_class = IdentificationForm
     success_url = '.'
@@ -94,8 +94,6 @@ class IdentificationView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         if self.request.user.identification is not None:
             self.request.user.identification.delete()
-
-        print 'here'
 
         self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
         self.request.user.save()

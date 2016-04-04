@@ -175,7 +175,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
     billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
 
-    identification = models.ForeignKey(Document, null=True, blank=True, related_name='identification_document')
+    identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
 
     documents = models.ManyToManyField(Document)
 

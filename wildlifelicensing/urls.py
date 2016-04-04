@@ -3,7 +3,6 @@ from django.conf import settings
 
 from wildlifelicensing.admin import wildlife_licensing_admin_site
 from wildlifelicensing.apps.dashboard.views import DashBoardRoutingView
-from wildlifelicensing.apps.dashboard.forms import LoginForm
 from ledger.urls import urlpatterns as ledger_patterns
 
 urlpatterns = [
