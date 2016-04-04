@@ -14,10 +14,19 @@ class Application(RevisionedMixin):
                                ('amendment_required', 'Amendment Required'), ('approved', 'Approved'),
                                ('rejected', 'Rejected'))
 
-    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('incomplete', 'Incomplete'),
-                                 ('amended', 'Amended'), ('ready_for_assessment', 'Ready for Assessment'),
-                                 ('awaiting_assessment', 'Awaiting Assessment'), ('approved', 'Approved'),
+    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('ready_for_action', 'Ready for Action'),
+                                 ('awaiting_applicant_response', 'Awaiting Applicant Response'),
+                                 ('awaiting_assessor_response', 'Awaiting Assessor Response'),
+                                 ('awaiting_responses', 'Awaiting Responses'), ('approved', 'Approved'),
                                  ('rejected', 'Rejected'))
+
+    ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
+                               ('updated', 'Updated'), ('checked', 'Checked'))
+
+    CHARACTER_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('accepted', 'Accepted'), ('rejected', 'Rejected'))
+
+    REVIEW_STATUS_CHOICES = (('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
+                             ('accepted', 'Accepted'), ('rejected', 'Rejected'))
 
     licence_type = models.ForeignKey(WildlifeLicenceType)
     customer_status = models.CharField('Customer Status', max_length=20, choices=CUSTOMER_STATUS_CHOICES)
@@ -27,7 +36,13 @@ class Application(RevisionedMixin):
     lodged_date = models.DateTimeField(blank=True, null=True)
 
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
-    processing_status = models.CharField('Processing Status', max_length=20, choices=PROCESSING_STATUS_CHOICES)
+    processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES)
+    id_check_status = models.CharField('Identification Check Status', max_length=20, choices=ID_CHECK_STATUS_CHOICES)
+    character_check_status = models.CharField('Character Check Status', max_length=20, choices=CHARACTER_CHECK_STATUS_CHOICES)
+    review_status = models.CharField('Review Status', max_length=20, choices=REVIEW_STATUS_CHOICES)
+
+    assessments = models.ManyToManyField(EmailUser, through='Assessment', through_fields=('application', 'assessor'), related_name='Assessments')
+
     conditions = models.ManyToManyField(Condition)
     notes = models.TextField('Notes', blank=True)
 
@@ -41,9 +56,17 @@ class AmendmentRequest(RevisionedMixin):
     application = models.ForeignKey(Application)
 
 
+class Assessment(RevisionedMixin):
+    STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
+
+    assessor = models.ForeignKey(EmailUser)
+    application = models.ForeignKey(Application)
+    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES)
+
+
 class AssessorComment(RevisionedMixin):
     text = models.TextField(blank=True)
-    application = models.ForeignKey(Application)
+    assessment = models.ForeignKey(Assessment)
 
 
 @receiver(pre_delete, sender=Application)
