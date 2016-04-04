@@ -10,7 +10,7 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import Persona, Document
 from ledger.accounts.forms import AddressForm, PersonaForm
 
-from forms import IdentityForm
+from forms import IdentificationForm
 
 
 class ListPersonasView(LoginRequiredMixin, TemplateView):
@@ -85,25 +85,27 @@ class EditPersonasView(LoginRequiredMixin, TemplateView):
         return redirect('main:list_personas')
 
 
-class IdentityView(LoginRequiredMixin, FormView):
-    template_name = 'wl/identity.html'
+class IdentificationView(LoginRequiredMixin, FormView):
+    template_name = 'wl/identification.html'
     login_url = '/'
-    form_class  = IdentityForm
+    form_class = IdentificationForm
     success_url = '.'
 
     def form_valid(self, form):
-        if self.request.user.identity is not None:
-            self.request.user.identity.delete()
+        if self.request.user.identification is not None:
+            self.request.user.identification.delete()
 
-        self.request.user.identity = Document.objects.create(file=self.request.FILES['identity_file'])
+        print 'here'
+
+        self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
         self.request.user.save()
 
-        return super(IdentityView, self).form_valid(form)
+        return super(IdentificationView, self).form_valid(form)
 
     def get_context_data(self, **kwargs):
-        context = super(IdentityView, self).get_context_data(**kwargs)
+        context = super(IdentificationView, self).get_context_data(**kwargs)
 
-        if self.request.user.identity is not None:
-            context['existing_id_image_url'] = self.request.user.identity.file.url
+        if self.request.user.identification is not None:
+            context['existing_id_image_url'] = self.request.user.identification.file.url
 
         return context

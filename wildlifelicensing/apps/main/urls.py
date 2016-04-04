@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from views import ListPersonasView, CreatePersonasView, EditPersonasView, IdentityView
+from views import ListPersonasView, CreatePersonasView, EditPersonasView, IdentificationView
 
 
 urlpatterns = [
@@ -8,5 +8,5 @@ urlpatterns = [
     url('^personas/create/$', CreatePersonasView.as_view(), name='create_persona'),
     url('^personas/edit/$', EditPersonasView.as_view(), name='edit_persona_prefix'),
     url('^personas/edit/([0-9]+)/$', EditPersonasView.as_view(), name='edit_persona'),
-    url('^identity/$', IdentityView.as_view(), name='identity'),
+    url('^identification/$', IdentificationView.as_view(), name='identification'),
 ]
