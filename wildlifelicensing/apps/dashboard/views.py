@@ -79,10 +79,6 @@ class DashboardTreeViewBase(TemplateView):
             +All applications
               - status
         """
-        query = {
-            'model': 'application',
-            'customer_status': 'new',
-        }
         all_applications = Application.objects.all()
         all_applications_node = self._create_node('All applications', href=self.url,
                                                   count=len(all_applications))
