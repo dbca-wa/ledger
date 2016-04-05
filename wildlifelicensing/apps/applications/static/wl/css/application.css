@@ -2,8 +2,17 @@
 
 }
 
-.affix {
-    top: 20px;
+@media (min-width: 992px) {
+    .affix {
+        top: 20px;
+        width: auto;
+    }
+}
+
+@media (max-width: 991px) {
+    .affix {
+        position: static;
+    }
 }
 
 .affix-bottom {
@@ -38,6 +47,10 @@ hr {
 
 a { cursor: pointer; }
 
-.ok {
-    color: #1F45FC;
+.ok-tick {
+    color: #449d44;
+}
+
+.status {
+    font-style: italic;
 }

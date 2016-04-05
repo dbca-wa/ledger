@@ -1,35 +1,18 @@
-define(
-    [
-        'jQuery',
-        'lodash',
-        'bootstrap',
-        'select2'
-    ],
-    function ($, _) {
-        var options;
+define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
+    var application;
+    var csrfToken;
 
-        function initAssignee(options) {
-            var $assignee = $(options.selectors.selectAssignee);
+    var $processingStatus;
+
+    function initAssignee(officersList, user) {
+            var $assignee = $('#assignee');
 
             $assignee.select2({
-                ajax: {
-                    url: "/applications/list_officers/",
-                    dataType: 'json',
-                    data: function (name) {
-                        return {
-                            name: name
-                        };
-                    },
-                    results: function (data) {
-                        return {
-                            results: data
-                        }
-                    }
-                },
+                data: officersList,
                 initSelection: function(element, callback) {
-                    if(options.data.application.assigned_officer) {
-                        callback({id: options.data.application.assigned_officer.id, text: options.data.application.assigned_officer.first_name + ' ' +
-                                 options.data.application.assigned_officer.last_name});
+                    if(application.assigned_officer) {
+                        callback({id:application.assigned_officer.id, text: application.assigned_officer.first_name + ' ' +
+                                 application.assigned_officer.last_name});
                     } else {
                         callback({id: 0, text: 'Unassigned'});
                     }
@@ -38,53 +21,187 @@ define(
 
             $assignee.on('change', function(e) {
                 $.post('/applications/assign_officer/', {
-                        applicationID: options.data.application.id,
-                        csrfmiddlewaretoken: options.data.csrf_token,
+                        applicationID: application.id,
+                        csrfmiddlewaretoken: csrfToken,
                         userID: e.val
+                    },
+                    function(data) {
+                        $processingStatus.text(data.processing_status);
                     }
                 );
             });
 
-            $(options.selectors.assignToMeLink).click(function() {
+            $('#assignToMe').click(function() {
                 $.post('/applications/assign_officer/', {
-                        applicationID: options.data.application.id,
-                        csrfmiddlewaretoken: options.data.csrf_token,
-                        userID: options.data.user.id
+                        applicationID: application.id,
+                        csrfmiddlewaretoken: csrfToken,
+                        userID: user.id
                     }, 
                     function(data) {
-                        $assignee.select2('data', data);
+                        $assignee.select2('data', data.assigned_officer);
+                        $processingStatus.text(data.processing_status);
                     }
                 );
             });
         }
 
-        function initActions(options) {
-        	$('.processing-action-group').find('button').click(function(e) {
-        		$(this).parent().parent().find('span').removeClass('hidden');
-        		$(this).parent().hide();
-        	});
+        function initIDCheck() {
+            var $container = $('#idCheck');
+
+            if(!application.licence_type.identification_required) {
+                $container.addClass('hidden');
+                return;
+            }
+
+            var $actionButtonsContainer = $container.find('.action-buttons-group'),
+                $okTick = $container.find('.ok-tick'),
+                $status = $container.find('.status');
+
+            if (application.id_check_status === 'Accepted') {
+                $actionButtonsContainer.addClass('hidden');
+                $status.addClass('hidden');
+                $okTick.removeClass('hidden');
+                return;
+            }
+
+            var $acceptButton = $actionButtonsContainer.find('.btn-success'),
+                $requestUpdateButton = $actionButtonsContainer.find('.btn-warning');
+
+            $acceptButton.click(function(e) {
+                $.post('/applications/set_id_check_status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'accepted'
+                },
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                    $status.addClass('hidden');
+                    $okTick.removeClass('hidden');
+                    $actionButtonsContainer.addClass('hidden');
+                });
+            });
+
+            var $requestIDUpdateModal = $('#requestIDUpdateModal'),
+                $requestIDUpdateSendButton = $requestIDUpdateModal.find('#sendIDUpdateRequest'),
+                $requestIDUpdateMessage = $requestIDUpdateModal.find('textarea');
+
+            $requestUpdateButton.click(function(e) {
+                $requestIDUpdateModal.modal('show');
+            });
+
+            $requestIDUpdateSendButton.click(function(e) {
+                $.post('/applications/set_id_check_status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'awaiting_update',
+                    message: $requestIDUpdateMessage.val()
+                },
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                    $container.find('.status').text(data.id_check_status);
+                    $requestIDUpdateMessage.val('');
+                });
+            });
         }
 
-        return function (moduleOptions) {
-            var defaults = {
-                selectors: {
-                    selectAssignee: '#assignee',
-                    assignToMeLink: '#assignToMe'
+        function initCharacterCheck() {
+            var $container = $('#characterCheck'),
+                $actionButtonsContainer = $container.find('.action-buttons-group'),
+                $okTick = $container.find('.ok-tick'),
+                $status = $container.find('.status');
+
+            if (application.character_check_status === 'Accepted') {
+                $actionButtonsContainer.addClass('hidden');
+                $status.addClass('hidden');
+                $okTick.removeClass('hidden');
+                return;
+            }
+
+            var $acceptButton = $actionButtonsContainer.find('.btn-success');
+
+            $acceptButton.click(function(e) {
+                $.post('/applications/set_character_check_status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'accepted'
                 },
-                data: {}
-            };
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                    $status.addClass('hidden');
+                    $okTick.removeClass('hidden');
+                    $actionButtonsContainer.addClass('hidden');
+                });
+            });
+        }
 
-            // merge the defaults options, and the options passed in parameter.
-            // This is a deep merge but the array are not merged
-            options = _.mergeWith({}, defaults, moduleOptions, function (objValue, srcValue) {
-                if (_.isArray(objValue)) {
-                    return srcValue;
-                }
+        function initReview() {
+            var $container = $('#review');
+
+            var $actionButtonsContainer = $container.find('.action-buttons-group'),
+                $okTick = $container.find('.ok-tick'),
+                $status = $container.find('.status');
+
+            if (application.review_status === 'Accepted') {
+                $actionButtonsContainer.addClass('hidden');
+                $status.addClass('hidden');
+                $okTick.removeClass('hidden');
+                return;
+            }
+
+            var $acceptButton = $actionButtonsContainer.find('.btn-success'),
+                $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning');
+
+            $acceptButton.click(function(e) {
+                $.post('/applications/set_review_status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'accepted'
+                },
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                    $status.addClass('hidden');
+                    $okTick.removeClass('hidden');
+                    $actionButtonsContainer.addClass('hidden');
+                });
             });
 
-            $(function () {
-                initAssignee(options);
-                initActions(options);
+            var $requestAmendmentsModal = $('#requestAmendmentsModal'),
+                $requestAmendmentsSendButton = $requestAmendmentsModal.find('#sendAmendmentsRequest'),
+                $requestAmendmentsMessage = $requestAmendmentsModal.find('textarea');
+
+            $requestAmendmentsButton.click(function(e) {
+                $requestAmendmentsModal.modal('show');
             });
+
+            $requestAmendmentsSendButton.click(function(e) {
+                $.post('/applications/set_review_status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'awaiting_amendments',
+                    message: $requestAmendmentsMessage.val()
+                },
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                    $container.find('.status').text(data.review_status);
+                    $requestAmendmentsMessage.val('');
+                });
+            });
+        }
+
+        return {
+            initialiseApplicationProcesssing: function (data) {
+                $processingStatus = $('#processingStatus');
+                csrfToken = data.csrf_token;
+                application = data.application;
+
+                initAssignee(data.officers, data.user);
+                initIDCheck();
+                initCharacterCheck();
+                initReview();
+            },
+            initialiseSidePanelAffix: function () {
+                var $sidebarPanels = $('#sidebarPanels');
+                $sidebarPanels.affix({ offset: { top: $sidebarPanels.offset().top }});
+            }
         }
     });
