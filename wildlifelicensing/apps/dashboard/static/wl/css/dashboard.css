@@ -1,5 +1,9 @@
-.pad-bottom-20 {
+.pad-bottom-md {
     margin-bottom: 20px;
+}
+
+.pad-top-s {
+    margin-top: 10px;
 }
 
 .treeview .node-dashboard-tree {

@@ -3,7 +3,8 @@ define(
         'jQuery',
         'lodash',
         'js/wl.dataTable',
-        'bootstrap'
+        'bootstrap',
+        'select2'
     ],
     function ($, _, dt) {
         var options,
@@ -148,6 +149,9 @@ define(
                     setFilters(options.data.query);
                 }
                 initTables();
+
+                // apply the bootstrap select2 to the filters.
+                $(options.selectors.applicationsFilterForm + ' select').select2();
             })
         };
     }
