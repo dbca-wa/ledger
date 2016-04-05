@@ -15,20 +15,24 @@ def done(request):
     return render(request, 'customers/done.html')
 
 
-def login_form(request):
-    return render(request, 'customers/form.html')
+def bounce(request):
+    if ('HTTP_REFERER' in request.META) and (request.META['HTTP_REFERER']):
+        return redirect(request.META['HTTP_REFERER'])
+    return redirect('/')
 
 
 def validation_sent(request):
     messages.success(request,
                      "An email has been sent to you. "
                      "Check your mailbox and click on the link to complete the login process.")
-    return redirect('/')
+    return bounce(request)
 
 
 def logout(request):
     auth_logout(request)
-    return redirect('/')
+    messages.success(request,
+                     "You have successfully logged out.")
+    return bounce(request)
 
 
 # The user will get an email with a link pointing to this view, this view just
