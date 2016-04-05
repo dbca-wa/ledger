@@ -124,6 +124,7 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
         all_applications = Application.objects.all()
         all_applications_node = self._create_node('All applications', href=self.url,
                                                   count=all_applications.count())
+        all_applications_node['state']['expanded'] = False
         for s_value, s_title in statuses:
             applications = all_applications.filter(processing_status=s_value)
             if applications.count() > 0:
@@ -140,6 +141,7 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
         }
         user_applications_node = self._create_node('My assigned applications', href=_build_url(self.url, query),
                                                    count=user_applications.count())
+        user_applications_node['state']['expanded'] = False
         for s_value, s_title in statuses:
             applications = user_applications.filter(processing_status=s_value)
             if applications.count() > 0:

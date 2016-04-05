@@ -4,8 +4,6 @@
 {% block extra_css %}
     <link rel="stylesheet"
           href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css">
-    <link rel="stylesheet"
-          href="//static.dpaw.wa.gov.au/static/libs/bootstrap-select/1.9.4/css/bootstrap-select.min.css">
     <link rel="stylesheet" href="{% static 'wl/css/dashboard.css' %}">
 {% endblock %}
 
@@ -19,7 +17,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container" id="dashboard-table-container">
         <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
             <div class="panel panel-default" id="applications">
                 <div class="panel-heading" role="tab" id="applications-heading">
@@ -33,7 +31,7 @@
                 <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="applications-heading">
                     <div class="panel-body">
                         <div class="row pad-bottom-20">
-                            <div id="applications-filter-panel">
+                            <div id="applications-filter-panel" class="filter-panel">
                                 <div class="col-md-10 col-md-offset-1">
                                     <form class="form-inline" id="applications-filter-form">
                                         <div class="form-group">
