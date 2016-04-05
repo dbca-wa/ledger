@@ -15,12 +15,12 @@
 
 {% block requirements %}
     require(['js/process/process_app', 'js/application_preview'], function (app, applicationPreview) {
-        var options = {
-            data: {% if dataJSON %} {{ dataJSON|jsonify }} {% else %} {} {% endif %}
-        };
-        app(options);
-
-        applicationPreview.layoutPreviewItems('#previewContainer', {{ dataJSON|jsonify }}.form_structure, {{ dataJSON|jsonify}}.application.data)
+        $(function () {
+            app.initialiseApplicationProcesssing({{ data|jsonify }});
+            applicationPreview.layoutPreviewItems('#previewContainer', {{ data|jsonify }}.form_structure, {{ data|jsonify}}.application.data)
+            $('#mainContainer').removeClass('hidden');
+            //app.initialiseSidePanelAffix();
+        });
     });
 {% endblock %}
 
@@ -30,7 +30,7 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'dashboard:tables_officer' %}">Tables</a></li>
+                    <li><a href="{% url 'dashboard:tables_officer' %}">Applications</a></li>
                     <li class="active">Process Application</li>
                 </ol>
             </div>
@@ -39,103 +39,113 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div id="mainContainer" class="container hidden">
         <div class="row">
             <div class="col-md-3">
-                <div class="row">
-                    <div class="panel panel-default">
-                        <div class="panel-body">
-                            <label>Applicant</label>
-                            {% with applicant=dataJSON.application.applicant_persona %}
-                                <p>
-                                    {{ applicant.user.first_name }} {{ applicant.user.last_name }}
-                                    {% if request.user.identification %}
-                                        <span class="pull-right">
-                                            <a data-toggle="modal" data-target="#idModal">
-                                                Show ID
-                                            </a>
-                                        </span>
-                                    {% endif %}
-                                <p>{{ applicant.postal_address.search_text }}</p>
-                                
-                            {% endwith %}
-                            <div class="row">
-                                <div class="col-md-5">
-                                    <label>Lodged on</label>
-                                    <p>{{ dataJSON.application.lodged_date }}</p>
-                                </div>
-                                <div class="col-md-7">
-                                    <label>Processing Status</label>
-                                    <p>{{ dataJSON.application.processing_status }}</p>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                 <label>Currently assigned to</label>
-                                 <input type="hidden" id="assignee" class="form-control"></input>
-                                 <a id="assignToMe" class="pull-right">Assign to me</a>
-                            </div>
-                         </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="panel panel-default">
-                        <div class="panel-body">
-                            <div class="processing-action-group">
-                                <div>
-                                    <label>Identity Check</label>
-                                    <span class="glyphicon glyphicon-ok pull-right ok hidden"></span>
-                                </div>
-                                <div>
-                                    <button type="button" class="btn btn-xs btn-success">Accept</button>
-                                    <button type="button" class="btn btn-xs btn-warning">Request Update</button>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="processing-action-group">
-                                <div>
-                                    <label>Character Check</label>
-                                    <span class="glyphicon glyphicon-ok pull-right ok hidden"></span>
-                                </div>
-                                <div>
-                                    <button type="button" class="btn btn-xs btn-success">Accept</button>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="processing-action-group">
-                                <div>
-                                    <label>Application Review</label>
-                                    <span class="glyphicon glyphicon-ok pull-right ok hidden"></span>
-                                </div>
-                                <div>
-                                    <button type="button" class="btn btn-xs btn-success">Accept</button>
-                                    <button type="button" class="btn btn-xs btn-warning">Request Amendments</button>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="processing-action-group">
-                                <div>
-                                    <label>Departmental Assessment</label>
-                                    <span class="glyphicon glyphicon-ok pull-right ok hidden"></span>
-                                </div>
-                                <div>
-                                    <div class="form-group">
-                                        Send for assessment
-                                        <select class="form-control"></select>
+                <div id=sidebarPanels class="bottom-buffer">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <label>Applicant</label>
+                                    {% with applicant=data.application.applicant_persona %}
+                                        <p>
+                                            {{ applicant.user.first_name }} {{ applicant.user.last_name }}
+                                            <span class="pull-right">
+                                                {% if request.user.identification %}
+                                                    <a data-toggle="modal" data-target="#idModal">
+                                                        Show ID
+                                                    </a>
+                                                {% else %}
+                                                    ID Unavailable
+                                                {% endif %}
+                                            </span>
+                                        <p>{{ applicant.postal_address.search_text }}</p>
+                                    {% endwith %}
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <label>Lodged on</label>
+                                            <p>{{ data.application.lodged_date|date:'d/m/Y' }}</p>
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label>Status</label>
+                                            <p id="processingStatus">{{ data.application.processing_status }}</p>
+                                        </div>
                                     </div>
-                                    <button type="button" class="btn btn-xs btn-success">Assessment Complete</button>
-                                </div>
+                                    <div class="form-group">
+                                         <label>Currently assigned to</label>
+                                         <input type="hidden" id="assignee" class="form-control"></input>
+                                         <a id="assignToMe" class="pull-right">Assign to me</a>
+                                    </div>
+                                 </div>
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-success pull-right" disabled>Approve Application</button>
-                    <button type="button" class="btn btn-sm btn-danger">Reject Application</button>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <div id="idCheck" class="processing-action-group">
+                                        <div>
+                                            <label>Identity Check</label>
+                                            <span class="pull-right status">{{ data.application.id_check_status }}</span>
+                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
+                                        </div>
+                                        <div class="action-buttons-group">
+                                            <button type="button" class="btn btn-xs btn-success">Accept</button>
+                                            <button type="button" class="btn btn-xs btn-warning">Request Update</button>
+                                        </div>
+                                        <hr>
+                                    </div>
+                                    <div id="characterCheck" class="processing-action-group">
+                                        <div>
+                                            <label>Character Check</label>
+                                            <span class="pull-right status">{{ data.application.character_check_status }}</span>
+                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
+                                        </div>
+                                        <div class="action-buttons-group">
+                                            <button type="button" class="btn btn-xs btn-success">Accept</button>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div id="review" class="processing-action-group">
+                                        <div>
+                                            <label>Review</label>
+                                            <span class="pull-right status">{{ data.application.review_status }}</span>
+                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
+                                        </div>
+                                        <div class="action-buttons-group">
+                                            <button type="button" class="btn btn-xs btn-success">Accept</button>
+                                            <button type="button" class="btn btn-xs btn-warning">Request Amendments</button>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="processing-action-group">
+                                        <div>
+                                            <label>Departmental Assessment</label>
+                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
+                                        </div>
+                                        <div>
+                                            <div class="form-group">
+                                                Send for assessment
+                                                <select class="form-control"></select>
+                                            </div>
+                                            <button type="button" class="btn btn-xs btn-success">Assessment Complete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-success pull-right" disabled>Approve Application</button>
+                            <button type="button" class="btn btn-sm btn-danger">Reject Application</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-9">
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <div id="previewContainer">
-                            <h2>{{ dataJSON.application.licence_type.name }}</h2>
+                            <h2>{{ data.application.licence_type.name }}</h2>
                         </div>
                     </div>
                 </div>
@@ -148,14 +158,56 @@
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title" id="myModalLabel">Identification for {{ request.user.first_name }} {{ request.user.last_name }}</h4>
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            <h4 class="modal-title">Identification for {{ request.user.first_name }} {{ request.user.last_name }}</h4>
                         </div>
                         <div class="modal-body" style="text-align: center">
                             <img src="{{ request.user.identification.file.url }}" />
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="requestIDUpdateModal" tabindex="-1">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            <h4 class="modal-title">Request Photo Identification Update</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Enter message to be sent to the applicant</label>
+                                <textarea rows="3" class="form-control"></textarea>
+                                <p class="help-block">E.g. Photo Identification missing, expired, insufficient, etc</p>
+                             </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="sendIDUpdateRequest" type="button" class="btn btn-default" data-dismiss="modal">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="requestAmendmentsModal" tabindex="-1">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            <h4 class="modal-title">Request Amendments to Application</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Enter message to be sent to the applicant</label>
+                                <textarea rows="3" class="form-control"></textarea>
+                                <p class="help-block">The message should describe the amendments that need to made to the application</p>
+                             </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="sendAmendmentsRequest" type="button" class="btn btn-default" data-dismiss="modal">Send Request</button>
                         </div>
                     </div>
                 </div>

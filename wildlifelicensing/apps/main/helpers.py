@@ -36,3 +36,7 @@ def is_officer(user):
 
 def get_all_officers():
     return EmailUser.objects.filter(groups__name='Officers')
+
+
+def get_all_assessors():
+    return EmailUser.objects.filter(groups__name='Assessors')
