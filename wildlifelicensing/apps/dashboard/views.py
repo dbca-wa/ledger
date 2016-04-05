@@ -42,6 +42,27 @@ def _render_date(date):
     return 'not a valid date object'
 
 
+def _render_user_name(user, first_name_first=True):
+    """
+    Last name, First name or Last name, First name
+    :param user:
+    :return:
+    """
+    result = ''
+    if user is not None:
+        if user.last_name or user.first_name:
+            format_ = '{first} {last}' if first_name_first else '{last}, {first}'
+            result = format_.format(
+                first=user.first_name,
+                last=user.last_name
+            )
+        else:
+            result = '{email}'.format(
+                email=user.email
+            )
+    return result
+
+
 class DashBoardRoutingView(TemplateView):
     template_name = 'wl/index.html'
 
@@ -251,7 +272,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
         data['applications']['filters']['status']['values'] = \
             [('all', 'All')] + _get_processing_statuses_but_draft()
         data['applications']['filters']['assignee'] = {
-            'values': [('all', 'All')] + [(user.pk, str(user),) for user in get_all_officers()]
+            'values': [('all', 'All')] + [(user.pk, _render_user_name(user),) for user in get_all_officers()]
         }
         data['applications']['ajax']['url'] = reverse('dashboard:applications_data_officer')
         return data
@@ -307,17 +328,7 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return self._build_search_query(fields_to_search, search)
 
     def _render_user_column(self, obj):
-        user = obj.applicant_persona.user
-        if user.last_name:
-            return '{last}, {first}, {email}'.format(
-                last=user.last_name,
-                first=user.first_name,
-                email=user.email
-            )
-        else:
-            return '{email}'.format(
-                email=user.email
-            )
+        return _render_user_name(obj.applicant_persona.user, first_name_first=False)
 
     def _render_persona_column(self, obj):
         persona = obj.applicant_persona
@@ -419,7 +430,7 @@ class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTable
                      ['applicant_persona.user.last_name', 'applicant_persona.user.first_name',
                       'applicant_persona.user.email'],
                      'processing_status', 'lodged_date',
-                     ['assigned_officer.last_name', 'assigned_officer.first_name', 'assigned_officer.email'], '']
+                     ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'], '']
 
     def _build_status_filter(self, status_value):
         # officers should not see applications in draft mode.
@@ -436,11 +447,7 @@ class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTable
         return self._build_search_query(fields_to_search, search)
 
     def _render_assignee_column(self, obj):
-        assignee = obj.assigned_officer
-        if assignee is None:
-            return ''
-        else:
-            return '{}'.format(assignee)
+        return _render_user_name(obj.assigned_officer)
 
     def _render_lodged_date(selfself, obj):
         return _render_date(obj.lodged_date)
