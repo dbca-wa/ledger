@@ -167,14 +167,14 @@ class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
         my_applications = _get_user_applications(self.request.user)
         my_applications_node = self._create_node('My applications', href=self.url, count=my_applications.count())
         # one children node per status
-        for status in [s[0] for s in Application.CUSTOMER_STATUS_CHOICES]:
-            applications = my_applications.filter(customer_status=status)
+        for status_value, status_title in Application.CUSTOMER_STATUS_CHOICES:
+            applications = my_applications.filter(customer_status=status_value)
             if applications.count() > 0:
                 query = {
-                    'application_status': status,
+                    'application_status': status_value,
                 }
                 href = _build_url(self.url, query)
-                node = self._create_node(status, href=href, count=applications.count())
+                node = self._create_node(status_title, href=href, count=applications.count())
                 self._add_node(my_applications_node, node)
         return [my_applications_node]
 
@@ -364,18 +364,21 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return self.model.objects.all()
 
     def _build_status_filter(self, status_value):
-        return Q(processing_status=status_value)
+        return Q(processing_status=status_value) if status_value != 'all' else Q()
 
     def filter_queryset(self, qs):
         query = Q()
         # part 1: filter from top level filters
         filters = self._parse_filters()
         for filter_name, filter_value in filters.items():
-            # if the value is 'all' no filter to apply
+            # if the value is 'all' no filter to apply.
+            # There is a special case for the status. There are two kinds of status depending on the user
+            # (customer or officer) also if the application is a draft it should not be seen by the officers.
+            # That is why the status filter is left to be implemented by subclasses.
+            if filter_name == 'status':
+                query &= self._build_status_filter(filter_value)
             if filter_value != 'all':
-                if filter_name == 'status':
-                    query &= self._build_status_filter(filter_value)
-                elif filter_name == 'assignee':
+                if filter_name == 'assignee':
                     query &= Q(assigned_officer__pk=filter_value)
         # part 2: filter from the global search
         search = self.request.GET.get('search[value]', None)
@@ -412,6 +415,10 @@ class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTable
                'assigned_officer', 'action']
     order_columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
                      'assigned_officer', '']
+
+    def _build_status_filter(self, status_value):
+        # officers should not see applications in draft mode.
+        return Q(processing_status=status_value) if status_value != 'all' else ~Q(customer_status='draft')
 
     def _render_action_column(self, obj):
         return '<a href="{0}">Process</a>'.format(
@@ -458,7 +465,7 @@ class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
         return _get_user_applications(self.request.user)
 
     def _build_status_filter(self, status_value):
-        return Q(customer_status=status_value)
+        return Q(customer_status=status_value) if status_value != 'all' else Q()
 
     def _render_action_column(self, obj):
         if obj.customer_status == 'draft':
