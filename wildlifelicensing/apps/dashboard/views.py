@@ -415,8 +415,11 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTableBaseView):
     columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
                'assigned_officer', 'action']
-    order_columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
-                     'assigned_officer', '']
+    order_columns = ['id', 'licence_type.code',
+                     ['applicant_persona.user.last_name', 'applicant_persona.user.first_name',
+                      'applicant_persona.user.email'],
+                     'processing_status', 'lodged_date',
+                     ['assigned_officer.last_name', 'assigned_officer.first_name', 'assigned_officer.email'], '']
 
     def _build_status_filter(self, status_value):
         # officers should not see applications in draft mode.
@@ -472,7 +475,7 @@ class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
     def _render_action_column(self, obj):
         if obj.customer_status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details', args={obj.licence_type.code, obj.pk}),
+                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
                 'Continue application'
             )
         else:

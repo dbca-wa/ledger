@@ -76,13 +76,15 @@ define(
             });
 
             // assignee filter
-            _.forEach(data.applications.filters.assignee.values, function (value) {
-                $node = createOptionNode(value);
-                $applicationsAssigneeTypeFilter.append($node);
-            });
-            $applicationsAssigneeTypeFilter.on('change', function () {
-                applicationsTable.ajax.reload();
-            });
+            if ($applicationsAssigneeTypeFilter && data.applications.filters.assignee.values) {
+                _.forEach(data.applications.filters.assignee.values, function (value) {
+                    $node = createOptionNode(value);
+                    $applicationsAssigneeTypeFilter.append($node);
+                });
+                $applicationsAssigneeTypeFilter.on('change', function () {
+                    applicationsTable.ajax.reload();
+                });
+            }
 
         }
 

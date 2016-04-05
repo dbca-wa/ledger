@@ -1,5 +1,6 @@
 {% extends 'wl/base.html' %}
 {% load static %}
+{% load users %}
 
 {% block extra_css %}
     <link rel="stylesheet"
@@ -44,11 +45,13 @@
                                             <select class="form-control" name="status" id="applications-filter-status">
                                             </select>
                                         </div>
-                                        <div class="form-group">
+                                        {%  if request.user|is_officer %}
+                                        <div class="form-group" id="applications-filter-assignee-group">
                                             <label for="applications-filter-assignee">Assignee: </label>
                                             <select class="form-control" name="assignee" id="applications-filter-assignee">
                                             </select>
                                         </div>
+                                        {%  endif %}
                                     </form>
                                 </div>
                             </div>
