@@ -14,8 +14,7 @@ from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors, render_user_name
-from wildlifelicensing.apps.applications.models import Application,\
-    AmendmentRequest
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -23,7 +22,7 @@ PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
 ID_CHECK_STATUSES = dict(Application.ID_CHECK_STATUS_CHOICES)
 CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
 REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
-
+ASSESSMENT_STATUSES = dict(Assessment.STATUS_CHOICES)
 
 class ProcessView(OfficerRequiredMixin, TemplateView):
     template_name = 'wl/process/process_app.html'
@@ -35,22 +34,17 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
-        assessors = [{'id': assessor.id, 'text': render_user_name(assessor)} for assessor in get_all_assessors()]
-
-        def format_application_statuses(instance, attrs):
-            attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
-            attrs['id_check_status'] = ID_CHECK_STATUSES[attrs['id_check_status']]
-            attrs['character_check_status'] = CHARACTER_CHECK_STATUSES[attrs['character_check_status']]
-            attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
-
-            return attrs
+        assessors = [{'id': assessor.id, 'text': render_user_name(assessor)} for assessor in 
+                     get_all_assessors().exclude(id__in=application.assessments.all())]
 
         data = {
             'user': serialize(request.user),
-            'application': serialize(application, posthook=format_application_statuses),
+            'application': serialize(application, posthook=_format_application_statuses),
             'form_structure': form_structure,
             'officers': officers,
             'assessors': assessors,
+            'assessments': serialize(application.assessment_set.all(),
+                                     posthook=_format_assessment_status),
             'csrf_token': str(csrf(request).get('csrf_token'))
         }
 
@@ -129,13 +123,44 @@ class SetReviewStatusView(View):
                              'processing_status': PROCESSING_STATUSES[application.processing_status]}, safe=False)
 
 
-def _determine_processing_status(application):
-    status = application.processing_status
+class SendForAssessmentView(View):
+    def post(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
-    if application.assigned_officer is not None:
-        status = 'ready_for_action'
+        assessor = get_object_or_404(EmailUser, pk=request.POST['userID'])
+        assessment = Assessment.objects.create(application=application, assessor=assessor, status=request.POST['status'])
+
+        application.processing_status = _determine_processing_status(application)
+        application.save()
+
+        return JsonResponse({'assessment': serialize(assessment, posthook=_format_assessment_status),
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]}, safe=False)
+
+
+def _determine_processing_status(application):
+    status = 'ready_for_action'
 
     if application.id_check_status == 'awaiting_update' or application.review_status == 'awaiting_amendments':
         status = 'awaiting_applicant_response'
 
+    if application.assessment_set.filter(status='awaiting_assessment').exists():
+        if status == 'awaiting_applicant_response':
+            status = 'awaiting_responses'
+        else:
+            status = 'awaiting_assessor_response'
+
     return status
+
+
+def _format_application_statuses(instance, attrs):
+    attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
+    attrs['id_check_status'] = ID_CHECK_STATUSES[attrs['id_check_status']]
+    attrs['character_check_status'] = CHARACTER_CHECK_STATUSES[attrs['character_check_status']]
+    attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
+
+    return attrs
+
+def _format_assessment_status(instance, attrs):
+    attrs['status'] = ASSESSMENT_STATUSES[attrs['status']]
+
+    return attrs

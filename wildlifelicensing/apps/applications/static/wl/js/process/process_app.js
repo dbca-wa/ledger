@@ -188,13 +188,36 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
             });
         }
 
-        function initAssessment(asessorsList) {
+        function createAssessmentRow(assessment) {
+            var row = $('<tr></tr>');
+            row.append('<td>' + assessment.assessor.first_name + ' ' + assessment.assessor.last_name + '</td>');
+            var statusColumn = $('<td></td>').css('text-align', 'right');
+            if(assessment.status === 'Awaiting Assessment') {
+                statusColumn.append(assessment.status);
+            } else {
+                statusColumn.append($('<span></span>').addClass('glyphicon').addClass('glyphicon-ok').addClass('ok-tick'));
+            }
+
+            row.append(statusColumn);
+
+            return row;
+        }
+
+        function initAssessment(assessorsList, currentAssessments) {
             var $assessor = $('#assessor'),
-                $sendForAssessment= $('#sendForAssessment');
+                $sendForAssessment = $('#sendForAssessment'),
+                $currentAssessments = $('#currentAssessments');
 
             $assessor.select2({
-                data: asessorsList,
+                data: assessorsList,
             });
+
+            if(currentAssessments.length > 0) {
+                $.each(currentAssessments, function(index, assessment) {
+                    $currentAssessments.append(createAssessmentRow(assessment));
+                });
+                $currentAssessments.parent().removeClass('hidden');
+            }
 
             $assessor.on('change', function(e) {
                 $sendForAssessment.prop('disabled', false);
@@ -204,10 +227,23 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 $.post('/applications/send_for_assessment/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
-                    userID: $sendForAssessment.val()
+                    status: 'awaiting_assessment',
+                    userID: $assessor.val()
                 },
                 function(data) {
                     $processingStatus.text(data.processing_status);
+                    $currentAssessments.append(createAssessmentRow(data.assessment));
+                    $assessor.select2('val', '');
+
+                    // remove assessor from assessors list
+                    for(var i = 0; i < assessorsList.length; i++) {
+                        if(assessorsList[i].id === data.assessment.assessor.id) {
+                            assessorsList.splice(i, 1);
+                            break;
+                        }
+                    }
+
+                    $currentAssessments.parent().removeClass('hidden');
                 });
 
                 $sendForAssessment.prop('disabled', true);
@@ -224,7 +260,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 initIDCheck();
                 initCharacterCheck();
                 initReview();
-                initAssessment(data.assessors);
+                initAssessment(data.assessors, data.assessments);
             },
             initialiseSidePanelAffix: function () {
                 var $sidebarPanels = $('#sidebarPanels');

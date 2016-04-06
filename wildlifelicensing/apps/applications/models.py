@@ -65,7 +65,7 @@ class Assessment(RevisionedMixin):
 
     assessor = models.ForeignKey(EmailUser)
     application = models.ForeignKey(Application)
-    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES)
+    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
 
 
 class AssessorComment(RevisionedMixin):

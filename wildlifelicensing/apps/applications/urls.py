@@ -4,7 +4,7 @@ from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeVie
     EnterDetailsView, PreviewView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, SetCharacterCheckStatusView, \
-    SetReviewStatusView
+    SetReviewStatusView, SendForAssessmentView
 
 
 urlpatterns = [
@@ -24,4 +24,5 @@ urlpatterns = [
     url('^set_id_check_status/$', SetIDCheckStatusView.as_view(), name='set_id_check_status'),
     url('^set_character_check_status/$', SetCharacterCheckStatusView.as_view(), name='set_character_check_status'),
     url('^set_review_status/$', SetReviewStatusView.as_view(), name='set_review_status'),
+    url('^send_for_assessment/$', SendForAssessmentView.as_view(), name='send_for_assessment'),
 ]
