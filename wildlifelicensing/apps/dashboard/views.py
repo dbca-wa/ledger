@@ -15,7 +15,7 @@ from braces.views import LoginRequiredMixin
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_officer, get_all_officers
+from wildlifelicensing.apps.main.helpers import is_officer, get_all_officers, render_user_name
 from .forms import LoginForm
 
 logger = logging.getLogger(__name__)
@@ -40,27 +40,6 @@ def _render_date(date):
     if not date:
         return ''
     return 'not a valid date object'
-
-
-def _render_user_name(user, first_name_first=True):
-    """
-    Last name, First name or Last name, First name
-    :param user:
-    :return:
-    """
-    result = ''
-    if user is not None:
-        if user.last_name or user.first_name:
-            format_ = '{first} {last}' if first_name_first else '{last}, {first}'
-            result = format_.format(
-                first=user.first_name,
-                last=user.last_name
-            )
-        else:
-            result = '{email}'.format(
-                email=user.email
-            )
-    return result
 
 
 class DashBoardRoutingView(TemplateView):
@@ -272,7 +251,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
         data['applications']['filters']['status']['values'] = \
             [('all', 'All')] + _get_processing_statuses_but_draft()
         data['applications']['filters']['assignee'] = {
-            'values': [('all', 'All')] + [(user.pk, _render_user_name(user),) for user in get_all_officers()]
+            'values': [('all', 'All')] + [(user.pk, render_user_name(user),) for user in get_all_officers()]
         }
         data['applications']['ajax']['url'] = reverse('dashboard:applications_data_officer')
         return data
@@ -328,7 +307,7 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return self._build_search_query(fields_to_search, search)
 
     def _render_user_column(self, obj):
-        return _render_user_name(obj.applicant_persona.user, first_name_first=False)
+        return render_user_name(obj.applicant_persona.user, first_name_first=False)
 
     def _render_persona_column(self, obj):
         persona = obj.applicant_persona
@@ -447,7 +426,7 @@ class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTable
         return self._build_search_query(fields_to_search, search)
 
     def _render_assignee_column(self, obj):
-        return _render_user_name(obj.assigned_officer)
+        return render_user_name(obj.assigned_officer)
 
     def _render_lodged_date(selfself, obj):
         return _render_date(obj.lodged_date)

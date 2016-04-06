@@ -13,7 +13,7 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors
+from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors, render_user_name
 from wildlifelicensing.apps.applications.models import Application,\
     AmendmentRequest
 
@@ -32,7 +32,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code)) as data_file:
             form_structure = json.load(data_file)
 
-        officers = [{'id': officer.id, 'text': officer.first_name + ' ' + officer.last_name} for officer in get_all_officers()]
+        officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
         assessors = [{'id': assessor.id, 'text': assessor.first_name + ' ' + assessor.last_name} for assessor in get_all_assessors()]
