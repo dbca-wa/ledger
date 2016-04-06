@@ -192,26 +192,26 @@
                 </div>
             </div>
 
-            <div class="modal fade" id="requestAmendmentsModal" tabindex="-1">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                            <h4 class="modal-title">Request Amendments to Application</h4>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label>Enter message to be sent to the applicant</label>
-                                <textarea rows="3" class="form-control"></textarea>
-                                <p class="help-block">The message should describe the amendments that need to made to the application</p>
-                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button id="sendAmendmentsRequest" type="button" class="btn btn-default" data-dismiss="modal">Send Request</button>
-                        </div>
+        {% endif %}
+        <div class="modal fade" id="requestAmendmentsModal" tabindex="-1">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                        <h4 class="modal-title">Request Amendments to Application</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Enter message to be sent to the applicant</label>
+                            <textarea rows="3" class="form-control"></textarea>
+                            <p class="help-block">The message should describe the amendments that need to made to the application</p>
+                         </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="sendAmendmentsRequest" type="button" class="btn btn-default" data-dismiss="modal">Send Request</button>
                     </div>
                 </div>
             </div>
-        {% endif %}
+        </div>
     {% endblock %}
 {% endblock %}
