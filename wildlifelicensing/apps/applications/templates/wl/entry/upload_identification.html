@@ -27,9 +27,10 @@
         <div class="row">
             <div class="col-md-12">
                 <h2>Upload Identification</h2>
-                <p>This type of licence required photographic identification. This requires uploading scanned or photograhed image of a valid Australian drivers licence, passport, or proof-of-age card.
+                <hr>
+                <p>This type of licence requires photographic identification. You can upload a scanned or photograhed image of a valid Australian drivers licence, passport, or proof-of-age card.
                 If you cannot provide identification at this point, you can skip this step of the application process. You can then, at any time, upload your photo ID by selecting the Manage ID
-                option under the right-hand menu on the top menu bar. Alternatively, you can present your photo ID in person at any Wildlife Licensing office branch.</p>
+                option under the Options menu on the menu bar. Alternatively, you can present your photo ID in person at any Wildlife Licensing office branch.</p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% with field=form.identification_file %}

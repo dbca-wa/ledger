@@ -27,14 +27,6 @@
   color: #fcb13f;
 }
 
-.control-label {
-  font-style: italic;
-  font-weight: 500;
-}
-.required-form-field label {
-  font-weight: 900;
-}
-
 .top-buffer {
     margin-top: 20px;
 }
