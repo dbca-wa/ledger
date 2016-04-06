@@ -19,7 +19,7 @@ from ledger.accounts.forms import AddressForm, PersonaForm
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main.forms import IdentificationForm
 
-from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data
 from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
 
@@ -132,13 +132,12 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        if len(args) > 1 and 'application' not in request.session:
-            application = get_object_or_404(Application, pk=args[1])
+        application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
+        if application is not None and 'application' not in request.session:
             request.session['application'] = {}
             request.session['application']['persona'] = application.applicant_persona.id
             request.session['application']['data'] = application.data
             request.session.modified = True
-
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
         persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
 
@@ -147,12 +146,14 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
         context = {'licence_type': licence_type, 'persona': persona, 'structure': form_structure}
 
-        if len(args) > 1:
-            context['application_pk'] = args[1]
+        if application is not None:
+            context['application_pk'] = application.pk
+            if application.review_status == 'awaiting_amendments':
+                amendments = AmendmentRequest.objects.filter(application=application).filter(status='requested')
+                context['amendments'] = amendments
 
         if 'data' in request.session.get('application'):
             context['data'] = request.session.get('application').get('data')
-
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -170,7 +171,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
             application.data = request.session.get('application').get('data')
             application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
-            application.applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+            application.applicant_persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
             application.customer_status = 'draft'
             application.processing_status = 'draft'
             application.save()
@@ -246,8 +247,17 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         application.licence_type = get_object_or_404(WildlifeLicenceType, code=args[0])
         application.applicant_persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
         application.lodged_date = datetime.now()
-        application.customer_status = 'pending'
-        application.processing_status = 'new'
+        if application.customer_status == 'amendment_required':
+            # this is a 're-lodged' application after some amendment were required.
+            # from this point we assumed that all the amendments have been amended.
+            AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
+            application.customer_status = 'under_review'
+            application.review_status = 'amended'
+            # the process status should be defined in the process view
+            # application.process_status = 'ready_for_action'
+        else:
+            application.customer_status = 'pending'
+            application.processing_status = 'new'
         application.save()
 
         # if attached files were saved temporarily, add each to application as part of a Document
