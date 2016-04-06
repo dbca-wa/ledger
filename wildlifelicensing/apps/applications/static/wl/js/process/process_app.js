@@ -1,6 +1,5 @@
 define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
-    var application;
-    var csrfToken;
+    var application, assessments, csrfToken;
 
     var $processingStatus;
 
@@ -78,6 +77,9 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                     $status.addClass('hidden');
                     $okTick.removeClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
+
+                    application.id_check_status = data.id_check_status;
+                    determineApplicationApprovable();
                 });
             });
 
@@ -100,6 +102,9 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                     $processingStatus.text(data.processing_status);
                     $container.find('.status').text(data.id_check_status);
                     $requestIDUpdateMessage.val('');
+
+                    application.id_check_status = data.id_check_status;
+                    determineApplicationApprovable();
                 });
             });
         }
@@ -130,6 +135,9 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                     $status.addClass('hidden');
                     $okTick.removeClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
+
+                    application.character_check_status = data.character_check_status;
+                    determineApplicationApprovable();
                 });
             });
         }
@@ -162,6 +170,9 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                     $status.addClass('hidden');
                     $okTick.removeClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
+
+                    application.review_status = data.review_status;
+                    determineApplicationApprovable();
                 });
             });
 
@@ -184,6 +195,9 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                     $processingStatus.text(data.processing_status);
                     $container.find('.status').text(data.review_status);
                     $requestAmendmentsMessage.val('');
+
+                    application.review_status = data.review_status;
+                    determineApplicationApprovable();
                 });
             });
         }
@@ -203,7 +217,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
             return row;
         }
 
-        function initAssessment(assessorsList, currentAssessments) {
+        function initAssessment(assessorsList) {
             var $assessor = $('#assessor'),
                 $sendForAssessment = $('#sendForAssessment'),
                 $currentAssessments = $('#currentAssessments');
@@ -212,8 +226,8 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 data: assessorsList,
             });
 
-            if(currentAssessments.length > 0) {
-                $.each(currentAssessments, function(index, assessment) {
+            if(assessments.length > 0) {
+                $.each(assessments, function(index, assessment) {
                     $currentAssessments.append(createAssessmentRow(assessment));
                 });
                 $currentAssessments.parent().removeClass('hidden');
@@ -244,10 +258,39 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                     }
 
                     $currentAssessments.parent().removeClass('hidden');
+
+                    assessments.push(data.assessment);
+                    determineApplicationApprovable();
                 });
 
                 $sendForAssessment.prop('disabled', true);
             });
+        }
+
+        function determineApplicationApprovable() {
+            var approvable = false;
+
+            if((application.licence_type.identification_required && application.id_check_status === 'Accepted') || 
+                    !application.licence_type.identification_required) {
+                if(application.character_check_status === 'Accepted') {
+                    if(application.review_status === 'Accepted') {
+                        if(assessments.length === 0) {
+                            approvable = true;
+                        } else {
+                            var allAssessed = true;
+                            for(var i = 0; i < assessments.length; i++) {
+                                if(assessments[i].status !== 'Assessed') {
+                                    allAssessed = false;
+                                    break;
+                                }
+                            }
+                            approvable = allAssessed;
+                        }
+                    }
+                }
+            }
+
+            $('#approve').prop('disabled', !approvable);
         }
 
         return {
@@ -255,12 +298,15 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 $processingStatus = $('#processingStatus');
                 csrfToken = data.csrf_token;
                 application = data.application;
+                assessments = data.assessments;
 
                 initAssignee(data.officers, data.user);
                 initIDCheck();
                 initCharacterCheck();
                 initReview();
-                initAssessment(data.assessors, data.assessments);
+                initAssessment(data.assessors);
+
+                determineApplicationApprovable();
             },
             initialiseSidePanelAffix: function () {
                 var $sidebarPanels = $('#sidebarPanels');
