@@ -74,7 +74,7 @@
                                     </div>
                                     <div class="form-group">
                                          <label>Currently assigned to</label>
-                                         <input type="hidden" id="assignee" class="form-control"></input>
+                                         <input type="hidden" id="assignee" class="form-control">
                                          <a id="assignToMe" class="pull-right">Assign to me</a>
                                     </div>
                                  </div>
@@ -122,15 +122,15 @@
                                     <hr>
                                     <div class="processing-action-group">
                                         <div>
-                                            <label>Departmental Assessment</label>
+                                            <label>Assessment</label>
                                             <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
                                         </div>
                                         <div>
                                             <div class="form-group">
                                                 Send for assessment
-                                                <select class="form-control"></select>
+                                                <input type="hidden" id="assessor" class="form-control" />
                                             </div>
-                                            <button type="button" class="btn btn-xs btn-success">Assessment Complete</button>
+                                            <button type="button" id="sendForAssessment" class="btn btn-xs btn-primary pull-right" disabled>Send</button>
                                         </div>
                                     </div>
                                 </div>
