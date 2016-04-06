@@ -56,7 +56,9 @@ class Application(RevisionedMixin):
 
 
 class AmendmentRequest(RevisionedMixin):
+    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
     text = models.TextField(blank=True)
+    status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     application = models.ForeignKey(Application)
 
 
