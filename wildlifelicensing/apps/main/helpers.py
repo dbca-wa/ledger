@@ -34,6 +34,17 @@ def is_officer(user):
     return belongs_to(user, 'Officers')
 
 
+def is_assessor(user):
+    """
+    Test if user is an WL Assessors
+    Rules:
+        Must belongs to group Assessors
+    :param user:
+    :return:
+    """
+    return belongs_to(user, 'Assessors')
+
+
 def get_all_officers():
     return EmailUser.objects.filter(groups__name='Officers')
 

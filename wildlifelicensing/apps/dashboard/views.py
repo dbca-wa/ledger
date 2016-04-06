@@ -14,8 +14,8 @@ from braces.views import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_officer, get_all_officers, render_user_name
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
+from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from .forms import LoginForm
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class DashBoardRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            if is_officer(self.request.user):
+            if is_officer(self.request.user) or is_assessor(self.request.user):
                 return redirect('dashboard:tree_officer')
             return redirect('dashboard:tree_customer')
         else:
@@ -107,7 +107,7 @@ class DashboardTreeViewBase(TemplateView):
         return super(DashboardTreeViewBase, self).get_context_data(**kwargs)
 
 
-class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
+class DashboardOfficerTreeView(OfficerOrAssessorRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'Dashboard'
     url = reverse_lazy('dashboard:tables_officer')
@@ -402,7 +402,7 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return query
 
 
-class ApplicationDataTableOfficerView(OfficerRequiredMixin, ApplicationDataTableBaseView):
+class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, ApplicationDataTableBaseView):
     columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
                'assigned_officer', 'action']
     order_columns = ['id', 'licence_type.code',
