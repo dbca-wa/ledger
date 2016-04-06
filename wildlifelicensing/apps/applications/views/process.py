@@ -35,7 +35,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
-        assessors = [{'id': assessor.id, 'text': assessor.first_name + ' ' + assessor.last_name} for assessor in get_all_assessors()]
+        assessors = [{'id': assessor.id, 'text': render_user_name(assessor)} for assessor in get_all_assessors()]
 
         def format_application_statuses(instance, attrs):
             attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
