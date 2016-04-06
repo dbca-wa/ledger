@@ -14,7 +14,8 @@ from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors
-from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.applications.models import Application,\
+    AmendmentRequest
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -117,8 +118,9 @@ class SetReviewStatusView(View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
         application.review_status = request.POST['status']
 
-        if 'message' in request.POST:
-            print request.POST.get('message')
+        if application.review_status == 'awaiting_amendments':
+            application.customer_status = 'amendment_required'
+            AmendmentRequest.objects.create(application=application, text=request.POST.get('message', ''))
 
         application.processing_status = _determine_processing_status(application)
         application.save()

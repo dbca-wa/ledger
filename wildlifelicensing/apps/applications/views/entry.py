@@ -140,7 +140,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
             request.session.modified = True
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
-        persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+        persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
 
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_structure = json.load(data_file)
@@ -222,7 +222,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
             form_stucture = json.load(data_file)
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
-        persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+        persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
 
         context = {'structure': form_stucture, 'licence_type': licence_type, 'persona': persona}
 
@@ -243,8 +243,8 @@ class PreviewView(LoginRequiredMixin, TemplateView):
             application = Application()
 
         application.data = request.session.get('application').get('data')
-        application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
-        application.applicant_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
+        application.licence_type = get_object_or_404(WildlifeLicenceType, code=args[0])
+        application.applicant_persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
         application.lodged_date = datetime.now()
         application.customer_status = 'pending'
         application.processing_status = 'new'

@@ -188,6 +188,32 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
             });
         }
 
+        function initAssessment(asessorsList) {
+            var $assessor = $('#assessor'),
+                $sendForAssessment= $('#sendForAssessment');
+
+            $assessor.select2({
+                data: asessorsList,
+            });
+
+            $assessor.on('change', function(e) {
+                $sendForAssessment.prop('disabled', false);
+            });
+
+            $sendForAssessment.click(function(e) {
+                $.post('/applications/send_for_assessment/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    userID: $sendForAssessment.val()
+                },
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                });
+
+                $sendForAssessment.prop('disabled', true);
+            });
+        }
+
         return {
             initialiseApplicationProcesssing: function (data) {
                 $processingStatus = $('#processingStatus');
@@ -198,6 +224,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 initIDCheck();
                 initCharacterCheck();
                 initReview();
+                initAssessment(data.assessors);
             },
             initialiseSidePanelAffix: function () {
                 var $sidebarPanels = $('#sidebarPanels');
