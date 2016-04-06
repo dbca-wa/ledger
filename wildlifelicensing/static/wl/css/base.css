@@ -35,8 +35,12 @@
   font-weight: 900;
 }
 
-.vertical-buffer {
+.top-buffer {
     margin-top: 20px;
+}
+
+.bottom-buffer {
+    margin-bottom: 20px;
 }
 
 .wl-breadcrumbs {

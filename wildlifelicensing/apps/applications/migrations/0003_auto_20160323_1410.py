@@ -10,8 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0004_auto_20160323_1350'),
-        ('applications', '0002_auto_20160322_1727'),
-        ('licence', '0004_make_licence_types')
+        ('applications', '0002_auto_20160322_1727')
     ]
 
     operations = [

@@ -6,12 +6,12 @@ require.config({
         'bootstrap-datetimepicker': '//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.7.14/js/bootstrap-datetimepicker.min',
         'select2': '//static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min',
         'handlebars': '//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.amd.min',
+        'handlebars.runtime': '//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.runtime.amd.min',
         'moment': '//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min',
         'parsley': '//static.dpaw.wa.gov.au/static/libs/parsley.js/2.3.5/parsley.min',
         'datatables.net': '//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/js/jquery.dataTables.min',
         'datatables.bootstrap': '//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/js/dataTables.bootstrap.min',
         'lodash':'//static.dpaw.wa.gov.au/static/libs/lodash.js/4.5.1/lodash.min',
-        'bootstrap.select': '//static.dpaw.wa.gov.au/static/libs/bootstrap-select/1.9.4/js/bootstrap-select.min',
         'bootstrap.treeView': '//static.dpaw.wa.gov.au/static/libs/bootstrap-treeview/1.2.0/bootstrap-treeview.min'
     },
     shim: {
@@ -34,9 +34,6 @@ require.config({
             deps: ['jQuery']
         },
         'datatables.bootstrap': {
-            deps: ['jQuery']
-        },
-        'bootstrap.select': {
             deps: ['jQuery']
         },
         'bootstrap.treeView': {

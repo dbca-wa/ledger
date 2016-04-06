@@ -3,10 +3,11 @@ define(
         'jQuery',
         'lodash',
         'js/wl.dataTable',
-        'bootstrap'
+        'bootstrap',
+        'select2'
     ],
     function ($, _, dt) {
-        var moduleOptions,
+        var options,
             tableOptions = {
                 paging: true,
                 info: true,
@@ -16,19 +17,19 @@ define(
                 deferRender: true,
                 serverSide: true,
                 autowidth: true
-
             },
             applicationsTable,
             $applicationsLicenceTypeFilter,
-            $applicationsStatusTypeFilter;
+            $applicationsStatusTypeFilter,
+            $applicationsAssigneeTypeFilter;
 
-        function initTables(options) {
+        function initTables() {
             var applicationTableOptions = $.extend({}, tableOptions, {
                     ajax: {
-                        url: options.ajax.applications,
+                        url: options.data.applications.ajax.url,
                         data: function (d) {
                             // add filters to the query
-                            d.filters = $(moduleOptions.selectors.applicationsFilterForm).serializeArray();
+                            d.filters = $(options.selectors.applicationsFilterForm).serializeArray();
                         },
                         error: function () {
                             console.log("error");
@@ -36,17 +37,7 @@ define(
                         }
                     }
                 }),
-                applicationsColumns = [
-                    {
-                        title: 'Licence Type'
-                    },
-                    {
-                        title: 'Applicant'
-                    },
-                    {
-                        title: 'Status'
-                    }
-                ];
+                applicationsColumns = options.data.applications.columnDefinitions;
 
             applicationsTable = dt.initTable(
                 options.selectors.applicationsTable,
@@ -55,7 +46,7 @@ define(
             );
         }
 
-        function initFilters(options) {
+        function initApplicationsFilters() {
             var data = options.data,
                 optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),
                 $node;
@@ -67,7 +58,7 @@ define(
                 }));
             }
 
-            // applications licence type
+            // licence type
             _.forEach(data.applications.filters.licenceType.values, function (value) {
 
                 $node = createOptionNode(value);
@@ -76,7 +67,7 @@ define(
             $applicationsLicenceTypeFilter.on('change', function () {
                 applicationsTable.ajax.reload();
             });
-            // applications status
+            // status
             _.forEach(data.applications.filters.status.values, function (value) {
                 $node = createOptionNode(value);
                 $applicationsStatusTypeFilter.append($node);
@@ -85,61 +76,82 @@ define(
                 applicationsTable.ajax.reload();
             });
 
+            // assignee filter
+            if ($applicationsAssigneeTypeFilter && data.applications.filters.assignee.values) {
+                _.forEach(data.applications.filters.assignee.values, function (value) {
+                    $node = createOptionNode(value);
+                    $applicationsAssigneeTypeFilter.append($node);
+                });
+                $applicationsAssigneeTypeFilter.on('change', function () {
+                    applicationsTable.ajax.reload();
+                });
+            }
+
         }
 
-        function setFilters(data) {
-            if (data.model) {
-                if (data.model === 'application') {
-                    $('#applications-collapse').collapse('show');
-                    if (data.status) {
-                        $applicationsStatusTypeFilter.val(data.status);
-                    }
-                    if (data.licence_type) {
-                        $applicationsLicenceTypeFilter.val(data.licence_type);
-                    }
-                }
+        function setFilters(query) {
+            $('#applications-collapse').collapse('show');
+            if (query['application_status']) {
+                $applicationsStatusTypeFilter.val(query['application_status']);
+            }
+            if (query['application_assignee']) {
+                $applicationsAssigneeTypeFilter.val(query['application_assignee'])
             }
         }
 
-        return function (options) {
+        return function (moduleOptions) {
             var defaults = {
                 selectors: {
                     applicationsTable: '#applications-table',
                     applicationsAccordion: '#applications-collapse',
                     applicationsFilterForm: '#applications-filter-form',
                     applicationsLicenceFilter: '#applications-filter-licence-type',
-                    applicationsStatusFilter: '#applications-filter-status'
-                },
-                ajax: {
-                    applications: "/dashboard/data/applications"
+                    applicationsStatusFilter: '#applications-filter-status',
+                    applicationsAssigneeFilter: '#applications-filter-assignee'
                 },
                 data: {
                     'applications': {
-                        'tableData': [],
+                        ajax: {
+                            url: "/dashboard/data/applications"
+                        },
+                        'columnDefinitions': [],
                         'filters': {
                             'licenceType': {
-                                'values': ['All']
+                                'values': []
                             },
                             'status': {
-                                'values': ['All']
+                                'values': []
+                            },
+                            'assignee': {
+                                'values': []
                             }
                         }
                     }
                 }
             };
-            moduleOptions = $.extend({}, defaults, options);
-            $(function () {
-                $applicationsLicenceTypeFilter = $(moduleOptions.selectors.applicationsLicenceFilter);
-                $applicationsStatusTypeFilter = $(moduleOptions.selectors.applicationsStatusFilter);
-
-                $(moduleOptions.selectors.applicationsAccordion).collapse('show');
-
-                initFilters(moduleOptions);
-                if (moduleOptions.data.query) {
-                    // set filter according to query data
-                    setFilters(moduleOptions.data.query);
+            // merge the defaults options, and the options passed in parameter.
+            // This is a deep merge but the array are not merged
+            options = _.mergeWith({}, defaults, moduleOptions, function (objValue, srcValue) {
+                if (_.isArray(objValue)) {
+                    return srcValue;
                 }
-                initTables(moduleOptions);
+            });
+            $(function () {
+                $applicationsLicenceTypeFilter = $(options.selectors.applicationsLicenceFilter);
+                $applicationsStatusTypeFilter = $(options.selectors.applicationsStatusFilter);
+                $applicationsAssigneeTypeFilter = $(options.selectors.applicationsAssigneeFilter);
+
+                $(options.selectors.applicationsAccordion).collapse('show');
+
+                initApplicationsFilters();
+                if (options.data.query) {
+                    // set filter according to query data
+                    setFilters(options.data.query);
+                }
+                initTables();
+
+                // apply the bootstrap select2 to the filters.
+                $(options.selectors.applicationsFilterForm + ' select').select2();
             })
         };
     }

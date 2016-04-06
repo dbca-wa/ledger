@@ -27,9 +27,14 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
-                    <li><a href="{% url 'applications:create_select_persona' licence_type.code %}">Select Persona</a></li>
-                    <li><a href="{% url 'applications:enter_details' licence_type.code %}">Enter Application Details</a></li>
+                    {% if application_pk %}
+                        <li><a href="{% url 'applications:create_select_persona_existing_application' licence_type.code application_pk %}">Select Persona</a></li>
+                        <li><a href="{% url 'applications:enter_details_existing_application' licence_type.code application_pk %}">Enter Application Details</a></li>
+                    {% else %}
+                        <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
+                        <li><a href="{% url 'applications:create_select_persona' licence_type.code %}">Select Persona</a></li>
+                        <li><a href="{% url 'applications:enter_details' licence_type.code %}">Enter Application Details</a></li>
+                    {% endif %}
                     <li class="active">Preview and Lodge Application</li>
                 </ol>
             </div>
@@ -41,15 +46,20 @@
     <div id="mainContainer" class="container hidden">
         <div class="row">
             <div class="col-md-2 col-sm-3">
-                <label class="vertical-buffer">Selected Persona: <em>{{ persona.name }}</em></label>
-                <a href="{% url 'applications:create_select_persona' licence_type.code %}">Change Persona</a>
+                <label class="top-buffer">Selected Persona:</label>
+                <p>{{ persona.name }}</p>
+                {% if application_pk %}
+                    <p><em><a href="{% url 'applications:create_select_persona_existing_application' licence_type.code application_pk %}">Change Persona</a></em></p>
+                {% else %}
+                    <p><em><a href="{% url 'applications:create_select_persona' licence_type.code %}">Change Persona</a></em></p>
+                {% endif %}
             </div>
             <div class="col-md-10 col-sm-2">
                 <h2>{{ licence_type.name }}</h2>
             </div>
         </div>
         <div class="row">
-            <nav class="hidden-xs col-sm-3 col-md-2 vertical-buffer">
+            <nav class="hidden-xs col-sm-3 col-md-2 top-buffer">
                 <div id="sectionList">
                     <ul class="nav nav-stacked">
                     </ul>
@@ -60,7 +70,11 @@
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
+                    {% if application_pk %}
+                    <a class="btn btn-default" href="{% url 'applications:enter_details_existing_application' licence_type.code application_pk %}">Edit Application Details</a>
+                    {% else %}
                     <a class="btn btn-default" href="{% url 'applications:enter_details' licence_type.code %}">Edit Application Details</a>
+                    {% endif %}
                     <button type="submit" class="btn btn-primary pull-right" name="lodge">Lodge Application</button>
                 </form>
             </div>

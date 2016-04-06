@@ -72,6 +72,8 @@
                                             <span class="caret"></span>
                                         </a>
                                         <ul class="dropdown-menu">
+                                            <li><a href="{% url 'main:list_personas' %}">Manage Personas</a></li>
+                                            <li><a href="{% url 'main:identification' %}">Manage ID</a></li>
                                             <li role="separator" class="divider"></li>
                                             {% if request.user.is_superuser %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
@@ -101,6 +103,8 @@
             </div>
         {% endblock %}
         {% block content %}
+        {% endblock %}
+        {% block modals %}
         {% endblock %}
     </body>
 </html>

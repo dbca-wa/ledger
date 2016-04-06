@@ -1,20 +1,5 @@
-define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicker', 'select2', 'js/handlebars_helpers'], function($, Handlebars) {
-    var templates = {};
-
-    function _getTemplate(templateName) {
-        if (templates[templateName] === undefined) {
-            $.ajax({
-                url: '/static/wl/hdb_templates/' + templateName + '.handlebars',
-                success: function(data) {
-                    templates[templateName] = Handlebars.compile(data);
-                },
-                async: false
-            });
-        }
-
-        return templates[templateName]
-    }
-
+define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker',
+        'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, index, isRepeat, itemData) {
         var itemContainer = $('<div>');
 
@@ -31,7 +16,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
             item.value = itemData[item.name];
         }
 
-        itemContainer.append(_getTemplate(item.type)(item));
+        itemContainer.append(Handlebars.templates[item.type](item));
 
         // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.value = undefined;
@@ -134,8 +119,8 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
         layoutFormItems: function(formContainerSelector, formStructure, data) {
             var formContainer = $(formContainerSelector);
 
-            $.each(formStructure, function(index, child) {
-                formContainer.append(_layoutItem(child, index, false, data));
+            $.each(formStructure, function(index, item) {
+                formContainer.append(_layoutItem(item, index, false, data));
             });
 
             // initialise all datapickers
@@ -163,7 +148,7 @@ define(['jQuery', 'handlebars', 'parsley', 'bootstrap', 'bootstrap-datetimepicke
                 }
             });
         },
-        initialiseSidebarMenu(sidebarMenuSelector) {
+        initialiseSidebarMenu: function(sidebarMenuSelector) {
             $('.section').each(function(index, value) {
                 var link = $('<a>');
                 link.attr('href', '#section-' + index);

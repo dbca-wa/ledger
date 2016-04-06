@@ -1,4 +1,4 @@
-/.settings/org.eclipse.core.resources.prefs
+.settings/
 .env
 venv/
 
@@ -72,3 +72,6 @@ target/
 /.project
 
 **/local/
+
+# media
+media/

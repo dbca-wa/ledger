@@ -175,6 +175,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
     billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
 
+    identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
+
     documents = models.ManyToManyField(Document)
 
     extra_data = JSONField(default=dict)
@@ -205,9 +207,9 @@ class RevisionedMixin(models.Model):
     """
     A model tracked by reversion through the save method.
     """
-    def save(self):
+    def save(self, **kwargs):
         with revisions.create_revision():
-            super(RevisionedMixin, self).save()
+            super(RevisionedMixin, self).save(**kwargs)
 
     @property
     def created_date(self):
@@ -224,10 +226,10 @@ class RevisionedMixin(models.Model):
 @python_2_unicode_compatible
 class Persona(RevisionedMixin):
     user = models.ForeignKey(EmailUser, verbose_name='User')
-    name = models.CharField('Name', max_length=100, blank=True, default='')
+    name = models.CharField('Display Name', max_length=100, help_text='e.g Personal, Work, University, etc')
     email = models.EmailField('Email')
     postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT)
-    institution = models.CharField('Institution', max_length=200, blank=True, default='', help_text='Company, Tertiary Institution, Government Department, etc')
+    institution = models.CharField('Institution', max_length=200, blank=True, default='', help_text='e.g. Company Name, Tertiary Institution, Government Department, etc')
 
     def __str__(self):
         if len(self.name) > 0:
