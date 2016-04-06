@@ -121,7 +121,7 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
         """
         # The draft status is excluded from the officer status list
         statuses = _get_processing_statuses_but_draft()
-        all_applications = Application.objects.all()
+        all_applications = Application.objects.filter(processing_status__in=[s[0] for s in statuses])
         all_applications_node = self._create_node('All applications', href=self.url,
                                                   count=all_applications.count())
         all_applications_node['state']['expanded'] = False
@@ -141,7 +141,7 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
         }
         user_applications_node = self._create_node('My assigned applications', href=_build_url(self.url, query),
                                                    count=user_applications.count())
-        user_applications_node['state']['expanded'] = False
+        user_applications_node['state']['expanded'] = True
         for s_value, s_title in statuses:
             applications = user_applications.filter(processing_status=s_value)
             if applications.count() > 0:
@@ -463,6 +463,11 @@ class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
             return '<a href="{0}">{1}</a>'.format(
                 reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
                 'Continue application'
+            )
+        elif obj.customer_status == 'amendment_required':
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                'Amend application'
             )
         else:
             return 'Locked'
