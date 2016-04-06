@@ -54,3 +54,7 @@ a { cursor: pointer; }
 .status {
     font-style: italic;
 }
+
+#currentAssessments {
+	font-size: 12px;
+}
