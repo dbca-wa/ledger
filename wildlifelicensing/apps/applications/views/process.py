@@ -14,6 +14,7 @@ from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors, render_user_name
+from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -77,7 +78,7 @@ class AssignOfficerView(View):
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
         return JsonResponse({'assigned_officer': assigned_officer, 'processing_status': PROCESSING_STATUSES[application.processing_status]},
-                            safe=False)
+                            safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class SetIDCheckStatusView(View):
@@ -92,7 +93,8 @@ class SetIDCheckStatusView(View):
         application.save()
 
         return JsonResponse({'id_check_status': ID_CHECK_STATUSES[application.id_check_status],
-                             'processing_status': PROCESSING_STATUSES[application.processing_status]}, safe=False)
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
+                            safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class SetCharacterCheckStatusView(View):
@@ -104,7 +106,8 @@ class SetCharacterCheckStatusView(View):
         application.save()
 
         return JsonResponse({'character_check_status': CHARACTER_CHECK_STATUSES[application.character_check_status],
-                             'processing_status': PROCESSING_STATUSES[application.processing_status]}, safe=False)
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
+                            safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class SetReviewStatusView(View):
@@ -120,7 +123,8 @@ class SetReviewStatusView(View):
         application.save()
 
         return JsonResponse({'review_status': REVIEW_STATUSES[application.review_status],
-                             'processing_status': PROCESSING_STATUSES[application.processing_status]}, safe=False)
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
+                            safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class SendForAssessmentView(View):
@@ -134,7 +138,8 @@ class SendForAssessmentView(View):
         application.save()
 
         return JsonResponse({'assessment': serialize(assessment, posthook=_format_assessment_status),
-                             'processing_status': PROCESSING_STATUSES[application.processing_status]}, safe=False)
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
+                            safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 def _determine_processing_status(application):

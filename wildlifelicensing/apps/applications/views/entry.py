@@ -253,8 +253,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
             AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
             application.customer_status = 'under_review'
             application.review_status = 'amended'
-            # the process status should be defined in the process view
-            # application.process_status = 'ready_for_action'
+            application.processing_status = 'ready_for_action'
         else:
             application.customer_status = 'pending'
             application.processing_status = 'new'

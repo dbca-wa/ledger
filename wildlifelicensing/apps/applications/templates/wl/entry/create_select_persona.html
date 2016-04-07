@@ -30,6 +30,11 @@
             <div class="row">
                 <div class="col-md-12">
                     <h2>Select Persona</h2>
+                    <hr>
+                    <p>
+                        The Wildlife Licensing system utilises the concept of personas to allow users to apply for a licence under different circumstances, such holding a licence
+                        for personal, commercial or research purposes. Please select an existing persona or alternatively create a new persona for this licence application.
+                    </p>
                     <form method="post">
                         {% csrf_token %}
                         {% bootstrap_form persona_selection_form %}
@@ -65,6 +70,13 @@
         <div class="row">
             <div class="col-md-12">
                 <h2>Create Persona</h2>
+                <hr>
+                <p>
+                    The Wildlife Licensing system utilises the concept of personas to allow users to apply for a licence under different circumstances, such holding a licence
+                    for personal, commercial or research purposes. You must create at least one persona in order to apply for a licence. When applying for subsequent licences, you
+                    will have the option to create or select alternative personas. At any time, you can create and edit personas by selecting Manage Personas from the Options menu
+                    on the menu bar.
+                </p>
                 <form method="post">
                     {% csrf_token %}
                     {% bootstrap_form persona_creation_form %}
