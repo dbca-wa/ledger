@@ -8,5 +8,5 @@ urlpatterns = patterns('accounts',
     url(r'^done/$', views.done, name='done'),
     url(r'^validation-sent/$', views.validation_sent, name='validation_sent'),
     url(r'^token-login/(?P<token>[^/]+)/$', views.token_login, name='token_login'),
-    url(r'^logout/', auth_views.logout, {'next_page': 'accounts:home'}, name='logout'),
+    url(r'^logout/', views.logout, name='logout'),
 )
