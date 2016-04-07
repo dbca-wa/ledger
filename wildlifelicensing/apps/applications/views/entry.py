@@ -34,6 +34,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         # if we've arrived at the licence type selection page and there is hangover application data left in the session, delete it
         delete_application_session_data(request.session)
+
         request.session['application'] = {}
 
         context = {'licence_types': dict([(licence_type.code, licence_type.name) for licence_type in WildlifeLicenceType.objects.all()])}
@@ -133,11 +134,14 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
+        print 'application' in request.session
         if application is not None and 'application' not in request.session:
             request.session['application'] = {}
             request.session['application']['persona'] = application.applicant_persona.id
             request.session['application']['data'] = application.data
             request.session.modified = True
+            print 'here'
+
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
         persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
 
@@ -283,15 +287,3 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         delete_application_session_data(request.session)
 
         return redirect('dashboard:home')
-
-
-def delete_application_session_data(session):
-    if 'application' in session:
-        if 'files' in session['application']:
-            if os.path.exists(session.get('application').get('files')):
-                try:
-                    shutil.rmtree(session.get('application').get('files'))
-                except:
-                    pass
-
-        del session['application']

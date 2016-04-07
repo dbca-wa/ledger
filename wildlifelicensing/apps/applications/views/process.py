@@ -1,6 +1,4 @@
-from django.contrib.auth.models import Group
 from django.core.context_processors import csrf
-from django.db.models import Q
 import os
 import json
 
@@ -25,6 +23,7 @@ CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
 REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
 ASSESSMENT_STATUSES = dict(Assessment.STATUS_CHOICES)
 
+
 class ProcessView(OfficerRequiredMixin, TemplateView):
     template_name = 'wl/process/process_app.html'
 
@@ -35,7 +34,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
-        assessors = [{'id': assessor.id, 'text': render_user_name(assessor)} for assessor in 
+        assessors = [{'id': assessor.id, 'text': render_user_name(assessor)} for assessor in
                      get_all_assessors().exclude(id__in=application.assessments.all())]
 
         data = {
@@ -43,6 +42,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
             'application': serialize(application, posthook=_format_application_statuses),
             'form_structure': form_structure,
             'officers': officers,
+            'ammendment_requests': serialize(application.ammendmentrequest_set.all()),
             'assessors': assessors,
             'assessments': serialize(application.assessment_set.all(),
                                      posthook=_format_assessment_status),
@@ -164,6 +164,7 @@ def _format_application_statuses(instance, attrs):
     attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
 
     return attrs
+
 
 def _format_assessment_status(instance, attrs):
     attrs['status'] = ASSESSMENT_STATUSES[attrs['status']]

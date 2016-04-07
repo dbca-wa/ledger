@@ -35,7 +35,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                         applicationID: application.id,
                         csrfmiddlewaretoken: csrfToken,
                         userID: user.id
-                    }, 
+                    },
                     function(data) {
                         $assignee.select2('data', data.assigned_officer);
                         $processingStatus.text(data.processing_status);
@@ -209,7 +209,6 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 statusColumn.append(assessment.status);
             } else {
                 statusColumn.append('<a>View Comments</a>');
-                statusColumn.append($('<span></span>').addClass('glyphicon').addClass('glyphicon-ok').addClass('ok-tick').css('margin-left', '15px'));
             }
 
             row.append(statusColumn);
