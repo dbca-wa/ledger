@@ -47,6 +47,10 @@ hr {
 
 a { cursor: pointer; }
 
+.action-buttons-group {
+    margin-bottom: 5px;
+}
+
 .ok-tick {
     color: #449d44;
 }
@@ -55,6 +59,10 @@ a { cursor: pointer; }
     font-style: italic;
 }
 
+#review a {
+    font-size: 12px;
+}
+
 #currentAssessments {
-	font-size: 12px;
+    font-size: 12px;
 }

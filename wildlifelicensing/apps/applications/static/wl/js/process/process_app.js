@@ -1,5 +1,5 @@
 define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
-    var application, assessments, csrfToken;
+    var application, assessments, amendmentRequests, csrfToken;
 
     var $processingStatus;
 
@@ -142,6 +142,17 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
             });
         }
 
+        function prepareAmendmentRequestsPopover($showPopover) {
+            $showPopover.popover('destroy')
+            var content = '';
+            $.each(amendmentRequests, function(index, value) {
+                console.log(value);
+                content += '<p>' + value.text + '<p>';
+            });
+            $showPopover.popover({content: content, html: true});
+            $showPopover.removeClass('hidden');
+        }
+
         function initReview() {
             var $container = $('#review');
 
@@ -177,7 +188,8 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
 
             var $requestAmendmentsModal = $('#requestAmendmentsModal'),
                 $requestAmendmentsSendButton = $requestAmendmentsModal.find('#sendAmendmentsRequest'),
-                $requestAmendmentsMessage = $requestAmendmentsModal.find('textarea');
+                $requestAmendmentsMessage = $requestAmendmentsModal.find('textarea'),
+                $showAmendmentRequests = $container.find('a');
 
             $requestAmendmentsButton.click(function(e) {
                 $requestAmendmentsModal.modal('show');
@@ -197,8 +209,17 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
 
                     application.review_status = data.review_status;
                     determineApplicationApprovable();
+
+                    if(data.review_status === 'Awaiting Amendments') {
+                        amendmentRequests.push(data.amendment_request);
+                        prepareAmendmentRequestsPopover($showAmendmentRequests);
+                    }
                 });
             });
+
+            if(amendmentRequests.length > 0) {
+                prepareAmendmentRequestsPopover($showAmendmentRequests);
+            }
         }
 
         function createAssessmentRow(assessment) {
@@ -298,6 +319,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 csrfToken = data.csrf_token;
                 application = data.application;
                 assessments = data.assessments;
+                amendmentRequests = data.amendment_requests;
 
                 initAssignee(data.officers, data.user);
                 initIDCheck();

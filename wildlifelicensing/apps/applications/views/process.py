@@ -42,7 +42,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
             'application': serialize(application, posthook=_format_application_statuses),
             'form_structure': form_structure,
             'officers': officers,
-            'ammendment_requests': serialize(application.ammendmentrequest_set.all()),
+            'amendment_requests': serialize(application.amendmentrequest_set.all()),
             'assessors': assessors,
             'assessments': serialize(application.assessment_set.all(),
                                      posthook=_format_assessment_status),
@@ -115,16 +115,21 @@ class SetReviewStatusView(View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
         application.review_status = request.POST['status']
 
+        amendment_request = None
         if application.review_status == 'awaiting_amendments':
             application.customer_status = 'amendment_required'
-            AmendmentRequest.objects.create(application=application, text=request.POST.get('message', ''))
+            amendment_request = AmendmentRequest.objects.create(application=application, text=request.POST.get('message', ''))
 
         application.processing_status = _determine_processing_status(application)
         application.save()
 
-        return JsonResponse({'review_status': REVIEW_STATUSES[application.review_status],
-                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
-                            safe=False, encoder=WildlifeLicensingJSONEncoder)
+        response = {'review_status': REVIEW_STATUSES[application.review_status],
+                    'processing_status': PROCESSING_STATUSES[application.processing_status]}
+
+        if amendment_request is not None:
+            response['amendment_request'] = serialize(amendment_request)
+
+        return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class SendForAssessmentView(View):

@@ -20,9 +20,9 @@ from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main.forms import IdentificationForm
 
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
-from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data
+from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
+    delete_application_session_data
 from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
-
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
