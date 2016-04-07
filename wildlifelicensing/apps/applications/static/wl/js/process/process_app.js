@@ -147,7 +147,9 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
 
             var $actionButtonsContainer = $container.find('.action-buttons-group'),
                 $okTick = $container.find('.ok-tick'),
-                $status = $container.find('.status');
+                $status = $container.find('.status'),
+                $acceptButton = $actionButtonsContainer.find('.btn-success'),
+                $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning');
 
             if (application.review_status === 'Accepted') {
                 $actionButtonsContainer.addClass('hidden');
@@ -155,9 +157,6 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 $okTick.removeClass('hidden');
                 return;
             }
-
-            var $acceptButton = $actionButtonsContainer.find('.btn-success'),
-                $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning');
 
             $acceptButton.click(function(e) {
                 $.post('/applications/set_review_status/', {
@@ -209,7 +208,8 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
             if(assessment.status === 'Awaiting Assessment') {
                 statusColumn.append(assessment.status);
             } else {
-                statusColumn.append($('<span></span>').addClass('glyphicon').addClass('glyphicon-ok').addClass('ok-tick'));
+                statusColumn.append('<a>View Comments</a>');
+                statusColumn.append($('<span></span>').addClass('glyphicon').addClass('glyphicon-ok').addClass('ok-tick').css('margin-left', '15px'));
             }
 
             row.append(statusColumn);
