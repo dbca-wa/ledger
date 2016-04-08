@@ -42,7 +42,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
 
-class CheckIdentityRequiredView(LoginRequiredMixin, FormView):
+class CheckIdentificationRequiredView(LoginRequiredMixin, FormView):
     template_name = 'wl/entry/upload_identification.html'
     login_url = '/'
     form_class = IdentificationForm
@@ -51,12 +51,12 @@ class CheckIdentityRequiredView(LoginRequiredMixin, FormView):
         licence_type = get_object_or_404(WildlifeLicenceType, code=args[1])
 
         if licence_type.identification_required and self.request.user.identification is None:
-            return super(CheckIdentityRequiredView, self).get(*args, **kwargs)
+            return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
         else:
             return redirect('applications:create_select_persona', args[1], **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(CheckIdentityRequiredView, self).get_context_data(**kwargs)
+        context = super(CheckIdentificationRequiredView, self).get_context_data(**kwargs)
         context['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
         return context
 

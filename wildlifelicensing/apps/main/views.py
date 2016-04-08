@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.base import TemplateView
@@ -11,9 +12,10 @@ from ledger.accounts.models import Persona, Document
 from ledger.accounts.forms import AddressForm, PersonaForm
 
 from forms import IdentificationForm
+from mixins import CustomerRequiredMixin
 
 
-class ListPersonasView(LoginRequiredMixin, TemplateView):
+class ListPersonasView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/list_personas.html'
     login_url = '/'
 
@@ -25,7 +27,7 @@ class ListPersonasView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class CreatePersonasView(LoginRequiredMixin, TemplateView):
+class CreatePersonasView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/create_persona.html'
     login_url = '/'
 
@@ -43,15 +45,15 @@ class CreatePersonasView(LoginRequiredMixin, TemplateView):
             persona.user = request.user
             persona.save()
         else:
-            return render(request, self.template_name, {'persona_form': PersonaForm(instance=persona),
-                                                        'address_form': AddressForm(instance=persona.postal_address)})
+            return render(request, self.template_name, {'persona_form': persona_form,
+                                                        'address_form': address_form})
 
         messages.success(request, "The persona '%s' was created." % persona.name)
 
         return redirect('main:list_personas')
 
 
-class EditPersonasView(LoginRequiredMixin, TemplateView):
+class EditPersonasView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/edit_persona.html'
     login_url = '/'
 
@@ -85,11 +87,10 @@ class EditPersonasView(LoginRequiredMixin, TemplateView):
         return redirect('main:list_personas')
 
 
-class IdentificationView(LoginRequiredMixin, FormView):
+class IdentificationView(CustomerRequiredMixin, FormView):
     template_name = 'wl/manage_identification.html'
     login_url = '/'
     form_class = IdentificationForm
-    success_url = '.'
 
     def form_valid(self, form):
         if self.request.user.identification is not None:
@@ -107,3 +108,6 @@ class IdentificationView(LoginRequiredMixin, FormView):
             context['existing_id_image_url'] = self.request.user.identification.file.url
 
         return context
+
+    def get_success_url(self):
+        return reverse('main:identification')
