@@ -1,7 +1,15 @@
 from django import forms
 
-from .models import Address, Persona
+from .models import Address, Persona, EmailUser
 
+
+
+class FirstTimeForm(forms.Form):
+    redirect_url = forms.CharField()
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+    dob = forms.DateField(input_formats=['%d/%m/%Y'])
+    
 
 class AddressForm(forms.ModelForm):
     class Meta:

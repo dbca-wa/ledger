@@ -9,4 +9,5 @@ urlpatterns = patterns('accounts',
     url(r'^validation-sent/$', views.validation_sent, name='validation_sent'),
     url(r'^token-login/(?P<token>[^/]+)/$', views.token_login, name='token_login'),
     url(r'^logout/', views.logout, name='logout'),
+    url(r'^firsttime/', views.first_time, name='first_time')
 )

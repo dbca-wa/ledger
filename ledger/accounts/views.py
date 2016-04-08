@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
+from .forms import FirstTimeForm
+from .models import EmailUser
 
 # Example views, most of them are just template rendering
 
@@ -21,17 +24,44 @@ def bounce(request):
     return redirect('/')
 
 
+@login_required(login_url='accounts:home')
+def first_time(request): 
+    context = {}
+    if request.method == 'POST':
+        form = FirstTimeForm(request.POST)
+        redirect_url = form.data['redirect_url']
+        if not redirect_url:
+            redirect_url = '/'
+        if form.is_valid():
+            # set user attributes
+            request.user.first_name = form.cleaned_data['first_name']
+            request.user.last_name = form.cleaned_data['last_name']
+            request.user.dob = form.cleaned_data['dob']
+            return redirect(redirect_url) 
+        context['form'] = form
+        context['redirect_url'] = redirect_url
+        return render(request, 'customers/firsttime.html', context)
+    # GET default
+    if 'next' in request.GET:
+        context['redirect_url'] = request.GET['next']
+    else:
+        context['redirect_url'] = '/'
+    return render(request, 'customers/firsttime.html', context)
+
+
 def validation_sent(request):
     messages.success(request,
                      "An email has been sent to you. "
-                     "Check your mailbox and click on the link to complete the login process.")
+                     "Check your mailbox and click on the link to complete the sign-in process.")
     return bounce(request)
 
 
-def logout(request):
+def logout(request, *args, **kwargs):
     auth_logout(request)
     messages.success(request,
                      "You have successfully logged out.")
+    if 'next' in kwargs:
+        return redirect(kwargs['next_page'])
     return bounce(request)
 
 
