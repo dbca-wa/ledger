@@ -143,14 +143,19 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
         }
 
         function prepareAmendmentRequestsPopover($showPopover) {
-            $showPopover.popover('destroy')
             var content = '';
             $.each(amendmentRequests, function(index, value) {
-                console.log(value);
                 content += '<p>' + value.text + '<p>';
             });
-            $showPopover.popover({content: content, html: true});
-            $showPopover.removeClass('hidden');
+
+            // check if popover created yet
+            var popover = $showPopover.data('bs.popover');
+            if(popover === undefined) {
+                $showPopover.popover({container: 'body', content: content, html: true});
+                $showPopover.removeClass('hidden');
+            } else {
+                popover.options.content = content;
+            }
         }
 
         function initReview() {
