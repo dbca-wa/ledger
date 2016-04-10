@@ -134,13 +134,11 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
-        print 'application' in request.session
         if application is not None and 'application' not in request.session:
             request.session['application'] = {}
             request.session['application']['persona'] = application.applicant_persona.id
             request.session['application']['data'] = application.data
             request.session.modified = True
-            print 'here'
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
         persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
