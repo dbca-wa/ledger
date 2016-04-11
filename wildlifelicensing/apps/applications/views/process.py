@@ -13,7 +13,7 @@ from ledger.accounts.models import EmailUser
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -21,7 +21,7 @@ PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
 ID_CHECK_STATUSES = dict(Application.ID_CHECK_STATUS_CHOICES)
 CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
 REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
-ASSESSMENT_STATUSES = dict(Assessment.STATUS_CHOICES)
+ASSESSMENT_STATUSES = dict(AssessmentRequest.STATUS_CHOICES)
 
 
 class ProcessView(OfficerRequiredMixin, TemplateView):
@@ -34,17 +34,18 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
+        current_assessors = [ass.assessor for ass in AssessmentRequest.objects.filter(application=application)]
         assessors = [{'id': assessor.id, 'text': render_user_name(assessor)} for assessor in
-                     get_all_assessors().exclude(id__in=application.assessments.all())]
+                     get_all_assessors().exclude(id__in=[assessor.pk for assessor in current_assessors])]
 
         data = {
             'user': serialize(request.user),
             'application': serialize(application, posthook=_format_application_statuses),
             'form_structure': form_structure,
             'officers': officers,
-            'amendment_requests': serialize(application.amendmentrequest_set.all()),
+            'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application)),
             'assessors': assessors,
-            'assessments': serialize(application.assessment_set.all(),
+            'assessments': serialize(AssessmentRequest.objects.filter(application=application),
                                      posthook=_format_assessment_status),
             'csrf_token': str(csrf(request).get('csrf_token'))
         }
@@ -118,7 +119,9 @@ class SetReviewStatusView(View):
         amendment_request = None
         if application.review_status == 'awaiting_amendments':
             application.customer_status = 'amendment_required'
-            amendment_request = AmendmentRequest.objects.create(application=application, text=request.POST.get('message', ''))
+            amendment_request = AmendmentRequest.objects.create(application=application,
+                                                                text=request.POST.get('message', ''),
+                                                                user=request.user)
 
         application.processing_status = _determine_processing_status(application)
         application.save()
@@ -137,8 +140,11 @@ class SendForAssessmentView(View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         assessor = get_object_or_404(EmailUser, pk=request.POST['userID'])
-        assessment = Assessment.objects.create(application=application, assessor=assessor, status=request.POST['status'])
+        assessment = AssessmentRequest.objects.create(application=application, assessor=assessor,
+                                                      status=request.POST['status'],
+                                                      user=request.user)
 
+        application.processing_status = _determine_processing_status(application)
         application.processing_status = _determine_processing_status(application)
         application.save()
 
@@ -153,7 +159,7 @@ def _determine_processing_status(application):
     if application.id_check_status == 'awaiting_update' or application.review_status == 'awaiting_amendments':
         status = 'awaiting_applicant_response'
 
-    if application.assessment_set.filter(status='awaiting_assessment').exists():
+    if AssessmentRequest.objects.filter(application=application).filter(status='awaiting_assessment').exists():
         if status == 'awaiting_applicant_response':
             status = 'awaiting_responses'
         else:
