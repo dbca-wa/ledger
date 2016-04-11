@@ -20,9 +20,9 @@ from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main.forms import IdentificationForm
 
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
-from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data
+from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
+    delete_application_session_data
 from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
-
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -34,6 +34,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         # if we've arrived at the licence type selection page and there is hangover application data left in the session, delete it
         delete_application_session_data(request.session)
+
         request.session['application'] = {}
 
         context = {'licence_types': dict([(licence_type.code, licence_type.name) for licence_type in WildlifeLicenceType.objects.all()])}
@@ -41,7 +42,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
 
-class CheckIdentityRequiredView(LoginRequiredMixin, FormView):
+class CheckIdentificationRequiredView(LoginRequiredMixin, FormView):
     template_name = 'wl/entry/upload_identification.html'
     login_url = '/'
     form_class = IdentificationForm
@@ -50,12 +51,12 @@ class CheckIdentityRequiredView(LoginRequiredMixin, FormView):
         licence_type = get_object_or_404(WildlifeLicenceType, code=args[1])
 
         if licence_type.identification_required and self.request.user.identification is None:
-            return super(CheckIdentityRequiredView, self).get(*args, **kwargs)
+            return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
         else:
             return redirect('applications:create_select_persona', args[1], **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(CheckIdentityRequiredView, self).get_context_data(**kwargs)
+        context = super(CheckIdentificationRequiredView, self).get_context_data(**kwargs)
         context['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
         return context
 
@@ -138,6 +139,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
             request.session['application']['persona'] = application.applicant_persona.id
             request.session['application']['data'] = application.data
             request.session.modified = True
+
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
         persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
 
@@ -283,15 +285,3 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         delete_application_session_data(request.session)
 
         return redirect('dashboard:home')
-
-
-def delete_application_session_data(session):
-    if 'application' in session:
-        if 'files' in session['application']:
-            if os.path.exists(session.get('application').get('files')):
-                try:
-                    shutil.rmtree(session.get('application').get('files'))
-                except:
-                    pass
-
-        del session['application']

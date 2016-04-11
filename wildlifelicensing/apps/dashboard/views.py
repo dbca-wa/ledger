@@ -14,7 +14,8 @@ from braces.views import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
+from wildlifelicensing.apps.applications.utils import delete_application_session_data
+from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from .forms import LoginForm
 
@@ -205,6 +206,8 @@ class DashboardTableBaseView(TemplateView):
         return data
 
     def get_context_data(self, **kwargs):
+        delete_application_session_data(self.request.session)
+
         if 'dataJSON' not in kwargs:
             data = self._build_data()
             # add the request query to the data
@@ -428,7 +431,7 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
     def _render_assignee_column(self, obj):
         return render_user_name(obj.assigned_officer)
 
-    def _render_lodged_date(selfself, obj):
+    def _render_lodged_date(self, obj):
         return _render_date(obj.lodged_date)
 
     columns_helpers = dict(ApplicationDataTableBaseView.columns_helpers.items(), **{

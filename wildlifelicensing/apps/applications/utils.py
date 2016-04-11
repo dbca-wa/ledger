@@ -1,3 +1,7 @@
+import os
+import shutil
+
+
 def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):
     data = {}
 
@@ -72,3 +76,15 @@ def get_all_filenames_from_application_data(item, data):
                 filenames += get_all_filenames_from_application_data(child, data)
 
     return filenames
+
+
+def delete_application_session_data(session):
+    if 'application' in session:
+        if 'files' in session['application']:
+            if os.path.exists(session.get('application').get('files')):
+                try:
+                    shutil.rmtree(session.get('application').get('files'))
+                except:
+                    pass
+
+        del session['application']

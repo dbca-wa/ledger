@@ -1,5 +1,5 @@
 define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
-    var application, assessments, csrfToken;
+    var application, assessments, amendmentRequests, csrfToken;
 
     var $processingStatus;
 
@@ -35,7 +35,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                         applicationID: application.id,
                         csrfmiddlewaretoken: csrfToken,
                         userID: user.id
-                    }, 
+                    },
                     function(data) {
                         $assignee.select2('data', data.assigned_officer);
                         $processingStatus.text(data.processing_status);
@@ -142,6 +142,22 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
             });
         }
 
+        function prepareAmendmentRequestsPopover($showPopover) {
+            var content = '';
+            $.each(amendmentRequests, function(index, value) {
+                content += '<p>' + value.text + '<p>';
+            });
+
+            // check if popover created yet
+            var popover = $showPopover.data('bs.popover');
+            if(popover === undefined) {
+                $showPopover.popover({container: 'body', content: content, html: true});
+                $showPopover.removeClass('hidden');
+            } else {
+                popover.options.content = content;
+            }
+        }
+
         function initReview() {
             var $container = $('#review');
 
@@ -177,7 +193,8 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
 
             var $requestAmendmentsModal = $('#requestAmendmentsModal'),
                 $requestAmendmentsSendButton = $requestAmendmentsModal.find('#sendAmendmentsRequest'),
-                $requestAmendmentsMessage = $requestAmendmentsModal.find('textarea');
+                $requestAmendmentsMessage = $requestAmendmentsModal.find('textarea'),
+                $showAmendmentRequests = $container.find('a');
 
             $requestAmendmentsButton.click(function(e) {
                 $requestAmendmentsModal.modal('show');
@@ -197,8 +214,17 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
 
                     application.review_status = data.review_status;
                     determineApplicationApprovable();
+
+                    if(data.review_status === 'Awaiting Amendments') {
+                        amendmentRequests.push(data.amendment_request);
+                        prepareAmendmentRequestsPopover($showAmendmentRequests);
+                    }
                 });
             });
+
+            if(amendmentRequests.length > 0) {
+                prepareAmendmentRequestsPopover($showAmendmentRequests);
+            }
         }
 
         function createAssessmentRow(assessment) {
@@ -209,7 +235,6 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 statusColumn.append(assessment.status);
             } else {
                 statusColumn.append('<a>View Comments</a>');
-                statusColumn.append($('<span></span>').addClass('glyphicon').addClass('glyphicon-ok').addClass('ok-tick').css('margin-left', '15px'));
             }
 
             row.append(statusColumn);
@@ -299,6 +324,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 csrfToken = data.csrf_token;
                 application = data.application;
                 assessments = data.assessments;
+                amendmentRequests = data.amendment_requests;
 
                 initAssignee(data.officers, data.user);
                 initIDCheck();
