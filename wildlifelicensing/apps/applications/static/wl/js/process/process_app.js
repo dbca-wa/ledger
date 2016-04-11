@@ -165,11 +165,13 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 $okTick = $container.find('.ok-tick'),
                 $status = $container.find('.status'),
                 $acceptButton = $actionButtonsContainer.find('.btn-success'),
-                $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning');
+                $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning'),
+                $showAmendmentRequests = $container.find('a');
 
             if (application.review_status === 'Accepted') {
                 $actionButtonsContainer.addClass('hidden');
                 $status.addClass('hidden');
+                $showAmendmentRequests.addClass('hidden');
                 $okTick.removeClass('hidden');
                 return;
             }
@@ -183,9 +185,9 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 function(data) {
                     $processingStatus.text(data.processing_status);
                     $status.addClass('hidden');
-                    $okTick.removeClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
-
+                    $showAmendmentRequests.addClass('hidden');
+                    $okTick.removeClass('hidden');
                     application.review_status = data.review_status;
                     determineApplicationApprovable();
                 });
@@ -193,8 +195,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
 
             var $requestAmendmentsModal = $('#requestAmendmentsModal'),
                 $requestAmendmentsSendButton = $requestAmendmentsModal.find('#sendAmendmentsRequest'),
-                $requestAmendmentsMessage = $requestAmendmentsModal.find('textarea'),
-                $showAmendmentRequests = $container.find('a');
+                $requestAmendmentsMessage = $requestAmendmentsModal.find('textarea');
 
             $requestAmendmentsButton.click(function(e) {
                 $requestAmendmentsModal.modal('show');
