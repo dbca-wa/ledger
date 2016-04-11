@@ -23,6 +23,7 @@ from wildlifelicensing.apps.applications.models import Application, AmendmentReq
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
     delete_application_session_data
 from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
+from bottle import Request
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -176,7 +177,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
             application.applicant_persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
             application.customer_status = 'draft'
             application.processing_status = 'draft'
-            application.save()
+            application.save(version_user=request.user, version_comment='Details Modified')
 
             if 'files' in request.session.get('application') and os.path.exists(request.session.get('application').get('files')):
                 try:
@@ -259,7 +260,8 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         else:
             application.customer_status = 'pending'
             application.processing_status = 'new'
-        application.save()
+
+        application.save(version_user=request.user, version_comment='Details Modified')
 
         # if attached files were saved temporarily, add each to application as part of a Document
         if 'files' in request.session.get('application') and os.path.exists(request.session.get('application').get('files')):

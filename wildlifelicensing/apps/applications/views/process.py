@@ -5,7 +5,9 @@ import json
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404
+from django.utils import formats
 
+from reversion import revisions
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser
@@ -37,6 +39,11 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
         assessors = [{'id': assessor.id, 'text': render_user_name(assessor)} for assessor in
                      get_all_assessors().exclude(id__in=application.assessments.all())]
 
+        previous_application_data = []
+        for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by('-revision__date_created'):
+            previous_application_data.append({'date': formats.date_format(revision.revision.date_created, 'DATETIME_FORMAT', True),
+                                              'data': revision.object_version.object.data})
+
         data = {
             'user': serialize(request.user),
             'application': serialize(application, posthook=_format_application_statuses),
@@ -46,6 +53,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
             'assessors': assessors,
             'assessments': serialize(application.assessment_set.all(),
                                      posthook=_format_assessment_status),
+            'previous_application_data': serialize(previous_application_data),
             'csrf_token': str(csrf(request).get('csrf_token'))
         }
 

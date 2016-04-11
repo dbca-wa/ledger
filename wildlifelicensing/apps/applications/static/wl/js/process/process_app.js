@@ -1,4 +1,4 @@
-define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
+define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], function ($, previewVersions) {
     var application, assessments, amendmentRequests, csrfToken;
 
     var $processingStatus;
@@ -41,6 +41,23 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                         $processingStatus.text(data.processing_status);
                     }
                 );
+            });
+        }
+
+        function initPreviousData(previousData) {
+            $container = $('#previousVersionsBody');
+            $.each(previousData, function(index, version) {
+                $versionContainer = $('<div></div>').addClass('form-group');
+                $versionContainer.append(version.date);
+                $compareLink = $('<a>Compare</a>').addClass('pull-right');
+
+                $compareLink.click(function(e) {
+                    $previewContainer.empty();
+                    previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, version.data);
+                });
+
+                $versionContainer.append($compareLink);
+                $container.append($versionContainer);
             });
         }
 
@@ -322,18 +339,22 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
         return {
             initialiseApplicationProcesssing: function (data) {
                 $processingStatus = $('#processingStatus');
+                $previewContainer = $('#previewContainer')
                 csrfToken = data.csrf_token;
                 application = data.application;
                 assessments = data.assessments;
                 amendmentRequests = data.amendment_requests;
 
                 initAssignee(data.officers, data.user);
+                initPreviousData(data.previous_application_data);
                 initIDCheck();
                 initCharacterCheck();
                 initReview();
                 initAssessment(data.assessors);
 
                 determineApplicationApprovable();
+
+                previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, application.data);
             },
             initialiseSidePanelAffix: function () {
                 var $sidebarPanels = $('#sidebarPanels');

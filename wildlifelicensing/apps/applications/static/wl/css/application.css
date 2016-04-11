@@ -40,6 +40,24 @@
     padding-bottom: 20px;
 }
 
+.panel-heading a.collapsed span:before
+{
+    content: "\e113";
+}
+
+.panel-heading a span:before
+{
+    content: "\e114";
+}
+
+.current-data {
+    color: green;
+}
+
+.previous-data {
+    color: red;
+}
+
 hr {
     margin-top: 10px;
     margin-bottom: 10px;

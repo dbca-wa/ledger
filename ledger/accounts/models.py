@@ -215,6 +215,8 @@ class RevisionedMixin(models.Model):
     """
     def save(self, **kwargs):
         with revisions.create_revision():
+            revisions.set_user(kwargs.pop('version_user', None))
+            revisions.set_comment(kwargs.pop('version_comment', ''))
             super(RevisionedMixin, self).save(**kwargs)
 
     @property

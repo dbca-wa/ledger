@@ -16,8 +16,8 @@
 {% block requirements %}
     require(['js/process/process_app', 'js/application_preview'], function (app, applicationPreview) {
         $(function () {
-            app.initialiseApplicationProcesssing({{ data|jsonify }});
-            applicationPreview.layoutPreviewItems('#previewContainer', {{ data|jsonify }}.form_structure, {{ data|jsonify}}.application.data)
+            data = {{ data|jsonify }};
+            app.initialiseApplicationProcesssing(data);
             $('#mainContainer').removeClass('hidden');
             //app.initialiseSidePanelAffix();
         });
@@ -46,7 +46,13 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">
-                                <div class="panel-body">
+                                <div class="panel-heading">
+                                    Application Overview
+                                    <a data-toggle="collapse" href="#applicationOverviewBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                </div>
+                                <div id="applicationOverviewBody" class="panel-body panel-collapse in">
                                     <label>Applicant</label>
                                     {% with applicant=data.application.applicant_persona %}
                                         <p>
@@ -84,7 +90,27 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">
-                                <div class="panel-body">
+                                <div class="panel-heading">
+                                    Previous Versions
+                                    <a data-toggle="collapse" href="#previousVersionsBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                 </div>
+                                <div id="previousVersionsBody" class="panel-body panel-collapse in">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    Processing Checklist
+                                    <a data-toggle="collapse" href="#processingChecklistBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                 </div>
+                                <div id="processingChecklistBody" class="panel-body panel-collapse in">
                                     <div id="idCheck" class="processing-action-group">
                                         <div>
                                             <label>Identity Check</label>
