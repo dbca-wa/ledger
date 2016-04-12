@@ -52,6 +52,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
+    'ledger.middleware.FirstTimeNagScreenMiddleware',
     'django_hosts.middleware.HostsResponseMiddleware',
 ]
 
