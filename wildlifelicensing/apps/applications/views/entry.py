@@ -23,7 +23,6 @@ from wildlifelicensing.apps.applications.models import Application, AmendmentReq
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
     delete_application_session_data
 from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
-from bottle import Request
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -249,7 +248,8 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         application.data = request.session.get('application').get('data')
         application.licence_type = get_object_or_404(WildlifeLicenceType, code=args[0])
         application.applicant_persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
-        application.lodged_date = datetime.now()
+        application.lodgement_sequence += 1
+        application.lodgement_date = datetime.now()
         if application.customer_status == 'amendment_required':
             # this is a 're-lodged' application after some amendment were required.
             # from this point we assumed that all the amendments have been amended.

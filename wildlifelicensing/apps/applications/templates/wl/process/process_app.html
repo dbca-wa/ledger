@@ -71,7 +71,7 @@
                                     <div class="row">
                                         <div class="col-md-5">
                                             <label>Lodged on</label>
-                                            <p>{{ data.application.lodged_date|date:'d/m/Y' }}</p>
+                                            <p>{{ data.application.lodgement_date|date:'d/m/Y' }}</p>
                                         </div>
                                         <div class="col-md-7">
                                             <label>Status</label>
@@ -91,12 +91,12 @@
                         <div class="col-md-12">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    Previous Versions
-                                    <a data-toggle="collapse" href="#previousVersionsBody" class="pull-right">
+                                    Lodged Versions
+                                    <a data-toggle="collapse" href="#lodgedVersionsBody" class="pull-right">
                                         <span class="glyphicon"></span>
                                     </a>
                                  </div>
-                                <div id="previousVersionsBody" class="panel-body panel-collapse in">
+                                <div id="lodgedVersionsBody" class="panel-body panel-collapse in">
                                 </div>
                             </div>
                         </div>
@@ -188,8 +188,8 @@
             <div class="col-md-9">
                 <div class="panel panel-default">
                     <div class="panel-body">
+                        <h2>{{ data.application.licence_type.name }}</h2>
                         <div id="previewContainer">
-                            <h2>{{ data.application.licence_type.name }}</h2>
                         </div>
                     </div>
                 </div>

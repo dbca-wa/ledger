@@ -50,6 +50,22 @@
     content: "\e114";
 }
 
+.lodged-version-row {
+    margin: -15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.lodged-version-col {
+    display: inline;
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+.lodged-version-col span {
+    font-style: italic;
+}
+
 .current-data {
     color: green;
 }

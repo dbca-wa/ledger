@@ -21,18 +21,53 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
 
         if(item.type === 'section' || item.type === 'group') {
             item.isPreviewMode = true;
-            itemContainer.append(Handlebars.templates[item.type](item));
+            var $template = $(Handlebars.templates[item.type](item));
+
+            if(item.type === 'group') {
+                if(itemDataCurrent !== itemDataPrevious) {
+                    if(itemDataPrevious === undefined && isRepeat) {
+                        $template.addClass('current-data');
+                    } else if (itemDataCurrent === undefined && isRepeat) {
+                        $template.addClass('previous-data');
+                    }
+                }
+            }
+
+            itemContainer.append($template);
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
             itemContainer.append($('<label>').text(item.label));
-            $.each(item.options, function(index, option) {
-                if(option.value === item.value) {
-                    itemContainer.append($('<p>').text(option.label));
-                }
-            });
+            if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
+                $.each(item.options, function(index, option) {
+                    if(option.value === item.valueCurrent) {
+                        itemContainer.append($('<p>').text(option.label));
+                    }
+                });
+            } else {
+                var labelCurrent, labelPrevious;
+                $.each(item.options, function(index, option) {
+                    if(option.value === item.valueCurrent) {
+                        labelCurrent = $('<p>').addClass('current-data').text(option.label);
+                    } else if (option.value === item.valuePrevious) {
+                        labelPrevious = $('<p>').addClass('previous-data').text(option.label);
+                    }
+                });
+
+                itemContainer.append(labelCurrent);
+                itemContainer.append(labelPrevious);
+            }
+        } else if(item.type === 'declaration') {
+            itemContainer.append($('<label>').text(item.label));
+
+            if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
+                itemContainer.append($('<p>').text(item.valueCurrent ? 'Declaration checked' : 'Declaration not checked'));
+            } else {
+                itemContainer.append($('<p>').addClass('current-data').text(item.valueCurrent ? 'Declaration checked' : 'Declaration not checked'));
+                itemContainer.append($('<p>').addClass('previous-data').text(item.valuePrevious ? 'Declaration checked' : 'Declaration not checked'));
+            }
         } else {
             itemContainer.append($('<label>').text(item.label));
 
-            if(item.valueCurrent === item.valuePrevious) { 
+            if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
                 itemContainer.append($('<p>').text(item.valueCurrent));
             } else {
                 itemContainer.append($('<p>').addClass('current-data').text(item.valueCurrent));
@@ -70,21 +105,33 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                             childDataPrevious = itemDataPrevious[child.name][0];
                         }
 
-                        childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childDataCurrent, childDataPrevious));
+                        childrenAnchorPoint.append(_layoutItem(child, childIndex, isRepeat, childDataCurrent, childDataPrevious));
                     }
 
                     var repeatItemsAnchorPoint = $('<div>');
                     childrenAnchorPoint.append(repeatItemsAnchorPoint);
 
-                    if(itemDataCurrent != undefined && child.name in itemDataCurrent && itemDataCurrent[child.name].length > 1) {
-                        $.each(itemDataCurrent[child.name].slice(1), function(childRepetitionIndex, repeatData) {
-                            repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
-                        });
+                    if((itemDataCurrent != undefined && child.name in itemDataCurrent && itemDataCurrent[child.name].length > 1) ||
+                       (itemDataPrevious != undefined && child.name in itemDataPrevious && itemDataPrevious[child.name].length > 1)) {
+                        var itemDataLength;
+                        if(itemDataCurrent[child.name] !== undefined && itemDataPrevious[child.name].length) {
+                            itemDataLength = Math.max(itemDataCurrent[child.name].length, itemDataPrevious[child.name].length);
+                        } else if (itemDataCurrent[child.name] !== undefined) {
+                            itemDataLength = itemDataCurrent[child.name].length;
+                        } else if (itemDataPrevious[child.name] !== undefined) {
+                            itemDataLength = itemDataPrevious[child.name].length;
+                        } 
+
+                        for(var i=1; i<itemDataLength; i++) {
+                            console.log(itemDataPrevious[child.name][i]);
+                            repeatItemsAnchorPoint.append(_layoutItem(child, index, true, itemDataCurrent[child.name][i], itemDataPrevious[child.name][i]));
+                        }
                     }
                 } else {
                     // only show children items when the item has no condition or the condition is met
-                    if(item.condition === undefined || item.condition === itemDataCurrent[item.name]) {
-                        childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemDataCurrent, itemDataPrevious));
+                    if(item.condition === undefined || (itemDataCurrent !== undefined && item.condition === itemDataCurrent[item.name]) ||
+                            (itemDataPrevious !== undefined && item.condition === itemDataPrevious[item.name])) {
+                        childrenAnchorPoint.append(_layoutItem(child, childIndex, isRepeat, itemDataCurrent, itemDataPrevious));
                     }
                 }
             });

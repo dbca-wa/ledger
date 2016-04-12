@@ -45,18 +45,32 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
         }
 
         function initPreviousData(previousData) {
-            $container = $('#previousVersionsBody');
+            $container = $('#lodgedVersionsBody');
             $.each(previousData, function(index, version) {
-                $versionContainer = $('<div></div>').addClass('form-group');
-                $versionContainer.append(version.date);
-                $compareLink = $('<a>Compare</a>').addClass('pull-right');
+                var $versionContainer = $('<div></div>').addClass('lodged-version-row');
+                $versionContainer.append($('<div></div>').addClass('lodged-version-col').text(version.lodgement_number));
+                $versionContainer.append($('<div></div>').addClass('lodged-version-col').text(version.date));
+
+                
+                if(index === 0) {
+                    var $compareLink = $('<a>Show</a>').addClass('hidden');
+                    var $comparingSpan = $('<span>Showing</span>');
+                } else {
+                    var $compareLink = $('<a>Compare</a>');
+                    var $comparingSpan = $('<span>Comparing</span>').addClass('hidden');
+                }
 
                 $compareLink.click(function(e) {
+                    $container.find('a').removeClass('hidden');
+                    $container.find('span').addClass('hidden');
+                    $compareLink.addClass('hidden');
+                    $comparingSpan.removeClass('hidden');
                     $previewContainer.empty();
                     previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, version.data);
                 });
 
-                $versionContainer.append($compareLink);
+                $versionContainer.append($('<div></div>').addClass('lodged-version-col pull-right').append($compareLink).append($comparingSpan));
+
                 $container.append($versionContainer);
             });
         }

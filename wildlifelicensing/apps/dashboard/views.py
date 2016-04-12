@@ -238,7 +238,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
             },
             {
                 'title': 'Lodged on',
-                'name': 'lodged_date'
+                'name': 'lodgement_date'
             },
             {
                 'title': 'Assignee',
@@ -406,12 +406,12 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
 
 class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, ApplicationDataTableBaseView):
-    columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
+    columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodgement_date',
                'assigned_officer', 'action']
     order_columns = ['id', 'licence_type.code',
                      ['applicant_persona.user.last_name', 'applicant_persona.user.first_name',
                       'applicant_persona.user.email'],
-                     'processing_status', 'lodged_date',
+                     'processing_status', 'lodgement_date',
                      ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'], '']
 
     def _build_status_filter(self, status_value):
@@ -431,8 +431,8 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
     def _render_assignee_column(self, obj):
         return render_user_name(obj.assigned_officer)
 
-    def _render_lodged_date(self, obj):
-        return _render_date(obj.lodged_date)
+    def _render_lodgement_date(self, obj):
+        return _render_date(obj.lodgement_date)
 
     columns_helpers = dict(ApplicationDataTableBaseView.columns_helpers.items(), **{
         'assigned_officer': {
@@ -442,8 +442,8 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
         'action': {
             'render': _render_action_column,
         },
-        'lodged_date': {
-            'render': _render_lodged_date
+        'lodgement_date': {
+            'render': _render_lodgement_date
         },
     })
 

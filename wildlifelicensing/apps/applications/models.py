@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+from django.utils.crypto import get_random_string
 
 from ledger.accounts.models import EmailUser, Persona, Document, RevisionedMixin
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition
@@ -33,7 +34,10 @@ class Application(RevisionedMixin):
     data = JSONField()
     documents = models.ManyToManyField(Document)
     applicant_persona = models.ForeignKey(Persona)
-    lodged_date = models.DateTimeField(blank=True, null=True)
+
+    lodgement_number = models.CharField(max_length=9, blank=True, default=get_random_string(9, allowed_chars='0123456789'))
+    lodgement_sequence = models.IntegerField(blank=True, default=0)
+    lodgement_date = models.DateTimeField(blank=True, null=True)
 
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
