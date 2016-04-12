@@ -1,0 +1,6 @@
+{%  extends 'wl/base_email.txt' %}
+
+{%  block content %}
+    Your Wildlife Licensing application has been reviewed and requires the following amendment before approval:
+    {{ amendment }}
+{%  endblock %}

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
     'wildlifelicensing.apps.applications',
+    'wildlifelicensing.apps.emails'
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
@@ -95,6 +96,7 @@ ADMINS = ('asi@dpaw.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
+DEFAULT_FROM_EMAIL = EMAIL_FROM
 
 
 TEMPLATES = [

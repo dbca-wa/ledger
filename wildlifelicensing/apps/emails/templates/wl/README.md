@@ -1,0 +1,1 @@
+Every new email templates (html and txt) must be associated with a new `TemplateEmailBase` in the `emails.py` module.
