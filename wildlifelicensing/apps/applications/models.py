@@ -7,7 +7,7 @@ from django.dispatch import receiver
 from django.utils.crypto import get_random_string
 
 from ledger.accounts.models import EmailUser, Persona, Document, RevisionedMixin
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry
 
 
 class Application(RevisionedMixin):
@@ -49,34 +49,30 @@ class Application(RevisionedMixin):
     review_status = models.CharField('Review Status', max_length=20, choices=REVIEW_STATUS_CHOICES,
                                      default=REVIEW_STATUS_CHOICES[0][0])
 
-    assessments = models.ManyToManyField(EmailUser, through='Assessment', through_fields=('application', 'assessor'), related_name='Assessments')
-
     conditions = models.ManyToManyField(Condition)
-    notes = models.TextField('Notes', blank=True)
 
     @property
     def is_assigned(self):
         return self.assigned_officer is not None
 
 
-class AmendmentRequest(RevisionedMixin):
+class ApplicationLogEntry(AbstractLogEntry):
+    application = models.ForeignKey(Application)
+
+
+class AmendmentRequest(ApplicationLogEntry):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
-    text = models.TextField(blank=True)
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
-    application = models.ForeignKey(Application)
 
 
-class Assessment(RevisionedMixin):
+class AssessmentRequest(ApplicationLogEntry):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
-
     assessor = models.ForeignKey(EmailUser)
-    application = models.ForeignKey(Application)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
 
 
-class AssessorComment(RevisionedMixin):
-    text = models.TextField(blank=True)
-    assessment = models.ForeignKey(Assessment)
+class AssessorComment(ApplicationLogEntry):
+    assessment_request = models.ForeignKey(AssessmentRequest)
 
 
 @receiver(pre_delete, sender=Application)
