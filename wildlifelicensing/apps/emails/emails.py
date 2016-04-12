@@ -58,4 +58,4 @@ class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
     subject = 'An amendment to you wildlife licensing application is required.'
     html_template = 'wl/application_amendment_requested.html'
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
-    txt_template = None
+    txt_template = 'wl/application_amendment_requested.txt'

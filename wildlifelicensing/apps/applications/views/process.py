@@ -13,7 +13,8 @@ from ledger.accounts.models import EmailUser
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest, log_email
+from wildlifelicensing.apps.emails.emails import ApplicationAmendmentRequestedEmail
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -74,11 +75,13 @@ class AssignOfficerView(View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
+                                                                               (application.assigned_officer.first_name,
+                                                                                application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
-        return JsonResponse({'assigned_officer': assigned_officer, 'processing_status': PROCESSING_STATUSES[application.processing_status]},
+        return JsonResponse({'assigned_officer': assigned_officer,
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
@@ -119,10 +122,13 @@ class SetReviewStatusView(View):
         amendment_request = None
         if application.review_status == 'awaiting_amendments':
             application.customer_status = 'amendment_required'
+            amendment_text = request.POST.get('message', '')
             amendment_request = AmendmentRequest.objects.create(application=application,
-                                                                text=request.POST.get('message', ''),
+                                                                text=amendment_text,
                                                                 user=request.user)
-
+            msg = ApplicationAmendmentRequestedEmail().send(application.applicant_persona.email,
+                                                            context={'amendment': amendment_text})
+            log_email(msg, application=application, sender=request.user)
         application.processing_status = _determine_processing_status(application)
         application.save()
 
