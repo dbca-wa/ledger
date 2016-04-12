@@ -13,8 +13,8 @@ from ledger.accounts.models import EmailUser
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest, log_email
-from wildlifelicensing.apps.emails.emails import ApplicationAmendmentRequestedEmail
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
+from wildlifelicensing.apps.applications.emails import send_amendment_requested_email
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -126,9 +126,7 @@ class SetReviewStatusView(View):
             amendment_request = AmendmentRequest.objects.create(application=application,
                                                                 text=amendment_text,
                                                                 user=request.user)
-            msg = ApplicationAmendmentRequestedEmail().send(application.applicant_persona.email,
-                                                            context={'amendment': amendment_text})
-            log_email(msg, application=application, sender=request.user)
+            send_amendment_requested_email(application, amendment_request, request=request)
         application.processing_status = _determine_processing_status(application)
         application.save()
 

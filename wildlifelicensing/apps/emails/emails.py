@@ -16,9 +16,9 @@ def _render(template, context):
 
 class TemplateEmailBase(object):
     subject = ''
-    html_template = 'wl/base_email.html'
+    html_template = 'wl/emails/base_email.html'
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
-    txt_template = 'wl/base-email.txt'
+    txt_template = 'wl/emails/base-email.txt'
 
     def send_to_user(self, user, context=None):
         return self.send(user.email, context=context)
@@ -52,10 +52,3 @@ class TemplateEmailBase(object):
         except Exception as e:
             logger.exception("Error while sending email to {}: {}".format(to_addresses, e))
             return None
-
-
-class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
-    subject = 'An amendment to you wildlife licensing application is required.'
-    html_template = 'wl/application_amendment_requested.html'
-    # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
-    txt_template = 'wl/application_amendment_requested.txt'

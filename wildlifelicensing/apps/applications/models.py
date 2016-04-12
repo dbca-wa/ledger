@@ -4,7 +4,6 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from django.core.mail import EmailMultiAlternatives, EmailMessage
 
 from ledger.accounts.models import EmailUser, Persona, Document, RevisionedMixin
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry
@@ -74,18 +73,6 @@ class AssessmentRequest(ApplicationLogEntry):
 
 class AssessorComment(ApplicationLogEntry):
     assessment_request = models.ForeignKey(AssessmentRequest)
-
-
-def log_email(email_message, application, sender=None):
-    if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
-        email_message = email_message.body
-    kwargs = {
-        'text': str(email_message),
-        'application': application,
-        'user': sender
-    }
-    email_entry = EmailLogEntry.objects.create(**kwargs)
-    return email_entry
 
 
 class EmailLogEntry(ApplicationLogEntry):
