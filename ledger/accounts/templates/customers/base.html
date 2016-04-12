@@ -1,0 +1,64 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>{% block title %}Parks and Wildlife - Customer Portal{% endblock %}</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation.css">
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="{% static 'ledger/css/ledger.css' %}"/>
+
+    {% block extra_css %}
+    {% endblock %}
+</head>
+<body>
+
+<div class="content">
+    <div class="row">
+        <div class="small-12 medium-6 columns text-center medium-text-left head-logo"><img src="{% static 'ledger/images/portal_logo.png' %}"/></div>
+        <div class="small-12 medium-6 columns text-center medium-text-left head-text"><a href="{% url 'accounts:home' %}">Customer Portal</a></div>
+    </div>
+    {% if messages %}
+    <div class="row"><div class="small-12 columns">
+    {% for message in messages %}
+    <div class="success callout callout-close" data-closable>
+        {{ message }}
+        <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endfor %}
+    </div></div>
+    {% endif %}
+
+    <div class="row"><div class="small-12 columns">
+
+{% block content %}
+<h1>Customer Portal</h1>
+<p>Content goes here</p>
+{% endblock %}
+
+    </div></div>
+    <div class="row footer">
+        <div class="small-12 medium-6 columns text-center medium-text-left foot-wa"><h4><a href="https://www.wa.gov.au">wa.gov.au</a></h4></div>
+        <div class="small-12 medium-6 columns text-center medium-text-right foot-links"><a href="https://www.dpaw.wa.gov.au">Home</a> | <a href="https://www.dpaw.wa.gov.au/privacy">Privacy</a> | <a href="https://www.dpaw.wa.gov.au/disclaimer">Disclaimer</a></div>
+    </div>
+</div>
+
+
+{% block extra_js %}
+
+{% endblock %}
+
+</body>
+</html>

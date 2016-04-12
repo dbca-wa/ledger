@@ -87,7 +87,7 @@ class SetIDCheckStatusView(View):
         application.id_check_status = request.POST['status']
 
         if 'message' in request.POST:
-            print request.POST.get('message')
+            print(request.POST.get('message'))
 
         application.processing_status = _determine_processing_status(application)
         application.save()

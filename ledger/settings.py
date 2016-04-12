@@ -52,6 +52,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
+    'ledger.middleware.FirstTimeNagScreenMiddleware',
     'django_hosts.middleware.HostsResponseMiddleware',
 ]
 
@@ -64,7 +65,7 @@ AUTHENTICATION_BACKENDS = (
 AUTH_USER_MODEL = 'accounts.EmailUser'
 SOCIAL_AUTH_STRATEGY = 'social.strategies.django_strategy.DjangoStrategy'
 SOCIAL_AUTH_STORAGE = 'social.apps.django_app.default.models.DjangoStorage'
-SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/login-form/'
+SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/'
 SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'ledger.accounts.mail.send_validation'
 SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/ledger/validation-sent/'
 SOCIAL_AUTH_PASSWORDLESS = True
@@ -169,6 +170,7 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
+    os.path.join(os.path.join(BASE_DIR, 'ledger', 'static')),
     os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),
 ]
 if not os.path.exists(os.path.join(BASE_DIR, 'media')):
@@ -194,7 +196,7 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'ledger.log'),
             'formatter': 'verbose',
-            'maxBytes': '5242880'
+            'maxBytes': 5242880
         },
     },
     'loggers': {
