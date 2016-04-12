@@ -10,7 +10,7 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import Persona, Document
 from ledger.accounts.forms import AddressForm, PersonaForm
 
-from forms import IdentificationForm
+from .forms import IdentificationForm
 
 
 class ListPersonasView(LoginRequiredMixin, TemplateView):
