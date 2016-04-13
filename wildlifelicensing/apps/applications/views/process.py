@@ -16,6 +16,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
+from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -84,11 +85,13 @@ class AssignOfficerView(View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
+                                                                               (application.assigned_officer.first_name,
+                                                                                application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
-        return JsonResponse({'assigned_officer': assigned_officer, 'processing_status': PROCESSING_STATUSES[application.processing_status]},
+        return JsonResponse({'assigned_officer': assigned_officer,
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
@@ -129,12 +132,14 @@ class SetReviewStatusView(View):
         amendment_request = None
         if application.review_status == 'awaiting_amendments':
             application.customer_status = 'amendment_required'
+            amendment_text = request.POST.get('message', '')
             amendment_request = AmendmentRequest.objects.create(application=application,
-                                                                text=request.POST.get('message', ''),
+                                                                text=amendment_text,
                                                                 user=request.user)
-
         application.processing_status = _determine_processing_status(application)
         application.save()
+        if amendment_request is not None:
+            send_amendment_requested_email(application, amendment_request, request=request)
 
         response = {'review_status': REVIEW_STATUSES[application.review_status],
                     'processing_status': PROCESSING_STATUSES[application.processing_status]}
@@ -150,15 +155,16 @@ class SendForAssessmentView(View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         assessor = get_object_or_404(EmailUser, pk=request.POST['userID'])
-        assessment = AssessmentRequest.objects.create(application=application, assessor=assessor,
-                                                      status=request.POST['status'],
-                                                      user=request.user)
+        assessment_request = AssessmentRequest.objects.create(application=application, assessor=assessor,
+                                                              status=request.POST['status'],
+                                                              user=request.user)
 
         application.processing_status = _determine_processing_status(application)
         application.processing_status = _determine_processing_status(application)
         application.save()
+        send_assessment_requested_email(application, assessment_request, request)
 
-        return JsonResponse({'assessment': serialize(assessment, posthook=_format_assessment_status),
+        return JsonResponse({'assessment': serialize(assessment_request, posthook=_format_assessment_status),
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 

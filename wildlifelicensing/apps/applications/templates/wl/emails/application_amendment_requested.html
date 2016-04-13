@@ -1,0 +1,10 @@
+{%  extends 'wl/emails/base_email.html' %}
+
+{%  block content %}
+    Your Wildlife Licensing application has been reviewed and requires the following amendment before approval:
+    <div>{{ amendment }}</div>
+    {% if url %}
+        Click <a href='{{ url }}'>here</a> to access to your application.
+        <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.</p>
+    {% endif %}
+{%  endblock %}
