@@ -5,6 +5,7 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 from django.contrib.auth.models import Group
+from mixer.backend.django import mixer
 from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser
@@ -69,6 +70,14 @@ def create_user(**kwargs):
     return user
 
 
+def create_random_user():
+    return mixer.blend(EmailUser)
+
+
+def create_random_customer():
+    return create_random_user()
+
+
 def create_default_customer():
     return create_user(**TestData.DEFAULT_CUSTOMER)
 
@@ -89,16 +98,17 @@ class HelpersTest(TestCase):
     def setUp(self):
         self.client = SocialClient()
 
-    def test_create_customer(self):
+    def test_create_default_customer(self):
         user = create_default_customer()
         self.assertIsNotNone(user)
         self.assertTrue(isinstance(user, EmailUser))
         self.assertEqual(TestData.DEFAULT_CUSTOMER['email'], user.email)
+        self.assertTrue(accounts_helpers.is_customer(user))
         # test that we can login
         self.client.login(user.email)
         is_client_authenticated(self.client)
 
-    def test_create_officer(self):
+    def test_create_default_officer(self):
         user = create_default_officer()
         self.assertIsNotNone(user)
         self.assertTrue(isinstance(user, EmailUser))
@@ -108,12 +118,31 @@ class HelpersTest(TestCase):
         self.client.login(user.email)
         is_client_authenticated(self.client)
 
-    def test_create_assessor(self):
+    def test_create_default_assessor(self):
         user = create_default_assessor()
         self.assertIsNotNone(user)
         self.assertTrue(isinstance(user, EmailUser))
         self.assertEqual(TestData.DEFAULT_ASSESSOR['email'], user.email)
         self.assertTrue(accounts_helpers.is_assessor(user))
+        # test that we can login
+        self.client.login(user.email)
+        is_client_authenticated(self.client)
+
+    def create_random_user(self):
+        user = create_random_user()
+        self.assertIsNotNone(user)
+        self.assertTrue(isinstance(user, EmailUser))
+        self.assertEqual(TestData.DEFAULT_CUSTOMER['email'], user.email)
+        # test that we can login
+        self.client.login(user.email)
+        is_client_authenticated(self.client)
+
+    def create_random_customer(self):
+        user = create_random_customer()
+        self.assertIsNotNone(user)
+        self.assertTrue(isinstance(user, EmailUser))
+        self.assertEqual(TestData.DEFAULT_CUSTOMER['email'], user.email)
+        self.assertTrue(accounts_helpers.is_customer(user))
         # test that we can login
         self.client.login(user.email)
         is_client_authenticated(self.client)

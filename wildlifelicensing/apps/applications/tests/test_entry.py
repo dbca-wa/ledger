@@ -7,7 +7,8 @@ from django.test import TestCase
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer, create_random_customer
+from wildlifelicensing.apps.applications.tests import helpers
 
 TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 'test_id.jpg')
 
@@ -50,7 +51,8 @@ class ApplicationEntryTestCase(TestCase):
             post_params = {
                 'identification_file': fp
             }
-            response = self.client.post(reverse('applications:check_identification', args=('regulation17',)), post_params)
+            response = self.client.post(reverse('applications:check_identification', args=('regulation17',)),
+                                        post_params)
 
             self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation17',)),
                                  status_code=302, target_status_code=200, fetch_redirect_response=False)
@@ -274,3 +276,24 @@ class ApplicationEntryTestCase(TestCase):
 
         # check that the state of the application is draft
         self.assertEqual(profile.application_set.first().processing_status, 'new')
+
+    def test_user_access(self):
+        """
+        Test that a user cannot edit/view another user application
+        """
+        customer1 = self.customer
+        application1 = helpers.create_random_application(user=customer1)
+        customer2 = create_random_customer()
+        application2 = helpers.create_random_application(user=customer2)
+
+        # login as user1
+        self.client.login(customer1.email)
+        my_url = reverse('applications:enter_details_existing_application',
+                         args=[application1.licence_type.code, application1.pk])
+        response = self.client.get(my_url)
+        self.assertEqual(200, response.status_code)
+
+        forbidden_url = reverse('applications:enter_details_existing_application',
+                                args=[application2.licence_type.code, application2.pk])
+        response = self.client.get(forbidden_url)
+        self.assertEqual(200, response.status_code)
