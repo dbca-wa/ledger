@@ -110,7 +110,7 @@ class Address(models.Model):
     def _update_search_text(self):
         search_fields = filter(
             bool, [self.line1, self.line2, self.line3, self.locality,
-                   self.state, unicode(self.country.name), self.postcode])
+                   self.state, str(self.country.name), self.postcode])
         self.search_text = ' '.join(search_fields)
 
     @property
@@ -126,7 +126,7 @@ class Address(models.Model):
         """
         fields = [self.line1, self.line2, self.line3,
                   self.locality, self.state, self.country, self.postcode]
-        fields = [f.strip() for f in fields if f]
+        fields = [str(f).strip() for f in fields if f]
         return fields
 
     def join_fields(self, fields, separator=u', '):
