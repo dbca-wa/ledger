@@ -26,7 +26,7 @@ def _build_url(base, query):
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_persona__user=user)
+    return Application.objects.filter(applicant_profile__user=user)
 
 
 def _get_processing_statuses_but_draft():
@@ -227,7 +227,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
             },
             {
                 'title': 'User',
-                'name': 'applicant_persona__user'
+                'name': 'applicant_profile__user'
             },
             {
                 'title': 'Status',
@@ -266,8 +266,8 @@ class DashboardTableCustomerView(DashboardTableBaseView):
                 'name': 'license_type',
             },
             {
-                'title': 'Persona',
-                'name': 'applicant_persona'
+                'title': 'Profile',
+                'name': 'applicant_profile'
             },
             {
                 'title': 'Status',
@@ -288,8 +288,8 @@ class DashboardTableCustomerView(DashboardTableBaseView):
 
 class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
     model = Application
-    columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
-    order_columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+    columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
+    order_columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
 
     def _build_search_query(self, fields_to_search, search):
         query = Q()
@@ -298,33 +298,33 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return query
 
     def _build_user_search_query(self, search):
-        fields_to_search = ['applicant_persona__user__last_name', 'applicant_persona__user__first_name',
-                            'applicant_persona__user__email']
+        fields_to_search = ['applicant_profile__user__last_name', 'applicant_profile__user__first_name',
+                            'applicant_profile__user__email']
         return self._build_search_query(fields_to_search, search)
 
-    def _build_persona_search_query(self, search):
-        fields_to_search = ['applicant_persona__email', 'applicant_persona__name']
+    def _build_profile_search_query(self, search):
+        fields_to_search = ['applicant_profile__email', 'applicant_profile__name']
         return self._build_search_query(fields_to_search, search)
 
     def _render_user_column(self, obj):
-        return render_user_name(obj.applicant_persona.user, first_name_first=False)
+        return render_user_name(obj.applicant_profile.user, first_name_first=False)
 
-    def _render_persona_column(self, obj):
-        persona = obj.applicant_persona
-        if persona is None:
+    def _render_profile_column(self, obj):
+        profile = obj.applicant_profile
+        if profile is None:
             return 'unknown'
         else:
             # return the string rep
-            return '{}'.format(persona)
+            return '{}'.format(profile)
 
     columns_helpers = {
-        'applicant_persona.user': {
+        'applicant_profile.user': {
             'render': _render_user_column,
             'search': _build_user_search_query
         },
-        'applicant_persona': {
-            'render': _render_persona_column,
-            'search': _build_persona_search_query
+        'applicant_profile': {
+            'render': _render_profile_column,
+            'search': _build_profile_search_query
         }
     }
 
@@ -403,11 +403,11 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
 
 class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, ApplicationDataTableBaseView):
-    columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodgement_date',
+    columns = ['id', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
                'assigned_officer', 'action']
     order_columns = ['id', 'licence_type.code',
-                     ['applicant_persona.user.last_name', 'applicant_persona.user.first_name',
-                      'applicant_persona.user.email'],
+                     ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
+                      'applicant_profile.user.email'],
                      'processing_status', 'lodgement_date',
                      ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'], '']
 
@@ -449,8 +449,8 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
 
 
 class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
-    columns = ['licence_type.code', 'applicant_persona', 'customer_status', 'action']
-    order_columns = ['licence_type.code', 'applicant_persona', 'customer_status', '']
+    columns = ['licence_type.code', 'applicant_profile', 'customer_status', 'action']
+    order_columns = ['licence_type.code', 'applicant_profile', 'customer_status', '']
 
     def get_initial_queryset(self):
         return _get_user_applications(self.request.user)

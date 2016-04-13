@@ -1,12 +1,12 @@
 from django.conf.urls import url
 
-from .views import ListPersonasView, CreatePersonasView, EditPersonasView, IdentificationView
+from .views import ListProfilesView, CreateProfilesView, EditProfilesView, IdentificationView
 
 
 urlpatterns = [
-    url('^personas/$', ListPersonasView.as_view(), name='list_personas'),
-    url('^personas/create/$', CreatePersonasView.as_view(), name='create_persona'),
-    url('^personas/edit/$', EditPersonasView.as_view(), name='edit_persona_prefix'),
-    url('^personas/edit/([0-9]+)/$', EditPersonasView.as_view(), name='edit_persona'),
+    url('^profiles/$', ListProfilesView.as_view(), name='list_profiles'),
+    url('^profiles/create/$', CreateProfilesView.as_view(), name='create_profile'),
+    url('^profiles/edit/$', EditProfilesView.as_view(), name='edit_profile_prefix'),
+    url('^profiles/edit/([0-9]+)/$', EditProfilesView.as_view(), name='edit_profile'),
     url('^identification/$', IdentificationView.as_view(), name='identification'),
 ]

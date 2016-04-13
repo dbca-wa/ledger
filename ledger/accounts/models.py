@@ -9,6 +9,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 
 from reversion import revisions
+from django_countries.fields import CountryField
 
 
 class EmailUserManager(BaseUserManager):
@@ -83,9 +84,9 @@ class Address(models.Model):
     line2 = models.CharField('Line 2', max_length=255, blank=True)
     line3 = models.CharField('Line 3', max_length=255, blank=True)
     locality = models.CharField('Suburb / Town', max_length=255)
-    state = models.CharField(
-        max_length=255, choices=STATE_CHOICES)
-    postcode = models.IntegerField()
+    state = models.CharField(max_length=255, choices=STATE_CHOICES, default='WA', blank=True)
+    country = CountryField(default='AU')
+    postcode = models.CharField(max_length=10)
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
 
@@ -109,7 +110,7 @@ class Address(models.Model):
     def _update_search_text(self):
         search_fields = filter(
             bool, [self.line1, self.line2, self.line3, self.locality,
-                   self.state, str(self.postcode)])
+                   self.state, unicode(self.country.name), self.postcode])
         self.search_text = ' '.join(search_fields)
 
     @property
@@ -124,7 +125,7 @@ class Address(models.Model):
         """Return the non-empty components of the address.
         """
         fields = [self.line1, self.line2, self.line3,
-                  self.locality, self.state, str(self.postcode)]
+                  self.locality, self.state, self.country, self.postcode]
         fields = [f.strip() for f in fields if f]
         return fields
 
@@ -236,10 +237,13 @@ class RevisionedMixin(models.Model):
     A model tracked by reversion through the save method.
     """
     def save(self, **kwargs):
-        with revisions.create_revision():
-            revisions.set_user(kwargs.pop('version_user', None))
-            revisions.set_comment(kwargs.pop('version_comment', ''))
+        if kwargs.pop('no_revision', False):
             super(RevisionedMixin, self).save(**kwargs)
+        else:
+            with revisions.create_revision():
+                revisions.set_user(kwargs.pop('version_user', None))
+                revisions.set_comment(kwargs.pop('version_comment', ''))
+                super(RevisionedMixin, self).save(**kwargs)
 
     @property
     def created_date(self):
@@ -254,7 +258,7 @@ class RevisionedMixin(models.Model):
 
 
 @python_2_unicode_compatible
-class Persona(RevisionedMixin):
+class Profile(RevisionedMixin):
     user = models.ForeignKey(EmailUser, verbose_name='User')
     name = models.CharField('Display Name', max_length=100, help_text='e.g Personal, Work, University, etc')
     email = models.EmailField('Email')

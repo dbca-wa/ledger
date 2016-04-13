@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeView, EditApplicationView, CheckIdentificationRequiredView, \
-    CreateSelectPersonaView, EnterDetailsView, PreviewView
+    CreateSelectProfileView, EnterDetailsView, PreviewView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, SetCharacterCheckStatusView, \
     SetReviewStatusView, SendForAssessmentView
@@ -11,8 +11,8 @@ urlpatterns = [
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^([\w-]+)/edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
     url('^([\w-]+)/check_identification/$', CheckIdentificationRequiredView.as_view(), name='check_identification'),
-    url('^([\w-]+)/persona/$', CreateSelectPersonaView.as_view(), name='create_select_persona'),
-    url('^([\w-]+)/persona/([0-9]+)/$', CreateSelectPersonaView.as_view(), name='create_select_persona_existing_application'),
+    url('^([\w-]+)/profile/$', CreateSelectProfileView.as_view(), name='create_select_profile'),
+    url('^([\w-]+)/profile/([0-9]+)/$', CreateSelectProfileView.as_view(), name='create_select_profile_existing_application'),
     url('^([\w-]+)/enter-details/$', EnterDetailsView.as_view(), name='enter_details'),
     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details'),
     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details_existing_application'),

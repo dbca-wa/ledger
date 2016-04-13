@@ -6,7 +6,7 @@ from reversion.admin import VersionAdmin
 
 from social.apps.django_app.default.models import UserSocialAuth
 
-from ledger.accounts.models import EmailUser, Address, Persona
+from ledger.accounts.models import EmailUser, Address, Profile
 
 
 @admin.register(EmailUser)
@@ -60,6 +60,6 @@ class AddressAdmin(VersionAdmin):
     pass
 
 
-@admin.register(Persona)
-class PersonaAdmin(VersionAdmin):
+@admin.register(Profile)
+class ProfileAdmin(VersionAdmin):
     pass

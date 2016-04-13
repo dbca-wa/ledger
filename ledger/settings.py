@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django_hosts',
     'bootstrap3',
     'reversion',
+    'django_countries',
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
     'wildlifelicensing.apps.dashboard',

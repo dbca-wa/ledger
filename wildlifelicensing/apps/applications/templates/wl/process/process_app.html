@@ -54,7 +54,7 @@
                                 </div>
                                 <div id="applicationOverviewBody" class="panel-body panel-collapse in">
                                     <label>Applicant</label>
-                                    {% with applicant=data.application.applicant_persona %}
+                                    {% with applicant=data.application.applicant_profile %}
                                         <p>
                                             {{ applicant.user.first_name }} {{ applicant.user.last_name }}
                                             <span class="pull-right">
@@ -124,7 +124,7 @@
                                 <div id="processingChecklistBody" class="panel-body panel-collapse in">
                                     <div id="idCheck" class="processing-action-group">
                                         <div>
-                                            <label>Identity Check</label>
+                                            <label>Identification Check</label>
                                             <span class="pull-right status">{{ data.application.id_check_status }}</span>
                                             <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
                                         </div>
@@ -191,7 +191,7 @@
                                 </div>
                             </div>
                             <button id="approve" type="button" class="btn btn-sm btn-success pull-right" disabled>Approve Application</button>
-                            <button id="reject" type="button" class="btn btn-sm btn-danger">Reject Application</button>
+                            <button id="decline" type="button" class="btn btn-sm btn-danger">Decline Application</button>
                         </div>
                     </div>
                 </div>

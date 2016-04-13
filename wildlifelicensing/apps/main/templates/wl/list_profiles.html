@@ -13,8 +13,8 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/personas_table'], function (personasTable) {
-        personasTable.initPersonasTable('#personas', {{ data|jsonify }}, '{% url 'main:edit_persona_prefix' %}');
+    require(['js/profiles_table'], function (profilesTable) {
+        profilesTable.initProfilesTable('#profiles', {{ data|jsonify }}, '{% url 'main:edit_profile_prefix' %}');
     });
 {% endblock %}
 
@@ -24,7 +24,7 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li class="active">List Personas</li>
+                    <li class="active">List Profiles</li>
                 </ol>
             </div>
         </div>
@@ -36,11 +36,11 @@
         <div class="panel-group">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3>Personas</h3>
+                    <h3>Profiles</h3>
                 </div>
                 <div class="panel-body">
-                    <a href="{% url 'main:create_persona' %}">Create new persona</a>
-                    <table id="personas" class="table table-striped table-bordered dataTable"></table>
+                    <a href="{% url 'main:create_profile' %}">Create new profile</a>
+                    <table id="profiles" class="table table-striped table-bordered dataTable"></table>
                 </div>
             </div>
         </div>

@@ -21,7 +21,7 @@ def send_amendment_requested_email(application, amendment_request, request):
         'amendment': amendment_request.text,
         'url': url
     }
-    msg = email.send(application.applicant_persona.email, context=context)
+    msg = email.send(application.applicant_profile.email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
 
@@ -41,7 +41,7 @@ def send_assessment_requested_email(application, assessment_request, request):
         'assessor': assessment_request.assessor,
         'url': url
     }
-    msg = email.send(application.applicant_persona.email, context=context)
+    msg = email.send(application.applicant_profile.email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
 

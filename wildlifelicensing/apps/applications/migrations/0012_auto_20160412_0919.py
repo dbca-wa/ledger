@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='application',
             name='lodgement_number',
-            field=models.CharField(blank=True, default='005359682', max_length=9),
+            field=models.CharField(blank=True, default='', max_length=9),
         ),
         migrations.AddField(
             model_name='application',

@@ -12,9 +12,9 @@ from django.core.files import File
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from ledger.accounts.models import Persona
+from ledger.accounts.models import Profile
 from ledger.accounts.models import Document
-from ledger.accounts.forms import AddressForm, PersonaForm
+from ledger.accounts.forms import AddressForm, ProfileForm
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main.forms import IdentificationForm
@@ -22,7 +22,7 @@ from wildlifelicensing.apps.main.forms import IdentificationForm
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
     delete_application_session_data
-from wildlifelicensing.apps.applications.forms import PersonaSelectionForm
+from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -50,7 +50,7 @@ class EditApplicationView(LoginRequiredMixin, View):
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
         if application is not None and 'application' not in request.session:
             request.session['application'] = {}
-            request.session['application']['persona'] = application.applicant_persona.id
+            request.session['application']['profile'] = application.applicant_profile.id
             request.session['application']['data'] = application.data
             request.session.modified = True
 
@@ -68,7 +68,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, FormView):
         if licence_type.identification_required and self.request.user.identification is None:
             return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
         else:
-            return redirect('applications:create_select_persona', args[1], **kwargs)
+            return redirect('applications:create_select_profile', args[1], **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(CheckIdentificationRequiredView, self).get_context_data(**kwargs)
@@ -82,11 +82,11 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, FormView):
         self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
         self.request.user.save()
 
-        return redirect('applications:create_select_persona', *self.args)
+        return redirect('applications:create_select_profile', *self.args)
 
 
-class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
-    template_name = 'wl/entry/create_select_persona.html'
+class CreateSelectProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'wl/entry/create_select_profile.html'
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
@@ -95,19 +95,19 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
         if len(args) > 1:
             context['application_pk'] = args[1]
 
-        persona_exists = request.user.persona_set.count() > 0
+        profile_exists = request.user.profile_set.count() > 0
 
-        if 'persona' in request.session.get('application'):
-            selected_persona = Persona.objects.get(id=request.session.get('application').get('persona'))
-            context['persona_selection_form'] = PersonaSelectionForm(user=request.user, selected_persona=selected_persona)
+        if 'profile' in request.session.get('application'):
+            selected_profile = Profile.objects.get(id=request.session.get('application').get('profile'))
+            context['profile_selection_form'] = ProfileSelectionForm(user=request.user, selected_profile=selected_profile)
         else:
-            if persona_exists:
-                context['persona_selection_form'] = PersonaSelectionForm(user=request.user)
+            if profile_exists:
+                context['profile_selection_form'] = ProfileSelectionForm(user=request.user)
 
-        if persona_exists:
-            context['persona_creation_form'] = PersonaForm()
+        if profile_exists:
+            context['profile_creation_form'] = ProfileForm()
         else:
-            context['persona_creation_form'] = PersonaForm(initial_display_name='Default', initial_email=request.user.email)
+            context['profile_creation_form'] = ProfileForm(initial_display_name='Default', initial_email=request.user.email)
 
         context['address_form'] = AddressForm()
 
@@ -115,30 +115,30 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         if 'select' in request.POST:
-            persona_selection_form = PersonaSelectionForm(request.POST, user=request.user)
+            profile_selection_form = ProfileSelectionForm(request.POST, user=request.user)
 
-            if persona_selection_form.is_valid():
-                request.session['application']['persona'] = persona_selection_form.cleaned_data.get('persona').id
+            if profile_selection_form.is_valid():
+                request.session['application']['profile'] = profile_selection_form.cleaned_data.get('profile').id
                 request.session.modified = True
             else:
-                return render(request, self.template_name, {'persona_selection_form': persona_selection_form,
-                                                            'persona_creation_form': PersonaForm(),
+                return render(request, self.template_name, {'profile_selection_form': profile_selection_form,
+                                                            'profile_creation_form': ProfileForm(),
                                                             'address_form': AddressForm()})
         elif 'create' in request.POST:
-            persona_form = PersonaForm(request.POST)
+            profile_form = ProfileForm(request.POST)
             address_form = AddressForm(request.POST)
 
-            if persona_form.is_valid() and address_form.is_valid():
-                persona = persona_form.save(commit=False)
-                persona.postal_address = address_form.save()
-                persona.user = request.user
-                persona.save()
+            if profile_form.is_valid() and address_form.is_valid():
+                profile = profile_form.save(commit=False)
+                profile.postal_address = address_form.save()
+                profile.user = request.user
+                profile.save()
 
-                request.session['application']['persona'] = persona.id
+                request.session['application']['profile'] = profile.id
                 request.session.modified = True
             else:
-                return render(request, self.template_name, {'persona_selection_form': PersonaSelectionForm(user=request.user),
-                                                            'persona_creation_form': persona_form, 'address_form': address_form})
+                return render(request, self.template_name, {'profile_selection_form': ProfileSelectionForm(user=request.user),
+                                                            'profile_creation_form': profile_form, 'address_form': address_form})
 
         return redirect('applications:enter_details', *args)
 
@@ -151,12 +151,12 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
-        persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
+        profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
 
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_structure = json.load(data_file)
 
-        context = {'licence_type': licence_type, 'persona': persona, 'structure': form_structure}
+        context = {'licence_type': licence_type, 'profile': profile, 'structure': form_structure}
 
         if application is not None:
             context['application_pk'] = application.pk
@@ -183,7 +183,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
             application.data = request.session.get('application').get('data')
             application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
-            application.applicant_persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
+            application.applicant_profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
             application.customer_status = 'draft'
             application.processing_status = 'draft'
             application.save(version_user=request.user, version_comment='Details Modified')
@@ -235,9 +235,9 @@ class PreviewView(LoginRequiredMixin, TemplateView):
             form_stucture = json.load(data_file)
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
-        persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
+        profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
 
-        context = {'structure': form_stucture, 'licence_type': licence_type, 'persona': persona}
+        context = {'structure': form_stucture, 'licence_type': licence_type, 'profile': profile}
 
         if len(args) > 1:
             context['application_pk'] = args[1]
@@ -257,7 +257,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
 
         application.data = request.session.get('application').get('data')
         application.licence_type = get_object_or_404(WildlifeLicenceType, code=args[0])
-        application.applicant_persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))
+        application.applicant_profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
         application.lodgement_sequence += 1
         application.lodgement_date = datetime.now()
         if application.customer_status == 'amendment_required':
@@ -270,6 +270,10 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         else:
             application.customer_status = 'pending'
             application.processing_status = 'new'
+
+        if len(application.lodgement_number) == 0:
+            application.save(no_revision=True)
+            application.lodgement_number = str(application.id).zfill(9)
 
         application.save(version_user=request.user, version_comment='Details Modified')
 

@@ -8,83 +8,83 @@ from django.views.generic.edit import FormView
 
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import Persona, Document
-from ledger.accounts.forms import AddressForm, PersonaForm
+from ledger.accounts.models import Profile, Document
+from ledger.accounts.forms import AddressForm, ProfileForm
 
 from forms import IdentificationForm
 from mixins import CustomerRequiredMixin
 
 
-class ListPersonasView(CustomerRequiredMixin, TemplateView):
-    template_name = 'wl/list_personas.html'
+class ListProfilesView(CustomerRequiredMixin, TemplateView):
+    template_name = 'wl/list_profiles.html'
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        context = super(ListPersonasView, self).get_context_data(**kwargs)
+        context = super(ListProfilesView, self).get_context_data(**kwargs)
 
-        context['data'] = serialize(Persona.objects.filter(user=self.request.user))
+        context['data'] = serialize(Profile.objects.filter(user=self.request.user))
 
         return context
 
 
-class CreatePersonasView(CustomerRequiredMixin, TemplateView):
-    template_name = 'wl/create_persona.html'
+class CreateProfilesView(CustomerRequiredMixin, TemplateView):
+    template_name = 'wl/create_profile.html'
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'persona_form': PersonaForm(),
+        return render(request, self.template_name, {'profile_form': ProfileForm(),
                                                     'address_form': AddressForm()})
 
     def post(self, request, *args, **kwargs):
-        persona_form = PersonaForm(request.POST)
+        profile_form = ProfileForm(request.POST)
         address_form = AddressForm(request.POST)
 
-        if persona_form.is_valid() and address_form.is_valid():
-            persona = persona_form.save(commit=False)
-            persona.postal_address = address_form.save()
-            persona.user = request.user
-            persona.save()
+        if profile_form.is_valid() and address_form.is_valid():
+            profile = profile_form.save(commit=False)
+            profile.postal_address = address_form.save()
+            profile.user = request.user
+            profile.save()
         else:
-            return render(request, self.template_name, {'persona_form': persona_form,
+            return render(request, self.template_name, {'profile_form': profile_form,
                                                         'address_form': address_form})
 
-        messages.success(request, "The persona '%s' was created." % persona.name)
+        messages.success(request, "The profile '%s' was created." % profile.name)
 
-        return redirect('main:list_personas')
+        return redirect('main:list_profiles')
 
 
-class EditPersonasView(CustomerRequiredMixin, TemplateView):
-    template_name = 'wl/edit_persona.html'
+class EditProfilesView(CustomerRequiredMixin, TemplateView):
+    template_name = 'wl/edit_profile.html'
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        persona = get_object_or_404(Persona, pk=args[0])
+        profile = get_object_or_404(Profile, pk=args[0])
 
-        if persona.user != request.user:
+        if profile.user != request.user:
             return HttpResponse('Unauthorized', status=401)
 
-        return render(request, self.template_name, {'persona_form': PersonaForm(instance=persona),
-                                                    'address_form': AddressForm(instance=persona.postal_address)})
+        return render(request, self.template_name, {'profile_form': ProfileForm(instance=profile),
+                                                    'address_form': AddressForm(instance=profile.postal_address)})
 
     def post(self, request, *args, **kwargs):
-        persona = get_object_or_404(Persona, pk=args[0])
+        profile = get_object_or_404(Profile, pk=args[0])
 
-        if persona.user != request.user:
+        if profile.user != request.user:
             return HttpResponse('Unauthorized', status=401)
 
-        persona_form = PersonaForm(request.POST, instance=persona)
-        address_form = AddressForm(request.POST, instance=persona.postal_address)
+        profile_form = ProfileForm(request.POST, instance=profile)
+        address_form = AddressForm(request.POST, instance=profile.postal_address)
 
-        if persona_form.is_valid() and address_form.is_valid():
-            persona.save()
+        if profile_form.is_valid() and address_form.is_valid():
+            profile.save()
             address_form.save()
         else:
-            return render(request, self.template_name, {'persona_form': PersonaForm(instance=persona),
-                                                        'address_form': AddressForm(instance=persona.postal_address)})
+            return render(request, self.template_name, {'profile_form': ProfileForm(instance=profile),
+                                                        'address_form': AddressForm(instance=profile.postal_address)})
 
-        messages.success(request, "The persona '%s' was updated." % persona.name)
+        messages.success(request, "The profile '%s' was updated." % profile.name)
 
-        return redirect('main:list_personas')
+        return redirect('main:list_profiles')
 
 
 class IdentificationView(LoginRequiredMixin, FormView):
