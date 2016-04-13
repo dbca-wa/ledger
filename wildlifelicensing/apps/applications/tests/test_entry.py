@@ -3,7 +3,6 @@ import os
 from django.core.urlresolvers import reverse
 from django.core.files import File
 from django.test import TestCase
-from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
@@ -42,23 +41,23 @@ class ApplicationEntryTestCase(TestCase):
         current identification, and upload an ID.
         """
         self.client.login(self.customer.email)
- 
+
         # check that client can access the identification required page
         response = self.client.get(reverse('applications:check_identification', args=('regulation17',)))
         self.assertEqual(200, response.status_code)
- 
+
         with open(TEST_ID_PATH) as fp:
             post_params = {
                 'identification_file': fp
             }
             response = self.client.post(reverse('applications:check_identification', args=('regulation17',)), post_params)
- 
+
             self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation17',)),
                                  status_code=302, target_status_code=200, fetch_redirect_response=False)
- 
+
             # update customer
             self.customer = EmailUser.objects.get(email=self.customer.email)
- 
+
             # assert customer's ID is the uploaded file
             self.assertEqual(self.customer.identification.filename, 'test_id.jpg')
 
@@ -132,8 +131,8 @@ class ApplicationEntryTestCase(TestCase):
 
         # create profiles
         address1 = Address.objects.create(line1='1 Test Street', locality='Test Suburb', state='WA', postcode='0001')
-        profile1 = Profile.objects.create(user=self.customer, name='Test Profile', email='test@testplace.net.au',
-                                          institution='Test Institution', postal_address=address1)
+        Profile.objects.create(user=self.customer, name='Test Profile', email='test@testplace.net.au',
+                               institution='Test Institution', postal_address=address1)
 
         address2 = Address.objects.create(line1='2 Test Street', locality='Test Suburb', state='WA', postcode='0001')
         profile2 = Profile.objects.create(user=self.customer, name='Test Profile 2', email='test@testplace.net.au',
