@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from ledger.accounts.models import RevisionedMixin, EmailUser, Document
 from ledger.licence.models import LicenceType
@@ -23,3 +24,13 @@ class AbstractLogEntry(models.Model):
 
     class Meta:
         abstract = True
+
+
+@python_2_unicode_compatible
+class AssessorDepartment(models.Model):
+    name = models.CharField(max_length=50)
+    email = models.EmailField()
+    members = models.ManyToManyField(EmailUser)
+
+    def __str__(self):
+        return self.name
