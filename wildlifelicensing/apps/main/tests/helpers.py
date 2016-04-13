@@ -3,8 +3,9 @@ import re
 
 from django.core import mail
 from django.core.urlresolvers import reverse
-from django.test import Client
+from django.test import Client, TestCase
 from django.contrib.auth.models import Group
+from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser
 from wildlifelicensing.apps.main import helpers as accounts_helpers
@@ -12,25 +13,22 @@ from wildlifelicensing.apps.main import helpers as accounts_helpers
 
 class TestData(object):
     DEFAULT_CUSTOMER = {
-        'email': 'custromer@utest.com',
-        'data': {
-            'first_name': 'Mark',
-            'last_name': 'Test',
-            'title': 'Dr',
-            'dob': '01/08/1989',
-            'phone_number': '123456',
-            'mobile_number': '67890',
-            'fax_number': '27362',
-            'organisation': 'Spectre',
-            'line1': '123 Lorre Avenue',
-            'locality': 'Perth',
-            'state': 'WA',
-            'postcode': 6000
-        }
+        'email': 'customer@test.com',
+        'first_name': 'Homer',
+        'last_name': 'Cust',
+        'dob': '1989-08-12',
     }
     DEFAULT_OFFICER = {
-        'email': 'officer@utest.com',
-        'data': {}
+        'email': 'officer@test.com',
+        'first_name': 'Offy',
+        'last_name': 'Sir',
+        'dob': '1979-12-13',
+    }
+    DEFAULT_ASSESSOR = {
+        'email': 'assessor@test.com',
+        'first_name': 'Assess',
+        'last_name': 'Ore',
+        'dob': '1979-10-05',
     }
 
 
@@ -65,21 +63,57 @@ def add_to_group(user, group_name):
     return user
 
 
+def create_user(**kwargs):
+    user = EmailUser.objects.create(**kwargs)
+    UserSocialAuth.create_social_auth(user, user.email, 'email')
+    return user
+
+
 def create_default_customer():
-    client = SocialClient()
-    client.login(TestData.DEFAULT_CUSTOMER['email'])
-    response = client.post(reverse('accounts:customer_create'), data=TestData.DEFAULT_CUSTOMER['data'])
-    customer = EmailUser.objects.filter(user__email=TestData.DEFAULT_CUSTOMER['email']).first()
-    is_ok = customer is not None and (response.status_code == 200 or response.status_code == 302)
-    if is_ok:
-        return customer
-    else:
-        raise Exception("could not create the default customer")
+    return create_user(**TestData.DEFAULT_CUSTOMER)
 
 
 def create_default_officer():
-    data = TestData.DEFAULT_OFFICER
-    client = SocialClient()
-    response = client.login(data['email'])
-    officer = add_to_group(response.context['user'], 'Officers')
-    return officer
+    user = create_user(**TestData.DEFAULT_OFFICER)
+    add_to_group(user, 'Officers')
+    return user
+
+
+def create_default_assessor():
+    user = create_user(**TestData.DEFAULT_ASSESSOR)
+    add_to_group(user, 'Assessors')
+    return user
+
+
+class HelpersTest(TestCase):
+    def setUp(self):
+        self.client = SocialClient()
+
+    def test_create_customer(self):
+        user = create_default_customer()
+        self.assertIsNotNone(user)
+        self.assertTrue(isinstance(user, EmailUser))
+        self.assertEqual(TestData.DEFAULT_CUSTOMER['email'], user.email)
+        # test that we can login
+        self.client.login(user.email)
+        is_client_authenticated(self.client)
+
+    def test_create_officer(self):
+        user = create_default_officer()
+        self.assertIsNotNone(user)
+        self.assertTrue(isinstance(user, EmailUser))
+        self.assertEqual(TestData.DEFAULT_OFFICER['email'], user.email)
+        self.assertTrue(accounts_helpers.is_officer(user))
+        # test that we can login
+        self.client.login(user.email)
+        is_client_authenticated(self.client)
+
+    def test_create_assessor(self):
+        user = create_default_assessor()
+        self.assertIsNotNone(user)
+        self.assertTrue(isinstance(user, EmailUser))
+        self.assertEqual(TestData.DEFAULT_ASSESSOR['email'], user.email)
+        self.assertTrue(accounts_helpers.is_assessor(user))
+        # test that we can login
+        self.client.login(user.email)
+        is_client_authenticated(self.client)
