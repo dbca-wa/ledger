@@ -8,21 +8,26 @@ from social.apps.django_app.default.models import UserSocialAuth
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
-from wildlifelicensing.apps.main.tests.helpers import SocialClient
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer
 
 TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 'test_id.jpg')
 
 
 class ApplicationEntryTestCase(TestCase):
     def setUp(self):
-        self.customer = EmailUser.objects.create(email='customer@test.net')
-        UserSocialAuth.create_social_auth(self.customer, self.customer.email, 'email')
+        self.customer = create_default_customer()
 
         self.client = SocialClient()
 
         licence_type = WildlifeLicenceType.objects.get(code='regulation17')
         licence_type.identification_required = True
         licence_type.save()
+
+    def tearDown(self):
+        self.client.logout()
+        # clean id file
+        if self.customer.identification:
+            os.remove(self.customer.identification.path)
 
     def test_select_licence_type(self):
         """Testing that a user can display the licence type selection list"""
@@ -37,29 +42,25 @@ class ApplicationEntryTestCase(TestCase):
         current identification, and upload an ID.
         """
         self.client.login(self.customer.email)
-
+ 
         # check that client can access the identification required page
         response = self.client.get(reverse('applications:check_identification', args=('regulation17',)))
         self.assertEqual(200, response.status_code)
-
-        try:
-            with open(TEST_ID_PATH) as fp:
-                post_params = {
-                    'identification_file': fp
-                }
-                response = self.client.post(reverse('applications:check_identification', args=('regulation17',)), post_params)
-
-                self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation17',)),
-                                     status_code=302, target_status_code=200, fetch_redirect_response=False)
-
-                # update customer
-                self.customer = EmailUser.objects.get(email=self.customer.email)
-
-                # assert customer's ID is the uploaded file
-                self.assertEqual(self.customer.identification.filename, 'test_id.jpg')
-        finally:
-            # remove uploaded file
-            os.remove(self.customer.identification.path)
+ 
+        with open(TEST_ID_PATH) as fp:
+            post_params = {
+                'identification_file': fp
+            }
+            response = self.client.post(reverse('applications:check_identification', args=('regulation17',)), post_params)
+ 
+            self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation17',)),
+                                 status_code=302, target_status_code=200, fetch_redirect_response=False)
+ 
+            # update customer
+            self.customer = EmailUser.objects.get(email=self.customer.email)
+ 
+            # assert customer's ID is the uploaded file
+            self.assertEqual(self.customer.identification.filename, 'test_id.jpg')
 
     def test_check_identification_required_current_id(self):
         """Testing that a user can display the identification required page in the case the user has a
@@ -68,17 +69,14 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         with open(TEST_ID_PATH) as fp:
-            self.customer.identification =  Document.objects.create(name='test_id')
-            self.customer.identification.file.save('test_id', File(fp), save=True)
+            self.customer.identification = Document.objects.create(name='test_id')
+            self.customer.identification.file.save('test_id.jpg', File(fp), save=True)
             self.customer.save()
 
         # check that client is redirected to profile creation / selection page
         response = self.client.get(reverse('applications:check_identification', args=('regulation17',)))
         self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation17',)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
-
-        # clean up ID file
-        os.remove(self.customer.identification.path)
 
     def test_create_select_profile_create(self):
         """Testing that a user can display the create / select profile page and create a profile
@@ -109,6 +107,7 @@ class ApplicationEntryTestCase(TestCase):
             'line1': '1 Test Street',
             'locality': 'Test Suburb',
             'state': 'WA',
+            'country': 'AU',
             'postcode': '0001',
             'create': True
         }
