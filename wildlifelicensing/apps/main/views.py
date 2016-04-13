@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.base import TemplateView
@@ -91,7 +91,7 @@ class IdentificationView(LoginRequiredMixin, FormView):
     template_name = 'wl/manage_identification.html'
     login_url = '/'
     form_class = IdentificationForm
-    success_url = '.'
+    success_url = reverse_lazy('main:identification')
 
     def form_valid(self, form):
         if self.request.user.identification is not None:

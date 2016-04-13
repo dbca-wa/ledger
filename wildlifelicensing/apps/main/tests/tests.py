@@ -6,23 +6,26 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from social.apps.django_app.default.models import UserSocialAuth
 
-from ledger.accounts.models import EmailUser, Address, Persona
+from ledger.accounts.models import EmailUser, Address, Persona, Document
 
-from helpers import SocialClient, add_to_group
+from helpers import SocialClient, create_default_customer, create_default_officer
 
 TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 'test_id.jpg')
 
 
 class AccountsTestCase(TestCase):
     def setUp(self):
-        self.customer = EmailUser.objects.create(email='customer@test.net')
-        UserSocialAuth.create_social_auth(self.customer, self.customer.email, 'email')
+        self.customer = create_default_customer()
 
-        self.officer = EmailUser.objects.create(email='officer@test.net')
-        UserSocialAuth.create_social_auth(self.officer, self.officer.email, 'email')
-        add_to_group(self.officer, 'Officers')
+        self.officer = create_default_officer()
 
         self.client = SocialClient()
+
+    def tearDown(self):
+        self.client.logout()
+        # clean id file
+        if self.customer.identification:
+            os.remove(self.customer.identification.path)
 
     def test_persona_list(self):
         """Testing that a user can display the persona list if they are a customer"""
@@ -114,23 +117,19 @@ class AccountsTestCase(TestCase):
         response = self.client.get(reverse('main:identification'))
         self.assertEqual(200, response.status_code)
 
-        try:
-            with open(TEST_ID_PATH) as fp:
-                post_params = {
-                    'identification_file': fp
-                }
+        with open(TEST_ID_PATH) as fp:
+            post_params = {
+                'identification_file': fp
+            }
+            self.client.login(self.customer.email)
+            response = self.client.post(reverse('main:identification'), post_params, follow=True)
+            self.assertEqual(200, response.status_code)
 
-                response = self.client.post(reverse('main:identification'), post_params, follow=True)
-                self.assertEqual(200, response.status_code)
+            # update customer
+            self.customer = EmailUser.objects.get(email=self.customer.email)
 
-                # update customer
-                self.customer = EmailUser.objects.get(email=self.customer.email)
+            # assert customer's ID is the uploaded file
+            self.assertEqual(self.customer.identification.filename, 'test_id.jpg')
 
-                # assert customer's ID is the uploaded file
-                self.assertEqual(self.customer.identification.filename, 'test_id.jpg')
-
-                # assert image url is the customer ID's url path
-                self.assertEqual(response.context['existing_id_image_url'], self.customer.identification.file.url)
-        finally:
-            # remove uploaded file
-            os.remove(self.customer.identification.path)
+            # assert image url is the customer ID's url path
+            self.assertEqual(response.context['existing_id_image_url'], self.customer.identification.file.url)
