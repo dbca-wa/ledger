@@ -44,34 +44,45 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
             });
         }
 
-        function initPreviousData(previousData) {
-            $container = $('#lodgedVersionsBody');
-            $.each(previousData, function(index, version) {
-                var $versionContainer = $('<div></div>').addClass('lodged-version-row');
-                $versionContainer.append($('<div></div>').addClass('lodged-version-col').text(version.lodgement_number));
-                $versionContainer.append($('<div></div>').addClass('lodged-version-col').text(version.date));
+        function createVersionRow(assessment) {
+            var row = $('<tr></tr>');
+            row.append('<td>' + assessment.assessor.first_name + ' ' + assessment.assessor.last_name + '</td>');
+            var statusColumn = $('<td></td>').css('text-align', 'right');
+            if(assessment.status === 'Awaiting Assessment') {
+                statusColumn.append(assessment.status);
+            } else {
+                statusColumn.append('<a>View Comments</a>');
+            }
 
-                
+            row.append(statusColumn);
+
+            return row;
+        }
+
+        function initLodgedVersions(previousData) {
+            var $table = $('#lodgedVersions');
+            $.each(previousData, function(index, version) {
+                var $row = $('<tr>');
+                $row.append($('<td>').text(version.lodgement_number));
+                $row.append($('<td>').text(version.date));
+
                 if(index === 0) {
-                    var $compareLink = $('<a>Show</a>').addClass('hidden');
-                    var $comparingSpan = $('<span>Showing</span>');
+                    var $compareLink = $('<a>Show</a>');
+                    $row.addClass('small-table-selected-row');
                 } else {
                     var $compareLink = $('<a>Compare</a>');
-                    var $comparingSpan = $('<span>Comparing</span>').addClass('hidden');
                 }
 
                 $compareLink.click(function(e) {
-                    $container.find('a').removeClass('hidden');
-                    $container.find('span').addClass('hidden');
-                    $compareLink.addClass('hidden');
-                    $comparingSpan.removeClass('hidden');
+                    $table.find('tr').removeClass('small-table-selected-row');
+                    $row.addClass('small-table-selected-row');
                     $previewContainer.empty();
                     previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, version.data);
                 });
 
-                $versionContainer.append($('<div></div>').addClass('lodged-version-col pull-right').append($compareLink).append($comparingSpan));
+                $row.append($('<td>').html($compareLink));
 
-                $container.append($versionContainer);
+                $table.append($row);
             });
         }
 
@@ -360,7 +371,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 amendmentRequests = data.amendment_requests;
 
                 initAssignee(data.officers, data.user);
-                initPreviousData(data.previous_application_data);
+                initLodgedVersions(data.previous_application_data);
                 initIDCheck();
                 initCharacterCheck();
                 initReview();

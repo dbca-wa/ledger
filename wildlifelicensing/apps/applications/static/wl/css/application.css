@@ -66,6 +66,14 @@
     font-style: italic;
 }
 
+.small-table {
+    font-size: 12px;
+}
+
+.small-table-selected-row {
+    background-color: ghostwhite;
+}
+
 .current-data {
     color: green;
 }
@@ -94,9 +102,5 @@ a { cursor: pointer; }
 }
 
 #review a {
-    font-size: 12px;
-}
-
-#currentAssessments {
     font-size: 12px;
 }

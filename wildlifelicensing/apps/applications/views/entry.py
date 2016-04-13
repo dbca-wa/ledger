@@ -5,7 +5,7 @@ import shutil
 
 from datetime import datetime
 
-from django.views.generic.base import TemplateView
+from django.views.generic.base import View, TemplateView
 from django.views.generic.edit import FormView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files import File
@@ -40,6 +40,21 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
         context = {'licence_types': dict([(licence_type.code, licence_type.name) for licence_type in WildlifeLicenceType.objects.all()])}
 
         return render(request, self.template_name, context)
+
+
+class EditApplicationView(LoginRequiredMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        delete_application_session_data(request.session)
+
+        application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
+        if application is not None and 'application' not in request.session:
+            request.session['application'] = {}
+            request.session['application']['persona'] = application.applicant_persona.id
+            request.session['application']['data'] = application.data
+            request.session.modified = True
+
+        return redirect('applications:enter_details', *args, **kwargs)
 
 
 class CheckIdentificationRequiredView(LoginRequiredMixin, FormView):
@@ -134,11 +149,6 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
-        if application is not None and 'application' not in request.session:
-            request.session['application'] = {}
-            request.session['application']['persona'] = application.applicant_persona.id
-            request.session['application']['data'] = application.data
-            request.session.modified = True
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
         persona = get_object_or_404(Persona, pk=request.session.get('application').get('persona'))

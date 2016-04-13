@@ -14,7 +14,6 @@ from braces.views import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
-from wildlifelicensing.apps.applications.utils import delete_application_session_data
 from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from .forms import LoginForm
@@ -206,8 +205,6 @@ class DashboardTableBaseView(TemplateView):
         return data
 
     def get_context_data(self, **kwargs):
-        delete_application_session_data(self.request.session)
-
         if 'dataJSON' not in kwargs:
             data = self._build_data()
             # add the request query to the data
@@ -464,12 +461,12 @@ class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
     def _render_action_column(self, obj):
         if obj.customer_status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Continue application'
             )
         elif obj.customer_status == 'amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Amend application'
             )
         else:
