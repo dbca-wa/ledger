@@ -1,0 +1,37 @@
+// purple used for logo
+$primary: #330080;
+
+// content pane, put a width cap in to make it look less weird
+.content {
+    max-width: 700px;
+    margin: auto;
+}
+
+// nudging for header to look nice on mobile/desktop
+.head-text {
+    margin-top: -0.75em;
+    font-size: 24px;
+}
+
+// nudging for callout panes with close button
+.callout-close {
+    padding-right: 2.5em;
+}
+
+@media screen and (min-width: 40em) { 
+    .head-logo {
+        margin-left: -20px;
+    }
+
+    .head-text {
+        margin-top: 60px;
+        text-align: right;
+    }
+}
+
+// footer styling
+.footer {
+    margin-top: 1em;
+    padding-top: 1em;
+    border-top: 1px solid transparentize($primary, 0.7);
+}

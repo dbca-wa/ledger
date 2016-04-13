@@ -139,6 +139,17 @@ class Address(models.Model):
 
 
 @python_2_unicode_compatible
+class EmailIdentity(models.Model):
+    """Table used for matching access email address with EmailUser.
+    """
+    user = models.ForeignKey('EmailUser', null=True)
+    email = models.EmailField(unique=True)
+
+    def __str__(self):
+        return self.email
+
+
+@python_2_unicode_compatible
 class EmailUser(AbstractBaseUser, PermissionsMixin):
     """Custom authentication model for the ledger project.
     Password and email are required. Other fields are optional.
@@ -204,6 +215,17 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             return self.first_name
         return self.email
 
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            # user exists, ensure EmailIdentity object corresponding with self.email exists
+            identity, created = EmailIdentity.objects.get_or_create(email=self.email, user=self)
+            super(EmailUser, self).save(*args, **kwargs)
+        else:
+            # user object is new, create user before creating EmailIdentity object
+            super(EmailUser, self).save(*args, **kwargs)
+            identity, created = EmailIdentity.objects.get_or_create(email=self.email, user=self)
+        
+
     @property
     def username(self):
         return self.email
@@ -244,3 +266,6 @@ class Persona(RevisionedMixin):
             return '{} ({})'.format(self.name, self.email)
         else:
             return '{}'.format(self.email)
+
+
+

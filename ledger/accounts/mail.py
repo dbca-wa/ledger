@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
+from django.template import loader
 
 
 # Send mail validation to user, the email should include a link to continue the
@@ -10,5 +11,7 @@ from django.core.urlresolvers import reverse
 def send_validation(strategy, backend, code):
     url = reverse('accounts:token_login', args=(code.code,))
     url = strategy.request.build_absolute_uri(url)
-    send_mail('Passwordless Login', 'Use this URL to login {0}'.format(url),
+    template = loader.render_to_string('email/login.txt', context={'login_url': url})
+
+    send_mail('Your login URL for the customer portal', template,
               settings.EMAIL_FROM, [code.email], fail_silently=False)

@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from views import ListPersonasView, CreatePersonasView, EditPersonasView, IdentificationView
+from .views import ListPersonasView, CreatePersonasView, EditPersonasView, IdentificationView
 
 
 urlpatterns = [

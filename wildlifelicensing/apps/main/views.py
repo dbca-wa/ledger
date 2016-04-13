@@ -87,10 +87,11 @@ class EditPersonasView(CustomerRequiredMixin, TemplateView):
         return redirect('main:list_personas')
 
 
-class IdentificationView(CustomerRequiredMixin, FormView):
+class IdentificationView(LoginRequiredMixin, FormView):
     template_name = 'wl/manage_identification.html'
     login_url = '/'
     form_class = IdentificationForm
+    success_url = '.'
 
     def form_valid(self, form):
         if self.request.user.identification is not None:
@@ -108,6 +109,3 @@ class IdentificationView(CustomerRequiredMixin, FormView):
             context['existing_id_image_url'] = self.request.user.identification.file.url
 
         return context
-
-    def get_success_url(self):
-        return reverse('main:identification')
