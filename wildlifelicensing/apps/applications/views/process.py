@@ -13,10 +13,11 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import get_all_officers, get_all_assessors, render_user_name
+from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email
+from wildlifelicensing.apps.main.models import AssessorDepartment
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -37,9 +38,9 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
-        current_assessors = [ass.assessor for ass in AssessmentRequest.objects.filter(application=application)]
-        assessors = [{'id': assessor.id, 'text': render_user_name(assessor)} for assessor in
-                     get_all_assessors().exclude(id__in=[assessor.pk for assessor in current_assessors])]
+        current_ass_depts = [ass_request.assessor_department for ass_request in AssessmentRequest.objects.filter(application=application)]
+        ass_depts = [{'id': ass_dept.id, 'text': ass_dept.name} for ass_dept in
+                     AssessorDepartment.objects.all().exclude(id__in=[ass_dept.pk for ass_dept in current_ass_depts])]
 
         previous_application_data = []
         for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by('-revision__date_created'):
@@ -54,7 +55,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
             'form_structure': form_structure,
             'officers': officers,
             'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application)),
-            'assessors': assessors,
+            'assessor_departments': ass_depts,
             'assessments': serialize(AssessmentRequest.objects.filter(application=application),
                                      posthook=_format_assessment_status),
             'previous_application_data': serialize(previous_application_data),
@@ -154,12 +155,11 @@ class SendForAssessmentView(View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
-        assessor = get_object_or_404(EmailUser, pk=request.POST['userID'])
-        assessment_request = AssessmentRequest.objects.create(application=application, assessor=assessor,
+        ass_dept = get_object_or_404(AssessorDepartment, pk=request.POST['assDeptID'])
+        assessment_request = AssessmentRequest.objects.create(application=application, assessor_department=ass_dept,
                                                               status=request.POST['status'],
                                                               user=request.user)
 
-        application.processing_status = _determine_processing_status(application)
         application.processing_status = _determine_processing_status(application)
         application.save()
         send_assessment_requested_email(application, assessment_request, request)

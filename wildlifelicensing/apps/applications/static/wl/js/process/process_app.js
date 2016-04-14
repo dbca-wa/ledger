@@ -67,7 +67,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 $row.append($('<td>').text(version.date));
 
                 if(index === 0) {
-                    var $compareLink = $('<a>Show</a>');
+                    var $compareLink = $('<a>Show</a>').addClass('hidden');
                     $row.addClass('small-table-selected-row');
                 } else {
                     var $compareLink = $('<a>Compare</a>');
@@ -75,7 +75,9 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
 
                 $compareLink.click(function(e) {
                     $table.find('tr').removeClass('small-table-selected-row');
+                    $table.find('a').removeClass('hidden');
                     $row.addClass('small-table-selected-row');
+                    $row.find('a').addClass('hidden');
                     $previewContainer.empty();
                     previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, version.data);
                 });
@@ -272,7 +274,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
 
         function createAssessmentRow(assessment) {
             var row = $('<tr></tr>');
-            row.append('<td>' + assessment.assessor.first_name + ' ' + assessment.assessor.last_name + '</td>');
+            row.append('<td>' + assessment.assessor_department.name + '</td>');
             var statusColumn = $('<td></td>').css('text-align', 'right');
             if(assessment.status === 'Awaiting Assessment') {
                 statusColumn.append(assessment.status);
@@ -310,7 +312,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'awaiting_assessment',
-                    userID: $assessor.val()
+                    assDeptID: $assessor.val()
                 },
                 function(data) {
                     $processingStatus.text(data.processing_status);
@@ -319,7 +321,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
 
                     // remove assessor from assessors list
                     for(var i = 0; i < assessorsList.length; i++) {
-                        if(assessorsList[i].id === data.assessment.assessor.id) {
+                        if(assessorsList[i].id === data.assessment.assessor_department.id) {
                             assessorsList.splice(i, 1);
                             break;
                         }
@@ -375,7 +377,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 initIDCheck();
                 initCharacterCheck();
                 initReview();
-                initAssessment(data.assessors);
+                initAssessment(data.assessor_departments);
 
                 determineApplicationApprovable();
 
