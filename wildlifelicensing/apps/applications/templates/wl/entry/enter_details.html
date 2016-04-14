@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/application_entry'], function(applicationDetails) {
+    require(['jQuery', 'js/entry/application_entry'], function($, applicationDetails) {
         applicationDetails.layoutFormItems('#formContainer', {{ structure|jsonify }}{% if data %}, {{ data|jsonify }}{% endif %});
 
         $('#mainContainer').removeClass('hidden');

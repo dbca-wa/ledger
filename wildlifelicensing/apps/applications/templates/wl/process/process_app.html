@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/process/process_app', 'js/application_preview'], function (app, applicationPreview) {
+    require(['js/process/process_app'], function (app, applicationPreview) {
         $(function () {
             data = {{ data|jsonify }};
             app.initialiseApplicationProcesssing(data);
@@ -190,8 +190,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <button id="approve" type="button" class="btn btn-sm btn-success pull-right" disabled>Approve Application</button>
-                            <button id="decline" type="button" class="btn btn-sm btn-danger">Decline Application</button>
+                            <form method="post" action="{% url 'applications:process' data.application.id %}">
+                                {% csrf_token %}
+                                <button id="approve" type="submit" name="approve" type="button" class="btn btn-sm btn-success pull-right" disabled>Approve Application</button>
+                                <button id="decline" type="submit" name="decline" type="button" class="btn btn-sm btn-danger">Decline Application</button>
+                            </form>
                         </div>
                     </div>
                 </div>
