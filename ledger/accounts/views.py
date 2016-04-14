@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils.http import urlquote_plus
 
 from .forms import FirstTimeForm
 from .models import EmailUser
@@ -70,11 +71,9 @@ def logout(request, *args, **kwargs):
 # redirects the user to PSA complete process for the email backend. The mail
 # link could point directly to PSA view but it's handy to proxy it and do
 # additional computation if needed.
-def token_login(request, token):
-    redirect_url = '{}?verification_code={}'.format(
+def token_login(request, token, email):
+    redirect_url = '{}?verification_code={}&email={}'.format(
         reverse('social:complete', args=('email',)),
-        token
+        urlquote_plus(token), urlquote_plus(email)
     )
-    if request.user and hasattr(request.user, 'email'):
-        redirect_url += '&email={}'.format(request.user.email)
     return redirect(redirect_url)
