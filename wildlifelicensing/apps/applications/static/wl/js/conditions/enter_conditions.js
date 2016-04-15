@@ -1,60 +1,137 @@
-define(['jQuery', 'bootstrap-3-typeahead'], function($) {
-    function initDefaultCondition(defaultConditions) {
-        $defaultConditions = $('#defaultConditions');
+define(['jQuery', 'lodash', 'select2'], function($, _) {
+    var $createCustomConditionModal = $('#createCustomConditionModal'),
+        $createCustomConditionForm = $('#createConditionForm'),
+        $conditionsForm = $('#conditionsForm');
+
+    function createConditionTableRow(condition, $table, $emptyRow) {
+        var $row = $('<tr>');
+
+        $row.append($('<td>').html(condition.code));
+        $row.append($('<td>').html(condition.text));
+
+        var $remove = $('<a>Remove</a>');
+        $remove.click(function(e) {
+            $row.remove();
+
+            if($table.find('tr').length == 2) {
+                $emptyRow.removeClass('hidden');
+            }
+
+            $conditionsForm.find('input[value="' + condition.id + '"]').remove();
+        });
+
+        var $clone = $('<a>Clone</a>');
+        $clone.click(function(e) {
+            $createCustomConditionForm.find('input[type=text]').val(condition.code);
+            $createCustomConditionForm.find('textarea').val(condition.text);
+            $createCustomConditionModal.modal('show');
+        });
+
+        $action = $('<div>').append($remove).append($('<hr>')).append($clone);
+
+        $row.append($('<td>').css('vertical-align', 'middle').html($action));
+        $table.append($row);
+
+        $conditionsForm.append($('<input>').attr('type', 'hidden').attr('name', 'conditionID').val(condition.id));
+    }
+
+    function initDefaultConditions(defaultConditions) {
+        var $defaultConditions = $('#defaultConditions'),
+            $defaultConditionsEmptyRow = $defaultConditions.find('#defaultConditionsEmptyRow');
+
         $.each(defaultConditions, function(index, condition) {
-            $row = $('<tr>');
-            $row.append($('<td>').html(condition.code));
-            $row.append($('<td>').html(condition.text));
-
-            $remove = $('<a>Remove</a>');
-            $remove.click(function(e) {
-                $(this).parent().parent().remove();
-            });
-
-            $row.append($('<td>').html($remove));
-            $defaultConditions.append($row);
+            createConditionTableRow(condition, $defaultConditions, $defaultConditionsEmptyRow);
         });
     }
 
-    function initSelectConditions() {
+    function initAdditionalConditions() {
         var conditions = {},
-            $selectConditions = $('#selectConditions');
+            $searchConditions = $('#searchConditions'),
+            $addCondition = $('#addCondition'),
+            $additionalConditions = $('#additionalConditions'),
+            $additionalConditionsEmptyRow = $additionalConditions.find('#additionalConditionsEmptyRow');
 
-        $selectConditions.typeahead({
-            source: function (query, process) {
-                return $.get('/applications/search_conditions?q=' + query, function (data) {
-                    condition_texts = [];
-                    $.each(data, function(index, condition) {
-                        conditions[condition.text] = condition;
-                        condition_texts.push(condition.text);
-                    });
-                    return process(condition_texts);
-                });
+        $searchConditions.select2({
+            dropdownCssClass : 'conditions-dropdown',
+            minimumInputLength: 3,
+            ajax: {
+                url: '/applications/search_conditions',
+                dataType: 'json',
+                quietMillis: 250,
+                data: function (term, page) {
+                    return {
+                        q: term,
+                    };
+                },
+                results: function (data, page) {
+                    conditions = data;
+
+                    conditions = _.chain(data).keyBy('id').value();
+
+                    return { results: data };
+                },
+                cache: true
             },
-            afterSelect: function(condition_text) {
-                var condition = conditions[condition_text];
-                
-                $row = $('<tr>');
-                $row.append($('<td>').html(condition.code));
-                $row.append($('<td>').html(condition.text));
+            formatResult: function(object) {
+                var $container = $('<table>'),
+                    $row = $('<tr>');
 
-                $remove = $('<a>Remove</a>');
-                $remove.click(function(e) {
-                    $(this).parent().parent().remove();
-                });
+                $row.append($('<td>').html(object.code));
+                $row.append($('<td>').html(object.text));
 
-                $row.append($('<td>').html($remove));
-                $('#additionalConditions').append($row);
+                $container.append($row);
 
-                $selectConditions.val('');
+                return $container;
+            },
+            formatResultCssClass: function(object) {
+                return 'conditions-option';
             }
-        })
+        });
+
+        $searchConditions.on('change', function(e) {
+            $addCondition.prop('disabled', false);
+        });
+
+        $addCondition.click(function(e) {
+            var condition = conditions[$searchConditions.val()];
+
+            createConditionTableRow(condition, $additionalConditions, $additionalConditionsEmptyRow);
+        });
+    }
+
+    function initCustomConditions() {
+        var $additionalConditions = $('#additionalConditions'),
+            $additionalConditionsEmptyRow = $additionalConditions.find('#additionalConditionsEmptyRow');
+
+        $('#createCustomCondition').click(function(e) {
+            $createCustomConditionModal.modal('show');
+        });
+
+        $createCustomConditionForm.submit(function(e) {
+            $.ajax({
+                type: $(this).attr('method'),
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (data) {
+                    createConditionTableRow(data, $additionalConditions, $additionalConditionsEmptyRow);
+
+                    $createCustomConditionModal.modal('hide');
+                }
+            });
+
+            e.preventDefault();
+        });
+
+        $createCustomConditionModal.on('hidden.bs.modal', function(e) {
+            $createCustomConditionForm.find('input[type=text], textarea').val('');
+        });
     }
 
     return {
         init: function(application) {
-            initDefaultCondition(application.licence_type.default_conditions);
-            initSelectConditions();
+            initDefaultConditions(application.licence_type.default_conditions);
+            initAdditionalConditions();
+            initCustomConditions();
         }
     }
 });

@@ -19,6 +19,9 @@ require.config({
         'jQuery': {
             exports: '$'
         },
+        'lodash': {
+            exports: '_'
+        },
         'bootstrap': {
             deps: ['jQuery']
         },

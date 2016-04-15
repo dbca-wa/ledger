@@ -6,7 +6,7 @@ from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeVie
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, SetCharacterCheckStatusView, \
     SetReviewStatusView, SendForAssessmentView
 
-from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView
+from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, CreateConditionView, SubmitConditionsView
 
 
 urlpatterns = [
@@ -32,4 +32,6 @@ urlpatterns = [
     # conditions
     url('^enter_conditions/([0-9]+)/$', EnterConditionsView.as_view(), name='enter_conditions'),
     url('^search_conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
+    url('^create_condition/$', CreateConditionView.as_view(), name='create_condition'),
+    url('^submit_conditions/([0-9]+)/$', SubmitConditionsView.as_view(), name='submit_conditions'),
 ]
