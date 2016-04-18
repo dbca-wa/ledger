@@ -104,3 +104,12 @@ a { cursor: pointer; }
 #review a {
     font-size: 12px;
 }
+
+.conditions-dropdown {
+    width: 600px !important;
+}
+
+.conditions-option td {
+    vertical-align: top;
+    padding: 8px;
+}

@@ -1,6 +1,15 @@
 import os
 import shutil
 
+from models import Application, AssessmentRequest
+
+
+PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
+ID_CHECK_STATUSES = dict(Application.ID_CHECK_STATUS_CHOICES)
+CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
+REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
+ASSESSMENT_STATUSES = dict(AssessmentRequest.STATUS_CHOICES)
+
 
 def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):
     data = {}
@@ -88,3 +97,18 @@ def delete_application_session_data(session):
                     pass
 
         del session['application']
+
+
+def format_application_statuses(instance, attrs):
+    attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
+    attrs['id_check_status'] = ID_CHECK_STATUSES[attrs['id_check_status']]
+    attrs['character_check_status'] = CHARACTER_CHECK_STATUSES[attrs['character_check_status']]
+    attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
+
+    return attrs
+
+
+def format_assessment_status(instance, attrs):
+    attrs['status'] = ASSESSMENT_STATUSES[attrs['status']]
+
+    return attrs

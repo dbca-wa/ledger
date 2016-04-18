@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery', 'js/application_preview'], function($, applicationPreview) {
+    require(['jQuery', 'js/entry/application_preview'], function($, applicationPreview) {
         applicationPreview.layoutPreviewItems('#formContainer', {{ structure|jsonify }}, {{ data|jsonify }});
 
         $('#mainContainer').removeClass('hidden');

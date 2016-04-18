@@ -175,7 +175,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
         request.session['application']['data'] = create_data_from_form(form_structure, request.POST, request.FILES)
         request.session.modified = True
 
-        if 'draft' in request.POST:
+        if 'draft' in request.POST or 'draft_continue' in request.POST:
             if len(args) > 1:
                 application = get_object_or_404(Application, pk=args[1])
             else:
@@ -210,9 +210,11 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
             messages.warning(request, 'The application was saved to draft.')
 
-            delete_application_session_data(request.session)
-
-            return redirect('dashboard:home')
+            if 'draft' in request.POST:
+                delete_application_session_data(request.session)
+                return redirect('dashboard:home')
+            else:
+                return redirect('applications:enter_details', args[0], application.pk)
         else:
             if len(request.FILES) > 0:
                 if 'files' not in request.session.get('application'):

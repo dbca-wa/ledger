@@ -201,13 +201,57 @@ class ApplicationEntryTestCase(TestCase):
 
         response = self.client.post(reverse('applications:enter_details', args=('regulation17',)), post_params)
 
-        # chech that a new applicaiton was created
+        # check that client is redirected to the dashboard
+        self.assertRedirects(response, reverse('dashboard:home'), status_code=302, target_status_code=200,
+                             fetch_redirect_response=False)
+
+        # check that a new application was created
         self.assertEqual(profile.application_set.count(), original_applications_count + 1)
 
         # check that the state of the application is draft
         self.assertEqual(profile.application_set.first().processing_status, 'draft')
 
-    def test_enter_details_lodge(self):
+    def test_enter_details_draft_continue(self):
+        """Testing that a user can enter the details of an application form and save as a draft
+        and continue editing"""
+        self.client.login(self.customer.email)
+
+        # create profiles
+        address = Address.objects.create(line1='1 Test Street', locality='Test Suburb', state='WA', postcode='0001')
+        profile = Profile.objects.create(user=self.customer, name='Test Profile', email='test@testplace.net.au',
+                                         institution='Test Institution', postal_address=address)
+
+        # create the application dict in the session first
+        # the session must be stored in a variable in order to be modifyable
+        # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
+        session = self.client.session
+        session['application'] = {'profile': profile.pk}
+        session.save()
+
+        original_applications_count = profile.application_set.count()
+
+        # check that client can access the enter details page
+        response = self.client.get(reverse('applications:enter_details', args=('regulation17',)))
+        self.assertEqual(200, response.status_code)
+
+        post_params = {
+            'project_title': 'Test Title',
+            'draft_continue': True
+        }
+
+        response = self.client.post(reverse('applications:enter_details', args=('regulation17',)), post_params)
+
+        # check that client is redirected to enter details page
+        self.assertRedirects(response, reverse('applications:enter_details', args=('regulation17', profile.application_set.first().pk)),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+
+        # check that a new application was created
+        self.assertEqual(profile.application_set.count(), original_applications_count + 1)
+
+        # check that the state of the application is draft
+        self.assertEqual(profile.application_set.first().processing_status, 'draft')
+
+    def test_enter_details_preview(self):
         """Testing that a user can enter the details of an application form and that the data is
         saved in the session for previewing
         """
@@ -242,7 +286,7 @@ class ApplicationEntryTestCase(TestCase):
         # check that the profile in the session is the selected profile
         self.assertEqual(self.client.session['application']['data'].get('project_title', ''), 'Test Title')
 
-    def test_enter_details_preview(self):
+    def test_enter_details_lodge(self):
         """Testing that a user can preview the details of an application form then lodge the application
         """
         self.client.login(self.customer.email)

@@ -1,13 +1,20 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from ledger.accounts.models import RevisionedMixin, EmailUser, Document
 from ledger.licence.models import LicenceType
 
 
+@python_2_unicode_compatible
 class Condition(RevisionedMixin):
     text = models.TextField()
+    code = models.CharField(max_length=10)
+    one_off = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.code
 
 
 class WildlifeLicenceType(LicenceType):
@@ -23,3 +30,14 @@ class AbstractLogEntry(models.Model):
 
     class Meta:
         abstract = True
+
+
+@python_2_unicode_compatible
+class AssessorDepartment(models.Model):
+    name = models.CharField(max_length=50)
+    email = models.EmailField()
+    members = models.ManyToManyField(EmailUser)
+    suggested_conditions = models.ManyToManyField(Condition, blank=True)
+
+    def __str__(self):
+        return self.name

@@ -6,7 +6,8 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry,\
+    AssessorDepartment
 
 
 class Application(RevisionedMixin):
@@ -70,7 +71,7 @@ class AmendmentRequest(ApplicationLogEntry):
 
 class AssessmentRequest(ApplicationLogEntry):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
-    assessor = models.ForeignKey(EmailUser)
+    assessor_department = models.ForeignKey(AssessorDepartment)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
 
 

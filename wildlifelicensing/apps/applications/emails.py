@@ -38,7 +38,7 @@ def send_assessment_requested_email(application, assessment_request, request):
                 args=[application.pk])
     )
     context = {
-        'assessor': assessment_request.assessor,
+        'assessor': assessment_request.assessor_department,
         'url': url
     }
     msg = email.send(application.applicant_profile.email, context=context)
