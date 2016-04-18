@@ -9,13 +9,7 @@ from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition
-from wildlifelicensing.apps.applications.utils import format_application_statuses
-
-
-def orderConditions(instance, attrs):
-    attrs['conditions'] = serialize(instance.conditions.all().order_by('order'))
-
-    return attrs
+from wildlifelicensing.apps.applications.utils import format_application
 
 
 class EnterConditionsView(OfficerRequiredMixin, TemplateView):
@@ -24,7 +18,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        kwargs['application'] = serialize(application, posthook=orderConditions)
+        kwargs['application'] = serialize(application, posthook=format_application)
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 

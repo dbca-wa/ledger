@@ -20,7 +20,7 @@ from wildlifelicensing.apps.applications.emails import send_amendment_requested_
 from wildlifelicensing.apps.main.models import AssessorDepartment
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
-    REVIEW_STATUSES, ASSESSMENT_STATUSES, format_application_statuses, format_assessment_status
+    REVIEW_STATUSES, ASSESSMENT_STATUSES, format_application, format_assessment_status
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -48,7 +48,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
 
         data = {
             'user': serialize(request.user),
-            'application': serialize(application, posthook=format_application_statuses),
+            'application': serialize(application, posthook=format_application),
             'form_structure': form_structure,
             'officers': officers,
             'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application)),

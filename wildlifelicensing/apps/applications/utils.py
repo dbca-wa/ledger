@@ -1,6 +1,8 @@
 import os
 import shutil
 
+from preserialize.serialize import serialize
+
 from models import Application, AssessmentRequest
 
 
@@ -99,11 +101,13 @@ def delete_application_session_data(session):
         del session['application']
 
 
-def format_application_statuses(instance, attrs):
+def format_application(instance, attrs):
     attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
     attrs['id_check_status'] = ID_CHECK_STATUSES[attrs['id_check_status']]
     attrs['character_check_status'] = CHARACTER_CHECK_STATUSES[attrs['character_check_status']]
     attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
+
+    attrs['conditions'] = serialize([ap.condition for ap in instance.applicationcondition_set.all().order_by('order')])
 
     return attrs
 
