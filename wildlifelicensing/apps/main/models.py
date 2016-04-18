@@ -18,8 +18,17 @@ class Condition(RevisionedMixin):
 
 
 class WildlifeLicenceType(LicenceType):
-    default_conditions = models.ManyToManyField(Condition, blank=True)
     identification_required = models.BooleanField(default=False)
+    default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
+
+
+class DefaultCondition(models.Model):
+    condition = models.ForeignKey(Condition)
+    wildlife_licence_type = models.ForeignKey(WildlifeLicenceType)
+    order = models.IntegerField()
+
+    class Meta:
+        unique_together = ('condition', 'wildlife_licence_type', 'order')
 
 
 class AbstractLogEntry(models.Model):

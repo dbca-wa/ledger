@@ -1,10 +1,11 @@
 define(['jQuery', 'lodash', 'select2'], function($, _) {
-    var $createCustomConditionModal = $('#createCustomConditionModal'),
-        $createCustomConditionForm = $('#createConditionForm'),
-        $conditionsForm = $('#conditionsForm');
+    var $conditionsTableBody = $('#conditionsBody'),
+        $conditionsEmptyRow = $('#conditionsEmptyRow'),
+        $createCustomConditionModal = $('#createCustomConditionModal'),
+        $createCustomConditionForm = $('#createConditionForm');
 
-    function createConditionTableRow(condition, $tableBody, $emptyRow) {
-        var $row = $('<tr>');
+    function createConditionTableRow(condition, rowClass) {
+        var $row = $('<tr>').addClass(rowClass);
 
         $row.append($('<td>').html(condition.code));
         $row.append($('<td>').html(condition.text));
@@ -13,11 +14,11 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         $remove.click(function(e) {
             $row.remove();
 
-            if($tableBody.find('tr').length == 1) {
-                $emptyRow.removeClass('hidden');
+            if($conditionsTableBody.find('tr').length == 1) {
+                $conditionsEmptyRow.removeClass('hidden');
             }
 
-            $conditionsForm.find('input[value="' + condition.id + '"]').remove();
+            $conditionsTableBody.find('input[value="' + condition.id + '"]').remove();
         });
 
         var $clone = $('<a>Clone</a>');
@@ -28,40 +29,49 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         });
 
         $action = $('<div>').append($remove).append($('<hr>')).append($clone);
-
         $row.append($('<td>').css('vertical-align', 'middle').html($action));
-        $tableBody.append($row);
 
-        $conditionsForm.append($('<input>').attr('type', 'hidden').attr('name', 'conditionID').val(condition.id));
+        var $moveUp = $('<a>').append($('<span>').addClass('glyphicon').addClass('glyphicon-chevron-up'));
+        $moveUp.click(function(e) {
+            $row.insertBefore($row.prev());
+        });
+
+        var $moveDown = $('<a>').append($('<span>').addClass('glyphicon').addClass('glyphicon-chevron-down'));
+        $moveDown.click(function(e) {
+            $row.insertAfter($row.next());
+        });
+
+        $ordering = $('<div>').css('text-align', 'center').append($moveUp).append($('<hr>')).append($moveDown);
+        $row.append($('<td>').css('vertical-align', 'middle').html($ordering));
+
+        $conditionsTableBody.append($row);
+
+        $row.append($('<input>').attr('type', 'hidden').attr('name', 'conditionID').val(condition.id));
+    }
+
+    function initExistingConditions(application) {
+        conditions = application.conditions;
+        $.each(application.conditions, function(index, condition) {
+            if(_.some(application.licence_type.default_conditions, ['id', condition.id])) {
+                createConditionTableRow(condition, 'default');
+            } else if(condition.one_off) {
+                createConditionTableRow(condition, 'custom');
+            } else {
+                createConditionTableRow(condition, 'additional');
+            }
+        });
     }
 
     function initDefaultConditions(defaultConditions) {
-        var $defaultConditionsBody = $('#defaultConditions').find('tbody');
-            $defaultConditionsEmptyRow = $defaultConditionsBody.find('#defaultConditionsEmptyRow');
-
         $.each(defaultConditions, function(index, condition) {
-            createConditionTableRow(condition, $defaultConditionsBody, $defaultConditionsEmptyRow);
-        });
-
-        $('#resetDefaultConditions').click(function(e) {
-            $defaultConditionsBody.empty();
-
-            $.each(defaultConditions, function(index, condition) {
-                createConditionTableRow(condition, $defaultConditionsBody, $defaultConditionsEmptyRow);
-            });
-
-            $defaultConditionsEmptyRow.addClass('hidden');
-
-            $defaultConditionsBody.append($defaultConditionsEmptyRow);
+            createConditionTableRow(condition, 'default');
         });
     }
 
     function initAdditionalConditions() {
         var conditions = {},
             $searchConditions = $('#searchConditions'),
-            $addCondition = $('#addCondition'),
-            $additionalConditionsBody = $('#additionalConditions').find('tbody'),
-            $additionalConditionsEmptyRow = $additionalConditionsBody.find('#additionalConditionsEmptyRow');
+            $addCondition = $('#addCondition');
 
         $searchConditions.select2({
             dropdownCssClass : 'conditions-dropdown',
@@ -93,8 +103,6 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
 
                 $container.append($row);
 
-                $additionalConditionsEmptyRow.addClass('hidden');
-
                 return $container;
             },
             formatResultCssClass: function(object) {
@@ -109,14 +117,11 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         $addCondition.click(function(e) {
             var condition = conditions[$searchConditions.val()];
 
-            createConditionTableRow(condition, $additionalConditionsBody, $additionalConditionsEmptyRow);
+            createConditionTableRow(condition, 'additional');
         });
     }
 
     function initCustomConditions() {
-        var $additionalConditionsBody = $('#additionalConditions').find('tbody'),
-            $additionalConditionsEmptyRow = $additionalConditionsBody.find('#additionalConditionsEmptyRow');
-
         $('#createCustomCondition').click(function(e) {
             $createCustomConditionModal.modal('show');
         });
@@ -127,8 +132,8 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
                 success: function (data) {
-                    createConditionTableRow(data, $additionalConditionsBody, $additionalConditionsEmptyRow);
-                    $additionalConditionsEmptyRow.addClass('hidden');
+                    createConditionTableRow(data, 'custom');
+                    $conditionsEmptyRow.addClass('hidden');
                     $createCustomConditionModal.modal('hide');
                 }
             });
@@ -141,11 +146,30 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         });
     }
 
+    function initForm() {
+        $('#issueLicence').click(function(e) {
+            var $conditionsForm = $('#conditionsForm');
+            $conditionsForm.append($('<input>').attr('type', 'hidden').attr('name', 'submissionType').val(this.id));
+            $conditionsForm.submit();
+        });
+
+        $('#backToProcessing').click(function(e) {
+            var $conditionsForm = $('#conditionsForm');
+            $conditionsForm.append($('<input>').attr('type', 'hidden').attr('name', 'submissionType').val(this.id));
+            $conditionsForm.submit();
+        });
+    }
+
     return {
         init: function(application) {
-            initDefaultConditions(application.licence_type.default_conditions);
+            if(application.conditions.length) {
+                initExistingConditions(application);
+            } else {
+                initDefaultConditions(application.licence_type.default_conditions);
+            }
             initAdditionalConditions();
             initCustomConditions();
+            initForm();
         }
     }
 });

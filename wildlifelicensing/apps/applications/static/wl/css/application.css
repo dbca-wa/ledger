@@ -114,14 +114,42 @@ a { cursor: pointer; }
     padding: 8px;
 }
 
+#conditionsBody hr {
+    border-color: #BDC3C7;
+}
+
 th.code {
     width: 10%;
 }
 
 th.condition {
-    width: 80%;
+    width: 75%;
 }
 
 th.action {
     width: 10%;
+}
+
+th.order {
+    width: 5%;
+}
+
+.default {
+    background: #EBF5FB;
+}
+
+.additional {
+    background: #FDF2E9;
+}
+
+.custom {
+    background: #FEF9E7;
+}
+
+.legend {
+    margin-left: 10px;
+    width: 15px;
+    height: 15px;
+    border: 1px solid #ddd;
+    display: inline-block;
 }

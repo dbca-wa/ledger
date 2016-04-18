@@ -104,46 +104,41 @@
                         </div>
                     </div>
                 </div>
-                <form method="post" action="{% url 'applications:submit_conditions' application.id %}" id="conditionsForm">
-                    {% csrf_token %}
-                    <button type="submit" name="issueLicence" type="button" class="btn btn-sm btn-success pull-right">Issue Licence</button>
-                    <button type="submit" name="backToProcessing" type="button" class="btn btn-sm btn-default">Back to Processing</button>
-                </form>
+                <button id="issueLicence" type="button" class="btn btn-sm btn-success pull-right">Issue Licence</button>
+                <button id="backToProcessing" type="button" class="btn btn-sm btn-default">Back to Processing</button>
             </div>
             <div class="col-md-9">
                 <h2>Enter Conditions</h2>
                 <hr>
-                <h3 class="pull-left">Default Conditions</h3>
-                <a id="resetDefaultConditions" class="pull-right top-buffer">Reset</a>
-                <table id="defaultConditions" class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th class="code">Code</th>
-                            <th class="condition">Condition</th>
-                            <th class="action">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr id="defaultConditionsEmptyRow" class="hidden">
-                            <td colspan="3">No default conditions specified</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <h3>Additional Conditions</h3>
-                <table id="additionalConditions" class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th class="code">Code</th>
-                            <th class="condition">Condition</th>
-                            <th class="action">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr id="additionalConditionsEmptyRow">
-                            <td colspan="3">No additional conditions specified</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="pull-right">
+                    <div class="legend default">
+                    </div>
+                    <strong>Default Condition</strong>
+                    <div class="legend additional">
+                    </div>
+                    <strong>Additional Condition</strong>
+                    <div class="legend custom">
+                    </div>
+                    <strong>Custom Condition</strong>
+                </div>
+                <form method="post" action="{% url 'applications:submit_conditions' application.id %}" id="conditionsForm">
+                    {% csrf_token %}
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="code">Code</th>
+                                <th class="condition">Condition</th>
+                                <th class="action">Action</th>
+                                <th class="order">Order</th>
+                            </tr>
+                        </thead>
+                            <tbody id="conditionsBody">
+                                <tr id="conditionsEmptyRow" class="hidden">
+                                    <td colspan="3">No default conditions specified</td>
+                                </tr>
+                            </tbody>
+                    </table>
+                </form>
             </div>
         </div>
     </div>

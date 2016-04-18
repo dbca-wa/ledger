@@ -53,7 +53,7 @@ class Application(RevisionedMixin):
     review_status = models.CharField('Review Status', max_length=20, choices=REVIEW_STATUS_CHOICES,
                                      default=REVIEW_STATUS_CHOICES[0][0])
 
-    conditions = models.ManyToManyField(Condition)
+    conditions = models.ManyToManyField(Condition, through='ApplicationCondition')
 
     @property
     def is_assigned(self):
@@ -77,6 +77,15 @@ class AssessmentRequest(ApplicationLogEntry):
 
 class AssessorComment(ApplicationLogEntry):
     assessment_request = models.ForeignKey(AssessmentRequest)
+
+
+class ApplicationCondition(models.Model):
+    condition = models.ForeignKey(Condition)
+    application = models.ForeignKey(Application)
+    order = models.IntegerField()
+
+    class Meta:
+        unique_together = ('condition', 'application', 'order')
 
 
 class EmailLogEntry(ApplicationLogEntry):
