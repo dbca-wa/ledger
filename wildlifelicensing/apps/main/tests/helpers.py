@@ -9,6 +9,7 @@ from mixer.backend.django import mixer
 from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser
+from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main import helpers as accounts_helpers
 
 
@@ -86,6 +87,10 @@ def create_default_officer():
     user = create_user(**TestData.DEFAULT_OFFICER)
     add_to_group(user, 'Officers')
     return user
+
+
+def create_licence_type(code='regulation17'):
+    return WildlifeLicenceType.objects.get_or_create(code=code)[0]
 
 
 def create_default_assessor():
