@@ -3,7 +3,7 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         $createCustomConditionForm = $('#createConditionForm'),
         $conditionsForm = $('#conditionsForm');
 
-    function createConditionTableRow(condition, $table, $emptyRow) {
+    function createConditionTableRow(condition, $tableBody, $emptyRow) {
         var $row = $('<tr>');
 
         $row.append($('<td>').html(condition.code));
@@ -13,7 +13,7 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         $remove.click(function(e) {
             $row.remove();
 
-            if($table.find('tr').length == 2) {
+            if($tableBody.find('tr').length == 1) {
                 $emptyRow.removeClass('hidden');
             }
 
@@ -30,17 +30,29 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         $action = $('<div>').append($remove).append($('<hr>')).append($clone);
 
         $row.append($('<td>').css('vertical-align', 'middle').html($action));
-        $table.append($row);
+        $tableBody.append($row);
 
         $conditionsForm.append($('<input>').attr('type', 'hidden').attr('name', 'conditionID').val(condition.id));
     }
 
     function initDefaultConditions(defaultConditions) {
-        var $defaultConditions = $('#defaultConditions'),
-            $defaultConditionsEmptyRow = $defaultConditions.find('#defaultConditionsEmptyRow');
+        var $defaultConditionsBody = $('#defaultConditions').find('tbody');
+            $defaultConditionsEmptyRow = $defaultConditionsBody.find('#defaultConditionsEmptyRow');
 
         $.each(defaultConditions, function(index, condition) {
-            createConditionTableRow(condition, $defaultConditions, $defaultConditionsEmptyRow);
+            createConditionTableRow(condition, $defaultConditionsBody, $defaultConditionsEmptyRow);
+        });
+
+        $('#resetDefaultConditions').click(function(e) {
+            $defaultConditionsBody.empty();
+
+            $.each(defaultConditions, function(index, condition) {
+                createConditionTableRow(condition, $defaultConditionsBody, $defaultConditionsEmptyRow);
+            });
+
+            $defaultConditionsEmptyRow.addClass('hidden');
+
+            $defaultConditionsBody.append($defaultConditionsEmptyRow);
         });
     }
 
@@ -48,8 +60,8 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         var conditions = {},
             $searchConditions = $('#searchConditions'),
             $addCondition = $('#addCondition'),
-            $additionalConditions = $('#additionalConditions'),
-            $additionalConditionsEmptyRow = $additionalConditions.find('#additionalConditionsEmptyRow');
+            $additionalConditionsBody = $('#additionalConditions').find('tbody'),
+            $additionalConditionsEmptyRow = $additionalConditionsBody.find('#additionalConditionsEmptyRow');
 
         $searchConditions.select2({
             dropdownCssClass : 'conditions-dropdown',
@@ -81,6 +93,8 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
 
                 $container.append($row);
 
+                $additionalConditionsEmptyRow.addClass('hidden');
+
                 return $container;
             },
             formatResultCssClass: function(object) {
@@ -95,13 +109,13 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
         $addCondition.click(function(e) {
             var condition = conditions[$searchConditions.val()];
 
-            createConditionTableRow(condition, $additionalConditions, $additionalConditionsEmptyRow);
+            createConditionTableRow(condition, $additionalConditionsBody, $additionalConditionsEmptyRow);
         });
     }
 
     function initCustomConditions() {
-        var $additionalConditions = $('#additionalConditions'),
-            $additionalConditionsEmptyRow = $additionalConditions.find('#additionalConditionsEmptyRow');
+        var $additionalConditionsBody = $('#additionalConditions').find('tbody'),
+            $additionalConditionsEmptyRow = $additionalConditionsBody.find('#additionalConditionsEmptyRow');
 
         $('#createCustomCondition').click(function(e) {
             $createCustomConditionModal.modal('show');
@@ -113,8 +127,8 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
                 success: function (data) {
-                    createConditionTableRow(data, $additionalConditions, $additionalConditionsEmptyRow);
-
+                    createConditionTableRow(data, $additionalConditionsBody, $additionalConditionsEmptyRow);
+                    $additionalConditionsEmptyRow.addClass('hidden');
                     $createCustomConditionModal.modal('hide');
                 }
             });

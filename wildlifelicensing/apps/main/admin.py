@@ -9,6 +9,7 @@ from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition
 @admin.register(WildlifeLicenceType)
 class LicenceTypeAdmin(VersionAdmin):
     list_display = ('name', 'code')
+    filter_horizontal = ('default_conditions',)
 
 
 # Register your models here.

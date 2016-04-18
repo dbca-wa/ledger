@@ -113,3 +113,15 @@ a { cursor: pointer; }
     vertical-align: top;
     padding: 8px;
 }
+
+th.code {
+    width: 10%;
+}
+
+th.condition {
+    width: 80%;
+}
+
+th.action {
+    width: 10%;
+}
