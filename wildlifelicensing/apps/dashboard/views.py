@@ -47,8 +47,11 @@ class DashBoardRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            if is_officer(self.request.user) or is_assessor(self.request.user):
+            if is_officer(self.request.user):
                 return redirect('dashboard:tree_officer')
+            elif is_assessor(self.request.user):
+                return redirect('dashboard: ')
+
             return redirect('dashboard:tree_customer')
         else:
             kwargs['form'] = LoginForm
@@ -282,7 +285,48 @@ class DashboardTableCustomerView(DashboardTableBaseView):
         ]
         data['applications']['filters']['status']['values'] = \
             [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
-        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_customer')
+        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_assessor')
+        return data
+
+
+class DashboardTableAssessorView(DashboardTableBaseView):
+    def _build_data(self):
+        data = super(DashboardTableAssessorView, self)._build_data()
+        data['applications']['columnDefinitions'] = [
+            {
+                'title': 'Lodge No.',
+                'name': 'lodgement_number'
+            },
+            {
+                'title': 'Licence Type',
+                'name': 'license_type',
+            },
+            {
+                'title': 'User',
+                'name': 'applicant_profile__user'
+            },
+            {
+                'title': 'Status',
+                'name': 'status'
+            },
+            {
+                'title': 'Lodged on',
+                'name': 'lodgement_date'
+            },
+            {
+                'title': 'Assignee',
+                'name': 'assigned_officer'
+            },
+            {
+                'title': 'Action',
+                'name': 'action',
+                'searchable': False,
+                'orderable': False
+            }
+        ]
+        data['applications']['filters']['status']['values'] = \
+            [('all', 'All')] + _get_processing_statuses_but_draft()
+        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_assessor')
         return data
 
 
@@ -477,3 +521,12 @@ class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
             'render': _render_action_column,
         },
     })
+
+
+class ApplicationDataTableAssessorView(ApplicationDataTableOfficerView):
+
+    def get_initial_queryset(self):
+        departments = self.request.user.assessordepartment_set.all()
+        return []
+
+
