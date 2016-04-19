@@ -416,9 +416,14 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
         return Q(processing_status=status_value) if status_value != 'all' else ~Q(customer_status='draft')
 
     def _render_action_column(self, obj):
-        return '<a href="{0}">Process</a>'.format(
-            reverse('applications:process', args={obj.pk}),
-        )
+        if obj.processing_status == 'ready_for_conditions':
+            return '<a href="{0}">Enter Conditions</a>'.format(
+                reverse('applications:enter_conditions', args=[obj.pk]),
+            )
+        else:
+            return '<a href="{0}">Process</a>'.format(
+                reverse('applications:process', args=[obj.pk]),
+            )
 
     def _build_assignee_search_query(self, search):
         fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name',

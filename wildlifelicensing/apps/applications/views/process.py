@@ -69,7 +69,7 @@ class ProcessView(OfficerRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
-        application.processing_status = 'approved'
+        application.processing_status = 'ready_for_conditions'
         application.save()
 
         return redirect('applications:enter_conditions', *args, **kwargs)
