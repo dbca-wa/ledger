@@ -12,7 +12,7 @@ from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser
 
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
@@ -25,7 +25,7 @@ from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CH
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 
-class ProcessView(OfficerRequiredMixin, TemplateView):
+class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
     template_name = 'wl/process/process_app.html'
 
     def _build_data(self, request, application):

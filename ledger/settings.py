@@ -194,6 +194,11 @@ LOGGING = {
         },
     },
     'handlers': {
+        'console': {
+            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -203,6 +208,11 @@ LOGGING = {
         },
     },
     'loggers': {
+        '': {
+            'handlers': ['file', 'console'],
+            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
+            'propagate': True
+        },
         'django.request': {
             'handlers': ['file'],
             'level': 'INFO'

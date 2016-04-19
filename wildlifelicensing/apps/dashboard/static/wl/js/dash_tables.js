@@ -57,27 +57,30 @@ define(
                     title: tuple[1] || tuple[0]
                 }));
             }
-
             // licence type
-            _.forEach(data.applications.filters.licenceType.values, function (value) {
+            if ($applicationsLicenceTypeFilter.length && data.applications.filters.licenceType) {
+                _.forEach(data.applications.filters.licenceType.values, function (value) {
 
-                $node = createOptionNode(value);
-                $applicationsLicenceTypeFilter.append($node);
-            });
-            $applicationsLicenceTypeFilter.on('change', function () {
-                applicationsTable.ajax.reload();
-            });
+                    $node = createOptionNode(value);
+                    $applicationsLicenceTypeFilter.append($node);
+                });
+                $applicationsLicenceTypeFilter.on('change', function () {
+                    applicationsTable.ajax.reload();
+                });
+            }
             // status
-            _.forEach(data.applications.filters.status.values, function (value) {
-                $node = createOptionNode(value);
-                $applicationsStatusTypeFilter.append($node);
-            });
-            $applicationsStatusTypeFilter.on('change', function () {
-                applicationsTable.ajax.reload();
-            });
+            if ($applicationsStatusTypeFilter.length && data.applications.filters.status) {
+                _.forEach(data.applications.filters.status.values, function (value) {
+                    $node = createOptionNode(value);
+                    $applicationsStatusTypeFilter.append($node);
+                });
+                $applicationsStatusTypeFilter.on('change', function () {
+                    applicationsTable.ajax.reload();
+                });
+            }
 
             // assignee filter
-            if ($applicationsAssigneeTypeFilter && data.applications.filters.assignee.values) {
+            if ($applicationsAssigneeTypeFilter.length && data.applications.filters.assignee) {
                 _.forEach(data.applications.filters.assignee.values, function (value) {
                     $node = createOptionNode(value);
                     $applicationsAssigneeTypeFilter.append($node);
@@ -86,7 +89,6 @@ define(
                     applicationsTable.ajax.reload();
                 });
             }
-
         }
 
         function setFilters(query) {
@@ -116,15 +118,15 @@ define(
                         },
                         'columnDefinitions': [],
                         'filters': {
-                            'licenceType': {
-                                'values': []
-                            },
-                            'status': {
-                                'values': []
-                            },
-                            'assignee': {
-                                'values': []
-                            }
+                            //'licenceType': {
+                            //    'values': []
+                            //},
+                            //'status': {
+                            //    'values': []
+                            //},
+                            //'assignee': {
+                            //    'values': []
+                            //}
                         }
                     }
                 }
