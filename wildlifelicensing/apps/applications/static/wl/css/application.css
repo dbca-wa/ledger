@@ -1,3 +1,4 @@
+/* all application pages */
 .affix-top {
 
 }
@@ -19,6 +20,17 @@
 
 }
 
+hr {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+a {
+    cursor: pointer;
+}
+
+/* enter details / preview */
+
 #sectionList > ul > .active {
     font-weight: bold;
 }
@@ -39,6 +51,8 @@
 #mainContainer {
     padding-bottom: 20px;
 }
+
+/* processing */
 
 .panel-heading a.collapsed span:before
 {
@@ -82,13 +96,6 @@
     color: red;
 }
 
-hr {
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
-a { cursor: pointer; }
-
 .action-buttons-group {
     margin-bottom: 5px;
 }
@@ -105,6 +112,12 @@ a { cursor: pointer; }
     font-size: 12px;
 }
 
+/* conditions */
+
+.popover{
+    max-width: 100%;
+}
+
 .conditions-dropdown {
     width: 600px !important;
 }
@@ -112,4 +125,44 @@ a { cursor: pointer; }
 .conditions-option td {
     vertical-align: top;
     padding: 8px;
+}
+
+#conditionsBody hr {
+    border-color: #BDC3C7;
+}
+
+th.code {
+    width: 10%;
+}
+
+th.condition {
+    width: 75%;
+}
+
+th.action {
+    width: 10%;
+}
+
+th.order {
+    width: 5%;
+}
+
+.default {
+    background: #EBF5FB;
+}
+
+.additional {
+    background: #FDF2E9;
+}
+
+.custom {
+    background: #FEF9E7;
+}
+
+.legend {
+    margin-left: 10px;
+    width: 15px;
+    height: 15px;
+    border: 1px solid #ddd;
+    display: inline-block;
 }

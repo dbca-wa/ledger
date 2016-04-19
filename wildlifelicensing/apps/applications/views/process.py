@@ -1,23 +1,26 @@
-import json
-import os
-
 from django.core.context_processors import csrf
+import os
+import json
+
 from django.http import JsonResponse
+from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import formats
-from django.views.generic import TemplateView, View
-from preserialize.serialize import serialize
+
 from reversion import revisions
+from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser
-from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
-from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
-    REVIEW_STATUSES, format_application_statuses, format_assessment_status
+
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
-from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
-from wildlifelicensing.apps.main.models import AssessorDepartment
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
+from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email
+from wildlifelicensing.apps.main.models import AssessorDepartment
+
+from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
+    REVIEW_STATUSES, format_application, format_assessment_status
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -45,7 +48,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         data = {
             'user': serialize(request.user),
-            'application': serialize(application, posthook=format_application_statuses),
+            'application': serialize(application, posthook=format_application),
             'form_structure': form_structure,
             'officers': officers,
             'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application)),
@@ -66,7 +69,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
-        application.processing_status = 'approved'
+        application.processing_status = 'ready_for_conditions'
         application.save()
 
         return redirect('applications:enter_conditions', *args, **kwargs)
@@ -87,8 +90,7 @@ class AssignOfficerView(View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                                                               (application.assigned_officer.first_name,
-                                                                                application.assigned_officer.last_name)}
+                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
@@ -101,6 +103,9 @@ class SetIDCheckStatusView(View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
         application.id_check_status = request.POST['status']
+
+        if 'message' in request.POST:
+            print(request.POST.get('message'))
 
         application.processing_status = _determine_processing_status(application)
         application.save()
