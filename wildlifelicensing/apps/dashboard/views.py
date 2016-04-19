@@ -263,11 +263,12 @@ class DashboardTableAssessorView(DashboardTableOfficerView):
 
     def _build_data(self):
         data = super(DashboardTableAssessorView, self)._build_data()
-        print('data', data['applications']['filters'])
         data['applications']['ajax']['url'] = reverse('dashboard:data_application_assessor')
-        # remove status filter
-        del data['applications']['filters']['status']
-        print('data', data['applications']['filters'])
+        # remove status and assignee filter
+        if 'status' in data['applications']['filters']:
+            del data['applications']['filters']['status']
+        if 'assignee' in data['applications']['filters']:
+            del data['applications']['filters']['assignee']
         return data
 
 
