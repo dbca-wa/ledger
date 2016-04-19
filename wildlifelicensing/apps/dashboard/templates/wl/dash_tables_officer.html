@@ -1,0 +1,30 @@
+{% extends 'wl/dash_tables.html' %}
+
+{% block application_filters %}
+    <form class="form" id="applications-filter-form">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="applications-filter-licence-type">License Type: </label>
+                <select class="form-control" name="license_type"
+                        id="applications-filter-licence-type">
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="applications-filter-status">Status: </label>
+                <select class="form-control" name="status"
+                        id="applications-filter-status">
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group" id="applications-filter-assignee-group">
+                <label for="applications-filter-assignee">Assignee: </label>
+                <select class="form-control" name="assignee"
+                        id="applications-filter-assignee">
+                </select>
+            </div>
+        </div>
+    </form>
+{% endblock %}
