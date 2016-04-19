@@ -20,7 +20,7 @@ from wildlifelicensing.apps.applications.emails import send_amendment_requested_
 from wildlifelicensing.apps.main.models import AssessorDepartment
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
-    REVIEW_STATUSES, ASSESSMENT_STATUSES, format_application, format_assessment_status
+    REVIEW_STATUSES, format_application, format_assessment_status
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -90,8 +90,7 @@ class AssignOfficerView(View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                                                               (application.assigned_officer.first_name,
-                                                                                application.assigned_officer.last_name)}
+                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 

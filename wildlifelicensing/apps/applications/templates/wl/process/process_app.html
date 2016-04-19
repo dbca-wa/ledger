@@ -192,7 +192,7 @@
                             </div>
                             <form method="post" action="{% url 'applications:process' data.application.id %}">
                                 {% csrf_token %}
-                                <button id="approve" type="submit" name="approve" type="button" class="btn btn-sm btn-success pull-right" disabled>Approve Application</button>
+                                <button id="approve" type="submit" name="enterConditions" type="button" class="btn btn-sm btn-success pull-right" disabled>Enter Conditions</button>
                                 <button id="decline" type="submit" name="decline" type="button" class="btn btn-sm btn-danger">Decline Application</button>
                             </form>
                         </div>

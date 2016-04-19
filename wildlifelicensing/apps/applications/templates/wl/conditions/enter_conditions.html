@@ -16,7 +16,7 @@
 {% block requirements %}
     require(['js/conditions/enter_conditions'], function (enter_conditions) {
         $(function () {
-            enter_conditions.init({{ application|jsonify }});
+            enter_conditions.init({{ application|jsonify }}, {{form_structure|jsonify}});
         });
     });
 {% endblock %}
@@ -73,6 +73,11 @@
                                        {{ application.assigned_officer.first_name }} {{ application.assigned_officer.last_name }}
                                     </p>
                                 </div>
+                                <p>
+                                    <a id="viewApplicationDetails" data-toggle="popover" data-placement="right">
+                                        View Application Details
+                                    </a>
+                                </p>
                              </div>
                         </div>
                     </div>
@@ -155,6 +160,9 @@
                         <h4 class="modal-title">Create Custom Condition</h4>
                     </div>
                     <div class="modal-body">
+                        <div id="createConditionError" class="alert alert-danger hidden">
+                            <span class="text-danger"></span>
+                        </div>
                         <div class="form-group">
                             <label>Condition Code</label>
                             <input type="text" name="code" class="form-control" required></input>
@@ -162,6 +170,12 @@
                         <div class="form-group">
                             <label>Condition Text</label>
                             <textarea name="text" rows="5" class="form-control" required></textarea>
+                         </div>
+                        <div class="form-group">
+                            <label>
+                                <input name="addToGeneralList" type="checkbox">
+                                Add to general condition list
+                            </label> 
                          </div>
                     </div>
                     <div class="modal-footer">

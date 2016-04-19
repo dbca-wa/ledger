@@ -10,7 +10,7 @@ from ledger.licence.models import LicenceType
 @python_2_unicode_compatible
 class Condition(RevisionedMixin):
     text = models.TextField()
-    code = models.CharField(max_length=10)
+    code = models.CharField(max_length=10, unique=True)
     one_off = models.BooleanField(default=False)
 
     def __str__(self):

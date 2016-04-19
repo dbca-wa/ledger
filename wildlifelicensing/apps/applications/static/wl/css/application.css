@@ -1,3 +1,4 @@
+/* all application pages */
 .affix-top {
 
 }
@@ -19,6 +20,17 @@
 
 }
 
+hr {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+a {
+    cursor: pointer;
+}
+
+/* enter details / preview */
+
 #sectionList > ul > .active {
     font-weight: bold;
 }
@@ -39,6 +51,8 @@
 #mainContainer {
     padding-bottom: 20px;
 }
+
+/* processing */
 
 .panel-heading a.collapsed span:before
 {
@@ -82,13 +96,6 @@
     color: red;
 }
 
-hr {
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
-a { cursor: pointer; }
-
 .action-buttons-group {
     margin-bottom: 5px;
 }
@@ -103,6 +110,12 @@ a { cursor: pointer; }
 
 #review a {
     font-size: 12px;
+}
+
+/* conditions */
+
+.popover{
+    max-width: 100%;
 }
 
 .conditions-dropdown {

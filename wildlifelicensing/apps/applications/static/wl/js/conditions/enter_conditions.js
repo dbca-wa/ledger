@@ -1,8 +1,17 @@
-define(['jQuery', 'lodash', 'select2'], function($, _) {
+define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function($, _, applicationPreview) {
     var $conditionsTableBody = $('#conditionsBody'),
         $conditionsEmptyRow = $('#conditionsEmptyRow'),
         $createCustomConditionModal = $('#createCustomConditionModal'),
         $createCustomConditionForm = $('#createConditionForm');
+
+    function initApplicationDetailsPopover(application, formStructure) {
+        var $contentContainer = $('<div>'),
+            $viewApplicationDetails = $('#viewApplicationDetails');
+
+        applicationPreview.layoutPreviewItems($contentContainer, formStructure, application.data);
+
+        $viewApplicationDetails.popover({container: 'body', content: $contentContainer, html: true});
+    }
 
     function createConditionTableRow(condition, rowClass) {
         var $row = $('<tr>').addClass(rowClass);
@@ -23,7 +32,7 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
 
         var $clone = $('<a>Clone</a>');
         $clone.click(function(e) {
-            $createCustomConditionForm.find('input[type=text]').val(condition.code);
+            $createCustomConditionForm.find('h4').text('Create Custom Condition from ' + condition.code);
             $createCustomConditionForm.find('textarea').val(condition.text);
             $createCustomConditionModal.modal('show');
         });
@@ -122,7 +131,10 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
     }
 
     function initCustomConditions() {
+        var $createConditionError = $('#createConditionError');
+
         $('#createCustomCondition').click(function(e) {
+            $createCustomConditionModal.find('h4').text('Create Custom Condition');
             $createCustomConditionModal.modal('show');
         });
 
@@ -132,9 +144,14 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
                 success: function (data) {
-                    createConditionTableRow(data, 'custom');
-                    $conditionsEmptyRow.addClass('hidden');
-                    $createCustomConditionModal.modal('hide');
+                    if(typeof data === "string" || data instanceof String) {
+                        $createConditionError.find('span').text(data);
+                        $createConditionError.removeClass('hidden');
+                    } else {
+                        createConditionTableRow(data, 'custom');
+                        $conditionsEmptyRow.addClass('hidden');
+                        $createCustomConditionModal.modal('hide');
+                    }
                 }
             });
 
@@ -143,6 +160,8 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
 
         $createCustomConditionModal.on('hidden.bs.modal', function(e) {
             $createCustomConditionForm.find('input[type=text], textarea').val('');
+            $createCustomConditionForm.find('input[type=checkbox]').attr('checked', false);
+            $createConditionError.addClass('hidden');
         });
     }
 
@@ -161,7 +180,8 @@ define(['jQuery', 'lodash', 'select2'], function($, _) {
     }
 
     return {
-        init: function(application) {
+        init: function(application, formStructure) {
+            initApplicationDetailsPopover(application, formStructure);
             if(application.conditions.length) {
                 initExistingConditions(application);
             } else {
