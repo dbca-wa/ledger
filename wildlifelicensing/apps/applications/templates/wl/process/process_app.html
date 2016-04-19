@@ -14,10 +14,10 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/process/process_app', 'js/application_preview'], function (app, applicationPreview) {
+    require(['js/process/process_app'], function (app, applicationPreview) {
         $(function () {
-            app.initialiseApplicationProcesssing({{ data|jsonify }});
-            applicationPreview.layoutPreviewItems('#previewContainer', {{ data|jsonify }}.form_structure, {{ data|jsonify}}.application.data)
+            data = {{ data|jsonify }};
+            app.initialiseApplicationProcesssing(data);
             $('#mainContainer').removeClass('hidden');
             //app.initialiseSidePanelAffix();
         });
@@ -46,9 +46,15 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">
-                                <div class="panel-body">
+                                <div class="panel-heading">
+                                    Application Overview
+                                    <a data-toggle="collapse" href="#applicationOverviewBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                </div>
+                                <div id="applicationOverviewBody" class="panel-body panel-collapse in">
                                     <label>Applicant</label>
-                                    {% with applicant=data.application.applicant_persona %}
+                                    {% with applicant=data.application.applicant_profile %}
                                         <p>
                                             {{ applicant.user.first_name }} {{ applicant.user.last_name }}
                                             <span class="pull-right">
@@ -65,7 +71,7 @@
                                     <div class="row">
                                         <div class="col-md-5">
                                             <label>Lodged on</label>
-                                            <p>{{ data.application.lodged_date|date:'d/m/Y' }}</p>
+                                            <p>{{ data.application.lodgement_date|date:'d/m/Y' }}</p>
                                         </div>
                                         <div class="col-md-7">
                                             <label>Status</label>
@@ -84,10 +90,41 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">
-                                <div class="panel-body">
+                                <div class="panel-heading">
+                                    Lodged Versions
+                                    <a data-toggle="collapse" href="#lodgedVersionsBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                 </div>
+                                <div id="lodgedVersionsBody" class="panel-body panel-collapse in">
+                                    <table id="lodgedVersions" class="table small-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Lodge No.</th>
+                                                <th>Date</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    Processing Checklist
+                                    <a data-toggle="collapse" href="#processingChecklistBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                 </div>
+                                <div id="processingChecklistBody" class="panel-body panel-collapse in">
                                     <div id="idCheck" class="processing-action-group">
                                         <div>
-                                            <label>Identity Check</label>
+                                            <label>Identification Check</label>
                                             <span class="pull-right status">{{ data.application.id_check_status }}</span>
                                             <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
                                         </div>
@@ -118,6 +155,9 @@
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
                                             <button type="button" class="btn btn-xs btn-warning">Request Amendments</button>
                                         </div>
+                                        <a class="hidden" data-toggle="popover" data-placement="right" title="Amendment Requests">
+                                            View all amendment requests
+                                        </a>
                                     </div>
                                     <hr>
                                     <div class="processing-action-group">
@@ -127,7 +167,7 @@
                                         </div>
                                         <div>
                                             <div class="form-group">
-                                                Send for assessment
+                                                Select Department
                                                 <input type="hidden" id="assessor" class="form-control" />
                                             </div>
                                             <div style="text-align:right">
@@ -136,7 +176,7 @@
                                         </div>
                                         <div class="hidden">
                                             Current Assessments
-                                            <table id="currentAssessments" class="table">
+                                            <table id="currentAssessments" class="table small-table">
                                                 <thead>
                                                     <tr>
                                                         <th>Assessor</th>
@@ -150,8 +190,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <button id="approve" type="button" class="btn btn-sm btn-success pull-right" disabled>Approve Application</button>
-                            <button id="reject" type="button" class="btn btn-sm btn-danger">Reject Application</button>
+                            <form method="post" action="{% url 'applications:process' data.application.id %}">
+                                {% csrf_token %}
+                                <button id="approve" type="submit" name="enterConditions" type="button" class="btn btn-sm btn-success pull-right" disabled>Enter Conditions</button>
+                                <button id="decline" type="submit" name="decline" type="button" class="btn btn-sm btn-danger">Decline Application</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -159,8 +202,8 @@
             <div class="col-md-9">
                 <div class="panel panel-default">
                     <div class="panel-body">
+                        <h2>{{ data.application.licence_type.name }}</h2>
                         <div id="previewContainer">
-                            <h2>{{ data.application.licence_type.name }}</h2>
                         </div>
                     </div>
                 </div>

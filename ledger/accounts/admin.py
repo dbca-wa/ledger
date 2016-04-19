@@ -6,7 +6,7 @@ from reversion.admin import VersionAdmin
 
 from social.apps.django_app.default.models import UserSocialAuth
 
-from ledger.accounts.models import EmailUser, Address, Persona
+from ledger.accounts.models import EmailUser, Address, Profile
 
 
 @admin.register(EmailUser)
@@ -19,7 +19,7 @@ class EmailUserAdmin(UserAdmin):
     )
     fieldsets = (
         (None, {'fields': ('email',)}),
-        ('Personal info', {'fields': ('first_name', 'last_name',)}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'dob')}),
         ('Permissions', {'fields': (
             'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
@@ -60,6 +60,6 @@ class AddressAdmin(VersionAdmin):
     pass
 
 
-@admin.register(Persona)
-class PersonaAdmin(VersionAdmin):
+@admin.register(Profile)
+class ProfileAdmin(VersionAdmin):
     pass

@@ -10,8 +10,8 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'main:list_personas' %}">List Personas</a></li>
-                    <li class="active">Create Persona</li>
+                    <li><a href="{% url 'main:list_profiles' %}">List Profiles</a></li>
+                    <li class="active">Create Profile</li>
                 </ol>
             </div>
         </div>
@@ -22,10 +22,10 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h2>Create Persona</h2>
+                <h2>Create Profile</h2>
                 <form method="post">
                     {% csrf_token %}
-                    {% bootstrap_form persona_form %}
+                    {% bootstrap_form profile_form %}
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h4 class="panel-title">Postal Address</h4>

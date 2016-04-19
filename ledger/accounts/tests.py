@@ -71,7 +71,7 @@ class AccountsTestCase(TestCase):
         response = self.client.get(reverse('accounts:logout', host='ledger'))
 
         # check response status is 302 - REDIRECT
-        self.assertRedirects(response, reverse('accounts:home', host='ledger'), status_code=302, target_status_code=200)
+        self.assertRedirects(response, settings.SOCIAL_AUTH_LOGIN_REDIRECT_URL, status_code=302, target_status_code=200)
 
         # check user is not logged out
         self.assertNotIn('_auth_user_id', self.client.session)

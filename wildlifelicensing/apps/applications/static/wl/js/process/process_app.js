@@ -1,5 +1,5 @@
-define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
-    var application, assessments, csrfToken;
+define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], function ($, previewVersions) {
+    var application, assessments, amendmentRequests, csrfToken;
 
     var $processingStatus;
 
@@ -35,12 +35,56 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                         applicationID: application.id,
                         csrfmiddlewaretoken: csrfToken,
                         userID: user.id
-                    }, 
+                    },
                     function(data) {
                         $assignee.select2('data', data.assigned_officer);
                         $processingStatus.text(data.processing_status);
                     }
                 );
+            });
+        }
+
+        function createVersionRow(assessment) {
+            var row = $('<tr></tr>');
+            row.append('<td>' + assessment.assessor.first_name + ' ' + assessment.assessor.last_name + '</td>');
+            var statusColumn = $('<td></td>').css('text-align', 'right');
+            if(assessment.status === 'Awaiting Assessment') {
+                statusColumn.append(assessment.status);
+            } else {
+                statusColumn.append('<a>View Comments</a>');
+            }
+
+            row.append(statusColumn);
+
+            return row;
+        }
+
+        function initLodgedVersions(previousData) {
+            var $table = $('#lodgedVersions');
+            $.each(previousData, function(index, version) {
+                var $row = $('<tr>');
+                $row.append($('<td>').text(version.lodgement_number));
+                $row.append($('<td>').text(version.date));
+
+                if(index === 0) {
+                    var $compareLink = $('<a>Show</a>').addClass('hidden');
+                    $row.addClass('small-table-selected-row');
+                } else {
+                    var $compareLink = $('<a>Compare</a>');
+                }
+
+                $compareLink.click(function(e) {
+                    $table.find('tr').removeClass('small-table-selected-row');
+                    $table.find('a').removeClass('hidden');
+                    $row.addClass('small-table-selected-row');
+                    $row.find('a').addClass('hidden');
+                    $previewContainer.empty();
+                    previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, version.data);
+                });
+
+                $row.append($('<td>').html($compareLink));
+
+                $table.append($row);
             });
         }
 
@@ -142,6 +186,22 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
             });
         }
 
+        function prepareAmendmentRequestsPopover($showPopover) {
+            var content = '';
+            $.each(amendmentRequests, function(index, value) {
+                content += '<p>' + value.text + '<p>';
+            });
+
+            // check if popover created yet
+            var popover = $showPopover.data('bs.popover');
+            if(popover === undefined) {
+                $showPopover.popover({container: 'body', content: content, html: true});
+                $showPopover.removeClass('hidden');
+            } else {
+                popover.options.content = content;
+            }
+        }
+
         function initReview() {
             var $container = $('#review');
 
@@ -149,11 +209,13 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 $okTick = $container.find('.ok-tick'),
                 $status = $container.find('.status'),
                 $acceptButton = $actionButtonsContainer.find('.btn-success'),
-                $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning');
+                $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning'),
+                $showAmendmentRequests = $container.find('a');
 
             if (application.review_status === 'Accepted') {
                 $actionButtonsContainer.addClass('hidden');
                 $status.addClass('hidden');
+                $showAmendmentRequests.addClass('hidden');
                 $okTick.removeClass('hidden');
                 return;
             }
@@ -167,9 +229,9 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                 function(data) {
                     $processingStatus.text(data.processing_status);
                     $status.addClass('hidden');
-                    $okTick.removeClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
-
+                    $showAmendmentRequests.addClass('hidden');
+                    $okTick.removeClass('hidden');
                     application.review_status = data.review_status;
                     determineApplicationApprovable();
                 });
@@ -197,19 +259,27 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
 
                     application.review_status = data.review_status;
                     determineApplicationApprovable();
+
+                    if(data.review_status === 'Awaiting Amendments') {
+                        amendmentRequests.push(data.amendment_request);
+                        prepareAmendmentRequestsPopover($showAmendmentRequests);
+                    }
                 });
             });
+
+            if(amendmentRequests.length > 0) {
+                prepareAmendmentRequestsPopover($showAmendmentRequests);
+            }
         }
 
         function createAssessmentRow(assessment) {
             var row = $('<tr></tr>');
-            row.append('<td>' + assessment.assessor.first_name + ' ' + assessment.assessor.last_name + '</td>');
+            row.append('<td>' + assessment.assessor_department.name + '</td>');
             var statusColumn = $('<td></td>').css('text-align', 'right');
             if(assessment.status === 'Awaiting Assessment') {
                 statusColumn.append(assessment.status);
             } else {
                 statusColumn.append('<a>View Comments</a>');
-                statusColumn.append($('<span></span>').addClass('glyphicon').addClass('glyphicon-ok').addClass('ok-tick').css('margin-left', '15px'));
             }
 
             row.append(statusColumn);
@@ -242,7 +312,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'awaiting_assessment',
-                    userID: $assessor.val()
+                    assDeptID: $assessor.val()
                 },
                 function(data) {
                     $processingStatus.text(data.processing_status);
@@ -251,7 +321,7 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
 
                     // remove assessor from assessors list
                     for(var i = 0; i < assessorsList.length; i++) {
-                        if(assessorsList[i].id === data.assessment.assessor.id) {
+                        if(assessorsList[i].id === data.assessment.assessor_department.id) {
                             assessorsList.splice(i, 1);
                             break;
                         }
@@ -296,17 +366,22 @@ define(['jQuery', 'lodash', 'bootstrap', 'select2'], function ($, _) {
         return {
             initialiseApplicationProcesssing: function (data) {
                 $processingStatus = $('#processingStatus');
+                $previewContainer = $('#previewContainer')
                 csrfToken = data.csrf_token;
                 application = data.application;
                 assessments = data.assessments;
+                amendmentRequests = data.amendment_requests;
 
                 initAssignee(data.officers, data.user);
+                initLodgedVersions(data.previous_application_data);
                 initIDCheck();
                 initCharacterCheck();
                 initReview();
-                initAssessment(data.assessors);
+                initAssessment(data.assessor_departments);
 
                 determineApplicationApprovable();
+
+                previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, application.data);
             },
             initialiseSidePanelAffix: function () {
                 var $sidebarPanels = $('#sidebarPanels');

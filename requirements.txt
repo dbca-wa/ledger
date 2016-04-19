@@ -10,3 +10,4 @@ django-hosts>=1.4
 django-datatables-view==1.13.0
 django-reversion==1.10.1
 django-preserialize==1.1.0
+django-countries==3.4.1

@@ -14,7 +14,7 @@ from braces.views import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from .forms import LoginForm
 
@@ -26,7 +26,7 @@ def _build_url(base, query):
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_persona__user=user)
+    return Application.objects.filter(applicant_profile__user=user)
 
 
 def _get_processing_statuses_but_draft():
@@ -227,7 +227,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
             },
             {
                 'title': 'User',
-                'name': 'applicant_persona__user'
+                'name': 'applicant_profile__user'
             },
             {
                 'title': 'Status',
@@ -235,7 +235,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
             },
             {
                 'title': 'Lodged on',
-                'name': 'lodged_date'
+                'name': 'lodgement_date'
             },
             {
                 'title': 'Assignee',
@@ -266,8 +266,8 @@ class DashboardTableCustomerView(DashboardTableBaseView):
                 'name': 'license_type',
             },
             {
-                'title': 'Persona',
-                'name': 'applicant_persona'
+                'title': 'Profile',
+                'name': 'applicant_profile'
             },
             {
                 'title': 'Status',
@@ -288,8 +288,8 @@ class DashboardTableCustomerView(DashboardTableBaseView):
 
 class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
     model = Application
-    columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
-    order_columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+    columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
+    order_columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
 
     def _build_search_query(self, fields_to_search, search):
         query = Q()
@@ -298,33 +298,33 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return query
 
     def _build_user_search_query(self, search):
-        fields_to_search = ['applicant_persona__user__last_name', 'applicant_persona__user__first_name',
-                            'applicant_persona__user__email']
+        fields_to_search = ['applicant_profile__user__last_name', 'applicant_profile__user__first_name',
+                            'applicant_profile__user__email']
         return self._build_search_query(fields_to_search, search)
 
-    def _build_persona_search_query(self, search):
-        fields_to_search = ['applicant_persona__email', 'applicant_persona__name']
+    def _build_profile_search_query(self, search):
+        fields_to_search = ['applicant_profile__email', 'applicant_profile__name']
         return self._build_search_query(fields_to_search, search)
 
     def _render_user_column(self, obj):
-        return render_user_name(obj.applicant_persona.user, first_name_first=False)
+        return render_user_name(obj.applicant_profile.user, first_name_first=False)
 
-    def _render_persona_column(self, obj):
-        persona = obj.applicant_persona
-        if persona is None:
+    def _render_profile_column(self, obj):
+        profile = obj.applicant_profile
+        if profile is None:
             return 'unknown'
         else:
             # return the string rep
-            return '{}'.format(persona)
+            return '{}'.format(profile)
 
     columns_helpers = {
-        'applicant_persona.user': {
+        'applicant_profile.user': {
             'render': _render_user_column,
             'search': _build_user_search_query
         },
-        'applicant_persona': {
-            'render': _render_persona_column,
-            'search': _build_persona_search_query
+        'applicant_profile': {
+            'render': _render_profile_column,
+            'search': _build_profile_search_query
         }
     }
 
@@ -403,12 +403,12 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
 
 class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, ApplicationDataTableBaseView):
-    columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
+    columns = ['id', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
                'assigned_officer', 'action']
     order_columns = ['id', 'licence_type.code',
-                     ['applicant_persona.user.last_name', 'applicant_persona.user.first_name',
-                      'applicant_persona.user.email'],
-                     'processing_status', 'lodged_date',
+                     ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
+                      'applicant_profile.user.email'],
+                     'processing_status', 'lodgement_date',
                      ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'], '']
 
     def _build_status_filter(self, status_value):
@@ -416,9 +416,14 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
         return Q(processing_status=status_value) if status_value != 'all' else ~Q(customer_status='draft')
 
     def _render_action_column(self, obj):
-        return '<a href="{0}">Process</a>'.format(
-            reverse('applications:process', args={obj.pk}),
-        )
+        if obj.processing_status == 'ready_for_conditions':
+            return '<a href="{0}">Enter Conditions</a>'.format(
+                reverse('applications:enter_conditions', args=[obj.pk]),
+            )
+        else:
+            return '<a href="{0}">Process</a>'.format(
+                reverse('applications:process', args=[obj.pk]),
+            )
 
     def _build_assignee_search_query(self, search):
         fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name',
@@ -428,8 +433,8 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
     def _render_assignee_column(self, obj):
         return render_user_name(obj.assigned_officer)
 
-    def _render_lodged_date(selfself, obj):
-        return _render_date(obj.lodged_date)
+    def _render_lodgement_date(self, obj):
+        return _render_date(obj.lodgement_date)
 
     columns_helpers = dict(ApplicationDataTableBaseView.columns_helpers.items(), **{
         'assigned_officer': {
@@ -439,8 +444,8 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
         'action': {
             'render': _render_action_column,
         },
-        'lodged_date': {
-            'render': _render_lodged_date
+        'lodgement_date': {
+            'render': _render_lodgement_date
         },
     })
 
@@ -449,8 +454,8 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
 
 
 class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
-    columns = ['licence_type.code', 'applicant_persona', 'customer_status', 'action']
-    order_columns = ['licence_type.code', 'applicant_persona', 'customer_status', '']
+    columns = ['licence_type.code', 'applicant_profile', 'customer_status', 'action']
+    order_columns = ['licence_type.code', 'applicant_profile', 'customer_status', '']
 
     def get_initial_queryset(self):
         return _get_user_applications(self.request.user)
@@ -461,12 +466,12 @@ class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
     def _render_action_column(self, obj):
         if obj.customer_status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Continue application'
             )
         elif obj.customer_status == 'amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Amend application'
             )
         else:
