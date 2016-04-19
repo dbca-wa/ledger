@@ -9,7 +9,7 @@ from django.template import loader
 # render a template and send a fancy HTML email instead.
 
 def send_validation(strategy, backend, code):
-    url = reverse('accounts:token_login', args=(code.code,))
+    url = reverse('accounts:token_login', args=(code.code, code.email))
     url = strategy.request.build_absolute_uri(url)
     template = loader.render_to_string('email/login.txt', context={'login_url': url})
 
