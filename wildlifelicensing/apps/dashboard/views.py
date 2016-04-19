@@ -262,13 +262,30 @@ class DashboardTableAssessorView(DashboardTableOfficerView):
     template_name = 'wl/dash_tables_assessor.html'
 
     def _build_data(self):
-        data = super(DashboardTableAssessorView, self)._build_data()
+        data = super(DashboardTableOfficerView, self)._build_data()
+        data['applications']['columnDefinitions'] = [
+            {
+                'title': 'Lodge No.'
+            },
+            {
+                'title': 'Licence Type'
+            },
+            {
+                'title': 'User'
+            },
+            {
+                'title': 'Lodged on'
+            },
+            {
+                'title': 'Assigned Officer'
+            },
+            {
+                'title': 'Action',
+                'searchable': False,
+                'orderable': False
+            }
+        ]
         data['applications']['ajax']['url'] = reverse('dashboard:data_application_assessor')
-        # remove status and assignee filter
-        if 'status' in data['applications']['filters']:
-            del data['applications']['filters']['status']
-        if 'assignee' in data['applications']['filters']:
-            del data['applications']['filters']['assignee']
         return data
 
 
@@ -424,7 +441,7 @@ class DataApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
 class DataApplicationOfficerView(OfficerOrAssessorRequiredMixin, DataApplicationBaseView):
     columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
                'assigned_officer', 'action']
-    order_columns = ['id', 'licence_type.code',
+    order_columns = ['lodgement_number', 'licence_type.code',
                      ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
                       'applicant_profile.user.email'],
                      'processing_status', 'lodgement_date',
@@ -512,8 +529,44 @@ class DataApplicationCustomerView(DataApplicationBaseView):
 
 
 class DataApplicationAssessorView(DataApplicationOfficerView):
+    columns = [
+        'lodgement_number',
+        'licence_type.code',
+        'applicant_profile.user',
+        'lodgement_date',
+        'assigned_officer',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        'licence_type.code',
+        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        'lodgement_date',
+        ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'], ''
+    ]
+
+    def _render_action_column(self, obj):
+        return '<a href="{0}">Review</a>'.format(
+            reverse('applications:enter_conditions_assessor', args=[obj.pk]),
+        )
+
+    columns_helpers = dict(DataApplicationBaseView.columns_helpers.items(), **{
+        'assigned_officer': {
+            'search': lambda self, obj: super(DataApplicationAssessorView, self)._build_assignee_search_query(obj) ,
+            'render': lambda self, obj: super(DataApplicationAssessorView, self)._render_assignee_column(obj) ,
+        },
+        'action': {
+            'render': _render_action_column,
+        },
+        'lodgement_date': {
+            'render': lambda self, obj: super(DataApplicationAssessorView, self)._render_lodgement_date(obj) ,
+        },
+    })
+
+
     def get_initial_queryset(self):
         departments = self.request.user.assessordepartment_set.all()
-        assessments = AssessmentRequest.objects.filter(assessor_department__in=departments)
+        assessments = AssessmentRequest.objects.filter(assessor_department__in=departments).filter(
+            status='awaiting_assessment')
         applications = Application.objects.filter(pk__in=[assessment.application.pk for assessment in assessments])
         return applications

@@ -9,7 +9,7 @@ from django.views.generic import View, TemplateView
 from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.main.models import Condition
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition
 from wildlifelicensing.apps.applications.utils import format_application
@@ -31,6 +31,10 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['form_structure'] = form_structure
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
+
+
+class EnterConditionsAssessorView(OfficerOrAssessorRequiredMixin, EnterConditionsView):
+    template_name = 'wl/conditions/assessor_enter_conditions.html'
 
 
 class SearchConditionsView(View):
@@ -63,7 +67,8 @@ class SubmitConditionsView(View):
         application.conditions.clear()
 
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
-            ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id), application=application, order=order)
+            ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
+                                                application=application, order=order)
 
         if request.POST.get('submissionType') == 'backToProcessing':
             return redirect('applications:process', *args)
