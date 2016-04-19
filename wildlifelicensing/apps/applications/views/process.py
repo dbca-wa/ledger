@@ -12,7 +12,7 @@ from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser
 
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
