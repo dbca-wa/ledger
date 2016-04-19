@@ -1,26 +1,23 @@
-from django.core.context_processors import csrf
-import os
 import json
+import os
 
+from django.core.context_processors import csrf
 from django.http import JsonResponse
-from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import formats
-
-from reversion import revisions
+from django.views.generic import TemplateView, View
 from preserialize.serialize import serialize
+from reversion import revisions
 
 from ledger.accounts.models import EmailUser
-
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
-from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
-from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email
-from wildlifelicensing.apps.main.models import AssessorDepartment
-
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, AssessmentRequest
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
-    REVIEW_STATUSES, ASSESSMENT_STATUSES, format_application_statuses, format_assessment_status
+    REVIEW_STATUSES, format_application_statuses, format_assessment_status
+from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
+from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
+from wildlifelicensing.apps.main.models import AssessorDepartment
+from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -104,9 +101,6 @@ class SetIDCheckStatusView(View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
         application.id_check_status = request.POST['status']
-
-        if 'message' in request.POST:
-            print(request.POST.get('message'))
 
         application.processing_status = _determine_processing_status(application)
         application.save()

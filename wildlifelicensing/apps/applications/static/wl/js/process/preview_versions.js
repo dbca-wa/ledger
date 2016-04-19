@@ -123,7 +123,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                         } 
 
                         for(var i=1; i<itemDataLength; i++) {
-                            console.log(itemDataPrevious[child.name][i]);
                             repeatItemsAnchorPoint.append(_layoutItem(child, index, true, itemDataCurrent[child.name][i], itemDataPrevious[child.name][i]));
                         }
                     }
