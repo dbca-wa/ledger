@@ -7,7 +7,8 @@ from django.test import TestCase
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer, create_random_customer
+from wildlifelicensing.apps.applications.tests import helpers
 
 TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 'test_id.jpg')
 
@@ -50,7 +51,8 @@ class ApplicationEntryTestCase(TestCase):
             post_params = {
                 'identification_file': fp
             }
-            response = self.client.post(reverse('applications:check_identification', args=('regulation17',)), post_params)
+            response = self.client.post(reverse('applications:check_identification', args=('regulation17',)),
+                                        post_params)
 
             self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation17',)),
                                  status_code=302, target_status_code=200, fetch_redirect_response=False)
@@ -240,7 +242,8 @@ class ApplicationEntryTestCase(TestCase):
         response = self.client.post(reverse('applications:enter_details', args=('regulation17',)), post_params)
 
         # check that client is redirected to enter details page
-        self.assertRedirects(response, reverse('applications:enter_details', args=('regulation17', profile.application_set.first().pk)),
+        self.assertRedirects(response, reverse('applications:enter_details',
+                                               args=('regulation17', profile.application_set.first().pk)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         # check that a new application was created
@@ -318,3 +321,73 @@ class ApplicationEntryTestCase(TestCase):
 
         # check that the state of the application is draft
         self.assertEqual(profile.application_set.first().processing_status, 'new')
+
+
+class ApplicationEntrySecurity(TestCase):
+    def setUp(self):
+        self.client = SocialClient()
+
+    def test_user_access_other_user(self):
+        """
+        Test that a user cannot edit/view another user application
+        """
+        customer1 = create_random_customer()
+        customer2 = create_random_customer()
+        self.assertNotEqual(customer1, customer2)
+        application1 = helpers.create_application(user=customer1)
+        application2 = helpers.create_application(user=customer2)
+        self.assertNotEqual(application1, application2)
+
+        # login as user1
+        self.client.login(customer1.email)
+        my_url = reverse('applications:enter_details_existing_application',
+                         args=[application1.licence_type.code, application1.pk])
+        response = self.client.get(my_url)
+        self.assertEqual(200, response.status_code)
+
+        forbidden_urls = [
+            reverse('applications:edit_application', args=[application2.licence_type.code, application2.pk]),
+            reverse('applications:enter_details_existing_application',
+                    args=[application2.licence_type.code, application2.pk]),
+            reverse('applications:preview', args=[application2.licence_type.code, application2.pk])
+        ]
+
+        for forbidden_url in forbidden_urls:
+            response = self.client.get(forbidden_url, follow=True)
+            self.assertEqual(403, response.status_code)
+
+    def test_user_access_lodged(self):
+        """
+        Once the application if lodged the user should not be able to edit it
+        """
+        customer1 = create_random_customer()
+        # login as user1
+        self.client.login(customer1.email)
+
+        application = helpers.create_application(user=customer1)
+        self.assertEqual('draft', application.customer_status)
+        my_urls = [
+            reverse('applications:edit_application', args=[application.licence_type.code, application.pk]),
+            reverse('applications:enter_details_existing_application',
+                    args=[application.licence_type.code, application.pk]),
+            reverse('applications:preview', args=[application.licence_type.code, application.pk])
+        ]
+        for url in my_urls:
+            response = self.client.get(url, follow=True)
+            self.assertEqual(200, response.status_code,
+                             msg="Wrong status code {1} for {0}".format(url, response.status_code))
+
+        # lodge the application
+        url = reverse('applications:preview', args=[application.licence_type.code, application.pk])
+        self.client.session['application'] = {
+                'profile': application.applicant_profile.pk,
+                'data': {
+                    'project_title': 'Test'
+                }
+            }
+        self.client.post(url)
+        application.refresh_from_db()
+        self.assertEqual('pending', application.customer_status)
+        for url in my_urls:
+            response = self.client.get(url, follow=True)
+            self.assertEqual(403, response.status_code)

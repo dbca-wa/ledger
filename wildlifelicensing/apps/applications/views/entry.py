@@ -23,6 +23,7 @@ from wildlifelicensing.apps.applications.models import Application, AmendmentReq
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
     delete_application_session_data
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
+from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -37,13 +38,13 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
 
         request.session['application'] = {}
 
-        context = {'licence_types': dict([(licence_type.code, licence_type.name) for licence_type in WildlifeLicenceType.objects.all()])}
+        context = {'licence_types': dict(
+            [(licence_type.code, licence_type.name) for licence_type in WildlifeLicenceType.objects.all()])}
 
         return render(request, self.template_name, context)
 
 
-class EditApplicationView(LoginRequiredMixin, View):
-
+class EditApplicationView(UserCanEditApplicationMixin, View):
     def get(self, request, *args, **kwargs):
         delete_application_session_data(request.session)
 
@@ -99,7 +100,8 @@ class CreateSelectProfileView(LoginRequiredMixin, TemplateView):
 
         if 'profile' in request.session.get('application'):
             selected_profile = Profile.objects.get(id=request.session.get('application').get('profile'))
-            context['profile_selection_form'] = ProfileSelectionForm(user=request.user, selected_profile=selected_profile)
+            context['profile_selection_form'] = ProfileSelectionForm(user=request.user,
+                                                                     selected_profile=selected_profile)
         else:
             if profile_exists:
                 context['profile_selection_form'] = ProfileSelectionForm(user=request.user)
@@ -107,7 +109,8 @@ class CreateSelectProfileView(LoginRequiredMixin, TemplateView):
         if profile_exists:
             context['profile_creation_form'] = ProfileForm()
         else:
-            context['profile_creation_form'] = ProfileForm(initial_display_name='Default', initial_email=request.user.email)
+            context['profile_creation_form'] = ProfileForm(initial_display_name='Default',
+                                                           initial_email=request.user.email)
 
         context['address_form'] = AddressForm()
 
@@ -137,13 +140,14 @@ class CreateSelectProfileView(LoginRequiredMixin, TemplateView):
                 request.session['application']['profile'] = profile.id
                 request.session.modified = True
             else:
-                return render(request, self.template_name, {'profile_selection_form': ProfileSelectionForm(user=request.user),
-                                                            'profile_creation_form': profile_form, 'address_form': address_form})
+                return render(request, self.template_name,
+                              {'profile_selection_form': ProfileSelectionForm(user=request.user),
+                               'profile_creation_form': profile_form, 'address_form': address_form})
 
         return redirect('applications:enter_details', *args)
 
 
-class EnterDetailsView(LoginRequiredMixin, TemplateView):
+class EnterDetailsView(UserCanEditApplicationMixin, TemplateView):
     template_name = 'wl/entry/enter_details.html'
     login_url = '/'
 
@@ -151,7 +155,10 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
-        profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
+        if request.session.get('application') and 'profile' in request.session.get('application'):
+            profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
+        else:
+            profile = application.applicant_profile
 
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_structure = json.load(data_file)
@@ -164,7 +171,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
                 amendments = AmendmentRequest.objects.filter(application=application).filter(status='requested')
                 context['amendments'] = amendments
 
-        if 'data' in request.session.get('application'):
+        if request.session.get('application') and 'data' in request.session.get('application'):
             context['data'] = request.session.get('application').get('data')
         return render(request, self.template_name, context)
 
@@ -183,18 +190,23 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
             application.data = request.session.get('application').get('data')
             application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
-            application.applicant_profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
+            application.applicant_profile = get_object_or_404(Profile,
+                                                              pk=request.session.get('application').get('profile'))
             application.customer_status = 'draft'
             application.processing_status = 'draft'
             application.save(version_user=request.user, version_comment='Details Modified')
 
-            if 'files' in request.session.get('application') and os.path.exists(request.session.get('application').get('files')):
+            if 'files' in request.session.get('application') and os.path.exists(
+                    request.session.get('application').get('files')):
                 try:
-                    for filename in get_all_filenames_from_application_data(form_structure, request.session.get('application').get('data')):
+                    for filename in get_all_filenames_from_application_data(form_structure,
+                                                                            request.session.get('application').get(
+                                                                                    'data')):
                         # need to be sure file is in tmp directory (as it could be a freshly attached file)
                         if os.path.exists(os.path.join(request.session.get('application').get('files'), filename)):
                             document = Document.objects.create(name=filename)
-                            with open(os.path.join(request.session.get('application').get('files'), filename), 'rb') as doc_file:
+                            with open(os.path.join(request.session.get('application').get('files'), filename),
+                                      'rb') as doc_file:
                                 document.file.save(filename, File(doc_file), save=True)
                                 application.documents.add(document)
                 except Exception as e:
@@ -221,14 +233,15 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
                     request.session['application']['files'] = tempfile.mkdtemp()
                     request.session.modified = True
                 for f in request.FILES:
-                    with open(os.path.join(request.session.get('application').get('files'), str(request.FILES[f])), 'wb+') as destination:
+                    with open(os.path.join(request.session.get('application').get('files'), str(request.FILES[f])),
+                              'wb+') as destination:
                         for chunk in request.FILES[f].chunks():
                             destination.write(chunk)
 
             return redirect('applications:preview', *args)
 
 
-class PreviewView(LoginRequiredMixin, TemplateView):
+class PreviewView(UserCanEditApplicationMixin, TemplateView):
     template_name = 'wl/entry/preview.html'
     login_url = '/'
 
@@ -236,15 +249,22 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_stucture = json.load(data_file)
 
+        application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
-        profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
+        if request.session.get('application') and 'profile' in request.session.get('application'):
+            profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
+        else:
+            profile = application.applicant_profile
 
         context = {'structure': form_stucture, 'licence_type': licence_type, 'profile': profile}
 
         if len(args) > 1:
             context['application_pk'] = args[1]
 
-        context['data'] = request.session.get('application').get('data')
+        if request.session.get('application') and 'data' in request.session.get('application'):
+            context['data'] = request.session.get('application').get('data')
+        else:
+            context['data'] = application.data
 
         return render(request, self.template_name, context)
 
@@ -280,11 +300,14 @@ class PreviewView(LoginRequiredMixin, TemplateView):
         application.save(version_user=request.user, version_comment='Details Modified')
 
         # if attached files were saved temporarily, add each to application as part of a Document
-        if 'files' in request.session.get('application') and os.path.exists(request.session.get('application').get('files')):
+        if 'files' in request.session.get('application') and os.path.exists(
+                request.session.get('application').get('files')):
             try:
-                for filename in get_all_filenames_from_application_data(form_structure, request.session.get('application_data')):
+                for filename in get_all_filenames_from_application_data(form_structure,
+                                                                        request.session.get('application_data')):
                     document = Document.objects.create(name=filename)
-                    with open(os.path.join(request.session.get('application').get('files'), filename), 'rb') as doc_file:
+                    with open(os.path.join(request.session.get('application').get('files'), filename),
+                              'rb') as doc_file:
                         document.file.save(filename, File(doc_file), save=True)
 
                         application.documents.add(document)
