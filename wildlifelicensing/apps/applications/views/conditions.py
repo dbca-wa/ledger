@@ -41,7 +41,7 @@ class SearchConditionsView(View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get('q')
 
-        q = Q(code__icontains=query) | Q(text__icontains=query) | Q(one_off=False)
+        q = Q(code__icontains=query) | Q(text__icontains=query) & Q(one_off=False)
 
         conditions = serialize(Condition.objects.filter(q))
 
