@@ -8,6 +8,7 @@ from django.dispatch import receiver
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry,\
     AssessorDepartment
+from django.template.defaultfilters import default
 
 
 class Application(RevisionedMixin):
@@ -36,6 +37,8 @@ class Application(RevisionedMixin):
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
     data = JSONField()
     documents = models.ManyToManyField(Document)
+    correctness_disclaimer = models.BooleanField(default=False)
+    further_information_disclaimer = models.BooleanField(default=False)
     applicant_profile = models.ForeignKey(Profile)
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')

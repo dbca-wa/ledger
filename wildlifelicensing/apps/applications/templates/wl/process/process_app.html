@@ -41,6 +41,13 @@
 {% block content %}
     <div id="mainContainer" class="container hidden">
         <div class="row">
+            <div class="col-md-12">
+                <h2>Process Application</h2>
+                <h3>{{ data.application.licence_type.name }}</h3>
+                <hr>
+            </div>
+        </div>
+        <div class="row">
             <div class="col-md-3">
                 <div id=sidebarPanels class="bottom-buffer">
                     <div class="row">
@@ -126,7 +133,10 @@
                                         <div>
                                             <label>Identification Check</label>
                                             <span class="pull-right status">{{ data.application.id_check_status }}</span>
-                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
+                                            <span class="done pull-right hidden">
+                                                <a>Reset</a>
+                                                <span class="glyphicon glyphicon-ok ok-tick"></span>
+                                            </span>
                                         </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
@@ -138,24 +148,39 @@
                                         <div>
                                             <label>Character Check</label>
                                             <span class="pull-right status">{{ data.application.character_check_status }}</span>
-                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
+                                            <span class="done pull-right hidden">
+                                                <a>Reset</a>
+                                                <span class="glyphicon glyphicon-ok ok-tick"></span>
+                                            </span>
                                         </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
                                         </div>
+                                        <a id="showCharacterChecklist" class="small-text" data-toggle="popover" data-placement="right" title="Character Checklist">
+                                            Character Checklist
+                                        </a>
+                                        {% if data.application.applicant_profile.user.character_flagged %}
+                                            <a id="dodgyUser" class="pull-right" data-toggle="tooltip" data-placement="right"
+                                                    title="User has previously been flagged as having questionalbe character">
+                                                <span  class="glyphicon glyphicon-user"></span>
+                                            </a>
+                                        {% endif %}
                                     </div>
                                     <hr>
                                     <div id="review" class="processing-action-group">
                                         <div>
                                             <label>Review</label>
                                             <span class="pull-right status">{{ data.application.review_status }}</span>
-                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
-                                        </div>
+                                            <span class="done pull-right hidden">
+                                                <a>Reset</a>
+                                                <span class="glyphicon glyphicon-ok ok-tick"></span>
+                                            </span>
+                                            </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
                                             <button type="button" class="btn btn-xs btn-warning">Request Amendments</button>
                                         </div>
-                                        <a class="hidden" data-toggle="popover" data-placement="right" title="Amendment Requests">
+                                        <a id="showAmendmentRequests" class="hidden small-text" data-toggle="popover" data-placement="right" title="Amendment Requests">
                                             View all amendment requests
                                         </a>
                                     </div>
@@ -202,7 +227,6 @@
             <div class="col-md-9">
                 <div class="panel panel-default">
                     <div class="panel-body">
-                        <h2>{{ data.application.licence_type.name }}</h2>
                         <div id="previewContainer">
                         </div>
                     </div>
@@ -217,10 +241,13 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                            <h4 class="modal-title">Identification for {{ request.user.first_name }} {{ request.user.last_name }}</h4>
+                            <h4 class="modal-title">Identification for {{ data.application.applicant_profile.user.first_name }}
+                            {{ data.application.applicant_profile.user.user.last_name }}</h4>
                         </div>
                         <div class="modal-body" style="text-align: center">
-                            <img src="{{ request.user.identification.file.url }}" />
+                            <a href="{{ data.application.applicant_profile.user.identification.file.url }}" target="_blank">
+                                <img width="100%" src="{{ data.application.applicant_profile.user.identification.file.url }}" />
+                            </a>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

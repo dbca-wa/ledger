@@ -44,6 +44,22 @@
 
 {% block content %}
     <div id="mainContainer" class="container hidden">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>{{ licence_type.name }}</h2>
+                <h3>Enter Application Details</h3>
+                <hr>
+                <p>
+                    In order to complete the application, you must fill out the questionnaire below. Please answer each question with careful consideration 
+                    as insufficient responses may require amendments to be made, delaying the issue of the licence.
+                </p>
+                <p>
+                    At any point you can save the questionnaire as a draft by clicking the Save Draft button at the bottom-left, allowing you to return to the
+                    application at a later time. When you are satisfied with your answers, click the Preview Application button at the bottom-right. You will
+                    then be shown a preview of the application as the Wildlife Licensing officer will see and be able to lodge the application.
+                </p>
+            </div>
+        </div>
         {%  if amendments %}
             <div class="row">
                 <div class="col-sm-2 col-md-10 col-md-offset-2">
@@ -70,19 +86,13 @@
                 {% else %}
                     <p><em><a href="{% url 'applications:create_select_profile' licence_type.code %}">Change Profile</a></em></p>
                 {% endif %}
+                <nav class="hidden-xs top-buffer">
+                    <div id="sectionList">
+                        <ul class="nav nav-stacked">
+                        </ul>
+                    </div>
+                </nav>
             </div>
-            <div class="col-md-10 col-sm-2">
-                <h2>{{ licence_type.name }}</h2>
-                <hr>
-            </div>
-        </div>
-        <div class="row">
-            <nav class="hidden-xs col-sm-3 col-md-2 top-buffer">
-                <div id="sectionList">
-                    <ul class="nav nav-stacked">
-                    </ul>
-                </div>
-            </nav>
             <div class="col-xs-12 col-sm-9 col-md-10">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}

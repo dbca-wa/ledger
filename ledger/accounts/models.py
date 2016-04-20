@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from reversion import revisions
 from django_countries.fields import CountryField
+from django.template.defaultfilters import default
 
 
 class EmailUserManager(BaseUserManager):
@@ -55,9 +56,6 @@ class Document(models.Model):
         return os.path.basename(self.path)
 
     def __str__(self):
-        return self.name or self.filename
-
-    def __unicode__(self):
         return self.name or self.filename
 
 
@@ -194,6 +192,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
 
     identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
+
+    character_flagged = models.BooleanField(default=False)
 
     documents = models.ManyToManyField(Document)
 

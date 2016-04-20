@@ -97,15 +97,34 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
             }
 
             var $actionButtonsContainer = $container.find('.action-buttons-group'),
-                $okTick = $container.find('.ok-tick'),
+                $done = $container.find('.done'),
+                $done = $container.find('.done'),
+                $resetLink = $done.find('a'),
                 $status = $container.find('.status');
 
             if (application.id_check_status === 'Accepted') {
                 $actionButtonsContainer.addClass('hidden');
                 $status.addClass('hidden');
-                $okTick.removeClass('hidden');
-                return;
+                $done.removeClass('hidden');
             }
+
+            $resetLink.click(function(e) {
+                $.post('/applications/set_id_check_status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'not_checked'
+                },
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                    $actionButtonsContainer.removeClass('hidden');
+                    $status.text(data.id_check_status);
+                    $status.removeClass('hidden');
+                    $done.addClass('hidden');
+
+                    application.id_check_status = data.id_check_status;
+                    determineApplicationApprovable();
+                });
+            });
 
             var $acceptButton = $actionButtonsContainer.find('.btn-success'),
                 $requestUpdateButton = $actionButtonsContainer.find('.btn-warning');
@@ -119,7 +138,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 function(data) {
                     $processingStatus.text(data.processing_status);
                     $status.addClass('hidden');
-                    $okTick.removeClass('hidden');
+                    $done.removeClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
 
                     application.id_check_status = data.id_check_status;
@@ -156,15 +175,33 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
         function initCharacterCheck() {
             var $container = $('#characterCheck'),
                 $actionButtonsContainer = $container.find('.action-buttons-group'),
-                $okTick = $container.find('.ok-tick'),
+                $done = $container.find('.done'),
+                $resetLink = $done.find('a'),
                 $status = $container.find('.status');
 
             if (application.character_check_status === 'Accepted') {
                 $actionButtonsContainer.addClass('hidden');
                 $status.addClass('hidden');
-                $okTick.removeClass('hidden');
-                return;
+                $done.removeClass('hidden');
             }
+
+            $resetLink.click(function(e) {
+                $.post('/applications/set_character_check_status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'not_checked'
+                },
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                    $actionButtonsContainer.removeClass('hidden');
+                    $status.text(data.character_check_status);
+                    $status.removeClass('hidden');
+                    $done.addClass('hidden');
+
+                    application.character_check_status = data.character_check_status;
+                    determineApplicationApprovable();
+                });
+            });
 
             var $acceptButton = $actionButtonsContainer.find('.btn-success');
 
@@ -177,25 +214,36 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 function(data) {
                     $processingStatus.text(data.processing_status);
                     $status.addClass('hidden');
-                    $okTick.removeClass('hidden');
+                    $done.removeClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
 
                     application.character_check_status = data.character_check_status;
                     determineApplicationApprovable();
                 });
             });
+
+            var $characterChecklist = $('<ul>').addClass('popover-checklist');
+
+            $characterChecklist.append($('<li>').text('Character flag in database'));
+            $characterChecklist.append($('<li>').text('Police record check'));
+
+            $container.find('#showCharacterChecklist').popover({container: 'body', content: $characterChecklist.prop('outerHTML'), html: true});
+
+            if(application.applicant_profile.user.character_flagged) {
+                $container.find('#dodgyUser').tooltip({container: 'body'});
+            }
         }
 
         function prepareAmendmentRequestsPopover($showPopover) {
-            var content = '';
+            var $content = $('<ul>').addClass('popover-checklist');
             $.each(amendmentRequests, function(index, value) {
-                content += '<p>' + value.text + '<p>';
+                $content.append($('<li>').text(value.text));
             });
 
             // check if popover created yet
             var popover = $showPopover.data('bs.popover');
             if(popover === undefined) {
-                $showPopover.popover({container: 'body', content: content, html: true});
+                $showPopover.popover({container: 'body', content: $content.prop('outerHTML'), html: true});
                 $showPopover.removeClass('hidden');
             } else {
                 popover.options.content = content;
@@ -206,19 +254,42 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
             var $container = $('#review');
 
             var $actionButtonsContainer = $container.find('.action-buttons-group'),
-                $okTick = $container.find('.ok-tick'),
+                $done = $container.find('.done'),
                 $status = $container.find('.status'),
                 $acceptButton = $actionButtonsContainer.find('.btn-success'),
+                $resetLink = $done.find('a'),
                 $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning'),
-                $showAmendmentRequests = $container.find('a');
+                $showAmendmentRequests = $container.find('#showAmendmentRequests');
+
+            if(amendmentRequests.length > 0) {
+                prepareAmendmentRequestsPopover($showAmendmentRequests);
+            }
 
             if (application.review_status === 'Accepted') {
                 $actionButtonsContainer.addClass('hidden');
                 $status.addClass('hidden');
                 $showAmendmentRequests.addClass('hidden');
-                $okTick.removeClass('hidden');
-                return;
+                $done.removeClass('hidden');
             }
+
+            $resetLink.click(function(e) {
+                $.post('/applications/set_review_status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'not_reviewed'
+                },
+                function(data) {
+                    $processingStatus.text(data.processing_status);
+                    $actionButtonsContainer.removeClass('hidden');
+                    $status.text(data.review_status);
+                    $status.removeClass('hidden');
+                    $showAmendmentRequests.removeClass('hidden');
+                    $done.addClass('hidden');
+
+                    application.review_status = data.review_status;
+                    determineApplicationApprovable();
+                });
+            });
 
             $acceptButton.click(function(e) {
                 $.post('/applications/set_review_status/', {
@@ -231,7 +302,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                     $status.addClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
                     $showAmendmentRequests.addClass('hidden');
-                    $okTick.removeClass('hidden');
+                    $done.removeClass('hidden');
                     application.review_status = data.review_status;
                     determineApplicationApprovable();
                 });
@@ -254,7 +325,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 },
                 function(data) {
                     $processingStatus.text(data.processing_status);
-                    $container.find('.status').text(data.review_status);
+                    $status.text(data.review_status);
                     $requestAmendmentsMessage.val('');
 
                     application.review_status = data.review_status;
@@ -266,10 +337,6 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                     }
                 });
             });
-
-            if(amendmentRequests.length > 0) {
-                prepareAmendmentRequestsPopover($showAmendmentRequests);
-            }
         }
 
         function createAssessmentRow(assessment) {

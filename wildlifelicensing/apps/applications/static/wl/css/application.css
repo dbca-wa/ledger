@@ -80,6 +80,10 @@ a {
     font-style: italic;
 }
 
+.popover-checklist {
+    padding-left: 20px;
+}
+
 .small-table {
     font-size: 12px;
 }
@@ -101,14 +105,19 @@ a {
 }
 
 .ok-tick {
+    margin-left: 5px;
     color: #449d44;
+}
+
+#dodgyUser {
+    color: red;
 }
 
 .status {
     font-style: italic;
 }
 
-#review a {
+.small-text {
     font-size: 12px;
 }
 
