@@ -5,8 +5,9 @@ define([
 ], function ($, _, conditions) {
 
     function initForm() {
-        $('#assessmentDone').click(function(e) {
-            console.log("Assessment Done");
+        $('#assessmentDone').click(function() {
+            var $conditionsForm = $('#conditionsForm');
+            $conditionsForm.submit();
         });
     }
 

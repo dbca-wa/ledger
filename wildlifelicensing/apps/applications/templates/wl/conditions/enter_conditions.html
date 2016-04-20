@@ -128,7 +128,7 @@
                     </div>
                     <strong>Custom Condition</strong>
                 </div>
-                <form method="post" action="{% url 'applications:submit_conditions' application.id %}" id="conditionsForm">
+                <form method="post" action="{{ action_url }}" id="conditionsForm">
                     {% csrf_token %}
                     <table class="table table-bordered">
                         <thead>
@@ -145,6 +145,8 @@
                                 </tr>
                             </tbody>
                     </table>
+                    {%  block comments %}
+                    {%  endblock %}
                 </form>
             </div>
         </div>

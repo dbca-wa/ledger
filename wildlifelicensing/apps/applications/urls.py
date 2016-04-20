@@ -9,7 +9,7 @@ from wildlifelicensing.apps.applications.views.process import ProcessView, Assig
     SetReviewStatusView, SendForAssessmentView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
-    CreateConditionView, SubmitConditionsView, EnterConditionsAssessorView
+    CreateConditionView, SubmitConditionsView, EnterConditionsAssessorView, SubmitConditionsAssessorView
 
 urlpatterns = [
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
@@ -34,8 +34,11 @@ urlpatterns = [
 
     # conditions
     url('^enter_conditions/([0-9]+)/$', EnterConditionsView.as_view(), name='enter_conditions'),
-    url('^enter_conditions/assessor/([0-9]+)/$', EnterConditionsAssessorView.as_view(), name='enter_conditions_assessor'),
+    url('^enter_conditions/([0-9]+)/assessment/([0-9]+)/?$', EnterConditionsAssessorView.as_view(),
+        name='enter_conditions_assessor'),
     url('^search_conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
     url('^create_condition/$', CreateConditionView.as_view(), name='create_condition'),
     url('^submit_conditions/([0-9]+)/$', SubmitConditionsView.as_view(), name='submit_conditions'),
+    url('^submit_conditions/([0-9]+)/assessment/([0-9]+)/?$', SubmitConditionsAssessorView.as_view(),
+        name='submit_conditions_assessor')
 ]

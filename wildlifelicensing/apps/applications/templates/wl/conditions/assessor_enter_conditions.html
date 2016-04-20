@@ -8,9 +8,9 @@
 
 {% block requirements %}
     require(['js/conditions/assessor_enter_conditions'], function (enter_conditions) {
-        $(function () {
-            enter_conditions.init({{ application|jsonify }}, {{form_structure|jsonify}});
-        });
+    $(function () {
+    enter_conditions.init({{ application|jsonify }}, {{ form_structure|jsonify }});
+    });
     });
 {% endblock %}
 
@@ -29,7 +29,15 @@
     </div>
 {% endblock %}
 
+{% block comments %}
+    <div class="form-group">
+        <label for="comment">Comment</label>
+            <textarea name="comment" rows="4" id="commentText" class="form-control"
+                      placeholder="Enter comment"></textarea>
+    </div>
+{% endblock %}
 
-{%  block action_button %}
-    <button id="assessmentDone" type="button" class="btn btn-sm btn-success pull-right">Done</button>
+
+{% block action_button %}
+    <button id="assessmentDone" type="button" class="btn btn-sm btn-success pull-right">Conclude Assessment</button>
 {% endblock %}

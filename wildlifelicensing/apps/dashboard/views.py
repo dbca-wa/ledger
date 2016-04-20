@@ -13,7 +13,7 @@ from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
-from wildlifelicensing.apps.applications.models import Application, AssessmentRequest
+from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from .forms import LoginForm
@@ -417,7 +417,10 @@ class DataApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
     def render_column(self, application, column):
         if column in self.columns_helpers and 'render' in self.columns_helpers[column]:
             func = self.columns_helpers[column]['render']
-            return func(self, application)
+            if callable(func):
+                return func(self, application)
+            else:
+                return 'render is not a function'
         else:
             result = super(DataApplicationBaseView, self).render_column(application, column)
         return result
@@ -431,8 +434,9 @@ class DataApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
                 # special cases
                 if col_name in self.columns_helpers and 'search' in self.columns_helpers[col_name]:
                     func = self.columns_helpers[col_name]['search']
-                    q = func(self, search)
-                    query |= q
+                    if callable(func):
+                        q = func(self, search)
+                        query |= q
                 else:
                     query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
         return query
@@ -528,45 +532,71 @@ class DataApplicationCustomerView(DataApplicationBaseView):
     })
 
 
-class DataApplicationAssessorView(DataApplicationOfficerView):
+class DataApplicationAssessorView(DataApplicationBaseView):
+    """
+    Model of this table is not Application but Assessment
+     see: get_initial_queryset method
+    """
     columns = [
-        'lodgement_number',
-        'licence_type.code',
-        'applicant_profile.user',
-        'lodgement_date',
-        'assigned_officer',
+        'application.lodgement_number',
+        'application.licence_type.code',
+        'application.applicant_profile.user',
+        'application.lodgement_date',
+        'application.assigned_officer',
         'action'
     ]
     order_columns = [
-        'lodgement_number',
-        'licence_type.code',
-        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
-        'lodgement_date',
-        ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'], ''
+        'application.lodgement_number',
+        'application.licence_type.code',
+        ['application.applicant_profile.user.last_name', 'application.applicant_profile.user.first_name',
+         'application.applicant_profile.user.email'],
+        'application.lodgement_date',
+        ['application.assigned_officer.first_name', 'application.assigned_officer.last_name',
+         'application.assigned_officer.email'], ''
     ]
 
     def _render_action_column(self, obj):
         return '<a href="{0}">Review</a>'.format(
-            reverse('applications:enter_conditions_assessor', args=[obj.pk]),
+            reverse('applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
         )
 
-    columns_helpers = dict(DataApplicationBaseView.columns_helpers.items(), **{
-        'assigned_officer': {
-            'search': lambda self, obj: super(DataApplicationAssessorView, self)._build_assignee_search_query(obj) ,
-            'render': lambda self, obj: super(DataApplicationAssessorView, self)._render_assignee_column(obj) ,
+    def _search_assignee_query(self, search):
+        fields_to_search = ['application.assigned_officer__last_name',
+                            'application.assigned_officer__first_name',
+                            'application.assigned_officer__email']
+        return self._build_search_query(fields_to_search, search)
+
+    def _render_assignee_column(self, obj):
+        return render_user_name(obj.application.assigned_officer)
+
+    def _render_lodgement_date(self, obj):
+        return _render_date(obj.application.lodgement_date)
+
+    def _render_applicant(self, obj):
+        return super(DataApplicationAssessorView, self)._render_user_column(obj.application),
+
+    def _search_user_query(self, obj):
+        return super(DataApplicationAssessorView, self)._build_user_search_query(obj.application)
+
+    columns_helpers = dict(**{
+        'application.applicant_profile.user': {
+            'render': _render_applicant,
+            'search': _search_user_query
+        },
+        'application.assigned_officer': {
+            'search': _search_assignee_query,
+            'render': _render_assignee_column,
         },
         'action': {
             'render': _render_action_column,
         },
-        'lodgement_date': {
-            'render': lambda self, obj: super(DataApplicationAssessorView, self)._render_lodgement_date(obj) ,
+        'application.lodgement_date': {
+            'render': _render_lodgement_date,
         },
     })
 
-
     def get_initial_queryset(self):
         departments = self.request.user.assessordepartment_set.all()
-        assessments = AssessmentRequest.objects.filter(assessor_department__in=departments).filter(
+        assessments = Assessment.objects.filter(assessor_department__in=departments).filter(
             status='awaiting_assessment')
-        applications = Application.objects.filter(pk__in=[assessment.application.pk for assessment in assessments])
-        return applications
+        return assessments
