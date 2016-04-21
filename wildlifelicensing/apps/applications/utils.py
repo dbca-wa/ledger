@@ -3,14 +3,14 @@ import shutil
 
 from preserialize.serialize import serialize
 
-from models import Application, AssessmentRequest
+from models import Application, Assessment
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
 ID_CHECK_STATUSES = dict(Application.ID_CHECK_STATUS_CHOICES)
 CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
 REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
-ASSESSMENT_STATUSES = dict(AssessmentRequest.STATUS_CHOICES)
+ASSESSMENT_STATUSES = dict(Assessment.STATUS_CHOICES)
 
 
 def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):

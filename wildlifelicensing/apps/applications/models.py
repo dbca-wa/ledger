@@ -72,14 +72,11 @@ class AmendmentRequest(ApplicationLogEntry):
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
 
 
-class AssessmentRequest(ApplicationLogEntry):
+class Assessment(ApplicationLogEntry):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
     assessor_department = models.ForeignKey(AssessorDepartment)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
-
-
-class AssessorComment(ApplicationLogEntry):
-    assessment_request = models.ForeignKey(AssessmentRequest)
+    comment = models.TextField(blank=True)
 
 
 class ApplicationCondition(models.Model):

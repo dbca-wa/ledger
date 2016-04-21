@@ -51,7 +51,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
             if(assessment.status === 'Awaiting Assessment') {
                 statusColumn.append(assessment.status);
             } else {
-                statusColumn.append('<a>View Comments</a>');
+                statusColumn.append('<a href="' + assessment.url + '">View Assessment</a>');
             }
 
             row.append(statusColumn);
@@ -340,17 +340,18 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
         }
 
         function createAssessmentRow(assessment) {
-            var row = $('<tr></tr>');
+            var row = $('<tr></tr>'),
+                $node;
             row.append('<td>' + assessment.assessor_department.name + '</td>');
             var statusColumn = $('<td></td>').css('text-align', 'right');
             if(assessment.status === 'Awaiting Assessment') {
                 statusColumn.append(assessment.status);
             } else {
-                statusColumn.append('<a>View Comments</a>');
+                $node = $('<a><span>View Comment</span></a>');
+                $node.popover({container: 'body', content: assessment.comment, html: true});
+                statusColumn.append($node);
             }
-
             row.append(statusColumn);
-
             return row;
         }
 

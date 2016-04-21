@@ -1,5 +1,6 @@
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.core.urlresolvers import reverse
+from django.conf import settings
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
 from wildlifelicensing.apps.applications.models import EmailLogEntry
@@ -31,17 +32,39 @@ class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_assessment_requested.txt'
 
 
-def send_assessment_requested_email(application, assessment_request, request):
+def send_assessment_requested_email(application, assessment, request):
     email = ApplicationAssessmentRequestedEmail()
     url = request.build_absolute_uri(
         reverse('applications:process',
                 args=[application.pk])
     )
     context = {
-        'assessor': assessment_request.assessor_department,
+        'assessor': assessment.assessor_department,
         'url': url
     }
     msg = email.send(application.applicant_profile.email, context=context)
+    _log_email(msg, application=application, sender=request.user)
+
+
+class ApplicationAssessmentDoneEmail(TemplateEmailBase):
+    subject = 'An assessment to a wildlife licensing application has been done.'
+    html_template = 'wl/emails/application_assessment_done.html'
+    txt_template = 'wl/emails/application_assessment_done.txt'
+
+
+def send_assessment_done_email(application, assessment, request):
+    email = ApplicationAssessmentDoneEmail()
+    url = request.build_absolute_uri(
+        reverse('applications:enter_conditions',
+                args=[application.pk])
+    )
+    context = {
+        'assessor': request.user,
+        'assessor_department': assessment.assessor_department,
+        'url': url
+    }
+    to_email = application.assigned_officer.email if application.assigned_officer else settings.WILDLIFELICENSING_EMAIL_CATCHALL
+    msg = email.send(to_email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
 

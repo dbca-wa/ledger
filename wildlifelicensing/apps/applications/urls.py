@@ -1,20 +1,23 @@
 from django.conf.urls import url
 
-from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeView, EditApplicationView, CheckIdentificationRequiredView, \
+from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeView, EditApplicationView, \
+    CheckIdentificationRequiredView, \
     CreateSelectProfileView, EnterDetailsView, PreviewView
 
-from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, SetCharacterCheckStatusView, \
+from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
+    SetCharacterCheckStatusView, \
     SetReviewStatusView, SendForAssessmentView
 
-from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, CreateConditionView, SubmitConditionsView
-
+from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
+    CreateConditionView, SubmitConditionsView, EnterConditionsAssessorView, SubmitConditionsAssessorView
 
 urlpatterns = [
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^([\w-]+)/edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
     url('^([\w-]+)/check_identification/$', CheckIdentificationRequiredView.as_view(), name='check_identification'),
     url('^([\w-]+)/profile/$', CreateSelectProfileView.as_view(), name='create_select_profile'),
-    url('^([\w-]+)/profile/([0-9]+)/$', CreateSelectProfileView.as_view(), name='create_select_profile_existing_application'),
+    url('^([\w-]+)/profile/([0-9]+)/$', CreateSelectProfileView.as_view(),
+        name='create_select_profile_existing_application'),
     url('^([\w-]+)/enter-details/$', EnterDetailsView.as_view(), name='enter_details'),
     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details'),
     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details_existing_application'),
@@ -31,7 +34,11 @@ urlpatterns = [
 
     # conditions
     url('^enter_conditions/([0-9]+)/$', EnterConditionsView.as_view(), name='enter_conditions'),
+    url('^enter_conditions/([0-9]+)/assessment/([0-9]+)/?$', EnterConditionsAssessorView.as_view(),
+        name='enter_conditions_assessor'),
     url('^search_conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
     url('^create_condition/$', CreateConditionView.as_view(), name='create_condition'),
     url('^submit_conditions/([0-9]+)/$', SubmitConditionsView.as_view(), name='submit_conditions'),
+    url('^submit_conditions/([0-9]+)/assessment/([0-9]+)/?$', SubmitConditionsAssessorView.as_view(),
+        name='submit_conditions_assessor')
 ]
