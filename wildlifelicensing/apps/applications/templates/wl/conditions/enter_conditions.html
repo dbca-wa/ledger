@@ -109,8 +109,10 @@
                         </div>
                     </div>
                 </div>
-                <button id="issueLicence" type="button" class="btn btn-sm btn-success pull-right">Issue Licence</button>
-                <button id="backToProcessing" type="button" class="btn btn-sm btn-default">Back to Processing</button>
+                {%  block action_button %}
+                    <button id="issueLicence" type="button" class="btn btn-sm btn-success pull-right">Issue Licence</button>
+                    <button id="backToProcessing" type="button" class="btn btn-sm btn-default">Back to Processing</button>
+                {% endblock %}
             </div>
             <div class="col-md-9">
                 <h2>Enter Conditions</h2>
@@ -126,7 +128,7 @@
                     </div>
                     <strong>Custom Condition</strong>
                 </div>
-                <form method="post" action="{% url 'applications:submit_conditions' application.id %}" id="conditionsForm">
+                <form method="post" action="{{ action_url }}" id="conditionsForm">
                     {% csrf_token %}
                     <table class="table table-bordered">
                         <thead>
@@ -137,12 +139,14 @@
                                 <th class="order">Order</th>
                             </tr>
                         </thead>
-                            <tbody id="conditionsBody">
-                                <tr id="conditionsEmptyRow" class="hidden">
-                                    <td colspan="3">No default conditions specified</td>
-                                </tr>
-                            </tbody>
+                        <tbody id="conditionsBody">
+                            <tr id="conditionsEmptyRow" class="hidden">
+                                <td colspan="3">No default conditions specified</td>
+                            </tr>
+                        </tbody>
                     </table>
+                    {%  block comments %}
+                    {%  endblock %}
                 </form>
             </div>
         </div>
