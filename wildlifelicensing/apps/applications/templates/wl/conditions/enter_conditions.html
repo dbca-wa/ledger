@@ -16,7 +16,7 @@
 {% block requirements %}
     require(['js/conditions/enter_conditions'], function (enter_conditions) {
         $(function () {
-            enter_conditions.init({{ application|jsonify }}, {{form_structure|jsonify}});
+            enter_conditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}});
         });
     });
 {% endblock %}
@@ -93,6 +93,33 @@
                         </div>
                     </div>
                 </div>
+                {% if assessments|length %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    Assessments
+                                    <a data-toggle="collapse" href="#assessmentsBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                </div>
+                                <div id="assessmentsBody" class="panel-body panel-collapse in">
+                                    Current Assessments
+                                    <table id="assessments" class="table small-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Assessor</th>
+                                                <th>Feedback</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
                 <div class="row">
                     <div class="col-md-12">
                         <div class="panel panel-default">
@@ -131,6 +158,9 @@
                     <div class="legend default">
                     </div>
                     <strong>Default Condition</strong>
+                    <div class="legend assessor">
+                    </div>
+                    <strong>Assessors' Condition</strong>
                     <div class="legend additional">
                     </div>
                     <strong>Additional Condition</strong>
@@ -141,7 +171,7 @@
                 <form method="post" action="{{ action_url }}" id="conditionsForm">
                     {% csrf_token %}
                     <table class="table table-bordered">
-                        <thead>
+                        <thead class="conditions-table-head">
                             <tr>
                                 <th class="code">Code</th>
                                 <th class="condition">Condition</th>

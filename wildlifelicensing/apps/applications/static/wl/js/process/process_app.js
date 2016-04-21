@@ -177,11 +177,15 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 $actionButtonsContainer = $container.find('.action-buttons-group'),
                 $done = $container.find('.done'),
                 $resetLink = $done.find('a'),
-                $status = $container.find('.status');
+                $status = $container.find('.status'),
+                $showCharacterChecklist = $container.find('#showCharacterChecklist'),
+                $dodgyUser = $container.find('#dodgyUser');
 
             if (application.character_check_status === 'Accepted') {
                 $actionButtonsContainer.addClass('hidden');
                 $status.addClass('hidden');
+                $showCharacterChecklist.addClass('hidden');
+                $dodgyUser.addClass('hidden');
                 $done.removeClass('hidden');
             }
 
@@ -196,6 +200,11 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                     $actionButtonsContainer.removeClass('hidden');
                     $status.text(data.character_check_status);
                     $status.removeClass('hidden');
+                    $showCharacterChecklist.removeClass('hidden');
+                    if(application.applicant_profile.user.character_flagged) {
+                        $dodgyUser.removeClass('hidden');
+                    }
+
                     $done.addClass('hidden');
 
                     application.character_check_status = data.character_check_status;
@@ -216,6 +225,8 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                     $status.addClass('hidden');
                     $done.removeClass('hidden');
                     $actionButtonsContainer.addClass('hidden');
+                    $showCharacterChecklist.addClass('hidden');
+                    $dodgyUser.addClass('hidden');
 
                     application.character_check_status = data.character_check_status;
                     determineApplicationApprovable();
@@ -227,10 +238,10 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
             $characterChecklist.append($('<li>').text('Character flag in database'));
             $characterChecklist.append($('<li>').text('Police record check'));
 
-            $container.find('#showCharacterChecklist').popover({container: 'body', content: $characterChecklist.prop('outerHTML'), html: true});
+            $showCharacterChecklist.popover({container: 'body', content: $characterChecklist.prop('outerHTML'), html: true});
 
             if(application.applicant_profile.user.character_flagged) {
-                $container.find('#dodgyUser').tooltip({container: 'body'});
+                $dodgyUser.tooltip({container: 'body'});
             }
         }
 

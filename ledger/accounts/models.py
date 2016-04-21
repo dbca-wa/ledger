@@ -162,7 +162,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     )
     is_active = models.BooleanField(
         default=True,
-        help_text='Designates whether this user should be treated as active. '
+        help_text='Designates whether this user should be treated as active.'
                   'Unselect this instead of deleting ledger.accounts.',
     )
     date_joined = models.DateTimeField(default=timezone.now)

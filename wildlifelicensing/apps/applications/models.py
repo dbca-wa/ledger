@@ -76,6 +76,7 @@ class Assessment(ApplicationLogEntry):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
     assessor_department = models.ForeignKey(AssessorDepartment)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
+    conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)
 
 
@@ -86,6 +87,15 @@ class ApplicationCondition(models.Model):
 
     class Meta:
         unique_together = ('condition', 'application', 'order')
+
+
+class AssessmentCondition(models.Model):
+    condition = models.ForeignKey(Condition)
+    assessment = models.ForeignKey(Assessment)
+    order = models.IntegerField()
+
+    class Meta:
+        unique_together = ('condition', 'assessment', 'order')
 
 
 class EmailLogEntry(ApplicationLogEntry):
