@@ -186,7 +186,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
             if(!_.includes(_.map(existingConditions, function(condition) {return $(condition).val()}), String(condition.id), 1)) {
                     createConditionTableRow(condition, 'additional');
             } else {
-                window.alert('The specified ondition has already been entered.')
+                window.alert('The specified condition has already been entered.')
             }
 
             $searchConditions.select2('val', '');
