@@ -8,9 +8,9 @@
 
 {% block requirements %}
     require(['js/conditions/assessor_enter_conditions'], function (enter_conditions) {
-    $(function () {
-    enter_conditions.init({{ application|jsonify }}, {{ form_structure|jsonify }});
-    });
+        $(function () {
+            enter_conditions.init({{ application|jsonify }}, {{ form_structure|jsonify }});
+        });
     });
 {% endblock %}
 
