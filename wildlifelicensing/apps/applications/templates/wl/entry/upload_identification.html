@@ -14,7 +14,7 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
+                    <li><a href="{% url 'wl_applications:select_licence_type' %}">Licence Applications</a></li>
                     <li class="active">Upload Identification</li>
                 </ol>
             </div>
@@ -47,7 +47,7 @@
                         </div>
                     {% endwith %}
                     <button type="submit" class="btn btn-primary pull-right">Upload</button>
-                    <a class="btn btn-info pull-right" href="{% url 'applications:create_select_persona' licence_type.code %}" style="margin-right: 20px;">Skip this step</a>
+                    <a class="btn btn-info pull-right" href="{% url 'wl_applications:create_select_persona' licence_type.code %}" style="margin-right: 20px;">Skip this step</a>
                 </form>
             </div>
         </div>

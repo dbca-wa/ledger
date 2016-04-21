@@ -52,7 +52,7 @@ class CheckIdentityRequiredView(LoginRequiredMixin, FormView):
         if licence_type.identification_required and self.request.user.identification is None:
             return super(CheckIdentityRequiredView, self).get(*args, **kwargs)
         else:
-            return redirect('applications:create_select_persona', args[1], **kwargs)
+            return redirect('wl_applications:create_select_persona', args[1], **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(CheckIdentityRequiredView, self).get_context_data(**kwargs)
@@ -66,7 +66,7 @@ class CheckIdentityRequiredView(LoginRequiredMixin, FormView):
         self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
         self.request.user.save()
 
-        return redirect('applications:create_select_persona', *self.args)
+        return redirect('wl_applications:create_select_persona', *self.args)
 
 
 class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
@@ -124,7 +124,7 @@ class CreateSelectPersonaView(LoginRequiredMixin, TemplateView):
                 return render(request, self.template_name, {'persona_selection_form': PersonaSelectionForm(user=request.user),
                                                             'persona_creation_form': persona_form, 'address_form': address_form})
 
-        return redirect('applications:enter_details', *args)
+        return redirect('wl_applications:enter_details', *args)
 
 
 class EnterDetailsView(LoginRequiredMixin, TemplateView):
@@ -200,7 +200,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
 
             delete_application_session_data(request.session)
 
-            return redirect('dashboard:home')
+            return redirect('wl_dashboard:home')
         else:
             if len(request.FILES) > 0:
                 if 'files' not in request.session.get('application'):
@@ -211,7 +211,7 @@ class EnterDetailsView(LoginRequiredMixin, TemplateView):
                         for chunk in request.FILES[f].chunks():
                             destination.write(chunk)
 
-            return redirect('applications:preview', *args)
+            return redirect('wl_applications:preview', *args)
 
 
 class PreviewView(LoginRequiredMixin, TemplateView):
@@ -282,7 +282,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
 
         delete_application_session_data(request.session)
 
-        return redirect('dashboard:home')
+        return redirect('wl_dashboard:home')
 
 
 def delete_application_session_data(session):

@@ -48,8 +48,8 @@ class DashBoardRoutingView(TemplateView):
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
             if is_officer(self.request.user) or is_assessor(self.request.user):
-                return redirect('dashboard:tree_officer')
-            return redirect('dashboard:tree_customer')
+                return redirect('wl_dashboard:tree_officer')
+            return redirect('wl_dashboard:tree_customer')
         else:
             kwargs['form'] = LoginForm
             return super(DashBoardRoutingView, self).get(*args, **kwargs)
@@ -57,7 +57,7 @@ class DashBoardRoutingView(TemplateView):
 
 class DashboardTreeViewBase(TemplateView):
     template_name = 'wl/dash_tree.html'
-    url = reverse_lazy('dashboard:tables_officer')
+    url = reverse_lazy('wl_dashboard:tables_officer')
 
     @staticmethod
     def _create_node(title, href=None, count=None):
@@ -110,7 +110,7 @@ class DashboardTreeViewBase(TemplateView):
 class DashboardOfficerTreeView(OfficerOrAssessorRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'Dashboard'
-    url = reverse_lazy('dashboard:tables_officer')
+    url = reverse_lazy('wl_dashboard:tables_officer')
 
     def _build_tree_nodes(self):
         """
@@ -158,7 +158,7 @@ class DashboardOfficerTreeView(OfficerOrAssessorRequiredMixin, DashboardTreeView
 class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'My Dashboard'
-    url = reverse_lazy('dashboard:tables_customer')
+    url = reverse_lazy('wl_dashboard:tables_customer')
 
     def _build_tree_nodes(self):
         """
@@ -253,7 +253,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
         data['applications']['filters']['assignee'] = {
             'values': [('all', 'All')] + [(user.pk, render_user_name(user),) for user in get_all_officers()]
         }
-        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_officer')
+        data['applications']['ajax']['url'] = reverse('wl_dashboard:applications_data_officer')
         return data
 
 
@@ -282,7 +282,7 @@ class DashboardTableCustomerView(DashboardTableBaseView):
         ]
         data['applications']['filters']['status']['values'] = \
             [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
-        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_customer')
+        data['applications']['ajax']['url'] = reverse('wl_dashboard:applications_data_customer')
         return data
 
 
@@ -417,7 +417,7 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
 
     def _render_action_column(self, obj):
         return '<a href="{0}">Process</a>'.format(
-            reverse('applications:process', args={obj.pk}),
+            reverse('wl_applications:process', args={obj.pk}),
         )
 
     def _build_assignee_search_query(self, search):
@@ -461,12 +461,12 @@ class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
     def _render_action_column(self, obj):
         if obj.customer_status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('wl_applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
                 'Continue application'
             )
         elif obj.customer_status == 'amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('wl_applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
                 'Amend application'
             )
         else:

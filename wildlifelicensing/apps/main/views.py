@@ -48,7 +48,7 @@ class CreatePersonasView(LoginRequiredMixin, TemplateView):
 
         messages.success(request, "The persona '%s' was created." % persona.name)
 
-        return redirect('main:list_personas')
+        return redirect('wl_main:list_personas')
 
 
 class EditPersonasView(LoginRequiredMixin, TemplateView):
@@ -82,7 +82,7 @@ class EditPersonasView(LoginRequiredMixin, TemplateView):
 
         messages.success(request, "The persona '%s' was updated." % persona.name)
 
-        return redirect('main:list_personas')
+        return redirect('wl_main:list_personas')
 
 
 class IdentificationView(LoginRequiredMixin, FormView):

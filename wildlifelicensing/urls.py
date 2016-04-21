@@ -7,10 +7,10 @@ from ledger.urls import urlpatterns as ledger_patterns
 
 urlpatterns = [
     url(r'^admin/', wildlife_licensing_admin_site.urls),
-    url(r'^$', DashBoardRoutingView.as_view(), name='home'),
-    url(r'', include('wildlifelicensing.apps.main.urls', namespace='main')),
-    url(r'', include('wildlifelicensing.apps.dashboard.urls', namespace='dashboard')),
-    url(r'^applications/', include('wildlifelicensing.apps.applications.urls', namespace='applications')),
+    url(r'^$', DashBoardRoutingView.as_view(), name='wl_home'),
+    url(r'', include('wildlifelicensing.apps.main.urls', namespace='wl_main')),
+    url(r'', include('wildlifelicensing.apps.dashboard.urls', namespace='wl_dashboard')),
+    url(r'^applications/', include('wildlifelicensing.apps.applications.urls', namespace='wl_applications')),
 ] + ledger_patterns
 
 if settings.DEBUG:
