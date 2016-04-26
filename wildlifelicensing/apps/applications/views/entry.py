@@ -83,6 +83,12 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, FormView):
         self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
         self.request.user.save()
 
+        # update any other applications for this user that are awaiting ID upload
+        for application in Application.objects.filter(applicant_profile__user=self.request.user):
+            if application.id_check_status == 'awaiting_update':
+                application.id_check_status = 'updated'
+                application.save()
+
         return redirect('applications:create_select_profile', *self.args)
 
 
