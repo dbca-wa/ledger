@@ -334,8 +334,7 @@ class DataApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
         return query
 
     def _build_user_search_query(self, search):
-        fields_to_search = ['applicant_profile__user__last_name', 'applicant_profile__user__first_name',
-                            'applicant_profile__user__email']
+        fields_to_search = ['applicant_profile__user__last_name', 'applicant_profile__user__first_name']
         return self._build_search_query(fields_to_search, search)
 
     def _build_profile_search_query(self, search):
@@ -466,8 +465,7 @@ class DataApplicationOfficerView(OfficerOrAssessorRequiredMixin, DataApplication
             )
 
     def _build_assignee_search_query(self, search):
-        fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name',
-                            'assigned_officer__email']
+        fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name']
         return self._build_search_query(fields_to_search, search)
 
     def _render_assignee_column(self, obj):
@@ -561,9 +559,9 @@ class DataApplicationAssessorView(DataApplicationBaseView):
         )
 
     def _search_assignee_query(self, search):
-        fields_to_search = ['application.assigned_officer__last_name',
-                            'application.assigned_officer__first_name',
-                            'application.assigned_officer__email']
+        fields_to_search = ['application__assigned_officer__last_name',
+                            'application__assigned_officer__first_name',
+                            'application__assigned_officer__email']
         return self._build_search_query(fields_to_search, search)
 
     def _render_assignee_column(self, obj):
@@ -575,8 +573,10 @@ class DataApplicationAssessorView(DataApplicationBaseView):
     def _render_applicant(self, obj):
         return super(DataApplicationAssessorView, self)._render_user_column(obj.application),
 
-    def _search_user_query(self, obj):
-        return super(DataApplicationAssessorView, self)._build_user_search_query(obj.application)
+    def _search_user_query(self, search):
+        fields_to_search = ['application__applicant_profile__user__last_name',
+                            'application__applicant_profile__user__first_name']
+        return self._build_search_query(fields_to_search, search)
 
     columns_helpers = dict(**{
         'application.applicant_profile.user': {
