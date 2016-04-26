@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.base import TemplateView
@@ -13,6 +13,7 @@ from ledger.accounts.forms import AddressForm, ProfileForm
 
 from forms import IdentificationForm
 from mixins import CustomerRequiredMixin
+from signals import identification_uploaded
 
 
 class ListProfilesView(CustomerRequiredMixin, TemplateView):
@@ -99,6 +100,8 @@ class IdentificationView(LoginRequiredMixin, FormView):
 
         self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
         self.request.user.save()
+
+        identification_uploaded.send(sender=self.__class__, user=self.request.user)
 
         return super(IdentificationView, self).form_valid(form)
 
