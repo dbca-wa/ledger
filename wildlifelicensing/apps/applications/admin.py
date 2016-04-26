@@ -9,7 +9,8 @@ from models import Application
 
 @admin.register(Application)
 class ApplicationAdmin(VersionAdmin):
-    pass
+    date_hierarchy = 'lodgement_date'
+    list_display = ('lodgement_number', 'lodgement_date')
 
 
 @admin.register(AssessorDepartment)
