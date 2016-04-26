@@ -35,7 +35,12 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_hosts',
     'bootstrap3',
-    'reversion', ] + get_core_apps() + [
+    'reversion',
+    'widget_tweaks',
+    ] + get_core_apps([  # django-oscar overrides
+        'ledger.basket', 
+        'ledger.order'
+    ]) + [
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
     'wildlifelicensing.apps.WLDashboard',
@@ -144,6 +149,8 @@ BOOTSTRAP3 = {
     'required_css_class': 'required-form-field',
     'set_placeholder': False,
 }
+
+OSCAR_DEFAULT_CURRENCY = 'AUD'
 
 HAYSTACK_CONNECTIONS = {
     'default': {
