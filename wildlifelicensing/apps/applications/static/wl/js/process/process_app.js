@@ -147,28 +147,33 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
             });
 
             var $requestIDUpdateModal = $('#requestIDUpdateModal'),
-                $requestIDUpdateSendButton = $requestIDUpdateModal.find('#sendIDUpdateRequest'),
-                $requestIDUpdateMessage = $requestIDUpdateModal.find('textarea');
+                $idRequestForm = $requestIDUpdateModal.find('#idRequestForm'),
+                $idReason = $idRequestForm.find('#id_reason'),
+                $idText = $idRequestForm.find('#id_text');
 
             $requestUpdateButton.click(function(e) {
                 $requestIDUpdateModal.modal('show');
             });
 
-            $requestIDUpdateSendButton.click(function(e) {
-                $.post('/applications/set_id_check_status/', {
-                    applicationID: application.id,
-                    csrfmiddlewaretoken: csrfToken,
-                    status: 'awaiting_update',
-                    message: $requestIDUpdateMessage.val()
-                },
-                function(data) {
-                    $processingStatus.text(data.processing_status);
-                    $container.find('.status').text(data.id_check_status);
-                    $requestIDUpdateMessage.val('');
+            $idRequestForm.submit(function(e) {
+                $.ajax({
+                    type: $(this).attr('method'),
+                    url: $(this).attr('action'),
+                    data: $(this).serialize(),
+                    success: function (data) {
+                        $processingStatus.text(data.processing_status);
+                        $container.find('.status').text(data.id_check_status);
+                        $idReason.find('option:eq(0)').prop('selected', true);
+                        $idText.val('');
 
-                    application.id_check_status = data.id_check_status;
-                    determineApplicationApprovable();
+                        application.id_check_status = data.id_check_status;
+                        determineApplicationApprovable();
+
+                        $requestIDUpdateModal.modal('hide');
+                    }
                 });
+
+                e.preventDefault();
             });
         }
 
@@ -248,7 +253,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
         function prepareAmendmentRequestsPopover($showPopover) {
             var $content = $('<ul>').addClass('popover-checklist');
             $.each(amendmentRequests, function(index, value) {
-                $content.append($('<li>').text(value.text));
+                $content.append($('<li>').text(value.reason + ': ' + value.text));
             });
 
             // check if popover created yet
@@ -257,7 +262,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 $showPopover.popover({container: 'body', content: $content.prop('outerHTML'), html: true});
                 $showPopover.removeClass('hidden');
             } else {
-                popover.options.content = content;
+                popover.options.content = $content;
             }
         }
 
@@ -269,7 +274,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 $status = $container.find('.status'),
                 $acceptButton = $actionButtonsContainer.find('.btn-success'),
                 $resetLink = $done.find('a'),
-                $requestAmendmentsButton = $actionButtonsContainer.find('.btn-warning'),
+                $requestAmendmentButton = $actionButtonsContainer.find('.btn-warning'),
                 $showAmendmentRequests = $container.find('#showAmendmentRequests');
 
             if(amendmentRequests.length > 0) {
@@ -319,34 +324,39 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 });
             });
 
-            var $requestAmendmentsModal = $('#requestAmendmentsModal'),
-                $requestAmendmentsSendButton = $requestAmendmentsModal.find('#sendAmendmentsRequest'),
-                $requestAmendmentsMessage = $requestAmendmentsModal.find('textarea');
+            var $requestAmendmentModal = $('#requestAmendmentModal'),
+                $amendmentRequestForm = $requestAmendmentModal.find('#amendmentRequestForm'),
+                $idReason = $amendmentRequestForm.find('#id_reason'),
+                $idText = $amendmentRequestForm.find('#id_text');
 
-            $requestAmendmentsButton.click(function(e) {
-                $requestAmendmentsModal.modal('show');
+            $requestAmendmentButton.click(function(e) {
+                $requestAmendmentModal.modal('show');
             });
 
-            $requestAmendmentsSendButton.click(function(e) {
-                $.post('/applications/set_review_status/', {
-                    applicationID: application.id,
-                    csrfmiddlewaretoken: csrfToken,
-                    status: 'awaiting_amendments',
-                    message: $requestAmendmentsMessage.val()
-                },
-                function(data) {
-                    $processingStatus.text(data.processing_status);
-                    $status.text(data.review_status);
-                    $requestAmendmentsMessage.val('');
+            $amendmentRequestForm.submit(function(e) {
+                $.ajax({
+                    type: $(this).attr('method'),
+                    url: $(this).attr('action'),
+                    data: $(this).serialize(),
+                    success: function (data) {
+                        $processingStatus.text(data.processing_status);
+                        $status.text(data.review_status);
+                        $idReason.find('option:eq(0)').prop('selected', true);
+                        $idText.val('');
 
-                    application.review_status = data.review_status;
-                    determineApplicationApprovable();
+                        application.review_status = data.review_status;
+                        determineApplicationApprovable();
 
-                    if(data.review_status === 'Awaiting Amendments') {
-                        amendmentRequests.push(data.amendment_request);
-                        prepareAmendmentRequestsPopover($showAmendmentRequests);
+                        if(data.review_status === 'Awaiting Amendments') {
+                            amendmentRequests.push(data.amendment_request);
+                            prepareAmendmentRequestsPopover($showAmendmentRequests);
+                        }
+
+                        $requestAmendmentModal.modal('hide');
                     }
                 });
+
+                e.preventDefault();
             });
         }
 

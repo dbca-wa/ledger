@@ -19,7 +19,7 @@ class EmailUserAdmin(UserAdmin):
     )
     fieldsets = (
         (None, {'fields': ('email',)}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification', 'character_flagged')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification', 'character_flagged', 'character_comments')}),
         ('Permissions', {'fields': (
             'is_active', 'is_staff', 'is_superuser', 'groups')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),

@@ -3,13 +3,14 @@ import shutil
 
 from preserialize.serialize import serialize
 
-from models import Application, Assessment
+from models import Application, AmendmentRequest, Assessment
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
 ID_CHECK_STATUSES = dict(Application.ID_CHECK_STATUS_CHOICES)
 CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
 REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
+AMENDMENT_REQUEST_REASONS = dict(AmendmentRequest.REASON_CHOICES)
 ASSESSMENT_STATUSES = dict(Assessment.STATUS_CHOICES)
 
 
@@ -108,6 +109,12 @@ def format_application(instance, attrs):
     attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
 
     attrs['conditions'] = serialize([ap.condition for ap in instance.applicationcondition_set.all().order_by('order')])
+
+    return attrs
+
+
+def format_amendment_request(instance, attrs):
+    attrs['reason'] = AMENDMENT_REQUEST_REASONS[attrs['reason']]
 
     return attrs
 

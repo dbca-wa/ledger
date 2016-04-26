@@ -195,6 +195,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     character_flagged = models.BooleanField(default=False)
 
+    character_comments = models.TextField(blank=True)
+
     documents = models.ManyToManyField(Document)
 
     extra_data = JSONField(default=dict)

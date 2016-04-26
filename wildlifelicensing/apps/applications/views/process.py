@@ -16,11 +16,13 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAs
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
+from wildlifelicensing.apps.applications.forms import IDRequestForm, AmendmentRequestForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email
 from wildlifelicensing.apps.main.models import AssessorDepartment
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
-    REVIEW_STATUSES, format_application, format_assessment_status
+    REVIEW_STATUSES, format_application, format_amendment_request, format_assessment_status
+
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -51,7 +53,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             'application': serialize(application, posthook=format_application),
             'form_structure': form_structure,
             'officers': officers,
-            'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application)),
+            'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application), posthook=format_amendment_request),
             'assessor_departments': ass_depts,
             'assessments': serialize(Assessment.objects.filter(application=application),
                                      posthook=format_assessment_status),
@@ -65,6 +67,9 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         application = get_object_or_404(Application, pk=self.args[0])
         if 'data' not in kwargs:
             kwargs['data'] = self._build_data(self.request, application)
+        kwargs['id_request_form'] = IDRequestForm(application=application, user=self.request.user)
+        kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, user=self.request.user)
+
         return super(ProcessView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -75,7 +80,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         return redirect('applications:enter_conditions', *args, **kwargs)
 
 
-class AssignOfficerView(View):
+class AssignOfficerView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
 
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
@@ -99,14 +104,12 @@ class AssignOfficerView(View):
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SetIDCheckStatusView(View):
+class SetIDCheckStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
         application.id_check_status = request.POST['status']
 
-        if 'message' in request.POST:
-            print(request.POST.get('message'))
-
+        application.customer_status = determine_customer_status(application)
         application.processing_status = determine_processing_status(application)
         application.save()
 
@@ -115,7 +118,27 @@ class SetIDCheckStatusView(View):
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SetCharacterCheckStatusView(View):
+class IDRequestView(OfficerRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        id_request_form = IDRequestForm(request.POST)
+        if id_request_form.is_valid():
+            id_request = id_request_form.save()
+
+            application = id_request.application
+            application.id_check_status = 'awaiting_update'
+            application.customer_status = determine_customer_status(application)
+            application.processing_status = determine_processing_status(application)
+            application.save()
+
+            response = {'id_check_status': ID_CHECK_STATUSES[application.id_check_status],
+                        'processing_status': PROCESSING_STATUSES[application.processing_status]}
+
+            return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
+        else:
+            return JsonResponse(id_request_form.errors, safe=False, encoder=WildlifeLicensingJSONEncoder)
+
+
+class SetCharacterCheckStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
         application.character_check_status = request.POST['status']
@@ -128,40 +151,51 @@ class SetCharacterCheckStatusView(View):
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SetReviewStatusView(View):
+class SetReviewStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
         application.review_status = request.POST['status']
 
-        amendment_request = None
-        if application.review_status == 'awaiting_amendments':
-            application.customer_status = 'amendment_required'
-            amendment_text = request.POST.get('message', '')
-            amendment_request = AmendmentRequest.objects.create(application=application,
-                                                                text=amendment_text,
-                                                                user=request.user)
+        application.customer_status = determine_customer_status(application)
         application.processing_status = determine_processing_status(application)
         application.save()
-        if amendment_request is not None:
-            send_amendment_requested_email(application, amendment_request, request=request)
 
         response = {'review_status': REVIEW_STATUSES[application.review_status],
                     'processing_status': PROCESSING_STATUSES[application.processing_status]}
 
-        if amendment_request is not None:
-            response['amendment_request'] = serialize(amendment_request)
-
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SendForAssessmentView(View):
+class AmendmentRequestView(OfficerRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        amendment_request_form = AmendmentRequestForm(request.POST)
+        if amendment_request_form.is_valid():
+            amendment_request = amendment_request_form.save()
+
+            application = amendment_request.application
+            application.review_status = 'awaiting_amendments'
+            application.customer_status = determine_customer_status(application)
+            application.processing_status = determine_processing_status(application)
+            application.save()
+
+            send_amendment_requested_email(application, amendment_request, request=request)
+
+            response = {'review_status': REVIEW_STATUSES[application.review_status],
+                        'processing_status': PROCESSING_STATUSES[application.processing_status],
+                        'amendment_request': serialize(amendment_request, posthook=format_amendment_request)}
+
+            return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
+        else:
+            return JsonResponse(amendment_request_form.errors, safe=False, encoder=WildlifeLicensingJSONEncoder)
+
+
+class SendForAssessmentView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         ass_dept = get_object_or_404(AssessorDepartment, pk=request.POST['assDeptID'])
         assessment = Assessment.objects.create(application=application, assessor_department=ass_dept,
-                                                              status=request.POST['status'],
-                                                              user=request.user)
+                                               status=request.POST['status'], user=request.user)
 
         application.processing_status = determine_processing_status(application)
         application.save()
@@ -183,5 +217,18 @@ def determine_processing_status(application):
             status = 'awaiting_responses'
         else:
             status = 'awaiting_assessor_response'
+
+    return status
+
+
+def determine_customer_status(application):
+    status = 'under_review'
+
+    if application.id_check_status == 'awaiting_update' and application.review_status == 'awaiting_amendments':
+        status = 'id_and_amendment_required'
+    elif application.id_check_status == 'awaiting_update':
+        status = 'id_required'
+    elif application.review_status == 'awaiting_amendments':
+        status = 'amendment_required'
 
     return status
