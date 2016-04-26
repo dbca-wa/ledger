@@ -65,7 +65,7 @@
                                         <p>
                                             {{ applicant.user.first_name }} {{ applicant.user.last_name }}
                                             <span class="pull-right">
-                                                {% if request.user.identification %}
+                                                {% if applicant.user.identification %}
                                                     <a data-toggle="modal" data-target="#idModal">
                                                         Show ID
                                                     </a>
@@ -235,7 +235,7 @@
         </div>
     </div>
     {% block modals %}
-        {% if request.user.identification %}
+        {% if data.application.applicant_profile.user.identification %}
             <div class="modal fade" id="idModal" tabindex="-1">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">

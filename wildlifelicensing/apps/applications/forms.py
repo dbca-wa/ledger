@@ -26,7 +26,7 @@ class ProfileSelectionForm(forms.Form):
 
 
 class IDRequestForm(forms.ModelForm):
-    class Meta():
+    class Meta:
         model = IDRequest
         fields = ['application', 'user', 'reason', 'text']
         widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
@@ -45,7 +45,7 @@ class IDRequestForm(forms.ModelForm):
 
 
 class AmendmentRequestForm(forms.ModelForm):
-    class Meta():
+    class Meta:
         model = AmendmentRequest
         fields = ['application', 'user', 'reason', 'text']
         widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
