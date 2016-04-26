@@ -43,7 +43,7 @@ class Application(RevisionedMixin):
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
-    lodgement_date = models.DateTimeField(blank=True, null=True)
+    lodgement_date = models.DateField(blank=True, null=True)
 
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
