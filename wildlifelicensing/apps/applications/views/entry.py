@@ -284,7 +284,7 @@ class PreviewView(UserCanEditApplicationMixin, TemplateView):
         application.further_information_disclaimer = request.POST.get('furtherInfoDisclaimer', '') == 'on'
         application.applicant_profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile'))
         application.lodgement_sequence += 1
-        application.lodgement_date = datetime.now()
+        application.lodgement_date = datetime.now().date()
         if application.customer_status == 'amendment_required':
             # this is a 're-lodged' application after some amendment were required.
             # from this point we assumed that all the amendments have been amended.
