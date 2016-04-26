@@ -5,8 +5,7 @@ from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeVie
     CreateSelectProfileView, EnterDetailsView, PreviewView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
-    SetCharacterCheckStatusView, \
-    SetReviewStatusView, SendForAssessmentView
+    IDRequestView, SetCharacterCheckStatusView, SetReviewStatusView, AmendmentRequestView, SendForAssessmentView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
     CreateConditionView, SubmitConditionsView, EnterConditionsAssessorView, SubmitConditionsAssessorView
@@ -28,8 +27,10 @@ urlpatterns = [
     url(r'^process/([0-9]+)/$', ProcessView.as_view(), name='process'),
     url('^assign_officer/$', AssignOfficerView.as_view(), name='assign_officer'),
     url('^set_id_check_status/$', SetIDCheckStatusView.as_view(), name='set_id_check_status'),
+    url('^id_request/$', IDRequestView.as_view(), name='id_request'),
     url('^set_character_check_status/$', SetCharacterCheckStatusView.as_view(), name='set_character_check_status'),
     url('^set_review_status/$', SetReviewStatusView.as_view(), name='set_review_status'),
+    url('^amendment_request/$', AmendmentRequestView.as_view(), name='amendment_request'),
     url('^send_for_assessment/$', SendForAssessmentView.as_view(), name='send_for_assessment'),
 
     # conditions

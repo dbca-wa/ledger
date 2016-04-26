@@ -8,32 +8,32 @@ from django.dispatch import receiver
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry,\
     AssessorDepartment
-from django.template.defaultfilters import default
 
 
 class Application(RevisionedMixin):
     CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('pending', 'Pending'), ('under_review', 'Under Review'),
-                               ('amendment_required', 'Amendment Required'), ('approved', 'Approved'),
-                               ('rejected', 'Rejected'))
+                               ('id_required', 'Identification Required'), ('amendment_required', 'Amendment Required'),
+                               ('id_and_amendment_required', 'Identification/Amendments Required'),
+                               ('approved', 'Approved'), ('declined', 'Declined'))
 
     PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'), ('ready_for_conditions', 'Ready for Conditions'),
-                                 ('rejected', 'Rejected'))
+                                 ('declined', 'Declined'))
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
 
     CHARACTER_CHECK_STATUS_CHOICES = (
-        ('not_checked', 'Not Checked'), ('accepted', 'Accepted'), ('rejected', 'Rejected'))
+        ('not_checked', 'Not Checked'), ('accepted', 'Accepted'))
 
     REVIEW_STATUS_CHOICES = (
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
-        ('accepted', 'Accepted'), ('rejected', 'Rejected'))
+        ('accepted', 'Accepted'))
 
     licence_type = models.ForeignKey(WildlifeLicenceType)
-    customer_status = models.CharField('Customer Status', max_length=20, choices=CUSTOMER_STATUS_CHOICES,
+    customer_status = models.CharField('Customer Status', max_length=30, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
     data = JSONField()
     documents = models.ManyToManyField(Document)
@@ -48,12 +48,12 @@ class Application(RevisionedMixin):
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
-    id_check_status = models.CharField('Identification Check Status', max_length=20, choices=ID_CHECK_STATUS_CHOICES,
+    id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
                                        default=ID_CHECK_STATUS_CHOICES[0][0])
-    character_check_status = models.CharField('Character Check Status', max_length=20,
+    character_check_status = models.CharField('Character Check Status', max_length=30,
                                               choices=CHARACTER_CHECK_STATUS_CHOICES,
                                               default=CHARACTER_CHECK_STATUS_CHOICES[0][0])
-    review_status = models.CharField('Review Status', max_length=20, choices=REVIEW_STATUS_CHOICES,
+    review_status = models.CharField('Review Status', max_length=30, choices=REVIEW_STATUS_CHOICES,
                                      default=REVIEW_STATUS_CHOICES[0][0])
 
     conditions = models.ManyToManyField(Condition, through='ApplicationCondition')
@@ -67,9 +67,22 @@ class ApplicationLogEntry(AbstractLogEntry):
     application = models.ForeignKey(Application)
 
 
+class IDRequest(ApplicationLogEntry):
+    REASON_CHOICES = (('missing', 'There is currently no Photographic Identification uploaded'),
+                      ('expired', 'The current identification has expired'),
+                      ('not_recognised', 'The current identification is not recognised by the Department of Parks and Wildlife'),
+                      ('illegible', 'The current identification image is of poor quality and cannot be made out.'),
+                      ('other', 'Other'))
+    reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+
+
 class AmendmentRequest(ApplicationLogEntry):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+    REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+                      ('missing_information', 'There was missing information'),
+                      ('other', 'Other'))
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
+    reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
 
 
 class Assessment(ApplicationLogEntry):
