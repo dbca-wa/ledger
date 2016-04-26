@@ -14,7 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application, Assessment
-from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin, AssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from .forms import LoginForm
 
@@ -216,7 +216,7 @@ class DashboardTableBaseView(TemplateView):
         return super(DashboardTableBaseView, self).get_context_data(**kwargs)
 
 
-class DashboardTableOfficerView(DashboardTableBaseView):
+class DashboardTableOfficerView(OfficerRequiredMixin, DashboardTableBaseView):
     template_name = 'wl/dash_tables_officer.html'
 
     def _build_data(self):
@@ -255,7 +255,7 @@ class DashboardTableOfficerView(DashboardTableBaseView):
         return data
 
 
-class DashboardTableAssessorView(DashboardTableOfficerView):
+class DashboardTableAssessorView(AssessorRequiredMixin, DashboardTableOfficerView):
     """
     Same table as officer with limited filters
     """
@@ -289,7 +289,7 @@ class DashboardTableAssessorView(DashboardTableOfficerView):
         return data
 
 
-class DashboardTableCustomerView(DashboardTableBaseView):
+class DashboardTableCustomerView(LoginRequiredMixin, DashboardTableBaseView):
     template_name = 'wl/dash_tables_customer.html'
 
     def _build_data(self):
