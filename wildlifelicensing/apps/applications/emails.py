@@ -35,8 +35,8 @@ class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
 def send_assessment_requested_email(application, assessment, request):
     email = ApplicationAssessmentRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('applications:process',
-                args=[application.pk])
+        reverse('applications:enter_conditions_assessor',
+                args=[application.pk, assessment.pk])
     )
     context = {
         'assessor': assessment.assessor_department,

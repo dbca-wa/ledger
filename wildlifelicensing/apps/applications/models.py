@@ -8,6 +8,7 @@ from django.dispatch import receiver
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry,\
     AssessorDepartment
+from django.template.defaultfilters import default
 
 
 class Application(RevisionedMixin):
@@ -36,11 +37,13 @@ class Application(RevisionedMixin):
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
     data = JSONField()
     documents = models.ManyToManyField(Document)
+    correctness_disclaimer = models.BooleanField(default=False)
+    further_information_disclaimer = models.BooleanField(default=False)
     applicant_profile = models.ForeignKey(Profile)
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
-    lodgement_date = models.DateTimeField(blank=True, null=True)
+    lodgement_date = models.DateField(blank=True, null=True)
 
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
@@ -73,6 +76,7 @@ class Assessment(ApplicationLogEntry):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
     assessor_department = models.ForeignKey(AssessorDepartment)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
+    conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)
 
 
@@ -83,6 +87,15 @@ class ApplicationCondition(models.Model):
 
     class Meta:
         unique_together = ('condition', 'application', 'order')
+
+
+class AssessmentCondition(models.Model):
+    condition = models.ForeignKey(Condition)
+    assessment = models.ForeignKey(Assessment)
+    order = models.IntegerField()
+
+    class Meta:
+        unique_together = ('condition', 'assessment', 'order')
 
 
 class EmailLogEntry(ApplicationLogEntry):

@@ -12,8 +12,8 @@ from preserialize.serialize import serialize
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment
-from wildlifelicensing.apps.applications.utils import format_application
+from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
+from wildlifelicensing.apps.applications.utils import format_application, format_assessment
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from django.db.utils import IntegrityError
@@ -32,7 +32,9 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = form_structure
+        kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
         kwargs['action_url'] = reverse('applications:submit_conditions', args=[application.pk])
+
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
 
@@ -100,16 +102,20 @@ class SubmitConditionsAssessorView(View):
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
-            ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
-                                                application=application, order=order)
+            AssessmentCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
+                                               assessment=assessment, order=order)
+
         # set the assessment request status to be 'assessed'
         assessment.status = 'assessed'
         comment = request.POST.get('comment', '')
         if len(comment.strip()) > 0:
             assessment.comment = comment
         assessment.save()
-        # # set application status process
+
+        # set application status process
         application.processing_status = determine_processing_status(application)
         application.save()
+
         send_assessment_done_email(application, assessment, request)
+
         return redirect(self.success_url)

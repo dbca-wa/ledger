@@ -6,7 +6,7 @@ from reversion.admin import VersionAdmin
 
 from social.apps.django_app.default.models import UserSocialAuth
 
-from ledger.accounts.models import EmailUser, Address, Profile
+from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 
 @admin.register(EmailUser)
@@ -19,9 +19,9 @@ class EmailUserAdmin(UserAdmin):
     )
     fieldsets = (
         (None, {'fields': ('email',)}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'dob')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification', 'character_flagged')}),
         ('Permissions', {'fields': (
-            'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+            'is_active', 'is_staff', 'is_superuser', 'groups')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
 
@@ -53,6 +53,11 @@ class EmailUserAdmin(UserAdmin):
                 user_social_auth.save()
             except UserSocialAuth.DoesNotExist:
                 self._create_user_social_auth(obj)
+
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    model = Document
 
 
 @admin.register(Address)

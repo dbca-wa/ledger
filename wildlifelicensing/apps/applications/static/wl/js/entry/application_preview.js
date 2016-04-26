@@ -25,6 +25,9 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                     itemContainer.append($('<p>').text(option.label));
                 }
             });
+        } else if(item.type === 'declaration') {
+            itemContainer.append($('<label>').text(item.label));
+            itemContainer.append($('<p>').text(item.valueCurrent ? 'Declaration checked' : 'Declaration not checked'));
         } else {
             itemContainer.append($('<label>').text(item.label));
             itemContainer.append($('<p>').text(item.value));
@@ -95,6 +98,13 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             var sectionList = $(sidebarMenuSelector);
             $('body').scrollspy({ target: '#sectionList' });
             sectionList.affix({ offset: { top: sectionList.offset().top }});
+        },
+        setupDisclaimer(disclaimersSelector, lodgeSelector) {
+            $(disclaimersSelector).change(function(e) {
+                // enable lodge button if the number of checked checkboxes is the same as the number of
+                // checkboxes in the dislaimer div (which is the parent of the disclaimers selector's elements)
+                $(lodgeSelector).attr('disabled', $(disclaimersSelector).parent().find(':checked').length !== $(disclaimersSelector).length);
+            })
         }
     }
 });
