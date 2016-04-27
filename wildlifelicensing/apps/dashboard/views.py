@@ -10,11 +10,11 @@ from django.views.generic import TemplateView
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from django.db.models import Q
 
-from braces.views import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
-from wildlifelicensing.apps.applications.models import Application
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
+from wildlifelicensing.apps.applications.models import Application, Assessment
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin, AssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from .forms import LoginForm
 
@@ -26,7 +26,7 @@ def _build_url(base, query):
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_persona__user=user)
+    return Application.objects.filter(applicant_profile__user=user)
 
 
 def _get_processing_statuses_but_draft():
@@ -47,9 +47,12 @@ class DashBoardRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            if is_officer(self.request.user) or is_assessor(self.request.user):
+            if is_officer(self.request.user):
                 return redirect('dashboard:tree_officer')
-            return redirect('dashboard:tree_customer')
+            elif is_assessor(self.request.user):
+                return redirect('dashboard:tables_assessor')
+
+            return redirect('dashboard:tables_customer')
         else:
             kwargs['form'] = LoginForm
             return super(DashBoardRoutingView, self).get(*args, **kwargs)
@@ -213,37 +216,32 @@ class DashboardTableBaseView(TemplateView):
         return super(DashboardTableBaseView, self).get_context_data(**kwargs)
 
 
-class DashboardTableOfficerView(DashboardTableBaseView):
+class DashboardTableOfficerView(OfficerRequiredMixin, DashboardTableBaseView):
+    template_name = 'wl/dash_tables_officer.html'
+
     def _build_data(self):
         data = super(DashboardTableOfficerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'ID',
-                'name': 'id'
+                'title': 'Lodge No.'
             },
             {
-                'title': 'Licence Type',
-                'name': 'license_type',
+                'title': 'Licence Type'
             },
             {
-                'title': 'User',
-                'name': 'applicant_persona__user'
+                'title': 'User'
             },
             {
                 'title': 'Status',
-                'name': 'status'
             },
             {
-                'title': 'Lodged on',
-                'name': 'lodged_date'
+                'title': 'Lodged on'
             },
             {
-                'title': 'Assignee',
-                'name': 'assigned_officer'
+                'title': 'Assignee'
             },
             {
                 'title': 'Action',
-                'name': 'action',
                 'searchable': False,
                 'orderable': False
             }
@@ -253,43 +251,81 @@ class DashboardTableOfficerView(DashboardTableBaseView):
         data['applications']['filters']['assignee'] = {
             'values': [('all', 'All')] + [(user.pk, render_user_name(user),) for user in get_all_officers()]
         }
-        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_officer')
+        data['applications']['ajax']['url'] = reverse('dashboard:data_application_officer')
         return data
 
 
-class DashboardTableCustomerView(DashboardTableBaseView):
+class DashboardTableAssessorView(AssessorRequiredMixin, DashboardTableOfficerView):
+    """
+    Same table as officer with limited filters
+    """
+    template_name = 'wl/dash_tables_assessor.html'
+
+    def _build_data(self):
+        data = super(DashboardTableOfficerView, self)._build_data()
+        data['applications']['columnDefinitions'] = [
+            {
+                'title': 'Lodge No.'
+            },
+            {
+                'title': 'Licence Type'
+            },
+            {
+                'title': 'User'
+            },
+            {
+                'title': 'Lodged on'
+            },
+            {
+                'title': 'Assigned Officer'
+            },
+            {
+                'title': 'Action',
+                'searchable': False,
+                'orderable': False
+            }
+        ]
+        data['applications']['ajax']['url'] = reverse('dashboard:data_application_assessor')
+        return data
+
+
+class DashboardTableCustomerView(LoginRequiredMixin, DashboardTableBaseView):
+    template_name = 'wl/dash_tables_customer.html'
+
     def _build_data(self):
         data = super(DashboardTableCustomerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Licence Type',
-                'name': 'license_type',
+                'title': 'Lodge No.'
             },
             {
-                'title': 'Persona',
-                'name': 'applicant_persona'
+                'title': 'Licence Type'
             },
             {
-                'title': 'Status',
-                'name': 'status'
+                'title': 'Profile'
+            },
+            {
+                'title': 'Status'
+            },
+            {
+                'title': 'Lodged on'
             },
             {
                 'title': 'Action',
-                'name': 'action',
                 'searchable': False,
                 'orderable': False
             }
         ]
         data['applications']['filters']['status']['values'] = \
             [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
-        data['applications']['ajax']['url'] = reverse('dashboard:applications_data_customer')
+        data['applications']['ajax']['url'] = reverse('dashboard:data_application_customer')
         return data
 
 
-class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
+class DataApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
     model = Application
-    columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
-    order_columns = ['licence_type.code', 'applicant_persona.user', 'applicant_persona', 'processing_status']
+    columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
+    order_columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
 
     def _build_search_query(self, fields_to_search, search):
         query = Q()
@@ -298,33 +334,32 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         return query
 
     def _build_user_search_query(self, search):
-        fields_to_search = ['applicant_persona__user__last_name', 'applicant_persona__user__first_name',
-                            'applicant_persona__user__email']
+        fields_to_search = ['applicant_profile__user__last_name', 'applicant_profile__user__first_name']
         return self._build_search_query(fields_to_search, search)
 
-    def _build_persona_search_query(self, search):
-        fields_to_search = ['applicant_persona__email', 'applicant_persona__name']
+    def _build_profile_search_query(self, search):
+        fields_to_search = ['applicant_profile__email', 'applicant_profile__name']
         return self._build_search_query(fields_to_search, search)
 
     def _render_user_column(self, obj):
-        return render_user_name(obj.applicant_persona.user, first_name_first=False)
+        return render_user_name(obj.applicant_profile.user, first_name_first=False)
 
-    def _render_persona_column(self, obj):
-        persona = obj.applicant_persona
-        if persona is None:
+    def _render_profile_column(self, obj):
+        profile = obj.applicant_profile
+        if profile is None:
             return 'unknown'
         else:
             # return the string rep
-            return '{}'.format(persona)
+            return '{}'.format(profile)
 
     columns_helpers = {
-        'applicant_persona.user': {
+        'applicant_profile.user': {
             'render': _render_user_column,
             'search': _build_user_search_query
         },
-        'applicant_persona': {
-            'render': _render_persona_column,
-            'search': _build_persona_search_query
+        'applicant_profile': {
+            'render': _render_profile_column,
+            'search': _build_profile_search_query
         }
     }
 
@@ -381,34 +416,38 @@ class ApplicationDataTableBaseView(LoginRequiredMixin, BaseDatatableView):
     def render_column(self, application, column):
         if column in self.columns_helpers and 'render' in self.columns_helpers[column]:
             func = self.columns_helpers[column]['render']
-            return func(self, application)
+            if callable(func):
+                return func(self, application)
+            else:
+                return 'render is not a function'
         else:
-            result = super(ApplicationDataTableBaseView, self).render_column(application, column)
+            result = super(DataApplicationBaseView, self).render_column(application, column)
         return result
 
     def _build_global_search_query(self, search):
         query = Q()
-        col_data = super(ApplicationDataTableBaseView, self).extract_datatables_column_data()
+        col_data = super(DataApplicationBaseView, self).extract_datatables_column_data()
         for col_no, col in enumerate(col_data):
             if col['searchable']:
                 col_name = self.columns[col_no]
                 # special cases
                 if col_name in self.columns_helpers and 'search' in self.columns_helpers[col_name]:
                     func = self.columns_helpers[col_name]['search']
-                    q = func(self, search)
-                    query |= q
+                    if callable(func):
+                        q = func(self, search)
+                        query |= q
                 else:
                     query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
         return query
 
 
-class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, ApplicationDataTableBaseView):
-    columns = ['id', 'licence_type.code', 'applicant_persona.user', 'processing_status', 'lodged_date',
+class DataApplicationOfficerView(OfficerOrAssessorRequiredMixin, DataApplicationBaseView):
+    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
                'assigned_officer', 'action']
-    order_columns = ['id', 'licence_type.code',
-                     ['applicant_persona.user.last_name', 'applicant_persona.user.first_name',
-                      'applicant_persona.user.email'],
-                     'processing_status', 'lodged_date',
+    order_columns = ['lodgement_number', 'licence_type.code',
+                     ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
+                      'applicant_profile.user.email'],
+                     'processing_status', 'lodgement_date',
                      ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'], '']
 
     def _build_status_filter(self, status_value):
@@ -416,22 +455,26 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
         return Q(processing_status=status_value) if status_value != 'all' else ~Q(customer_status='draft')
 
     def _render_action_column(self, obj):
-        return '<a href="{0}">Process</a>'.format(
-            reverse('applications:process', args={obj.pk}),
-        )
+        if obj.processing_status == 'ready_for_conditions':
+            return '<a href="{0}">Enter Conditions</a>'.format(
+                reverse('applications:enter_conditions', args=[obj.pk]),
+            )
+        else:
+            return '<a href="{0}">Process</a>'.format(
+                reverse('applications:process', args=[obj.pk]),
+            )
 
     def _build_assignee_search_query(self, search):
-        fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name',
-                            'assigned_officer__email']
+        fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name']
         return self._build_search_query(fields_to_search, search)
 
     def _render_assignee_column(self, obj):
         return render_user_name(obj.assigned_officer)
 
-    def _render_lodged_date(selfself, obj):
-        return _render_date(obj.lodged_date)
+    def _render_lodgement_date(self, obj):
+        return _render_date(obj.lodgement_date)
 
-    columns_helpers = dict(ApplicationDataTableBaseView.columns_helpers.items(), **{
+    columns_helpers = dict(DataApplicationBaseView.columns_helpers.items(), **{
         'assigned_officer': {
             'search': _build_assignee_search_query,
             'render': _render_assignee_column
@@ -439,8 +482,8 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
         'action': {
             'render': _render_action_column,
         },
-        'lodged_date': {
-            'render': _render_lodged_date
+        'lodgement_date': {
+            'render': _render_lodgement_date
         },
     })
 
@@ -448,9 +491,11 @@ class ApplicationDataTableOfficerView(OfficerOrAssessorRequiredMixin, Applicatio
         return self.model.objects.all()
 
 
-class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
-    columns = ['licence_type.code', 'applicant_persona', 'customer_status', 'action']
-    order_columns = ['licence_type.code', 'applicant_persona', 'customer_status', '']
+class DataApplicationCustomerView(DataApplicationBaseView):
+    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
+               'action']
+    order_columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
+                     '']
 
     def get_initial_queryset(self):
         return _get_user_applications(self.request.user)
@@ -461,19 +506,97 @@ class ApplicationDataTableCustomerView(ApplicationDataTableBaseView):
     def _render_action_column(self, obj):
         if obj.customer_status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Continue application'
             )
         elif obj.customer_status == 'amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:enter_details_existing_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Amend application'
             )
         else:
             return 'Locked'
 
-    columns_helpers = dict(ApplicationDataTableBaseView.columns_helpers.items(), **{
+    def _render_lodgement_date(self, obj):
+        return _render_date(obj.lodgement_date)
+
+    columns_helpers = dict(DataApplicationBaseView.columns_helpers.items(), **{
         'action': {
             'render': _render_action_column,
         },
+        'lodgement_date': {
+            'render': _render_lodgement_date
+        },
     })
+
+
+class DataApplicationAssessorView(DataApplicationBaseView):
+    """
+    Model of this table is not Application but Assessment
+     see: get_initial_queryset method
+    """
+    columns = [
+        'application.lodgement_number',
+        'application.licence_type.code',
+        'application.applicant_profile.user',
+        'application.lodgement_date',
+        'application.assigned_officer',
+        'action'
+    ]
+    order_columns = [
+        'application.lodgement_number',
+        'application.licence_type.code',
+        ['application.applicant_profile.user.last_name', 'application.applicant_profile.user.first_name',
+         'application.applicant_profile.user.email'],
+        'application.lodgement_date',
+        ['application.assigned_officer.first_name', 'application.assigned_officer.last_name',
+         'application.assigned_officer.email'], ''
+    ]
+
+    def _render_action_column(self, obj):
+        return '<a href="{0}">Review</a>'.format(
+            reverse('applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
+        )
+
+    def _search_assignee_query(self, search):
+        fields_to_search = ['application__assigned_officer__last_name',
+                            'application__assigned_officer__first_name',
+                            'application__assigned_officer__email']
+        return self._build_search_query(fields_to_search, search)
+
+    def _render_assignee_column(self, obj):
+        return render_user_name(obj.application.assigned_officer)
+
+    def _render_lodgement_date(self, obj):
+        return _render_date(obj.application.lodgement_date)
+
+    def _render_applicant(self, obj):
+        return super(DataApplicationAssessorView, self)._render_user_column(obj.application),
+
+    def _search_user_query(self, search):
+        fields_to_search = ['application__applicant_profile__user__last_name',
+                            'application__applicant_profile__user__first_name']
+        return self._build_search_query(fields_to_search, search)
+
+    columns_helpers = dict(**{
+        'application.applicant_profile.user': {
+            'render': _render_applicant,
+            'search': _search_user_query
+        },
+        'application.assigned_officer': {
+            'search': _search_assignee_query,
+            'render': _render_assignee_column,
+        },
+        'action': {
+            'render': _render_action_column,
+        },
+        'application.lodgement_date': {
+            'render': _render_lodgement_date,
+        },
+    })
+
+    def get_initial_queryset(self):
+        departments = self.request.user.assessordepartment_set.all()
+        assessments = Assessment.objects.filter(assessor_department__in=departments).filter(
+            status='awaiting_assessment')
+        return assessments

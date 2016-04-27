@@ -13,10 +13,10 @@
 
 {% block requirements %}
     require(["{% static 'wl/js/dash_tables.js' %}"], function (app) {
-    var options = {
-    data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}
-    };
-    app(options);
+        var options = {
+            data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}
+        };
+        app(options);
     });
 {% endblock %}
 
@@ -37,33 +37,8 @@
                     <div class="panel-body">
                         <div class="row filter-panel pad-bottom-md pad-top-s">
                             <div id="applications-filter-panel">
-                                <form class="form" id="applications-filter-form">
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="applications-filter-licence-type">License Type: </label>
-                                            <select class="form-control" name="license_type"
-                                                    id="applications-filter-licence-type">
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="applications-filter-status">Status: </label>
-                                            <select class="form-control" name="status" id="applications-filter-status">
-                                            </select>
-                                        </div>
-                                    </div>
-                                    {% if request.user|is_officer %}
-                                        <div class="col-md-3">
-                                            <div class="form-group" id="applications-filter-assignee-group">
-                                                <label for="applications-filter-assignee">Assignee: </label>
-                                                <select class="form-control" name="assignee"
-                                                        id="applications-filter-assignee">
-                                                </select>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </form>
+                                {% block application_filters %}
+                                {% endblock %}
                             </div>
                         </div>
                         <table id="applications-table" class="table table-striped table-bordered dataTable"></table>

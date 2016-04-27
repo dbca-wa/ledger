@@ -1,44 +1,45 @@
 from __future__ import unicode_literals
-from braces.views import UserPassesTestMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 from .helpers import is_customer, is_officer, is_assessor
 
 
 class CustomerRequiredMixin(UserPassesTestMixin):
     """
-    A Django braces Access mixin that check for user being a customer.
+    An AccessMixin that check for user being a customer.
     See rules in 'is_customer' function
     """
 
-    def test_func(self, user):
-        return is_customer(user)
+    def test_func(self):
+        return is_customer(self.request.user)
 
 
 class OfficerRequiredMixin(UserPassesTestMixin):
     """
-    A Django braces Access mixin that check for user being a WL Officer.
+    An AccessMixin that check for user being a WL Officer.
     See rules in 'is_officer' function
     """
 
-    def test_func(self, user):
-        return is_officer(user)
+    def test_func(self):
+        return is_officer(self.request.user)
 
 
 class AssessorRequiredMixin(UserPassesTestMixin):
     """
-    A Django braces Access mixin that check for user being a WL Assessor.
+    An AccessMixin that check for user being a WL Assessor.
     See rules in 'is_assessor' function
     """
 
-    def test_func(self, user):
-        return is_assessor(user)
+    def test_func(self):
+        return is_assessor(self.request.user)
 
 
 class OfficerOrAssessorRequiredMixin(UserPassesTestMixin):
     """
-    A Django braces Access mixin that check for user being a WL Assessor.
+    An AccessMixin that check for user being a WL Assessor.
     See rules in 'is_assessor' function
     """
 
-    def test_func(self, user):
+    def test_func(self):
+        user = self.request.user
         return is_officer(user) or is_assessor(user)

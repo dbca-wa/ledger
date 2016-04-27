@@ -1,18 +1,18 @@
 .wl-header {
-  background: #529b6b;
+    background: #529b6b;
 }
 .wl-banner {
-  height: 100px;
-  padding-top: 10px;
-  background-image: url("/static/wl/img/banner.png");
-  background-repeat: no-repeat;
+    height: 100px;
+    padding-top: 10px;
+    background-image: url("/static/wl/img/banner.png");
+    background-repeat: no-repeat;
 }
 .wl-banner img {
-  vertical-align: top;
+    vertical-align: top;
 }
 .wl-banner div {
-  margin-left: 10px;
-  display: inline-block;
+    margin-left: 10px;
+    display: inline-block;
 }
 
 @media (max-width: 992px) {
@@ -38,5 +38,20 @@
 .wl-breadcrumbs {
     background-color: white;
     margin-top: -20px;
+    margin-bottom: 0px;
     padding-left: 0px;
+}
+
+.modal-header {
+    background-color: #529b6b;
+    color: #fcb13f;
+}
+
+.modal-body {
+    background-color: #529b6b;
+    color: #fff;
+}
+
+.modal-footer {
+    background-color: #529b6b;
 }

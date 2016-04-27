@@ -11,13 +11,15 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery', 'js/application_preview'], function($, applicationPreview) {
+    require(['jQuery', 'js/entry/application_preview'], function($, applicationPreview) {
         applicationPreview.layoutPreviewItems('#formContainer', {{ structure|jsonify }}, {{ data|jsonify }});
 
         $('#mainContainer').removeClass('hidden');
 
         // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
         applicationPreview.initialiseSidebarMenu('#sectionList');
+
+        applicationPreview.setupDisclaimer($('#disclaimers').find('input[type=checkbox]'), '#lodge');
     });
 {% endblock %}
 
@@ -28,11 +30,11 @@
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
                     {% if application_pk %}
-                        <li><a href="{% url 'applications:create_select_persona_existing_application' licence_type.code application_pk %}">Select Persona</a></li>
+                        <li><a href="{% url 'applications:create_select_profile_existing_application' licence_type.code application_pk %}">Select Profile</a></li>
                         <li><a href="{% url 'applications:enter_details_existing_application' licence_type.code application_pk %}">Enter Application Details</a></li>
                     {% else %}
                         <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
-                        <li><a href="{% url 'applications:create_select_persona' licence_type.code %}">Select Persona</a></li>
+                        <li><a href="{% url 'applications:create_select_profile' licence_type.code %}">Select Profile</a></li>
                         <li><a href="{% url 'applications:enter_details' licence_type.code %}">Enter Application Details</a></li>
                     {% endif %}
                     <li class="active">Preview and Lodge Application</li>
@@ -45,38 +47,68 @@
 {% block content %}
     <div id="mainContainer" class="container hidden">
         <div class="row">
-            <div class="col-md-2 col-sm-3">
-                <label class="top-buffer">Selected Persona:</label>
-                <p>{{ persona.name }}</p>
-                {% if application_pk %}
-                    <p><em><a href="{% url 'applications:create_select_persona_existing_application' licence_type.code application_pk %}">Change Persona</a></em></p>
-                {% else %}
-                    <p><em><a href="{% url 'applications:create_select_persona' licence_type.code %}">Change Persona</a></em></p>
-                {% endif %}
-            </div>
-            <div class="col-md-10 col-sm-2">
+            <div class="col-md-12">
                 <h2>{{ licence_type.name }}</h2>
+                <h3>Preview and Lodge Application</h3>
                 <hr>
+                <p>
+                    Please review the answers you provided to ensure their correctness before lodging your application. If you need to change any answers, click the
+                    Edit Application Details button at the bottom-left. When you are satisfied with your answers, check the disclaimer checkboxes and click the Lodge
+                    Application button at the bottom-right.
+                </p>
+                <p>
+                    Note that once you have lodged the application, you will not be able to alter it unless a Wildlife Licensing officer requests
+                    amendments be made. Should amendments be required, you will be notified via email (using the email address for the profile selected) whereby
+                    you will be able to alter the application according to the amendments requested.
+                </p>
             </div>
         </div>
         <div class="row">
-            <nav class="hidden-xs col-sm-3 col-md-2 top-buffer">
-                <div id="sectionList">
-                    <ul class="nav nav-stacked">
-                    </ul>
-                </div>
-            </nav>
+            <div class="col-md-2 col-sm-3">
+                <label class="top-buffer">Selected Profile:</label>
+                <p>{{ profile.name }}</p>
+                {% if application_pk %}
+                    <p><em><a href="{% url 'applications:create_select_profile_existing_application' licence_type.code application_pk %}">Change Profile</a></em></p>
+                {% else %}
+                    <p><em><a href="{% url 'applications:create_select_profile' licence_type.code %}">Change Profile</a></em></p>
+                {% endif %}
+                <nav class="hidden-xs top-buffer">
+                    <div id="sectionList">
+                        <ul class="nav nav-stacked">
+                        </ul>
+                    </div>
+                </nav>
+            </div>
             <div class="col-xs-12 col-sm-9 col-md-10">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
-                    {% if application_pk %}
-                    <a class="btn btn-default" href="{% url 'applications:enter_details_existing_application' licence_type.code application_pk %}">Edit Application Details</a>
-                    {% else %}
-                    <a class="btn btn-default" href="{% url 'applications:enter_details' licence_type.code %}">Edit Application Details</a>
-                    {% endif %}
-                    <button type="submit" class="btn btn-primary pull-right" name="lodge">Lodge Application</button>
+                    <hr>
+                    <h3>Disclaimer</h3>
+                    <div id="disclaimers" class="children-anchor-point">
+                        <div class="form-group">
+                           <label>
+                                <input name="correctnessDisclaimer" type="checkbox" />
+                                I acknowledge that the information provided in the application is true and correct at the time of submission.
+                           </label> 
+                        </div>
+                        <div class="form-group">
+                           <label>
+                                <input name="furtherInfoDisclaimer" type="checkbox" />
+                                I acknowledge that if further information or details are requested of me, the application assessment period may exceed
+                                20 working days.
+                           </label> 
+                        </div>
+                    </div>
+                    <div>
+                        {% if application_pk %}
+                            <a class="btn btn-default" href="{% url 'applications:enter_details_existing_application' licence_type.code application_pk %}">Edit Application Details</a>
+                        {% else %}
+                            <a class="btn btn-default" href="{% url 'applications:enter_details' licence_type.code %}">Edit Application Details</a>
+                        {% endif %}
+                        <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>Lodge Application</button>
+                    </div>
                 </form>
             </div>
         </div>

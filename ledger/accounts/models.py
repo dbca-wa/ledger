@@ -1,4 +1,7 @@
 from __future__ import unicode_literals
+
+import os
+
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -6,6 +9,8 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 
 from reversion import revisions
+from django_countries.fields import CountryField
+from django.template.defaultfilters import default
 
 
 class EmailUserManager(BaseUserManager):
@@ -48,7 +53,7 @@ class Document(models.Model):
 
     @property
     def filename(self):
-        return self.path.basename(self.path)
+        return os.path.basename(self.path)
 
     def __str__(self):
         return self.name or self.filename
@@ -77,9 +82,9 @@ class Address(models.Model):
     line2 = models.CharField('Line 2', max_length=255, blank=True)
     line3 = models.CharField('Line 3', max_length=255, blank=True)
     locality = models.CharField('Suburb / Town', max_length=255)
-    state = models.CharField(
-        max_length=255, choices=STATE_CHOICES)
-    postcode = models.IntegerField()
+    state = models.CharField(max_length=255, choices=STATE_CHOICES, default='WA', blank=True)
+    country = CountryField(default='AU')
+    postcode = models.CharField(max_length=10)
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
 
@@ -103,7 +108,7 @@ class Address(models.Model):
     def _update_search_text(self):
         search_fields = filter(
             bool, [self.line1, self.line2, self.line3, self.locality,
-                   self.state, str(self.postcode)])
+                   self.state, str(self.country.name), self.postcode])
         self.search_text = ' '.join(search_fields)
 
     @property
@@ -118,8 +123,8 @@ class Address(models.Model):
         """Return the non-empty components of the address.
         """
         fields = [self.line1, self.line2, self.line3,
-                  self.locality, self.state, str(self.postcode)]
-        fields = [f.strip() for f in fields if f]
+                  self.locality, self.state, self.country, self.postcode]
+        fields = [str(f).strip() for f in fields if f]
         return fields
 
     def join_fields(self, fields, separator=u', '):
@@ -157,7 +162,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     )
     is_active = models.BooleanField(
         default=True,
-        help_text='Designates whether this user should be treated as active. '
+        help_text='Designates whether this user should be treated as active.'
                   'Unselect this instead of deleting ledger.accounts.',
     )
     date_joined = models.DateTimeField(default=timezone.now)
@@ -187,6 +192,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
 
     identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
+
+    character_flagged = models.BooleanField(default=False)
+
+    character_comments = models.TextField(blank=True)
 
     documents = models.ManyToManyField(Document)
 
@@ -230,8 +239,13 @@ class RevisionedMixin(models.Model):
     A model tracked by reversion through the save method.
     """
     def save(self, **kwargs):
-        with revisions.create_revision():
+        if kwargs.pop('no_revision', False):
             super(RevisionedMixin, self).save(**kwargs)
+        else:
+            with revisions.create_revision():
+                revisions.set_user(kwargs.pop('version_user', None))
+                revisions.set_comment(kwargs.pop('version_comment', ''))
+                super(RevisionedMixin, self).save(**kwargs)
 
     @property
     def created_date(self):
@@ -246,7 +260,7 @@ class RevisionedMixin(models.Model):
 
 
 @python_2_unicode_compatible
-class Persona(RevisionedMixin):
+class Profile(RevisionedMixin):
     user = models.ForeignKey(EmailUser, verbose_name='User')
     name = models.CharField('Display Name', max_length=100, help_text='e.g Personal, Work, University, etc')
     email = models.EmailField('Email')

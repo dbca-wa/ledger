@@ -1,0 +1,232 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
+          rel="stylesheet"/>
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(['js/conditions/enter_conditions'], function (enter_conditions) {
+        $(function () {
+            enter_conditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}});
+        });
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><a href="{% url 'dashboard:tables_officer' %}">Applications</a></li>
+                    <li><a href="{% url 'applications:process' application.id %}">Process Application</a></li>
+                    <li class="active">Enter Licence Conditions</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container bottom-buffer">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Enter Licence Conditions</h2>
+                <h3>{{ application.licence_type.name }}</h3>
+                <hr>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Application Overview
+                                <a data-toggle="collapse" href="#applicationOverviewBody" class="pull-right">
+                                    <span class="glyphicon"></span>
+                                </a>
+                            </div>
+                            <div id="applicationOverviewBody" class="panel-body panel-collapse in">
+                                <label>Applicant</label>
+                                {% with applicant=application.applicant_profile %}
+                                    <p>
+                                        {{ applicant.user.first_name }} {{ applicant.user.last_name }}
+                                    </p>
+                                    <p>{{ applicant.postal_address.search_text }}</p>
+                                {% endwith %}
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <label>Lodged on</label>
+                                        <p>{{ application.lodgement_date|date:'d/m/Y' }}</p>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <label>Status</label>
+                                        <p>{{ application.processing_status }}</p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Currently assigned to</label>
+                                    <p>
+                                        {% if application.assigned_officer %} 
+                                            {{ application.assigned_officer.first_name }} {{ application.assigned_officer.last_name }}
+                                        {% else %}
+                                            Unassigned
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <p>
+                                    <a id="viewApplicationDetails" data-toggle="popover" data-placement="right">
+                                        View Application Details
+                                    </a>
+                                </p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                {% if assessments|length %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    Assessments
+                                    <a data-toggle="collapse" href="#assessmentsBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                </div>
+                                <div id="assessmentsBody" class="panel-body panel-collapse in">
+                                    Current Assessments
+                                    <table id="assessments" class="table small-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Assessor</th>
+                                                <th>Feedback</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Add Additional Conditions
+                                <a data-toggle="collapse" href="#addAdditionalConditionsBody" class="pull-right">
+                                    <span class="glyphicon"></span>
+                                </a>
+                            </div>
+                            <div id="addAdditionalConditionsBody" class="panel-body panel-collapse in">
+                                <div>
+                                    <div class="form-group">
+                                        Search Conditions
+                                        <input type="hidden" id="searchConditions" class="form-control" />
+                                    </div>
+                                    <div style="text-align:right">
+                                        <button type="button" id="addCondition" class="btn btn-xs btn-primary" disabled>Add Condition</button>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div style="text-align:right">
+                                    <button type="button" id="createCustomCondition" class="btn btn-xs btn-primary">Create Custom Condition</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {%  block action_button %}
+                    <button id="issueLicence" type="button" class="btn btn-sm btn-success pull-right">Issue Licence</button>
+                    <button id="backToProcessing" type="button" class="btn btn-sm btn-default">Back to Processing</button>
+                {% endblock %}
+            </div>
+            <div class="col-md-9">
+                <h3>Current Conditions</h3>
+                <div class="pull-right">
+                    <div class="legend default">
+                    </div>
+                    <strong>Default Condition</strong>
+                    <div class="legend assessor">
+                    </div>
+                    <strong>Assessors' Condition</strong>
+                    <div class="legend additional">
+                    </div>
+                    <strong>Additional Condition</strong>
+                    <div class="legend custom">
+                    </div>
+                    <strong>Custom Condition</strong>
+                </div>
+                <form method="post" action="{{ action_url }}" id="conditionsForm">
+                    {% csrf_token %}
+                    <table class="table table-bordered">
+                        <thead class="conditions-table-head">
+                            <tr>
+                                <th class="code">Code</th>
+                                <th class="condition">Condition</th>
+                                <th class="action">Action</th>
+                                <th class="order">Order</th>
+                            </tr>
+                        </thead>
+                        <tbody id="conditionsBody">
+                            <tr id="conditionsEmptyRow" class="hidden">
+                                <td colspan="3">No default conditions specified</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    {%  block comments %}
+                    {%  endblock %}
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block modals %}
+    <div class="modal fade" id="createCustomConditionModal" tabindex="-1">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="post" action="{% url 'applications:create_condition' %}" id="createConditionForm">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                        <h4 class="modal-title">Create Custom Condition</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="createConditionError" class="alert alert-danger hidden">
+                            <span class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Condition Code</label>
+                            <input type="text" name="code" class="form-control" required></input>
+                         </div>
+                        <div class="form-group">
+                            <label>Condition Text</label>
+                            <textarea name="text" rows="5" class="form-control" required></textarea>
+                         </div>
+                        <div class="form-group">
+                            <label>
+                                <input name="addToGeneralList" type="checkbox" />
+                                Add to general condition list
+                            </label> 
+                         </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Create and Add Condition</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

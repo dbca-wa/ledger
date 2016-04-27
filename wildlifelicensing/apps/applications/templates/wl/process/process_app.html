@@ -14,10 +14,10 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/process/process_app', 'js/application_preview'], function (app, applicationPreview) {
+    require(['js/process/process_app'], function (app, applicationPreview) {
         $(function () {
-            app.initialiseApplicationProcesssing({{ data|jsonify }});
-            applicationPreview.layoutPreviewItems('#previewContainer', {{ data|jsonify }}.form_structure, {{ data|jsonify}}.application.data)
+            data = {{ data|jsonify }};
+            app.initialiseApplicationProcesssing(data);
             $('#mainContainer').removeClass('hidden');
             //app.initialiseSidePanelAffix();
         });
@@ -41,18 +41,31 @@
 {% block content %}
     <div id="mainContainer" class="container hidden">
         <div class="row">
+            <div class="col-md-12">
+                <h2>Process Application</h2>
+                <h3>{{ data.application.licence_type.name }}</h3>
+                <hr>
+            </div>
+        </div>
+        <div class="row">
             <div class="col-md-3">
                 <div id=sidebarPanels class="bottom-buffer">
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">
-                                <div class="panel-body">
+                                <div class="panel-heading">
+                                    Application Overview
+                                    <a data-toggle="collapse" href="#applicationOverviewBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                </div>
+                                <div id="applicationOverviewBody" class="panel-body panel-collapse in">
                                     <label>Applicant</label>
-                                    {% with applicant=data.application.applicant_persona %}
+                                    {% with applicant=data.application.applicant_profile %}
                                         <p>
                                             {{ applicant.user.first_name }} {{ applicant.user.last_name }}
                                             <span class="pull-right">
-                                                {% if request.user.identification %}
+                                                {% if applicant.user.identification %}
                                                     <a data-toggle="modal" data-target="#idModal">
                                                         Show ID
                                                     </a>
@@ -65,7 +78,7 @@
                                     <div class="row">
                                         <div class="col-md-5">
                                             <label>Lodged on</label>
-                                            <p>{{ data.application.lodged_date|date:'d/m/Y' }}</p>
+                                            <p>{{ data.application.lodgement_date|date:'d/m/Y' }}</p>
                                         </div>
                                         <div class="col-md-7">
                                             <label>Status</label>
@@ -84,12 +97,46 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">
-                                <div class="panel-body">
+                                <div class="panel-heading">
+                                    Lodged Versions
+                                    <a data-toggle="collapse" href="#lodgedVersionsBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                 </div>
+                                <div id="lodgedVersionsBody" class="panel-body panel-collapse in">
+                                    <table id="lodgedVersions" class="table small-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Lodge No.</th>
+                                                <th>Date</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    Processing Checklist
+                                    <a data-toggle="collapse" href="#processingChecklistBody" class="pull-right">
+                                        <span class="glyphicon"></span>
+                                    </a>
+                                 </div>
+                                <div id="processingChecklistBody" class="panel-body panel-collapse in">
                                     <div id="idCheck" class="processing-action-group">
                                         <div>
-                                            <label>Identity Check</label>
+                                            <label>ID Check</label>
                                             <span class="pull-right status">{{ data.application.id_check_status }}</span>
-                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
+                                            <span class="done pull-right hidden">
+                                                <a>Reset</a>
+                                                <span class="glyphicon glyphicon-ok ok-tick"></span>
+                                            </span>
                                         </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
@@ -101,23 +148,41 @@
                                         <div>
                                             <label>Character Check</label>
                                             <span class="pull-right status">{{ data.application.character_check_status }}</span>
-                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
+                                            <span class="done pull-right hidden">
+                                                <a>Reset</a>
+                                                <span class="glyphicon glyphicon-ok ok-tick"></span>
+                                            </span>
                                         </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
                                         </div>
+                                        <a id="showCharacterChecklist" class="small-text" data-toggle="popover" data-placement="right" title="Character Checklist">
+                                            Character Checklist
+                                        </a>
+                                        {% if data.application.applicant_profile.user.character_flagged %}
+                                            <a id="dodgyUser" class="pull-right" data-toggle="tooltip" data-placement="right"
+                                                    title="User has previously been flagged as having questionalbe character. {{ data.application.applicant_profile.user.character_comments }}">
+                                                <span  class="glyphicon glyphicon-user"></span>
+                                            </a>
+                                        {% endif %}
                                     </div>
                                     <hr>
                                     <div id="review" class="processing-action-group">
                                         <div>
                                             <label>Review</label>
                                             <span class="pull-right status">{{ data.application.review_status }}</span>
-                                            <span class="glyphicon glyphicon-ok pull-right ok-tick hidden"></span>
-                                        </div>
+                                            <span class="done pull-right hidden">
+                                                <a>Reset</a>
+                                                <span class="glyphicon glyphicon-ok ok-tick"></span>
+                                            </span>
+                                            </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
                                             <button type="button" class="btn btn-xs btn-warning">Request Amendments</button>
                                         </div>
+                                        <a id="showAmendmentRequests" class="hidden small-text" data-toggle="popover" data-placement="right" title="Amendment Requests">
+                                            View all amendment requests
+                                        </a>
                                     </div>
                                     <hr>
                                     <div class="processing-action-group">
@@ -127,7 +192,7 @@
                                         </div>
                                         <div>
                                             <div class="form-group">
-                                                Send for assessment
+                                                Select Department
                                                 <input type="hidden" id="assessor" class="form-control" />
                                             </div>
                                             <div style="text-align:right">
@@ -136,7 +201,7 @@
                                         </div>
                                         <div class="hidden">
                                             Current Assessments
-                                            <table id="currentAssessments" class="table">
+                                            <table id="currentAssessments" class="table small-table">
                                                 <thead>
                                                     <tr>
                                                         <th>Assessor</th>
@@ -150,8 +215,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <button id="approve" type="button" class="btn btn-sm btn-success pull-right" disabled>Approve Application</button>
-                            <button id="reject" type="button" class="btn btn-sm btn-danger">Reject Application</button>
+                            <form method="post" action="{% url 'applications:process' data.application.id %}">
+                                {% csrf_token %}
+                                <button id="approve" type="submit" name="enterConditions" type="button" class="btn btn-sm btn-success pull-right" disabled>Enter Conditions</button>
+                                <button id="decline" type="submit" name="decline" type="button" class="btn btn-sm btn-danger">Decline Application</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -160,7 +228,6 @@
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <div id="previewContainer">
-                            <h2>{{ data.application.licence_type.name }}</h2>
                         </div>
                     </div>
                 </div>
@@ -168,16 +235,19 @@
         </div>
     </div>
     {% block modals %}
-        {% if request.user.identification %}
+        {% if data.application.applicant_profile.user.identification %}
             <div class="modal fade" id="idModal" tabindex="-1">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                            <h4 class="modal-title">Identification for {{ request.user.first_name }} {{ request.user.last_name }}</h4>
+                            <h4 class="modal-title">Identification for {{ data.application.applicant_profile.user.first_name }}
+                            {{ data.application.applicant_profile.user.user.last_name }}</h4>
                         </div>
                         <div class="modal-body" style="text-align: center">
-                            <img src="{{ request.user.identification.file.url }}" />
+                            <a href="{{ data.application.applicant_profile.user.identification.file.url }}" target="_blank">
+                                <img width="100%" src="{{ data.application.applicant_profile.user.identification.file.url }}" />
+                            </a>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -192,39 +262,39 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                        <h4 class="modal-title">Request Photo Identification Update</h4>
+                        <h4 class="modal-title">Request Photo Identification Upload</h4>
                     </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label>Enter message to be sent to the applicant</label>
-                            <textarea rows="3" class="form-control"></textarea>
-                            <p class="help-block">E.g. Photo Identification missing, expired, insufficient, etc</p>
-                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button id="sendIDUpdateRequest" type="button" class="btn btn-default" data-dismiss="modal">Send Request</button>
-                    </div>
+                    <form id="idRequestForm" method="post" action="{% url 'applications:id_request' %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            {% bootstrap_form id_request_form %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-default">Send Request</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
 
-        <div class="modal fade" id="requestAmendmentsModal" tabindex="-1">
+        <div class="modal fade" id="requestAmendmentModal" tabindex="-1">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                         <h4 class="modal-title">Request Amendments to Application</h4>
                     </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label>Enter message to be sent to the applicant</label>
-                            <textarea rows="3" class="form-control"></textarea>
-                            <p class="help-block">The message should describe the amendments that need to made to the application</p>
-                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button id="sendAmendmentsRequest" type="button" class="btn btn-default" data-dismiss="modal">Send Request</button>
-                    </div>
+                    <form id="amendmentRequestForm" method="post" action="{% url 'applications:amendment_request' %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="modal-body">
+                                {% bootstrap_form amendment_request_form %}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-default">Send Request</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

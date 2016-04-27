@@ -32,11 +32,13 @@ INSTALLED_APPS = [
     'django_hosts',
     'bootstrap3',
     'reversion',
+    'django_countries',
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
     'wildlifelicensing.apps.applications',
+    'wildlifelicensing.apps.emails'
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
@@ -96,6 +98,8 @@ ADMINS = ('asi@dpaw.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
+DEFAULT_FROM_EMAIL = EMAIL_FROM
+WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wildlifelicensing@dpaw.wa.gov.au')
 
 
 TEMPLATES = [
@@ -175,7 +179,7 @@ STATICFILES_DIRS = [
 ]
 if not os.path.exists(os.path.join(BASE_DIR, 'media')):
     os.mkdir(os.path.join(BASE_DIR, 'media'))
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = env('MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
 MEDIA_URL = '/media/'
 
 
@@ -191,6 +195,11 @@ LOGGING = {
         },
     },
     'handlers': {
+        'console': {
+            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -200,6 +209,11 @@ LOGGING = {
         },
     },
     'loggers': {
+        '': {
+            'handlers': ['file', 'console'],
+            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
+            'propagate': True
+        },
         'django.request': {
             'handlers': ['file'],
             'level': 'INFO'
