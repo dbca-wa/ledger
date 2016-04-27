@@ -3,11 +3,11 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
-from wildlifelicensing.apps.applications.models import EmailLogEntry
+from wildlifelicensing.apps.applications.models import EmailLogEntry, AmendmentRequest
 
 
 class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
-    subject = 'An amendment to you wildlife licensing application is required.'
+    subject = 'An amendment to your wildlife licensing application is required.'
     html_template = 'wl/emails/application_amendment_requested.html'
     txt_template = 'wl/emails/application_amendment_requested.txt'
 
@@ -19,9 +19,11 @@ def send_amendment_requested_email(application, amendment_request, request):
                 args=[application.licence_type.code, application.pk])
     )
     context = {
-        'amendment': amendment_request.text,
+        'amendment_detail': amendment_request.text,
         'url': url
     }
+    if amendment_request.reason:
+        context['amendment_reason'] = dict(AmendmentRequest.REASON_CHOICES)[amendment_request.reason]
     msg = email.send(application.applicant_profile.email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
