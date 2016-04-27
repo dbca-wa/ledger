@@ -11,7 +11,7 @@ from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, A
 
 
 class Application(RevisionedMixin):
-    CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('pending', 'Pending'), ('under_review', 'Under Review'),
+    CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('under_review', 'Under Review'),
                                ('id_required', 'Identification Required'), ('amendment_required', 'Amendment Required'),
                                ('id_and_amendment_required', 'Identification/Amendments Required'),
                                ('approved', 'Approved'), ('declined', 'Declined'))

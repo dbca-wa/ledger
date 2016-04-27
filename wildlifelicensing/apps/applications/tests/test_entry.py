@@ -380,14 +380,14 @@ class ApplicationEntrySecurity(TestCase):
         # lodge the application
         url = reverse('applications:preview', args=[application.licence_type.code, application.pk])
         self.client.session['application'] = {
-                'profile': application.applicant_profile.pk,
-                'data': {
-                    'project_title': 'Test'
-                }
+            'profile': application.applicant_profile.pk,
+            'data': {
+                'project_title': 'Test'
             }
+        }
         self.client.post(url)
         application.refresh_from_db()
-        self.assertEqual('pending', application.customer_status)
+        self.assertEqual('under_review', application.customer_status)
         for url in my_urls:
             response = self.client.get(url, follow=True)
             self.assertEqual(403, response.status_code)

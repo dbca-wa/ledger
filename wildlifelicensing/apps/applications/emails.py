@@ -15,7 +15,7 @@ class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
 def send_amendment_requested_email(application, amendment_request, request):
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('applications:enter_details_existing_application',
+        reverse('applications:edit_application',
                 args=[application.licence_type.code, application.pk])
     )
     context = {
