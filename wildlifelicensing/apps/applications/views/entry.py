@@ -73,6 +73,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super(CheckIdentificationRequiredView, self).get_context_data(**kwargs)
+        context['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
         context['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
         return context
 
