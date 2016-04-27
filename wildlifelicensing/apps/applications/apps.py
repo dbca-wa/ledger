@@ -12,5 +12,5 @@ class ApplicationsConfig(AppConfig):
     def ready(self):
         if not self.run_once:
             import signals
-        
+
         self.run_once = True
