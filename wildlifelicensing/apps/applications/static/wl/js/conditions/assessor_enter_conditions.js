@@ -6,8 +6,7 @@ define([
 ], function ($, _, applicationPreview) {
     var $conditionsTableBody = $('#conditionsBody'),
     $conditionsEmptyRow = $('#conditionsEmptyRow'),
-    $createCustomConditionModal = $('#createCustomConditionModal'),
-    $createCustomConditionForm = $('#createConditionForm');
+    $createCustomConditionModal = $('#createCustomConditionModal');
 
     function initApplicationDetailsPopover(application, formStructure) {
         var $contentContainer = $('<div>'),
@@ -35,15 +34,8 @@ define([
             $conditionsTableBody.find('input[value="' + condition.id + '"]').remove();
         });
 
-        var $clone = $('<a>Clone</a>');
-        $clone.click(function(e) {
-            $createCustomConditionForm.find('h4').text('Create Custom Condition from ' + condition.code);
-            $createCustomConditionForm.find('textarea').val(condition.text);
-            $createCustomConditionModal.modal('show');
-        });
-
         if(!readonly) {
-            $action = $('<div>').append($remove).append($('<hr>')).append($clone);
+            $action = $('<div>').append($remove);
 
             var $moveUp = $('<a>').append($('<span>').addClass('glyphicon').addClass('glyphicon-chevron-up'));
             $moveUp.click(function(e) {
@@ -59,7 +51,7 @@ define([
 
             $ordering = $('<div>').css('text-align', 'center').append($moveUp).append($('<hr>')).append($moveDown);
         } else {
-            $action = $('<div>').append($clone);
+            $action = $('<div>');
             $ordering = $('<div>');
         }
 
@@ -141,41 +133,6 @@ define([
         });
     }
 
-    function initCustomConditions() {
-        var $createConditionError = $('#createConditionError');
-
-        $('#createCustomCondition').click(function(e) {
-            $createCustomConditionModal.find('h4').text('Create Custom Condition');
-            $createCustomConditionModal.modal('show');
-        });
-
-        $createCustomConditionForm.submit(function(e) {
-            $.ajax({
-                type: $(this).attr('method'),
-                url: $(this).attr('action'),
-                data: $(this).serialize(),
-                success: function (data) {
-                    if(typeof data === "string" || data instanceof String) {
-                        $createConditionError.find('span').text(data);
-                        $createConditionError.removeClass('hidden');
-                    } else {
-                        createConditionTableRow(data, 'custom');
-                        $conditionsEmptyRow.addClass('hidden');
-                        $createCustomConditionModal.modal('hide');
-                    }
-                }
-            });
-
-            e.preventDefault();
-        });
-
-        $createCustomConditionModal.on('hidden.bs.modal', function(e) {
-            $createCustomConditionForm.find('input[type=text], textarea').val('');
-            $createCustomConditionForm.find('input[type=checkbox]').attr('checked', false);
-            $createConditionError.addClass('hidden');
-        });
-    }
-
     function initForm() {
         $('#assessmentDone').click(function() {
             var $conditionsForm = $('#conditionsForm');
@@ -188,7 +145,6 @@ define([
             initApplicationDetailsPopover(application, formStructure);
             initDefaultConditions(application.licence_type.default_conditions);
             initAdditionalConditions();
-            initCustomConditions();
             initForm();
         }
     }

@@ -292,14 +292,13 @@ class PreviewView(UserCanEditApplicationMixin, TemplateView):
         application.lodgement_date = datetime.now().date()
         if application.customer_status == 'amendment_required':
             # this is a 're-lodged' application after some amendment were required.
-            # from this point we assumed that all the amendments have been amended.
+            # from this point we assume that all the amendments have been amended.
             AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
-            application.customer_status = 'under_review'
             application.review_status = 'amended'
             application.processing_status = 'ready_for_action'
         else:
-            application.customer_status = 'pending'
             application.processing_status = 'new'
+        application.customer_status = 'under_review'
 
         if len(application.lodgement_number) == 0:
             application.save(no_revision=True)
