@@ -99,6 +99,14 @@ def create_default_assessor():
     return user
 
 
+def is_login_page(response):
+    if hasattr(response, 'content'):
+        content = response.content
+    else:
+        content = str(response)
+    return content.find('<div id="wl-login-container">') > 0
+
+
 class HelpersTest(TestCase):
     def setUp(self):
         self.client = SocialClient()
