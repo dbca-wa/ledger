@@ -42,7 +42,7 @@ def send_assessment_requested_email(application, assessment, request):
         'assessor': assessment.assessor_department,
         'url': url
     }
-    msg = email.send(application.applicant_profile.email, context=context)
+    msg = email.send(assessment.assessor_department.email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
 
