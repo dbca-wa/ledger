@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 from django.apps import AppConfig
-from mock import self
 
 
 class ApplicationsConfig(AppConfig):
