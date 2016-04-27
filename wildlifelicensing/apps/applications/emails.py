@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
-from wildlifelicensing.apps.applications.models import EmailLogEntry, AmendmentRequest
+from wildlifelicensing.apps.applications.models import EmailLogEntry, AmendmentRequest, IDRequest
 
 
 class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
@@ -68,6 +68,28 @@ def send_assessment_done_email(application, assessment, request):
     to_email = application.assigned_officer.email if application.assigned_officer else settings.WILDLIFELICENSING_EMAIL_CATCHALL
     msg = email.send(to_email, context=context)
     _log_email(msg, application=application, sender=request.user)
+
+
+class ApplicationIDUpdaterequestedEmail(TemplateEmailBase):
+    subject = 'An ID update for a wildlife licensing application is required.'
+    html_template = 'wl/emails/application_id_request.html'
+    txt_template = 'wl/emails/application_id_request.txt'
+
+
+def send_id_update_request_email(id_request, request):
+    email = ApplicationIDUpdaterequestedEmail()
+    url = request.build_absolute_uri(
+        reverse('main:identification')
+    )
+    context = {
+        'url': url
+    }
+    if id_request.reason:
+        context['request_reason'] = dict(IDRequest.REASON_CHOICES)[id_request.reason]
+    if id_request.text:
+        context['request_text'] = id_request.text
+    msg = email.send(id_request.application.applicant_profile.email, context=context)
+    _log_email(msg, application=id_request.application, sender=request.user)
 
 
 def _log_email(email_message, application, sender=None):

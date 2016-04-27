@@ -17,12 +17,12 @@ from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_na
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
 from wildlifelicensing.apps.applications.forms import IDRequestForm, AmendmentRequestForm
-from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email
+from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
+    send_id_update_request_email
 from wildlifelicensing.apps.main.models import AssessorDepartment
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
     REVIEW_STATUSES, format_application, format_amendment_request, format_assessment_status
-
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -37,15 +37,19 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
-        current_ass_depts = [ass_request.assessor_department for ass_request in Assessment.objects.filter(application=application)]
+        current_ass_depts = [ass_request.assessor_department for ass_request in
+                             Assessment.objects.filter(application=application)]
         ass_depts = [{'id': ass_dept.id, 'text': ass_dept.name} for ass_dept in
                      AssessorDepartment.objects.all().exclude(id__in=[ass_dept.pk for ass_dept in current_ass_depts])]
 
         previous_application_data = []
-        for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by('-revision__date_created'):
+        for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
+                '-revision__date_created'):
             previous_application_data.append({'lodgement_number': revision.object_version.object.lodgement_number +
-                                              '-' + str(revision.object_version.object.lodgement_sequence),
-                                              'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
+                                                                  '-' + str(
+                revision.object_version.object.lodgement_sequence),
+                                              'date': formats.date_format(revision.revision.date_created, 'd/m/Y',
+                                                                          True),
                                               'data': revision.object_version.object.data})
 
         data = {
@@ -53,7 +57,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             'application': serialize(application, posthook=format_application),
             'form_structure': form_structure,
             'officers': officers,
-            'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application), posthook=format_amendment_request),
+            'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application),
+                                            posthook=format_amendment_request),
             'assessor_departments': ass_depts,
             'assessments': serialize(Assessment.objects.filter(application=application),
                                      posthook=format_assessment_status),
@@ -95,7 +100,8 @@ class AssignOfficerView(OfficerRequiredMixin, View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
+                                                                               (application.assigned_officer.first_name,
+                                                                                application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
@@ -129,6 +135,10 @@ class IDRequestView(OfficerRequiredMixin, View):
             application.customer_status = determine_customer_status(application)
             application.processing_status = determine_processing_status(application)
             application.save()
+            try:
+                send_id_update_request_email(id_request, request)
+            except Exception as e:
+                print(str(e))
 
             response = {'id_check_status': ID_CHECK_STATUSES[application.id_check_status],
                         'processing_status': PROCESSING_STATUSES[application.processing_status]}
