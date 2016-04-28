@@ -361,19 +361,36 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
         }
 
         function createAssessmentRow(assessment) {
-            var row = $('<tr></tr>'),
-                $node;
-            row.append('<td>' + assessment.assessor_department.name + '</td>');
-            var statusColumn = $('<td></td>').css('text-align', 'right');
+            var $row = $('<tr>'),
+                $actions = $('<p>').addClass('center').addClass('no-margin');
+            $row.append('<td>' + assessment.assessor_department.name + '</td>');
+            var statusColumn = $('<td>').addClass('center');
             if(assessment.status === 'Awaiting Assessment') {
-                statusColumn.append(assessment.status);
+                var $remind = $('<a>').text('Remind');
+
+                $remind.click(function(e) {
+                    $.post('/applications/remind_assessment/',  {
+                        assessmentID: assessment.id,
+                        csrfmiddlewaretoken: csrfToken
+                    }, function(data) {
+                        if(data === 'ok') {
+                            window.alert('Reminder sent');
+                        }
+                    });
+                });
+
+                $actions.append($remind);
             } else {
-                $node = $('<a><span>View Comment</span></a>');
-                $node.popover({container: 'body', content: assessment.comment, html: true});
-                statusColumn.append($node);
+                var $viewComment = $('<a>').text('View Comment');
+                $viewComment.popover({container: 'body', content: assessment.comment, html: true});
+                $actions.append($viewComment);
             }
-            row.append(statusColumn);
-            return row;
+
+            statusColumn.append(assessment.status);
+            statusColumn.append($actions);
+
+            $row.append(statusColumn);
+            return $row;
         }
 
         function initAssessment(assessorsList) {
@@ -433,18 +450,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                     !application.licence_type.identification_required) {
                 if(application.character_check_status === 'Accepted') {
                     if(application.review_status === 'Accepted') {
-                        if(assessments.length === 0) {
-                            approvable = true;
-                        } else {
-                            var allAssessed = true;
-                            for(var i = 0; i < assessments.length; i++) {
-                                if(assessments[i].status !== 'Assessed') {
-                                    allAssessed = false;
-                                    break;
-                                }
-                            }
-                            approvable = allAssessed;
-                        }
+                        approvable = true;
                     }
                 }
             }

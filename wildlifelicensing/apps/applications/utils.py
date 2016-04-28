@@ -121,11 +121,6 @@ def format_amendment_request(instance, attrs):
 
 def format_assessment(instance, attrs):
     attrs['conditions'] = serialize([ass.condition for ass in instance.assessmentcondition_set.all().order_by('order')])
-
-    return attrs
-
-
-def format_assessment_status(instance, attrs):
     attrs['status'] = ASSESSMENT_STATUSES[attrs['status']]
 
     return attrs

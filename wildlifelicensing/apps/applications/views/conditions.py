@@ -116,6 +116,6 @@ class SubmitConditionsAssessorView(View):
         application.processing_status = determine_processing_status(application)
         application.save()
 
-        send_assessment_done_email(application, assessment, request)
+        send_assessment_done_email(assessment, request)
 
         return redirect(self.success_url)

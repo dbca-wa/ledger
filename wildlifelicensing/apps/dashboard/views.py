@@ -596,7 +596,7 @@ class DataApplicationAssessorView(DataApplicationBaseView):
     })
 
     def get_initial_queryset(self):
-        departments = self.request.user.assessordepartment_set.all()
+        departments = self.request.user.assessorgroup_set.all()
         assessments = Assessment.objects.filter(assessor_department__in=departments).filter(
             status='awaiting_assessment')
         return assessments

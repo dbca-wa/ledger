@@ -12,6 +12,12 @@ class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_amendment_requested.txt'
 
 
+class ApplicationAssessmentReminderEmail(TemplateEmailBase):
+    subject = 'Reminder: An amendment to you wildlife licensing application is required.'
+    html_template = 'wl/emails/application_amendment_reminder.html'
+    txt_template = 'wl/emails/application_amendment_reminder.txt'
+
+
 def send_amendment_requested_email(application, amendment_request, request):
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
@@ -32,7 +38,9 @@ class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_assessment_requested.txt'
 
 
-def send_assessment_requested_email(application, assessment, request):
+def send_assessment_requested_email(assessment, request):
+    application = assessment.application
+
     email = ApplicationAssessmentRequestedEmail()
     url = request.build_absolute_uri(
         reverse('applications:enter_conditions_assessor',
@@ -42,9 +50,24 @@ def send_assessment_requested_email(application, assessment, request):
         'assessor': assessment.assessor_department,
         'url': url
     }
-    msg = email.send(application.applicant_profile.email, context=context)
+    msg = email.send(assessment.assessor_department.email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
+
+def send_assessment_reminder_email(assessment, request):
+    application = assessment.application
+
+    email = ApplicationAssessmentReminderEmail()
+    url = request.build_absolute_uri(
+        reverse('applications:enter_conditions_assessor',
+                args=[application.pk, assessment.pk])
+    )
+    context = {
+        'assessor': assessment.assessor_department,
+        'url': url
+    }
+    msg = email.send(assessment.assessor_department.email, context=context)
+    _log_email(msg, application=application, sender=request.user)
 
 class ApplicationAssessmentDoneEmail(TemplateEmailBase):
     subject = 'An assessment to a wildlife licensing application has been done.'
@@ -52,7 +75,9 @@ class ApplicationAssessmentDoneEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_assessment_done.txt'
 
 
-def send_assessment_done_email(application, assessment, request):
+def send_assessment_done_email(assessment, request):
+    application = assessment.application
+
     email = ApplicationAssessmentDoneEmail()
     url = request.build_absolute_uri(
         reverse('applications:enter_conditions',

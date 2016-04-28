@@ -1,5 +1,6 @@
 define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function($, _, applicationPreview) {
-    var $conditionsTableBody = $('#conditionsBody'),
+    var $conditionsForm = $('#conditionsForm'),
+        $conditionsTableBody = $('#conditionsBody'),
         $conditionsEmptyRow = $('#conditionsEmptyRow'),
         $createCustomConditionModal = $('#createCustomConditionModal'),
         $createCustomConditionForm = $('#createConditionForm');
@@ -14,41 +15,79 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
     }
 
     function initAssessments(assessments) {
-        var $assessments = $('#assessments');
+        var $assessments = $('#assessments'),
+            showAssessmentsTable = false;
 
         $.each(assessments, function(assessmentIndex, assessment) {
-            var $contentContainer = $('<div>'),
-                $assessorRow = $('<tr>');
-                $viewDetails = $('<a>').text('View Feedback'),
-                $conditionsTable = $('<table>').addClass('table').addClass('table-bordered').addClass('popover-conditions-table').
-                    append($('<thead>')).append($('<tbody>'));
+            if(assessment.status === 'Assessed') {
+                showAssessmentsTable = true;
 
-            $contentContainer.append($('<label>').text("Assessor's Conditions"));
+                var $contentContainer = $('<div>'),
+                    $assessorRow = $('<tr>');
+                    $viewDetails = $('<a>').text('View Feedback');
 
-            $conditionsTable.find('thead').append($('<tr>').append($('<th>').text('Code')).append($('<th>').text('Condition')));
-            $.each(assessment.conditions, function(conditionIndex, condition) {
-                var $conditionRow = $('<tr>').addClass('assessor');
-                $conditionRow.append($('<td>').text(condition.code));
-                $conditionRow.append($('<td>').text(condition.text));
-                $conditionsTable.append($conditionRow);
-            });
+                $contentContainer.append($('<label>').text("Assessor's Suggested Conditions"));
 
-            $contentContainer.append($conditionsTable);
-            $contentContainer.append($('<label>').text("Assessor's Comments"));
-            $contentContainer.append($('<p>').text(assessment.comment));
+                if(assessment.conditions.length > 0) {
+                    var $conditionsTable = $('<table>').addClass('table').addClass('table-bordered').addClass('popover-conditions-table').
+                        append($('<thead>')).append($('<tbody>'));
 
-            $viewDetails.popover({
-                container: 'body',
-                title: 'Conditions / Comments from ' + assessment.assessor_department.name,
-                content: $contentContainer,
-                html: true
-            });
+                    $conditionsTable.find('thead').append($('<tr>').append($('<th>').text('Code')).append($('<th>').text('Condition')).
+                        append($('<th>').text('Action')));
+                    $.each(assessment.conditions, function(conditionIndex, condition) {
+                        var $conditionRow = $('<tr>').addClass('assessor');
+                            $add = $('<a>').text('Add');
 
-            $assessorRow.append($('<td>').html(assessment.assessor_department.name));
-            $assessorRow.append($('<td>').html($viewDetails));
+                        $add.click(function(e) {
+                            var existingConditions = $conditionsForm.find('input[type=hidden]');
 
-            $assessments.append($assessorRow);
+                            // only add condition if it hasn't already been entered
+                            if(!_.includes(_.map(existingConditions, function(condition) {return $(condition).val()}), String(condition.id), 1)) {
+                                createConditionTableRow(condition, 'assessor');
+                                $conditionsEmptyRow.addClass('hidden');
+                            } else {
+                                window.alert('The specified condition has already been entered.');
+                            }
+                        });
+
+                        $conditionRow.append($('<td>').text(condition.code));
+                        $conditionRow.append($('<td>').text(condition.text));
+                        $conditionRow.append($('<td>').html($add));
+                        $conditionsTable.append($conditionRow);
+                    });
+    
+                    $contentContainer.append($conditionsTable);
+                } else {
+                    $contentContainer.append($('<p>').append($('<em>').text('No conditions specified')));
+                }
+
+                $contentContainer.append($('<label>').text("Assessor's Comment"));
+
+                if(assessment.comment.length > 0) {
+                    $contentContainer.append($('<p>').text(assessment.comment));
+                } else {
+                    $contentContainer.append($('<p>').append($('<em>').text('No comment')));
+                }
+
+                $viewDetails.popover({
+                    container: 'body',
+                    title: 'Conditions / Comments from ' + assessment.assessor_department.name,
+                    content: $contentContainer,
+                    html: true
+                });
+
+                $assessorRow.append($('<td>').html(assessment.assessor_department.name));
+                $assessorRow.append($('<td>').html($viewDetails));
+
+                $assessments.append($assessorRow);
+            }
         });
+
+        if(showAssessmentsTable) {
+            $assessments.removeClass('hidden');
+        } else {
+            $assessments.after($('<p>').append($('<em>').text('No assessments available')));
+        }
     }
 
     function createConditionTableRow(condition, rowClass) {
@@ -123,19 +162,10 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
         });
     }
 
-    function initAssessorsConditions(assessments) {
-        $.each(assessments, function(assessmentIndex, assessment) {
-            $.each(assessment.conditions, function(conditionIndex, condition) {
-                createConditionTableRow(condition, 'assessor');
-            });
-        });
-    }
-
     function initAdditionalConditions() {
         var conditions = {},
             $searchConditions = $('#searchConditions'),
-            $addCondition = $('#addCondition'),
-            $conditionsForm = $('#conditionsForm');
+            $addCondition = $('#addCondition');
 
         $searchConditions.select2({
             dropdownCssClass : 'conditions-dropdown',
@@ -184,7 +214,8 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
 
             // only add condition if it hasn't already been entered
             if(!_.includes(_.map(existingConditions, function(condition) {return $(condition).val()}), String(condition.id), 1)) {
-                    createConditionTableRow(condition, 'additional');
+                createConditionTableRow(condition, 'additional');
+                $conditionsEmptyRow.addClass('hidden');
             } else {
                 window.alert('The specified condition has already been entered.');
             }
@@ -253,11 +284,15 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
                 initExistingConditions(application, assessments);
             } else {
                 initDefaultConditions(application.licence_type.default_conditions);
-                initAssessorsConditions(assessments);
+            }
+
+            if($conditionsTableBody.find('tr').length > 1) {
+                $conditionsEmptyRow.addClass('hidden');
             }
 
             initAdditionalConditions();
             initCustomConditions();
+
             initForm();
         }
     }
