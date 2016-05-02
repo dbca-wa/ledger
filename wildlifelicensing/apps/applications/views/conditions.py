@@ -16,6 +16,7 @@ from wildlifelicensing.apps.applications.models import Application, ApplicationC
 from wildlifelicensing.apps.applications.utils import format_application, format_assessment
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
+from wildlifelicensing.apps.applications.mixins import CanEditRequirementMixin
 from django.db.utils import IntegrityError
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -38,7 +39,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
 
-class EnterConditionsAssessorView(OfficerOrAssessorRequiredMixin, EnterConditionsView):
+class EnterConditionsAssessorView(CanEditRequirementMixin, EnterConditionsView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
 
     def get_context_data(self, **kwargs):
