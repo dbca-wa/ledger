@@ -70,14 +70,14 @@ def send_assessment_done_email(application, assessment, request):
     _log_email(msg, application=application, sender=request.user)
 
 
-class ApplicationIDUpdaterequestedEmail(TemplateEmailBase):
+class ApplicationIDUpdateRequestedEmail(TemplateEmailBase):
     subject = 'An ID update for a wildlife licensing application is required.'
     html_template = 'wl/emails/application_id_request.html'
     txt_template = 'wl/emails/application_id_request.txt'
 
 
 def send_id_update_request_email(id_request, request):
-    email = ApplicationIDUpdaterequestedEmail()
+    email = ApplicationIDUpdateRequestedEmail()
     url = request.build_absolute_uri(
         reverse('main:identification')
     )
