@@ -504,16 +504,21 @@ class DataApplicationCustomerView(DataApplicationBaseView):
         return Q(customer_status=status_value) if status_value != 'all' else Q()
 
     def _render_action_column(self, obj):
-        if obj.customer_status == 'draft':
+        status = obj.customer_status
+        if status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
                 reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Continue application'
             )
-        elif obj.customer_status == 'amendment_required':
+        elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
                 reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Amend application'
             )
+        elif status == 'id_required':
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('main:identification'),
+                'Update ID')
         else:
             return 'Locked'
 
