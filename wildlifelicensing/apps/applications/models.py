@@ -15,6 +15,8 @@ class Application(RevisionedMixin):
                                ('id_required', 'Identification Required'), ('amendment_required', 'Amendment Required'),
                                ('id_and_amendment_required', 'Identification/Amendments Required'),
                                ('approved', 'Approved'), ('declined', 'Declined'))
+    # List of statuses from above that allow a customer to edit an application.
+    CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required']
 
     PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
@@ -61,6 +63,10 @@ class Application(RevisionedMixin):
     @property
     def is_assigned(self):
         return self.assigned_officer is not None
+
+    @property
+    def can_user_edit(self):
+        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
 
 
 class ApplicationLogEntry(AbstractLogEntry):

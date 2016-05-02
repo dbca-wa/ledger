@@ -32,7 +32,6 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
         self.raise_exception = True
         application = self.get_application()
         if application is not None:
-            return application.applicant_profile.user == user and application.customer_status in ['draft',
-                                                                                                  'amendment_required']
+            return application.applicant_profile.user == user and application.can_user_edit
         else:
             return True
