@@ -16,7 +16,7 @@
 {% block requirements %}
     require(['js/conditions/enter_conditions'], function (enter_conditions) {
         $(function () {
-            enter_conditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}});
+            enter_conditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}}, '{{ csrf_token }}');
         });
     });
 {% endblock %}
@@ -177,7 +177,7 @@
                                 <th class="order">Order</th>
                             </tr>
                         </thead>
-                        <tbody id="conditionsBody">
+                        <tbody id="conditionsBody" class='conditions-table-body'>
                             <tr id="conditionsEmptyRow">
                                 <td colspan="3">No conditions specified</td>
                             </tr>

@@ -13,7 +13,7 @@ from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
-from wildlifelicensing.apps.applications.utils import format_application, format_assessment
+from wildlifelicensing.apps.applications.utils import format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from django.db.utils import IntegrityError
@@ -73,6 +73,18 @@ class CreateConditionView(View):
                                                           one_off=not request.POST.get('addToGeneralList', False)))
         except IntegrityError:
             response = 'This code has already been used. Please enter a unique code.'
+
+        return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
+
+
+class SetAssessmentConditionState(View):
+    def post(self, request, *args, **kwargs):
+        assessment_condition = get_object_or_404(AssessmentCondition, pk=request.POST.get('assessmentConditionID'))
+
+        assessment_condition.acceptance_status = request.POST.get('acceptanceStatus')
+        assessment_condition.save()
+
+        response = ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES[assessment_condition.acceptance_status]
 
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
