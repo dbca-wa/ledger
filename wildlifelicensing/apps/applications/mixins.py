@@ -68,6 +68,4 @@ class CanEditRequirementMixin(UserPassesTestMixin):
         if is_officer(user):
             return True
         assessment = self.get_assessment()
-        print('assessment dept', assessment.assessor_department)
-        print('ass group', get_user_assessor_groups(user))
-        return assessment is not None and assessment.assessor_department in get_user_assessor_groups(user)
+        return assessment is not None and assessment.assessor_group in get_user_assessor_groups(user)

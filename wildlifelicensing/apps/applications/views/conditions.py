@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.main.models import Condition
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin, AssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
 from wildlifelicensing.apps.applications.utils import format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
@@ -56,18 +56,21 @@ class EnterConditionsAssessorView(CanEditRequirementMixin, EnterConditionsView):
         return ctx
 
 
-class SearchConditionsView(View):
+class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get('q')
 
-        q = Q(code__icontains=query) | Q(text__icontains=query) & Q(one_off=False)
-
-        conditions = serialize(Condition.objects.filter(q))
+        if query is not None:
+            q = Q(code__icontains=query) | Q(text__icontains=query) & Q(one_off=False)
+            qs = Condition.objects.filter(q)
+        else:
+            qs = Condition.objects.none()
+        conditions = serialize(qs)
 
         return JsonResponse(conditions, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class CreateConditionView(View):
+class CreateConditionView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             response = serialize(Condition.objects.create(code=request.POST.get('code'), text=request.POST.get('text'),
@@ -78,7 +81,7 @@ class CreateConditionView(View):
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SetAssessmentConditionState(View):
+class SetAssessmentConditionState(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         assessment_condition = get_object_or_404(AssessmentCondition, pk=request.POST.get('assessmentConditionID'))
 
@@ -90,7 +93,7 @@ class SetAssessmentConditionState(View):
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SubmitConditionsView(View):
+class SubmitConditionsView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
@@ -107,7 +110,7 @@ class SubmitConditionsView(View):
             return redirect('dashboard:home')
 
 
-class SubmitConditionsAssessorView(View):
+class SubmitConditionsAssessorView(CanEditRequirementMixin, View):
     success_url = reverse_lazy('dashboard:home')
 
     def post(self, request, *args, **kwargs):

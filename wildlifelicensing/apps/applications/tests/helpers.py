@@ -1,10 +1,13 @@
 from django.test import TestCase
 from mixer.backend.django import mixer
 
+from django.core.urlresolvers import reverse_lazy
+
 from ledger.accounts.models import Profile
-from ledger.licence.models import LicenceType
-from wildlifelicensing.apps.applications.models import Application
-from wildlifelicensing.apps.main.tests.helpers import create_user, create_random_customer, create_licence_type
+
+from wildlifelicensing.apps.applications.models import Application, Assessment, Condition, AssessmentCondition
+from wildlifelicensing.apps.main.tests.helpers import create_random_customer, create_licence_type, \
+    SocialClient, get_or_create_default_assessor_group, get_or_create_default_officer
 
 
 def create_profile(user):
@@ -22,6 +25,47 @@ def create_application(user=None, **kwargs):
         kwargs['data'] = {}
     application = mixer.blend(Application, **kwargs)
     return application
+
+
+def lodge_application(application):
+    """
+    :param application:
+    """
+    client = SocialClient()
+    client.login(application.applicant_profile.user.email)
+    url = reverse_lazy('applications:preview', args=[application.licence_type.code, application.pk])
+    session = client.session
+    session['application'] = {
+        'profile': application.applicant_profile.pk,
+        'data': application.data
+    }
+    session.save()
+    client.post(url)
+    application.refresh_from_db()
+    client.logout()
+    return application
+
+
+def create_and_lodge_application(user=None, **kwargs):
+    return lodge_application(create_application(user, **kwargs))
+
+
+def get_or_create_assessment(application):
+    """
+    First assessment for the given application or create one
+    :param application:
+    :return:
+    """
+    group = get_or_create_default_assessor_group()
+    assessment = Assessment.objects.filter(application=application).first()
+    if assessment is None:
+        assessment = Assessment.objects.create(application=application, assessor_group=group,
+                                               user=get_or_create_default_officer())
+    return assessment
+
+
+def get_or_create_condition(code, defaults):
+    return Condition.objects.get_or_create(code=code, defaults=defaults)[0]
 
 
 class HelpersTest(TestCase):

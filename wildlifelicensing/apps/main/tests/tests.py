@@ -8,16 +8,16 @@ from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser, Address, Profile, Document
 
-from helpers import SocialClient, create_default_customer, create_default_officer
+from helpers import SocialClient, get_or_create_default_customer, get_or_create_default_officer
 
 TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 'test_id.jpg')
 
 
 class AccountsTestCase(TestCase):
     def setUp(self):
-        self.customer = create_default_customer()
+        self.customer = get_or_create_default_customer()
 
-        self.officer = create_default_officer()
+        self.officer = get_or_create_default_officer()
 
         self.client = SocialClient()
 
