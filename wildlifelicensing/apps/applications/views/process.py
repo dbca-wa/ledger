@@ -130,7 +130,7 @@ class IDRequestView(OfficerRequiredMixin, View):
             application.processing_status = determine_processing_status(application)
             application.save()
             send_id_update_request_email(id_request, request)
-	
+
             response = {'id_check_status': ID_CHECK_STATUSES[application.id_check_status],
                         'processing_status': PROCESSING_STATUSES[application.processing_status]}
 

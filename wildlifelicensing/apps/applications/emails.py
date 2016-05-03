@@ -71,6 +71,7 @@ def send_assessment_reminder_email(assessment, request):
     msg = email.send(assessment.assessor_group.email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
+
 class ApplicationAssessmentDoneEmail(TemplateEmailBase):
     subject = 'An assessment to a wildlife licensing application has been done.'
     html_template = 'wl/emails/application_assessment_done.html'
