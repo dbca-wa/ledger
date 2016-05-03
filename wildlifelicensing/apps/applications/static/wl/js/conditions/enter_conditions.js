@@ -29,8 +29,8 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
                 $contentContainer.append($('<label>').text("Assessor's Suggested Conditions"));
 
                 if(assessment.conditions.length > 0) {
-                    var $assessorsConditionsTable = $('<table>').addClass('table').addClass('table-bordered').addClass('assessment-conditions-table');
-                        $assessorsConditionsTableHead = $('<thead>').addClass('assessment-conditions-table-head'),
+                    var $assessorsConditionsTable = $('<table>').addClass('table').addClass('table-bordered').addClass('popover-conditions-table');
+                        $assessorsConditionsTableHead = $('<thead>').addClass('popover-conditions-table-head'),
                         $assessorsConditionsTableBody = $('<tbody>').addClass('conditions-table-body');
 
                     $assessorsConditionsTable.append($assessorsConditionsTableHead).append($assessorsConditionsTableBody);
