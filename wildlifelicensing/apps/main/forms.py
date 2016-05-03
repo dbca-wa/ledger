@@ -2,6 +2,7 @@ import os
 
 from django import forms
 
+from wildlifelicensing.apps.main.models import WildlifeLicence
 
 
 class IdentificationForm(forms.Form):
@@ -14,7 +15,21 @@ class IdentificationForm(forms.Form):
 
         ext = os.path.splitext(str(id_file))[1][1:]
 
-        if not ext in self.VALID_FILE_TYPES:
+        if ext not in self.VALID_FILE_TYPES:
             raise forms.ValidationError('Uploaded image must be of file type: %s' % ', '.join(self.VALID_FILE_TYPES))
 
         return id_file
+
+
+class IssueLicenceForm(forms.ModelForm):
+    class Meta:
+        model = WildlifeLicence
+        fields = ['issue_date', 'start_date', 'end_date', 'purpose']
+
+    def __init__(self, *args, **kwargs):
+        purpose = kwargs.pop('purpose', None)
+
+        super(IssueLicenceForm, self).__init__(*args, **kwargs)
+
+        if purpose is not None:
+            self.fields['purpose'].initial = purpose

@@ -3,6 +3,7 @@ from django import forms
 from ledger.accounts.models import Profile
 
 from models import IDRequest, AmendmentRequest
+from wildlifelicensing.apps.main.models import WildlifeLicence
 
 
 class ProfileSelectionForm(forms.Form):

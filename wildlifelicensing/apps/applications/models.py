@@ -21,7 +21,7 @@ class Application(RevisionedMixin):
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'), ('ready_for_conditions', 'Ready for Conditions'),
-                                 ('declined', 'Declined'))
+                                 ('ready_to_issue', 'Ready to Issue'), ('declined', 'Declined'))
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
@@ -96,6 +96,7 @@ class Assessment(ApplicationLogEntry):
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)
+    purpose = models.TextField(blank=True)
 
 
 class ApplicationCondition(models.Model):
