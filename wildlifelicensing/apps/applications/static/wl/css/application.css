@@ -136,12 +136,12 @@ a {
     padding: 8px;
 }
 
-#conditionsBody hr {
-    border-color: #BDC3C7;
-}
-
 .conditions-table-head {
     background-color: #f5f5f5;
+}
+
+.conditions-table-body hr {
+    border-color: #BDC3C7;
 }
 
 th.code {
@@ -160,6 +160,18 @@ th.order {
     width: 5%;
 }
 
+.popover-conditions-table {
+    width: 800px;
+}
+
+.popover-conditions-table-head {
+    background-color: #f5f5f5;
+}
+
+th.action-status {
+    width: 15%;
+}
+
 .default {
     background: #EBF5FB;
 }
@@ -170,10 +182,6 @@ th.order {
 
 .additional {
     background: #FDF2E9;
-}
-
-.popover-conditions-table {
-    width: 800px;
 }
 
 .custom {

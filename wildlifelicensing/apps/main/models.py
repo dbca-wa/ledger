@@ -43,11 +43,10 @@ class AbstractLogEntry(models.Model):
 
 
 @python_2_unicode_compatible
-class AssessorDepartment(models.Model):
+class AssessorGroup(models.Model):
     name = models.CharField(max_length=50)
     email = models.EmailField()
-    members = models.ManyToManyField(EmailUser)
-    suggested_conditions = models.ManyToManyField(Condition, blank=True)
+    members = models.ManyToManyField(EmailUser, blank=True)
 
     def __str__(self):
         return self.name

@@ -73,6 +73,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super(CheckIdentificationRequiredView, self).get_context_data(**kwargs)
+        context['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
         context['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
         return context
 
@@ -292,14 +293,13 @@ class PreviewView(UserCanEditApplicationMixin, TemplateView):
         application.lodgement_date = datetime.now().date()
         if application.customer_status == 'amendment_required':
             # this is a 're-lodged' application after some amendment were required.
-            # from this point we assumed that all the amendments have been amended.
+            # from this point we assume that all the amendments have been amended.
             AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
-            application.customer_status = 'under_review'
             application.review_status = 'amended'
             application.processing_status = 'ready_for_action'
         else:
-            application.customer_status = 'pending'
             application.processing_status = 'new'
+        application.customer_status = 'under_review'
 
         if len(application.lodgement_number) == 0:
             application.save(no_revision=True)

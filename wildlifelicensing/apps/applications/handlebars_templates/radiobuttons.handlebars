@@ -2,8 +2,8 @@
     <label >{{label}}</label>
     {{#each options}}
         <div class="radio">
-            <label >
-                <input name="{{../name}}" type="radio" value="{{this.value}}" {{#if ../required}}required{{/if}} {{#isEqual this.value ../value }}checked{{/isEqual}}>{{this.label}}/>
+            <label>
+                <input name="{{../name}}" type="radio" value="{{this.value}}" {{#if ../required}}required{{/if}} {{#isEqual this.value ../value }}checked{{/isEqual}}>
                 {{this.label}}
             </label>
         </div>

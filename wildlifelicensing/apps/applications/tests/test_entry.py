@@ -7,7 +7,8 @@ from django.test import TestCase
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer, create_random_customer
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer, create_random_customer, \
+    is_login_page
 from wildlifelicensing.apps.applications.tests import helpers
 
 TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 'test_id.jpg')
@@ -379,15 +380,57 @@ class ApplicationEntrySecurity(TestCase):
 
         # lodge the application
         url = reverse('applications:preview', args=[application.licence_type.code, application.pk])
-        self.client.session['application'] = {
-                'profile': application.applicant_profile.pk,
-                'data': {
-                    'project_title': 'Test'
-                }
+        session = self.client.session
+        session['application'] = {
+            'profile': application.applicant_profile.pk,
+            'data': {
+                'project_title': 'Test'
             }
+        }
+        session.save()
         self.client.post(url)
         application.refresh_from_db()
-        self.assertEqual('pending', application.customer_status)
+        self.assertEqual('under_review', application.customer_status)
         for url in my_urls:
             response = self.client.get(url, follow=True)
             self.assertEqual(403, response.status_code)
+
+    def test_user_not_logged_is_redirected_to_login(self):
+        """
+        A user not logged in should be redirected to the login page and not see a 403
+        """
+        customer1 = create_random_customer()
+        application = helpers.create_application(user=customer1)
+        self.assertEqual('draft', application.customer_status)
+        my_urls = [
+            reverse('applications:edit_application', args=[application.licence_type.code, application.pk]),
+            reverse('applications:enter_details_existing_application',
+                    args=[application.licence_type.code, application.pk]),
+            reverse('applications:preview', args=[application.licence_type.code, application.pk])
+        ]
+        for url in my_urls:
+            response = self.client.get(url, follow=True)
+            self.assertEqual(200, response.status_code,
+                             msg="Wrong status code {1} for {0}".format(url, response.status_code))
+            self.assertTrue(is_login_page(response))
+
+        # lodge the application
+        self.client.login(customer1.email)
+        url = reverse('applications:preview', args=[application.licence_type.code, application.pk])
+        session = self.client.session
+        session['application'] = {
+            'profile': application.applicant_profile.pk,
+            'data': {
+                'project_title': 'Test'
+            }
+        }
+        session.save()
+        self.client.post(url)
+        application.refresh_from_db()
+        self.assertEqual('under_review', application.customer_status)
+        # logout
+        self.client.logout()
+        for url in my_urls:
+            response = self.client.get(url, follow=True)
+            self.assertEqual(200, response.status_code)
+            self.assertTrue(is_login_page(response))

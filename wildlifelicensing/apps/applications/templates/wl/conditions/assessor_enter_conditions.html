@@ -107,10 +107,6 @@
                                         <button type="button" id="addCondition" class="btn btn-xs btn-primary" disabled>Add Condition</button>
                                     </div>
                                 </div>
-                                <hr>
-                                <div style="text-align:right">
-                                    <button type="button" id="createCustomCondition" class="btn btn-xs btn-primary">Create Custom Condition</button>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -126,22 +122,19 @@
                     <div class="legend additional">
                     </div>
                     <strong>Additional Condition</strong>
-                    <div class="legend custom">
-                    </div>
-                    <strong>Custom Condition</strong>
                 </div>
                 <form method="post" action="{{ action_url }}" id="conditionsForm">
                     {% csrf_token %}
                     <table class="table table-bordered">
                         <thead class="conditions-table-head">
-                            <tr style="background-color: #f5f5f5">
+                            <tr>
                                 <th class="code">Code</th>
                                 <th class="condition">Condition</th>
                                 <th class="action">Action</th>
                                 <th class="order">Order</th>
                             </tr>
                         </thead>
-                        <tbody id="conditionsBody">
+                        <tbody id="conditionsBody" class="conditions-table-body">
                             <tr id="conditionsEmptyRow" class="hidden">
                                 <td colspan="3">No default conditions specified</td>
                             </tr>
@@ -150,44 +143,6 @@
                     <div class="form-group">
                         <label for="comment">Comments</label>
                         <textarea name="comment" rows="4" id="commentText" class="form-control" placeholder="Enter comment"></textarea>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-{% endblock %}
-
-{% block modals %}
-    <div class="modal fade" id="createCustomConditionModal" tabindex="-1">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form method="post" action="{% url 'applications:create_condition' %}" id="createConditionForm">
-                    {% csrf_token %}
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                        <h4 class="modal-title">Create Custom Condition</h4>
-                    </div>
-                    <div class="modal-body">
-                        <div id="createConditionError" class="alert alert-danger hidden">
-                            <span class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Condition Code</label>
-                            <input type="text" name="code" class="form-control" required></input>
-                         </div>
-                        <div class="form-group">
-                            <label>Condition Text</label>
-                            <textarea name="text" rows="5" class="form-control" required></textarea>
-                         </div>
-                        <div class="form-group">
-                            <label>
-                                <input name="addToGeneralList" type="checkbox" />
-                                Add to general condition list
-                            </label> 
-                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Create and Add Condition</button>
                     </div>
                 </form>
             </div>
