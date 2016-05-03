@@ -37,15 +37,17 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% with field=form.identification_file %}
-                        <div class="form-group {% if field.errors %} has-error has-feedback {% endif %}">
+                        <div class="form-group">
+                            <div class="{% if field.errors %} has-error has-feedback {% endif %}">
                             <label for="{{ field.auto_id }}">{{ field.label }}</label> 
                             <input id="{{ field.auto_id }}" name="{{ field.name }}" type="file" class="form-control" {% if file_types %}accept="{{ file_types }}"{% endif %}>
-                            {% if field.help_text %}
-                                <p class="help-block">{{ field.help_text }}</p>
-                            {% endif %}
                             {% if field.errors %}
                                 <span class="glyphicon glyphicon-remove form-control-feedback"></span>
                                 <span class='text-danger'>{{ field.errors|join:'<br />' }}</span>
+                            {% endif %}
+                            </div>
+                            {% if field.help_text %}
+                                <p class="help-block">{{ field.help_text }}</p>
                             {% endif %}
                         </div>
                     {% endwith %}

@@ -5,10 +5,12 @@ from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeVie
     CreateSelectProfileView, EnterDetailsView, PreviewView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
-    IDRequestView, SetCharacterCheckStatusView, SetReviewStatusView, AmendmentRequestView, SendForAssessmentView
+    IDRequestView, SetCharacterCheckStatusView, SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, \
+    RemindAssessmentView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
-    CreateConditionView, SubmitConditionsView, EnterConditionsAssessorView, SubmitConditionsAssessorView
+    CreateConditionView, SetAssessmentConditionState, SubmitConditionsView, EnterConditionsAssessorView, \
+    SubmitConditionsAssessorView, SetAssessmentConditionState
 
 urlpatterns = [
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
@@ -32,6 +34,7 @@ urlpatterns = [
     url('^set_review_status/$', SetReviewStatusView.as_view(), name='set_review_status'),
     url('^amendment_request/$', AmendmentRequestView.as_view(), name='amendment_request'),
     url('^send_for_assessment/$', SendForAssessmentView.as_view(), name='send_for_assessment'),
+    url('^remind_assessment/$', RemindAssessmentView.as_view(), name='remind_assessment'),
 
     # conditions
     url('^enter_conditions/([0-9]+)/$', EnterConditionsView.as_view(), name='enter_conditions'),
@@ -39,6 +42,7 @@ urlpatterns = [
         name='enter_conditions_assessor'),
     url('^search_conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
     url('^create_condition/$', CreateConditionView.as_view(), name='create_condition'),
+    url('^set_assessment_condition_state/$', SetAssessmentConditionState.as_view(), name='set_assessment_condition_state'),
     url('^submit_conditions/([0-9]+)/$', SubmitConditionsView.as_view(), name='submit_conditions'),
     url('^submit_conditions/([0-9]+)/assessment/([0-9]+)/?$', SubmitConditionsAssessorView.as_view(),
         name='submit_conditions_assessor')

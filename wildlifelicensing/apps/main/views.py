@@ -106,9 +106,9 @@ class IdentificationView(LoginRequiredMixin, FormView):
         return super(IdentificationView, self).form_valid(form)
 
     def get_context_data(self, **kwargs):
-        context = super(IdentificationView, self).get_context_data(**kwargs)
+        kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
 
         if self.request.user.identification is not None:
-            context['existing_id_image_url'] = self.request.user.identification.file.url
+            kwargs['existing_id_image_url'] = self.request.user.identification.file.url
 
-        return context
+        return super(IdentificationView, self).get_context_data(**kwargs)

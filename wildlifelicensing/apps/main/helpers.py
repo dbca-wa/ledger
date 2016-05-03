@@ -53,8 +53,8 @@ def get_all_assessors():
     return EmailUser.objects.filter(groups__name='Assessors')
 
 
-def get_user_assessor_departments(user):
-    return user.assessordepartment_set.all()
+def get_user_assessor_groups(user):
+    return user.assessorgroup_set.all()
 
 
 def render_user_name(user, first_name_first=True):

@@ -16,7 +16,7 @@
 {% block requirements %}
     require(['js/conditions/enter_conditions'], function (enter_conditions) {
         $(function () {
-            enter_conditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}});
+            enter_conditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}}, '{{ csrf_token }}');
         });
     });
 {% endblock %}
@@ -93,33 +93,31 @@
                         </div>
                     </div>
                 </div>
-                {% if assessments|length %}
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    Assessments
-                                    <a data-toggle="collapse" href="#assessmentsBody" class="pull-right">
-                                        <span class="glyphicon"></span>
-                                    </a>
-                                </div>
-                                <div id="assessmentsBody" class="panel-body panel-collapse in">
-                                    Current Assessments
-                                    <table id="assessments" class="table small-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Assessor</th>
-                                                <th>Feedback</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        </tbody>
-                                    </table>
-                                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Assessments
+                                <a data-toggle="collapse" href="#assessmentsBody" class="pull-right">
+                                    <span class="glyphicon"></span>
+                                </a>
+                            </div>
+                            <div id="assessmentsBody" class="panel-body panel-collapse in">
+                                Current Assessments
+                                <table id="assessments" class="table small-table hidden">
+                                    <thead>
+                                        <tr>
+                                            <th>Assessor</th>
+                                            <th>Feedback</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                {% endif %}
+                </div>
                 <div class="row">
                     <div class="col-md-12">
                         <div class="panel panel-default">
@@ -179,9 +177,9 @@
                                 <th class="order">Order</th>
                             </tr>
                         </thead>
-                        <tbody id="conditionsBody">
-                            <tr id="conditionsEmptyRow" class="hidden">
-                                <td colspan="3">No default conditions specified</td>
+                        <tbody id="conditionsBody" class='conditions-table-body'>
+                            <tr id="conditionsEmptyRow">
+                                <td colspan="3">No conditions specified</td>
                             </tr>
                         </tbody>
                     </table>
