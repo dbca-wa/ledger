@@ -192,7 +192,7 @@
                                         </div>
                                         <div>
                                             <div class="form-group">
-                                                Select Department
+                                                Select Group
                                                 <input type="hidden" id="assessor" class="form-control" />
                                             </div>
                                             <div style="text-align:right">
@@ -201,7 +201,7 @@
                                         </div>
                                         <div class="hidden">
                                             Current Assessments
-                                            <table id="currentAssessments" class="table small-table">
+                                            <table id="currentAssessments" class="table small-table no-margin">
                                                 <thead>
                                                     <tr>
                                                         <th>Assessor</th>
@@ -235,28 +235,36 @@
         </div>
     </div>
     {% block modals %}
-        {% if data.application.applicant_profile.user.identification %}
-            <div class="modal fade" id="idModal" tabindex="-1">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                            <h4 class="modal-title">Identification for {{ data.application.applicant_profile.user.first_name }}
-                            {{ data.application.applicant_profile.user.user.last_name }}</h4>
-                        </div>
-                        <div class="modal-body" style="text-align: center">
-                            <a href="{{ data.application.applicant_profile.user.identification.file.url }}" target="_blank">
-                                <img width="100%" src="{{ data.application.applicant_profile.user.identification.file.url }}" />
-                            </a>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        {% with user=data.application.applicant_profile.user %}
+            {% if user.identification %}
+                <div class="modal fade" id="idModal" tabindex="-1">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                                <h4 class="modal-title">Identification for {{ user.first_name }}
+                                {{ user.last_name }}</h4>
+                            </div>
+                            <div class="modal-body center">
+                               {% if user.identification.file.url|slice:'-3:' == 'pdf' %}
+                                    <a href="{{ user.identification.file.url }}" target="_blank">
+                                        <img src="{% static 'wl/img/pdf.png' %}"></img>
+                                        <p>View PDF</p>
+                                    </a>
+                                {% else %} 
+                                    <a href="{{ user.identification.file.url }}" target="_blank">
+                                        <img width="100%" src="{{ user.identification.file.url }}" />
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        {% endif %}
-
+            {% endif %}
+        {% endwith %}
         <div class="modal fade" id="requestIDUpdateModal" tabindex="-1">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">

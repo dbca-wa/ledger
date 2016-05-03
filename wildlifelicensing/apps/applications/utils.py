@@ -3,7 +3,7 @@ import shutil
 
 from preserialize.serialize import serialize
 
-from models import Application, AmendmentRequest, Assessment
+from models import Application, AmendmentRequest, Assessment, AssessmentCondition
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
@@ -12,6 +12,7 @@ CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
 REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
 AMENDMENT_REQUEST_REASONS = dict(AmendmentRequest.REASON_CHOICES)
 ASSESSMENT_STATUSES = dict(Assessment.STATUS_CHOICES)
+ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES = dict(AssessmentCondition.ACCEPTANCE_STATUS_CHOICES)
 
 
 def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):
@@ -120,12 +121,14 @@ def format_amendment_request(instance, attrs):
 
 
 def format_assessment(instance, attrs):
-    attrs['conditions'] = serialize([ass.condition for ass in instance.assessmentcondition_set.all().order_by('order')])
+    attrs['conditions'] = serialize(instance.assessmentcondition_set.all().order_by('order'),
+                                    fields=['acceptance_status', 'id', 'condition'], posthook=format_assessment_condition)
+    attrs['status'] = ASSESSMENT_STATUSES[attrs['status']]
 
     return attrs
 
 
-def format_assessment_status(instance, attrs):
-    attrs['status'] = ASSESSMENT_STATUSES[attrs['status']]
+def format_assessment_condition(instance, attrs):
+    attrs['acceptance_status'] = ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES[attrs['acceptance_status']]
 
     return attrs

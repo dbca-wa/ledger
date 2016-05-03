@@ -6,8 +6,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry,\
-    AssessorDepartment
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry, AssessorGroup
 
 
 class Application(RevisionedMixin):
@@ -96,7 +95,7 @@ class AmendmentRequest(ApplicationLogEntry):
 
 class Assessment(ApplicationLogEntry):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
-    assessor_department = models.ForeignKey(AssessorDepartment)
+    assessor_group = models.ForeignKey(AssessorGroup)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)
@@ -112,9 +111,12 @@ class ApplicationCondition(models.Model):
 
 
 class AssessmentCondition(models.Model):
+    ACCEPTANCE_STATUS_CHOICES = (('not_specified', 'Not Specified'), ('accepted', 'Accepted'), ('declined', 'Declined'))
     condition = models.ForeignKey(Condition)
     assessment = models.ForeignKey(Assessment)
     order = models.IntegerField()
+    acceptance_status = models.CharField('Acceptance Status', max_length=20, choices=ACCEPTANCE_STATUS_CHOICES,
+                                         default=ACCEPTANCE_STATUS_CHOICES[0][0])
 
     class Meta:
         unique_together = ('condition', 'assessment', 'order')

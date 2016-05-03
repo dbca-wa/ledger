@@ -54,7 +54,7 @@ def get_all_assessors():
 
 
 def get_user_assessor_groups(user):
-    return user.assessordepartment_set.all()
+    return user.assessorgroup_set.all()
 
 
 def render_user_name(user, first_name_first=True):

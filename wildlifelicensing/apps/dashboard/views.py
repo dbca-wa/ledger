@@ -601,7 +601,7 @@ class DataApplicationAssessorView(OfficerOrAssessorRequiredMixin, DataApplicatio
     })
 
     def get_initial_queryset(self):
-        departments = self.request.user.assessordepartment_set.all()
-        assessments = Assessment.objects.filter(assessor_department__in=departments).filter(
+        groups = self.request.user.assessorgroup_set.all()
+        assessments = Assessment.objects.filter(assessor_group__in=groups).filter(
             status='awaiting_assessment')
         return assessments
