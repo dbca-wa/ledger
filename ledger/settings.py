@@ -216,7 +216,8 @@ LOGGING = {
         },
         'django.request': {
             'handlers': ['file'],
-            'level': 'INFO'
+            'level': 'INFO',
+            'propagate': False,
         },
         'log': {
             'handlers': ['file'],

@@ -6,8 +6,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry,\
-    AssessorGroup
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry, AssessorGroup
 
 
 class Application(RevisionedMixin):
@@ -15,6 +14,8 @@ class Application(RevisionedMixin):
                                ('id_required', 'Identification Required'), ('amendment_required', 'Amendment Required'),
                                ('id_and_amendment_required', 'Identification/Amendments Required'),
                                ('approved', 'Approved'), ('declined', 'Declined'))
+    # List of statuses from above that allow a customer to edit an application.
+    CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required']
 
     PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
@@ -62,6 +63,10 @@ class Application(RevisionedMixin):
     def is_assigned(self):
         return self.assigned_officer is not None
 
+    @property
+    def can_user_edit(self):
+        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
+
 
 class ApplicationLogEntry(AbstractLogEntry):
     application = models.ForeignKey(Application)
@@ -87,7 +92,7 @@ class AmendmentRequest(ApplicationLogEntry):
 
 class Assessment(ApplicationLogEntry):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
-    assessor_department = models.ForeignKey(AssessorGroup)
+    assessor_group = models.ForeignKey(AssessorGroup)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)

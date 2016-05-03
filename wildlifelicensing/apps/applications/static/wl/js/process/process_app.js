@@ -363,7 +363,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
         function createAssessmentRow(assessment) {
             var $row = $('<tr>'),
                 $actions = $('<p>').addClass('center').addClass('no-margin');
-            $row.append('<td>' + assessment.assessor_department.name + '</td>');
+            $row.append('<td>' + assessment.assessor_group.name + '</td>');
             var statusColumn = $('<td>').addClass('center');
             if(assessment.status === 'Awaiting Assessment') {
                 var $remind = $('<a>').text('Remind');
@@ -418,7 +418,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'awaiting_assessment',
-                    assDeptID: $assessor.val()
+                    assGroupID: $assessor.val()
                 },
                 function(data) {
                     $processingStatus.text(data.processing_status);
@@ -427,7 +427,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
 
                     // remove assessor from assessors list
                     for(var i = 0; i < assessorsList.length; i++) {
-                        if(assessorsList[i].id === data.assessment.assessor_department.id) {
+                        if(assessorsList[i].id === data.assessment.assessor_group.id) {
                             assessorsList.splice(i, 1);
                             break;
                         }
@@ -472,7 +472,7 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
                 initIDCheck();
                 initCharacterCheck();
                 initReview();
-                initAssessment(data.assessor_departments);
+                initAssessment(data.assessor_groups);
 
                 determineApplicationApprovable();
 

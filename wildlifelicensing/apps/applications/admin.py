@@ -20,7 +20,7 @@ class AssessorGroupAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super(AssessorGroupAdmin, self).get_form(request, obj, **kwargs)
 
-        # only users in Assessors group can be in an Assessor Department
+        # only users in Assessors group can be in an Assessor Group
         form.base_fields['members'].queryset = form.base_fields['members'].queryset.filter(groups__name='Assessors')
 
         return form

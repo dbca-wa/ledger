@@ -1,7 +1,11 @@
 {%  extends 'wl/emails/base_email.txt' %}
 {%  block content %}
-    Your Wildlife Licensing application has been reviewed and requires the following amendment before approval:
-    {{ amendment }}
+    Your Wildlife Licensing application has been reviewed and requires an amendment before approval.
+    {% if amendment_reason %}
+    Amendment Reason: {{ amendment_reason }}
+    {% endif %}
+    Amendment detail:
+     {{ amendment_detail }}
     {% if url %}
         Please copy and paste the following link into your browser to access your application:
         {{ url }}

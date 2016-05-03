@@ -107,12 +107,12 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
 
                 $viewDetails.popover({
                     container: 'body',
-                    title: 'Conditions / Comments from ' + assessment.assessor_department.name,
+                    title: 'Conditions / Comments from ' + assessment.assessor_group.name,
                     content: $contentContainer,
                     html: true
                 });
 
-                $assessorRow.append($('<td>').html(assessment.assessor_department.name));
+                $assessorRow.append($('<td>').html(assessment.assessor_group.name));
                 $assessorRow.append($('<td>').html($viewDetails));
 
                 $assessments.append($assessorRow);

@@ -1,5 +1,5 @@
 {% block greetings %}
-    Dear Sir, Madam,
+    Dear Sir/Madam,
 {%  endblock %}
 {% block content %}
 {%  endblock %}
