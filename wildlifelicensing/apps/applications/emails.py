@@ -14,8 +14,8 @@ class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
 
 class ApplicationAssessmentReminderEmail(TemplateEmailBase):
     subject = 'Reminder: An amendment to you wildlife licensing application is required.'
-    html_template = 'wl/emails/application_amendment_reminder.html'
-    txt_template = 'wl/emails/application_amendment_reminder.txt'
+    html_template = 'wl/emails/application_assessment_reminder.html'
+    txt_template = 'wl/emails/application_assessment_reminder.txt'
 
 
 def send_amendment_requested_email(application, amendment_request, request):
