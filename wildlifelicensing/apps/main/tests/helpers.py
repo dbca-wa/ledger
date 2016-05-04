@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import re
+import os
 
 from django.core import mail
 from django.core.urlresolvers import reverse
@@ -14,6 +15,8 @@ from wildlifelicensing.apps.main import helpers as accounts_helpers
 
 
 class TestData(object):
+    TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 'test_id.jpg')
+
     DEFAULT_CUSTOMER = {
         'email': 'customer@test.com',
         'first_name': 'Homer',
@@ -44,6 +47,8 @@ class SocialClient(Client):
     """
 
     def login(self, email):
+        # important clear the mail box before
+        clear_mailbox()
         self.post(reverse('social:complete', kwargs={'backend': "email"}), {'email': email})
         if len(mail.outbox) == 0:
             raise Exception("Email not received")
@@ -51,6 +56,9 @@ class SocialClient(Client):
             login_url = re.search('(?P<url>https?://[^\s]+)', mail.outbox[0].body).group('url')
             response = self.get(login_url, follow=True)
         return response
+
+    def logout(self):
+        self.get(reverse('accounts:logout'))
 
 
 def is_client_authenticated(client):
@@ -125,6 +133,46 @@ def is_login_page(response):
     return content.find('<div id="wl-login-container">') > 0
 
 
+def get_emails():
+    return mail.outbox
+
+
+def get_email():
+    emails = get_emails()
+    return emails[0] if len(emails) > 0 else None
+
+
+def is_email():
+    return len(get_emails()) > 0
+
+
+def clear_mailbox():
+    mail.outbox = []
+
+
+def upload_id(user):
+    with open(TestData.TEST_ID_PATH) as fp:
+        post_params = {
+            'identification_file': fp
+        }
+        client = SocialClient()
+        client.login(user.email)
+        response = client.post(reverse('main:identification'), post_params, follow=True)
+        client.logout()
+        return response
+
+
+def clear_id_file(user):
+    # clean id file
+    if user.identification:
+        os.remove(user.identification.path)
+
+
+def clear_all_id_files():
+    for user in EmailUser.objects.all():
+        clear_id_file(user)
+
+
 class HelpersTest(TestCase):
     def setUp(self):
         self.client = SocialClient()
@@ -177,3 +225,26 @@ class HelpersTest(TestCase):
         # test that we can login
         self.client.login(user.email)
         is_client_authenticated(self.client)
+
+
+class TestClient(TestCase):
+    def test_login_logout_login(self):
+        user = get_or_create_default_customer()
+        client = SocialClient()
+        self.assertFalse(is_client_authenticated(client))
+        client.login(user.email)
+        self.assertTrue(is_client_authenticated(client))
+        client.logout()
+        self.assertFalse(is_client_authenticated(client))
+        client.login(user.email)
+        self.assertTrue(is_client_authenticated(client))
+        self.assertEqual(unicode(user.pk), client.session.get('_auth_user_id'))
+        client.logout()
+        officer = get_or_create_default_officer()
+        client.login(officer.email)
+        self.assertTrue(is_client_authenticated(client))
+        self.assertEqual(unicode(officer.pk), client.session.get('_auth_user_id'))
+        client.logout()
+        client.login(user.email)
+        self.assertTrue(is_client_authenticated(client))
+        self.assertEqual(unicode(user.pk), client.session.get('_auth_user_id'))
