@@ -16,7 +16,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAs
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
-from wildlifelicensing.apps.applications.forms import IDRequestForm, AmendmentRequestForm
+from wildlifelicensing.apps.applications.forms import IDRequestForm, AmendmentRequestForm, ApplicationLogEntryForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, send_assessment_reminder_email, \
     send_id_update_request_email
 from wildlifelicensing.apps.main.models import AssessorGroup
@@ -70,6 +70,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             kwargs['data'] = self._build_data(self.request, application)
         kwargs['id_request_form'] = IDRequestForm(application=application, user=self.request.user)
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, user=self.request.user)
+        kwargs['application_log_entry_form'] = ApplicationLogEntryForm(application=application, user=self.request.user)
 
         return super(ProcessView, self).get_context_data(**kwargs)
 
@@ -242,3 +243,9 @@ def determine_customer_status(application):
         status = 'amendment_required'
 
     return status
+
+
+class LogEntryView(OfficerRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)

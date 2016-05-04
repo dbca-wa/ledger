@@ -2,7 +2,7 @@ from django import forms
 
 from ledger.accounts.models import Profile
 
-from models import IDRequest, AmendmentRequest
+from wildlifelicensing.apps.applications.models import IDRequest, AmendmentRequest, ApplicationLogEntry
 
 
 class ProfileSelectionForm(forms.Form):
@@ -55,6 +55,24 @@ class AmendmentRequestForm(forms.ModelForm):
         user = kwargs.pop('user', None)
 
         super(AmendmentRequestForm, self).__init__(*args, **kwargs)
+
+        if application is not None:
+            self.fields['application'].initial = application
+
+        if user is not None:
+            self.fields['user'].initial = user
+
+
+class ApplicationLogEntryForm(forms.ModelForm):
+    class Meta:
+        model = ApplicationLogEntry
+        fields = ['application', 'user', 'document', 'text']
+        widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
+
+    def __init__(self, *args, **kwargs):
+        application = kwargs.pop('application', None)
+        user = kwargs.pop('user', None)
+        super(ApplicationLogEntryForm, self).__init__(*args, **kwargs)
 
         if application is not None:
             self.fields['application'].initial = application
