@@ -515,7 +515,7 @@ class DataApplicationCustomerView(DataApplicationBaseView):
                 reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Amend application'
             )
-        elif status == 'id_required':
+        elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
             return '<a href="{0}">{1}</a>'.format(
                 reverse('main:identification'),
                 'Update ID')
