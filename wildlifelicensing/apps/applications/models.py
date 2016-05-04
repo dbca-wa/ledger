@@ -123,7 +123,9 @@ class AssessmentCondition(models.Model):
 
 
 class EmailLogEntry(ApplicationLogEntry):
-    pass
+    subject = models.CharField(max_length=500, blank=True)
+    to = models.CharField(max_length=500, blank=True, verbose_name="To")
+    from_email = models.CharField(max_length=200, blank=True, verbose_name="From")
 
 
 @receiver(pre_delete, sender=Application)
