@@ -9,7 +9,7 @@ from preserialize.serialize import serialize
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf
-from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 
 
@@ -23,7 +23,10 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         application = get_object_or_404(Application, pk=self.args[0])
 
         kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['issue_licence_form'] = IssueLicenceForm()
+
+        purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
+
+        kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes)
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 

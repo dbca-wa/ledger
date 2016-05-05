@@ -14,7 +14,9 @@
 {% endblock %}
 
 {% block requirements %}
-
+    require(['js/issue/issue_licence'], function(issueLicence) {
+        issueLicence.initialise();
+    });
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -81,21 +83,17 @@
                                         {% endif %}
                                     </p>
                                 </div>
-                                <p>
-                                    <a id="viewApplicationDetails" data-toggle="popover" data-placement="right">
-                                        View Application Details
-                                    </a>
-                                </p>
                              </div>
                         </div>
                     </div>
                 </div>
+                <button id="issue" type="button" class="btn btn-sm btn-success pull-right">Issue</button>
+                <a class="btn btn-sm btn-default" href="{% url 'applications:process' application.id %}" role="button">Back to Enter Conditions</a>
             </div>
             <div class="col-md-9">
                 <form method="post" id="issueLicenceForm">
                     {% csrf_token %}
                     {% bootstrap_form issue_licence_form %}
-                    <input type="submit" class="btn btn-success pull-right">
                 </form>
             </div>
         </div>

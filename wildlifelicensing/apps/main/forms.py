@@ -1,6 +1,8 @@
 import os
+from datetime import datetime
 
 from django import forms
+from django.conf import settings
 
 from wildlifelicensing.apps.main.models import WildlifeLicence
 
@@ -24,7 +26,7 @@ class IdentificationForm(forms.Form):
 class IssueLicenceForm(forms.ModelForm):
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'purpose']
+        fields = ['issue_date', 'start_date', 'end_date', 'purpose']    
 
     def __init__(self, *args, **kwargs):
         purpose = kwargs.pop('purpose', None)
@@ -33,3 +35,7 @@ class IssueLicenceForm(forms.ModelForm):
 
         if purpose is not None:
             self.fields['purpose'].initial = purpose
+
+        self.fields['issue_date'].initial = datetime.now()
+        self.fields['issue_date'].input_formats =  ('%d/%m/%Y',)
+

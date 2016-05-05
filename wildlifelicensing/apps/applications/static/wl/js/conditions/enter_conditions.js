@@ -178,7 +178,6 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
             $.merge(assessorConditions, assessment.conditions);
         });
 
-        
         $.each(application.conditions, function(index, condition) {
             if(_.some(application.licence_type.default_conditions, ['id', condition.id])) {
                 createConditionTableRow(condition, 'default');
