@@ -9,7 +9,7 @@ from mixer.backend.django import mixer
 from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser
-from wildlifelicensing.apps.main.models import WildlifeLicenceType
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, AssessorGroup
 from wildlifelicensing.apps.main import helpers as accounts_helpers
 
 
@@ -31,6 +31,10 @@ class TestData(object):
         'first_name': 'Assess',
         'last_name': 'Ore',
         'dob': '1979-10-05',
+    }
+    DEFAULT_ASSESSOR_GROUP = {
+        'name': 'ass group',
+        'email': 'assessor@test.com',
     }
 
 
@@ -65,10 +69,11 @@ def add_to_group(user, group_name):
     return user
 
 
-def create_user(**kwargs):
-    user = EmailUser.objects.create(**kwargs)
-    UserSocialAuth.create_social_auth(user, user.email, 'email')
-    return user
+def get_or_create_user(email, defaults):
+    user, created = EmailUser.objects.get_or_create(defaults=defaults, email=email)
+    if created:
+        UserSocialAuth.create_social_auth(user, user.email, 'email')
+    return user, created
 
 
 def create_random_user():
@@ -79,13 +84,15 @@ def create_random_customer():
     return create_random_user()
 
 
-def create_default_customer():
-    return create_user(**TestData.DEFAULT_CUSTOMER)
+def get_or_create_default_customer():
+    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER['email'], TestData.DEFAULT_CUSTOMER)
+    return user
 
 
-def create_default_officer():
-    user = create_user(**TestData.DEFAULT_OFFICER)
-    add_to_group(user, 'Officers')
+def get_or_create_default_officer():
+    user, created = get_or_create_user(TestData.DEFAULT_OFFICER['email'], TestData.DEFAULT_OFFICER)
+    if created:
+        add_to_group(user, 'Officers')
     return user
 
 
@@ -93,10 +100,21 @@ def create_licence_type(code='regulation17'):
     return WildlifeLicenceType.objects.get_or_create(code=code)[0]
 
 
-def create_default_assessor():
-    user = create_user(**TestData.DEFAULT_ASSESSOR)
-    add_to_group(user, 'Assessors')
+def get_or_create_default_assessor():
+    user, created = get_or_create_user(TestData.DEFAULT_ASSESSOR['email'], TestData.DEFAULT_ASSESSOR)
+    if created:
+        add_to_group(user, 'Assessors')
     return user
+
+
+def get_or_create_default_assessor_group():
+    return AssessorGroup.objects.get_or_create(defaults=TestData.DEFAULT_ASSESSOR_GROUP,
+                                               name=TestData.DEFAULT_ASSESSOR_GROUP['name'])[0]
+
+
+def add_assessor_to_assessor_group(assessor, group):
+    group.members.add(assessor)
+    group.save()
 
 
 def is_login_page(response):
@@ -112,7 +130,7 @@ class HelpersTest(TestCase):
         self.client = SocialClient()
 
     def test_create_default_customer(self):
-        user = create_default_customer()
+        user = get_or_create_default_customer()
         self.assertIsNotNone(user)
         self.assertTrue(isinstance(user, EmailUser))
         self.assertEqual(TestData.DEFAULT_CUSTOMER['email'], user.email)
@@ -122,7 +140,7 @@ class HelpersTest(TestCase):
         is_client_authenticated(self.client)
 
     def test_create_default_officer(self):
-        user = create_default_officer()
+        user = get_or_create_default_officer()
         self.assertIsNotNone(user)
         self.assertTrue(isinstance(user, EmailUser))
         self.assertEqual(TestData.DEFAULT_OFFICER['email'], user.email)
@@ -132,7 +150,7 @@ class HelpersTest(TestCase):
         is_client_authenticated(self.client)
 
     def test_create_default_assessor(self):
-        user = create_default_assessor()
+        user = get_or_create_default_assessor()
         self.assertIsNotNone(user)
         self.assertTrue(isinstance(user, EmailUser))
         self.assertEqual(TestData.DEFAULT_ASSESSOR['email'], user.email)

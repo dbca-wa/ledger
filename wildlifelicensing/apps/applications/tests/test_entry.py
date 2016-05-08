@@ -7,7 +7,7 @@ from django.test import TestCase
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer, create_random_customer, \
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, create_random_customer, \
     is_login_page
 from wildlifelicensing.apps.applications.tests import helpers
 
@@ -16,7 +16,7 @@ TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 't
 
 class ApplicationEntryTestCase(TestCase):
     def setUp(self):
-        self.customer = create_default_customer()
+        self.customer = get_or_create_default_customer()
 
         self.client = SocialClient()
 
