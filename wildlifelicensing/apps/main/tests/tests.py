@@ -8,9 +8,9 @@ from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser, Address, Profile, Document
 
-from helpers import SocialClient, get_or_create_default_customer, get_or_create_default_officer
+from helpers import SocialClient, get_or_create_default_customer, get_or_create_default_officer, TestData
 
-TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 'test_id.jpg')
+TEST_ID_PATH = TestData.TEST_ID_PATH
 
 
 class AccountsTestCase(TestCase):
@@ -115,7 +115,7 @@ class AccountsTestCase(TestCase):
     def test_upload_id(self):
         """Testing that a user can upload an ID image"""
         self.client.login(self.customer.email)
-
+        self.assertIsNone(self.customer.identification)
         response = self.client.get(reverse('main:identification'))
         self.assertEqual(200, response.status_code)
 
@@ -130,6 +130,7 @@ class AccountsTestCase(TestCase):
             # update customer
             self.customer = EmailUser.objects.get(email=self.customer.email)
 
+            self.assertIsNotNone(self.customer.identification)
             # assert customer's ID is the uploaded file
             self.assertEqual(self.customer.identification.filename, 'test_id.jpg')
 
