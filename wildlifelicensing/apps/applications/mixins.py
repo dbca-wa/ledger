@@ -38,7 +38,7 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
             return True
 
 
-class CanEditRequirementMixin(UserPassesTestMixin):
+class CanEditAssessmentMixin(UserPassesTestMixin):
     """
     CBV mixin that check the 'editability' of assessment that the user is a assessor and that he/she belongs to the right assessor group.
     This mixin assume that the url contains the pk of the assessment in 2nd position
