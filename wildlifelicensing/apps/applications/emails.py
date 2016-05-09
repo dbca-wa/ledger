@@ -121,7 +121,6 @@ def send_id_update_request_email(id_request, request):
 def _log_email(email_message, application, sender=None):
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
         # TODO this will log the plain text body, should we log the html instead
-        # TODO log the subject of the email
         text = email_message.body
         subject = email_message.subject
         from_email = unicode(sender) if sender else unicode(email_message.from_email)

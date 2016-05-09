@@ -15,12 +15,12 @@
 
 {% block requirements %}
     require(['js/process/process_app'], function (app, applicationPreview) {
-    $(function () {
-    data = {{ data|jsonify }};
-    app.initialiseApplicationProcesssing(data);
-    $('#mainContainer').removeClass('hidden');
-    //app.initialiseSidePanelAffix();
-    });
+        $(function () {
+            data = {{ data|jsonify }};
+            app.initialiseApplicationProcesssing(data);
+            $('#mainContainer').removeClass('hidden');
+            //app.initialiseSidePanelAffix();
+        });
     });
 {% endblock %}
 
@@ -92,7 +92,7 @@
                                     </div>
                                     <div class="form-group" id="application-log-group">
                                         <div><label>Communication log</label></div>
-                                        <a id="showLog" class="pull-left">Show</a>
+                                        <a id="showLog" class="pull-left" role="button">Show log</a>
                                         <a id="addLogEntry" class="pull-right">Add log entry</a>
                                     </div>
                                 </div>
@@ -329,8 +329,8 @@
                             <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                             <h4 class="modal-title">Add log entry to application</h4>
                         </div>
-                        <form id="amendmentRequestForm" method="post"
-                              action="{% url 'applications:log_entry' %}">
+                        <form id="addLogEntryForm" method="post"
+                              action="{% url 'applications:add_log_entry' data.application.id %}">
                             {% csrf_token %}
                             <div class="modal-body">
                                 <div class="modal-body">

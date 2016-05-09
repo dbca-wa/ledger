@@ -1,5 +1,13 @@
-define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], function ($, previewVersions) {
+define([
+    'jQuery',
+    'js/process/preview_versions',
+    'js/wl.dataTable',
+    'bootstrap',
+    'select2'
+], function ($, previewVersions, dataTable) {
+
     "use strict";
+
     var application, assessments, amendmentRequests, csrfToken, $processingStatus, $previewContainer;
 
     function initAssignee(officersList, user) {
@@ -448,13 +456,91 @@ define(['jQuery', 'js/process/preview_versions', 'bootstrap', 'select2'], functi
     }
 
     function initCommunicationLog() {
-        var $logEntryModal = $('#logEntryModal'),
-            $addLogEntryButton = $('#addLogEntry');
 
-        $addLogEntryButton.click(function (e) {
+        var $showLogButton = $('#showLog'),
+            $logEntryModal = $('#logEntryModal'),
+            $logEntryForm = $logEntryModal.find('form'),
+            $addLogEntryButton = $('#addLogEntry'),
+            $logListContent = $('<div>'),
+            $logTable = $('<table class="table table-bordered">');
+
+        $logListContent.append($logTable);
+        dataTable = initLogTable($logTable);
+        $addLogEntryButton.click(function () {
             $logEntryModal.modal('show');
         });
+
+        $showLogButton.popover({
+            container: 'body',
+            title: 'Communication log',
+            content: $logListContent,
+            placement: 'right',
+            trigger: "manual",
+            html: true
+        }).click(function () {
+            // Check popover visibility.
+            var isVisible = $(this).data()['bs.popover'].tip().hasClass('in');
+            if (!isVisible) {
+                dataTable.ajax.reload();
+                $showLogButton.popover('show');
+            } else {
+                $showLogButton.popover('hide');
+            }
+        });
+
+        $logEntryForm.submit(function (e) {
+            $.ajax({
+                type: $(this).attr('method'),
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (data) {
+                    $logEntryModal.modal('hide');
+                }
+            });
+            e.preventDefault();
+        });
     }
+
+    function initLogTable($table) {
+        var tableOptions = {
+                paging: true,
+                info: true,
+                searching: true,
+                processing: true,
+                deferRender: true,
+                serverSide: false,
+                autowidth: true,
+                order: [[0, 'desc']],
+                ajax: {
+                    url: '/applications/log_list/' + application.id
+
+                }
+            },
+            colDefinitions = [
+                {
+                    'title': 'Date',
+                    'data': 'date'
+                },
+                {
+                    'title': 'Type',
+                    'data': 'type'
+                },
+                {
+                    'title': 'Subject/Desc',
+                    'data': 'subject'
+                },
+                {
+                    'title': 'Text',
+                    'data': 'text'
+                },
+                {
+                    'title': 'File/Attach',
+                    'data': 'file'
+                }
+            ];
+        return dataTable.initTable($table, tableOptions, colDefinitions);
+    }
+
 
     function determineApplicationApprovable() {
         var approvable = false;

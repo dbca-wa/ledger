@@ -23,13 +23,13 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
                 showAssessmentsTable = true;
 
                 var $contentContainer = $('<div>'),
-                    $assessorRow = $('<tr>');
+                    $assessorRow = $('<tr>'),
                     $viewDetails = $('<a>').text('View Feedback');
 
                 $contentContainer.append($('<label>').text("Assessor's Suggested Conditions"));
 
                 if(assessment.conditions.length > 0) {
-                    var $assessorsConditionsTable = $('<table>').addClass('table').addClass('table-bordered').addClass('popover-conditions-table');
+                    var $assessorsConditionsTable = $('<table>').addClass('table').addClass('table-bordered').addClass('popover-conditions-table'),
                         $assessorsConditionsTableHead = $('<thead>').addClass('popover-conditions-table-head'),
                         $assessorsConditionsTableBody = $('<tbody>').addClass('conditions-table-body');
 

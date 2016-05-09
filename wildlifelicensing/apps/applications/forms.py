@@ -63,19 +63,11 @@ class AmendmentRequestForm(forms.ModelForm):
             self.fields['user'].initial = user
 
 
-class ApplicationLogEntryForm(forms.ModelForm):
-    class Meta:
-        model = ApplicationLogEntry
-        fields = ['application', 'user', 'document', 'text']
-        widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
+class ApplicationLogEntryForm(forms.Form):
+    subject = forms.CharField(required=True, label="Subject / Description")
+    text = forms.CharField(widget=forms.Textarea, required=False)
+    document = forms.FileField(required=False)
 
     def __init__(self, *args, **kwargs):
-        application = kwargs.pop('application', None)
-        user = kwargs.pop('user', None)
         super(ApplicationLogEntryForm, self).__init__(*args, **kwargs)
 
-        if application is not None:
-            self.fields['application'].initial = application
-
-        if user is not None:
-            self.fields['user'].initial = user
