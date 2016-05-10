@@ -290,6 +290,6 @@ class AddLogEntryView(OfficerRequiredMixin, View):
             entry.user = user
             entry.application = application
             entry.save()
-            return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
+            return JsonResponse(entry, safe=False, encoder=WildlifeLicensingJSONEncoder)
         else:
             return JsonResponse('not valid', safe=False, encoder=WildlifeLicensingJSONEncoder)

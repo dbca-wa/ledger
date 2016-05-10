@@ -2,13 +2,14 @@ define([
     'jQuery',
     'js/process/preview_versions',
     'js/wl.dataTable',
+    'moment',
     'bootstrap',
     'select2'
-], function ($, previewVersions, dataTable) {
+], function ($, previewVersions, dataTable, moment) {
 
     "use strict";
 
-    var application, assessments, amendmentRequests, csrfToken, $processingStatus, $previewContainer;
+    var application, assessments, amendmentRequests, csrfToken, $processingStatus, $previewContainer, moduleData;
 
     function initAssignee(officersList, user) {
         var $assignee = $('#assignee');
@@ -88,7 +89,7 @@ define([
                 $row.addClass('small-table-selected-row');
                 $row.find('a').addClass('hidden');
                 $previewContainer.empty();
-                previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, version.data);
+                previewVersions.layoutPreviewItems($previewContainer, moduleData.form_structure, application.data, version.data);
             });
 
             $row.append($('<td>').html($compareLink));
@@ -116,7 +117,7 @@ define([
             $done.removeClass('hidden');
         }
 
-        $resetLink.click(function (e) {
+        $resetLink.click(function () {
             $.post('/applications/set_id_check_status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
@@ -137,7 +138,7 @@ define([
         var $acceptButton = $actionButtonsContainer.find('.btn-success'),
             $requestUpdateButton = $actionButtonsContainer.find('.btn-warning');
 
-        $acceptButton.click(function (e) {
+        $acceptButton.click(function () {
             $.post('/applications/set_id_check_status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
@@ -159,7 +160,7 @@ define([
             $idReason = $idRequestForm.find('#id_reason'),
             $idText = $idRequestForm.find('#id_text');
 
-        $requestUpdateButton.click(function (e) {
+        $requestUpdateButton.click(function () {
             $requestIDUpdateModal.modal('show');
         });
 
@@ -202,7 +203,7 @@ define([
             $done.removeClass('hidden');
         }
 
-        $resetLink.click(function (e) {
+        $resetLink.click(function () {
             $.post('/applications/set_character_check_status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
@@ -227,7 +228,7 @@ define([
 
         var $acceptButton = $actionButtonsContainer.find('.btn-success');
 
-        $acceptButton.click(function (e) {
+        $acceptButton.click(function () {
             $.post('/applications/set_character_check_status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
@@ -300,7 +301,7 @@ define([
             $done.removeClass('hidden');
         }
 
-        $resetLink.click(function (e) {
+        $resetLink.click(function () {
             $.post('/applications/set_review_status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
@@ -319,7 +320,7 @@ define([
                 });
         });
 
-        $acceptButton.click(function (e) {
+        $acceptButton.click(function () {
             $.post('/applications/set_review_status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
@@ -341,7 +342,7 @@ define([
             $idReason = $amendmentRequestForm.find('#id_reason'),
             $idText = $amendmentRequestForm.find('#id_text');
 
-        $requestAmendmentButton.click(function (e) {
+        $requestAmendmentButton.click(function () {
             $requestAmendmentModal.modal('show');
         });
 
@@ -380,7 +381,7 @@ define([
         if (assessment.status === 'Awaiting Assessment') {
             var $remind = $('<a>').text('Remind');
 
-            $remind.click(function (e) {
+            $remind.click(function () {
                 $.post('/applications/remind_assessment/', {
                     assessmentID: assessment.id,
                     csrfmiddlewaretoken: csrfToken
@@ -411,7 +412,7 @@ define([
             $currentAssessments = $('#currentAssessments');
 
         $assessor.select2({
-            data: assessorsList,
+            data: assessorsList
         });
 
         if (assessments.length > 0) {
@@ -421,11 +422,11 @@ define([
             $currentAssessments.parent().removeClass('hidden');
         }
 
-        $assessor.on('change', function (e) {
+        $assessor.on('change', function () {
             $sendForAssessment.prop('disabled', false);
         });
 
-        $sendForAssessment.click(function (e) {
+        $sendForAssessment.click(function () {
             $.post('/applications/send_for_assessment/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
@@ -493,7 +494,7 @@ define([
                 type: $(this).attr('method'),
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
-                success: function (data) {
+                success: function () {
                     $logEntryModal.modal('hide');
                 }
             });
@@ -502,7 +503,8 @@ define([
     }
 
     function initLogTable($table) {
-        var tableOptions = {
+        var dateFormat = 'DD/MM/YYYY',
+            tableOptions = {
                 paging: true,
                 info: true,
                 searching: true,
@@ -518,26 +520,31 @@ define([
             },
             colDefinitions = [
                 {
-                    'title': 'Date',
-                    'data': 'date'
+                    title: 'Date',
+                    data: 'date',
+                    'render': function (date) {
+                        return moment(date).format(dateFormat);
+                    }
                 },
                 {
-                    'title': 'Type',
-                    'data': 'type'
+                    title: 'Type',
+                    data: 'type'
                 },
                 {
-                    'title': 'Subject/Desc',
-                    'data': 'subject'
+                    title: 'Subject/Desc',
+                    data: 'subject'
                 },
                 {
-                    'title': 'Text',
-                    'data': 'text'
+                    title: 'Text',
+                    data: 'text'
                 },
                 {
-                    'title': 'File/Attach',
-                    'data': 'file'
+                    title: 'File/Attach',
+                    data: 'file'
                 }
             ];
+        // set DT date format sorting
+        dataTable.setDateTimeFormat(dateFormat);
         return dataTable.initTable($table, tableOptions, colDefinitions);
     }
 
@@ -564,6 +571,7 @@ define([
             application = data.application;
             assessments = data.assessments;
             amendmentRequests = data.amendment_requests;
+            moduleData = data;
 
             initAssignee(data.officers, data.user);
             initLodgedVersions(data.previous_application_data);
