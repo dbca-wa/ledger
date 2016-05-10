@@ -10,7 +10,7 @@ from django.utils import formats
 from reversion import revisions
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
@@ -261,7 +261,7 @@ class CommunicationLogListView(OfficerRequiredMixin, View):
                 'type': 'Email',
                 'subject': obj.subject,
                 'text': obj.text,
-                'document': obj.document
+                'document': obj.document.file.url if obj.document else None
             }
             data.append(r)
 
@@ -271,25 +271,32 @@ class CommunicationLogListView(OfficerRequiredMixin, View):
                 'type': 'Custom',
                 'subject': obj.subject,
                 'text': obj.text,
-                'document': obj.document
+                'document': obj.document.file.url if obj.document else None
             }
             data.append(r)
-
 
         return JsonResponse({'data': data}, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class AddLogEntryView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        print(request.POST)
-        form = ApplicationLogEntryForm(request.POST)
+        print('request', request.POST)
+        print('files', request.FILES)
+        form = ApplicationLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
             application = get_object_or_404(Application, pk=args[0])
             user = request.user
-            entry = CustomLogEntry(**form.cleaned_data)
-            entry.user = user
-            entry.application = application
-            entry.save()
-            return JsonResponse(entry, safe=False, encoder=WildlifeLicensingJSONEncoder)
+            document = None
+            if request.FILES and 'document' in request.FILES:
+                document = Document.objects.create(file=request.FILES['document'])
+            data = {
+                'document': document,
+                'user': user,
+                'application': application,
+                'text': form.cleaned_data['text'],
+                'subject': form.cleaned_data['subject']
+            }
+            entry = CustomLogEntry.objects.create(**data)
+            return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
         else:
             return JsonResponse('not valid', safe=False, encoder=WildlifeLicensingJSONEncoder)

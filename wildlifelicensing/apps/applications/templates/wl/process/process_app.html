@@ -330,7 +330,7 @@
                             <h4 class="modal-title">Add log entry to application</h4>
                         </div>
                         <form id="addLogEntryForm" method="post"
-                              action="{% url 'applications:add_log_entry' data.application.id %}">
+                              action="{% url 'applications:add_log_entry' data.application.id %}" enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class="modal-body">
                                 <div class="modal-body">

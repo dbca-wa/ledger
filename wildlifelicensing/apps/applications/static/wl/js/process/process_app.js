@@ -3,9 +3,10 @@ define([
     'js/process/preview_versions',
     'js/wl.dataTable',
     'moment',
+    'lodash',
     'bootstrap',
     'select2'
-], function ($, previewVersions, dataTable, moment) {
+], function ($, previewVersions, dataTable, moment, _) {
 
     "use strict";
 
@@ -484,21 +485,26 @@ define([
             if (!isVisible) {
                 dataTable.ajax.reload();
                 $showLogButton.popover('show');
+                $('[data-toggle="tooltip"]').tooltip();
             } else {
                 $showLogButton.popover('hide');
             }
         });
 
         $logEntryForm.submit(function (e) {
+            var formData;
+            e.preventDefault();
+            formData = new FormData($(this).get(0));
             $.ajax({
                 type: $(this).attr('method'),
                 url: $(this).attr('action'),
-                data: $(this).serialize(),
+                data: formData,
+                processData: false,
+                contentType: false,
                 success: function () {
                     $logEntryModal.modal('hide');
                 }
             });
-            e.preventDefault();
         });
     }
 
@@ -512,11 +518,7 @@ define([
                 deferRender: true,
                 serverSide: false,
                 autowidth: true,
-                order: [[0, 'desc']],
-                ajax: {
-                    url: '/applications/log_list/' + application.id
-
-                }
+                order: [[0, 'desc']]
             },
             colDefinitions = [
                 {
@@ -531,20 +533,59 @@ define([
                     data: 'type'
                 },
                 {
-                    title: 'Subject/Desc',
+                    title: 'Subject/Desc.',
                     data: 'subject'
                 },
                 {
                     title: 'Text',
-                    data: 'text'
+                    data: 'text',
+                    'render': function (value) {
+                        var ellipsis = '...',
+                            truncated = _.truncate(value, {
+                            length: 100,
+                            omission: ellipsis,
+                            separator: ' '
+                        }),
+                            result = '<span>' + truncated +'</span>',
+                            popTemplate = _.template('<a href="#" ' +
+                                'role="button" ' +
+                                'data-toggle="popover" ' +
+                                'data-trigger="click" ' +
+                                'data-placement="top auto"' +
+                                'data-html="true" ' +
+                                'data-content="<%= text %>" ' +
+                                '>more</a>');
+                        if (_.endsWith(truncated, ellipsis)) {
+                            result += popTemplate({
+                               text: value
+                            });
+                        }
+                        return result;
+                    },
+                    'createdCell': function (cell) {
+                        //TODO why this is not working?
+                        // the call to popover is done in the 'draw' event
+                        $(cell).popover();
+                    }
                 },
                 {
-                    title: 'File/Attach',
-                    data: 'file'
+                    title: 'Document',
+                    data: 'document',
+                    'render': function (value) {
+                        if (value) {
+                            return '<a href="' + value + '" target="_blank"><p>View</p></a>';
+                        } else {
+                            return '';
+                        }
+                    }
                 }
             ];
         // set DT date format sorting
         dataTable.setDateTimeFormat(dateFormat);
+        $table.on('draw.dt', function () {
+            console.log("log table drawn");
+            $table.find('[data-toggle="popover"]').popover();
+        });
         return dataTable.initTable($table, tableOptions, colDefinitions);
     }
 
