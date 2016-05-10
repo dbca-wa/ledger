@@ -104,14 +104,14 @@ def create_licence_pdf(filename, licence, application):
                               spaceAfter=PARAGRAPH_BOTTOM_MARGIN, alignment=enums.TA_LEFT,
                               leftIndent=PAGE_WIDTH / 10, rightIndent=PAGE_WIDTH / 10))
     styles.add(ParagraphStyle(name='InfoTitleLargeRight', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE,
-                              spaceAfter=PARAGRAPH_BOTTOM_MARGIN, alignment=enums.TA_RIGHT, 
+                              spaceAfter=PARAGRAPH_BOTTOM_MARGIN, alignment=enums.TA_RIGHT,
                               rightIndent=PAGE_WIDTH / 10))
     styles.add(ParagraphStyle(name='BoldLeft', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
     styles.add(ParagraphStyle(name='Center', alignment=enums.TA_CENTER))
     styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
     styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
 
-    licence_table_style = TableStyle([('VALIGN', (0,0), (-1, -1), 'TOP')])
+    licence_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
 
     elements = []
 
@@ -128,7 +128,7 @@ def create_licence_pdf(filename, licence, application):
     elements.append(conditionList)
 
     # purpose
-    if True: #license.purpose:
+    if license.purpose:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         purposes = []
@@ -139,7 +139,7 @@ def create_licence_pdf(filename, licence, application):
                 purposes.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         elements.append(Table([[Paragraph('Purpose', styles['BoldLeft']), purposes]],
-                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN )- 100),
+                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                               style=licence_table_style))
 
     # authorised persons
@@ -148,8 +148,8 @@ def create_licence_pdf(filename, licence, application):
         authorized_persons = [Paragraph('%s %s' % (ap['ap_given_names'], ap['ap_surname']), styles['Left'])
                               for ap in application.data['authorised_persons']]
         elements.append(Table([[Paragraph('Authorised Persons', styles['BoldLeft']), authorized_persons]],
-                          colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN )- 100),
-                          style=licence_table_style))
+                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
+                              style=licence_table_style))
 
     # dates
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -157,7 +157,7 @@ def create_licence_pdf(filename, licence, application):
                              Paragraph('Date of Expiry', styles['BoldLeft'])],
                             [Paragraph(str(licence.issue_date), styles['Left']), Paragraph(str(licence.start_date), styles['Left']),
                              Paragraph(str(licence.end_date), styles['Left'])]]],
-                          colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN )- 100),
+                          colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                           style=licence_table_style))
 
     # licensee details
@@ -168,9 +168,8 @@ def create_licence_pdf(filename, licence, application):
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
                           Paragraph(address.country.name, styles['Left'])]
     elements.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
-                            [Paragraph(render_user_name(application.applicant_profile.user), styles['Left'])] + 
-                             address_paragraphs]],
-                          colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN )- 100),
+                            [Paragraph(render_user_name(application.applicant_profile.user), styles['Left'])] + address_paragraphs]],
+                          colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                           style=licence_table_style))
 
     doc.build(elements)
