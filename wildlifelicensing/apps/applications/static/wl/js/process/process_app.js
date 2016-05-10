@@ -518,7 +518,10 @@ define([
                 deferRender: true,
                 serverSide: false,
                 autowidth: true,
-                order: [[0, 'desc']]
+                order: [[0, 'desc']],
+                ajax: {
+                    url: '/applications/log_list/' + application.id
+                }
             },
             colDefinitions = [
                 {
@@ -582,8 +585,8 @@ define([
             ];
         // set DT date format sorting
         dataTable.setDateTimeFormat(dateFormat);
+        // activate popover when table is drawn.
         $table.on('draw.dt', function () {
-            console.log("log table drawn");
             $table.find('[data-toggle="popover"]').popover();
         });
         return dataTable.initTable($table, tableOptions, colDefinitions);

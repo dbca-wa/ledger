@@ -15,7 +15,8 @@ from ledger.accounts.models import EmailUser, Document
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment, EmailLogEntry, CustomLogEntry
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment, EmailLogEntry, \
+    CustomLogEntry
 from wildlifelicensing.apps.applications.forms import IDRequestForm, AmendmentRequestForm, ApplicationLogEntryForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
     send_assessment_reminder_email, \
@@ -280,8 +281,6 @@ class CommunicationLogListView(OfficerRequiredMixin, View):
 
 class AddLogEntryView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        print('request', request.POST)
-        print('files', request.FILES)
         form = ApplicationLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
             application = get_object_or_404(Application, pk=args[0])
@@ -299,4 +298,14 @@ class AddLogEntryView(OfficerRequiredMixin, View):
             entry = CustomLogEntry.objects.create(**data)
             return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
         else:
-            return JsonResponse('not valid', safe=False, encoder=WildlifeLicensingJSONEncoder)
+            return JsonResponse(
+                {
+                    "errors": [
+                        {
+                            'status': "422",
+                            'title': 'Data not valid',
+                            'detail': form.errors
+                        }
+                    ]
+                },
+                safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)
