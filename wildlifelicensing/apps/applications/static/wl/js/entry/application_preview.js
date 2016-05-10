@@ -99,7 +99,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             $('body').scrollspy({ target: '#sectionList' });
             sectionList.affix({ offset: { top: sectionList.offset().top }});
         },
-        setupDisclaimer(disclaimersSelector, lodgeSelector) {
+        setupDisclaimer: function(disclaimersSelector, lodgeSelector) {
             $(disclaimersSelector).change(function(e) {
                 // enable lodge button if the number of checked checkboxes is the same as the number of
                 // checkboxes in the dislaimer div (which is the parent of the disclaimers selector's elements)

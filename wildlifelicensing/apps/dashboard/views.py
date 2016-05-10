@@ -110,7 +110,7 @@ class DashboardTreeViewBase(TemplateView):
         return super(DashboardTreeViewBase, self).get_context_data(**kwargs)
 
 
-class DashboardOfficerTreeView(OfficerOrAssessorRequiredMixin, DashboardTreeViewBase):
+class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'Dashboard'
     url = reverse_lazy('dashboard:tables_officer')
@@ -441,7 +441,7 @@ class DataApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
         return query
 
 
-class DataApplicationOfficerView(OfficerOrAssessorRequiredMixin, DataApplicationBaseView):
+class DataApplicationOfficerView(OfficerRequiredMixin, DataApplicationBaseView):
     columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
                'assigned_officer', 'action']
     order_columns = ['lodgement_number', 'licence_type.code',
@@ -515,7 +515,7 @@ class DataApplicationCustomerView(DataApplicationBaseView):
                 reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
                 'Amend application'
             )
-        elif status == 'id_required':
+        elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
             return '<a href="{0}">{1}</a>'.format(
                 reverse('main:identification'),
                 'Update ID')
@@ -535,7 +535,7 @@ class DataApplicationCustomerView(DataApplicationBaseView):
     })
 
 
-class DataApplicationAssessorView(DataApplicationBaseView):
+class DataApplicationAssessorView(OfficerOrAssessorRequiredMixin, DataApplicationBaseView):
     """
     Model of this table is not Application but Assessment
      see: get_initial_queryset method

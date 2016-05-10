@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^dashboard/tables/officer/?', views.DashboardTableOfficerView.as_view(), name='tables_officer'),
     url(r'^dashboard/tables/customer/?', views.DashboardTableCustomerView.as_view(), name='tables_customer'),
     url(r'^dashboard/tables/assessor/?', views.DashboardTableAssessorView.as_view(), name='tables_assessor'),
+    url(r'^dashboard/tables/assessor/?', views.DashboardTableAssessorView.as_view(), name='assessor'),
     url(r'^dashboard/data/applications/officer/?', views.DataApplicationOfficerView.as_view(),
         name='data_application_officer'),
     url(r'^dashboard/data/applications/customer/?', views.DataApplicationCustomerView.as_view(),
