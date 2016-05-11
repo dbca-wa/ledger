@@ -387,7 +387,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 request.session.get('application').get('files')):
             try:
                 for filename in get_all_filenames_from_application_data(form_structure,
-                                                                        request.session.get('application_data')):
+                                                                        request.session.get('application').get('data')):
                     document = Document.objects.create(name=filename)
                     with open(os.path.join(request.session.get('application').get('files'), filename),
                               'rb') as doc_file:
