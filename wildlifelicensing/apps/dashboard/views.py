@@ -14,7 +14,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application, Assessment
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin, AssessorRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin, \
+    AssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from .forms import LoginForm
 
@@ -204,7 +205,7 @@ class DashboardTableBaseView(TemplateView):
                     'url': ''
                 }
             },
-            'licenses': {
+            'licences': {
                 'columnDefinitions': [],
                 'filters': {
                     'licenceType': {
@@ -334,7 +335,7 @@ class DashboardTableCustomerView(LoginRequiredMixin, DashboardTableBaseView):
             [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
         data['applications']['ajax']['url'] = reverse('dashboard:data_application_customer')
 
-        data['licenses']['columnDefinitions'] = [
+        data['licences']['columnDefinitions'] = [
             {
                 'title': 'License No.'
             },
@@ -356,6 +357,7 @@ class DashboardTableCustomerView(LoginRequiredMixin, DashboardTableBaseView):
                 'orderable': False
             }
         ]
+        data['applications']['ajax']['url'] = reverse('dashboard:data_licences_customer')
         return data
 
 
@@ -642,3 +644,59 @@ class DataApplicationAssessorView(OfficerOrAssessorRequiredMixin, DataApplicatio
         assessments = Assessment.objects.filter(assessor_group__in=groups).filter(
             status='awaiting_assessment')
         return assessments
+
+
+class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
+    """
+    View to handle datatable server-side processing
+    It is extension of the BaseDatatableView at
+     https://bitbucket.org/pigletto/django-datatables-view
+    It just provides a configurable way to define render and search functions for each defined columns through the
+    column_helpers = {
+       'column': {
+            'search': callable(search_term)
+            'render': callable(model_instance)
+       }
+    }
+
+    """
+    columns_helpers = {
+    }
+
+    def _build_search_query(self, search):
+        query = Q()
+        col_data = super(DataTableBaseView, self).extract_datatables_column_data()
+        for col_no, col in enumerate(col_data):
+            if col['searchable']:
+                col_name = self.columns[col_no]
+                # special cases
+                if col_name in self.columns_helpers and 'search' in self.columns_helpers[col_name]:
+                    func = self.columns_helpers[col_name]['search']
+                    if callable(func):
+                        q = func(search)
+                        query |= q
+                else:
+                    query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
+        return query
+
+    def filter_queryset(self, qs):
+        query = Q()
+        search = self.request.GET.get('search[value]', None)
+        if search:
+            query &= self._build_search_query(search)
+        return qs.filter(query)
+
+    def render_column(self, instance, column):
+        if column in self.columns_helpers and 'render' in self.columns_helpers[column]:
+            func = self.columns_helpers[column]['render']
+            if callable(func):
+                return func(instance)
+            else:
+                return 'render is not a function'
+        else:
+            result = super(DataTableBaseView, self).render_column(instance, column)
+        return result
+
+
+class DataLicencesCustomerView(DataTableBaseView):
+    pass
