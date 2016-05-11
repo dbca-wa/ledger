@@ -6,6 +6,8 @@
 
 {% load jsonify %}
 
+{% load users %}
+
 {% block extra_css %}
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
@@ -33,6 +35,9 @@
                         <li><a href="{% url 'applications:create_select_profile_existing_application' licence_type.code application_pk %}">Select Profile</a></li>
                     {% else %}
                         <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
+                        {% if request.user|is_officer %}
+                            <li><a href="{% url 'applications:create_select_customer' licence_type.code %}">Select Customer</a></li>
+                        {% endif %}
                         <li><a href="{% url 'applications:create_select_profile' licence_type.code %}">Select Profile</a></li>
                     {% endif %}
                     <li class="active">Enter Application Details</li>
@@ -46,9 +51,9 @@
     <div id="mainContainer" class="container hidden">
         <div class="row">
             <div class="col-md-12">
-                <h2>{{ licence_type.name }}</h2>
-                <h3>Enter Application Details</h3>
-                <hr>
+                {% with heading='Enter Application Details' %}
+                    {% include 'wl/entry/header.html' %}
+                {% endwith %}
                 <p>
                     In order to complete the application, you must fill out the questionnaire below. Please answer each question with careful consideration 
                     as insufficient responses may require amendments to be made, delaying the issue of the licence.

@@ -46,7 +46,9 @@ class Application(RevisionedMixin):
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateField(blank=True, null=True)
 
-    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
+    proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='proxy')
+
+    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='assignee')
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,

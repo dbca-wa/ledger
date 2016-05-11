@@ -170,7 +170,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertTrue('profile' in self.client.session['application'])
 
         # check that the profile in the session is the selected profile
-        self.assertEqual(self.client.session['application']['profile'], profile2.pk)
+        self.assertEqual(self.client.session['application']['profile_pk'], profile2.pk)
 
     def test_enter_details_draft(self):
         """Testing that a user can enter the details of an application form and save as a draft

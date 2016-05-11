@@ -6,6 +6,8 @@
 
 {% load jsonify %}
 
+{% load users %}
+
 {% block extra_css %}
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
@@ -34,6 +36,9 @@
                         <li><a href="{% url 'applications:enter_details_existing_application' licence_type.code application_pk %}">Enter Application Details</a></li>
                     {% else %}
                         <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
+                        {% if request.user|is_officer %}
+                            <li><a href="{% url 'applications:create_select_customer' licence_type.code %}">Select Customer</a></li>
+                        {% endif %}
                         <li><a href="{% url 'applications:create_select_profile' licence_type.code %}">Select Profile</a></li>
                         <li><a href="{% url 'applications:enter_details' licence_type.code %}">Enter Application Details</a></li>
                     {% endif %}
@@ -48,9 +53,9 @@
     <div id="mainContainer" class="container hidden">
         <div class="row">
             <div class="col-md-12">
-                <h2>{{ licence_type.name }}</h2>
-                <h3>Preview and Lodge Application</h3>
-                <hr>
+                {% with heading='Preview and Lodge Application' %}
+                    {% include 'wl/entry/header.html' %}
+                {% endwith %}
                 <p>
                     Please review the answers you provided to ensure their correctness before lodging your application. If you need to change any answers, click the
                     Edit Application Details button at the bottom-left. When you are satisfied with your answers, check the disclaimer checkboxes and click the Lodge

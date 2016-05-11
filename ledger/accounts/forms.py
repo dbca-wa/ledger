@@ -2,7 +2,7 @@ from django import forms
 
 from django_countries.widgets import CountrySelectWidget
 
-from .models import Address, Profile, EmailUser
+from .models import EmailUser, Address, Profile
 
 
 class FirstTimeForm(forms.Form):
@@ -10,6 +10,29 @@ class FirstTimeForm(forms.Form):
     first_name = forms.CharField()
     last_name = forms.CharField()
     dob = forms.DateField(input_formats=['%d/%m/%Y'])
+
+
+class EmailUserForm(forms.ModelForm):
+    email = forms.EmailField(required=False, help_text='If no email address is available, leave blank and a placeholder '
+                             'email will be generated for the customer')
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+    dob = forms.DateField(input_formats=['%d/%m/%Y'])
+
+    class Meta:
+        model = EmailUser
+        fields = ['email', 'first_name', 'last_name', 'dob']
+
+    def save(self, force_insert=False, force_update=False, commit=True):
+        email_user = super(EmailUserForm, self).save(commit=False)
+
+        if not email_user.email:
+            email_user.email = '%s.%s.%s@ledger.dpaw.wa.gov.au' % (email_user.first_name, email_user.last_name, email_user.dob)
+
+        if commit:
+            email_user.save()
+
+        return email_user
 
 
 class AddressForm(forms.ModelForm):

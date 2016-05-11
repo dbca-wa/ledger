@@ -3,6 +3,10 @@ import shutil
 
 from preserialize.serialize import serialize
 
+from ledger.accounts.models import EmailUser
+
+from wildlifelicensing.apps.main.helpers import is_officer
+
 from models import Application, AmendmentRequest, Assessment, AssessmentCondition
 
 
@@ -89,6 +93,25 @@ def get_all_filenames_from_application_data(item, data):
                 filenames += get_all_filenames_from_application_data(child, data)
 
     return filenames
+
+
+class SessionDataMissingException(Exception):
+    pass
+
+
+def determine_applicant(request):
+    if is_officer(request.user):
+        if 'application' in request.session:
+            if 'customer_pk' in request.session.get('application'):
+                applicant = EmailUser.objects.get(pk=request.session['application']['customer_pk'])
+            else:
+                raise SessionDataMissingException('customer_pk not set in session')
+        else:
+            raise SessionDataMissingException('application not set in session')
+    else:
+        applicant = request.user
+
+    return applicant
 
 
 def delete_application_session_data(session):
