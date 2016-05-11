@@ -1,0 +1,10 @@
+{%  extends 'wl/emails/base_email.html' %}
+
+{%  block content %}
+    Congratulations, your Wildlife Licensing application has been approved and the corresponding licence has been issued.
+    <p>You'll find your licence in attachment. Please read it carefully.</p>
+    {% if url %}
+        <p>You also can access it from your Wildlife Licensing <a href='{{ url }}'>dashboard.</a></p>
+        <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.</p>
+    {% endif %}
+{%  endblock %}

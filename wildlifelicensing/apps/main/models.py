@@ -23,16 +23,12 @@ class WildlifeLicenceType(LicenceType):
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
 
 
-@python_2_unicode_compatible
 class WildlifeLicence(Licence):
     profile = models.ForeignKey(Profile)
     sequence_number = models.IntegerField(default=1)
     purpose = models.TextField(blank=True)
     document = models.ForeignKey(Document, blank=True, null=True)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
-
-    def __str__(self):
-        return '{} {}'.format(self.licence_type, self.status)
 
 
 class DefaultCondition(models.Model):

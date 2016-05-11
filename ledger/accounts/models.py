@@ -213,6 +213,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         full_name = '{} {}'.format(self.first_name, self.last_name)
         return full_name.strip()
 
+    def get_full_name_dob(self):
+        full_name_dob = '{} {} ({})'.format(self.first_name, self.last_name, self.dob.strftime('%d/%m/%Y'))
+        return full_name_dob.strip()
+
     def get_short_name(self):
         if self.first_name:
             return self.first_name
