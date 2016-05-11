@@ -498,6 +498,10 @@ class DataApplicationOfficerView(OfficerRequiredMixin, DataApplicationBaseView):
             return '<a href="{0}">Enter Conditions</a>'.format(
                 reverse('applications:enter_conditions', args=[obj.pk]),
             )
+        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
+            return '<a href="{0}" target="_blank">View licence</a>'.format(
+                obj.licence.document.file.url
+            )
         else:
             return '<a href="{0}">Process</a>'.format(
                 reverse('applications:process', args=[obj.pk]),
@@ -558,6 +562,10 @@ class DataApplicationCustomerView(DataApplicationBaseView):
             return '<a href="{0}">{1}</a>'.format(
                 reverse('main:identification'),
                 'Update ID')
+        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
+            return '<a href="{0}" target="_blank">View licence</a>'.format(
+                obj.licence.document.file.url
+            )
         else:
             return 'Locked'
 
