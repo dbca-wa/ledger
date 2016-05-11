@@ -9,15 +9,17 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from django.db.models import Q
+from django.contrib.staticfiles.templatetags.staticfiles import static
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from ledger.licence.models import LicenceType
+from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin, \
     AssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
-from .forms import LoginForm
+from wildlifelicensing.apps.dashboard.forms import LoginForm
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,10 @@ def _build_url(base, query):
 
 def _get_user_applications(user):
     return Application.objects.filter(applicant_profile__user=user)
+
+
+def _get_user_licences(user):
+    return WildlifeLicence.objects.filter(profile__user=user)
 
 
 def _get_processing_statuses_but_draft():
@@ -41,6 +47,16 @@ def _render_date(date):
     if not date:
         return ''
     return 'not a valid date object'
+
+
+def _render_licence_document(licence):
+    if licence is not None and licence.document is not None:
+        return '<a href="{0}" target="_blank">View PDF</a><img height="20" src="{1}"></img>'.format(
+            licence.document.file.url,
+            static('wl/img/pdf.png')
+        )
+    else:
+        return ''
 
 
 class DashBoardRoutingView(TemplateView):
@@ -337,19 +353,21 @@ class DashboardTableCustomerView(LoginRequiredMixin, DashboardTableBaseView):
 
         data['licences']['columnDefinitions'] = [
             {
-                'title': 'License No.'
-            },
-            {
                 'title': 'Licence Type'
             },
             {
                 'title': 'Issue Date'
             },
             {
+                'title': 'Start Date'
+            },
+            {
                 'title': 'Expiry Date'
             },
             {
-                'title': 'Document'
+                'title': 'Licence',
+                'searchable': False,
+                'orderable': False
             },
             {
                 'title': 'Action',
@@ -357,7 +375,7 @@ class DashboardTableCustomerView(LoginRequiredMixin, DashboardTableBaseView):
                 'orderable': False
             }
         ]
-        data['applications']['ajax']['url'] = reverse('dashboard:data_licences_customer')
+        data['licences']['ajax']['url'] = reverse('dashboard:data_licences_customer')
         return data
 
 
@@ -681,7 +699,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
                 if col_name in self.columns_helpers and 'search' in self.columns_helpers[col_name]:
                     func = self.columns_helpers[col_name]['search']
                     if callable(func):
-                        q = func(search)
+                        q = func(self, search)
                         query |= q
                 else:
                     query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
@@ -698,7 +716,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         if column in self.columns_helpers and 'render' in self.columns_helpers[column]:
             func = self.columns_helpers[column]['render']
             if callable(func):
-                return func(instance)
+                return func(self, instance)
             else:
                 return 'render is not a function'
         else:
@@ -707,4 +725,32 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
 
 class DataLicencesCustomerView(DataTableBaseView):
-    pass
+    model = WildlifeLicence
+    columns = ['licence_type.code', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
+    order_columns = ['licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
+
+    columns_helpers = {
+        'issue_date': {
+            'render': lambda self, instance: _render_date(instance.issue_date)
+        },
+        'start_date': {
+            'render': lambda self, instance: _render_date(instance.start_date)
+        },
+        'end_date': {
+            'render': lambda self, instance: _render_date(instance.end_date)
+        },
+        'licence': {
+            'render': lambda self, instance: _render_licence_document(instance)
+        },
+        'action': {
+            'render': lambda self, instance: self._render_action(instance)
+        }
+    }
+
+    @staticmethod
+    def _render_action(instance):
+        url = '#'
+        return '<a href="{0}">Renew</a>'.format(url)
+
+    def get_initial_queryset(self):
+        return _get_user_licences(self.request.user)

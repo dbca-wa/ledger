@@ -39,10 +39,10 @@ define(
             var licencesTableOptions = $.extend({}, tableOptions, {
                     ajax: {
                         url: options.data.licences.ajax.url,
-                        data: function (d) {
-                            // add filters to the query
-                            d.filters = $(options.selectors.licencesFilterForm).serializeArray();
-                        },
+                        //data: function (d) {
+                        //    // add filters to the query
+                        //    d.filters = $(options.selectors.licencesFilterForm).serializeArray();
+                        //},
                         error: function (xhr, textStatus, thrownError) {
                             console.log("Error while loading licences data:", thrownError, textStatus, xhr.responseText, xhr.status);
                             //Stop the data table 'Processing'.
