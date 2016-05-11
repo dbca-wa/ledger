@@ -28,7 +28,7 @@ class IdentificationForm(forms.Form):
 class IssueLicenceForm(forms.ModelForm):
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'purpose']    
+        fields = ['issue_date', 'start_date', 'end_date', 'purpose']
 
     def __init__(self, *args, **kwargs):
         purpose = kwargs.pop('purpose', None)
