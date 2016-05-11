@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 from django import forms
+from django.conf import settings
 
 from wildlifelicensing.apps.main.models import WildlifeLicence
 
@@ -34,7 +35,8 @@ class IssueLicenceForm(forms.ModelForm):
 
         super(IssueLicenceForm, self).__init__(*args, **kwargs)
 
-        self.fields['purpose'].initial = purpose
+        if purpose is not None:
+            self.fields['purpose'].initial = purpose
 
         today_date = datetime.now()
         self.fields['issue_date'].initial = today_date.strftime(DATE_FORMAT)

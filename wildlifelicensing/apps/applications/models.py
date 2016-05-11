@@ -6,7 +6,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry, AssessorGroup
+from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceType, Condition, AbstractLogEntry, AssessorGroup
 
 
 class Application(RevisionedMixin):
@@ -17,7 +17,7 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required']
 
-    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('ready_for_action', 'Ready for Action'),
+    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'), ('ready_for_conditions', 'Ready for Conditions'),
@@ -46,7 +46,9 @@ class Application(RevisionedMixin):
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateField(blank=True, null=True)
 
-    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
+    proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='proxy')
+
+    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='assignee')
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
@@ -58,6 +60,10 @@ class Application(RevisionedMixin):
                                      default=REVIEW_STATUS_CHOICES[0][0])
 
     conditions = models.ManyToManyField(Condition, through='ApplicationCondition')
+
+    license = models.ForeignKey(WildlifeLicence, blank=True, null=True)
+
+    previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
 
     @property
     def is_assigned(self):

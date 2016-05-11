@@ -2,6 +2,7 @@ import os
 import json
 
 from django.db.models import Q
+from django.db.utils import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import View, TemplateView
@@ -10,14 +11,13 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.main.models import Condition
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin, AssessorRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
 from wildlifelicensing.apps.applications.utils import format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from wildlifelicensing.apps.applications.mixins import CanEditAssessmentMixin
-from django.db.utils import IntegrityError
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 

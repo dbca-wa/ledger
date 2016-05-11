@@ -39,7 +39,7 @@ def first_time(request):
             request.user.last_name = form.cleaned_data['last_name']
             request.user.dob = form.cleaned_data['dob']
             request.user.save()
-            return redirect(redirect_url) 
+            return redirect(redirect_url)
         context['form'] = form
         context['redirect_url'] = redirect_url
         return render(request, 'customers/firsttime.html', context)
