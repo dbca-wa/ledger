@@ -163,7 +163,6 @@ def upload_id(user):
 
 
 def clear_id_file(user):
-    # clean id file
     if user.identification:
         os.remove(user.identification.path)
 

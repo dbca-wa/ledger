@@ -6,7 +6,7 @@ from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeVie
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, SetCharacterCheckStatusView, SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, \
-    RemindAssessmentView
+    RemindAssessmentView, AddLogEntryView, CommunicationLogListView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
     CreateConditionView, SetAssessmentConditionState, SubmitConditionsView, EnterConditionsAssessorView, \
@@ -37,6 +37,9 @@ urlpatterns = [
     url('^amendment_request/$', AmendmentRequestView.as_view(), name='amendment_request'),
     url('^send_for_assessment/$', SendForAssessmentView.as_view(), name='send_for_assessment'),
     url('^remind_assessment/$', RemindAssessmentView.as_view(), name='remind_assessment'),
+    # communication log
+    url('^add_log_entry/([0-9]+)/', AddLogEntryView.as_view(), name='add_log_entry'),
+    url('log_list/([0-9]+)/$', CommunicationLogListView.as_view(), name='log_list'),
 
     # conditions
     url('^enter_conditions/([0-9]+)/$', EnterConditionsView.as_view(), name='enter_conditions'),

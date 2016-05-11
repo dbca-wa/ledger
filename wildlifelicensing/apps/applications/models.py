@@ -78,7 +78,8 @@ class ApplicationLogEntry(AbstractLogEntry):
 class IDRequest(ApplicationLogEntry):
     REASON_CHOICES = (('missing', 'There is currently no Photographic Identification uploaded'),
                       ('expired', 'The current identification has expired'),
-                      ('not_recognised', 'The current identification is not recognised by the Department of Parks and Wildlife'),
+                      ('not_recognised',
+                       'The current identification is not recognised by the Department of Parks and Wildlife'),
                       ('illegible', 'The current identification image is of poor quality and cannot be made out.'),
                       ('other', 'Other'))
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
@@ -124,7 +125,13 @@ class AssessmentCondition(models.Model):
 
 
 class EmailLogEntry(ApplicationLogEntry):
-    pass
+    subject = models.CharField(max_length=500, blank=True)
+    to = models.CharField(max_length=500, blank=True, verbose_name="To")
+    from_email = models.CharField(max_length=200, blank=True, verbose_name="From")
+
+
+class CustomLogEntry(ApplicationLogEntry):
+    subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
 
 
 @receiver(pre_delete, sender=Application)

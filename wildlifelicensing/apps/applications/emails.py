@@ -121,12 +121,27 @@ def send_id_update_request_email(id_request, request):
 def _log_email(email_message, application, sender=None):
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
         # TODO this will log the plain text body, should we log the html instead
-        # TODO log the subject of the email
-        email_message = email_message.body
+        text = email_message.body
+        subject = email_message.subject
+        from_email = unicode(sender) if sender else unicode(email_message.from_email)
+        # the to email is normally a list
+        if isinstance(email_message.to, list):
+            to = ';'.join(email_message.to)
+        else:
+            to = unicode(email_message.to)
+    else:
+        text = unicode(email_message)
+        subject = ''
+        to = application.applicant_profile.user.email
+        from_email = unicode(sender) if sender else ''
+
     kwargs = {
-        'text': str(email_message),
+        'subject': subject,
+        'text': text,
         'application': application,
-        'user': sender
+        'user': sender,
+        'to': to,
+        'from_email': from_email
     }
     email_entry = EmailLogEntry.objects.create(**kwargs)
     return email_entry
