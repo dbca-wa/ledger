@@ -97,8 +97,12 @@ class SubmitConditionsView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
+        application.processing_status = 'ready_to_issue'
+
         # remove existing conditions as there may be new conditions and/or changes of order
         application.conditions.clear()
+
+        application.save()
 
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
             ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
@@ -107,7 +111,7 @@ class SubmitConditionsView(OfficerRequiredMixin, View):
         if request.POST.get('submissionType') == 'backToProcessing':
             return redirect('applications:process', *args)
         else:
-            return redirect('dashboard:home')
+            return redirect('applications:issue_licence', *self.args, **self.kwargs)
 
 
 class SubmitConditionsAssessorView(CanEditAssessmentMixin, View):
