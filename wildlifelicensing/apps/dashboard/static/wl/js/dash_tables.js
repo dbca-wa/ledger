@@ -7,6 +7,8 @@ define(
         'select2'
     ],
     function ($, _, dt) {
+        "use strict";
+
         var options,
             tableOptions = {
                 paging: true,
@@ -91,13 +93,19 @@ define(
             }
         }
 
+        /**
+         *
+         * @param query
+         * @param query.application_status
+         * @param query.application_assignee
+         */
         function setFilters(query) {
             $('#applications-collapse').collapse('show');
-            if (query['application_status']) {
-                $applicationsStatusTypeFilter.val(query['application_status']);
+            if (query.application_status) {
+                $applicationsStatusTypeFilter.val(query.application_status);
             }
-            if (query['application_assignee']) {
-                $applicationsAssigneeTypeFilter.val(query['application_assignee'])
+            if (query.application_assignee) {
+                $applicationsAssigneeTypeFilter.val(query.application_assignee);
             }
         }
 
@@ -109,7 +117,14 @@ define(
                     applicationsFilterForm: '#applications-filter-form',
                     applicationsLicenceFilter: '#applications-filter-licence-type',
                     applicationsStatusFilter: '#applications-filter-status',
-                    applicationsAssigneeFilter: '#applications-filter-assignee'
+                    applicationsAssigneeFilter: '#applications-filter-assignee',
+
+                    licencesTable: '#licences-table',
+                    licencesAccordion: '#licences-collapse',
+                    licencesFilterForm: '#licences-filter-form',
+                    licencesLicenceFilter: '#licences-filter-licence-type',
+                    licencesStatusFilter: '#licences-filter-status',
+                    licencesAssigneeFilter: '#licences-filter-assignee'
                 },
                 data: {
                     'applications': {
@@ -154,7 +169,7 @@ define(
 
                 // apply the bootstrap select2 to the filters.
                 $(options.selectors.applicationsFilterForm + ' select').select2();
-            })
+            });
         };
     }
 );

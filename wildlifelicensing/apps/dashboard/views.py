@@ -203,6 +203,20 @@ class DashboardTableBaseView(TemplateView):
                 'ajax': {
                     'url': ''
                 }
+            },
+            'licenses': {
+                'columnDefinitions': [],
+                'filters': {
+                    'licenceType': {
+                        'values': licence_types,
+                    },
+                    'status': {
+                        'values': [],
+                    }
+                },
+                'ajax': {
+                    'url': ''
+                }
             }
         }
         return data
@@ -319,6 +333,29 @@ class DashboardTableCustomerView(LoginRequiredMixin, DashboardTableBaseView):
         data['applications']['filters']['status']['values'] = \
             [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
         data['applications']['ajax']['url'] = reverse('dashboard:data_application_customer')
+
+        data['licenses']['columnDefinitions'] = [
+            {
+                'title': 'License No.'
+            },
+            {
+                'title': 'Licence Type'
+            },
+            {
+                'title': 'Issue Date'
+            },
+            {
+                'title': 'Expiry Date'
+            },
+            {
+                'title': 'Document'
+            },
+            {
+                'title': 'Action',
+                'searchable': False,
+                'orderable': False
+            }
+        ]
         return data
 
 
