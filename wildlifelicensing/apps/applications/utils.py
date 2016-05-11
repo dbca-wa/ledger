@@ -7,7 +7,7 @@ from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.helpers import is_officer
 
-from models import Application, AmendmentRequest, Assessment, AssessmentCondition
+from models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
@@ -80,17 +80,26 @@ def _create_data_from_item(item, post_data, file_data, post_data_index=None):
 
 def get_all_filenames_from_application_data(item, data):
     filenames = []
-    if item.get('type', '') == 'file':
-        if item['name'] in data and len(data[item['name']]) > 0:
-            filenames.append(data[item['name']])
 
-    if 'children' in item:
-        for child in item['children']:
+    if isinstance(item, list):
+        for child in item:
             if child.get('type', '') == 'group':
                 for child_data in data[child['name']]:
                     filenames += get_all_filenames_from_application_data(child, child_data)
             else:
                 filenames += get_all_filenames_from_application_data(child, data)
+    else:
+        if item.get('type', '') == 'file':
+            if item['name'] in data and len(data[item['name']]) > 0:
+                filenames.append(data[item['name']])
+
+        if 'children' in item:
+            for child in item['children']:
+                if child.get('type', '') == 'group':
+                    for child_data in data[child['name']]:
+                        filenames += get_all_filenames_from_application_data(child, child_data)
+                else:
+                    filenames += get_all_filenames_from_application_data(child, data)
 
     return filenames
 
@@ -129,6 +138,45 @@ def delete_application_session_data(session):
                     pass
 
         del session['application']
+
+
+def clone_application(application, save=False):
+    application.customer_status = 'draft'
+    application.processing_status = 'renewal'
+
+    application.id_check_status = 'not_checked'
+    application.character_check_status = 'not_checked'
+    application.review_status = 'not_reviewed'
+
+    application.lodgement_number = ''
+    application.lodgement_sequence = 0
+    application.lodgement_date = None
+
+    application.assigned_officer = None
+
+    application.license = None
+
+    original_application_pk = application.pk
+
+    application.previous_application = Application.objects.get(pk=original_application_pk)
+
+    application.pk = None
+
+    application.save(no_revision=True)
+
+    # clone documents
+    for application_document in Application.documents.through.objects.filter(application=original_application_pk):
+        application_document.application = application
+        application_document.pk = None
+        application_document.save()
+
+    # clone conditions
+    for application_condition in ApplicationCondition.objects.filter(application=original_application_pk):
+        application_condition.application = application
+        application_condition.pk = None
+        application_condition.save()
+
+    return application
 
 
 def format_application(instance, attrs):
