@@ -1,9 +1,9 @@
 define(
-    'js/wl.dataTable',
     [
         'jQuery',
         'datatables.net',
-        'datatables.bootstrap'
+        'datatables.bootstrap',
+        'datatables.datetime'
     ],
     function ($) {
         'use strict';
@@ -45,6 +45,12 @@ define(
         }
 
         return {
+            setDateTimeFormat: function (format) {
+                // use the datetime plugin: https://datatables.net/plug-ins/sorting/datetime-moment
+                // the format follows the moment.js rules: http://momentjs.com/docs/#/displaying/
+                // ex 'DD/MM/YYYY
+                $.fn.dataTable.moment(format);
+            },
             initTable: function (selector, tableOptions, columnsOptions) {
                 var options = {},
                     table;
