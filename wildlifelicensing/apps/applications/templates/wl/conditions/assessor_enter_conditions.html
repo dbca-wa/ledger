@@ -144,16 +144,17 @@
                         <label for="comment">Comments</label>
                         <textarea name="comment" rows="4" id="commentText" class="form-control" placeholder="Enter comment"></textarea>
                     </div>
+                    {% if assessment.assessor_group.purpose %}
+                        <div class="form-group">
+                            <label for="purpose">Purpose</label>
+                            <textarea name="purpose" rows="4" id="purposeText" class="form-control" placeholder="Enter purpose"></textarea>
+                        </div>
+                    {% endif %}
                 </form>
             </div>
         </div>
     </div>
 {% endblock %}
-
-{% block comments %}
-
-{% endblock %}
-
 
 {% block action_button %}
     <button id="assessmentDone" type="button" class="btn btn-sm btn-success pull-right">Conclude Assessment</button>

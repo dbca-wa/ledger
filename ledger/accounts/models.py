@@ -227,7 +227,6 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             # user object is new, create user before creating EmailIdentity object
             super(EmailUser, self).save(*args, **kwargs)
             identity, created = EmailIdentity.objects.get_or_create(email=self.email, user=self)
-        
 
     @property
     def username(self):
