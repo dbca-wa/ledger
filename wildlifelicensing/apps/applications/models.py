@@ -61,7 +61,7 @@ class Application(RevisionedMixin):
 
     conditions = models.ManyToManyField(Condition, through='ApplicationCondition')
 
-    license = models.ForeignKey(WildlifeLicence, blank=True, null=True)
+    licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
 
