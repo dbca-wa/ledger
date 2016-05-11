@@ -1,9 +1,13 @@
+import logging
+
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
 from wildlifelicensing.apps.applications.models import EmailLogEntry, AmendmentRequest, IDRequest
+
+logger = logging.getLogger(__name__)
 
 
 class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
@@ -116,6 +120,38 @@ def send_id_update_request_email(id_request, request):
         context['request_text'] = id_request.text
     msg = email.send(id_request.application.applicant_profile.email, context=context)
     _log_email(msg, application=id_request.application, sender=request.user)
+
+
+class LicenceIssuedEmail(TemplateEmailBase):
+    subject = 'Your wildlife licensing licence has been issued.'
+    html_template = 'wl/emails/licence_issued.html'
+    txt_template = 'wl/emails/licence_issued.txt'
+
+
+def send_licence_issued_email(licence, application, request):
+    email = LicenceIssuedEmail()
+    url = request.build_absolute_uri(
+        reverse('dashboard:home')
+    )
+    context = {
+        'url': url
+    }
+    if licence.document is not None:
+        file_name = 'WL_licence_' + str(licence.licence_type.code)
+        if licence.licence_no:
+            file_name += '_' + str(licence.licence_no)
+        file_name += '.pdf'
+        attachment = (file_name, licence.document.file.read(), 'application/pdf')
+        attachments = [attachment]
+    else:
+        logger.error('The license pk=' + licence.pk + ' has no document associated with it.')
+        attachments = None
+    msg = email.send(licence.profile.email, context=context, attachments=attachments)
+    log_entry = _log_email(msg, application=application, sender=request.user)
+    if licence.document is not None:
+        log_entry.document = licence.document
+        log_entry.save()
+    return log_entry
 
 
 def _log_email(email_message, application, sender=None):

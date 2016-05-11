@@ -11,6 +11,7 @@ from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
+from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -52,6 +53,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             application.licence = licence
 
             application.save()
+
+            send_licence_issued_email(licence, application, request)
 
             messages.success(request, 'The licence has now been issued.')
 
