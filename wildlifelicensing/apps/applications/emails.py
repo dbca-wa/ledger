@@ -140,6 +140,8 @@ def send_licence_issued_email(licence, application, request):
         file_name = 'WL_licence_' + str(licence.licence_type.code)
         if licence.licence_no:
             file_name += '_' + str(licence.licence_no)
+        elif licence.start_date:
+            file_name += '_' + str(licence.start_date)
         file_name += '.pdf'
         attachment = (file_name, licence.document.file.read(), 'application/pdf')
         attachments = [attachment]
