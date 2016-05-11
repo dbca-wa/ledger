@@ -28,7 +28,7 @@ class WildlifeLicence(Licence):
     profile = models.ForeignKey(Profile)
     sequence_number = models.IntegerField(default=1)
     purpose = models.TextField(blank=True)
-
+    document = models.ForeignKey(Document, blank=True, null=True)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
 
     def __str__(self):

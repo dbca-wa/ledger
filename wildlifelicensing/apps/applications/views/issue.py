@@ -1,14 +1,14 @@
 import os
 
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView
 
 from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.forms import IssueLicenceForm
-from wildlifelicensing.apps.main.pdf import create_licence_pdf
+from wildlifelicensing.apps.main.pdf import create_licence_pdf_document
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 
@@ -40,14 +40,24 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence.licence_type = application.licence_type
             licence.profile = application.applicant_profile
             licence.user = application.applicant_profile.user
+
+            filename = '%s.pdf' % application.lodgement_number
+
+            licence.document = create_licence_pdf_document(filename, licence, application)
+
             licence.save()
 
+            application.customer_status = 'approved'
+            application.processing_status = 'issued'
             application.licence = licence
+
             application.save()
 
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="licence.pdf"'
+            messages.success(request, 'The licence has now been issued.')
 
-            response.write(create_licence_pdf('licence.pdf', licence, application))
+            return redirect('dashboard:home')
+        else:
+            purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
-            return response
+            return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
+                                                        'issue_licence_form': IssueLicenceForm(purpose=purposes)})

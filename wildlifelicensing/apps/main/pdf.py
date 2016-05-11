@@ -7,9 +7,12 @@ from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 
+from django.core.files import File
 from django.conf import settings
 
 from helpers import render_user_name
+
+from ledger.accounts.models import Document
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img', 'bw_dpaw_header_logo.png')
 
@@ -85,7 +88,7 @@ def _create_licence_header(canvas, doc):
     canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 3, '179911')
 
 
-def create_licence_pdf(filename, licence, application):
+def create_licence_pdf_document(filename, licence, application):
     licence_buffer = BytesIO()
 
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
@@ -107,6 +110,7 @@ def create_licence_pdf(filename, licence, application):
                               spaceAfter=PARAGRAPH_BOTTOM_MARGIN, alignment=enums.TA_RIGHT,
                               rightIndent=PAGE_WIDTH / 10))
     styles.add(ParagraphStyle(name='BoldLeft', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
+    styles.add(ParagraphStyle(name='BoldRight', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_RIGHT))
     styles.add(ParagraphStyle(name='Center', alignment=enums.TA_CENTER))
     styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
     styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
@@ -128,7 +132,7 @@ def create_licence_pdf(filename, licence, application):
     elements.append(conditionList)
 
     # purpose
-    if license.purpose:
+    if licence.purpose:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         purposes = []
@@ -143,7 +147,7 @@ def create_licence_pdf(filename, licence, application):
                               style=licence_table_style))
 
     # authorised persons
-    if 'authorised_persons' in application.data:
+    if 'authorised_persons' in application.data and len(application.data['authorised_persons']) > 0:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         authorized_persons = [Paragraph('%s %s' % (ap['ap_given_names'], ap['ap_surname']), styles['Left'])
                               for ap in application.data['authorised_persons']]
@@ -151,14 +155,19 @@ def create_licence_pdf(filename, licence, application):
                               colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                               style=licence_table_style))
 
-    # dates
+    # dates and licensing officer
+    dates_licensing_officer_table_style = TableStyle([('VALIGN', (0, 0), (-2, -1), 'TOP'),
+                                                      ('VALIGN', (0, 0), (-1, -1), 'BOTTOM')])
+
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Table([[[Paragraph('Date of Issue', styles['BoldLeft']), Paragraph('Valid From', styles['BoldLeft']),
                              Paragraph('Date of Expiry', styles['BoldLeft'])],
                             [Paragraph(str(licence.issue_date), styles['Left']), Paragraph(str(licence.start_date), styles['Left']),
-                             Paragraph(str(licence.end_date), styles['Left'])]]],
-                          colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
-                          style=licence_table_style))
+                             Paragraph(str(licence.end_date), styles['Left'])],
+                            Paragraph('Licensing Officer', styles['BoldRight']),
+                            ]],
+                          colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 200, 100),
+                          style=dates_licensing_officer_table_style))
 
     # licensee details
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -174,8 +183,9 @@ def create_licence_pdf(filename, licence, application):
 
     doc.build(elements)
 
-    # Get the value of the BytesIO buffer and write it to the response.
-    pdf = licence_buffer.getvalue()
+    document = Document.objects.create(name=filename)
+    document.file.save(filename, File(licence_buffer), save=True)
+
     licence_buffer.close()
 
-    return pdf
+    return document
