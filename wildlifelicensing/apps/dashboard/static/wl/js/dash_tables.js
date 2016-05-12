@@ -7,6 +7,8 @@ define(
         'select2'
     ],
     function ($, _, dt) {
+        "use strict";
+
         var options,
             tableOptions = {
                 paging: true,
@@ -19,21 +21,56 @@ define(
                 autowidth: true
             },
             applicationsTable,
+            licencesTable,
             $applicationsLicenceTypeFilter,
             $applicationsStatusTypeFilter,
             $applicationsAssigneeTypeFilter;
 
         function initTables() {
-            var applicationTableOptions = $.extend({}, tableOptions, {
+            if (options.data.applications) {
+                initApplicationsTable();
+            }
+            if (options.data.licences) {
+                initLicenceTable();
+            }
+        }
+
+        function initLicenceTable() {
+            var licencesTableOptions = $.extend({}, tableOptions, {
+                    ajax: {
+                        url: options.data.licences.ajax.url,
+                        //data: function (d) {
+                        //    // add filters to the query
+                        //    d.filters = $(options.selectors.licencesFilterForm).serializeArray();
+                        //},
+                        error: function (xhr, textStatus, thrownError) {
+                            console.log("Error while loading licences data:", thrownError, textStatus, xhr.responseText, xhr.status);
+                            //Stop the data table 'Processing'.
+                            $(options.selectors.licencesTable + '_processing').hide();
+                        }
+                    }
+                }),
+                licencesColumns = options.data.licences.columnDefinitions;
+
+            licencesTable = dt.initTable(
+                options.selectors.licencesTable,
+                licencesTableOptions,
+                licencesColumns
+            );
+        }
+
+        function initApplicationsTable() {
+            var applicationsTableOptions = $.extend({}, tableOptions, {
                     ajax: {
                         url: options.data.applications.ajax.url,
                         data: function (d) {
                             // add filters to the query
                             d.filters = $(options.selectors.applicationsFilterForm).serializeArray();
                         },
-                        error: function () {
-                            console.log("error");
-                            //TODO Stop the data table 'Processing' and show an error.
+                        error: function (xhr, textStatus, thrownError) {
+                            console.log("Error while loading applications data:", thrownError, textStatus, xhr.responseText, xhr.status);
+                            //Stop the data table 'Processing'.
+                            $(options.selectors.applicationsTable + '_processing').hide();
                         }
                     }
                 }),
@@ -41,7 +78,7 @@ define(
 
             applicationsTable = dt.initTable(
                 options.selectors.applicationsTable,
-                applicationTableOptions,
+                applicationsTableOptions,
                 applicationsColumns
             );
         }
@@ -91,13 +128,19 @@ define(
             }
         }
 
+        /**
+         *
+         * @param query
+         * @param query.application_status
+         * @param query.application_assignee
+         */
         function setFilters(query) {
             $('#applications-collapse').collapse('show');
-            if (query['application_status']) {
-                $applicationsStatusTypeFilter.val(query['application_status']);
+            if (query.application_status) {
+                $applicationsStatusTypeFilter.val(query.application_status);
             }
-            if (query['application_assignee']) {
-                $applicationsAssigneeTypeFilter.val(query['application_assignee'])
+            if (query.application_assignee) {
+                $applicationsAssigneeTypeFilter.val(query.application_assignee);
             }
         }
 
@@ -109,7 +152,14 @@ define(
                     applicationsFilterForm: '#applications-filter-form',
                     applicationsLicenceFilter: '#applications-filter-licence-type',
                     applicationsStatusFilter: '#applications-filter-status',
-                    applicationsAssigneeFilter: '#applications-filter-assignee'
+                    applicationsAssigneeFilter: '#applications-filter-assignee',
+
+                    licencesTable: '#licences-table',
+                    licencesAccordion: '#licences-collapse',
+                    licencesFilterForm: '#licences-filter-form',
+                    licencesLicenceFilter: '#licences-filter-licence-type',
+                    licencesStatusFilter: '#licences-filter-status',
+                    licencesAssigneeFilter: '#licences-filter-assignee'
                 },
                 data: {
                     'applications': {
@@ -118,16 +168,9 @@ define(
                         },
                         'columnDefinitions': [],
                         'filters': {
-                            //'licenceType': {
-                            //    'values': []
-                            //},
-                            //'status': {
-                            //    'values': []
-                            //},
-                            //'assignee': {
-                            //    'values': []
-                            //}
                         }
+                    },
+                    'licences': {
                     }
                 }
             };
@@ -154,7 +197,7 @@ define(
 
                 // apply the bootstrap select2 to the filters.
                 $(options.selectors.applicationsFilterForm + ' select').select2();
-            })
+            });
         };
     }
 );
