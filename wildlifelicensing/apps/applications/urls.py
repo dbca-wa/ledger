@@ -1,7 +1,8 @@
 from django.conf.urls import url
 
 from wildlifelicensing.apps.applications.views.entry import SelectLicenceTypeView, CreateSelectCustomer, \
-    EditApplicationView, CheckIdentificationRequiredView, CreateSelectProfileView, EnterDetailsView, PreviewView
+    EditApplicationView, CheckIdentificationRequiredView, CreateSelectProfileView, EnterDetailsView, PreviewView, \
+    RenewLicenceView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, SetCharacterCheckStatusView, SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, \
@@ -11,9 +12,10 @@ from wildlifelicensing.apps.applications.views.conditions import EnterConditions
     CreateConditionView, SetAssessmentConditionState, SubmitConditionsView, EnterConditionsAssessorView, \
     SubmitConditionsAssessorView
 
-from wildlifelicensing.apps.applications.views.issue import IssueLicenceView
+from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, PreviewLicenceView
 
 urlpatterns = [
+    # application entry / licence renewal
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^([\w-]+)/create_select_customer/$', CreateSelectCustomer.as_view(), name='create_select_customer'),
     url('^([\w-]+)/edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
@@ -26,6 +28,7 @@ urlpatterns = [
     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details_existing_application'),
     url('^([\w-]+)/preview/$', PreviewView.as_view(), name='preview'),
     url('^([\w-]+)/preview/([0-9]+)/$', PreviewView.as_view(), name='preview'),
+    url('^([\w-]+)/renew-licence/([0-9]+)/$', RenewLicenceView.as_view(), name='renew_licence'),
 
     # process
     url(r'^process/([0-9]+)/$', ProcessView.as_view(), name='process'),
@@ -54,4 +57,5 @@ urlpatterns = [
 
     # issue
     url('^issue_licence/([0-9]+)/$', IssueLicenceView.as_view(), name='issue_licence'),
+    url('^preview_licence/([0-9]+)/$', PreviewLicenceView.as_view(), name='preview_licence'),
 ]

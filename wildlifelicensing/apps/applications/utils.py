@@ -140,7 +140,7 @@ def delete_application_session_data(session):
         del session['application']
 
 
-def clone_application(application, save=False):
+def clone_application_for_renewal(application, save=False):
     application.customer_status = 'draft'
     application.processing_status = 'renewal'
 
@@ -154,7 +154,7 @@ def clone_application(application, save=False):
 
     application.assigned_officer = None
 
-    application.license = None
+    application.licence = None
 
     original_application_pk = application.pk
 

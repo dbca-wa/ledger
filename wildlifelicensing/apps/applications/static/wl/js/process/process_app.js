@@ -618,7 +618,7 @@ define([
             moduleData = data;
 
             initAssignee(data.officers, data.user);
-            initLodgedVersions(data.previous_application_data);
+            initLodgedVersions(data.previous_versions);
             initIDCheck();
             initCharacterCheck();
             initReview();

@@ -1,5 +1,5 @@
 <div class="top-buffer">
-    <h2 class="inline">{{ licence_type.name }}</h2>
+    <h2 class="inline">{{ licence_type.name }} {% if is_renewal %}(Renewal) {% endif %}</h2>
     {% if customer %}
             <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
     {% endif %}

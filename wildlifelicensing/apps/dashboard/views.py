@@ -29,7 +29,7 @@ def _build_url(base, query):
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_profile__user=user)
+    return Application.objects.filter(applicant_profile__user=user).exclude(customer_status='approved')
 
 
 def _get_user_licences(user):
@@ -749,7 +749,18 @@ class DataLicencesCustomerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        url = '#'
+        if not instance.licence_type.is_renewable:
+            return 'Not renewable'
+
+        try:
+            application = Application.objects.get(licence=instance)
+        except Application.DoesNotExist:
+            pass
+
+        if Application.objects.filter(previous_application=application).exists():
+            return 'Renewed'
+
+        url = reverse('applications:renew_licence', args=(instance.licence_type.code, instance.pk,))
         return '<a href="{0}">Renew</a>'.format(url)
 
     def get_initial_queryset(self):
