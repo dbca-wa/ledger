@@ -3,7 +3,8 @@ from django import forms
 from django_countries.widgets import CountrySelectWidget
 from django.core.exceptions import ValidationError
 
-from .models import Address, Profile, EmailUser
+
+from .models import Address, Profile, EmailUser,Document
 
 
 class FirstTimeForm(forms.Form):
@@ -58,3 +59,22 @@ class ProfileForm(forms.ModelForm):
 
         if initial_email is not None:
             self.fields['email'].initial = initial_email
+
+
+class EmailUserForm(forms.ModelForm):
+    class Meta:
+        model = EmailUser
+        fields = ['email','first_name','last_name','title','dob','phone_number','mobile_number','fax_number','organisation','character_flagged','character_comments','date_joined']
+
+    def __init__(self, *args, **kwargs):
+        super(EmailUserForm, self).__init__(*args, **kwargs)
+
+
+class DocumentForm(forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ['name','description','file']
+
+    def __init__(self, *args, **kwargs):
+        super(DocumentForm, self).__init__(*args, **kwargs)
+

@@ -1,0 +1,84 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li class="active">Edit Account</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block requirements %}
+    require(['js/edit_account'], function (edit_account) {
+        edit_account.init();
+    });
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Edit Profile</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    {% bootstrap_form emailuser_form %}
+                    <div class="panel panel-default" id="residential_address_section">
+                        <div class="panel-heading">
+                            <table width="100%"><tr>
+                            <td width="98%"><h4 class="panel-title">Residential Address</h4></td>
+                            <td align="left" width="50px">
+                                <button type="button" class="btn btn-default" aria-label="Left Align" id="residential_address_edit">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                            </tr></table>
+                        </div>
+                        <div class="panel-body">
+                            {% bootstrap_form residential_address_form %}
+                        </div>
+                    </div>
+                    <div class="panel panel-default" id="postal_address_section">
+                        <div class="panel-heading">
+                            <table width="100%"><tr>
+                            <td width="98%"><h4 class="panel-title">Postal Address</h4></td>
+                            <td align="left" width="50px">
+                                <button type="button" class="btn btn-default" aria-label="Left Align" id="postal_address_edit">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                            </tr></table>
+                        </div>
+                        <div class="panel-body">
+                            {% bootstrap_form postal_address_form %}
+                        </div>
+                    </div>
+                    <div class="panel panel-default" id="billing_address_section">
+                        <div class="panel-heading">
+                            <table width="100%"><tr>
+                            <td width="98%"><h4 class="panel-title">Billing Address</h4></td>
+                            <td align="left" width="50px">
+                                <button type="button" class="btn btn-default" aria-label="Left Align" id="billing_address_edit">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                            </tr></table>
+                        </div>
+                        <div class="panel-body">
+                            {% bootstrap_form billing_address_form %}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary pull-right">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -7,6 +7,8 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
+from django.dispatch import receiver
+from django.db.models.signals import post_delete,pre_save,post_save
 
 from reversion import revisions
 from django_countries.fields import CountryField
@@ -57,6 +59,44 @@ class Document(models.Model):
 
     def __str__(self):
         return self.name or self.filename
+
+class DocumentListener(object):
+    """
+    Event listener for Document.
+
+    """
+    @staticmethod
+    @receiver(post_delete, sender=Document)
+    def _post_delete(sender, instance,**kwargs):
+        # Pass false so FileField doesn't save the model.
+        try:
+            instance.file.delete(False)
+        except:
+            #if deleting file is failed, ignore.
+            pass
+
+    @staticmethod
+    @receiver(pre_save, sender=Document)
+    def _pre_save(sender, instance,**kwargs):
+        original_instance = Document.objects.get(pk = instance.pk)
+        if original_instance.file:
+            setattr(instance,"_original_file",original_instance.file)
+        elif hasattr(instance,"_original_file"):
+            delattr(instance,"_original_file")
+
+    @staticmethod
+    @receiver(post_save, sender=Document)
+    def _post_save(sender, instance,**kwargs):
+        original_file = getattr(instance,"_original_file")
+        if original_file and instance.file != original_file:
+            #file changed, delete the original file
+            try:
+                original_file.delete(False);    
+            except:
+                #if deleting file is failed, ignore.
+                pass
+            delattr(instance,"_original_file")
+
 
 
 @python_2_unicode_compatible
