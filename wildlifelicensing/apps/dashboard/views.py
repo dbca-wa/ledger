@@ -769,11 +769,10 @@ class DataLicencesCustomerView(DataTableBaseView):
 
         try:
             application = Application.objects.get(licence=instance)
+            if Application.objects.filter(previous_application=application).exists():
+                return 'Renewed'
         except Application.DoesNotExist:
             pass
-
-        if Application.objects.filter(previous_application=application).exists():
-            return 'Renewed'
 
         url = reverse('applications:renew_licence', args=(instance.licence_type.code, instance.pk,))
         return '<a href="{0}">Renew</a>'.format(url)
