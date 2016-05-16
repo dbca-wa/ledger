@@ -47,7 +47,7 @@ class TemplateEmailBase(object):
         if isinstance(to_addresses, basestring):
             to_addresses = [to_addresses]
         if attachments is not None and not isinstance(attachments, list):
-                attachments = list(attachments)
+            attachments = list(attachments)
         msg = EmailMultiAlternatives(self.subject, txt_body, from_email=from_address, to=to_addresses,
                                      attachments=attachments)
         msg.attach_alternative(html_body, 'text/html')

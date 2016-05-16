@@ -97,6 +97,9 @@
                     {% csrf_token %}
                     {% bootstrap_form issue_licence_form %}
                 </form>
+                <a href="{% url 'applications:preview_licence' application.id %}" id="previewLicence" class="pull-right" target="_blank">
+                    Preview Licence PDF <img height="20px" src="{% static 'wl/img/pdf.png' %}"></img>
+                </a>
             </div>
         </div>
     </div>

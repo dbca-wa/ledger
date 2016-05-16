@@ -36,6 +36,8 @@ PARAGRAPH_BOTTOM_MARGIN = 5
 
 SECTION_BUFFER_HEIGHT = 10
 
+DATE_FORMAT = '%d/%m/%Y'
+
 
 def _create_licence_header(canvas, doc):
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
@@ -88,9 +90,7 @@ def _create_licence_header(canvas, doc):
     canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 3, '179911')
 
 
-def create_licence_pdf_document(filename, licence, application):
-    licence_buffer = BytesIO()
-
+def _create_licence(licence_buffer, licence, application):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='OtherPagesFrame')
     every_page_template = PageTemplate(id='OtherPages', frames=every_page_frame, onPage=_create_licence_header)
@@ -162,8 +162,9 @@ def create_licence_pdf_document(filename, licence, application):
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Table([[[Paragraph('Date of Issue', styles['BoldLeft']), Paragraph('Valid From', styles['BoldLeft']),
                              Paragraph('Date of Expiry', styles['BoldLeft'])],
-                            [Paragraph(str(licence.issue_date), styles['Left']), Paragraph(str(licence.start_date), styles['Left']),
-                             Paragraph(str(licence.end_date), styles['Left'])],
+                            [Paragraph(licence.issue_date.strftime(DATE_FORMAT), styles['Left']), 
+                             Paragraph(licence.start_date.strftime(DATE_FORMAT), styles['Left']),
+                             Paragraph(licence.end_date.strftime(DATE_FORMAT), styles['Left'])],
                             Paragraph('Licensing Officer', styles['BoldRight']),
                             ]],
                           colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 200, 100),
@@ -183,9 +184,29 @@ def create_licence_pdf_document(filename, licence, application):
 
     doc.build(elements)
 
+    return licence_buffer
+
+
+def create_licence_pdf_document(filename, licence, application):
+    licence_buffer = BytesIO()
+
+    _create_licence(licence_buffer, licence, application)
+
     document = Document.objects.create(name=filename)
     document.file.save(filename, File(licence_buffer), save=True)
 
     licence_buffer.close()
 
     return document
+
+
+def create_licence_pdf_bytes(filename, licence, application):
+    licence_buffer = BytesIO()
+
+    _create_licence(licence_buffer, licence, application)
+
+    # Get the value of the BytesIO buffer
+    value = licence_buffer.getvalue()
+    licence_buffer.close()
+
+    return value
