@@ -129,7 +129,7 @@ class DashboardTreeViewBase(TemplateView):
 
 class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
-    title = 'Dashboard'
+    title = 'Officer Dashboard'
     url = reverse_lazy('dashboard:tables_officer')
 
     def _build_tree_nodes(self):
@@ -270,6 +270,9 @@ class DashboardTableOfficerView(OfficerRequiredMixin, DashboardTableBaseView):
             },
             {
                 'title': 'Assignee'
+            },
+            {
+                'title': 'Proxy'
             },
             {
                 'title': 'Action',
@@ -500,12 +503,14 @@ class DataApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
 
 class DataApplicationOfficerView(OfficerRequiredMixin, DataApplicationBaseView):
     columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
-               'assigned_officer', 'action']
+               'assigned_officer', 'proxy_applicant', 'action']
     order_columns = ['lodgement_number', 'licence_type.code',
                      ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
                       'applicant_profile.user.email'],
                      'processing_status', 'lodgement_date',
-                     ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'], '']
+                     ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
+                     ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
+                     '']
 
     def _build_status_filter(self, status_value):
         # officers should not see applications in draft mode.
@@ -529,6 +534,10 @@ class DataApplicationOfficerView(OfficerRequiredMixin, DataApplicationBaseView):
         fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name']
         return self._build_search_query(fields_to_search, search)
 
+    def _build_proxy_search_query(self, search):
+        fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name']
+        return self._build_search_query(fields_to_search, search)
+
     def _render_assignee_column(self, obj):
         return render_user_name(obj.assigned_officer)
 
@@ -539,6 +548,12 @@ class DataApplicationOfficerView(OfficerRequiredMixin, DataApplicationBaseView):
         'assigned_officer': {
             'search': _build_assignee_search_query,
             'render': _render_assignee_column
+        },
+        'proxy_applicant': {
+            'search': lambda self, search: self._build_global_search_query([
+                'proxy_applicant__last_name', 'proxy_applicant__first_name'],
+                search),
+            'render': lambda self, obj: render_user_name(obj.proxy_applicant)
         },
         'action': {
             'render': _render_action_column,
