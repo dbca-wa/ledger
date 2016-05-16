@@ -25,6 +25,7 @@
                 <h2>Edit Document</h2>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
+                    {% bootstrap_form_errors document_form %}
                     {% bootstrap_form document_form %}
                     <button type="submit" class="btn btn-primary pull-right">Save</button>
                 </form>

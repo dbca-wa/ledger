@@ -1,60 +1,52 @@
 define(['jQuery'], function($) {
-    var edit_address = function(address_type,edit) {
-        $("#" + address_type + "_address_section .panel-body :input").prop('disabled',!edit);
-        if (edit) {
-            $("#" + address_type + "_address_edit").html('<span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>');
-        } else {
-            $("#" + address_type + "_address_edit").html('<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>');
+    var choose_address_source_type = function(address_type,button) {
+        if ($(button).hasClass("active")) {
+            //already in active status
+            return;
         }
-    }
 
-    var _residential_edit_status = false;
-    var _postal_edit_status = false;
-    var _billing_edit_status = false;
+        $("#" + address_type + "_address-source_types :button").removeClass("active");
+        $(button).addClass("active");
+        $("#" + address_type + "_address-source_type").val($(button).val());
+        if ($(button).val() == "removed") {
+            $("#" + address_type + "_address_panel #" + address_type + "_address_body").appendTo("#" + address_type + "_address_cache");
+        } else if ($(button).val() == "added") {
+            $("#" + address_type + "_address_cache #" + address_type + "_address_body").appendTo("#" + address_type + "_address_panel .panel-body");
+        } else if ($(button).val() == "residential_address") {
+            $("#" + address_type + "_address_panel #" + address_type + "_address_body").appendTo("#" + address_type + "_address_cache");
+        } else if ($(button).val() == "postal_address") {
+            $("#" + address_type + "_address_panel #" + address_type + "_address_body").appendTo("#" + address_type + "_address_cache");
+        } 
+    }
     return {
         init: function() {
-            $("#residential_address_edit").click(
+            $("#residential_address-source_types :button").click(
                 function() {
-                    _residential_edit_status = !_residential_edit_status;
-                    edit_address("residential",_residential_edit_status);
+                    choose_address_source_type("residential",this);
                 }
             );
 
-            $("#postal_address_edit").click(
+            $("#postal_address-source_types :button").click(
                 function() {
-                    _postal_edit_status = !_postal_edit_status;
-                    edit_address("postal",_postal_edit_status);
+                    choose_address_source_type("postal",this);
                 }
             );
 
-            $("#billing_address_edit").click(
+            $("#billing_address-source_types :button").click(
                 function() {
-                    _billing_edit_status = !_billing_edit_status;
-                    edit_address("billing",_billing_edit_status);
+                    choose_address_source_type("billing",this);
                 }
             );
-
-            $("#residential_address_section .panel-body :input").each(function() {
-                if ($(this).tagName == "input" || $(this).value().trim() != "") {
-                    _residential_edit_status = true;
-                }
+            //set initial status to "removed"
+            $("#residential_address-source_types :button[value='removed']").addClass("active");
+            $("#postal_address-source_types :button[value='removed']").addClass("active");
+            $("#billing_address-source_types :button[value='removed']").addClass("active");
+            $.each(["residential","postal","billing"],function(index,address_type){
+                var source_type = $("#" + address_type + "_address-source_type").val();
+                $("#" + address_type + "_address-source_types :button[value='" + source_type + "']").click();
             });
-
-            $("#postal_address_section .panel-body :input").each(function() {
-                if ($(this).tagName == "input" || $(this).value().trim() != "") {
-                    _postal_edit_status = true;
-                }
-            });
-
-            $("#billing_address_section .panel-body :input").each(function() {
-                if ($(this).tagName == "input" || $(this).value().trim() != "") {
-                    _billing_edit_status = true;
-                }
-            });
-
-            edit_address("residential",_residential_edit_status);
-            edit_address("postal",_postal_edit_status);
-            edit_address("billing",_billing_edit_status);
+            
         }
+
     }
 });

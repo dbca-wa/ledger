@@ -27,57 +27,101 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h2>Edit Profile</h2>
+                <h2>Edit Account</h2>
                 <form method="post">
                     {% csrf_token %}
+                    {% bootstrap_form_errors emailuser_form %}
                     {% bootstrap_form emailuser_form %}
-                    <div class="panel panel-default" id="residential_address_section">
+                    <div class="panel panel-default" id="residential_address_panel">
                         <div class="panel-heading">
-                            <table width="100%"><tr>
-                            <td width="98%"><h4 class="panel-title">Residential Address</h4></td>
-                            <td align="left" width="50px">
-                                <button type="button" class="btn btn-default" aria-label="Left Align" id="residential_address_edit">
-                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                            </tr></table>
+                            <div class="row">
+                                <div class="col-md-5 text-left"><h4 class="panel-title">Residential Address</h4></div>
+                                <div class="col-md-7 text-right">
+                                    <div class="btn-group" role="group" aria-label="..." id="residential_address-source_types">
+                                        <input type="hidden" name="residential_address-source_type" id="residential_address-source_type" value="{{residential_address_source_type}}"/>
+                                        <button type="button" class="btn btn-default" value="added">
+                                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                                        </button>
+                                        <button type="button" class="btn btn-default" value="removed">
+                                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="panel-body">
-                            {% bootstrap_form residential_address_form %}
                         </div>
                     </div>
-                    <div class="panel panel-default" id="postal_address_section">
+                    <div class="panel panel-default" id="postal_address_panel">
                         <div class="panel-heading">
-                            <table width="100%"><tr>
-                            <td width="98%"><h4 class="panel-title">Postal Address</h4></td>
-                            <td align="left" width="50px">
-                                <button type="button" class="btn btn-default" aria-label="Left Align" id="postal_address_edit">
-                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                            </tr></table>
+                            <div class="row">
+                                <div class="col-md-5 text-left"><h4 class="panel-title">Postal Address</h4></div>
+                                <div class="col-md-7 text-right">
+                                    <div class="btn-group" role="group" aria-label="..." id="postal_address-source_types">
+                                        <input type="hidden" name="postal_address-source_type" id="postal_address-source_type" value="{{postal_address_source_type}}"/>
+                                        <button type="button" class="btn btn-default" value="residential_address">
+                                            Same as Residential Address
+                                        </button>
+                                        <button type="button" class="btn btn-default" value="added">
+                                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                                        </button>
+                                        <button type="button" class="btn btn-default" value="removed">
+                                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="panel-body">
-                            {% bootstrap_form postal_address_form %}
                         </div>
                     </div>
-                    <div class="panel panel-default" id="billing_address_section">
+                    <div class="panel panel-default" id="billing_address_panel">
                         <div class="panel-heading">
-                            <table width="100%"><tr>
-                            <td width="98%"><h4 class="panel-title">Billing Address</h4></td>
-                            <td align="left" width="50px">
-                                <button type="button" class="btn btn-default" aria-label="Left Align" id="billing_address_edit">
-                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                            </tr></table>
+                            <div class="row">
+                                <div class="col-md-5 text-left"><h4 class="panel-title">Billing Address</h4></div>
+                                <div class="col-md-7 text-right">
+                                    <div class="btn-group" role="group" aria-label="..." id="billing_address-source_types">
+                                        <input type="hidden" name="billing_address-source_type" id="billing_address-source_type" value="{{billing_address_source_type}}"/>
+                                        <button type="button" class="btn btn-default" value="residential_address">
+                                            Same as Residential Address
+                                        </button>
+                                        <button type="button" class="btn btn-default" value="postal_address">
+                                            Same as Postal Address
+                                        </button>
+                                        <button type="button" class="btn btn-default" value="added">
+                                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                                        </button>
+                                        <button type="button" class="btn btn-default" value="removed">
+                                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="panel-body">
-                            {% bootstrap_form billing_address_form %}
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary pull-right">Save</button>
                 </form>
+            </div>
+        </div>
+        <div id="residential_address_cache" style="display:none">
+            <div id="residential_address_body">
+            {% bootstrap_form_errors residential_address_form %}
+            {% bootstrap_form residential_address_form %}
+            </div>
+        </div>
+        <div id="postal_address_cache" style="display:none">
+            <div id="postal_address_body">
+            {% bootstrap_form_errors postal_address_form %}
+            {% bootstrap_form postal_address_form %}
+            </div>
+        </div>
+        <div id="billing_address_cache" style="display:none">
+            <div id="billing_address_body">
+            {% bootstrap_form_errors billing_address_form %}
+            {% bootstrap_form billing_address_form %}
             </div>
         </div>
     </div>
