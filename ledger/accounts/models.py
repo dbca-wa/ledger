@@ -78,16 +78,19 @@ class DocumentListener(object):
     @staticmethod
     @receiver(pre_save, sender=Document)
     def _pre_save(sender, instance,**kwargs):
-        original_instance = Document.objects.get(pk = instance.pk)
-        if original_instance.file:
-            setattr(instance,"_original_file",original_instance.file)
+        if instance.pk:
+            original_instance = Document.objects.get(pk = instance.pk)
+            if original_instance.file:
+                setattr(instance,"_original_file",original_instance.file)
+            elif hasattr(instance,"_original_file"):
+                delattr(instance,"_original_file")
         elif hasattr(instance,"_original_file"):
             delattr(instance,"_original_file")
 
     @staticmethod
     @receiver(post_save, sender=Document)
     def _post_save(sender, instance,**kwargs):
-        original_file = getattr(instance,"_original_file")
+        original_file = getattr(instance,"_original_file") if hasattr(instance,"_original_file") else None
         if original_file and instance.file != original_file:
             #file changed, delete the original file
             try:

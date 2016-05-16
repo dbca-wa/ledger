@@ -144,6 +144,7 @@ class IdentificationView(LoginRequiredMixin, FormView):
 class EditAccountView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/edit_account.html'
     login_url = '/'
+    identification_url = reverse_lazy('main:identification')
 
     def get(self, request, *args, **kwargs):
         emailuser = get_object_or_404(EmailUser, pk=request.user.id)
@@ -154,7 +155,7 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
  
         #if user doesn't choose a identification, display a warning message
         if not emailuser.identification:
-            messages.warning(request, "Please choose your identification.")
+            messages.warning(request, "Please update a identification.")
 
         return render(request, self.template_name, {'emailuser_form': EmailUserForm(instance=emailuser),
                                                     'residential_address_form': AddressForm(prefix="residential_address",instance=emailuser.residential_address),
@@ -184,7 +185,7 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
         #Save the original user data.
         original_first_name = emailuser.first_name
         original_last_name = emailuser.last_name
-        original_identification = emailuser.identification
+        #original_identification = emailuser.identification
 
         original_residential_address_source_type = "added" if emailuser.residential_address else "removed"
         original_postal_address_source_type =  "removed" if not emailuser.postal_address else ("residential_address" if emailuser.postal_address == emailuser.residential_address else "added")
@@ -225,10 +226,12 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
         ):
             emailuser = emailuser_form.save(commit=False)
             is_name_changed = any([original_first_name != emailuser.first_name,original_last_name != emailuser.last_name])
-            if is_name_changed and emailuser.identification == original_identification:
+
+            if is_name_changed :
                 #user need to update his/her identification
                 emailuser.identification = None   
             #save user address information.
+
             if residential_address_source_type == "added":
                 emailuser.residential_address = residential_address_form.save()
             else:
@@ -265,11 +268,10 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
             #send signal if either first name or last name is changed
             if is_name_changed:
                 name_changed.send(sender=self.__class__, user=emailuser)
-            
-            if is_name_changed and not emailuser.identification:
-                messages.warning(request, "Please update your identification after you changed your name.")
+                messages.warning(request, "Please upload a new identification after you changed your name.")
+                return redirect(self.identification_url)
             elif not emailuser.identification:
-                messages.warning(request, "Please choose your identification.")
+                messages.warning(request, "Please update a identification.")
             else:
                 messages.success(request, "User account was saved.")
 

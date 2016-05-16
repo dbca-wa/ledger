@@ -63,7 +63,7 @@ class ProfileForm(forms.ModelForm):
 class EmailUserForm(forms.ModelForm):
     class Meta:
         model = EmailUser
-        fields = ['email','first_name','last_name','title','dob','phone_number','mobile_number','fax_number','identification','organisation','character_flagged','character_comments']
+        fields = ['email','first_name','last_name','title','dob','phone_number','mobile_number','fax_number','organisation','character_flagged','character_comments']
 
     def __init__(self, *args, **kwargs):
         super(EmailUserForm, self).__init__(*args, **kwargs)
