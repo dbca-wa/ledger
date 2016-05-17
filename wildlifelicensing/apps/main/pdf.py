@@ -162,7 +162,7 @@ def _create_licence(licence_buffer, licence, application):
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Table([[[Paragraph('Date of Issue', styles['BoldLeft']), Paragraph('Valid From', styles['BoldLeft']),
                              Paragraph('Date of Expiry', styles['BoldLeft'])],
-                            [Paragraph(licence.issue_date.strftime(DATE_FORMAT), styles['Left']), 
+                            [Paragraph(licence.issue_date.strftime(DATE_FORMAT), styles['Left']),
                              Paragraph(licence.start_date.strftime(DATE_FORMAT), styles['Left']),
                              Paragraph(licence.end_date.strftime(DATE_FORMAT), styles['Left'])],
                             Paragraph('Licensing Officer', styles['BoldRight']),
