@@ -30,7 +30,7 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'dashboard:tables_officer' %}">Applications</a></li>
+                    <li><a href="{% url 'dashboard:tables_applications_officer' %}">Applications</a></li>
                     <li class="active">Process Application</li>
                 </ol>
             </div>
@@ -86,11 +86,16 @@
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                         <label>Currently assigned to</label>
-                                         <input type="hidden" id="assignee" class="form-control">
-                                         <a id="assignToMe" class="pull-right">Assign to me</a>
+                                        <label>Currently assigned to</label>
+                                        <input type="hidden" id="assignee" class="form-control">
+                                        <a id="assignToMe" class="pull-right">Assign to me</a>
                                     </div>
-                                 </div>
+                                    <div class="form-group" id="application-log-group">
+                                        <div><label>Communication log</label></div>
+                                        <a id="showLog" class="pull-left" role="button">Show log</a>
+                                        <a id="addLogEntry" class="pull-right">Add log entry</a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -98,11 +103,11 @@
                         <div class="col-md-12">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    Lodged Versions
+                                    Previous Versions
                                     <a data-toggle="collapse" href="#lodgedVersionsBody" class="pull-right">
                                         <span class="glyphicon"></span>
                                     </a>
-                                 </div>
+                                </div>
                                 <div id="lodgedVersionsBody" class="panel-body panel-collapse in">
                                     <table id="lodgedVersions" class="table small-table">
                                         <thead>
@@ -127,7 +132,7 @@
                                     <a data-toggle="collapse" href="#processingChecklistBody" class="pull-right">
                                         <span class="glyphicon"></span>
                                     </a>
-                                 </div>
+                                </div>
                                 <div id="processingChecklistBody" class="panel-body panel-collapse in">
                                     <div id="idCheck" class="processing-action-group">
                                         <div>
@@ -156,13 +161,15 @@
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
                                         </div>
-                                        <a id="showCharacterChecklist" class="small-text" data-toggle="popover" data-placement="right" title="Character Checklist">
+                                        <a id="showCharacterChecklist" class="small-text" data-toggle="popover"
+                                           data-placement="right" title="Character Checklist">
                                             Character Checklist
                                         </a>
                                         {% if data.application.applicant_profile.user.character_flagged %}
-                                            <a id="dodgyUser" class="pull-right" data-toggle="tooltip" data-placement="right"
-                                                    title="User has previously been flagged as having questionalbe character. {{ data.application.applicant_profile.user.character_comments }}">
-                                                <span  class="glyphicon glyphicon-user"></span>
+                                            <a id="dodgyUser" class="pull-right" data-toggle="tooltip"
+                                               data-placement="right"
+                                               title="User has previously been flagged as having questionalbe character. {{ data.application.applicant_profile.user.character_comments }}">
+                                                <span class="glyphicon glyphicon-user"></span>
                                             </a>
                                         {% endif %}
                                     </div>
@@ -175,12 +182,14 @@
                                                 <a>Reset</a>
                                                 <span class="glyphicon glyphicon-ok ok-tick"></span>
                                             </span>
-                                            </div>
+                                        </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
-                                            <button type="button" class="btn btn-xs btn-warning">Request Amendments</button>
+                                            <button type="button" class="btn btn-xs btn-warning">Request Amendments
+                                            </button>
                                         </div>
-                                        <a id="showAmendmentRequests" class="hidden small-text" data-toggle="popover" data-placement="right" title="Amendment Requests">
+                                        <a id="showAmendmentRequests" class="hidden small-text" data-toggle="popover"
+                                           data-placement="right" title="Amendment Requests">
                                             View all amendment requests
                                         </a>
                                     </div>
@@ -193,10 +202,12 @@
                                         <div>
                                             <div class="form-group">
                                                 Select Group
-                                                <input type="hidden" id="assessor" class="form-control" />
+                                                <input type="hidden" id="assessor" class="form-control"/>
                                             </div>
                                             <div style="text-align:right">
-                                                <button type="button" id="sendForAssessment" class="btn btn-xs btn-primary" disabled>Send</button>
+                                                <button type="button" id="sendForAssessment"
+                                                        class="btn btn-xs btn-primary" disabled>Send
+                                                </button>
                                             </div>
                                         </div>
                                         <div class="hidden">
@@ -217,8 +228,12 @@
                             </div>
                             <form method="post" action="{% url 'applications:process' data.application.id %}">
                                 {% csrf_token %}
-                                <button id="approve" type="submit" name="enterConditions" type="button" class="btn btn-sm btn-success pull-right" disabled>Enter Conditions</button>
-                                <button id="decline" type="submit" name="decline" type="button" class="btn btn-sm btn-danger">Decline Application</button>
+                                <button id="approve" type="submit" name="enterConditions" type="button"
+                                        class="btn btn-sm btn-success pull-right" disabled>Enter Conditions
+                                </button>
+                                <button id="decline" type="submit" name="decline" type="button"
+                                        class="btn btn-sm btn-danger">Decline Application
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -243,17 +258,17 @@
                             <div class="modal-header">
                                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                                 <h4 class="modal-title">Identification for {{ user.first_name }}
-                                {{ user.last_name }}</h4>
+                                    {{ user.last_name }}</h4>
                             </div>
                             <div class="modal-body center">
-                               {% if user.identification.file.url|slice:'-3:' == 'pdf' %}
+                                {% if user.identification.file.url|slice:'-3:' == 'pdf' %}
                                     <a href="{{ user.identification.file.url }}" target="_blank">
                                         <img src="{% static 'wl/img/pdf.png' %}"></img>
                                         <p>View PDF</p>
                                     </a>
-                                {% else %} 
+                                {% else %}
                                     <a href="{{ user.identification.file.url }}" target="_blank">
-                                        <img width="100%" src="{{ user.identification.file.url }}" />
+                                        <img width="100%" src="{{ user.identification.file.url }}"/>
                                     </a>
                                 {% endif %}
                             </div>
@@ -306,5 +321,29 @@
                 </div>
             </div>
         </div>
+        {% if application_log_entry_form %}
+            <div class="modal fade" id="logEntryModal" tabindex="-1">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            <h4 class="modal-title">Add log entry to application</h4>
+                        </div>
+                        <form id="addLogEntryForm" method="post"
+                              action="{% url 'applications:add_log_entry' data.application.id %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="modal-body">
+                                <div class="modal-body">
+                                    {% bootstrap_form application_log_entry_form %}
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-default">Add Entry</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     {% endblock %}
 {% endblock %}

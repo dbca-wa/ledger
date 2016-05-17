@@ -1,6 +1,6 @@
 {%  extends 'wl/emails/base_email.txt' %}
 {%  block content %}
-    Reminder: A Wildlife Licensing application has been reviewed and requires your assessment before approval.
+    Reminder: a Wildlife Licensing application has been reviewed and requires your assessment before approval.
     {% if url %}
         Please copy and paste the following link into your browser to review the application:
         {{ url }}

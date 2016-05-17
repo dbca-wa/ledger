@@ -2,6 +2,7 @@ import os
 import json
 
 from django.db.models import Q
+from django.db.utils import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import View, TemplateView
@@ -16,7 +17,7 @@ from wildlifelicensing.apps.applications.models import Application, ApplicationC
 from wildlifelicensing.apps.applications.utils import format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
-from django.db.utils import IntegrityError
+from wildlifelicensing.apps.applications.mixins import CanEditAssessmentMixin
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -38,7 +39,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
 
-class EnterConditionsAssessorView(OfficerOrAssessorRequiredMixin, EnterConditionsView):
+class EnterConditionsAssessorView(CanEditAssessmentMixin, EnterConditionsView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
 
     def get_context_data(self, **kwargs):
@@ -55,18 +56,21 @@ class EnterConditionsAssessorView(OfficerOrAssessorRequiredMixin, EnterCondition
         return ctx
 
 
-class SearchConditionsView(View):
+class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get('q')
 
-        q = Q(code__icontains=query) | Q(text__icontains=query) & Q(one_off=False)
-
-        conditions = serialize(Condition.objects.filter(q))
+        if query is not None:
+            q = Q(code__icontains=query) | Q(text__icontains=query) & Q(one_off=False)
+            qs = Condition.objects.filter(q)
+        else:
+            qs = Condition.objects.none()
+        conditions = serialize(qs)
 
         return JsonResponse(conditions, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class CreateConditionView(View):
+class CreateConditionView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             response = serialize(Condition.objects.create(code=request.POST.get('code'), text=request.POST.get('text'),
@@ -77,7 +81,7 @@ class CreateConditionView(View):
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SetAssessmentConditionState(View):
+class SetAssessmentConditionState(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         assessment_condition = get_object_or_404(AssessmentCondition, pk=request.POST.get('assessmentConditionID'))
 
@@ -89,12 +93,16 @@ class SetAssessmentConditionState(View):
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SubmitConditionsView(View):
+class SubmitConditionsView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
+        application.processing_status = 'ready_to_issue'
+
         # remove existing conditions as there may be new conditions and/or changes of order
         application.conditions.clear()
+
+        application.save()
 
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
             ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
@@ -103,10 +111,10 @@ class SubmitConditionsView(View):
         if request.POST.get('submissionType') == 'backToProcessing':
             return redirect('applications:process', *args)
         else:
-            return redirect('dashboard:home')
+            return redirect('applications:issue_licence', *self.args, **self.kwargs)
 
 
-class SubmitConditionsAssessorView(View):
+class SubmitConditionsAssessorView(CanEditAssessmentMixin, View):
     success_url = reverse_lazy('dashboard:home')
 
     def post(self, request, *args, **kwargs):

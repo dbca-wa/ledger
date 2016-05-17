@@ -10,20 +10,21 @@ from django.utils import formats
 from reversion import revisions
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
-from wildlifelicensing.apps.applications.forms import IDRequestForm, AmendmentRequestForm
-from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, send_assessment_reminder_email, \
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment, EmailLogEntry, \
+    CustomLogEntry
+from wildlifelicensing.apps.applications.forms import IDRequestForm, AmendmentRequestForm, ApplicationLogEntryForm
+from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
+    send_assessment_reminder_email, \
     send_id_update_request_email
 from wildlifelicensing.apps.main.models import AssessorGroup
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
     REVIEW_STATUSES, format_application, format_amendment_request, format_assessment
-
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -38,27 +39,38 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
-        current_ass_groups = [ass_request.assessor_group for ass_request in Assessment.objects.filter(application=application)]
+        current_ass_groups = [ass_request.assessor_group for ass_request in
+                              Assessment.objects.filter(application=application)]
         ass_groups = [{'id': ass_group.id, 'text': ass_group.name} for ass_group in
-                     AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups])]
+                      AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups])]
 
-        previous_application_data = []
-        for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by('-revision__date_created'):
-            previous_application_data.append({'lodgement_number': revision.object_version.object.lodgement_number +
-                                              '-' + str(revision.object_version.object.lodgement_sequence),
-                                              'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
-                                              'data': revision.object_version.object.data})
+        previous_versions = []
+        for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
+                '-revision__date_created'):
+            previous_versions.append({'lodgement_number': revision.object_version.object.lodgement_number +
+                                      '-' + str(revision.object_version.object.lodgement_sequence),
+                                      'date': formats.date_format(revision.revision.date_created, 'd/m/Y',
+                                                                  True),
+                                      'data': revision.object_version.object.data})
+
+        if application.previous_application is not None:
+            previous_versions.append({'lodgement_number': application.previous_application.lodgement_number +
+                                      '-' + str(application.previous_application.lodgement_sequence),
+                                      'date': formats.date_format(application.previous_application.lodgement_date, 'd/m/Y',
+                                                                  True),
+                                      'data': application.previous_application.data})
 
         data = {
             'user': serialize(request.user),
             'application': serialize(application, posthook=format_application),
             'form_structure': form_structure,
             'officers': officers,
-            'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application), posthook=format_amendment_request),
+            'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application),
+                                            posthook=format_amendment_request),
             'assessor_groups': ass_groups,
             'assessments': serialize(Assessment.objects.filter(application=application),
                                      posthook=format_assessment),
-            'previous_application_data': serialize(previous_application_data),
+            'previous_versions': serialize(previous_versions),
             'csrf_token': str(csrf(request).get('csrf_token'))
         }
 
@@ -70,6 +82,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             kwargs['data'] = self._build_data(self.request, application)
         kwargs['id_request_form'] = IDRequestForm(application=application, user=self.request.user)
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, user=self.request.user)
+        kwargs['application_log_entry_form'] = ApplicationLogEntryForm()
 
         return super(ProcessView, self).get_context_data(**kwargs)
 
@@ -95,7 +108,8 @@ class AssignOfficerView(OfficerRequiredMixin, View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
+                                                                               (application.assigned_officer.first_name,
+                                                                                application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
@@ -242,3 +256,62 @@ def determine_customer_status(application):
         status = 'amendment_required'
 
     return status
+
+
+class CommunicationLogListView(OfficerRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=args[0])
+        data = []
+        for obj in EmailLogEntry.objects.filter(application=application):
+            r = {
+                'date': obj.created,
+                'type': 'Email',
+                'subject': obj.subject,
+                'text': obj.text,
+                'document': obj.document.file.url if obj.document else None
+            }
+            data.append(r)
+
+        for obj in CustomLogEntry.objects.filter(application=application):
+            r = {
+                'date': obj.created,
+                'type': 'Custom',
+                'subject': obj.subject,
+                'text': obj.text,
+                'document': obj.document.file.url if obj.document else None
+            }
+            data.append(r)
+
+        return JsonResponse({'data': data}, safe=False, encoder=WildlifeLicensingJSONEncoder)
+
+
+class AddLogEntryView(OfficerRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        form = ApplicationLogEntryForm(data=request.POST, files=request.FILES)
+        if form.is_valid():
+            application = get_object_or_404(Application, pk=args[0])
+            user = request.user
+            document = None
+            if request.FILES and 'document' in request.FILES:
+                document = Document.objects.create(file=request.FILES['document'])
+            data = {
+                'document': document,
+                'user': user,
+                'application': application,
+                'text': form.cleaned_data['text'],
+                'subject': form.cleaned_data['subject']
+            }
+            entry = CustomLogEntry.objects.create(**data)
+            return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
+        else:
+            return JsonResponse(
+                {
+                    "errors": [
+                        {
+                            'status': "422",
+                            'title': 'Data not valid',
+                            'detail': form.errors
+                        }
+                    ]
+                },
+                safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)

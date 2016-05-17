@@ -23,13 +23,13 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
                 showAssessmentsTable = true;
 
                 var $contentContainer = $('<div>'),
-                    $assessorRow = $('<tr>');
+                    $assessorRow = $('<tr>'),
                     $viewDetails = $('<a>').text('View Feedback');
 
                 $contentContainer.append($('<label>').text("Assessor's Suggested Conditions"));
 
                 if(assessment.conditions.length > 0) {
-                    var $assessorsConditionsTable = $('<table>').addClass('table').addClass('table-bordered').addClass('popover-conditions-table');
+                    var $assessorsConditionsTable = $('<table>').addClass('table').addClass('table-bordered').addClass('popover-conditions-table'),
                         $assessorsConditionsTableHead = $('<thead>').addClass('popover-conditions-table-head'),
                         $assessorsConditionsTableBody = $('<tbody>').addClass('conditions-table-body');
 
@@ -178,7 +178,6 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
             $.merge(assessorConditions, assessment.conditions);
         });
 
-        
         $.each(application.conditions, function(index, condition) {
             if(_.some(application.licence_type.default_conditions, ['id', condition.id])) {
                 createConditionTableRow(condition, 'default');
@@ -209,7 +208,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
             dropdownCssClass : 'conditions-dropdown',
             minimumInputLength: 3,
             ajax: {
-                url: '/applications/search_conditions',
+                url: '/applications/search-conditions',
                 dataType: 'json',
                 quietMillis: 250,
                 data: function (term, page) {

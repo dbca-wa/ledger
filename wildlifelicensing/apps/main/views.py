@@ -1,19 +1,36 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.urlresolvers import reverse_lazy
-from django.http import HttpResponse,HttpResponseBadRequest
+from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic.base import TemplateView
+from django.views.generic.base import View, TemplateView
 from django.views.generic.edit import FormView
 
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import Profile, Document,EmailIdentity,EmailUser,Address
-from ledger.accounts.forms import AddressForm, ProfileForm,EmailUserForm,DocumentForm
+from ledger.accounts.models import Profile, Document, EmailUser
+from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, DocumentForm
 
 from forms import IdentificationForm
-from mixins import CustomerRequiredMixin
+from mixins import CustomerRequiredMixin, OfficerRequiredMixin
 from signals import identification_uploaded
+from serializers import WildlifeLicensingJSONEncoder
+
+
+class SearchCustomersView(OfficerRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get('q')
+
+        if query is not None:
+            q = Q(first_name__icontains=query) | Q(last_name__icontains=query) & Q(groups=None)
+            qs = EmailUser.objects.filter(q)
+        else:
+            qs = EmailUser.objects.none()
+
+        users = [{'id': email_user.id, 'text': email_user.get_full_name_dob()} for email_user in qs]
+
+        return JsonResponse(users, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class ListProfilesView(CustomerRequiredMixin, TemplateView):

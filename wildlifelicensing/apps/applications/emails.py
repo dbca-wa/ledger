@@ -1,9 +1,15 @@
+import logging
+
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
+from django_hosts import reverse as hosts_reverse
+
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
 from wildlifelicensing.apps.applications.models import EmailLogEntry, AmendmentRequest, IDRequest
+
+logger = logging.getLogger(__name__)
 
 
 class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
@@ -118,15 +124,83 @@ def send_id_update_request_email(id_request, request):
     _log_email(msg, application=id_request.application, sender=request.user)
 
 
+class LicenceIssuedEmail(TemplateEmailBase):
+    subject = 'Your wildlife licensing licence has been issued.'
+    html_template = 'wl/emails/licence_issued.html'
+    txt_template = 'wl/emails/licence_issued.txt'
+
+
+def send_licence_issued_email(licence, application, cover_letter_message, request):
+    email = LicenceIssuedEmail()
+    url = request.build_absolute_uri(
+        reverse('dashboard:home')
+    )
+    context = {
+        'url': url,
+        'cover_letter_message': cover_letter_message
+    }
+    if licence.document is not None:
+        file_name = 'WL_licence_' + str(licence.licence_type.code)
+        if licence.licence_no:
+            file_name += '_' + str(licence.licence_no)
+        elif licence.start_date:
+            file_name += '_' + str(licence.start_date)
+        file_name += '.pdf'
+        attachment = (file_name, licence.document.file.read(), 'application/pdf')
+        attachments = [attachment]
+    else:
+        logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
+        attachments = None
+    msg = email.send(licence.profile.email, context=context, attachments=attachments)
+    log_entry = _log_email(msg, application=application, sender=request.user)
+    if licence.document is not None:
+        log_entry.document = licence.document
+        log_entry.save()
+    return log_entry
+
+
+class LicenceRenewalNotificationEmail(TemplateEmailBase):
+    subject = 'Your wildlife licence is due for renewal.'
+    html_template = 'wl/emails/renew_licence_notification.html'
+    txt_template = 'wl/emails/renew_licence_notification.txt'
+
+
+def send_licence_renewal_email_notification(licence):
+    email = LicenceRenewalNotificationEmail()
+    url = 'http:' + hosts_reverse('applications:renew_licence', args=(licence.pk,))
+
+    context = {
+        'url': url,
+        'licence': licence
+    }
+
+    email.send(licence.profile.email, context=context)
+
+
 def _log_email(email_message, application, sender=None):
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
         # TODO this will log the plain text body, should we log the html instead
-        # TODO log the subject of the email
-        email_message = email_message.body
+        text = email_message.body
+        subject = email_message.subject
+        from_email = unicode(sender) if sender else unicode(email_message.from_email)
+        # the to email is normally a list
+        if isinstance(email_message.to, list):
+            to = ';'.join(email_message.to)
+        else:
+            to = unicode(email_message.to)
+    else:
+        text = unicode(email_message)
+        subject = ''
+        to = application.applicant_profile.user.email
+        from_email = unicode(sender) if sender else ''
+
     kwargs = {
-        'text': str(email_message),
+        'subject': subject,
+        'text': text,
         'application': application,
-        'user': sender
+        'user': sender,
+        'to': to,
+        'from_email': from_email
     }
     email_entry = EmailLogEntry.objects.create(**kwargs)
     return email_entry

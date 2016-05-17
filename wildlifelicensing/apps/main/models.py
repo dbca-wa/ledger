@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
-from ledger.accounts.models import RevisionedMixin, EmailUser, Document
-from ledger.licence.models import LicenceType
+from ledger.accounts.models import RevisionedMixin, EmailUser, Document, Profile
+from ledger.licence.models import LicenceType, Licence
 
 
 @python_2_unicode_compatible
@@ -21,6 +21,14 @@ class Condition(RevisionedMixin):
 class WildlifeLicenceType(LicenceType):
     identification_required = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
+
+
+class WildlifeLicence(Licence):
+    profile = models.ForeignKey(Profile)
+    sequence_number = models.IntegerField(default=1)
+    purpose = models.TextField(blank=True)
+    document = models.ForeignKey(Document, blank=True, null=True)
+    previous_licence = models.ForeignKey('self', blank=True, null=True)
 
 
 class DefaultCondition(models.Model):
@@ -47,6 +55,7 @@ class AssessorGroup(models.Model):
     name = models.CharField(max_length=50)
     email = models.EmailField()
     members = models.ManyToManyField(EmailUser, blank=True)
+    purpose = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

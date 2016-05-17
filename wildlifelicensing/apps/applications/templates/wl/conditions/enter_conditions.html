@@ -27,7 +27,7 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'dashboard:tables_officer' %}">Applications</a></li>
+                    <li><a href="{% url 'dashboard:tables_applications_officer' %}">Applications</a></li>
                     <li><a href="{% url 'applications:process' application.id %}">Process Application</a></li>
                     <li class="active">Enter Licence Conditions</li>
                 </ol>
@@ -145,10 +145,8 @@
                         </div>
                     </div>
                 </div>
-                {%  block action_button %}
-                    <button id="issueLicence" type="button" class="btn btn-sm btn-success pull-right">Issue Licence</button>
-                    <button id="backToProcessing" type="button" class="btn btn-sm btn-default">Back to Processing</button>
-                {% endblock %}
+                <button id="issueLicence" type="button" class="btn btn-sm btn-success pull-right">Issue Licence</button>
+                <button id="backToProcessing" type="button" class="btn btn-sm btn-default">Back to Processing</button>
             </div>
             <div class="col-md-9">
                 <h3>Current Conditions</h3>
@@ -183,8 +181,6 @@
                             </tr>
                         </tbody>
                     </table>
-                    {%  block comments %}
-                    {%  endblock %}
                 </form>
             </div>
         </div>

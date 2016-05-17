@@ -4,12 +4,14 @@ from .views import (
         ListProfilesView, CreateProfilesView, EditProfilesView, DeleteProfileView,
         IdentificationView,
         EditAccountView,
+		SearchCustomersView,
         ListDocumentView,EditDocumentView,CreateDocumentView,DeleteDocumentView
 )
 
 
 urlpatterns = [
     url('^account/$', EditAccountView.as_view(), name='edit_account'),
+    url('^search_customers/$', SearchCustomersView.as_view(), name='search_customers'),
 
     #url('^document/$', ListDocumentView.as_view(), name='list_documents'),
     #url('^document/create/$', CreateDocumentView.as_view(), name='create_document'),

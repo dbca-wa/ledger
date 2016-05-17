@@ -4,6 +4,7 @@ django-oscar>=1.1
 git+https://github.com/scottp-dpaw/python-social-auth@securityfix#egg=python-social-auth
 mixer>=5.4.1
 coverage>=4.0.3
+reportlab==3.3.0
 django_bootstrap3>=6.2.2
 django-braces>=1.8.1
 django-hosts>=1.4
@@ -11,3 +12,4 @@ django-datatables-view==1.13.0
 django-reversion==1.10.1
 django-preserialize==1.1.0
 django-countries==3.4.1
+django-cron==0.4.6

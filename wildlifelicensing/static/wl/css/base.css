@@ -42,6 +42,10 @@
     padding-left: 0px;
 }
 
+.inline {
+    display: inline;
+}
+
 .center {
     text-align: center;
 }

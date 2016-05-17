@@ -1,0 +1,73 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css"
+        rel="stylesheet"/>
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(['js/entry/create_select_customer'], function (create_select_customer) {
+        $(function () {
+            create_select_customer.init();
+        });
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li class="active">Select or Create Customer</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container bottom-buffer">
+        <div class="row">
+            <div class="col-md-12">
+                    {% with heading='Select or Create Customer' %}
+                        {% include 'wl/entry/header.html' %}
+                    {% endwith %}
+                <p>
+                    Select or create the customer for whom the application is being applied on behalf of.
+                </p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Select or Create Customer</label>
+                        <input type="hidden" name="customer" id="searchCustomer" class="form-control" />
+                    </div>
+                    <button type="submit" class="btn btn-primary pull-right" id="select" name="select" disabled=True>Select or Create Customer</button>
+                </form>
+            </div>
+        </div>
+        <div class="row top-buffer">
+            <div class="col-md-12">
+                <label>Create Customer</label>
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="panel">
+                            <form method="post">
+                                {% csrf_token %}
+                                {% bootstrap_form create_customer_form %}
+                                <button type="submit" class="btn btn-primary pull-right" name="create">Create Customer</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

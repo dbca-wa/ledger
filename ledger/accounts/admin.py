@@ -4,8 +4,6 @@ from django.forms import modelform_factory
 
 from reversion.admin import VersionAdmin
 
-from social.apps.django_app.default.models import UserSocialAuth
-
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 from ledger.accounts.forms import ProfileAdminForm
 
@@ -31,11 +29,11 @@ class EmailUserAdmin(UserAdmin):
     add_fieldsets_for_dummy_user = (
         (None, {
             'classes': ('wide',),
-            'fields': ('first_name','last_name'),
+            'fields': ('first_name', 'last_name'),
         }),
     )
     fieldsets_for_dummy_user = (
-        (None, {'fields': ('dummy_email','email',)}),
+        (None, {'fields': ('dummy_email', 'email',)}),
         ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification', 'character_flagged', 'character_comments')}),
         ('Permissions', {'fields': (
             'is_active', 'is_staff', 'is_superuser', 'groups')}),
@@ -46,18 +44,18 @@ class EmailUserAdmin(UserAdmin):
     add_form = modelform_factory(EmailUser, fields=[])
     form = add_form
 
-    list_display = ('email', 'first_name', 'last_name', 'is_staff','is_dummy')
+    list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_dummy')
     ordering = ('email',)
     search_fields = ('email', 'first_name', 'last_name', 'email')
     readonly_fields = ('dummy_email',)
 
-    def is_dummy(self,o):
+    def is_dummy(self, o):
         return o.is_dummy_user
     is_dummy.boolean = True
 
     def get_fieldsets(self, request, obj=None):
         if not obj:
-            if request.GET.get('dummy',False):
+            if request.GET.get('dummy', False):
                 return self.add_fieldsets_for_dummy_user
             else:
                 return self.add_fieldsets
@@ -68,12 +66,13 @@ class EmailUserAdmin(UserAdmin):
 
     def save_model(self, request, obj, form, change):
         if not obj.pk:
-            #new user
-            is_dummy = request.GET.get("dummy",False)
+            # new user
+            is_dummy = request.GET.get("dummy", False)
             if is_dummy:
                 obj.email = obj.get_dummy_email()
 
         obj.save()
+
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):

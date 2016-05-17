@@ -6,7 +6,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, AbstractLogEntry, AssessorGroup
+from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceType, Condition, AbstractLogEntry, AssessorGroup
 
 
 class Application(RevisionedMixin):
@@ -17,11 +17,11 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required']
 
-    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('ready_for_action', 'Ready for Action'),
+    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'), ('ready_for_conditions', 'Ready for Conditions'),
-                                 ('declined', 'Declined'))
+                                 ('ready_to_issue', 'Ready to Issue'), ('issued', 'Issued'), ('declined', 'Declined'))
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
@@ -46,7 +46,9 @@ class Application(RevisionedMixin):
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateField(blank=True, null=True)
 
-    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True)
+    proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='proxy')
+
+    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='assignee')
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
@@ -59,12 +61,19 @@ class Application(RevisionedMixin):
 
     conditions = models.ManyToManyField(Condition, through='ApplicationCondition')
 
+    licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
+
+    previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+
     @property
     def is_assigned(self):
         return self.assigned_officer is not None
 
     @property
     def can_user_edit(self):
+        """
+        :return: True if the application is in one of the editable status.
+        """
         return self.customer_status in self.CUSTOMER_EDITABLE_STATE
 
 
@@ -75,7 +84,8 @@ class ApplicationLogEntry(AbstractLogEntry):
 class IDRequest(ApplicationLogEntry):
     REASON_CHOICES = (('missing', 'There is currently no Photographic Identification uploaded'),
                       ('expired', 'The current identification has expired'),
-                      ('not_recognised', 'The current identification is not recognised by the Department of Parks and Wildlife'),
+                      ('not_recognised',
+                       'The current identification is not recognised by the Department of Parks and Wildlife'),
                       ('illegible', 'The current identification image is of poor quality and cannot be made out.'),
                       ('other', 'Other'))
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
@@ -96,6 +106,7 @@ class Assessment(ApplicationLogEntry):
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)
+    purpose = models.TextField(blank=True)
 
 
 class ApplicationCondition(models.Model):
@@ -120,7 +131,13 @@ class AssessmentCondition(models.Model):
 
 
 class EmailLogEntry(ApplicationLogEntry):
-    pass
+    subject = models.CharField(max_length=500, blank=True)
+    to = models.CharField(max_length=500, blank=True, verbose_name="To")
+    from_email = models.CharField(max_length=200, blank=True, verbose_name="From")
+
+
+class CustomLogEntry(ApplicationLogEntry):
+    subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
 
 
 @receiver(pre_delete, sender=Application)

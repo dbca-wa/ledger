@@ -10,7 +10,12 @@ from models import Application
 @admin.register(Application)
 class ApplicationAdmin(VersionAdmin):
     date_hierarchy = 'lodgement_date'
-    list_display = ('lodgement_number', 'lodgement_date')
+    list_display = ('licence_type', 'get_user', 'processing_status', 'lodgement_number', 'lodgement_date')
+
+    def get_user(self, obj):
+        return obj.applicant_profile.user
+    get_user.short_description = 'User'
+    get_user.admin_order_field = 'applicant_profile__user'
 
 
 @admin.register(AssessorGroup)

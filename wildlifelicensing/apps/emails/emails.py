@@ -23,12 +23,14 @@ class TemplateEmailBase(object):
     def send_to_user(self, user, context=None):
         return self.send(user.email, context=context)
 
-    def send(self, to_addresses, from_address=None, context=None):
+    def send(self, to_addresses, from_address=None, context=None, attachments=None):
         """
         Send an email using EmailMultiAlternatives with text and html.
         :param to_addresses: a string or a list of addresses
         :param from_address: if None the settings.DEFAULT_FROM_EMAIL is used
         :param context: a dictionary or a Context object used for rendering the templates.
+        :param attachments: a list of (filepath, content, mimetype) triples
+               (see https://docs.djangoproject.com/en/1.9/topics/email/)
         :return:
         """
         # The next line will throw a TemplateDoesNotExist if html template cannot be found
@@ -44,7 +46,10 @@ class TemplateEmailBase(object):
         # build message
         if isinstance(to_addresses, basestring):
             to_addresses = [to_addresses]
-        msg = EmailMultiAlternatives(self.subject, txt_body, from_email=from_address, to=to_addresses)
+        if attachments is not None and not isinstance(attachments, list):
+            attachments = list(attachments)
+        msg = EmailMultiAlternatives(self.subject, txt_body, from_email=from_address, to=to_addresses,
+                                     attachments=attachments)
         msg.attach_alternative(html_body, 'text/html')
         try:
             msg.send(fail_silently=False)

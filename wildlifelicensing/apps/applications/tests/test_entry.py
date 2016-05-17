@@ -7,7 +7,7 @@ from django.test import TestCase
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, create_default_customer, create_random_customer, \
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, create_random_customer, \
     is_login_page
 from wildlifelicensing.apps.applications.tests import helpers
 
@@ -16,7 +16,7 @@ TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 't
 
 class ApplicationEntryTestCase(TestCase):
     def setUp(self):
-        self.customer = create_default_customer()
+        self.customer = get_or_create_default_customer()
 
         self.client = SocialClient()
 
@@ -124,7 +124,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertEqual(self.customer.profile_set.count(), original_profile_count + 1)
 
         # check the created profile has been set in the session
-        self.assertTrue('profile' in self.client.session['application'])
+        self.assertTrue('profile_pk' in self.client.session['application'])
 
     def test_create_select_profile_select(self):
         """Testing that a user can display the create / select profile page and select a profile
@@ -167,10 +167,10 @@ class ApplicationEntryTestCase(TestCase):
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         # check the profile has been set in the session
-        self.assertTrue('profile' in self.client.session['application'])
+        self.assertTrue('profile_pk' in self.client.session['application'])
 
         # check that the profile in the session is the selected profile
-        self.assertEqual(self.client.session['application']['profile'], profile2.pk)
+        self.assertEqual(self.client.session['application']['profile_pk'], profile2.pk)
 
     def test_enter_details_draft(self):
         """Testing that a user can enter the details of an application form and save as a draft
@@ -186,7 +186,7 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {'profile': profile.pk}
+        session['application'] = {'profile_pk': profile.pk}
         session.save()
 
         original_applications_count = profile.application_set.count()
@@ -226,7 +226,7 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {'profile': profile.pk}
+        session['application'] = {'profile_pk': profile.pk}
         session.save()
 
         original_applications_count = profile.application_set.count()
@@ -268,7 +268,7 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {'profile': profile.pk}
+        session['application'] = {'profile_pk': profile.pk}
         session.save()
 
         # check that client can access the enter details page
@@ -302,7 +302,12 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {'profile': profile.pk, 'data': {'project_title': 'Test Title'}}
+        session['application'] = {
+            'profile_pk': profile.pk, 
+            'data': {
+                'project_title': 'Test Title'
+            }
+        }
         session.save()
 
         original_applications_count = profile.application_set.count()
@@ -382,7 +387,7 @@ class ApplicationEntrySecurity(TestCase):
         url = reverse('applications:preview', args=[application.licence_type.code, application.pk])
         session = self.client.session
         session['application'] = {
-            'profile': application.applicant_profile.pk,
+            'profile_pk': application.applicant_profile.pk,
             'data': {
                 'project_title': 'Test'
             }
@@ -419,7 +424,7 @@ class ApplicationEntrySecurity(TestCase):
         url = reverse('applications:preview', args=[application.licence_type.code, application.pk])
         session = self.client.session
         session['application'] = {
-            'profile': application.applicant_profile.pk,
+            'profile_pk': application.applicant_profile.pk,
             'data': {
                 'project_title': 'Test'
             }
