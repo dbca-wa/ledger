@@ -44,15 +44,21 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         ass_groups = [{'id': ass_group.id, 'text': ass_group.name} for ass_group in
                       AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups])]
 
-        previous_application_data = []
+        previous_versions = []
         for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
                 '-revision__date_created'):
-            previous_application_data.append({'lodgement_number': revision.object_version.object.lodgement_number +
-                                                                  '-' + str(
-                revision.object_version.object.lodgement_sequence),
-                                              'date': formats.date_format(revision.revision.date_created, 'd/m/Y',
-                                                                          True),
-                                              'data': revision.object_version.object.data})
+            previous_versions.append({'lodgement_number': revision.object_version.object.lodgement_number +
+                                      '-' + str(revision.object_version.object.lodgement_sequence),
+                                      'date': formats.date_format(revision.revision.date_created, 'd/m/Y',
+                                                                  True),
+                                      'data': revision.object_version.object.data})
+
+        if application.previous_application is not None:
+            previous_versions.append({'lodgement_number': application.previous_application.lodgement_number +
+                                      '-' + str(application.previous_application.lodgement_sequence),
+                                      'date': formats.date_format(application.previous_application.lodgement_date, 'd/m/Y',
+                                                                  True),
+                                      'data': application.previous_application.data})
 
         data = {
             'user': serialize(request.user),
@@ -64,7 +70,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             'assessor_groups': ass_groups,
             'assessments': serialize(Assessment.objects.filter(application=application),
                                      posthook=format_assessment),
-            'previous_application_data': serialize(previous_application_data),
+            'previous_versions': serialize(previous_versions),
             'csrf_token': str(csrf(request).get('csrf_token'))
         }
 

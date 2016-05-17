@@ -24,7 +24,8 @@ define(
             licencesTable,
             $applicationsLicenceTypeFilter,
             $applicationsStatusTypeFilter,
-            $applicationsAssigneeTypeFilter;
+            $applicationsAssigneeTypeFilter,
+            $licencesLicenceTypeFilter;
 
         function initTables() {
             if (options.data.applications) {
@@ -52,11 +53,39 @@ define(
                 }),
                 licencesColumns = options.data.licences.columnDefinitions;
 
+            if (options.data.licences.tableOptions) {
+                $.extend(licencesTableOptions, options.data.licences.tableOptions);
+            }
+
             licencesTable = dt.initTable(
                 options.selectors.licencesTable,
                 licencesTableOptions,
                 licencesColumns
             );
+        }
+
+        function initLicensesFilters() {
+            var data = options.data,
+                optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),
+                $node;
+
+            function createOptionNode(tuple) {
+                return $(optionTemplate({
+                    value: tuple[0],
+                    title: tuple[1] || tuple[0]
+                }));
+            }
+            // licence type
+            if ($licencesLicenceTypeFilter.length && data.licences.filters.licenceType) {
+                _.forEach(data.licences.filters.licenceType.values, function (value) {
+
+                    $node = createOptionNode(value);
+                    $licencesLicenceTypeFilter.append($node);
+                });
+                $licencesLicenceTypeFilter.on('change', function () {
+                    licencesTable.ajax.reload();
+                });
+            }
         }
 
         function initApplicationsTable() {
@@ -76,6 +105,9 @@ define(
                 }),
                 applicationsColumns = options.data.applications.columnDefinitions;
 
+            if (options.data.applications.tableOptions) {
+                $.extend(applicationsTableOptions, options.data.applications.tableOptions);
+            }
             applicationsTable = dt.initTable(
                 options.selectors.applicationsTable,
                 applicationsTableOptions,
@@ -150,16 +182,14 @@ define(
                     applicationsTable: '#applications-table',
                     applicationsAccordion: '#applications-collapse',
                     applicationsFilterForm: '#applications-filter-form',
-                    applicationsLicenceFilter: '#applications-filter-licence-type',
+                    applicationsLicenceTypeFilter: '#applications-filter-licence-type',
                     applicationsStatusFilter: '#applications-filter-status',
                     applicationsAssigneeFilter: '#applications-filter-assignee',
 
                     licencesTable: '#licences-table',
                     licencesAccordion: '#licences-collapse',
                     licencesFilterForm: '#licences-filter-form',
-                    licencesLicenceFilter: '#licences-filter-licence-type',
-                    licencesStatusFilter: '#licences-filter-status',
-                    licencesAssigneeFilter: '#licences-filter-assignee'
+                    licencesLicenceTypeFilter: '#licences-filter-licence-type'
                 },
                 data: {
                     'applications': {
@@ -182,13 +212,16 @@ define(
                 }
             });
             $(function () {
-                $applicationsLicenceTypeFilter = $(options.selectors.applicationsLicenceFilter);
+                $applicationsLicenceTypeFilter = $(options.selectors.applicationsLicenceTypeFilter);
                 $applicationsStatusTypeFilter = $(options.selectors.applicationsStatusFilter);
                 $applicationsAssigneeTypeFilter = $(options.selectors.applicationsAssigneeFilter);
+
+                $licencesLicenceTypeFilter = $(options.selectors.licencesLicenceTypeFilter);
 
                 $(options.selectors.applicationsAccordion).collapse('show');
 
                 initApplicationsFilters();
+                initLicensesFilters();
                 if (options.data.query) {
                     // set filter according to query data
                     setFilters(options.data.query);
