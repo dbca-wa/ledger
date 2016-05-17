@@ -16,10 +16,10 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
                     {% if request.user|is_officer %}
-                        <li><a href="{% url 'applications:create_select_customer' licence_type.code %}">Select Customer</a></li>
+                        <li><a href="{% url 'applications:create_select_customer' %}">Select or Create Customer</a></li>
                     {% endif %}
+                    <li><a href="{% url 'applications:select_licence_type' %}">Select Licence Type</a></li>
                     <li class="active">Upload Identification</li>
                 </ol>
             </div>

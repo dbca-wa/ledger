@@ -30,7 +30,7 @@ define([
         });
 
         $assignee.on('change', function (e) {
-            $.post('/applications/assign_officer/', {
+            $.post('/applications/assign-officer/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     userID: e.val
@@ -42,7 +42,7 @@ define([
         });
 
         $('#assignToMe').click(function () {
-            $.post('/applications/assign_officer/', {
+            $.post('/applications/assign-officer/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     userID: user.id
@@ -119,7 +119,7 @@ define([
         }
 
         $resetLink.click(function () {
-            $.post('/applications/set_id_check_status/', {
+            $.post('/applications/set-id-check-status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'not_checked'
@@ -140,7 +140,7 @@ define([
             $requestUpdateButton = $actionButtonsContainer.find('.btn-warning');
 
         $acceptButton.click(function () {
-            $.post('/applications/set_id_check_status/', {
+            $.post('/applications/set-id-check-status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'accepted'
@@ -205,7 +205,7 @@ define([
         }
 
         $resetLink.click(function () {
-            $.post('/applications/set_character_check_status/', {
+            $.post('/applications/set-character-check-status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'not_checked'
@@ -230,7 +230,7 @@ define([
         var $acceptButton = $actionButtonsContainer.find('.btn-success');
 
         $acceptButton.click(function () {
-            $.post('/applications/set_character_check_status/', {
+            $.post('/applications/set-character-check-status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'accepted'
@@ -303,7 +303,7 @@ define([
         }
 
         $resetLink.click(function () {
-            $.post('/applications/set_review_status/', {
+            $.post('/applications/set-review-status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'not_reviewed'
@@ -322,7 +322,7 @@ define([
         });
 
         $acceptButton.click(function () {
-            $.post('/applications/set_review_status/', {
+            $.post('/applications/set-review-status/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'accepted'
@@ -383,7 +383,7 @@ define([
             var $remind = $('<a>').text('Remind');
 
             $remind.click(function () {
-                $.post('/applications/remind_assessment/', {
+                $.post('/applications/remind-assessment/', {
                     assessmentID: assessment.id,
                     csrfmiddlewaretoken: csrfToken
                 }, function (data) {
@@ -428,7 +428,7 @@ define([
         });
 
         $sendForAssessment.click(function () {
-            $.post('/applications/send_for_assessment/', {
+            $.post('/applications/send-for-assessment/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
                     status: 'awaiting_assessment',
@@ -520,7 +520,7 @@ define([
                 autowidth: true,
                 order: [[0, 'desc']],
                 ajax: {
-                    url: '/applications/log_list/' + application.id
+                    url: '/applications/log-list/' + application.id
                 }
             },
             colDefinitions = [

@@ -4,6 +4,8 @@ from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
+from django_hosts import reverse as hosts_reverse
+
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
 from wildlifelicensing.apps.applications.models import EmailLogEntry, AmendmentRequest, IDRequest
 
@@ -128,13 +130,14 @@ class LicenceIssuedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/licence_issued.txt'
 
 
-def send_licence_issued_email(licence, application, request):
+def send_licence_issued_email(licence, application, cover_letter_message, request):
     email = LicenceIssuedEmail()
     url = request.build_absolute_uri(
         reverse('dashboard:home')
     )
     context = {
-        'url': url
+        'url': url,
+        'cover_letter_message': cover_letter_message
     }
     if licence.document is not None:
         file_name = 'WL_licence_' + str(licence.licence_type.code)
@@ -154,6 +157,24 @@ def send_licence_issued_email(licence, application, request):
         log_entry.document = licence.document
         log_entry.save()
     return log_entry
+
+
+class LicenceRenewalNotificationEmail(TemplateEmailBase):
+    subject = 'Your wildlife licence is due for renewal.'
+    html_template = 'wl/emails/renew_licence_notification.html'
+    txt_template = 'wl/emails/renew_licence_notification.txt'
+
+
+def send_licence_renewal_email_notification(licence):
+    email = LicenceRenewalNotificationEmail()
+    url = 'http:' + hosts_reverse('applications:renew_licence', args=(licence.pk,))
+
+    context = {
+        'url': url,
+        'licence': licence
+    }
+
+    email.send(licence.profile.email, context=context)
 
 
 def _log_email(email_message, application, sender=None):

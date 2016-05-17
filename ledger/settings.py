@@ -33,7 +33,8 @@ INSTALLED_APPS = [
     'bootstrap3',
     'reversion',
     'django_countries',
-    'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
+    'django_cron',
+    'ledger.accounts',  # Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
@@ -168,9 +169,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-DATE_INPUT_FORMATS = ('%d/%m/%Y', '%Y-%m-%d')
-DATE_FORMAT = 'd m Y'
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -184,6 +182,9 @@ if not os.path.exists(os.path.join(BASE_DIR, 'media')):
 MEDIA_ROOT = env('MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
 MEDIA_URL = '/media/'
 
+CRON_CLASSES = [
+    'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
+]
 
 # Logging settings
 # Ensure that the logs directory exists:

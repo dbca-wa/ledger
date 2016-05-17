@@ -35,10 +35,10 @@
                         <li><a href="{% url 'applications:create_select_profile_existing_application' licence_type.code application_pk %}">Select Profile</a></li>
                         <li><a href="{% url 'applications:enter_details_existing_application' licence_type.code application_pk %}">Enter Application Details</a></li>
                     {% else %}
-                        <li><a href="{% url 'applications:select_licence_type' %}">Licence Applications</a></li>
                         {% if request.user|is_officer %}
-                            <li><a href="{% url 'applications:create_select_customer' licence_type.code %}">Select Customer</a></li>
+                            <li><a href="{% url 'applications:create_select_customer' %}">Select or Create Customer</a></li>
                         {% endif %}
+                        <li><a href="{% url 'applications:select_licence_type' %}">Select Licence Type</a></li>
                         <li><a href="{% url 'applications:create_select_profile' licence_type.code %}">Select Profile</a></li>
                         <li><a href="{% url 'applications:enter_details' licence_type.code %}">Enter Application Details</a></li>
                     {% endif %}

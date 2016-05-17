@@ -81,7 +81,7 @@ define([
             dropdownCssClass : 'conditions-dropdown',
             minimumInputLength: 3,
             ajax: {
-                url: '/applications/search_conditions',
+                url: '/applications/search-conditions',
                 dataType: 'json',
                 quietMillis: 250,
                 data: function (term, page) {

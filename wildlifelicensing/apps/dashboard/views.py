@@ -33,7 +33,7 @@ def _get_user_applications(user):
 
 
 def _get_user_licences(user):
-    return WildlifeLicence.objects.filter(profile__user=user)
+    return WildlifeLicence.objects.filter(user=user)
 
 
 def _get_processing_statuses_but_draft():
@@ -544,6 +544,10 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
             return '<a href="{0}">Enter Conditions</a>'.format(
                 reverse('applications:enter_conditions', args=[obj.pk]),
             )
+        if obj.processing_status == 'ready_to_issue':
+            return '<a href="{0}">Issue Licence</a>'.format(
+                reverse('applications:issue_licence', args=[obj.pk]),
+            )
         elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
             return '<a href="{0}" target="_blank">View licence</a>'.format(
                 obj.licence.document.file.url
@@ -697,18 +701,8 @@ class DataTableLicencesOfficerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        if not instance.licence_type.is_renewable:
-            return 'Not renewable'
-
-        try:
-            application = Application.objects.get(licence=instance)
-            if Application.objects.filter(previous_application=application).exists():
-                return 'Renewed'
-        except Application.DoesNotExist:
-            pass
-
-        url = reverse('applications:renew_licence', args=(instance.licence_type.code, instance.pk,))
-        return '<a href="{0}">Renew</a>'.format(url)
+        url = reverse('applications:reissue_licence', args=(instance.pk,))
+        return '<a href="{0}">Reissue</a>'.format(url)
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()
@@ -979,7 +973,7 @@ class DataTableLicencesCustomerView(DataTableBaseView):
         except Application.DoesNotExist:
             pass
 
-        url = reverse('applications:renew_licence', args=(instance.licence_type.code, instance.pk,))
+        url = reverse('applications:renew_licence', args=(instance.pk,))
         return '<a href="{0}">Renew</a>'.format(url)
 
     def get_initial_queryset(self):

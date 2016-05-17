@@ -30,7 +30,11 @@
                     <li><a href="{% url 'dashboard:tables_applications_officer' %}">Applications</a></li>
                     <li><a href="{% url 'applications:process' application.id %}">Process Application</a></li>
                     <li><a href="{% url 'applications:enter_conditions' application.id %}">Enter Conditions</a></li>
-                    <li class="active">Issue Licence</li>
+                    {% if application.licence %}
+                        <li class="active">Reissue Licence</li>
+                    {% else %}
+                        <li class="active">Issue Licence</li>
+                    {% endif %}
                 </ol>
             </div>
         </div>
@@ -41,7 +45,11 @@
     <div class="container bottom-buffer">
         <div class="row">
             <div class="col-md-12">
-                <h2>Issue Licence</h2>
+                {% if application.licence %}
+                    <h2>Reissue Licence</h2>
+                {% else %}
+                    <h2>Issue Licence</h2>
+                {% endif %}
                 <h3>{{ application.licence_type.name }}</h3>
                 <hr>
             </div>
@@ -89,17 +97,23 @@
                         </div>
                     </div>
                 </div>
-                <button id="issue" type="button" class="btn btn-sm btn-success pull-right">Issue</button>
-                <a class="btn btn-sm btn-default" href="{% url 'applications:process' application.id %}" role="button">Back to Enter Conditions</a>
+                <button id="issue" type="button" class="btn btn-sm btn-success pull-right">
+                    {% if application.licence %}
+                        Reissue
+                    {% else %}
+                        Issue
+                    {% endif %}
+                </button>
+                <a class="btn btn-sm btn-default" href="{% url 'applications:enter_conditions' application.id %}" role="button">Back to Enter Conditions</a>
+                <a href="{% url 'applications:preview_licence' application.id %}" id="previewLicence" class="top-buffer pull-right" target="_blank">
+                    Preview Licence PDF <img height="20px" src="{% static 'wl/img/pdf.png' %}"></img>
+                </a>
             </div>
             <div class="col-md-9">
                 <form method="post" id="issueLicenceForm">
                     {% csrf_token %}
                     {% bootstrap_form issue_licence_form %}
                 </form>
-                <a href="{% url 'applications:preview_licence' application.id %}" id="previewLicence" class="pull-right" target="_blank">
-                    Preview Licence PDF <img height="20px" src="{% static 'wl/img/pdf.png' %}"></img>
-                </a>
             </div>
         </div>
     </div>

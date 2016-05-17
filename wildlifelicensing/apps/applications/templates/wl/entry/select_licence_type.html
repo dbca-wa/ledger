@@ -36,15 +36,9 @@
             <div class="row">
                 <div class="col-md-12">
                     <ul>
-                        {% if request.user|is_officer %}
-                            {% for key, value in licence_types.items %}
-                                <li><a href="{% url 'applications:create_select_customer' key %}">{{ value }}</a></li>
-                            {% endfor %}
-                        {% else %}
-                            {% for key, value in licence_types.items %}
-                                <li><a href="{% url 'applications:check_identification' key %}">{{ value }}</a></li>
-                            {% endfor %}
-                        {% endif %}
+                        {% for key, value in licence_types.items %}
+                            <li><a href="{% url 'applications:check_identification' key %}">{{ value }}</a></li>
+                        {% endfor %}
                     </ul>
                 </div>
             </div>

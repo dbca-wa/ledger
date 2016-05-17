@@ -1,14 +1,15 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.urlresolvers import reverse_lazy
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
+from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.base import View, TemplateView
 from django.views.generic.edit import FormView
 
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import Profile, Document, EmailIdentity, Address, EmailUser
+from ledger.accounts.models import Profile, Document, EmailUser
 from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, DocumentForm
 
 from forms import IdentificationForm

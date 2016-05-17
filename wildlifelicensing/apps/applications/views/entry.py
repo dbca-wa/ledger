@@ -25,26 +25,10 @@ from wildlifelicensing.apps.applications.utils import create_data_from_form, get
     SessionDataMissingException, clone_application_for_renewal
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_officer
+from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
+from wildlifelicensing.apps.main.helpers import is_officer, is_customer
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-
-
-class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
-    template_name = 'wl/entry/select_licence_type.html'
-    login_url = '/'
-
-    def get(self, request, *args, **kwargs):
-        # if we've arrived at the licence type selection page and there is hangover application data left in the session, delete it
-        delete_application_session_data(request.session)
-
-        request.session['application'] = {}
-
-        context = {'licence_types': dict(
-            [(licence_type.code, licence_type.name) for licence_type in WildlifeLicenceType.objects.all()])}
-
-        return render(request, self.template_name, context)
 
 
 class ApplicationEntryBaseView(TemplateView):
@@ -69,30 +53,19 @@ class ApplicationEntryBaseView(TemplateView):
         return super(ApplicationEntryBaseView, self).get_context_data(**kwargs)
 
 
-class CreateSelectCustomer(OfficerRequiredMixin, ApplicationEntryBaseView):
-    template_name = 'wl/entry/create_select_customer.html'
+class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        delete_application_session_data(request.session)
 
-    def get_context_data(self, **kwargs):
-        kwargs['create_customer_form'] = EmailUserForm()
+        request.session['application'] = {}
+        request.session.modified = True
 
-        return super(CreateSelectCustomer, self).get_context_data(**kwargs)
+        if is_customer(request.user):
+            request.session['application']['customer_pk'] = request.user.pk
 
-    def post(self, request, *args, **kwargs):
-        if 'select' in request.POST:
-            request.session['application']['customer_pk'] = request.POST.get('customer')
-            request.session.modified = True
-        elif 'create' in request.POST:
-            create_customer_form = EmailUserForm(request.POST)
-            if create_customer_form.is_valid():
-                customer = create_customer_form.save()
-                request.session['application']['customer_pk'] = customer.id
-                request.session.modified = True
-            else:
-                context = {'licence_type': get_object_or_404(WildlifeLicenceType, code=self.args[0]),
-                           'create_customer_form': create_customer_form}
-                return render(request, self.template_name, context)
-
-        return redirect('applications:check_identification', *args, **kwargs)
+            return redirect('applications:select_licence_type', *args, **kwargs)
+        else:
+            return redirect('applications:create_select_customer')
 
 
 class EditApplicationView(UserCanEditApplicationMixin, View):
@@ -102,13 +75,50 @@ class EditApplicationView(UserCanEditApplicationMixin, View):
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
         if application is not None and 'application' not in request.session:
             request.session['application'] = {}
-            if is_officer(request.user):
-                request.session['application']['customer_pk'] = application.applicant_profile.user
+            request.session['application']['customer_pk'] = application.applicant_profile.user.pk
             request.session['application']['profile_pk'] = application.applicant_profile.id
             request.session['application']['data'] = application.data
             request.session.modified = True
 
         return redirect('applications:enter_details', *args, **kwargs)
+
+
+class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
+    template_name = 'wl/entry/create_select_customer.html'
+    login_url = '/'
+
+    def get_context_data(self, **kwargs):
+        kwargs['create_customer_form'] = EmailUserForm(email_required=False)
+
+        return super(CreateSelectCustomer, self).get_context_data(**kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if 'select' in request.POST:
+            request.session['application']['customer_pk'] = request.POST.get('customer')
+            request.session.modified = True
+        elif 'create' in request.POST:
+            create_customer_form = EmailUserForm(request.POST, email_required=False)
+            if create_customer_form.is_valid():
+                customer = create_customer_form.save()
+                request.session['application']['customer_pk'] = customer.id
+                request.session.modified = True
+            else:
+                context = {'licence_type': get_object_or_404(WildlifeLicenceType, code=self.args[0]),
+                           'create_customer_form': create_customer_form}
+                return render(request, self.template_name, context)
+
+        return redirect('applications:select_licence_type', *args, **kwargs)
+
+
+class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
+    template_name = 'wl/entry/select_licence_type.html'
+    login_url = '/'
+
+    def get_context_data(self, **kwargs):
+        kwargs['licence_types'] = dict([(licence_type.code, licence_type.name) for licence_type
+                                        in WildlifeLicenceType.objects.all()])
+
+        return super(SelectLicenceTypeView, self).get_context_data(**kwargs)
 
 
 class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseView, FormView):
@@ -388,7 +398,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 application.processing_status = 'new'
         application.customer_status = 'under_review'
 
-        if len(application.lodgement_number) == 0:
+        if not application.lodgement_number:
             application.save(no_revision=True)
             application.lodgement_number = str(application.id).zfill(9)
 
@@ -427,7 +437,7 @@ class RenewLicenceView(View): #NOTE: need a UserCanRenewLicence type mixin
     def get(self, request, *args, **kwargs):
         delete_application_session_data(request.session)
 
-        previous_application = get_object_or_404(Application, licence=args[1])
+        previous_application = get_object_or_404(Application, licence=args[0])
 
         # check if there is already a renewal, otherwise create one
         try:
@@ -440,9 +450,9 @@ class RenewLicenceView(View): #NOTE: need a UserCanRenewLicence type mixin
 
         request.session['application'] = {}
         if is_officer(request.user):
-            request.session['application']['customer_pk'] = application.applicant_profile.user
+            request.session['application']['customer_pk'] = application.applicant_profile.user.pk
         request.session['application']['profile_pk'] = application.applicant_profile.id
         request.session['application']['data'] = application.data
         request.session.modified = True
 
-        return redirect('applications:enter_details', args[0], application.pk, **kwargs)
+        return redirect('applications:enter_details', application.licence_type.code, application.pk, **kwargs)

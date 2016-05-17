@@ -25,12 +25,16 @@ class IdentificationForm(forms.Form):
 
 
 class IssueLicenceForm(forms.ModelForm):
+    cover_letter_message = forms.CharField(label='Cover letter message', widget=forms.Textarea, required=False, strip=True)
+
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'purpose']
+        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'purpose', 'cover_letter_message']
 
     def __init__(self, *args, **kwargs):
         purpose = kwargs.pop('purpose', None)
+
+        is_renewable = kwargs.pop('is_renewable', False)
 
         super(IssueLicenceForm, self).__init__(*args, **kwargs)
 
@@ -41,9 +45,14 @@ class IssueLicenceForm(forms.ModelForm):
         self.fields['issue_date'].initial = today_date.strftime(DATE_FORMAT)
         self.fields['start_date'].initial = today_date.strftime(DATE_FORMAT)
 
+        self.fields['issue_date'].localize = False
+
         try:
             one_year_today = today_date.replace(year=today_date.year + 1)
         except ValueError:
             one_year_today = today_date + (datetime.date(today_date.year + 1, 1, 1) - datetime.date(today_date.year, 1, 1))
 
         self.fields['end_date'].initial = one_year_today.strftime(DATE_FORMAT)
+
+        self.fields['is_renewable'].initial = is_renewable
+        self.fields['is_renewable'].widget = forms.CheckboxInput()

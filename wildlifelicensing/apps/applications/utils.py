@@ -109,21 +109,18 @@ class SessionDataMissingException(Exception):
 
 
 def determine_applicant(request):
-    if is_officer(request.user):
-        if 'application' in request.session:
-            if 'customer_pk' in request.session.get('application'):
-                try:
-                    applicant = EmailUser.objects.get(pk=request.session['application']['customer_pk'])
-                except EmailUser.DoesNotExist:
-                    raise SessionDataMissingException('customer_pk does not refer to existing customer')
-                except EmailUser.MultipleObjectsReturned:
-                    raise SessionDataMissingException('customer_pk does not refer to several customers')
-            else:
-                raise SessionDataMissingException('customer_pk not set in session')
+    if 'application' in request.session:
+        if 'customer_pk' in request.session.get('application'):
+            try:
+                applicant = EmailUser.objects.get(pk=request.session['application']['customer_pk'])
+            except EmailUser.DoesNotExist:
+                raise SessionDataMissingException('customer_pk does not refer to existing customer')
+            except EmailUser.MultipleObjectsReturned:
+                raise SessionDataMissingException('customer_pk does not refer to several customers')
         else:
-            raise SessionDataMissingException('application not set in session')
+            raise SessionDataMissingException('customer_pk not set in session')
     else:
-        applicant = request.user
+        raise SessionDataMissingException('application not set in session')
 
     return applicant
 

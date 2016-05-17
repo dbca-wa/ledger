@@ -34,10 +34,21 @@ class AssessorRequiredMixin(UserPassesTestMixin):
         return is_assessor(self.request.user)
 
 
+class OfficerOrCustomerRequiredMixin(UserPassesTestMixin):
+    """
+    An AccessMixin that check for user being a WL Officer or WL Assessor.
+    See rules in 'is_officer' and 'is_customer' functions
+    """
+
+    def test_func(self):
+        user = self.request.user
+        return is_officer(user) or is_customer(user)
+
+
 class OfficerOrAssessorRequiredMixin(UserPassesTestMixin):
     """
-    An AccessMixin that check for user being a WL Assessor.
-    See rules in 'is_assessor' function
+    An AccessMixin that check for user being a WL Officer or WL Assessor.
+    See rules in 'is_officer' and 'is_assessor' functions
     """
 
     def test_func(self):
