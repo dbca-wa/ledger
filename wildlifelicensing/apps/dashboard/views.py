@@ -957,8 +957,13 @@ class DataTableLicencesCustomerView(DataTableBaseView):
     }
 
     @staticmethod
+    def _can_user_renew_licence(license):
+        return license.licence_type.is_renewable \
+               and license.end_date <= datetime.date.today() + datetime.timedelta(days=30)
+
+    @staticmethod
     def _render_action(instance):
-        if not instance.licence_type.is_renewable:
+        if not DataTableLicencesCustomerView._can_user_renew_licence(instance):
             return 'Not renewable'
 
         try:
