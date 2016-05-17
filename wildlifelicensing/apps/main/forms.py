@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 
 from django import forms
-from django.conf import settings
 
 from wildlifelicensing.apps.main.models import WildlifeLicence
 

@@ -22,12 +22,11 @@ from wildlifelicensing.apps.main.forms import IdentificationForm
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
     delete_application_session_data, determine_applicant,\
-    SessionDataMissingException
+    SessionDataMissingException, clone_application_for_renewal
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer
-from bottle import request
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -57,6 +56,15 @@ class ApplicationEntryBaseView(TemplateView):
         if is_officer(self.request.user) and 'application' in self.request.session and \
                 'customer_pk' in self.request.session['application']:
             kwargs['customer'] = EmailUser.objects.get(pk=self.request.session['application']['customer_pk'])
+
+        kwargs['is_renewal'] = False
+        if len(self.args) > 1:
+            try:
+                application = Application.objects.get(pk=self.args[1])
+                if application.processing_status == 'renewal':
+                    kwargs['is_renewal'] = True
+            except Exception:
+                pass
 
         return super(ApplicationEntryBaseView, self).get_context_data(**kwargs)
 
@@ -272,7 +280,10 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             application.applicant_profile = get_object_or_404(Profile,
                                                               pk=request.session.get('application').get('profile_pk'))
             application.customer_status = 'draft'
-            application.processing_status = 'draft'
+
+            if application.processing_status != 'renewal':
+                application.processing_status = 'draft'
+
             application.save(version_user=application.applicant_profile.user)
 
             if 'files' in request.session.get('application') and \
@@ -373,7 +384,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             application.review_status = 'amended'
             application.processing_status = 'ready_for_action'
         else:
-            application.processing_status = 'new'
+            if application.processing_status != 'renewal':
+                application.processing_status = 'new'
         application.customer_status = 'under_review'
 
         if len(application.lodgement_number) == 0:
@@ -409,3 +421,28 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         delete_application_session_data(request.session)
 
         return redirect('dashboard:home')
+
+
+class RenewLicenceView(View): #NOTE: need a UserCanRenewLicence type mixin
+    def get(self, request, *args, **kwargs):
+        delete_application_session_data(request.session)
+
+        previous_application = get_object_or_404(Application, licence=args[1])
+
+        # check if there is already a renewal, otherwise create one
+        try:
+            application = Application.objects.get(previous_application=previous_application)
+            if application.customer_status == 'under_review':
+                messages.warning(request, 'A renewal for this licence has already been lodged and is awaiting review.')
+                return redirect('dashboard:home')
+        except Application.DoesNotExist:
+            application = clone_application_for_renewal(previous_application)
+
+        request.session['application'] = {}
+        if is_officer(request.user):
+            request.session['application']['customer_pk'] = application.applicant_profile.user
+        request.session['application']['profile_pk'] = application.applicant_profile.id
+        request.session['application']['data'] = application.data
+        request.session.modified = True
+
+        return redirect('applications:enter_details', args[0], application.pk, **kwargs)
