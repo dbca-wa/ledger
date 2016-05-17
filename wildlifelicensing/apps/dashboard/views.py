@@ -502,6 +502,10 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
             return '<a href="{0}">Enter Conditions</a>'.format(
                 reverse('applications:enter_conditions', args=[obj.pk]),
             )
+        if obj.processing_status == 'ready_to_issue':
+            return '<a href="{0}">Issue Licence</a>'.format(
+                reverse('applications:issue_licence', args=[obj.pk]),
+            )
         elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
             return '<a href="{0}" target="_blank">View licence</a>'.format(
                 obj.licence.document.file.url
