@@ -270,6 +270,20 @@ class Profile(RevisionedMixin):
     postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT)
     institution = models.CharField('Institution', max_length=200, blank=True, default='', help_text='e.g. Company Name, Tertiary Institution, Government Department, etc')
 
+
+    @property
+    def auth_identity(self):
+        """
+        Return True if the email is an email identity; otherwise return False.
+        """
+        if not self.email: 
+            return False;
+
+        if not hasattr(self,"_auth_identity"):
+            self._auth_identity = EmailIdentity.objects.filter(user=self.user,email=self.email).exists()
+
+        return self._auth_identity
+
     def __str__(self):
         if len(self.name) > 0:
             return '{} ({})'.format(self.name, self.email)
