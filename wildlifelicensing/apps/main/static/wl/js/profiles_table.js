@@ -1,6 +1,6 @@
 define(['jQuery', 'js/wl.dataTable'], function($, dataTable) {
     return {
-        initProfilesTable: function(tableSelector, data, editURL,deleteURL) {
+        initProfilesTable: function(tableSelector, data, editURL) {
             dataTable.initTable($(tableSelector), {
                 paging: false,
             }, [

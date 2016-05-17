@@ -266,25 +266,6 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             return self.first_name
         return self.email
 
-    def save(self, *args, **kwargs):
-        if self.pk is not None:
-            # user exists, ensure EmailIdentity object corresponding with self.email exists
-            if not self.is_dummy_user:
-                identity, created = EmailIdentity.objects.get_or_create(email=self.email, user=self)
-
-            origin_user = EmailUser.objects.get(pk = self.pk)
-            if origin_user.email != self.email and not origin_user.is_dummy_user:
-                #user changed his email and also the original email is not a dummy email, try to delete the email from identity
-                EmailIdentity.objects.filter(email=origin_user.email,user=self).delete()
- 
-            super(EmailUser, self).save(*args, **kwargs)
-        else:
-            # user object is new, create user before creating EmailIdentity object
-            super(EmailUser, self).save(*args, **kwargs)
-            if not self.is_dummy_user:
-                identity, created = EmailIdentity.objects.get_or_create(email=self.email, user=self)
-     
-
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
     dummy_email_suffix_len = len(dummy_email_suffix)
     @property
