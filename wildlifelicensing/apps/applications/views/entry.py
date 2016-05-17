@@ -450,7 +450,7 @@ class RenewLicenceView(View): #NOTE: need a UserCanRenewLicence type mixin
 
         request.session['application'] = {}
         if is_officer(request.user):
-            request.session['application']['customer_pk'] = application.applicant_profile.user
+            request.session['application']['customer_pk'] = application.applicant_profile.user.pk
         request.session['application']['profile_pk'] = application.applicant_profile.id
         request.session['application']['data'] = application.data
         request.session.modified = True

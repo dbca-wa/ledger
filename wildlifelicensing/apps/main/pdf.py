@@ -79,15 +79,22 @@ def _create_licence_header(canvas, doc):
 
     canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), 'PAGE')
     canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'NO.')
-    canvas.drawString(current_x - 54, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'PERSON NO.')
 
     canvas.setFont(DEFAULT_FONTNAME, LARGE_FONTSIZE)
 
     current_x += 50
 
     canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), str(canvas.getPageNumber()))
-    canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'SF010807')
-    canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 3, '179911')
+    canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2, doc.licence.licence_no)
+
+
+def _get_authorised_person_names(application):
+    authorised_persons = []
+    for ap in application.data.get('authorised_persons', []):
+        if ap.get('ap_given_names') and ap.get('ap_given_names'):
+            authorised_persons.append('%s %s' % (ap['ap_given_names'], ap['ap_surname']))
+
+    return authorised_persons
 
 
 def _create_licence(licence_buffer, licence, application):
@@ -97,6 +104,9 @@ def _create_licence(licence_buffer, licence, application):
 
     doc = BaseDocTemplate(licence_buffer, pageTemplates=[every_page_template],
                           pagesize=A4)
+
+    # this is the only way to get data into the onPage callback function
+    doc.licence = licence
 
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name='InfoTitleLargeCenter', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE,
@@ -147,10 +157,10 @@ def _create_licence(licence_buffer, licence, application):
                               style=licence_table_style))
 
     # authorised persons
-    if 'authorised_persons' in application.data and len(application.data['authorised_persons']) > 0:
+    authorised_persons = _get_authorised_person_names(application)
+    if len(authorised_persons) > 0:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        authorized_persons = [Paragraph('%s %s' % (ap['ap_given_names'], ap['ap_surname']), styles['Left'])
-                              for ap in application.data['authorised_persons']]
+        authorized_persons = [Paragraph(ap, styles['Left']) for ap in authorised_persons]
         elements.append(Table([[Paragraph('Authorised Persons', styles['BoldLeft']), authorized_persons]],
                               colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                               style=licence_table_style))

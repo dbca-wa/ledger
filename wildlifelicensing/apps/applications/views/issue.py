@@ -50,11 +50,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             filename = '%s.pdf' % application.lodgement_number
 
-            licence.document = create_licence_pdf_document(filename, licence, application)
-
             if not licence.licence_no:
                 licence.save(no_revision=True)
                 licence.licence_no = str(licence.id).zfill(9)
+
+            licence.document = create_licence_pdf_document(filename, licence, application)
 
             licence.save()
 

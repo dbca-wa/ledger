@@ -620,18 +620,8 @@ class DataTableLicencesOfficerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        if not instance.licence_type.is_renewable:
-            return 'Not renewable'
-
-        try:
-            application = Application.objects.get(licence=instance)
-            if Application.objects.filter(previous_application=application).exists():
-                return 'Renewed'
-        except Application.DoesNotExist:
-            pass
-
-        url = reverse('applications:renew_licence', args=(instance.licence_type.code, instance.pk,))
-        return '<a href="{0}">Renew</a>'.format(url)
+        url = reverse('applications:reissue_licence', args=(instance.pk,))
+        return '<a href="{0}">Reissue</a>'.format(url)
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()
@@ -865,7 +855,7 @@ class DataTableApplicationCustomerView(DataTableApplicationBaseView):
 class DataTableLicencesCustomerView(DataTableBaseView):
     model = WildlifeLicence
     columns = ['licence_no', 'licence_type.code', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
-    order_columns = ['licence_no','licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
+    order_columns = ['licence_no', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
 
     columns_helpers = {
         'issue_date': {
@@ -897,7 +887,7 @@ class DataTableLicencesCustomerView(DataTableBaseView):
         except Application.DoesNotExist:
             pass
 
-        url = reverse('applications:renew_licence', args=(instance.licence_type.code, instance.pk,))
+        url = reverse('applications:renew_licence', args=(instance.pk,))
         return '<a href="{0}">Renew</a>'.format(url)
 
     def get_initial_queryset(self):
