@@ -16,5 +16,5 @@ class CheckLicenceRenewalsCronJob(CronJobBase):
     def do(self):
         expiry_notification_date = datetime.now() + timedelta(days=self.LICENCE_RENEWAL_NOTIFICATION_DAYS)
 
-        for licence in WildlifeLicence.objects.filter(end_date=expiry_notification_date, licence_type__is_renewable=True):
+        for licence in WildlifeLicence.objects.filter(end_date=expiry_notification_date, is_renewable=True):
             send_licence_renewal_email_notification(licence)
