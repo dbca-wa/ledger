@@ -25,7 +25,8 @@ define(
             $applicationsLicenceTypeFilter,
             $applicationsStatusTypeFilter,
             $applicationsAssigneeTypeFilter,
-            $licencesLicenceTypeFilter;
+            $licencesLicenceTypeFilter,
+            $licencesDateFilter;
 
         function initTables() {
             if (options.data.applications) {
@@ -40,10 +41,12 @@ define(
             var licencesTableOptions = $.extend({}, tableOptions, {
                     ajax: {
                         url: options.data.licences.ajax.url,
-                        //data: function (d) {
-                        //    // add filters to the query
-                        //    d.filters = $(options.selectors.licencesFilterForm).serializeArray();
-                        //},
+                        data: function (d) {
+                            // add filters to the query
+                            if ($(options.selectors.licencesFilterForm)) {
+                                d.filters = $(options.selectors.licencesFilterForm).serializeArray();
+                            }
+                        },
                         error: function (xhr, textStatus, thrownError) {
                             console.log("Error while loading licences data:", thrownError, textStatus, xhr.responseText, xhr.status);
                             //Stop the data table 'Processing'.
@@ -64,7 +67,7 @@ define(
             );
         }
 
-        function initLicensesFilters() {
+        function initLicencesFilters() {
             var data = options.data,
                 optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),
                 $node;
@@ -76,7 +79,7 @@ define(
                 }));
             }
             // licence type
-            if ($licencesLicenceTypeFilter.length && data.licences.filters.licenceType) {
+            if ($licencesLicenceTypeFilter && $licencesLicenceTypeFilter.length && data.licences.filters.licenceType) {
                 _.forEach(data.licences.filters.licenceType.values, function (value) {
 
                     $node = createOptionNode(value);
@@ -86,6 +89,17 @@ define(
                     licencesTable.ajax.reload();
                 });
             }
+            // date drop down
+            if ($licencesDateFilter && $licencesDateFilter.length && data.licences.filters.date) {
+                _.forEach(data.licences.filters.date.values, function (value) {
+                    $node = createOptionNode(value);
+                    $licencesDateFilter.append($node);
+                });
+                $licencesDateFilter.on('change', function () {
+                    licencesTable.ajax.reload();
+                });
+            }
+            
         }
 
         function initApplicationsTable() {
@@ -189,7 +203,8 @@ define(
                     licencesTable: '#licences-table',
                     licencesAccordion: '#licences-collapse',
                     licencesFilterForm: '#licences-filter-form',
-                    licencesLicenceTypeFilter: '#licences-filter-licence-type'
+                    licencesLicenceTypeFilter: '#licences-filter-licence-type',
+                    licencesDateFilter: '#licences-filter-date'
                 },
                 data: {
                     'applications': {
@@ -217,11 +232,13 @@ define(
                 $applicationsAssigneeTypeFilter = $(options.selectors.applicationsAssigneeFilter);
 
                 $licencesLicenceTypeFilter = $(options.selectors.licencesLicenceTypeFilter);
+                $licencesDateFilter = $(options.selectors.licencesDateFilter);
 
                 $(options.selectors.applicationsAccordion).collapse('show');
 
+
                 initApplicationsFilters();
-                initLicensesFilters();
+                initLicencesFilters();
                 if (options.data.query) {
                     // set filter according to query data
                     setFilters(options.data.query);

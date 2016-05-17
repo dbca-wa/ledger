@@ -22,7 +22,7 @@
         "children": [
             {
                 "type": "select",
-                "label": "Does this project require any other approvals, permits, licenses, etc under any other state or federal legislation?",
+                "label": "Does this project require any other approvals, permits, licences, etc under any other state or federal legislation?",
                 "name": "requires_permits",
                 "options": [
                     {"value": "yes", "label": "Yes"},
@@ -202,7 +202,7 @@
             },
             {
                 "type": "declaration",
-                "label": "I acknowledge that I will make changes in this system to authorised persons throughout license duration if changes are required",
+                "label": "I acknowledge that I will make changes in this system to authorised persons throughout licence duration if changes are required",
                 "name": "ap_change_acknowledgement"
             }
        ]
