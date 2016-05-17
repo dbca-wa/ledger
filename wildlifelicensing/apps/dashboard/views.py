@@ -326,7 +326,6 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         :param qs:
         :return:
         """
-        print('filters', self._parse_filters())
         query = Q()
         # part 1: filter from top level filters
         filters = self._parse_filters()
@@ -677,6 +676,24 @@ class DataTableLicencesOfficerView(DataTableBaseView):
             'render': lambda self, instance: self._render_action(instance)
         }
     }
+
+    @staticmethod
+    def filter_date(value):
+        today = datetime.date.today()
+        if value == TableLicencesOfficerView.DATE_FILTER_ACTIVE:
+            return Q(start_date__lte=today) & Q(end_date__gte=today)
+        elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRING:
+            return Q(end_date__gte=today) & Q(end_date__lte=today + datetime.timedelta(days=30))
+        elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRED:
+            return Q(end_date__lt=today)
+        else:
+            return None
+
+    def filter_licence_type(self, value):
+        if value.lower() != 'all':
+            return Q(licence_type__pk=value)
+        else:
+            return None
 
     @staticmethod
     def _render_action(instance):
