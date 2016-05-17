@@ -20,6 +20,7 @@ define(['jQuery'], function($) {
     }
     return {
         init: function() {
+            /* disable address maintenance feature
             $("#residential_address-source_types :button").click(
                 function() {
                     choose_address_source_type("residential",this);
@@ -45,6 +46,7 @@ define(['jQuery'], function($) {
                 var source_type = $("#" + address_type + "_address-source_type").val();
                 $("#" + address_type + "_address-source_types :button[value='" + source_type + "']").click();
             });
+            */
             
         }
 

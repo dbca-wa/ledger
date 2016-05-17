@@ -32,6 +32,7 @@
                     {% csrf_token %}
                     {% bootstrap_form_errors emailuser_form %}
                     {% bootstrap_form emailuser_form %}
+                    {% comment "disable address maintenance feature" %}
                     <div class="panel panel-default" id="residential_address_panel">
                         <div class="panel-heading">
                             <div class="row">
@@ -102,10 +103,12 @@
                         <div class="panel-body">
                         </div>
                     </div>
+                    {% endcomment %}
                     <button type="submit" class="btn btn-primary pull-right">Save</button>
                 </form>
             </div>
         </div>
+        {% comment "disable address maintenance feature" %}
         <div id="residential_address_cache" style="display:none">
             <div id="residential_address_body">
             {% bootstrap_form_errors residential_address_form %}
@@ -124,5 +127,6 @@
             {% bootstrap_form billing_address_form %}
             </div>
         </div>
+        {% endcomment %}
     </div>
 {% endblock %}

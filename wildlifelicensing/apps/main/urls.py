@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from .views import (
-        ListProfilesView, CreateProfilesView, EditProfilesView, 
+        ListProfilesView, CreateProfilesView, EditProfilesView, DeleteProfileView,
         IdentificationView,
         EditAccountView,
         ListDocumentView,EditDocumentView,CreateDocumentView,DeleteDocumentView
@@ -22,6 +22,8 @@ urlpatterns = [
     url('^profiles/create/$', CreateProfilesView.as_view(), name='create_profile'),
     url('^profiles/edit/$', EditProfilesView.as_view(), name='edit_profile_prefix'),
     url('^profiles/edit/([0-9]+)/$', EditProfilesView.as_view(), name='edit_profile'),
+    #url('^profiles/delete/(?P<id>[0-9]+)/$', DeleteProfileView.as_view(), name='delete_profile'),
+    #url('^profiles/delete/$', DeleteProfileView.as_view(), name='delete_profile_prefix'),
 
     url('^identification/$', IdentificationView.as_view(), name='identification'),
 ]
