@@ -1,8 +1,9 @@
 from django import forms
 
 from django_countries.widgets import CountrySelectWidget
+from django.core.exceptions import ValidationError
 
-from .models import EmailUser, Address, Profile
+from .models import Address, Profile, EmailUser,Document
 
 
 class FirstTimeForm(forms.Form):
@@ -12,29 +13,6 @@ class FirstTimeForm(forms.Form):
     dob = forms.DateField(input_formats=['%d/%m/%Y'])
 
 
-class EmailUserForm(forms.ModelForm):
-    email = forms.EmailField(required=False, help_text='If no email address is available, leave blank and a placeholder '
-                             'email will be generated for the customer')
-    first_name = forms.CharField()
-    last_name = forms.CharField()
-    dob = forms.DateField(input_formats=['%d/%m/%Y'])
-
-    class Meta:
-        model = EmailUser
-        fields = ['email', 'first_name', 'last_name', 'dob']
-
-    def save(self, force_insert=False, force_update=False, commit=True):
-        email_user = super(EmailUserForm, self).save(commit=False)
-
-        if not email_user.email:
-            email_user.email = '%s.%s.%s@ledger.dpaw.wa.gov.au' % (email_user.first_name, email_user.last_name, email_user.dob)
-
-        if commit:
-            email_user.save()
-
-        return email_user
-
-
 class AddressForm(forms.ModelForm):
     class Meta:
         model = Address
@@ -42,7 +20,44 @@ class AddressForm(forms.ModelForm):
         widgets = {'country': CountrySelectWidget()}
 
 
-class ProfileForm(forms.ModelForm):
+class ProfileBaseForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ProfileBaseForm, self).__init__(*args, **kwargs)
+
+        """
+        instance = kwargs.get("instance")
+        if instance and instance.pk:
+            self.fields['auth_identity'].initial = kwargs["instance"].auth_identity
+            if instance.user and instance.user.email == instance.email:
+                #the profile's email is the same as the user account email, it must be an email identity;
+                self.fields['auth_identity'].widget.attrs['disabled'] = True
+        """
+
+    def clean(self): 
+        super(ProfileBaseForm,self).clean();
+        #always create a email identity for profile email
+        self.cleaned_data["auth_identity"] = True
+
+    def clean_auth_identity(self):
+        if not self.cleaned_data.get("auth_identity",False):
+            if self.instance.user and self.instance.user.email == self.cleaned_data["email"]:
+                #the profile's email is the same as the user account email, it must be an email identity;
+                return True;
+        return self.cleaned_data.get("auth_identity")
+
+    def save(self,commit=True):
+        setattr(self.instance,"auth_identity",self.cleaned_data.get("auth_identity",False))
+        return super(ProfileBaseForm,self).save(commit)
+
+    class Meta:
+        model = Profile
+        fields = '__all__'
+
+class ProfileAdminForm(ProfileBaseForm):
+    pass
+
+class ProfileForm(ProfileBaseForm):
+    #auth_identity = forms.BooleanField(required=False)
     class Meta:
         model = Profile
         fields = ['name', 'email', 'institution']
@@ -58,3 +73,33 @@ class ProfileForm(forms.ModelForm):
 
         if initial_email is not None:
             self.fields['email'].initial = initial_email
+
+
+class EmailUserForm(forms.ModelForm):
+    class Meta:
+        model = EmailUser
+        fields = ['email','first_name','last_name','title','dob','phone_number','mobile_number','fax_number']
+
+    def __init__(self, *args, **kwargs):
+        super(EmailUserForm, self).__init__(*args, **kwargs)
+
+    def save(self, force_insert=False, force_update=False, commit=True):
+        email_user = super(EmailUserForm, self).save(commit=False)
+
+        if not email_user.email:
+            email_user.email = '%s.%s.%s@ledger.dpaw.wa.gov.au' % (email_user.first_name, email_user.last_name, email_user.dob)
+
+        if commit:
+            email_user.save()
+
+        return email_user
+
+
+class DocumentForm(forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ['name','description','file']
+
+    def __init__(self, *args, **kwargs):
+        super(DocumentForm, self).__init__(*args, **kwargs)
+
