@@ -74,7 +74,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                  'licencee.')
                 send_licence_issued_email(licence, application, issue_licence_form.cleaned_data['cover_letter_message'],
                                           request)
-            elif not application.applicant_profile.user.email.endswith('dpaw.wa.gov.au'):
+            elif not application.applicant_profile.user.email.endswith('ledger.dpaw.wa.gov.au'):
                 # customer applied offline but provided an email address
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
                                  'licencee. However, as the application was entered on behalf of the licencee by '

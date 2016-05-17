@@ -88,7 +88,7 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        kwargs['create_customer_form'] = EmailUserForm()
+        kwargs['create_customer_form'] = EmailUserForm(email_required=False)
 
         return super(CreateSelectCustomer, self).get_context_data(**kwargs)
 
@@ -97,7 +97,7 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
             request.session['application']['customer_pk'] = request.POST.get('customer')
             request.session.modified = True
         elif 'create' in request.POST:
-            create_customer_form = EmailUserForm(request.POST)
+            create_customer_form = EmailUserForm(request.POST, email_required=False)
             if create_customer_form.is_valid():
                 customer = create_customer_form.save()
                 request.session['application']['customer_pk'] = customer.id
