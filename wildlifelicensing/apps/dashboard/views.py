@@ -294,8 +294,50 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
                     query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
         return query
 
+    def _parse_filters(self):
+        """
+        The additional filters are sent in the query param with the following form (example):
+        'filters[0][name]': '['licence_type']'
+        'filters[0][value]: ['all']'
+        'filters[1][name]': '['status']'
+        'filters[1][value]: ['draft']'
+        .....
+        :return: a dict {
+            'licence_type': 'all',
+            'status': 'draft',
+            ....
+        }
+        """
+        result = {}
+        querydict = self._querydict
+        counter = 0
+        filter_key = 'filters[{0}][name]'.format(counter)
+        while filter_key in querydict:
+            result[querydict.get(filter_key)] = querydict.get('filters[{0}][value]'.format(counter))
+            counter += 1
+            filter_key = 'filters[{0}][name]'.format(counter)
+        return result
+
     def filter_queryset(self, qs):
+        """
+        Two level of filtering:
+        1- The filters included in the query (see _parse_filter)
+        2- The data table search filter
+        :param qs:
+        :return:
+        """
         query = Q()
+        # part 1: filter from top level filters
+        filters = self._parse_filters()
+        for filter_name, filter_value in filters.items():
+            # look for a filter_<filter_name> method and call it with the filter value
+            # the method must return a Q instance, if it returns None or anything else it will be ignored
+            filter_method = getattr(self, 'filter_' + filter_name.lower(), None)
+            if callable(filter_method):
+                q_filter = filter_method(filter_value)
+                if isinstance(q_filter, Q):
+                    query &= q_filter
+
         search = self.request.GET.get('search[value]', None)
         if search:
             query &= self._build_global_search_query(search)
@@ -555,6 +597,11 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
 class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
     template_name = 'wl/dash_tables_licences_officer.html'
 
+    DATE_FILTER_ACTIVE = 'active'
+    DATE_FILTER_EXPIRING = 'expiring'
+    DATE_FILTER_EXPIRED = 'expired'
+    DATE_FILTER_ALL = 'all'
+
     def _build_data(self):
         data = super(TableLicencesOfficerView, self)._build_data()
         del data['applications']
@@ -586,6 +633,18 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
             }
         ]
         data['licences']['ajax']['url'] = reverse('dashboard:data_licences_officer')
+        # filters (note: there is already the licenceType from the super class)
+        filters = {
+            'date': {
+                'values': [
+                    (self.DATE_FILTER_ACTIVE, self.DATE_FILTER_ACTIVE.capitalize()),
+                    (self.DATE_FILTER_EXPIRING, self.DATE_FILTER_EXPIRING.capitalize()),
+                    (self.DATE_FILTER_EXPIRED, self.DATE_FILTER_EXPIRED.capitalize()),
+                    (self.DATE_FILTER_ALL, self.DATE_FILTER_ALL.capitalize()),
+                ]
+            }
+        }
+        data['licences']['filters'].update(filters)
         # global table options
         data['licences']['tableOptions'] = {
             'pageLength': 25
@@ -621,6 +680,24 @@ class DataTableLicencesOfficerView(DataTableBaseView):
             'render': lambda self, instance: self._render_action(instance)
         }
     }
+
+    @staticmethod
+    def filter_date(value):
+        today = datetime.date.today()
+        if value == TableLicencesOfficerView.DATE_FILTER_ACTIVE:
+            return Q(start_date__lte=today) & Q(end_date__gte=today)
+        elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRING:
+            return Q(end_date__gte=today) & Q(end_date__lte=today + datetime.timedelta(days=30))
+        elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRED:
+            return Q(end_date__lt=today)
+        else:
+            return None
+
+    def filter_licence_type(self, value):
+        if value.lower() != 'all':
+            return Q(licence_type__pk=value)
+        else:
+            return None
 
     @staticmethod
     def _render_action(instance):

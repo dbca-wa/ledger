@@ -149,7 +149,7 @@ def send_licence_issued_email(licence, application, cover_letter_message, reques
         attachment = (file_name, licence.document.file.read(), 'application/pdf')
         attachments = [attachment]
     else:
-        logger.error('The license pk=' + licence.pk + ' has no document associated with it.')
+        logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
         attachments = None
     msg = email.send(licence.profile.email, context=context, attachments=attachments)
     log_entry = _log_email(msg, application=application, sender=request.user)
