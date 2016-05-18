@@ -36,6 +36,10 @@ def _get_user_licences(user):
     return WildlifeLicence.objects.filter(user=user)
 
 
+def _get_current_onbehalf_applications(officer):
+    return Application.objects.filter(proxy_applicant=officer).exclude(processing_status='issued')
+
+
 def _get_processing_statuses_but_draft():
     return [s for s in Application.PROCESSING_STATUS_CHOICES if s[0] != 'draft']
 
@@ -125,84 +129,6 @@ class DashboardTreeViewBase(TemplateView):
         if 'title' not in kwargs and hasattr(self, 'title'):
             kwargs['title'] = self.title
         return super(DashboardTreeViewBase, self).get_context_data(**kwargs)
-
-
-class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
-    template_name = 'wl/dash_tree.html'
-    title = 'Officer Dashboard'
-    url = reverse_lazy('dashboard:tables_applications_officer')
-
-    def _build_tree_nodes(self):
-        """
-            +Applications assigned to me
-              - status
-            +All applications
-              - status
-        """
-        # The draft status is excluded from the officer status list
-        statuses = _get_processing_statuses_but_draft()
-        all_applications = Application.objects.filter(processing_status__in=[s[0] for s in statuses])
-        all_applications_node = self._create_node('All applications', href=self.url,
-                                                  count=all_applications.count())
-        all_applications_node['state']['expanded'] = False
-        for s_value, s_title in statuses:
-            applications = all_applications.filter(processing_status=s_value)
-            if applications.count() > 0:
-                query = {
-                    'application_status': s_value,
-                }
-                href = _build_url(self.url, query)
-                node = self._create_node(s_title, href=href, count=applications.count())
-                self._add_node(all_applications_node, node)
-
-        user_applications = all_applications.filter(assigned_officer=self.request.user)
-        query = {
-            'application_assignee': self.request.user.pk
-        }
-        user_applications_node = self._create_node('My assigned applications', href=_build_url(self.url, query),
-                                                   count=user_applications.count())
-        user_applications_node['state']['expanded'] = True
-        for s_value, s_title in statuses:
-            applications = user_applications.filter(processing_status=s_value)
-            if applications.count() > 0:
-                query.update({
-                    'application_status': s_value
-                })
-                href = _build_url(self.url, query)
-                node = self._create_node(s_title, href=href, count=applications.count())
-                self._add_node(user_applications_node, node)
-
-        # Licences
-        url = reverse_lazy('dashboard:tables_licences_officer')
-        all_licences_node = self._create_node('All licences', href=url, count=WildlifeLicence.objects.count())
-
-        return [user_applications_node, all_applications_node, all_licences_node]
-
-
-class DashboardCustomerTreeView(LoginRequiredMixin, DashboardTreeViewBase):
-    template_name = 'wl/dash_tree.html'
-    title = 'My Dashboard'
-    url = reverse_lazy('dashboard:tables_customer')
-
-    def _build_tree_nodes(self):
-        """
-            +My applications
-              - status
-        :return:
-        """
-        my_applications = _get_user_applications(self.request.user)
-        my_applications_node = self._create_node('My applications', href=self.url, count=my_applications.count())
-        # one children node per status
-        for status_value, status_title in Application.CUSTOMER_STATUS_CHOICES:
-            applications = my_applications.filter(customer_status=status_value)
-            if applications.count() > 0:
-                query = {
-                    'application_status': status_value,
-                }
-                href = _build_url(self.url, query)
-                node = self._create_node(status_title, href=href, count=applications.count())
-                self._add_node(my_applications_node, node)
-        return [my_applications_node]
 
 
 class TableBaseView(TemplateView):
@@ -478,6 +404,70 @@ class DataTableApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
 #    Officers
 ########################
 
+class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
+    template_name = 'wl/dash_tree.html'
+    title = 'Officer Dashboard'
+    url = reverse_lazy('dashboard:tables_applications_officer')
+
+    def _build_tree_nodes(self):
+        """
+            +Applications assigned to me
+              - status
+            +All applications
+              - status
+        """
+        # The draft status is excluded from the officer status list
+        result = []
+        statuses = _get_processing_statuses_but_draft()
+        all_applications = Application.objects.filter(processing_status__in=[s[0] for s in statuses])
+        all_applications_node = self._create_node('All applications', href=self.url,
+                                                  count=all_applications.count())
+        all_applications_node['state']['expanded'] = False
+        for s_value, s_title in statuses:
+            applications = all_applications.filter(processing_status=s_value)
+            if applications.count() > 0:
+                query = {
+                    'application_status': s_value,
+                }
+                href = _build_url(self.url, query)
+                node = self._create_node(s_title, href=href, count=applications.count())
+                self._add_node(all_applications_node, node)
+
+        assigned_applications = all_applications.filter(assigned_officer=self.request.user)
+        query = {
+            'application_assignee': self.request.user.pk
+        }
+        assigned_applications_node = self._create_node('My assigned applications', href=_build_url(self.url, query),
+                                                       count=assigned_applications.count())
+        assigned_applications_node['state']['expanded'] = True
+        for s_value, s_title in statuses:
+            applications = assigned_applications.filter(processing_status=s_value)
+            if applications.count() > 0:
+                query.update({
+                    'application_status': s_value
+                })
+                href = _build_url(self.url, query)
+                node = self._create_node(s_title, href=href, count=applications.count())
+                self._add_node(assigned_applications_node, node)
+        result.append(assigned_applications_node)
+
+        on_behalf_applications = _get_current_onbehalf_applications(self.request.user)
+        if on_behalf_applications.count() > 0:
+            url = reverse_lazy('dashboard:tables_applications_officer_onbehalf')
+            on_behalf_applications_node = self._create_node('My current proxied applications', href=url,
+                                                            count=on_behalf_applications.count())
+            result.append(on_behalf_applications_node)
+
+        result.append(all_applications_node)
+
+        # Licences
+        url = reverse_lazy('dashboard:tables_licences_officer')
+        all_licences_node = self._create_node('All licences', href=url, count=WildlifeLicence.objects.count())
+        result.append(all_licences_node)
+
+        return result
+
+
 class TableApplicationsOfficerView(OfficerRequiredMixin, TableBaseView):
     template_name = 'wl/dash_tables_applications_officer.html'
 
@@ -592,6 +582,83 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
 
     def get_initial_queryset(self):
         return self.model.objects.all()
+
+
+class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, TableBaseView):
+    template_name = 'wl/dash_tables_applications_officer_onbehalf.html'
+
+    def _build_data(self):
+        data = super(TableApplicationsOfficerOnBehalfView, self)._build_data()
+        data['applications']['columnDefinitions'] = [
+            {
+                'title': 'Lodge No.'
+            },
+            {
+                'title': 'Licence Type'
+            },
+            {
+                'title': 'User'
+            },
+            {
+                'title': 'Status'
+            },
+            {
+                'title': 'Lodged on'
+            },
+            {
+                'title': 'Action',
+                'searchable': False,
+                'orderable': False
+            }
+        ]
+        data['applications']['ajax']['url'] = reverse('dashboard:data_application_officer_onbehalf')
+
+        return data
+
+
+class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, DataTableApplicationBaseView):
+    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
+               'action']
+    order_columns = ['lodgement_number', 'licence_type.code',
+                     ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
+                      'applicant_profile.user.email'],
+                     'processing_status', 'lodgement_date',
+                     '']
+
+    def _render_action_column(self, obj):
+        status = obj.customer_status
+        if status == 'draft':
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
+                'Continue application'
+            )
+        elif status == 'amendment_required' or status == 'id_and_amendment_required':
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
+                'Amend application'
+            )
+        elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('main:identification'),
+                'Update ID')
+        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
+            return '<a href="{0}" target="_blank">View licence</a>'.format(
+                obj.licence.document.file.url
+            )
+        else:
+            return 'Locked'
+
+    columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
+        'lodgement_date': {
+            'render': lambda self, instance: _render_date(instance.lodgement_date)
+        },
+        'action': {
+            'render': _render_action_column,
+        },
+    })
+
+    def get_initial_queryset(self):
+        return _get_current_onbehalf_applications(self.request.user)
 
 
 class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
