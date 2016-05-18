@@ -103,6 +103,15 @@
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
+                    {% if is_proxy_application %}
+                        <h3 class="section">Original Application Document</h3>
+                        <hr>
+                        <div class="form-group">
+                            <label>Application Document</label>
+                            <input name="application_document" type="file" class="form-control" accept=".pdf, .docx, .doc">
+                            <p class="help-block">Attach a scanned version of the original application as a Word or PDF document</p>
+                        </div>
+                    {% endif %}
                     <button type="submit" class="btn btn-primary pull-right" name="preview">Preview Application</button>
                     <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft_continue">Save Draft and Continue Editing</button>
                     <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>

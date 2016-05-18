@@ -264,6 +264,8 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 amendments = AmendmentRequest.objects.filter(application=application).filter(status='requested')
                 kwargs['amendments'] = amendments
 
+        kwargs['is_proxy_application'] = is_officer(self.request.user)
+
         if self.request.session.get('application') and 'data' in self.request.session.get('application'):
             kwargs['data'] = self.request.session.get('application').get('data')
 
@@ -317,7 +319,10 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                         messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
 
             for f in request.FILES:
-                application.documents.add(Document.objects.create(name=f, file=request.FILES[f]))
+                if f == 'application_document':
+                    application.hard_copy = Document.objects.create(name=f, file=request.FILES[f])
+                else:
+                    application.documents.add(Document.objects.create(name=f, file=request.FILES[f]))
 
             messages.warning(request, 'The application was saved to draft.')
 
@@ -332,6 +337,10 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                     request.session['application']['files'] = tempfile.mkdtemp()
                     request.session.modified = True
                 for f in request.FILES:
+                    if f == 'application_document':
+                        request.session['application']['application_document'] = str(request.FILES[f])
+                        request.session.modified = True
+
                     with open(os.path.join(request.session.get('application').get('files'), str(request.FILES[f])),
                               'wb+') as destination:
                         for chunk in request.FILES[f].chunks():
@@ -417,11 +426,21 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
                         application.documents.add(document)
 
+                if 'application_document' in request.session.get('application'):
+                    filename = request.session.get('application').get('application_document')
+                    document = Document.objects.create(name=filename)
+                    with open(os.path.join(request.session.get('application').get('files'), filename), 'rb') as doc_file:
+                        document.file.save(filename, File(doc_file), save=True)
+
+                        application.hard_copy = document
+                        application.save(no_revision=True)
+
                 messages.success(request, 'The application was successfully lodged.')
             except Exception as e:
                 messages.error(request, 'There was a problem creating the application: %s' % e)
             finally:
                 try:
+                    # delete temporary files that were stored in session
                     shutil.rmtree(request.session.get('application').get('files'))
                 except (shutil.Error, OSError) as e:
                     messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
