@@ -9,6 +9,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
 from django.db.models.signals import post_delete, pre_save, post_save
+from django.core.exceptions import ValidationError
 
 from reversion import revisions
 from django_countries.fields import CountryField
@@ -17,7 +18,7 @@ from social.apps.django_app.default.models import UserSocialAuth
 
 from datetime import datetime
 
-from ledger.accounts.signals import name_changed
+from ledger.accounts.signals import name_changed,post_clean
 
 
 class EmailUserManager(BaseUserManager):
@@ -259,6 +260,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                 return '{} ({})'.format(self.email, self.organisation)
             return '{}'.format(self.email)
 
+    def clean(self):
+        super(EmailUser,self).clean()
+        post_clean.send(sender=self.__class__, instance=self)
+
     def save(self, *args, **kwargs):
         if not self.email:
             self.email = self.get_dummy_email()
@@ -395,6 +400,10 @@ class Profile(RevisionedMixin):
 
         return self._auth_identity
 
+    def clean(self):
+        super(Profile,self).clean()
+        post_clean.send(sender=self.__class__, instance=self)
+
     def __str__(self):
         if len(self.name) > 0:
             return '{} ({})'.format(self.name, self.email)
@@ -453,3 +462,27 @@ class ProfileListener(object):
             # delete the profile's email from email identity and social auth
             EmailIdentity.objects.filter(email=original_instance.email, user=original_instance.user).delete()
             UserSocialAuth.objects.filter(provider="email", uid=original_instance.email, user=original_instance.user).delete()
+
+
+
+class EmailIdentityListener(object):
+    """
+    Event listener for EmailIdentity
+    """
+    @staticmethod
+    @receiver(post_clean, sender=Profile)
+    def _profile_post_clean(sender, instance, **kwargs):
+        if instance.email:
+            if EmailIdentity.objects.filter(email=instance.email).exclude(user=instance.user).exists():
+                #Email already used by other user in email identity.
+                raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
+
+    @staticmethod
+    @receiver(post_clean, sender=EmailUser)
+    def _emailuser_post_clean(sender, instance, **kwargs):
+        if instance.email:
+            if EmailIdentity.objects.filter(email=instance.email).exclude(user=instance).exists():
+                #Email already used by other user in email identity.
+                raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
+
+
