@@ -130,6 +130,11 @@ class SubmitConditionsAssessorView(CanEditAssessmentMixin, View):
         comment = request.POST.get('comment', '')
         if len(comment.strip()) > 0:
             assessment.comment = comment
+
+        purpose = request.POST.get('purpose', '')
+        if len(purpose.strip()) > 0:
+            assessment.purpose = purpose
+
         assessment.save()
 
         # set application status process
