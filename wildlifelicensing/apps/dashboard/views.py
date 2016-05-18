@@ -9,6 +9,7 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from django.db.models import Q
+from django.db.models.query import EmptyQuerySet
 from django.contrib.staticfiles.templatetags.staticfiles import static
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -201,6 +202,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
     }
 
     """
+    model = None
     columns_helpers = {
     }
 
@@ -280,124 +282,42 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
             result = super(DataTableBaseView, self).render_column(instance, column)
         return result
 
+    def get_initial_queryset(self):
+        if self.model:
+            return self.model.objects.all()
+        else:
+            return EmptyQuerySet()
 
-class DataTableApplicationBaseView(LoginRequiredMixin, BaseDatatableView):
+
+class DataTableApplicationBaseView(DataTableBaseView):
     model = Application
     columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
     order_columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
 
-    def _build_search_query(self, fields_to_search, search):
-        query = Q()
-        for field in fields_to_search:
-            query |= Q(**{"{0}__icontains".format(field): search})
-        return query
-
-    def _build_user_search_query(self, search):
-        fields_to_search = ['applicant_profile__user__last_name', 'applicant_profile__user__first_name']
-        return self._build_search_query(fields_to_search, search)
-
-    def _build_profile_search_query(self, search):
-        fields_to_search = ['applicant_profile__email', 'applicant_profile__name']
-        return self._build_search_query(fields_to_search, search)
-
-    def _render_user_column(self, obj):
-        return render_user_name(obj.applicant_profile.user, first_name_first=False)
-
-    def _render_profile_column(self, obj):
-        profile = obj.applicant_profile
-        if profile is None:
-            return 'unknown'
-        else:
-            # return the string rep
-            return '{}'.format(profile)
-
     columns_helpers = {
         'applicant_profile.user': {
-            'render': _render_user_column,
-            'search': _build_user_search_query
+            'render': lambda self, instance: render_user_name(instance.applicant_profile.user, first_name_first=False),
+            'search': lambda self, search: _build_field_query(
+                ['applicant_profile__user__last_name', 'applicant_profile__user__first_name'], search)
         },
         'applicant_profile': {
-            'render': _render_profile_column,
-            'search': _build_profile_search_query
+            'render': lambda self, instance: '{}'.format(instance.applicant_profile),
+            'search': lambda self, search: _build_field_query(
+                ['applicant_profile__email', 'applicant_profile__name'], search)
         }
     }
 
-    def _parse_filters(self):
-        """
-        The additional filters are sent in the query param with the following form (example):
-        'filters[0][name]': '['licence_type']'
-        'filters[0][value]: ['all']'
-        'filters[1][name]': '['status']'
-        'filters[1][value]: ['draft']'
-        .....
-        :return: a dict {
-            'licence_type': 'all',
-            'status': 'draft',
-            ....
-        }
-        """
-        result = {}
-        querydict = self._querydict
-        counter = 0
-        filter_key = 'filters[{0}][name]'.format(counter)
-        while filter_key in querydict:
-            result[querydict.get(filter_key)] = querydict.get('filters[{0}][value]'.format(counter))
-            counter += 1
-            filter_key = 'filters[{0}][name]'.format(counter)
-        return result
+    @staticmethod
+    def filter_status(value):
+        return Q(processing_status=value) if value.lower() != 'all' else None
 
-    def get_initial_queryset(self):
-        return self.model.objects.all()
+    @staticmethod
+    def filter_assignee(value):
+        return Q(assigned_officer__pk=value) if value.lower() != 'all' else None
 
-    def _build_status_filter(self, status_value):
-        return Q(processing_status=status_value) if status_value != 'all' else Q()
-
-    def filter_queryset(self, qs):
-        query = Q()
-        # part 1: filter from top level filters
-        filters = self._parse_filters()
-        for filter_name, filter_value in filters.items():
-            # if the value is 'all' no filter to apply.
-            # There is a special case for the status. There are two kinds of status depending on the user
-            # (customer or officer) also if the application is a draft it should not be seen by the officers.
-            # That is why the status filter is left to be implemented by subclasses.
-            if filter_name == 'status':
-                query &= self._build_status_filter(filter_value)
-            if filter_value != 'all':
-                if filter_name == 'assignee':
-                    query &= Q(assigned_officer__pk=filter_value)
-        # part 2: filter from the global search
-        search = self.request.GET.get('search[value]', None)
-        if search:
-            query &= self._build_global_search_query(search)
-        return qs.filter(query)
-
-    def render_column(self, application, column):
-        if column in self.columns_helpers and 'render' in self.columns_helpers[column]:
-            func = self.columns_helpers[column]['render']
-            if callable(func):
-                return func(self, application)
-            else:
-                return 'render is not a function'
-        else:
-            result = super(DataTableApplicationBaseView, self).render_column(application, column)
-        return result
-
-    def _build_global_search_query(self, search):
-        query = Q()
-        col_data = super(DataTableApplicationBaseView, self).extract_datatables_column_data()
-        for col_no, col in enumerate(col_data):
-            if col['searchable']:
-                col_name = self.columns[col_no]
-                # special cases
-                if col_name in self.columns_helpers and 'search' in self.columns_helpers[col_name]:
-                    func = self.columns_helpers[col_name]['search']
-                    if callable(func):
-                        q = func(self, search)
-                        query |= q
-                else:
-                    query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
-        return query
+    @staticmethod
+    def filter_licence_type(value):
+        return Q(licence_type__pk=value) if value.lower() != 'all' else None
 
 
 ########################
@@ -525,11 +445,35 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
                      ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
                      '']
 
-    def _build_status_filter(self, status_value):
-        # officers should not see applications in draft mode.
-        return Q(processing_status=status_value) if status_value != 'all' else ~Q(customer_status='draft')
+    columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
+        'assigned_officer': {
+            'search': lambda self, search: _build_field_query(
+                ['assigned_officer__last_name', 'assigned_officer__first_name'],
+                search
+            ),
+            'render': lambda self, instance: render_user_name(instance.assigned_officer)
+        },
+        'proxy_applicant': {
+            'search': lambda self, search: _build_field_query([
+                'proxy_applicant__last_name', 'proxy_applicant__first_name'],
+                search),
+            'render': lambda self, obj: render_user_name(obj.proxy_applicant)
+        },
+        'action': {
+            'render': lambda self, instance: DataTableApplicationsOfficerView._render_action_column(instance),
+        },
+        'lodgement_date': {
+            'render': lambda self, instance: _render_date(instance.lodgement_date)
+        },
+    })
 
-    def _render_action_column(self, obj):
+    @staticmethod
+    def filter_status(value):
+        # officers should not see applications in draft mode.
+        return Q(processing_status=value) if value != 'all' else ~Q(customer_status='draft')
+
+    @staticmethod
+    def _render_action_column(obj):
         if obj.processing_status == 'ready_for_conditions':
             return '<a href="{0}">Enter Conditions</a>'.format(
                 reverse('applications:enter_conditions', args=[obj.pk]),
@@ -546,42 +490,6 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
             return '<a href="{0}">Process</a>'.format(
                 reverse('applications:process', args=[obj.pk]),
             )
-
-    def _build_assignee_search_query(self, search):
-        fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name']
-        return self._build_search_query(fields_to_search, search)
-
-    def _build_proxy_search_query(self, search):
-        fields_to_search = ['assigned_officer__last_name', 'assigned_officer__first_name']
-        return self._build_search_query(fields_to_search, search)
-
-    def _render_assignee_column(self, obj):
-        return render_user_name(obj.assigned_officer)
-
-    def _render_lodgement_date(self, obj):
-        return _render_date(obj.lodgement_date)
-
-    columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
-        'assigned_officer': {
-            'search': _build_assignee_search_query,
-            'render': _render_assignee_column
-        },
-        'proxy_applicant': {
-            'search': lambda self, search: _build_field_query([
-                'proxy_applicant__last_name', 'proxy_applicant__first_name'],
-                search),
-            'render': lambda self, obj: render_user_name(obj.proxy_applicant)
-        },
-        'action': {
-            'render': _render_action_column,
-        },
-        'lodgement_date': {
-            'render': _render_lodgement_date
-        },
-    })
-
-    def get_initial_queryset(self):
-        return self.model.objects.all()
 
 
 class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, TableBaseView):
@@ -719,7 +627,7 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
         return data
 
 
-class DataTableLicencesOfficerView(DataTableBaseView):
+class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
     model = WildlifeLicence
     columns = ['licence_no', 'licence_type.code', 'profile.user', 'start_date', 'end_date', 'licence', 'action']
     order_columns = ['licence_no', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
@@ -760,7 +668,8 @@ class DataTableLicencesOfficerView(DataTableBaseView):
         else:
             return None
 
-    def filter_licence_type(self, value):
+    @staticmethod
+    def filter_licence_type(value):
         if value.lower() != 'all':
             return Q(licence_type__pk=value)
         else:
@@ -813,7 +722,7 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
         return data
 
 
-class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, DataTableApplicationBaseView):
+class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, DataTableBaseView):
     """
     Model of this table is not Application but Assessment
      see: get_initial_queryset method
@@ -836,47 +745,35 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, DataTable
          'application.assigned_officer.email'], ''
     ]
 
-    def _render_action_column(self, obj):
+    columns_helpers = dict(**{
+        'application.applicant_profile.user': {
+            'render': lambda self, instance: render_user_name(instance.application.applicant_profile.user),
+            'search': lambda self, search: _build_field_query(
+                ['application__applicant_profile__user__last_name', 'application__applicant_profile__user__first_name'],
+                search
+            ),
+        },
+        'application.assigned_officer': {
+            'render': lambda self, instance: render_user_name(instance.application.assigned_officer),
+            'search': lambda self, search: _build_field_query(
+                ['application__assigned_officer__last_name', 'application__assigned_officer__first_name',
+                 'application__assigned_officer__email'],
+                search
+            ),
+        },
+        'action': {
+            'render': lambda self, instance: DataTableApplicationAssessorView.render_action_column(instance),
+        },
+        'application.lodgement_date': {
+            'render': lambda self, instance: _render_date(instance.application.lodgement_date),
+        },
+    })
+
+    @staticmethod
+    def render_action_column(obj):
         return '<a href="{0}">Review</a>'.format(
             reverse('applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
         )
-
-    def _search_assignee_query(self, search):
-        fields_to_search = ['application__assigned_officer__last_name',
-                            'application__assigned_officer__first_name',
-                            'application__assigned_officer__email']
-        return self._build_search_query(fields_to_search, search)
-
-    def _render_assignee_column(self, obj):
-        return render_user_name(obj.application.assigned_officer)
-
-    def _render_lodgement_date(self, obj):
-        return _render_date(obj.application.lodgement_date)
-
-    def _render_applicant(self, obj):
-        return super(DataTableApplicationAssessorView, self)._render_user_column(obj.application),
-
-    def _search_user_query(self, search):
-        fields_to_search = ['application__applicant_profile__user__last_name',
-                            'application__applicant_profile__user__first_name']
-        return self._build_search_query(fields_to_search, search)
-
-    columns_helpers = dict(**{
-        'application.applicant_profile.user': {
-            'render': _render_applicant,
-            'search': _search_user_query
-        },
-        'application.assigned_officer': {
-            'search': _search_assignee_query,
-            'render': _render_assignee_column,
-        },
-        'action': {
-            'render': _render_action_column,
-        },
-        'application.lodgement_date': {
-            'render': _render_lodgement_date,
-        },
-    })
 
     def get_initial_queryset(self):
         groups = self.request.user.assessorgroup_set.all()
@@ -958,13 +855,17 @@ class DataTableApplicationCustomerView(DataTableApplicationBaseView):
     order_columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
                      '']
 
-    def get_initial_queryset(self):
-        return _get_user_applications(self.request.user)
+    columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
+        'action': {
+            'render': lambda self, instance: DataTableApplicationCustomerView.render_action_column(instance),
+        },
+        'lodgement_date': {
+            'render': lambda self, instance: _render_date(instance.lodgement_date)
+        },
+    })
 
-    def _build_status_filter(self, status_value):
-        return Q(customer_status=status_value) if status_value != 'all' else Q()
-
-    def _render_action_column(self, obj):
+    @staticmethod
+    def render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
@@ -987,17 +888,8 @@ class DataTableApplicationCustomerView(DataTableApplicationBaseView):
         else:
             return 'Locked'
 
-    def _render_lodgement_date(self, obj):
-        return _render_date(obj.lodgement_date)
-
-    columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
-        'action': {
-            'render': _render_action_column,
-        },
-        'lodgement_date': {
-            'render': _render_lodgement_date
-        },
-    })
+    def get_initial_queryset(self):
+        return _get_user_applications(self.request.user)
 
 
 class DataTableLicencesCustomerView(DataTableBaseView):
