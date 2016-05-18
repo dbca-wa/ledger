@@ -361,7 +361,7 @@ class ApplicationEntryTestCase(TestCase):
         original_applications_count = profile.application_set.count()
 
         # check that client can access the enter details page
-        response = self.client.get(reverse('applications:preview', args=('regulation17',)))
+        response = self.client.get(reverse('applications:enter_details', args=('regulation17',)))
         self.assertEqual(200, response.status_code)
 
         post_params = {
