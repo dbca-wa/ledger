@@ -59,18 +59,19 @@ def _create_licence_header(canvas, doc):
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER), 'Enquiries:')
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Telephone:')
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Facsimile:')
-
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4 - HEADER_MARGIN, 'Correspondance:')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Web Site:')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Correspondance:')
 
     current_x += 80
 
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER), '17 DICK PERRY AVE, KENSINGTON, WESTERN AUSTRALIA')
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, '08 9219 9000')
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, '08 9219 8242')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, doc.site_url)
 
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4 - HEADER_MARGIN, 'Locked Bag 30')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5 - HEADER_MARGIN, 'Bentley Delivery Centre WA 6983')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Locked Bag 30')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'Bentley Delivery Centre WA 6983')
 
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
@@ -97,7 +98,7 @@ def _get_authorised_person_names(application):
     return authorised_persons
 
 
-def _create_licence(licence_buffer, licence, application):
+def _create_licence(licence_buffer, licence, application, site_url):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='OtherPagesFrame')
     every_page_template = PageTemplate(id='OtherPages', frames=every_page_frame, onPage=_create_licence_header)
@@ -107,6 +108,7 @@ def _create_licence(licence_buffer, licence, application):
 
     # this is the only way to get data into the onPage callback function
     doc.licence = licence
+    doc.site_url = site_url
 
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name='InfoTitleLargeCenter', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE,
@@ -197,10 +199,10 @@ def _create_licence(licence_buffer, licence, application):
     return licence_buffer
 
 
-def create_licence_pdf_document(filename, licence, application):
+def create_licence_pdf_document(filename, licence, application, site_url):
     licence_buffer = BytesIO()
 
-    _create_licence(licence_buffer, licence, application)
+    _create_licence(licence_buffer, licence, application, site_url)
 
     document = Document.objects.create(name=filename)
     document.file.save(filename, File(licence_buffer), save=True)
@@ -210,10 +212,10 @@ def create_licence_pdf_document(filename, licence, application):
     return document
 
 
-def create_licence_pdf_bytes(filename, licence, application):
+def create_licence_pdf_bytes(filename, licence, application, site_url):
     licence_buffer = BytesIO()
 
-    _create_licence(licence_buffer, licence, application)
+    _create_licence(licence_buffer, licence, application, site_url)
 
     # Get the value of the BytesIO buffer
     value = licence_buffer.getvalue()

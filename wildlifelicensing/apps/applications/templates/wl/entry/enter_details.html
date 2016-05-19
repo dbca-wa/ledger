@@ -69,10 +69,10 @@
             <div class="row">
                 <div class="col-sm-2 col-md-10 col-md-offset-2">
                     <div id="amendments-panel">
-                    <h4>
-                        <span class="icon glyphicon glyphicon-alert text-warning"></span>
-                        <label>Your application requires the following amendment(s) before approval:</label>
-                    </h4>
+                        <h4>
+                            <span class="icon glyphicon glyphicon-alert text-warning"></span>
+                            <label>Your application requires the following amendment(s) before approval:</label>
+                        </h4>
                         {%  for amendment in amendments %}
                             <div class="alert alert-warning">
                                 {{ amendment.text }}

@@ -2,6 +2,7 @@ import os
 
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
@@ -54,7 +55,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 licence.save(no_revision=True)
                 licence.licence_no = str(licence.id).zfill(9)
 
-            licence.document = create_licence_pdf_document(filename, licence, application)
+            licence.document = create_licence_pdf_document(filename, licence, application,
+                                                           request.build_absolute_uri(reverse('home')))
 
             licence.save()
 
@@ -129,6 +131,7 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
 
         response = HttpResponse(content_type='application/pdf')
 
-        response.write(create_licence_pdf_bytes(filename, licence, application))
+        response.write(create_licence_pdf_bytes(filename, licence, application,
+                                                request.build_absolute_uri(reverse('home'))))
 
         return response

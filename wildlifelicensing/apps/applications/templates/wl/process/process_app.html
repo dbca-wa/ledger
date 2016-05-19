@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/process/process_app'], function (app, applicationPreview) {
+    require(['js/process/process_app'], function (app) {
         $(function () {
             data = {{ data|jsonify }};
             app.initialiseApplicationProcesssing(data);

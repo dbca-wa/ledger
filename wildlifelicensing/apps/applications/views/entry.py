@@ -13,8 +13,7 @@ from django.core.files import File
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from ledger.accounts.models import EmailUser, Profile
-from ledger.accounts.models import Document
+from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
@@ -22,7 +21,7 @@ from wildlifelicensing.apps.main.forms import IdentificationForm
 
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
-    set_app_session_data, is_app_session_data_set, get_app_session_data, \
+    prepend_url_to_application_data_files, set_app_session_data, is_app_session_data_set, get_app_session_data, \
     delete_app_session_data, determine_applicant, SessionDataMissingException, clone_application_for_renewal
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin
@@ -57,6 +56,8 @@ class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         delete_app_session_data(request.session)
 
+        set_app_session_data(request.session, 'temp_files_dir', tempfile.mkdtemp(dir=settings.MEDIA_ROOT))
+
         if is_customer(request.user):
             set_app_session_data(request.session, 'customer_pk', request.user.pk)
 
@@ -69,11 +70,21 @@ class EditApplicationView(UserCanEditApplicationMixin, View):
     def get(self, request, *args, **kwargs):
         delete_app_session_data(request.session)
 
+        temp_files_dir = tempfile.mkdtemp(dir=settings.MEDIA_ROOT)
+        set_app_session_data(request.session, 'temp_files_dir', temp_files_dir)
+
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
         if application is not None:
             set_app_session_data(request.session, 'customer_pk', application.applicant_profile.user.pk)
             set_app_session_data(request.session, 'profile_pk', application.applicant_profile.pk)
             set_app_session_data(request.session, 'data', application.data)
+
+            # copy document files into temp_files_dir
+            for document in application.documents.all():
+                shutil.copyfile(document.file.path, os.path.join(temp_files_dir, document.name))
+
+            if application.hard_copy is not None:
+                shutil.copyfile(application.hard_copy.file.path, os.path.join(temp_files_dir, application.hard_copy.name))
 
         return redirect('applications:enter_details', *args, **kwargs)
 
@@ -258,7 +269,14 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 kwargs['amendments'] = amendments
 
         if is_app_session_data_set(self.request.session, 'data'):
-            kwargs['data'] = get_app_session_data(self.request.session, 'data')
+            data = get_app_session_data(self.request.session, 'data')
+
+            temp_files_url = settings.MEDIA_URL + \
+                os.path.basename(os.path.normpath(get_app_session_data(self.request.session, 'temp_files_dir')))
+
+            prepend_url_to_application_data_files(form_structure, data, temp_files_url)
+
+            kwargs['data'] = data
 
         return super(EnterDetailsView, self).get_context_data(**kwargs)
 
@@ -267,6 +285,8 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             form_structure = json.load(data_file)
 
         set_app_session_data(request.session, 'data', create_data_from_form(form_structure, request.POST, request.FILES))
+
+        temp_files_dir = get_app_session_data(request.session, 'temp_files_dir')
 
         if 'draft' in request.POST or 'draft_continue' in request.POST:
             if len(args) > 1:
@@ -288,33 +308,37 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
             application.save(version_user=application.applicant_profile.user)
 
-            if is_app_session_data_set(request.session, 'files') and \
-                    os.path.exists(get_app_session_data(request.session, 'files')):
-                file_path = get_app_session_data(request.session, 'files')
-                try:
-                    for filename in get_all_filenames_from_application_data(form_structure,
-                                                                            get_app_session_data(request.session, 'data')):
+            # delete all existing documents for this application
+            application.documents.all().delete()
+            if application.hard_copy is not None:
+                application.hard_copy.delete()
 
-                        # need to be sure file is in tmp directory (as it could be a freshly attached file)
-                        if os.path.exists(os.path.join(file_path, filename)):
-                            document = Document.objects.create(name=filename)
-                            with open(os.path.join(file_path, filename),
-                                      'rb') as doc_file:
-                                document.file.save(filename, File(doc_file), save=True)
-                                application.documents.add(document)
-                except Exception as e:
-                    messages.error(request, 'There was a problem appending applications files: %s' % e)
-                finally:
-                    try:
-                        shutil.rmtree(file_path)
-                    except (shutil.Error, OSError) as e:
-                        messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
+            # need to create documents from all the existing files that haven't been replaced
+            # (saved in temp_files_dir) as well as any new ones
+            try:
+                for filename in get_all_filenames_from_application_data(form_structure,
+                                                                        get_app_session_data(request.session, 'data')):
+
+                    # need to be sure file is in tmp directory (as it could be a freshly attached file)
+                    if os.path.exists(os.path.join(temp_files_dir, filename)):
+                        document = Document.objects.create(name=filename)
+                        with open(os.path.join(temp_files_dir, filename), 'rb') as doc_file:
+                            document.file.save(filename, File(doc_file), save=True)
+                            application.documents.add(document)
+            except Exception as e:
+                messages.error(request, 'There was a problem appending applications files: %s' % e)
+
+            finally:
+                try:
+                    shutil.rmtree(temp_files_dir)
+                except (shutil.Error, OSError) as e:
+                    messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
 
             for f in request.FILES:
                 if f == 'application_document':
-                    application.hard_copy = Document.objects.create(name=f, file=request.FILES[f])
+                    application.hard_copy = Document.objects.create(name=str(request.FILES[f]), file=request.FILES[f])
                 else:
-                    application.documents.add(Document.objects.create(name=f, file=request.FILES[f]))
+                    application.documents.add(Document.objects.create(name=str(request.FILES[f]), file=request.FILES[f]))
 
             messages.warning(request, 'The application was saved to draft.')
 
@@ -325,16 +349,13 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 return redirect('applications:enter_details', args[0], application.pk)
         else:
             if len(request.FILES) > 0:
-                file_path = get_app_session_data(request.session, 'files')
-                if file_path is None:
-                    file_path = tempfile.mkdtemp(settings.MEDIA_ROOT)
-                    set_app_session_data(request.session, 'files', file_path)
+                temp_files_dir = get_app_session_data(request.session, 'temp_files_dir')
+
                 for f in request.FILES:
                     if f == 'application_document':
                         set_app_session_data(request.session, 'application_document', str(request.FILES[f]))
 
-                    with open(os.path.join(file_path, str(request.FILES[f])),
-                              'wb+') as destination:
+                    with open(os.path.join(temp_files_dir, str(request.FILES[f])), 'wb+') as destination:
                         for chunk in request.FILES[f].chunks():
                             destination.write(chunk)
 
@@ -348,8 +369,10 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0])) as data_file:
             form_structure = json.load(data_file)
 
-        application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
         licence_type = WildlifeLicenceType.objects.get(code=self.args[0])
+
+        application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
+
         if is_app_session_data_set(self.request.session, 'profile_pk'):
             profile = get_object_or_404(Profile, pk=get_app_session_data(self.request.session, 'profile_pk'))
         else:
@@ -365,9 +388,14 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             kwargs['application_pk'] = self.args[1]
 
         if is_app_session_data_set(self.request.session, 'data'):
-            kwargs['data'] = get_app_session_data(self.request.session, 'data')
-        else:
-            kwargs['data'] = application.data
+            data = get_app_session_data(self.request.session, 'data')
+
+            temp_files_url = settings.MEDIA_URL + \
+                os.path.basename(os.path.normpath(get_app_session_data(self.request.session, 'temp_files_dir')))
+
+            prepend_url_to_application_data_files(form_structure, data, temp_files_url)
+
+            kwargs['data'] = data
 
         return super(PreviewView, self).get_context_data(**kwargs)
 
@@ -390,6 +418,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         application.applicant_profile = get_object_or_404(Profile, pk=get_app_session_data(request.session, 'profile_pk'))
         application.lodgement_sequence += 1
         application.lodgement_date = datetime.now().date()
+
         if application.customer_status == 'amendment_required':
             # this is a 're-lodged' application after some amendment were required.
             # from this point we assume that all the amendments have been amended.
@@ -399,46 +428,49 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         else:
             if application.processing_status != 'renewal':
                 application.processing_status = 'new'
+
         application.customer_status = 'under_review'
 
+        # need to save application in order to get its pk
         if not application.lodgement_number:
             application.save(no_revision=True)
-            application.lodgement_number = str(application.id).zfill(9)
+            application.lodgement_number = str(application.pk).zfill(9)
 
         application.save(version_user=application.applicant_profile.user, version_comment='Details Modified')
 
+        # delete all existing documents for this application
+        application.documents.all().delete()
+        if application.hard_copy is not None:
+            application.hard_copy.delete()
+
         # if attached files were saved temporarily, add each to application as part of a Document
-        if is_app_session_data_set(request.session, 'files') and \
-                os.path.exists(get_app_session_data(request.session, 'files')):
-            file_path = get_app_session_data(request.session, 'files')
-            try:
-                for filename in get_all_filenames_from_application_data(form_structure,
-                                                                        get_app_session_data(request.session, 'data')):
-                    document = Document.objects.create(name=filename)
-                    with open(os.path.join(file_path, filename), 'rb') as doc_file:
-                        document.file.save(filename, File(doc_file), save=True)
+        temp_files_dir = get_app_session_data(request.session, 'temp_files_dir')
+        try:
+            for filename in get_all_filenames_from_application_data(form_structure,
+                                                                    get_app_session_data(request.session, 'data')):
+                document = Document.objects.create(name=filename)
+                with open(os.path.join(temp_files_dir, filename), 'rb') as doc_file:
+                    document.file.save(filename, File(doc_file), save=True)
 
-                        application.documents.add(document)
+                    application.documents.add(document)
 
-                if is_app_session_data_set(request.session, 'application_document'):
-                    filename = get_app_session_data(request.session, 'application_document')
-                    document = Document.objects.create(name=filename)
-                    with open(os.path.join(get_app_session_data(request.session, 'files'), filename), 'rb') as doc_file:
-                        document.file.save(filename, File(doc_file), save=True)
+            if is_app_session_data_set(request.session, 'application_document'):
+                filename = get_app_session_data(request.session, 'application_document')
+                document = Document.objects.create(name=filename)
+                with open(os.path.join(get_app_session_data(request.session, 'temp_files_dir'), filename), 'rb') as doc_file:
+                    document.file.save(filename, File(doc_file), save=True)
 
-                        application.hard_copy = document
-                        application.save(no_revision=True)
+                    application.hard_copy = document
+                    application.save(no_revision=True)
 
-                messages.success(request, 'The application was successfully lodged.')
-            except Exception as e:
-                messages.error(request, 'There was a problem creating the application: %s' % e)
-            finally:
-                try:
-                    shutil.rmtree(file_path)
-                except (shutil.Error, OSError) as e:
-                    messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
-        else:
             messages.success(request, 'The application was successfully lodged.')
+        except Exception as e:
+            messages.error(request, 'There was a problem creating the application: %s' % e)
+        finally:
+            try:
+                shutil.rmtree(temp_files_dir)
+            except (shutil.Error, OSError) as e:
+                messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
 
         delete_app_session_data(request.session)
 
