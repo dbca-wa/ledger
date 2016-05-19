@@ -29,7 +29,7 @@
                         <h4 class="panel-title">
                             <a role="button" data-toggle="collapse" href="#applications-collapse"
                                aria-expanded="true" aria-controls="collapseOne">
-                                <h3>Applications</h3>
+                                <h3>{% block applications_title %}Applications{% endblock %}</h3>
                             </a>
                         </h4>
                     </div>
@@ -55,7 +55,7 @@
                         <h4 class="panel-title">
                             <a role="button" data-toggle="collapse" href="#licences-collapse"
                                aria-expanded="true" aria-controls="collapseOne">
-                                <h3>Licences</h3>
+                                <h3>{%  block licences_title %}Licences{% endblock %}</h3>
                             </a>
                         </h4>
                     </div>

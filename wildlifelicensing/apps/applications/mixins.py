@@ -11,6 +11,7 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
     in editable mode.
     This mixin assume that the url contains the pk of the application on 2nd position.
     If the user is not logged-in it redirects to the login page, else it throws a 403
+    Officers can edit an application
     """
     login_url = reverse_lazy('home')
     permission_denied_message = "You don't have the permission to access this resource."
@@ -30,6 +31,8 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
         if not user.is_authenticated():
             self.raise_exception = False
             return False
+        if is_officer(user):
+            return True
         self.raise_exception = True
         application = self.get_application()
         if application is not None:
