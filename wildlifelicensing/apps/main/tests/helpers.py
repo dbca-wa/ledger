@@ -79,8 +79,6 @@ def add_to_group(user, group_name):
 
 def get_or_create_user(email, defaults):
     user, created = EmailUser.objects.get_or_create(defaults=defaults, email=email)
-    if created:
-        UserSocialAuth.create_social_auth(user, user.email, 'email')
     return user, created
 
 

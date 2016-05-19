@@ -132,7 +132,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
             messages.error(self.request, e.message)
-            return redirect('applications:create_select_customer', *args)
+            return redirect('applications:create_select_customer')
 
         if licence_type.identification_required and applicant.identification is None:
             return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
@@ -149,7 +149,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
             messages.error(self.request, e.message)
-            return redirect('applications:create_select_customer', *self.args)
+            return redirect('applications:create_select_customer')
 
         if applicant.identification is not None:
             applicant.identification.delete()
@@ -177,7 +177,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
             messages.error(self.request, e.message)
-            return redirect('applications:create_select_customer', *self.args)
+            return redirect('applications:create_select_customer')
 
         profile_exists = applicant.profile_set.count() > 0
 
@@ -203,7 +203,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
             applicant = determine_applicant(request)
         except SessionDataMissingException as e:
             messages.error(request, e.message)
-            return redirect('applications:create_select_customer', *args)
+            return redirect('applications:create_select_customer')
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
 
