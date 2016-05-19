@@ -8,6 +8,7 @@ from datetime import datetime
 from django.views.generic.base import View, TemplateView
 from django.views.generic.edit import FormView
 from django.shortcuts import render, redirect, get_object_or_404
+from django.conf import settings
 from django.core.files import File
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -21,8 +22,8 @@ from wildlifelicensing.apps.main.forms import IdentificationForm
 
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
 from wildlifelicensing.apps.applications.utils import create_data_from_form, get_all_filenames_from_application_data, \
-    set_application_session_data, is_application_session_data_set, get_application_session_data, \
-    delete_application_session_data, determine_applicant,SessionDataMissingException, clone_application_for_renewal
+    set_app_session_data, is_app_session_data_set, get_app_session_data, \
+    delete_app_session_data, determine_applicant, SessionDataMissingException, clone_application_for_renewal
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
@@ -37,8 +38,8 @@ class ApplicationEntryBaseView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
 
-        if is_officer(self.request.user) and is_application_session_data_set(self.request.session, 'customer_pk'):
-            kwargs['customer'] = EmailUser.objects.get(pk=get_application_session_data(self.request.session, 'customer_pk'))
+        if is_officer(self.request.user) and is_app_session_data_set(self.request.session, 'customer_pk'):
+            kwargs['customer'] = EmailUser.objects.get(pk=get_app_session_data(self.request.session, 'customer_pk'))
 
         kwargs['is_renewal'] = False
         if len(self.args) > 1:
@@ -54,13 +55,10 @@ class ApplicationEntryBaseView(TemplateView):
 
 class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        delete_application_session_data(request.session)
-
-        request.session['application'] = {}
-        request.session.modified = True
+        delete_app_session_data(request.session)
 
         if is_customer(request.user):
-            set_application_session_data(request.session, 'customer_pk', request.user.pk)
+            set_app_session_data(request.session, 'customer_pk', request.user.pk)
 
             return redirect('applications:select_licence_type', *args, **kwargs)
         else:
@@ -69,13 +67,13 @@ class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
 
 class EditApplicationView(UserCanEditApplicationMixin, View):
     def get(self, request, *args, **kwargs):
-        delete_application_session_data(request.session)
+        delete_app_session_data(request.session)
 
         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
         if application is not None:
-            set_application_session_data(request.session, 'customer_pk', application.applicant_profile.user.pk)
-            set_application_session_data(request.session, 'profile_pk', application.applicant_profile.user.pk)
-            set_application_session_data(request.session, 'data', application.data)
+            set_app_session_data(request.session, 'customer_pk', application.applicant_profile.user.pk)
+            set_app_session_data(request.session, 'profile_pk', application.applicant_profile.pk)
+            set_app_session_data(request.session, 'data', application.data)
 
         return redirect('applications:enter_details', *args, **kwargs)
 
@@ -91,12 +89,12 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         if 'select' in request.POST:
-            set_application_session_data(request.session, 'customer_pk', request.POST.get('customer'))
+            set_app_session_data(request.session, 'customer_pk', request.POST.get('customer'))
         elif 'create' in request.POST:
             create_customer_form = EmailUserForm(request.POST, email_required=False)
             if create_customer_form.is_valid():
                 customer = create_customer_form.save()
-                set_application_session_data(request.session, 'customer_pk', customer.id)
+                set_app_session_data(request.session, 'customer_pk', customer.id)
             else:
                 context = {'licence_type': get_object_or_404(WildlifeLicenceType, code=self.args[0]),
                            'create_customer_form': create_customer_form}
@@ -176,8 +174,8 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
 
         profile_exists = applicant.profile_set.count() > 0
 
-        if is_application_session_data_set(self.request.session, 'profile_pk'):
-            selected_profile = Profile.objects.get(id=get_application_session_data(self.request.session, 'profile_pk'))
+        if is_app_session_data_set(self.request.session, 'profile_pk'):
+            selected_profile = Profile.objects.get(id=get_app_session_data(self.request.session, 'profile_pk'))
             kwargs['profile_selection_form'] = ProfileSelectionForm(user=applicant, selected_profile=selected_profile)
         else:
             if profile_exists:
@@ -206,8 +204,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
             profile_selection_form = ProfileSelectionForm(request.POST, user=applicant)
 
             if profile_selection_form.is_valid():
-                set_application_session_data(request.session, 'profile_pk', profile_selection_form.cleaned_data.get('profile').id)
-                request.session.modified = True
+                set_app_session_data(request.session, 'profile_pk', profile_selection_form.cleaned_data.get('profile').id)
             else:
                 return render(request, self.template_name, {'licence_type': licence_type,
                                                             'profile_selection_form': profile_selection_form,
@@ -223,7 +220,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                 profile.user = applicant
                 profile.save()
 
-                set_application_session_data(request.session, 'profile_pk', profile.id)
+                set_app_session_data(request.session, 'profile_pk', profile.id)
             else:
                 return render(request, self.template_name,
                               {'licence_type': licence_type,
@@ -240,8 +237,8 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
 
         licence_type = WildlifeLicenceType.objects.get(code=self.args[0])
-        if is_application_session_data_set(self.request.session, 'profile_pk'):
-            profile = get_object_or_404(Profile, pk=self.request.session.get('application').get('profile_pk'))
+        if is_app_session_data_set(self.request.session, 'profile_pk'):
+            profile = get_object_or_404(Profile, pk=get_app_session_data(self.request.session, 'profile_pk'))
         else:
             profile = application.applicant_profile
 
@@ -252,14 +249,16 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         kwargs['profile'] = profile
         kwargs['structure'] = form_structure
 
+        kwargs['is_proxy_applicant'] = is_officer(self.request.user)
+
         if application is not None:
             kwargs['application_pk'] = application.pk
             if application.review_status == 'awaiting_amendments':
                 amendments = AmendmentRequest.objects.filter(application=application).filter(status='requested')
                 kwargs['amendments'] = amendments
 
-        if is_application_session_data_set(self.request.session, 'data'):
-            kwargs['data'] = get_application_session_data(self.request.session, 'data')
+        if is_app_session_data_set(self.request.session, 'data'):
+            kwargs['data'] = get_app_session_data(self.request.session, 'data')
 
         return super(EnterDetailsView, self).get_context_data(**kwargs)
 
@@ -267,7 +266,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
             form_structure = json.load(data_file)
 
-        set_application_session_data(request.session, 'data', create_data_from_form(form_structure, request.POST, request.FILES))
+        set_app_session_data(request.session, 'data', create_data_from_form(form_structure, request.POST, request.FILES))
 
         if 'draft' in request.POST or 'draft_continue' in request.POST:
             if len(args) > 1:
@@ -278,10 +277,10 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             if is_officer(request.user):
                 application.proxy_applicant = request.user
 
-            application.data = get_application_session_data(request.session, 'data')
+            application.data = get_app_session_data(request.session, 'data')
             application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
             application.applicant_profile = get_object_or_404(Profile,
-                                                              pk=get_application_session_data(request.session, 'profile_pk'))
+                                                              pk=get_app_session_data(request.session, 'profile_pk'))
             application.customer_status = 'draft'
 
             if application.processing_status != 'renewal':
@@ -289,14 +288,14 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
             application.save(version_user=application.applicant_profile.user)
 
-            if is_application_session_data_set(request.session, 'files') and \
-                    os.path.exists(get_application_session_data(request.session, 'files')):
-                file_path = get_application_session_data(request.session, 'files')
+            if is_app_session_data_set(request.session, 'files') and \
+                    os.path.exists(get_app_session_data(request.session, 'files')):
+                file_path = get_app_session_data(request.session, 'files')
                 try:
                     for filename in get_all_filenames_from_application_data(form_structure,
-                                                                            get_application_session_data(request.session, 'data')):
+                                                                            get_app_session_data(request.session, 'data')):
+
                         # need to be sure file is in tmp directory (as it could be a freshly attached file)
-                        
                         if os.path.exists(os.path.join(file_path, filename)):
                             document = Document.objects.create(name=filename)
                             with open(os.path.join(file_path, filename),
@@ -320,20 +319,21 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.warning(request, 'The application was saved to draft.')
 
             if 'draft' in request.POST:
-                delete_application_session_data(request.session)
+                delete_app_session_data(request.session)
                 return redirect('dashboard:home')
             else:
                 return redirect('applications:enter_details', args[0], application.pk)
         else:
             if len(request.FILES) > 0:
-                if not is_application_session_data_set(request.session, 'files'):
-                    set_application_session_data(request.session, 'files', tempfile.mkdtemp())
+                file_path = get_app_session_data(request.session, 'files')
+                if file_path is None:
+                    file_path = tempfile.mkdtemp(settings.MEDIA_ROOT)
+                    set_app_session_data(request.session, 'files', file_path)
                 for f in request.FILES:
                     if f == 'application_document':
-                        request.session['application']['application_document'] = str(request.FILES[f])
-                        request.session.modified = True
+                        set_app_session_data(request.session, 'application_document', str(request.FILES[f]))
 
-                    with open(os.path.join(request.session.get('application').get('files'), str(request.FILES[f])),
+                    with open(os.path.join(file_path, str(request.FILES[f])),
                               'wb+') as destination:
                         for chunk in request.FILES[f].chunks():
                             destination.write(chunk)
@@ -350,8 +350,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
         licence_type = WildlifeLicenceType.objects.get(code=self.args[0])
-        if is_application_session_data_set(self.request.session, 'profile_pk'):
-            profile = get_object_or_404(Profile, pk=get_application_session_data('profile_pk', self.request.session))
+        if is_app_session_data_set(self.request.session, 'profile_pk'):
+            profile = get_object_or_404(Profile, pk=get_app_session_data(self.request.session, 'profile_pk'))
         else:
             profile = application.applicant_profile
 
@@ -359,11 +359,13 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         kwargs['profile'] = profile
         kwargs['structure'] = form_structure
 
+        kwargs['is_proxy_applicant'] = is_officer(self.request.user)
+
         if len(self.args) > 1:
             kwargs['application_pk'] = self.args[1]
 
-        if is_application_session_data_set(self.request.session, 'data'):
-            kwargs['data'] = get_application_session_data(self.request.session, 'data')
+        if is_app_session_data_set(self.request.session, 'data'):
+            kwargs['data'] = get_app_session_data(self.request.session, 'data')
         else:
             kwargs['data'] = application.data
 
@@ -381,11 +383,11 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         if is_officer(request.user):
             application.proxy_applicant = request.user
 
-        application.data = get_application_session_data(self.request.session, 'data')
+        application.data = get_app_session_data(self.request.session, 'data')
         application.licence_type = get_object_or_404(WildlifeLicenceType, code=args[0])
         application.correctness_disclaimer = request.POST.get('correctnessDisclaimer', '') == 'on'
         application.further_information_disclaimer = request.POST.get('furtherInfoDisclaimer', '') == 'on'
-        application.applicant_profile = get_object_or_404(Profile, pk=request.session.get('application').get('profile_pk'))
+        application.applicant_profile = get_object_or_404(Profile, pk=get_app_session_data(request.session, 'profile_pk'))
         application.lodgement_sequence += 1
         application.lodgement_date = datetime.now().date()
         if application.customer_status == 'amendment_required':
@@ -406,22 +408,22 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         application.save(version_user=application.applicant_profile.user, version_comment='Details Modified')
 
         # if attached files were saved temporarily, add each to application as part of a Document
-        if is_application_session_data_set(request.session, 'files') and \
-                os.path.exists(get_application_session_data(request.session, 'files')):
-            file_path = get_application_session_data(request.session, 'files')
+        if is_app_session_data_set(request.session, 'files') and \
+                os.path.exists(get_app_session_data(request.session, 'files')):
+            file_path = get_app_session_data(request.session, 'files')
             try:
                 for filename in get_all_filenames_from_application_data(form_structure,
-                                                                        get_application_session_data(request.session, 'data')):
+                                                                        get_app_session_data(request.session, 'data')):
                     document = Document.objects.create(name=filename)
                     with open(os.path.join(file_path, filename), 'rb') as doc_file:
                         document.file.save(filename, File(doc_file), save=True)
 
                         application.documents.add(document)
 
-                if 'application_document' in request.session.get('application'):
-                    filename = request.session.get('application').get('application_document')
+                if is_app_session_data_set(request.session, 'application_document'):
+                    filename = get_app_session_data(request.session, 'application_document')
                     document = Document.objects.create(name=filename)
-                    with open(os.path.join(request.session.get('application').get('files'), filename), 'rb') as doc_file:
+                    with open(os.path.join(get_app_session_data(request.session, 'files'), filename), 'rb') as doc_file:
                         document.file.save(filename, File(doc_file), save=True)
 
                         application.hard_copy = document
@@ -438,14 +440,14 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         else:
             messages.success(request, 'The application was successfully lodged.')
 
-        delete_application_session_data(request.session)
+        delete_app_session_data(request.session)
 
         return redirect('dashboard:home')
 
 
 class RenewLicenceView(View): #NOTE: need a UserCanRenewLicence type mixin
     def get(self, request, *args, **kwargs):
-        delete_application_session_data(request.session)
+        delete_app_session_data(request.session)
 
         previous_application = get_object_or_404(Application, licence=args[0])
 
@@ -458,8 +460,8 @@ class RenewLicenceView(View): #NOTE: need a UserCanRenewLicence type mixin
         except Application.DoesNotExist:
             application = clone_application_for_renewal(previous_application)
 
-        set_application_session_data(request.session, 'customer_pk', application.applicant_profile.user.pk)
-        set_application_session_data(request.session, 'profile_pk', application.applicant_profile.user.pk)
-        set_application_session_data(request.session, 'data', application.data)
+        set_app_session_data(request.session, 'customer_pk', application.applicant_profile.user.pk)
+        set_app_session_data(request.session, 'profile_pk', application.applicant_profile.pk)
+        set_app_session_data(request.session, 'data', application.data)
 
         return redirect('applications:enter_details', application.licence_type.code, application.pk, **kwargs)

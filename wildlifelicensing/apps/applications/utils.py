@@ -125,7 +125,7 @@ def determine_applicant(request):
     return applicant
 
 
-def set_application_session_data(session, key, value):
+def set_app_session_data(session, key, value):
     if 'application' not in session:
         session['application'] = {}
 
@@ -134,18 +134,18 @@ def set_application_session_data(session, key, value):
     session.modified = True
 
 
-def is_application_session_data_set(session, key):
+def is_app_session_data_set(session, key):
     return 'application' in session and key in session['application']
 
 
-def get_application_session_data(session, key):
+def get_app_session_data(session, key):
     if 'application' in session and key in session['application']:
         return session['application'][key]
     else:
         return None
 
 
-def delete_application_session_data(session):
+def delete_app_session_data(session):
     if 'application' in session:
         if 'files' in session['application']:
             if os.path.exists(session.get('application').get('files')):
