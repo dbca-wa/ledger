@@ -80,7 +80,7 @@ def get_all_filenames_from_application_data(item, data):
 
     if isinstance(item, list):
         for child in item:
-            if child.get('type', '') == 'group':
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
                 for child_data in data[child['name']]:
                     filenames += get_all_filenames_from_application_data(child, child_data)
             else:
@@ -92,7 +92,7 @@ def get_all_filenames_from_application_data(item, data):
 
         if 'children' in item:
             for child in item['children']:
-                if child.get('type', '') == 'group':
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
                     for child_data in data[child['name']]:
                         filenames += get_all_filenames_from_application_data(child, child_data)
                 else:
@@ -108,7 +108,7 @@ def prepend_url_to_application_data_files(item, data, root_url):
 
     if isinstance(item, list):
         for child in item:
-            if child.get('type', '') == 'group':
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
                 for child_data in data[child['name']]:
                     prepend_url_to_application_data_files(child, child_data, root_url)
             else:
@@ -120,7 +120,7 @@ def prepend_url_to_application_data_files(item, data, root_url):
 
         if 'children' in item:
             for child in item['children']:
-                if child.get('type', '') == 'group':
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
                     for child_data in data[child['name']]:
                         prepend_url_to_application_data_files(child, child_data, root_url)
                 else:
@@ -130,7 +130,7 @@ def prepend_url_to_application_data_files(item, data, root_url):
 def convert_application_data_files_to_url(item, data, document_queryset):
     if isinstance(item, list):
         for child in item:
-            if child.get('type', '') == 'group':
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
                 for child_data in data[child['name']]:
                     convert_application_data_files_to_url(child, child_data, document_queryset)
             else:
@@ -145,7 +145,7 @@ def convert_application_data_files_to_url(item, data, document_queryset):
 
         if 'children' in item:
             for child in item['children']:
-                if child.get('type', '') == 'group':
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
                     for child_data in data[child['name']]:
                         convert_application_data_files_to_url(child, child_data, document_queryset)
                 else:

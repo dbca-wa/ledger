@@ -140,7 +140,8 @@ def _create_licence(licence_buffer, licence, application, site_url):
     # licence conditions
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('Conditions', styles['InfoTitleLargeCenter']))
-    conditionList = ListFlowable([Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()])
+    conditionList = ListFlowable([Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
+                                 bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
     elements.append(conditionList)
 
     # purpose

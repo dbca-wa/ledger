@@ -153,12 +153,12 @@ class TestViewAccess(TestCase):
         for url in urls_get_forbidden:
             response = self.client.get(url, follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:assessor'), status_code=302,
+                self.assertRedirects(response, reverse('dashboard:tables_assessor'), status_code=302,
                                      target_status_code=200)
         for url in urls_post_forbidden:
             response = self.client.post(url['url'], url['data'], follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:assessor'), status_code=302,
+                self.assertRedirects(response, reverse('dashboard:tables_assessor'), status_code=302,
                                      target_status_code=200)
         for url in urls_get_allowed:
             response = self.client.get(url, follow=True)
@@ -224,12 +224,12 @@ class TestViewAccess(TestCase):
         for url in urls_get_forbidden:
             response = self.client.get(url, follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:assessor'), status_code=302,
+                self.assertRedirects(response, reverse('dashboard:tables_assessor'), status_code=302,
                                      target_status_code=200)
         for url in urls_post_forbidden:
             response = self.client.post(url['url'], url['data'], follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:assessor'), status_code=302,
+                self.assertRedirects(response, reverse('dashboard:tables_assessor'), status_code=302,
                                      target_status_code=200)
         for url in urls_get_allowed:
             response = self.client.get(url, follow=True)

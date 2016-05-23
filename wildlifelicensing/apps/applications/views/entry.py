@@ -271,10 +271,10 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         if is_app_session_data_set(self.request.session, 'data'):
             data = get_app_session_data(self.request.session, 'data')
 
-            temp_files_url = settings.MEDIA_URL + \
-                os.path.basename(os.path.normpath(get_app_session_data(self.request.session, 'temp_files_dir')))
-
-            prepend_url_to_application_data_files(form_structure, data, temp_files_url)
+            temp_files_dir = get_app_session_data(self.request.session, 'temp_files_dir')
+            if temp_files_dir is not None:
+                temp_files_url = settings.MEDIA_URL + os.path.basename(os.path.normpath(temp_files_dir))
+                prepend_url_to_application_data_files(form_structure, data, temp_files_url)
 
             kwargs['data'] = data
 
@@ -330,7 +330,8 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
             finally:
                 try:
-                    shutil.rmtree(temp_files_dir)
+                    if temp_files_dir is not None:
+                        shutil.rmtree(temp_files_dir)
                 except (shutil.Error, OSError) as e:
                     messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
 
@@ -468,7 +469,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.error(request, 'There was a problem creating the application: %s' % e)
         finally:
             try:
-                shutil.rmtree(temp_files_dir)
+                if temp_files_dir is not None:
+                    shutil.rmtree(temp_files_dir)
             except (shutil.Error, OSError) as e:
                 messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
 

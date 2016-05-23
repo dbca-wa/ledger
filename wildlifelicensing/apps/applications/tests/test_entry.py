@@ -419,6 +419,7 @@ class ApplicationEntrySecurity(TestCase):
         self.client.login(customer1.email)
 
         application = helpers.create_application(user=customer1)
+
         self.assertEqual('draft', application.customer_status)
         my_urls = [
             reverse('applications:edit_application', args=[application.licence_type.code, application.pk]),
