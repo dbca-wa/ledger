@@ -55,9 +55,9 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             if application.previous_application is not None:
                 licence.licence_number = application.previous_application.licence.licence_number
 
-                # if licence is renewal, want to use previous licence's sequence number (incremented by 1)
+                # if licence is renewal, want to use previous licence's sequence number
                 if licence.licence_sequence == 0:
-                    licence.licence_sequence = application.previous_application.licence.licence_sequence + 1
+                    licence.licence_sequence = application.previous_application.licence.licence_sequence
 
             if not licence.licence_number:
                 licence.save(no_revision=True)
