@@ -20,6 +20,9 @@ from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
+LICENCE_TYPE_NUM_CHARS = 2
+LICENCE_NUMBER_NUM_CHARS = 6
+
 
 class IssueLicenceView(OfficerRequiredMixin, TemplateView):
     template_name = 'wl/issue/issue_licence.html'
@@ -49,11 +52,21 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence.profile = application.applicant_profile
             licence.user = application.applicant_profile.user
 
-            filename = '%s.pdf' % application.lodgement_number
+            if application.previous_application is not None:
+                licence.licence_number = application.previous_application.licence.licence_number
 
-            if not licence.licence_no:
+                # if licence is renewal, want to use previous licence's sequence number (incremented by 1)
+                if licence.licence_sequence == 0:
+                    licence.licence_sequence = application.previous_application.licence.licence_sequence + 1
+
+            if not licence.licence_number:
                 licence.save(no_revision=True)
-                licence.licence_no = str(licence.id).zfill(9)
+                licence.licence_number = '%s-%s' % (str(licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
+                                                    str(licence.id).zfill(LICENCE_NUMBER_NUM_CHARS))
+
+            licence.licence_sequence += 1
+
+            filename = '%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
             licence.document = create_licence_pdf_document(filename, licence, application,
                                                            request.build_absolute_uri(reverse('home')))

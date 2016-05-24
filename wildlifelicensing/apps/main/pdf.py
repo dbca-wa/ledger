@@ -86,7 +86,10 @@ def _create_licence_header(canvas, doc):
     current_x += 50
 
     canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), str(canvas.getPageNumber()))
-    canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2, doc.licence.licence_no)
+
+    if doc.licence.licence_number is not None and doc.licence.licence_sequence:
+        canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2,
+                          '%s-%d' % (doc.licence.licence_number, doc.licence.licence_sequence))
 
 
 def _get_authorised_person_names(application):

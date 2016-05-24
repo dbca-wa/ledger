@@ -30,6 +30,9 @@ from wildlifelicensing.apps.main.helpers import is_officer, is_customer
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
+LICENCE_TYPE_NUM_CHARS = 2
+LODGEMENT_NUMBER_NUM_CHARS = 6
+
 
 class ApplicationEntryBaseView(TemplateView):
     login_url = '/'
@@ -435,7 +438,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         # need to save application in order to get its pk
         if not application.lodgement_number:
             application.save(no_revision=True)
-            application.lodgement_number = str(application.pk).zfill(9)
+            application.lodgement_number = '%s-%s' % (str(application.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
+                                                      str(application.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
         application.save(version_user=application.applicant_profile.user, version_comment='Details Modified')
 
@@ -479,7 +483,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         return redirect('dashboard:home')
 
 
-class RenewLicenceView(View): #NOTE: need a UserCanRenewLicence type mixin
+class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
     def get(self, request, *args, **kwargs):
         delete_app_session_data(request.session)
 

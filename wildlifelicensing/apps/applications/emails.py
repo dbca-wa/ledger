@@ -141,8 +141,10 @@ def send_licence_issued_email(licence, application, cover_letter_message, reques
     }
     if licence.document is not None:
         file_name = 'WL_licence_' + str(licence.licence_type.code)
-        if licence.licence_no:
-            file_name += '_' + str(licence.licence_no)
+        if licence.licence_number:
+            file_name += '_' + str(licence.licence_number)
+        if licence.licence_sequence:
+            file_name += '-' + str(licence.licence_sequence)
         elif licence.start_date:
             file_name += '_' + str(licence.start_date)
         file_name += '.pdf'
@@ -161,8 +163,8 @@ def send_licence_issued_email(licence, application, cover_letter_message, reques
 
 class LicenceRenewalNotificationEmail(TemplateEmailBase):
     subject = 'Your wildlife licence is due for renewal.'
-    html_template = 'wl/emails/renew_licence_notification.html'
-    txt_template = 'wl/emails/renew_licence_notification.txt'
+    html_template = 'wl/emails/renew_licence_numbertification.html'
+    txt_template = 'wl/emails/renew_licence_numbertification.txt'
 
 
 def send_licence_renewal_email_notification(licence):
