@@ -33,10 +33,6 @@ def _get_user_applications(user):
     return Application.objects.filter(applicant_profile__user=user)
 
 
-def _get_user_licences(user):
-    return WildlifeLicence.objects.filter(user=user)
-
-
 def _get_current_onbehalf_applications(officer):
     return Application.objects.filter(proxy_applicant=officer)
 
@@ -409,7 +405,7 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, TableBaseView):
         data = super(TableApplicationsOfficerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge No.'
+                'title': 'Lodge Number'
             },
             {
                 'title': 'Licence Type'
@@ -516,7 +512,7 @@ class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, TableBaseView):
         data = super(TableApplicationsOfficerOnBehalfView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge No.'
+                'title': 'Lodge Number'
             },
             {
                 'title': 'Licence Type'
@@ -721,7 +717,7 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
         data = super(TableApplicationsOfficerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge No.'
+                'title': 'Lodge Number'
             },
             {
                 'title': 'Licence Type'
@@ -820,7 +816,7 @@ class TableCustomerView(LoginRequiredMixin, TableBaseView):
         data = super(TableCustomerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge No.'
+                'title': 'Lodge Number'
             },
             {
                 'title': 'Licence Type'
@@ -846,7 +842,7 @@ class TableCustomerView(LoginRequiredMixin, TableBaseView):
 
         data['licences']['columnDefinitions'] = [
             {
-                'title': 'Licence No.'
+                'title': 'Licence Number'
             },
             {
                 'title': 'Licence Type'
@@ -872,6 +868,10 @@ class TableCustomerView(LoginRequiredMixin, TableBaseView):
             }
         ]
         data['licences']['ajax']['url'] = reverse('dashboard:data_licences_customer')
+        # global table options
+        data['licences']['tableOptions'] = {
+            'order': [[4, 'desc']]
+        }
         return data
 
 
@@ -948,24 +948,22 @@ class DataTableLicencesCustomerView(DataTableBaseView):
     }
 
     @staticmethod
-    def _can_user_renew_licence(licence):
-        return licence.licence_type.is_renewable \
-            and licence.end_date <= datetime.date.today() + datetime.timedelta(days=30)
-
-    @staticmethod
     def _render_action(instance):
-        if not DataTableLicencesCustomerView._can_user_renew_licence(instance):
+        if not instance.is_renewable:
             return 'Not renewable'
-
-        try:
-            application = Application.objects.get(licence=instance)
-            if Application.objects.filter(previous_application=application).exists():
-                return 'Renewed'
-        except Application.DoesNotExist:
-            pass
-
-        url = reverse('applications:renew_licence', args=(instance.pk,))
-        return '<a href="{0}">Renew</a>'.format(url)
+        else:
+            try:
+                application = Application.objects.get(licence=instance)
+                if Application.objects.filter(previous_application=application).exists():
+                    return 'Renewed'
+            except Application.DoesNotExist:
+                pass
+            expiry_days = (instance.end_date - datetime.date.today()).days
+            if expiry_days <= 30:
+                url = reverse('applications:renew_licence', args=(instance.pk,))
+                return '<a href="{0}">Renew</a>'.format(url)
+            else:
+                return 'Renewable in ' + str(expiry_days - 30) + ' days'
 
     def get_initial_queryset(self):
-        return _get_user_licences(self.request.user)
+        return WildlifeLicence.objects.filter(user=self.request.user)
