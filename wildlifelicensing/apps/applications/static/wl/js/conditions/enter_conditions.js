@@ -56,7 +56,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
                                 // only add condition if it hasn't already been entered
                                 if(!_.includes(_.map(existingConditions, function(condition) {return $(condition).val()}),
                                         String(assessmentCondition.condition.id), 1)) {
-                                    $.post('/applications/set_assessment_condition_state/',  {
+                                    $.post('/applications/set-assessment-condition-state/',  {
                                         assessmentConditionID: assessmentCondition.id,
                                         acceptanceStatus: 'accepted',
                                         csrfmiddlewaretoken: csrfToken
@@ -72,7 +72,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
                             });
 
                             $decline.click(function(e) {
-                                $.post('/applications/set_assessment_condition_state/',  {
+                                $.post('/applications/set-assessment-condition-state/', {
                                     assessmentConditionID: assessmentCondition.id,
                                     acceptanceStatus: 'declined',
                                     csrfmiddlewaretoken: csrfToken

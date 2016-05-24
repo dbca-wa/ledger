@@ -38,6 +38,7 @@ class Application(RevisionedMixin):
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
     data = JSONField()
     documents = models.ManyToManyField(Document)
+    hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
     correctness_disclaimer = models.BooleanField(default=False)
     further_information_disclaimer = models.BooleanField(default=False)
     applicant_profile = models.ForeignKey(Profile)

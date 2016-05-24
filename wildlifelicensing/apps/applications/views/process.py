@@ -24,7 +24,7 @@ from wildlifelicensing.apps.applications.emails import send_amendment_requested_
 from wildlifelicensing.apps.main.models import AssessorGroup
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, CHARACTER_CHECK_STATUSES, \
-    REVIEW_STATUSES, format_application, format_amendment_request, format_assessment
+    REVIEW_STATUSES, convert_application_data_files_to_url, format_application, format_amendment_request, format_assessment
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -59,6 +59,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                                       'date': formats.date_format(application.previous_application.lodgement_date, 'd/m/Y',
                                                                   True),
                                       'data': application.previous_application.data})
+
+        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
 
         data = {
             'user': serialize(request.user),

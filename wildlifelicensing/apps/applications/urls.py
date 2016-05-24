@@ -41,6 +41,7 @@ urlpatterns = [
     url('^amendment-request/$', AmendmentRequestView.as_view(), name='amendment_request'),
     url('^send-for-assessment/$', SendForAssessmentView.as_view(), name='send_for_assessment'),
     url('^remind-assessment/$', RemindAssessmentView.as_view(), name='remind_assessment'),
+
     # communication log
     url('^add-log-entry/([0-9]+)/', AddLogEntryView.as_view(), name='add_log_entry'),
     url('log-list/([0-9]+)/$', CommunicationLogListView.as_view(), name='log_list'),

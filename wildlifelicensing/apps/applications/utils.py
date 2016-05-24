@@ -1,11 +1,8 @@
-import os
 import shutil
 
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import EmailUser
-
-from wildlifelicensing.apps.main.helpers import is_officer
+from ledger.accounts.models import EmailUser, Document
 
 from models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 
@@ -83,7 +80,7 @@ def get_all_filenames_from_application_data(item, data):
 
     if isinstance(item, list):
         for child in item:
-            if child.get('type', '') == 'group':
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
                 for child_data in data[child['name']]:
                     filenames += get_all_filenames_from_application_data(child, child_data)
             else:
@@ -95,13 +92,64 @@ def get_all_filenames_from_application_data(item, data):
 
         if 'children' in item:
             for child in item['children']:
-                if child.get('type', '') == 'group':
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
                     for child_data in data[child['name']]:
                         filenames += get_all_filenames_from_application_data(child, child_data)
                 else:
                     filenames += get_all_filenames_from_application_data(child, data)
 
     return filenames
+
+
+def prepend_url_to_application_data_files(item, data, root_url):
+    # ensure root url ends with a /
+    if root_url[-1] != '/':
+        root_url += '/'
+
+    if isinstance(item, list):
+        for child in item:
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
+                for child_data in data[child['name']]:
+                    prepend_url_to_application_data_files(child, child_data, root_url)
+            else:
+                prepend_url_to_application_data_files(child, data, root_url)
+    else:
+        if item.get('type', '') == 'file':
+            if item['name'] in data and len(data[item['name']]) > 0:
+                data[item['name']] = root_url + data[item['name']]
+
+        if 'children' in item:
+            for child in item['children']:
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
+                    for child_data in data[child['name']]:
+                        prepend_url_to_application_data_files(child, child_data, root_url)
+                else:
+                    prepend_url_to_application_data_files(child, data, root_url)
+
+
+def convert_application_data_files_to_url(item, data, document_queryset):
+    if isinstance(item, list):
+        for child in item:
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
+                for child_data in data[child['name']]:
+                    convert_application_data_files_to_url(child, child_data, document_queryset)
+            else:
+                convert_application_data_files_to_url(child, data, document_queryset)
+    else:
+        if item.get('type', '') == 'file':
+            if item['name'] in data and len(data[item['name']]) > 0:
+                try:
+                    data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
+                except Document.DoesNotExist:
+                    pass
+
+        if 'children' in item:
+            for child in item['children']:
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
+                    for child_data in data[child['name']]:
+                        convert_application_data_files_to_url(child, child_data, document_queryset)
+                else:
+                    convert_application_data_files_to_url(child, data, document_queryset)
 
 
 class SessionDataMissingException(Exception):
@@ -125,15 +173,36 @@ def determine_applicant(request):
     return applicant
 
 
-def delete_application_session_data(session):
-    if 'application' in session:
-        if 'files' in session['application']:
-            if os.path.exists(session.get('application').get('files')):
-                try:
-                    shutil.rmtree(session.get('application').get('files'))
-                except:
-                    pass
+def set_app_session_data(session, key, value):
+    if 'application' not in session:
+        session['application'] = {}
 
+    session['application'][key] = value
+
+    session.modified = True
+
+
+def is_app_session_data_set(session, key):
+    return 'application' in session and key in session['application']
+
+
+def get_app_session_data(session, key):
+    if is_app_session_data_set(session, key):
+        return session['application'][key]
+    else:
+        return None
+
+
+def delete_app_session_data(session):
+    temp_files_dir = get_app_session_data(session, 'temp_files_dir')
+
+    if temp_files_dir is not None:
+        try:
+            shutil.rmtree(temp_files_dir)
+        except:
+            pass
+
+    if 'application' in session:
         del session['application']
 
 

@@ -29,11 +29,15 @@ class LicenceType(RevisionedMixin, ActiveMixin):
 class Licence(RevisionedMixin, ActiveMixin):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     licence_type = models.ForeignKey(LicenceType, on_delete=models.PROTECT)
-    licence_no = models.CharField(max_length=64, unique=True, blank=True, null=True)
+    licence_number = models.CharField(max_length=64, blank=True, null=True)
+    licence_sequence = models.IntegerField(blank=True, default=0)
     issue_date = models.DateField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
     is_renewable = models.NullBooleanField(blank=True)
 
+    class Meta:
+        unique_together = ('licence_number', 'licence_sequence')
+
     def __str__(self):
-        return '{} {}'.format(self.licence_type, self.licence_no)
+        return '{} {}-{}'.format(self.licence_type, self.licence_number, self.licence_sequence)

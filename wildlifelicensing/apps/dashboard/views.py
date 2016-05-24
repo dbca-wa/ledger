@@ -30,7 +30,7 @@ def _build_url(base, query):
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_profile__user=user).exclude(customer_status='approved')
+    return Application.objects.filter(applicant_profile__user=user)
 
 
 def _get_user_licences(user):
@@ -38,7 +38,7 @@ def _get_user_licences(user):
 
 
 def _get_current_onbehalf_applications(officer):
-    return Application.objects.filter(proxy_applicant=officer).exclude(processing_status='issued')
+    return Application.objects.filter(proxy_applicant=officer)
 
 
 def _get_processing_statuses_but_draft():
@@ -52,6 +52,20 @@ def _render_date(date):
     if not date:
         return ''
     return 'not a valid date object'
+
+
+def _render_lodgement_number(application):
+    if application is not None and application.lodgement_number and application.lodgement_sequence:
+        return '%s-%d' % (application.lodgement_number, application.lodgement_sequence)
+    else:
+        return ''
+
+
+def _render_licence_number(licence):
+    if licence is not None and licence.licence_number and licence.licence_sequence:
+        return '%s-%d' % (licence.licence_number, licence.licence_sequence)
+    else:
+        return ''
 
 
 def _render_licence_document(licence):
@@ -446,6 +460,9 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
                      '']
 
     columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
+        'lodgement_number': {
+            'render': lambda self, instance: _render_lodgement_number(instance)
+        },
         'assigned_officer': {
             'search': lambda self, search: _build_field_query(
                 ['assigned_officer__last_name', 'assigned_officer__first_name'],
@@ -557,6 +574,9 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, DataTableAp
             return 'Locked'
 
     columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
+        'lodgement_number': {
+            'render': lambda self, instance: _render_lodgement_number(instance)
+        },
         'lodgement_date': {
             'render': lambda self, instance: _render_date(instance.lodgement_date)
         },
@@ -582,7 +602,7 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
         del data['applications']
         data['licences']['columnDefinitions'] = [
             {
-                'title': 'Licence No.'
+                'title': 'Licence Number'
             },
             {
                 'title': 'Licence Type'
@@ -629,10 +649,13 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
 
 class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
     model = WildlifeLicence
-    columns = ['licence_no', 'licence_type.code', 'profile.user', 'start_date', 'end_date', 'licence', 'action']
-    order_columns = ['licence_no', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
+    columns = ['licence_number', 'licence_type.code', 'profile.user', 'start_date', 'end_date', 'licence', 'action']
+    order_columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
 
     columns_helpers = {
+        'licence_number': {
+            'render': lambda self, instance: _render_licence_number(instance)
+        },
         'profile.user': {
             'render': lambda self, instance: render_user_name(instance.profile.user, first_name_first=False),
             'search': lambda self, search: _build_field_query([
@@ -746,6 +769,9 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, DataTable
     ]
 
     columns_helpers = dict(**{
+        'application.lodgement_number': {
+            'render': lambda self, instance: _render_lodgement_number(instance.application)
+        },
         'application.applicant_profile.user': {
             'render': lambda self, instance: render_user_name(instance.application.applicant_profile.user),
             'search': lambda self, search: _build_field_query(
@@ -856,6 +882,9 @@ class DataTableApplicationCustomerView(DataTableApplicationBaseView):
                      '']
 
     columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
+        'lodgement_number': {
+            'render': lambda self, instance: _render_lodgement_number(instance)
+        },
         'action': {
             'render': lambda self, instance: DataTableApplicationCustomerView.render_action_column(instance),
         },
@@ -894,10 +923,13 @@ class DataTableApplicationCustomerView(DataTableApplicationBaseView):
 
 class DataTableLicencesCustomerView(DataTableBaseView):
     model = WildlifeLicence
-    columns = ['licence_no', 'licence_type.code', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
-    order_columns = ['licence_no', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
+    columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
+    order_columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
 
     columns_helpers = {
+        'licence_number': {
+            'render': lambda self, instance: _render_licence_number(instance)
+        },
         'issue_date': {
             'render': lambda self, instance: _render_date(instance.issue_date)
         },
@@ -916,9 +948,9 @@ class DataTableLicencesCustomerView(DataTableBaseView):
     }
 
     @staticmethod
-    def _can_user_renew_licence(license):
-        return license.licence_type.is_renewable \
-               and license.end_date <= datetime.date.today() + datetime.timedelta(days=30)
+    def _can_user_renew_licence(licence):
+        return licence.licence_type.is_renewable \
+            and licence.end_date <= datetime.date.today() + datetime.timedelta(days=30)
 
     @staticmethod
     def _render_action(instance):
