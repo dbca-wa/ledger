@@ -8,8 +8,8 @@ from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLice
 
 
 class ReturnType(models.Model):
-    models.OneToOneField(WildlifeLicenceType)
-    additional_data_descriptors = JSONField()
+    licence_type = models.OneToOneField(WildlifeLicenceType)
+    additional_data_descriptors = JSONField(blank=True, null=True)
 
 
 class Return(RevisionedMixin):
@@ -34,4 +34,4 @@ class ReturnRow(RevisionedMixin):
     latitude = models.DecimalField(decimal_places=3, max_digits=6)
     longitude = models.DecimalField(decimal_places=3, max_digits=6)
 
-    additional_data = JSONField()
+    additional_data = JSONField(blank=True, null=True)
