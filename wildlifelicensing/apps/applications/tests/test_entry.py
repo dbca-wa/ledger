@@ -138,6 +138,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertFalse('profile_selection_form' in response.context)
 
         post_params = {
+            'user': self.customer.pk,
             'name': 'Test Profile',
             'email': 'test@testplace.net.au',
             'institution': 'Test Institution',

@@ -196,9 +196,10 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                 kwargs['profile_selection_form'] = ProfileSelectionForm(user=applicant)
 
         if profile_exists:
-            kwargs['profile_creation_form'] = ProfileForm()
+            kwargs['profile_creation_form'] = ProfileForm(user=get_app_session_data(self.request.session, 'customer_pk'))
         else:
-            kwargs['profile_creation_form'] = ProfileForm(initial_display_name='Default', initial_email=applicant.email)
+            kwargs['profile_creation_form'] = ProfileForm(initial_display_name='Default', initial_email=applicant.email,
+                                                          user=get_app_session_data(self.request.session, 'customer_pk'))
 
         kwargs['address_form'] = AddressForm()
         kwargs['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
@@ -231,7 +232,6 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
             if profile_form.is_valid() and address_form.is_valid():
                 profile = profile_form.save(commit=False)
                 profile.postal_address = address_form.save()
-                profile.user = applicant
                 profile.save()
 
                 set_app_session_data(request.session, 'profile_pk', profile.id)

@@ -61,13 +61,19 @@ class ProfileForm(ProfileBaseForm):
     # auth_identity = forms.BooleanField(required=False)
     class Meta:
         model = Profile
-        fields = ['name', 'email', 'institution']
+        fields = ['user', 'name', 'email', 'institution']
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         initial_display_name = kwargs.pop('initial_display_name', None)
         initial_email = kwargs.pop('initial_email', None)
 
         super(ProfileForm, self).__init__(*args, **kwargs)
+
+        if user is not None:
+            self.fields['user'].initial = user
+
+        self.fields['user'].widget = forms.HiddenInput()
 
         if initial_display_name is not None:
             self.fields['name'].initial = initial_display_name

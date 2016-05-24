@@ -44,7 +44,6 @@ class ListProfilesView(CustomerRequiredMixin, TemplateView):
             attr["auth_identity"] = instance.auth_identity
             return attr
 
-        #context['data'] = serialize(Profile.objects.filter(user=self.request.user),posthook=posthook)
         context['data'] = serialize(Profile.objects.filter(user=self.request.user))
 
         return context
@@ -75,11 +74,12 @@ class CreateProfilesView(CustomerRequiredMixin, TemplateView):
 
         return redirect('main:list_profiles')
 
+
 class DeleteProfileView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/list_profiles.html'
     login_url = '/'
 
-    def get(self,request,id, *args, **kwargs):
+    def get(self, request, id, *args, **kwargs):
         profile = get_object_or_404(Profile, pk=id)
         profile.delete()
         messages.success(request, "The profile '%s' was deleted." % profile.name)
