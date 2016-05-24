@@ -33,10 +33,6 @@ def _get_user_applications(user):
     return Application.objects.filter(applicant_profile__user=user)
 
 
-def _get_user_licences(user):
-    return WildlifeLicence.objects.filter(user=user)
-
-
 def _get_current_onbehalf_applications(officer):
     return Application.objects.filter(proxy_applicant=officer)
 
@@ -967,7 +963,7 @@ class DataTableLicencesCustomerView(DataTableBaseView):
                 url = reverse('applications:renew_licence', args=(instance.pk,))
                 return '<a href="{0}">Renew</a>'.format(url)
             else:
-                return 'Renewable in ' + str(expiry_days) + ' days'
+                return 'Renewable in ' + str(expiry_days - 30) + ' days'
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.filter(user=self.request.user)
