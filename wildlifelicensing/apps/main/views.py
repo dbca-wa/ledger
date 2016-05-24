@@ -112,8 +112,8 @@ class EditProfilesView(CustomerRequiredMixin, TemplateView):
             address_form.save()
             email = profile.email
         else:
-            return render(request, self.template_name, {'profile_form': ProfileForm(instance=profile),
-                                                        'address_form': AddressForm(instance=profile.postal_address)})
+            return render(request, self.template_name, {'profile_form': profile_form,
+                                                        'address_form': address_form})
 
         messages.success(request, "The profile '%s' was updated." % profile.name)
 
