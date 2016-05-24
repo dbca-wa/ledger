@@ -589,7 +589,7 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
     template_name = 'wl/dash_tables_licences_officer.html'
 
     DATE_FILTER_ACTIVE = 'active'
-    DATE_FILTER_EXPIRING = 'expiring'
+    DATE_FILTER_RENEWABLE = 'renewable'
     DATE_FILTER_EXPIRED = 'expired'
     DATE_FILTER_ALL = 'all'
 
@@ -629,7 +629,7 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
             'date': {
                 'values': [
                     (self.DATE_FILTER_ACTIVE, self.DATE_FILTER_ACTIVE.capitalize()),
-                    (self.DATE_FILTER_EXPIRING, self.DATE_FILTER_EXPIRING.capitalize()),
+                    (self.DATE_FILTER_RENEWABLE, self.DATE_FILTER_RENEWABLE.capitalize()),
                     (self.DATE_FILTER_EXPIRED, self.DATE_FILTER_EXPIRED.capitalize()),
                     (self.DATE_FILTER_ALL, self.DATE_FILTER_ALL.capitalize()),
                 ]
@@ -680,8 +680,8 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
         today = datetime.date.today()
         if value == TableLicencesOfficerView.DATE_FILTER_ACTIVE:
             return Q(start_date__lte=today) & Q(end_date__gte=today)
-        elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRING:
-            return Q(end_date__gte=today) & Q(end_date__lte=today + datetime.timedelta(days=30))
+        elif value == TableLicencesOfficerView.DATE_FILTER_RENEWABLE:
+            return Q(is_renewable=True) & Q(end_date__gte=today) & Q(end_date__lte=today + datetime.timedelta(days=30))
         elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRED:
             return Q(end_date__lt=today)
         else:
