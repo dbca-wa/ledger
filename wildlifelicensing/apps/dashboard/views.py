@@ -65,11 +65,9 @@ def _render_licence_number(licence):
 
 
 def _render_licence_document(licence):
-    if licence is not None and licence.document is not None:
+    if licence is not None and licence.licence_document is not None:
         return '<a href="{0}" target="_blank">View PDF</a><img height="20" src="{1}"></img>'.format(
-            licence.document.file.url,
-            static('wl/img/pdf.png')
-        )
+            licence.licence_document.file.url, static('wl/img/pdf.png'))
     else:
         return ''
 
@@ -495,9 +493,10 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
             return '<a href="{0}">Issue Licence</a>'.format(
                 reverse('applications:issue_licence', args=[obj.pk]),
             )
-        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
-            return '<a href="{0}" target="_blank">View licence</a>'.format(
-                obj.licence.document.file.url
+        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.licence_document is not None:
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('applications:view_application', args=[obj.pk]),
+                'View application (read-only)'
             )
         else:
             return '<a href="{0}">Process</a>'.format(
@@ -562,12 +561,11 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, DataTableAp
             return '<a href="{0}">{1}</a>'.format(
                 reverse('main:identification'),
                 'Update ID')
-        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
-            return '<a href="{0}" target="_blank">View licence</a>'.format(
-                obj.licence.document.file.url
-            )
         else:
-            return 'Locked'
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('applications:view_application', args=[obj.pk]),
+                'View application (read-only)'
+            )
 
     columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
@@ -910,12 +908,11 @@ class DataTableApplicationCustomerView(DataTableApplicationBaseView):
             return '<a href="{0}">{1}</a>'.format(
                 reverse('main:identification'),
                 'Update ID')
-        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
-            return '<a href="{0}" target="_blank">View licence</a>'.format(
-                obj.licence.document.file.url
-            )
         else:
-            return 'Locked'
+            return '<a href="{0}"">{1}</a>'.format(
+                reverse('applications:view_application', args=[obj.pk]),
+                'View application (read-only)'
+            )
 
     def get_initial_queryset(self):
         return _get_user_applications(self.request.user)

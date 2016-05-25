@@ -1,0 +1,69 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% load users %}
+
+{% block extra_css %}
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(['jQuery', 'js/entry/application_preview'], function($, applicationPreview) {
+        applicationPreview.layoutPreviewItems('#applicationContainer', {{ structure|jsonify }}, {{ data|jsonify }});
+
+        $('#mainContainer').removeClass('hidden');
+
+        // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
+        applicationPreview.initialiseSidebarMenu('#sectionList');
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li class="active">View Application (read-only)</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div id="mainContainer" class="container hidden">
+        <div class="row">
+            <div class="col-md-12">
+                {% with heading='Application (read-only)' %}
+                    {% include 'wl/entry/header.html' %}
+                {% endwith %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2 col-sm-3">
+                <nav class="hidden-xs top-buffer">
+                    <div id="sectionList">
+                        <ul class="nav nav-stacked">
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+            <div class="col-xs-12 col-sm-9 col-md-10">
+                <div id="applicationContainer">
+                </div>
+                {% if is_proxy_applicant %}
+                    <h3 class="section">Original Application Document</h3>
+                    <hr>
+                        <label>Application Document</label>
+                        <p></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
