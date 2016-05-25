@@ -401,6 +401,8 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
 class TableApplicationsOfficerView(OfficerRequiredMixin, TableBaseView):
     template_name = 'wl/dash_tables_applications_officer.html'
 
+    STATUS_PENDING = 'pending'
+
     def _build_data(self):
         data = super(TableApplicationsOfficerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
@@ -432,7 +434,8 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, TableBaseView):
             }
         ]
         data['applications']['filters']['status']['values'] = \
-            [('all', 'All')] + _get_processing_statuses_but_draft()
+            [('all', 'All')] + [(self.STATUS_PENDING, self.STATUS_PENDING.capitalize())] +\
+            _get_processing_statuses_but_draft()
         data['applications']['filters']['assignee'] = {
             'values': [('all', 'All')] + [(user.pk, render_user_name(user),) for user in get_all_officers()]
         }
@@ -481,8 +484,15 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
     })
 
     @staticmethod
+    def _get_pending_processing_statuses():
+        return [s[0] for s in Application.PROCESSING_STATUS_CHOICES
+                if s[0] != 'draft' and s[0] != 'issued' and s[0] != 'declined']
+
+    @staticmethod
     def filter_status(value):
         # officers should not see applications in draft mode.
+        if value.lower() == TableApplicationsOfficerView.STATUS_PENDING:
+            return Q(processing_status__in=DataTableApplicationsOfficerView._get_pending_processing_statuses())
         return Q(processing_status=value) if value != 'all' else ~Q(customer_status='draft')
 
     @staticmethod
