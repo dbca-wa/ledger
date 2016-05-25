@@ -32,4 +32,12 @@ urlpatterns = [
         name='data_licences_officer'),
     url(r'^dashboard/data/licences/customer/?$', views.DataTableLicencesCustomerView.as_view(),
         name='data_licences_customer'),
+
+    # Returns
+    url(r'^dashboard/tables/returns/officer/?$', views.TableReturnsOfficerView.as_view(),
+        name='tables_returns_officer'),
+    url(r'^dashboard/data/returns/officer/?$', views.DataTableReturnsOfficerView.as_view(),
+        name='data_returns_officer'),
+    url(r'^dashboard/data/returns/customer/?$', views.DataTableReturnsCustomerView.as_view(),
+        name='data_returns_customer'),
 ]

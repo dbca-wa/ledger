@@ -13,17 +13,18 @@ class ReturnType(models.Model):
 
 
 class Return(RevisionedMixin):
-    STATUS_CHOICES = (('draft', 'Draft'), ('submitted', 'Submitted'),
-                      ('accepted', 'Accepted'), ('declined', 'Declined'))
+    STATUS_CHOICES = [('draft', 'Draft'), ('submitted', 'Submitted'),
+                      ('accepted', 'Accepted'), ('declined', 'Declined')]
 
-    models.ForeignKey(ReturnType)
-    models.ForeignKey(WildlifeLicence)
+    return_type = models.ForeignKey(ReturnType)
+    licence = models.ForeignKey(WildlifeLicence)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateField(blank=True, null=True)
+    due_date = models.DateField(null=False, blank=False)
 
 
 class ReturnRow(RevisionedMixin):
