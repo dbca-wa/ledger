@@ -501,5 +501,6 @@ class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
         set_app_session_data(request.session, 'customer_pk', application.applicant_profile.user.pk)
         set_app_session_data(request.session, 'profile_pk', application.applicant_profile.pk)
         set_app_session_data(request.session, 'data', application.data)
+        set_app_session_data(request.session, 'temp_files_dir', tempfile.mkdtemp(dir=settings.MEDIA_ROOT))
 
         return redirect('applications:enter_details', application.licence_type.code, application.pk, **kwargs)
