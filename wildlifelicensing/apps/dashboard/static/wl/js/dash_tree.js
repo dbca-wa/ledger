@@ -5,6 +5,8 @@ define(
     ],
     function ($) {
 
+        "use strict";
+
         return function (options) {
             var defaults = {
                 treeSelector: '#applications-table',
@@ -27,6 +29,6 @@ define(
                         showTags: true
                     });
             });
-        }
+        };
     }
 );

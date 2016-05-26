@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'bootstrap3',
     'reversion',
     'widget_tweaks',
+    'django_countries',
+    'django_cron',
     ] + get_core_apps([  # django-oscar overrides
         'ledger.basket', 
         'ledger.order'
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     'wildlifelicensing.apps.WLDashboard',
     'wildlifelicensing.apps.WLMain',
     'wildlifelicensing.apps.WLApplications',
+    'wildlifelicensing.apps.WLEmails',
 ]
 
 SITE_ID = 1
@@ -108,6 +111,8 @@ ADMINS = ('asi@dpaw.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
+DEFAULT_FROM_EMAIL = EMAIL_FROM
+WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wildlifelicensing@dpaw.wa.gov.au')
 
 
 TEMPLATES = [
@@ -186,12 +191,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-AU'
 TIME_ZONE = 'Australia/Perth'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
@@ -203,9 +207,12 @@ STATICFILES_DIRS = [
 ]
 if not os.path.exists(os.path.join(BASE_DIR, 'media')):
     os.mkdir(os.path.join(BASE_DIR, 'media'))
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = env('MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
 MEDIA_URL = '/media/'
 
+CRON_CLASSES = [
+    'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
+]
 
 # Logging settings
 # Ensure that the logs directory exists:
@@ -219,6 +226,11 @@ LOGGING = {
         },
     },
     'handlers': {
+        'console': {
+            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -228,9 +240,15 @@ LOGGING = {
         },
     },
     'loggers': {
+        '': {
+            'handlers': ['file', 'console'],
+            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
+            'propagate': True
+        },
         'django.request': {
             'handlers': ['file'],
-            'level': 'INFO'
+            'level': 'INFO',
+            'propagate': False,
         },
         'log': {
             'handlers': ['file'],

@@ -2,13 +2,15 @@
 
 {% load static %}
 
+{% load users %}
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
             {% bootstrap_css %}
-            <link type="text/css" href="{% static 'wl/css/base.css' %}" rel="stylesheet">
+                <link type="text/css" href="{% static 'wl/css/base.css' %}" rel="stylesheet">
             {% block extra_css %}
             {% endblock %}
             <title>
@@ -47,13 +49,12 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            <a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Wildlife Licensing</div></a>
+                            <a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Dashboard</div></a>
                         </div>
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
-                                    <li><a href="{% url 'wl_dashboard:home' %}">Dashboard</a></li>
-                                    <li><a href="{% url 'wl_applications:select_licence_type' %}">Applications</a></li>
+                                    <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">
@@ -78,9 +79,12 @@
                                             <span class="caret"></span>
                                         </a>
                                         <ul class="dropdown-menu">
-                                            <li><a href="{% url 'wl_main:list_personas' %}">Manage Personas</a></li>
-                                            <li><a href="{% url 'wl_main:identification' %}">Manage ID</a></li>
-                                            <li role="separator" class="divider"></li>
+                                            {% if request.user|is_customer %}
+                                                <li><a href="{% url 'wl_main:edit_account' %}">Manage Account</a></li>
+                                                <li><a href="{% url 'wl_main:list_profiles' %}">Manage Profiles</a></li>
+                                                <li><a href="{% url 'wl_main:identification' %}">Manage ID</a></li>
+                                                <li role="separator" class="divider"></li>
+                                            {% endif %}
                                             {% if request.user.is_superuser %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 <li role="separator" class="divider"></li>

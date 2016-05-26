@@ -13,63 +13,66 @@
 
 {% block requirements %}
     require(["{% static 'wl/js/dash_tables.js' %}"], function (app) {
-    var options = {
-    data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}
-    };
-    app(options);
+        var options = {
+            data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}
+        };
+        app(options);
     });
 {% endblock %}
 
 {% block content %}
     <div class="container" id="dashboard-table-container">
-        <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-            <div class="panel panel-default" id="applications">
-                <div class="panel-heading" role="tab" id="applications-heading">
-                    <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#applications-collapse"
-                           aria-expanded="true" aria-controls="collapseOne">
-                            <h3>Applications</h3>
-                        </a>
-                    </h4>
-                </div>
-                <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel"
-                     aria-labelledby="applications-heading">
-                    <div class="panel-body">
-                        <div class="row filter-panel pad-bottom-md pad-top-s">
-                            <div id="applications-filter-panel">
-                                <form class="form" id="applications-filter-form">
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="applications-filter-licence-type">License Type: </label>
-                                            <select class="form-control" name="license_type"
-                                                    id="applications-filter-licence-type">
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="applications-filter-status">Status: </label>
-                                            <select class="form-control" name="status" id="applications-filter-status">
-                                            </select>
-                                        </div>
-                                    </div>
-                                    {% if request.user|is_officer %}
-                                        <div class="col-md-3">
-                                            <div class="form-group" id="applications-filter-assignee-group">
-                                                <label for="applications-filter-assignee">Assignee: </label>
-                                                <select class="form-control" name="assignee"
-                                                        id="applications-filter-assignee">
-                                                </select>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </form>
+        {% block applications %}
+            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                <div class="panel panel-default" id="applications">
+                    <div class="panel-heading" role="tab" id="applications-heading">
+                        <h4 class="panel-title">
+                            <a role="button" data-toggle="collapse" href="#applications-collapse"
+                               aria-expanded="true" aria-controls="collapseOne">
+                                <h3>Applications</h3>
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel"
+                         aria-labelledby="applications-heading">
+                        <div class="panel-body">
+                            <div class="row filter-panel pad-bottom-md pad-top-s">
+                                <div id="applications-filter-panel">
+                                    {% block applications_filters %}
+                                    {% endblock %}
+                                </div>
                             </div>
+                            <table id="applications-table" class="table table-striped table-bordered dataTable"></table>
                         </div>
-                        <table id="applications-table" class="table table-striped table-bordered dataTable"></table>
                     </div>
                 </div>
             </div>
-        </div>
+        {% endblock %}
+        {% block licences %}
+            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                <div class="panel panel-default" id="licences">
+                    <div class="panel-heading" role="tab" id="licences-heading">
+                        <h4 class="panel-title">
+                            <a role="button" data-toggle="collapse" href="#licences-collapse"
+                               aria-expanded="true" aria-controls="collapseOne">
+                                <h3>Licences</h3>
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="licences-collapse" class="panel-collapse collapse in" role="tabpanel"
+                         aria-labelledby="licences-heading">
+                        <div class="panel-body">
+                            <div class="row filter-panel pad-bottom-md pad-top-s">
+                                <div id="licences-filter-panel">
+                                    {% block licences_filters %}
+                                    {% endblock %}
+                                </div>
+                            </div>
+                            <table id="licences-table" class="table table-striped table-bordered dataTable"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endblock %}
     </div>
 {% endblock %}

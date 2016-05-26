@@ -20,7 +20,7 @@ def is_customer(user):
     :param user:
     :return:
     """
-    return not is_officer(user)
+    return not is_officer(user) and not is_assessor(user)
 
 
 def is_officer(user):
@@ -51,6 +51,10 @@ def get_all_officers():
 
 def get_all_assessors():
     return EmailUser.objects.filter(groups__name='Assessors')
+
+
+def get_user_assessor_groups(user):
+    return user.assessorgroup_set.all()
 
 
 def render_user_name(user, first_name_first=True):

@@ -4,6 +4,8 @@
 
 {% load bootstrap3 %}
 
+{% load users %}
+
 {% block extra_css %}
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
@@ -14,7 +16,10 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'wl_applications:select_licence_type' %}">Licence Applications</a></li>
+                    {% if request.user|is_officer %}
+                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
+                    {% endif %}
+                    <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
                     <li class="active">Upload Identification</li>
                 </ol>
             </div>
@@ -26,28 +31,33 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h2>Upload Identification</h2>
-                <hr>
+                {% with heading='Upload Identification' %}
+                    {% include 'wl/entry/header.html' %}
+                {% endwith %}
                 <p>This type of licence requires photographic identification. You can upload a scanned or photograhed image of a valid Australian drivers licence, passport, or proof-of-age card.
                 If you cannot provide identification at this point, you can skip this step of the application process. You can then, at any time, upload your photo ID by selecting the Manage ID
                 option under the Options menu on the menu bar. Alternatively, you can present your photo ID in person at any Wildlife Licensing office branch.</p>
+
+                <p><strong><em>Note: your application will not be approved until identification has been submitted.</em></strong></p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% with field=form.identification_file %}
-                        <div class="form-group {% if field.errors %} has-error has-feedback {% endif %}">
+                        <div class="form-group">
+                            <div class="{% if field.errors %} has-error has-feedback {% endif %}">
                             <label for="{{ field.auto_id }}">{{ field.label }}</label> 
                             <input id="{{ field.auto_id }}" name="{{ field.name }}" type="file" class="form-control" {% if file_types %}accept="{{ file_types }}"{% endif %}>
-                            {% if field.help_text %}
-                                <p class="help-block">{{ field.help_text }}</p>
-                            {% endif %}
                             {% if field.errors %}
                                 <span class="glyphicon glyphicon-remove form-control-feedback"></span>
                                 <span class='text-danger'>{{ field.errors|join:'<br />' }}</span>
                             {% endif %}
+                            </div>
+                            {% if field.help_text %}
+                                <p class="help-block">{{ field.help_text }}</p>
+                            {% endif %}
                         </div>
                     {% endwith %}
                     <button type="submit" class="btn btn-primary pull-right">Upload</button>
-                    <a class="btn btn-info pull-right" href="{% url 'wl_applications:create_select_persona' licence_type.code %}" style="margin-right: 20px;">Skip this step</a>
+                    <a class="btn btn-info pull-right" href="{% url 'wl_applications:create_select_profile' licence_type.code %}" style="margin-right: 20px;">Skip this step</a>
                 </form>
             </div>
         </div>

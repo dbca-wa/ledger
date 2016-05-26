@@ -1,0 +1,161 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
+          rel="stylesheet"/>
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(['js/conditions/assessor_enter_conditions'], function (enter_conditions) {
+        $(function () {
+            enter_conditions.init({{ application|jsonify }}, {{ form_structure|jsonify }});
+        });
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><a href="{% url 'wl_dashboard:tables_assessor' %}">Applications</a></li>
+                    <li class="active">Enter Conditions</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container bottom-buffer">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Enter Licence Conditions</h2>
+                <h3>{{ application.licence_type.name }}</h3>
+                <hr>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Application Overview
+                                <a data-toggle="collapse" href="#applicationOverviewBody" class="pull-right">
+                                    <span class="glyphicon"></span>
+                                </a>
+                            </div>
+                            <div id="applicationOverviewBody" class="panel-body panel-collapse in">
+                                <label>Applicant</label>
+                                {% with applicant=application.applicant_profile %}
+                                    <p>
+                                        {{ applicant.user.first_name }} {{ applicant.user.last_name }}
+                                    </p>
+                                    <p>{{ applicant.postal_address.search_text }}</p>
+                                {% endwith %}
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <label>Lodged on</label>
+                                        <p>{{ application.lodgement_date|date:'d/m/Y' }}</p>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <label>Assigned Officer</label>
+                                        <p>
+                                            {% if application.assigned_officer %} 
+                                                {{ application.assigned_officer.first_name }} {{ application.assigned_officer.last_name }}
+                                            {% else %}
+                                                Unassigned
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <p>
+                                    <a id="viewApplicationDetails" data-toggle="popover" data-placement="right">
+                                        View Application Details
+                                    </a>
+                                </p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Add Additional Conditions
+                                <a data-toggle="collapse" href="#addAdditionalConditionsBody" class="pull-right">
+                                    <span class="glyphicon"></span>
+                                </a>
+                            </div>
+                            <div id="addAdditionalConditionsBody" class="panel-body panel-collapse in">
+                                <div>
+                                    <div class="form-group">
+                                        Search Conditions
+                                        <input type="hidden" id="searchConditions" class="form-control" />
+                                    </div>
+                                    <div style="text-align:right">
+                                        <button type="button" id="addCondition" class="btn btn-xs btn-primary" disabled>Add Condition</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button id="assessmentDone" type="button" class="btn btn-sm btn-success pull-right">Conclude Assessment</button>
+            </div>
+            <div class="col-md-9">
+                <h3>Current Conditions</h3>
+                <div class="pull-right">
+                    <div class="legend default">
+                    </div>
+                    <strong>Default Condition</strong>
+                    <div class="legend additional">
+                    </div>
+                    <strong>Additional Condition</strong>
+                </div>
+                <form method="post" action="{{ action_url }}" id="conditionsForm">
+                    {% csrf_token %}
+                    <table class="table table-bordered">
+                        <thead class="conditions-table-head">
+                            <tr>
+                                <th class="code">Code</th>
+                                <th class="condition">Condition</th>
+                                <th class="action">Action</th>
+                                <th class="order">Order</th>
+                            </tr>
+                        </thead>
+                        <tbody id="conditionsBody" class="conditions-table-body">
+                            <tr id="conditionsEmptyRow" class="hidden">
+                                <td colspan="3">No default conditions specified</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="form-group">
+                        <label for="comment">Comments</label>
+                        <textarea name="comment" rows="4" id="commentText" class="form-control" placeholder="Enter comment"></textarea>
+                    </div>
+                    {% if assessment.assessor_group.purpose %}
+                        <div class="form-group">
+                            <label for="purpose">Purpose</label>
+                            <textarea name="purpose" rows="4" id="purposeText" class="form-control" placeholder="Enter purpose"></textarea>
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block action_button %}
+    <button id="assessmentDone" type="button" class="btn btn-sm btn-success pull-right">Conclude Assessment</button>
+{% endblock %}

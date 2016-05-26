@@ -6,6 +6,8 @@
 
 {% load jsonify %}
 
+{% load users %}
+
 {% block extra_css %}
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
@@ -35,7 +37,7 @@
                 <div class="col-md-12">
                     <ul>
                         {% for key, value in licence_types.items %}
-                            <li><a href="{% url 'wl_applications:check_identity' key %}">{{ value }}</a></li>
+                            <li><a href="{% url 'wl_applications:check_identification' key %}">{{ value }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>

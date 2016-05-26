@@ -13,3 +13,7 @@ class WLDashboard(AppConfig):
 class WLMain(AppConfig):
     name = 'wildlifelicensing.apps.main'
     label = 'wl_main'
+
+class WLEmails(AppConfig):
+    name = 'wildlifelicensing.apps.emails'
+    label = 'wl_emails'

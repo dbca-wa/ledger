@@ -12,12 +12,18 @@
         }
     },
     {
-        "model": "wl_main.WildlifeLicenceType",
+        "model": "licence.LicenceType",
         "pk": 1,
         "fields": {
             "name": "Application for a licence to take fauna for scientific purposes",
             "code": "regulation17"
         }
+    },
+    {
+        "model": "wl_main.WildlifeLicenceType",
+        "pk": 1,
+        "fields": {
+            "licencetype_ptr_id": 1
+        }
     }
-
 ]

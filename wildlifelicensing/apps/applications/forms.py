@@ -1,23 +1,73 @@
 from django import forms
 
-from ledger.accounts.models import Persona
+from ledger.accounts.models import Profile
+
+from wildlifelicensing.apps.applications.models import IDRequest, AmendmentRequest, ApplicationLogEntry
 
 
-class PersonaSelectionForm(forms.Form):
-    persona = forms.ModelChoiceField(queryset=Persona.objects.none(), empty_label=None)
+class ProfileSelectionForm(forms.Form):
+    profile = forms.ModelChoiceField(queryset=Profile.objects.none(), empty_label=None)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user')
 
-        selected_persona = None
-        if 'selected_persona' in kwargs:
-            selected_persona = kwargs.pop('selected_persona')
+        selected_profile = None
+        if 'selected_profile' in kwargs:
+            selected_profile = kwargs.pop('selected_profile')
 
-        super(PersonaSelectionForm, self).__init__(*args, **kwargs)
+        super(ProfileSelectionForm, self).__init__(*args, **kwargs)
 
-        self.fields['persona'].queryset = user.persona_set.all()
+        self.fields['profile'].queryset = user.profile_set.all()
 
-        if selected_persona is not None:
-            self.fields['persona'].initial = selected_persona
+        if selected_profile is not None:
+            self.fields['profile'].initial = selected_profile
         else:
-            self.fields['persona'].initial = user.persona_set.first()
+            self.fields['profile'].initial = user.profile_set.first()
+
+
+class IDRequestForm(forms.ModelForm):
+    class Meta:
+        model = IDRequest
+        fields = ['application', 'user', 'reason', 'text']
+        widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
+
+    def __init__(self, *args, **kwargs):
+        application = kwargs.pop('application', None)
+        user = kwargs.pop('user', None)
+
+        super(IDRequestForm, self).__init__(*args, **kwargs)
+
+        if application is not None:
+            self.fields['application'].initial = application
+
+        if user is not None:
+            self.fields['user'].initial = user
+
+
+class AmendmentRequestForm(forms.ModelForm):
+    class Meta:
+        model = AmendmentRequest
+        fields = ['application', 'user', 'reason', 'text']
+        widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
+
+    def __init__(self, *args, **kwargs):
+        application = kwargs.pop('application', None)
+        user = kwargs.pop('user', None)
+
+        super(AmendmentRequestForm, self).__init__(*args, **kwargs)
+
+        if application is not None:
+            self.fields['application'].initial = application
+
+        if user is not None:
+            self.fields['user'].initial = user
+
+
+class ApplicationLogEntryForm(forms.Form):
+    subject = forms.CharField(required=True, label="Subject / Description")
+    text = forms.CharField(widget=forms.Textarea, required=False)
+    document = forms.FileField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(ApplicationLogEntryForm, self).__init__(*args, **kwargs)
+
