@@ -17,6 +17,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.applications.models import Application, Assessment
+from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin, \
     AssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
@@ -60,6 +61,13 @@ def _render_lodgement_number(application):
 def _render_licence_number(licence):
     if licence is not None and licence.licence_number and licence.licence_sequence:
         return '%s-%d' % (licence.licence_number, licence.licence_sequence)
+    else:
+        return ''
+
+
+def _render_return_number(instance):
+    if instance is not None and instance.lodgement_number and instance.lodgement_sequence:
+        return '%s-%d' % (instance.lodgement_number, instance.lodgement_sequence)
     else:
         return ''
 
@@ -144,6 +152,10 @@ class TableBaseView(TemplateView):
     template_name = 'wl/dash_tables.html'
 
     def _build_data(self):
+        """
+        Build data skeleton for all the tables definitions, filters....
+        :return:
+        """
         licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
         data = {
             'applications': {
@@ -161,6 +173,17 @@ class TableBaseView(TemplateView):
                 }
             },
             'licences': {
+                'columnDefinitions': [],
+                'filters': {
+                    'licenceType': {
+                        'values': licence_types,
+                    },
+                },
+                'ajax': {
+                    'url': ''
+                }
+            },
+            'returns': {
                 'columnDefinitions': [],
                 'filters': {
                     'licenceType': {
@@ -393,11 +416,18 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
         all_licences_node = self._create_node('All licences', href=url, count=WildlifeLicence.objects.count())
         result.append(all_licences_node)
 
+        # Returns
+        url = reverse_lazy('dashboard:tables_returns_officer')
+        all_returns_node = self._create_node('All returns', href=url, count=WildlifeLicence.objects.count())
+        result.append(all_returns_node)
+
         return result
 
 
 class TableApplicationsOfficerView(OfficerRequiredMixin, TableBaseView):
     template_name = 'wl/dash_tables_applications_officer.html'
+
+    STATUS_PENDING = 'pending'
 
     def _build_data(self):
         data = super(TableApplicationsOfficerView, self)._build_data()
@@ -430,7 +460,8 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, TableBaseView):
             }
         ]
         data['applications']['filters']['status']['values'] = \
-            [('all', 'All')] + _get_processing_statuses_but_draft()
+            [('all', 'All')] + [(self.STATUS_PENDING, self.STATUS_PENDING.capitalize())] + \
+            _get_processing_statuses_but_draft()
         data['applications']['filters']['assignee'] = {
             'values': [('all', 'All')] + [(user.pk, render_user_name(user),) for user in get_all_officers()]
         }
@@ -479,8 +510,15 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
     })
 
     @staticmethod
+    def _get_pending_processing_statuses():
+        return [s[0] for s in Application.PROCESSING_STATUS_CHOICES
+                if s[0] != 'draft' and s[0] != 'issued' and s[0] != 'declined']
+
+    @staticmethod
     def filter_status(value):
         # officers should not see applications in draft mode.
+        if value.lower() == TableApplicationsOfficerView.STATUS_PENDING:
+            return Q(processing_status__in=DataTableApplicationsOfficerView._get_pending_processing_statuses())
         return Q(processing_status=value) if value != 'all' else ~Q(customer_status='draft')
 
     @staticmethod
@@ -545,7 +583,20 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, DataTableAp
                      'processing_status', 'lodgement_date',
                      '']
 
-    def _render_action_column(self, obj):
+    columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
+        'lodgement_number': {
+            'render': lambda self, instance: _render_lodgement_number(instance)
+        },
+        'lodgement_date': {
+            'render': lambda self, instance: _render_date(instance.lodgement_date)
+        },
+        'action': {
+            'render': lambda self, action: self._render_action_column,
+        },
+    })
+
+    @staticmethod
+    def _render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
@@ -567,18 +618,6 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, DataTableAp
                 'View application (read-only)'
             )
 
-    columns_helpers = dict(DataTableApplicationBaseView.columns_helpers.items(), **{
-        'lodgement_number': {
-            'render': lambda self, instance: _render_lodgement_number(instance)
-        },
-        'lodgement_date': {
-            'render': lambda self, instance: _render_date(instance.lodgement_date)
-        },
-        'action': {
-            'render': _render_action_column,
-        },
-    })
-
     def get_initial_queryset(self):
         return _get_current_onbehalf_applications(self.request.user)
 
@@ -587,13 +626,14 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
     template_name = 'wl/dash_tables_licences_officer.html'
 
     DATE_FILTER_ACTIVE = 'active'
-    DATE_FILTER_EXPIRING = 'expiring'
+    DATE_FILTER_RENEWABLE = 'renewable'
     DATE_FILTER_EXPIRED = 'expired'
     DATE_FILTER_ALL = 'all'
 
     def _build_data(self):
         data = super(TableLicencesOfficerView, self)._build_data()
         del data['applications']
+        del data['returns']
         data['licences']['columnDefinitions'] = [
             {
                 'title': 'Licence Number'
@@ -627,7 +667,7 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
             'date': {
                 'values': [
                     (self.DATE_FILTER_ACTIVE, self.DATE_FILTER_ACTIVE.capitalize()),
-                    (self.DATE_FILTER_EXPIRING, self.DATE_FILTER_EXPIRING.capitalize()),
+                    (self.DATE_FILTER_RENEWABLE, self.DATE_FILTER_RENEWABLE.capitalize()),
                     (self.DATE_FILTER_EXPIRED, self.DATE_FILTER_EXPIRED.capitalize()),
                     (self.DATE_FILTER_ALL, self.DATE_FILTER_ALL.capitalize()),
                 ]
@@ -643,8 +683,22 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
 
 class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
     model = WildlifeLicence
-    columns = ['licence_number', 'licence_type.code', 'profile.user', 'start_date', 'end_date', 'licence', 'action']
-    order_columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
+    columns = [
+        'licence_number',
+        'licence_type.code',
+        'profile.user',
+        'start_date',
+        'end_date',
+        'licence',
+        'action']
+    order_columns = [
+        'licence_number',
+        'licence_type.code',
+        ['profile.user.last_name', 'profile.user.first_name'],
+        'start_date',
+        'end_date',
+        '',
+        '']
 
     columns_helpers = {
         'licence_number': {
@@ -678,8 +732,8 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
         today = datetime.date.today()
         if value == TableLicencesOfficerView.DATE_FILTER_ACTIVE:
             return Q(start_date__lte=today) & Q(end_date__gte=today)
-        elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRING:
-            return Q(end_date__gte=today) & Q(end_date__lte=today + datetime.timedelta(days=30))
+        elif value == TableLicencesOfficerView.DATE_FILTER_RENEWABLE:
+            return Q(is_renewable=True) & Q(end_date__gte=today) & Q(end_date__lte=today + datetime.timedelta(days=30))
         elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRED:
             return Q(end_date__lt=today)
         else:
@@ -701,6 +755,135 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
         return WildlifeLicence.objects.all()
 
 
+class TableReturnsOfficerView(OfficerRequiredMixin, TableBaseView):
+    template_name = 'wl/dash_tables_returns_officer.html'
+
+    STATUS_FILTER_ALL_BUT_DRAFT = 'all_but_draft'
+    OVERDUE_FILTER = 'overdue'
+
+    def _build_data(self):
+        data = super(TableReturnsOfficerView, self)._build_data()
+        del data['applications']
+        del data['returns']
+        data['returns']['columnDefinitions'] = [
+            {
+                'title': 'Return Number'
+            },
+            {
+                'title': 'Licence Type'
+            },
+            {
+                'title': 'User'
+            },
+            {
+                'title': 'Lodged On'
+            },
+            {
+                'title': 'Due On'
+            },
+            {
+                'title': 'Status'
+            },
+            {
+                'title': 'Licence',
+                'searchable': False,
+                'orderable': False
+            },
+            {
+                'title': 'Action',
+                'searchable': False,
+                'orderable': False
+            }
+        ]
+        data['returns']['ajax']['url'] = reverse('dashboard:data_returns_officer')
+        # global table options
+        data['returns']['tableOptions'] = {
+            'pageLength': 25
+        }
+        filters = {
+            'status': {
+                'values': [
+                              (self.STATUS_FILTER_ALL_BUT_DRAFT, 'All (but draft)'),
+                              (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
+                          ] + list(Return.STATUS_CHOICES)
+            }
+        }
+        data['returns']['filters'].update(filters)
+
+        return data
+
+
+class DataTableReturnsOfficerView(DataTableBaseView):
+    model = Return
+    columns = [
+        'lodgement_number',
+        'licence.licence_type.code',
+        'licence.profile.user',
+        'lodgement_date',
+        'due_date',
+        'status',
+        'licence',
+        'action',
+    ]
+    order_columns = [
+        'lodgement_number',
+        'licence.licence_type.code',
+        ['licence.profile.user.last_name', 'licence.profile.user.first_name'],
+        'lodgement_date',
+        'due_date',
+        'status',
+        '',
+        '']
+    columns_helpers = {
+        'lodgement_number': {
+            'render': lambda self, instance: _render_return_number(instance)
+        },
+        'lodgement_date': {
+            'render': lambda self, instance: _render_date(instance.lodgement_date)
+        },
+        'licence.profile.user': {
+            'render': lambda self, instance: render_user_name(instance.licence.profile.user, first_name_first=False),
+            'search': lambda self, search: _build_field_query([
+                'licence__profile__user__last_name', 'licence__profile__user__first_name'],
+                search),
+        },
+        'due_date': {
+            'render': lambda self, instance: _render_date(instance.due_date)
+        },
+        'licence': {
+            'render': lambda self, instance: _render_licence_document(instance.licence)
+        },
+        'action': {
+            'render': lambda self, instance: self._render_action(instance)
+        }
+    }
+
+    @staticmethod
+    def _render_action(instance):
+        return 'View'
+
+    @staticmethod
+    def filter_licence_type(value):
+        if value.lower() != 'all':
+            return Q(return_type__licence_type__pk=value)
+        else:
+            return None
+
+    @staticmethod
+    def filter_status(value):
+        if value == TableReturnsOfficerView.STATUS_FILTER_ALL_BUT_DRAFT:
+            return ~Q(status='draft')
+        elif value == TableReturnsOfficerView.OVERDUE_FILTER:
+            return Q(due_date__lt=datetime.date.today()) & ~Q(status__in=['submitted', 'accepted', 'declined'])
+        elif value:
+            return Q(status=value)
+        else:
+            return None
+
+    def get_initial_queryset(self):
+        return Return.objects.all()
+
+
 ########################
 #    Assessors
 ########################
@@ -712,7 +895,7 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
     template_name = 'wl/dash_tables_assessor.html'
 
     def _build_data(self):
-        data = super(TableApplicationsOfficerView, self)._build_data()
+        data = super(TableAssessorView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
                 'title': 'Lodge Number'
@@ -808,10 +991,15 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, DataTable
 
 
 class TableCustomerView(LoginRequiredMixin, TableBaseView):
+    """
+    This view includes the table definitions and fiters for applications, licences and returns for the customers as it's
+    display on the same page.
+    """
     template_name = 'wl/dash_tables_customer.html'
 
     def _build_data(self):
         data = super(TableCustomerView, self)._build_data()
+        # Applications
         data['applications']['columnDefinitions'] = [
             {
                 'title': 'Lodge Number'
@@ -834,10 +1022,12 @@ class TableCustomerView(LoginRequiredMixin, TableBaseView):
                 'orderable': False
             }
         ]
-        data['applications']['filters']['status']['values'] = \
-            [('all', 'All')] + list(Application.CUSTOMER_STATUS_CHOICES)
+        # no filters
+        if 'filters' in data['applications']:
+            del data['applications']['filters']
         data['applications']['ajax']['url'] = reverse('dashboard:data_application_customer')
 
+        # Licences
         data['licences']['columnDefinitions'] = [
             {
                 'title': 'Licence Number'
@@ -866,10 +1056,51 @@ class TableCustomerView(LoginRequiredMixin, TableBaseView):
             }
         ]
         data['licences']['ajax']['url'] = reverse('dashboard:data_licences_customer')
+        # no filters
+        if 'filters' in data['licences']:
+            del data['licences']['filters']
         # global table options
         data['licences']['tableOptions'] = {
             'order': [[4, 'desc']]
         }
+
+        # Returns
+        data['returns']['columnDefinitions'] = [
+            {
+                'title': 'Return Number'
+            },
+            {
+                'title': 'Licence Type'
+            },
+            {
+                'title': 'Lodged On'
+            },
+            {
+                'title': 'Due On'
+            },
+            {
+                'title': 'Status'
+            },
+            {
+                'title': 'Licence',
+                'searchable': False,
+                'orderable': False
+            },
+            {
+                'title': 'Action',
+                'searchable': False,
+                'orderable': False
+            }
+        ]
+        data['returns']['ajax']['url'] = reverse('dashboard:data_returns_customer')
+        # no filters
+        if 'filters' in data['returns']:
+            del data['returns']['filters']
+        # global table options
+        data['returns']['tableOptions'] = {
+            'order': [[3, 'desc']]
+        }
+
         return data
 
 
@@ -964,3 +1195,34 @@ class DataTableLicencesCustomerView(DataTableBaseView):
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.filter(user=self.request.user)
+
+
+class DataTableReturnsCustomerView(DataTableBaseView):
+    model = Return
+    columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', 'licence',
+               'action']
+    order_columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', '', '']
+    columns_helpers = {
+        'lodgement_number': {
+            'render': lambda self, instance: _render_return_number(instance)
+        },
+        'lodgement_date': {
+            'render': lambda self, instance: _render_date(instance.lodgement_date)
+        },
+        'due_date': {
+            'render': lambda self, instance: _render_date(instance.due_date)
+        },
+        'licence': {
+            'render': lambda self, instance: _render_licence_document(instance.licence)
+        },
+        'action': {
+            'render': lambda self, instance: self._render_action(instance)
+        }
+    }
+
+    @staticmethod
+    def _render_action(instance):
+        return 'View'
+
+    def get_initial_queryset(self):
+        return Return.objects.filter(licence__user=self.request.user)
