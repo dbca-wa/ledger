@@ -1,6 +1,6 @@
 [
   {
-    "model": "main.condition",
+    "model": "wl_main.condition",
     "pk": 1,
     "fields": {
       "text": "The licensee shall comply with the provisions of the Wildlife Conservation Act 1950, Wildlife Conservation\r\nRegulations 1970 and any notices in force under this legislation.",
@@ -9,7 +9,7 @@
     }
   },
   {
-    "model": "main.condition",
+    "model": "wl_main.condition",
     "pk": 2,
     "fields": {
       "text": "Unless specifically authorised in the Conditions of this Licence or otherwise in writing by the Director General,\r\nspecies of fauna declared as likely to become extinct, rare or otherwise in need of special protection shall not be\r\ncaptured or otherwise taken.",
@@ -18,7 +18,7 @@
     }
   },
   {
-    "model": "main.condition",
+    "model": "wl_main.condition",
     "pk": 3,
     "fields": {
       "text": "No fauna shall be taken from any Nature Reserve, National Park, Marine Park, Marine Nature Reserve, Timber Reserve or State Forest without prior written approval of the Director General. No fauna shall be taken from any other public land without the written approval of the Government Authority managing that land.",
@@ -27,7 +27,7 @@
     }
   },
   {
-    "model": "main.condition",
+    "model": "wl_main.condition",
     "pk": 4,
     "fields": {
       "text": "No entry or collection of fauna to be undertaken on any private property or pastoral lease without the consent in writing of the owner or occupier, or from any Aboriginal lands without the written approval of the Department of Aboriginal Affairs.",
@@ -36,7 +36,7 @@
     }
   },
   {
-    "model": "main.condition",
+    "model": "wl_main.condition",
     "pk": 5,
     "fields": {
       "text": "No fauna or their progeny shall be released in any area where it does not naturally occur, nor be handed over to any other person or authority unless approved by the Director General, nor shall the remains of such fauna be disposed of in such manner as to confuse the natural or present day distribution of the species.",
@@ -45,7 +45,7 @@
     }
   },
   {
-    "model": "main.condition",
+    "model": "wl_main.condition",
     "pk": 6,
     "fields": {
       "text": "This licence and the written permission referred to at conditions 3 & 4 must be carried by the licensee or\r\nauthorised agent at all times for the purpose of proving their authority to take fauna when questioned as to their right to do so by a Wildlife Officer, any other State or Local Government employee or any member of the public.",
@@ -54,7 +54,7 @@
     }
   },
   {
-    "model": "main.condition",
+    "model": "wl_main.condition",
     "pk": 7,
     "fields": {
       "text": "Any interaction involving Gazetted Threatened Fauna that may be harmful and/or invasive may require approval from the Department of the Environment ph 02 6274 1111. Interaction with such species is controlled by the  Commonwealth Government's \"Environment Protection and Biodiversity Conservation Act 1999\" and \"Environment Protection and Biodiversity Conservation Regulations 2000\" as well as this Department's Wildlife Conservation Act 1950 and Wildlife Conservation Regulations 1970.",
@@ -63,7 +63,7 @@
     }
   },
   {
-    "model": "main.condition",
+    "model": "wl_main.condition",
     "pk": 8,
     "fields": {
       "text": "No bioprospecting involving the removal of sample aquatic and terrestrial organisms (both flora and fauna) for chemical extraction and bioactivity screening is permitted to be conducted without specific written approval by the Director General.",
