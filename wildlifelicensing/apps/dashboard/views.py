@@ -1242,4 +1242,4 @@ class DataTableReturnsCustomerView(DataTableBaseView):
         return 'View'
 
     def get_initial_queryset(self):
-        return Return.objects.filter(licence__user=self.request.user)
+        return Return.objects.filter(licence__holder=self.request.user)

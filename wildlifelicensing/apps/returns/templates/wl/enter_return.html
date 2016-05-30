@@ -35,37 +35,58 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% bootstrap_form upload_spreadsheet_form %}
                     <button type="submit" class="btn btn-primary pull-right" name="upload">Upload File</button>
                 </form>
             </div>
         </div>
-        <div class="row top-buffer">
-            <div class="col-md-12">
-                <table id="returnTable" class="table table-striped table-bordered dataTable">
-                    <thead>
-                        <tr>
-                            {% for heading in headings %}
-                                <th>{{ heading }}</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for i in '0123456789' %}
-                            <tr>
-                                {% for heading in headings %}
-                                    <td>
-                                        <input name="{{ heading|slugify }}"></input>
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <a id="addRow">Add Row</a>
-            </div>
-        </div>
+        <form method="POST">
+            {% csrf_token %}
+            {% for table in tables %}
+                <div class="row top-buffer">
+                    <div class="col-md-12">
+                        <h3>{{ table.name }}</h3>
+                        <table id="returnTable" class="table table-striped table-bordered dataTable">
+                            <thead>
+                                <tr>
+                                    {% for header in table.headers %}
+                                        <th>{{ header }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if table.data %}
+                                    {% for row in table.data %}
+                                        <tr>
+                                            {% for key, val in row.items %}
+                                                <td>
+                                                    <input name="{{ table.name }}::{{ key }}" value="{{ val }}"></input>
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for i in '01234' %}
+                                        <tr>
+                                            {% for header in table.headers %}
+                                                <td>
+                                                    <input name="{{ table.name }}::{{ header }}"></input>
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        <a id="addRow">Add Row</a>
+                    </div>
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary pull-right" name="submit">Submit</button>
+            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft_continue">Save Draft and Continue Editing</button>
+            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>
+        </form>
     </div>
 {% endblock %}

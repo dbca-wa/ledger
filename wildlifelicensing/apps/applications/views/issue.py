@@ -14,6 +14,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
+from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
@@ -49,7 +50,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         original_issue_date = None
         if application.licence is not None:
             issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence)
-            original_issue_date = application.licence.issue_date 
+            original_issue_date = application.licence.issue_date
         else:
             issue_licence_form = IssueLicenceForm(request.POST)
 
@@ -86,6 +87,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                                              request.build_absolute_uri(reverse('home')))
 
             licence.save()
+
+            licence_issued.send(sender=self.__class__, wildlife_licence=licence)
 
             application.customer_status = 'approved'
             application.processing_status = 'issued'

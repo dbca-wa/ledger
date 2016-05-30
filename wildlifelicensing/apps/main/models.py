@@ -24,12 +24,16 @@ class WildlifeLicenceType(LicenceType):
 
 
 class WildlifeLicence(Licence):
+    MONTH_FREQUENCY_CHOICES = [(-1, 'One off'), (1, 'Monthly'), (3, 'Quarterly'), (6, 'Twice-Yearly'), (12, 'Yearly')]
+    DEFAULT_FREQUENCY = MONTH_FREQUENCY_CHOICES[0][0]
+
     profile = models.ForeignKey(Profile)
     sequence_number = models.IntegerField(default=1)
     purpose = models.TextField(blank=True)
     cover_letter_message = models.TextField(blank=True)
     licence_document = models.ForeignKey(Document, blank=True, null=True, related_name='licence_document')
     cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
+    return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
 
 
