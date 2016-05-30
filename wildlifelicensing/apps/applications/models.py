@@ -17,6 +17,9 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required']
 
+    # List of statuses from above that allow a customer to view an application (read-only)
+    CUSTOMER_VIEWABLWE_STATE = ['under_review', 'id_required', 'approved', 'id_required']
+
     PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
@@ -76,6 +79,13 @@ class Application(RevisionedMixin):
         :return: True if the application is in one of the editable status.
         """
         return self.customer_status in self.CUSTOMER_EDITABLE_STATE
+
+    @property
+    def can_user_view(self):
+        """
+        :return: True if the application is in one of the approved status.
+        """
+        return self.customer_status in self.CUSTOMER_VIEWABLWE_STATE
 
 
 class ApplicationLogEntry(AbstractLogEntry):

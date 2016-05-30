@@ -130,16 +130,16 @@ class LicenceIssuedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/licence_issued.txt'
 
 
-def send_licence_issued_email(licence, application, cover_letter_message, request):
+def send_licence_issued_email(licence, application, request):
     email = LicenceIssuedEmail()
     url = request.build_absolute_uri(
         reverse('dashboard:home')
     )
     context = {
         'url': url,
-        'cover_letter_message': cover_letter_message
+        'cover_letter_message': licence.cover_letter_message
     }
-    if licence.document is not None:
+    if licence.licence_document is not None:
         file_name = 'WL_licence_' + str(licence.licence_type.code)
         if licence.licence_number:
             file_name += '_' + str(licence.licence_number)
@@ -148,23 +148,23 @@ def send_licence_issued_email(licence, application, cover_letter_message, reques
         elif licence.start_date:
             file_name += '_' + str(licence.start_date)
         file_name += '.pdf'
-        attachment = (file_name, licence.document.file.read(), 'application/pdf')
+        attachment = (file_name, licence.licence_document.file.read(), 'application/pdf')
         attachments = [attachment]
     else:
         logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
         attachments = None
     msg = email.send(licence.profile.email, context=context, attachments=attachments)
     log_entry = _log_email(msg, application=application, sender=request.user)
-    if licence.document is not None:
-        log_entry.document = licence.document
+    if licence.licence_document is not None:
+        log_entry.document = licence.licence_document
         log_entry.save()
     return log_entry
 
 
 class LicenceRenewalNotificationEmail(TemplateEmailBase):
     subject = 'Your wildlife licence is due for renewal.'
-    html_template = 'wl/emails/renew_licence_numbertification.html'
-    txt_template = 'wl/emails/renew_licence_numbertification.txt'
+    html_template = 'wl/emails/renew_licence_notification.html'
+    txt_template = 'wl/emails/renew_licence_notification.txt'
 
 
 def send_licence_renewal_email_notification(licence):
@@ -177,6 +177,25 @@ def send_licence_renewal_email_notification(licence):
     }
 
     email.send(licence.profile.email, context=context)
+
+
+
+class UserNameChangeNotificationEmail(TemplateEmailBase):
+    subject = 'User has changed name and requires licence reissue.'
+    html_template = 'wl/emails/user_name_change_notification.html'
+    txt_template = 'wl/emails/user_name_change_notification.txt'
+
+
+def send_user_name_change_notification_email(licence):
+    email = UserNameChangeNotificationEmail()
+
+    url = 'http:' + hosts_reverse('applications:reissue_licence', args=(licence.pk,))
+
+    context = {
+        'licence': licence,
+        'url': url
+    }
+    msg = email.send(licence.issuer.email, context=context)
 
 
 def _log_email(email_message, application, sender=None):

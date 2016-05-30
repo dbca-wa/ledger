@@ -73,11 +73,17 @@ def _render_return_number(instance):
 
 
 def _render_licence_document(licence):
-    if licence is not None and licence.document is not None:
+    if licence is not None and licence.licence_document is not None:
         return '<a href="{0}" target="_blank">View PDF</a><img height="20" src="{1}"></img>'.format(
-            licence.document.file.url,
-            static('wl/img/pdf.png')
-        )
+            licence.licence_document.file.url, static('wl/img/pdf.png'))
+    else:
+        return ''
+
+
+def _render_cover_letter_document(licence):
+    if licence is not None and licence.cover_letter_document is not None:
+        return '<a href="{0}" target="_blank">View PDF</a><img height="20" src="{1}"></img>'.format(
+            licence.cover_letter_document.file.url, static('wl/img/pdf.png'))
     else:
         return ''
 
@@ -533,9 +539,10 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, DataTableApplicatio
             return '<a href="{0}">Issue Licence</a>'.format(
                 reverse('applications:issue_licence', args=[obj.pk]),
             )
-        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
-            return '<a href="{0}" target="_blank">View licence</a>'.format(
-                obj.licence.document.file.url
+        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.licence_document is not None:
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('applications:view_application', args=[obj.pk]),
+                'View application (read-only)'
             )
         else:
             return '<a href="{0}">Process</a>'.format(
@@ -613,12 +620,11 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, DataTableAp
             return '<a href="{0}">{1}</a>'.format(
                 reverse('main:identification'),
                 'Update ID')
-        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
-            return '<a href="{0}" target="_blank">View licence</a>'.format(
-                obj.licence.document.file.url
-            )
         else:
-            return 'Locked'
+            return '<a href="{0}">{1}</a>'.format(
+                reverse('applications:view_application', args=[obj.pk]),
+                'View application (read-only)'
+            )
 
     def get_initial_queryset(self):
         return _get_current_onbehalf_applications(self.request.user)
@@ -658,6 +664,11 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
                 'orderable': False
             },
             {
+                'title': 'Cover Letter',
+                'searchable': False,
+                'orderable': False
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -692,6 +703,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
         'start_date',
         'end_date',
         'licence',
+        'cover_letter',
         'action']
     order_columns = [
         'licence_number',
@@ -723,6 +735,9 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
         },
         'licence': {
             'render': lambda self, instance: _render_licence_document(instance)
+        },
+        'cover_letter': {
+            'render': lambda self, instance: _render_cover_letter_document(instance)
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
@@ -766,7 +781,7 @@ class TableReturnsOfficerView(OfficerRequiredMixin, TableBaseView):
     def _build_data(self):
         data = super(TableReturnsOfficerView, self)._build_data()
         del data['applications']
-        del data['returns']
+        del data['licences']
         data['returns']['columnDefinitions'] = [
             {
                 'title': 'Return Number'
@@ -805,9 +820,9 @@ class TableReturnsOfficerView(OfficerRequiredMixin, TableBaseView):
         filters = {
             'status': {
                 'values': [
-                              (self.STATUS_FILTER_ALL_BUT_DRAFT, 'All (but draft)'),
-                              (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
-                          ] + list(Return.STATUS_CHOICES)
+                    (self.STATUS_FILTER_ALL_BUT_DRAFT, 'All (but draft)'),
+                    (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
+                ] + list(Return.STATUS_CHOICES)
             }
         }
         data['returns']['filters'].update(filters)
@@ -1141,12 +1156,11 @@ class DataTableApplicationCustomerView(DataTableApplicationBaseView):
             return '<a href="{0}">{1}</a>'.format(
                 reverse('main:identification'),
                 'Update ID')
-        elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.document is not None:
-            return '<a href="{0}" target="_blank">View licence</a>'.format(
-                obj.licence.document.file.url
-            )
         else:
-            return 'Locked'
+            return '<a href="{0}"">{1}</a>'.format(
+                reverse('applications:view_application', args=[obj.pk]),
+                'View application (read-only)'
+            )
 
     def get_initial_queryset(self):
         return _get_user_applications(self.request.user)
@@ -1197,7 +1211,7 @@ class DataTableLicencesCustomerView(DataTableBaseView):
                 return 'Renewable in ' + str(expiry_days - 30) + ' days'
 
     def get_initial_queryset(self):
-        return WildlifeLicence.objects.filter(user=self.request.user)
+        return WildlifeLicence.objects.filter(holder=self.request.user)
 
 
 class DataTableReturnsCustomerView(DataTableBaseView):

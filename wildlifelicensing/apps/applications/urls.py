@@ -14,6 +14,9 @@ from wildlifelicensing.apps.applications.views.conditions import EnterConditions
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
+from wildlifelicensing.apps.applications.views.view import ViewReadonlyView
+
+
 urlpatterns = [
     # application entry / licence renewal
     url('^new-application/$', NewApplicationView.as_view(), name='new_application'),
@@ -61,4 +64,7 @@ urlpatterns = [
     url('^issue-licence/([0-9]+)/$', IssueLicenceView.as_view(), name='issue_licence'),
     url('^reissue-licence/([0-9]+)/$', ReissueLicenceView.as_view(), name='reissue_licence'),
     url('^preview-licence/([0-9]+)/$', PreviewLicenceView.as_view(), name='preview_licence'),
+
+    # view
+    url('^view-application/([0-9]+)/$', ViewReadonlyView.as_view(), name='view_application')
 ]

@@ -12,7 +12,8 @@ from preserialize.serialize import serialize
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.forms import IssueLicenceForm
-from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes
+from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
+    create_cover_letter_pdf_document
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
@@ -32,17 +33,23 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         kwargs['application'] = serialize(application, posthook=format_application)
 
-        purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
+        # if reissue
+        if application.licence:
+            kwargs['issue_licence_form'] = IssueLicenceForm(instance=application.licence)
+        else:
+            purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
-        kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable)
+            kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable)
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
+        original_issue_date = None
         if application.licence is not None:
             issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence)
+            original_issue_date = application.licence.issue_date 
         else:
             issue_licence_form = IssueLicenceForm(request.POST)
 
@@ -50,7 +57,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence = issue_licence_form.save(commit=False)
             licence.licence_type = application.licence_type
             licence.profile = application.applicant_profile
-            licence.user = application.applicant_profile.user
+            licence.holder = application.applicant_profile.user
+            licence.issuer = request.user
 
             if application.previous_application is not None:
                 licence.licence_number = application.previous_application.licence.licence_number
@@ -66,10 +74,16 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             licence.licence_sequence += 1
 
-            filename = '%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
+            licence_filename = 'licence-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
-            licence.document = create_licence_pdf_document(filename, licence, application,
-                                                           request.build_absolute_uri(reverse('home')))
+            licence.licence_document = create_licence_pdf_document(licence_filename, licence, application,
+                                                                   request.build_absolute_uri(reverse('home')),
+                                                                   original_issue_date)
+
+            cover_letter_filename = 'cover-letter-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
+
+            licence.cover_letter_document = create_cover_letter_pdf_document(cover_letter_filename, licence,
+                                                                             request.build_absolute_uri(reverse('home')))
 
             licence.save()
 
@@ -87,23 +101,26 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 # customer applied online
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
                                  'licencee.')
-                send_licence_issued_email(licence, application, issue_licence_form.cleaned_data['cover_letter_message'],
-                                          request)
+                send_licence_issued_email(licence, application, request)
             elif not application.applicant_profile.user.is_dummy_user:
                 # customer applied offline but provided an email address
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
                                  'licencee. However, as the application was entered on behalf of the licencee by '
-                                 'staff, it should also be posted to the licencee. Click the following link to show '
-                                 'the licence: <a href="{0}" target="_blank">Licence PDF</a><img height="20px" '
-                                 'src="{1}"></img>'.format(licence.document.file.url, static('wl/img/pdf.png')))
-                send_licence_issued_email(licence, application, issue_licence_form.cleaned_data['cover_letter_message'],
-                                          request)
+                                 'staff, it should also be posted to the licencee. Click this link to show '
+                                 'the licence <a href="{0}" target="_blank">Licence PDF</a><img height="20px" '
+                                 'src="{1}"></img> and this link to show the cover letter <a href="{2}" target="_blank">'
+                                 'Cover Letter PDF</a><img height="20px" src="{3}"></img>'.
+                                 format(licence.licence_document.file.url, static('wl/img/pdf.png'),
+                                        licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
+                send_licence_issued_email(licence, application, request)
             else:
                 # customer applied offline and did not provide an email address
                 messages.success(request, 'The licence has now been issued and must be posted to the licencee. Click '
-                                 'the following link to show the licence: <a href="{0}" target="_blank">Licence PDF'
-                                 '</a><img height="20px" src="{1}"></img>'.format(licence.document.file.url,
-                                                                                  static('wl/img/pdf.png')))
+                                 'this link to show the licence <a href="{0}" target="_blank">Licence PDF'
+                                 '</a><img height="20px" src="{1}"></img> and this link to show the cover letter'
+                                 '<a href="{2}" target="_blank">Cover Letter PDF</a><img height="20px" src="{3}">'
+                                 '</img>'.format(licence.licence_document.file.url, static('wl/img/pdf.png'),
+                                                 licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
 
             return redirect('dashboard:home')
         else:
@@ -129,12 +146,17 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        issue_licence_form = IssueLicenceForm(request.GET)
+        original_issue_date = None
+        if application.licence is not None:
+            issue_licence_form = IssueLicenceForm(request.GET, instance=application.licence)
+            original_issue_date = application.licence.issue_date 
+        else:
+            issue_licence_form = IssueLicenceForm(request.GET)
 
         licence = issue_licence_form.save(commit=False)
         licence.licence_type = application.licence_type
         licence.profile = application.applicant_profile
-        licence.user = application.applicant_profile.user
+        licence.holder = application.applicant_profile.user
 
         filename = '%s.pdf' % application.lodgement_number
 
@@ -145,6 +167,7 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
         response = HttpResponse(content_type='application/pdf')
 
         response.write(create_licence_pdf_bytes(filename, licence, application,
-                                                request.build_absolute_uri(reverse('home'))))
+                                                request.build_absolute_uri(reverse('home')),
+                                                original_issue_date))
 
         return response

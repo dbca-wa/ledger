@@ -4,4 +4,6 @@
 {% block content %}
 {%  endblock %}
 {% block signature %}
+Best regards,
+Parks and Wildlife Customer Portal
 {% endblock %}

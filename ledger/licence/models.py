@@ -27,7 +27,9 @@ class LicenceType(RevisionedMixin, ActiveMixin):
 
 @python_2_unicode_compatible
 class Licence(RevisionedMixin, ActiveMixin):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    holder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='holder')
+    issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='issuer',
+                               blank=True, null=True)
     licence_type = models.ForeignKey(LicenceType, on_delete=models.PROTECT)
     licence_number = models.CharField(max_length=64, blank=True, null=True)
     licence_sequence = models.IntegerField(blank=True, default=0)

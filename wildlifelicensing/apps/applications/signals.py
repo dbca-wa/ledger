@@ -1,9 +1,23 @@
+from datetime import date
+
 from django.dispatch import receiver
 
-from wildlifelicensing.apps.main.signals import identification_uploaded
+from ledger.licence.models import Licence
+from ledger.accounts.signals import name_changed
 
+from wildlifelicensing.apps.main.signals import identification_uploaded
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.applications.views.process import determine_processing_status, determine_customer_status
+from wildlifelicensing.apps.applications.emails import send_user_name_change_notification_email
+
+from wildlifelicensing.apps.main.models import Licence
+
+
+@receiver(name_changed)
+def name_changed_callback(sender, **kwargs):
+    if 'user' in kwargs:
+        for licence in Licence.objects.filter(holder=kwargs.get('user'), end_date__gt=date.today()):
+            send_user_name_change_notification_email(licence)
 
 
 @receiver(identification_uploaded)
