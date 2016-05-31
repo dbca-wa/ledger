@@ -1,19 +1,30 @@
 from django.contrib import admin
-
+from django import forms
 from reversion.admin import VersionAdmin
 
 from wildlifelicensing.apps.main.models import AssessorGroup
+from wildlifelicensing.apps.main.forms import BetterJSONField
 
 from models import Application
+
+
+class ApplicationAdminForm(forms.ModelForm):
+    data = BetterJSONField()
+
+    class Meta:
+        model = Application
+        exclude = []
 
 
 @admin.register(Application)
 class ApplicationAdmin(VersionAdmin):
     date_hierarchy = 'lodgement_date'
     list_display = ('licence_type', 'get_user', 'processing_status', 'lodgement_number', 'lodgement_date')
+    form = ApplicationAdminForm
 
     def get_user(self, obj):
         return obj.applicant_profile.user
+
     get_user.short_description = 'User'
     get_user.admin_order_field = 'applicant_profile__user'
 

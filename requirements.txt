@@ -14,4 +14,5 @@ django-preserialize==1.1.0
 django-countries==3.4.1
 django-cron==0.4.6
 openpyxl==2.3.5
-jsontableschema==0.6.3
+datapackage>=0.6.1
+jsontableschema>=0.6.3
