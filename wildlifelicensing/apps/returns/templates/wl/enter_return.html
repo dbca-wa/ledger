@@ -4,6 +4,8 @@
 
 {% load bootstrap3 %}
 
+{% load dict_helpers %}
+
 {% block extra_css %}
     <link rel="stylesheet"
           href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css">
@@ -14,7 +16,7 @@
 
 {% block requirements %}
     require(["{% static 'wl/js/return_table.js' %}"], function (returnTable) {
-        returnTable.initTable('#returnTable');
+        returnTable.initTables();
     });
 {% endblock %}
 
@@ -32,7 +34,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container bottom-buffer">
         <div class="row">
             <div class="col-md-12">
                 <form method="post" enctype="multipart/form-data">
@@ -48,7 +50,7 @@
                 <div class="row top-buffer">
                     <div class="col-md-12">
                         <h3>{{ table.name }}</h3>
-                        <table id="returnTable" class="table table-striped table-bordered dataTable">
+                        <table class="return-table table table-striped table-bordered dataTable">
                             <thead>
                                 <tr>
                                     {% for header in table.headers %}
@@ -60,9 +62,9 @@
                                 {% if table.data %}
                                     {% for row in table.data %}
                                         <tr>
-                                            {% for key, val in row.items %}
+                                            {% for header in table.headers %}
                                                 <td>
-                                                    <input name="{{ table.name }}::{{ key }}" value="{{ val }}"></input>
+                                                    <input name="{{ table.name }}::{{ header }}" value="{{ row|get_item:header }}"></input>
                                                 </td>
                                             {% endfor %}
                                         </tr>
@@ -80,7 +82,7 @@
                                 {% endif %}
                             </tbody>
                         </table>
-                        <a id="addRow">Add Row</a>
+                        <a class="add-return-row">Add Row</a>
                     </div>
                 </div>
             {% endfor %}

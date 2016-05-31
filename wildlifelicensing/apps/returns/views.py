@@ -3,7 +3,7 @@ import shutil
 import tempfile
 
 from django.views.generic.base import TemplateView
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.storage import default_storage
@@ -13,13 +13,39 @@ from django_datatables_view.base_datatable_view import DatatableMixin, BaseDatat
 from jsontableschema.model import SchemaModel
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.returns.models import ReturnType, Return, ReturnTable, ReturnRow
+from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow
 from wildlifelicensing.apps.returns import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
-from wildlifelicensing.apps.main.models import WildlifeLicence
-from datetime import date, datetime
+from datetime import date
+
+LICENCE_TYPE_NUM_CHARS = 2
+LODGEMENT_NUMBER_NUM_CHARS = 6
 
 RETURNS_APP_PATH = os.path.join(os.path.dirname(__file__), 'excel_templates')
+
+
+def _create_return_data_from_post_data(ret, tables_info, post_data):
+    for table in tables_info:
+        table_namespace = table.get('name') + '::'
+
+        table_data = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if key.startswith(table_namespace)])
+
+        return_table, created = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
+
+        # delete any existing rows as they will all be recreated
+        return_table.returnrow_set.all().delete()
+
+        num_rows = len(table_data.values()[0])
+
+        return_rows = []
+        for row_num in range(num_rows):
+            row_data = {}
+            for key, value in table_data.items():
+                row_data[key] = value[row_num]
+
+            return_rows.append(ReturnRow(return_table=return_table, data=row_data))
+
+        ReturnRow.objects.bulk_create(return_rows)
 
 
 class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
@@ -27,25 +53,29 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        return_type = get_object_or_404(ReturnType, licence_type__code=self.args[0])
+        ret = get_object_or_404(Return, pk=self.args[0])
 
         kwargs['tables'] = []
 
-        for schema_name in return_type.get_schema_names():
-            schema = SchemaModel(return_type.get_schema(schema_name))
-            kwargs['tables'].append({'name': schema_name, 'headers': schema.headers})
+        for schema_name in ret.return_type.get_schema_names():
+            schema = SchemaModel(ret.return_type.get_schema(schema_name))
+            table = {'name': schema_name, 'headers': schema.headers}
+
+            try:
+                return_table = ret.returntable_set.get(name=schema_name)
+                table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
+            except ReturnTable.DoesNotExist:
+                pass
+
+            kwargs['tables'].append(table)
 
         kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
-
-        if len(self.args) > 1:
-            ret = get_object_or_404(ReturnType, pl=self.args[1])
 
         return super(EnterReturnView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        return_type = get_object_or_404(ReturnType, licence_type__code=args[0])
-
         context = self.get_context_data()
+        ret = get_object_or_404(Return, pk=self.args[0])
 
         if 'upload' in request.POST:
             form = UploadSpreadsheetForm(request.POST, request.FILES)
@@ -66,32 +96,35 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                             table['data'] = list(table_data.rows_by_col_header_it())
                 finally:
                     shutil.rmtree(temp_file_dir)
+        elif 'draft' in request.POST or 'draft_continue' in request.POST:
+            _create_return_data_from_post_data(ret, context['tables'], request.POST)
+
+            ret.status = 'draft'
+            ret.save()
+
+            messages.warning(request, 'Return saved as draft.')
+
+            if 'draft' in request.POST:
+                return redirect('home')
+            else:
+                for table in context['tables']:
+                    return_table = ReturnTable.objects.get(ret=ret, name=table.get('name'))
+                    table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
+
         elif 'submit' in request.POST:
-            ret = Return.objects.create(return_type=return_type, licence=WildlifeLicence.objects.first(), due_date=datetime.today())
+            _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
-            for table in context['tables']:
-                table_namespace = table.get('name') + '::'
+            ret.return_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
+                                           str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
-                table_data = dict([(key.replace(table_namespace, ''), request.POST.getlist(key)) for key in request.POST.keys() if key.startswith(table_namespace)])
+            ret.lodgement_date = date.today()
 
-                return_table = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
+            ret.status = 'submitted'
+            ret.save()
 
-                # delete any existing rows as they will all be recreated
-                return_table.returnrow_set.all().delete()
+            messages.success(request, 'Return successfully submitted.')
 
-                num_rows = len(table_data.values()[0])
-
-                return_rows = []
-                for row_num in range(num_rows):
-                    row_data = {}
-                    for key, value in table_data.items():
-                        row_data[key] = value[row_num]
-
-                    return_rows.append(ReturnRow(return_table=return_table, data=row_data))
-
-                ReturnRow.objects.bulk_create(return_rows)
-
-            messages.success(request, 'Return successfully created.')
+            return redirect('home')
 
         return render(request, self.template_name, context)
 
@@ -99,3 +132,39 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 class CurateReturnView(OfficerRequiredMixin, TemplateView):
     template_name = 'wl/curate_return.html'
     login_url = '/'
+
+    def get_context_data(self, **kwargs):
+        ret = get_object_or_404(Return, pk=self.args[0])
+
+        kwargs['return'] = ret
+
+        kwargs['tables'] = []
+
+        for schema_name in ret.return_type.get_schema_names():
+            schema = SchemaModel(ret.return_type.get_schema(schema_name))
+            table = {'name': schema_name, 'headers': schema.headers}
+
+            try:
+                return_table = ret.returntable_set.get(name=schema_name)
+                table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
+            except ReturnTable.DoesNotExist:
+                pass
+
+            kwargs['tables'].append(table)
+
+        kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
+
+        return super(CurateReturnView, self).get_context_data(**kwargs)
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        ret = get_object_or_404(Return, pk=self.args[0])
+
+        _create_return_data_from_post_data(ret, context['tables'], request.POST)
+
+        ret.status = 'accepted'
+        ret.save()
+
+        messages.success(request, 'Return successfully curated.')
+
+        return redirect('home')

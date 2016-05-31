@@ -86,7 +86,7 @@ class Return(RevisionedMixin):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=DEFAULT_STATUS)
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
-    lodgement_sequence = models.IntegerField(blank=True, default=0)
+
     lodgement_date = models.DateField(blank=True, null=True)
 
     due_date = models.DateField(null=False, blank=False)
