@@ -24,10 +24,6 @@ class ReturnType(models.Model):
     month_frequency = models.IntegerField(choices=WildlifeLicence.MONTH_FREQUENCY_CHOICES,
                                           default=WildlifeLicence.DEFAULT_FREQUENCY)
 
-    @property
-    def resources(self):
-        return self.data_descriptor.get('resources', [])
-
     def clean(self):
         """
         Validate the data descriptor
@@ -55,22 +51,22 @@ class ReturnType(models.Model):
                             resource.get('name'),
                             [str(e[0]) for e in jsontableschema.validator.iter_errors(schema)]))
 
-    def get_schema_names(self):
-        names = []
+    @property
+    def resources(self):
+        return self.data_descriptor.get('resources', [])
+
+    def get_resource_by_name(self, name):
         for resource in self.resources:
-            if 'name' in resource:
-                names.append(resource.get('name'))
-
-        return names
-
-    def get_schema(self, table_name):
-        resources = self.data_descriptor.get('resources', [])
-
-        for resource in resources:
-            if resource.get('name') == table_name:
-                return resource.get('schema', {})
-
+            if resource.get('name') == name:
+                return resource
         return None
+
+    def get_resources_names(self):
+        return [r.get('name') for r in self.resources]
+
+    def get_schema_by_name(self, name):
+        resource = self.get_resource_by_name(name)
+        return resource.get('schema', {}) if resource else None
 
 
 class Return(RevisionedMixin):

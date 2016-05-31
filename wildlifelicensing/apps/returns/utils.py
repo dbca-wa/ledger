@@ -1,20 +1,24 @@
 from datetime import timedelta, date
 from wildlifelicensing.apps.returns.models import Return
+from dateutil.relativedelta import relativedelta
 
 
 def create_returns_due_dates(start_date, end_date, monthly_frequency):
-    dates = []
+    due_dates = []
     if monthly_frequency < 0:
-        dates.append(end_date)
+        due_dates.append(end_date)
     else:
-        months = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
-
-        num_returns = months / monthly_frequency
-
-        for return_num in range(1, num_returns + 1):
-            dates.append(start_date + timedelta(days=(return_num * monthly_frequency * 365) / 12))
-
-    return dates
+        delta = relativedelta(months=monthly_frequency)
+        due_date = start_date + delta
+        if due_date > end_date:
+            # case where the first return due date is > end_date
+            # treat it like a one off
+            due_dates.append(end_date)
+        else:
+            while due_date <= end_date:
+                due_dates.append(due_date)
+                due_date += delta
+    return due_dates
 
 
 def is_return_overdue(ret):
