@@ -1230,7 +1230,7 @@ class DataTableReturnsCustomerView(DataTableBaseView):
             'render': lambda self, instance: _render_date(instance.due_date)
         },
         'licence': {
-            'render': lambda self, instance: _render_licence_document(instance.licence)
+            'render': lambda self, instance: _render_licence_number(instance.licence)
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
@@ -1239,7 +1239,11 @@ class DataTableReturnsCustomerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        return 'View'
+        if instance.status == 'new' or instance.status == 'draft':
+            url = reverse('returns:enter_return', args=(instance.pk,))
+            return '<a href="{0}">Enter Return</a>'.format(url)
+        else:
+            return 'View'
 
     def get_initial_queryset(self):
         return Return.objects.filter(licence__holder=self.request.user)

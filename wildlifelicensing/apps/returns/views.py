@@ -3,7 +3,7 @@ import shutil
 import tempfile
 
 from django.views.generic.base import TemplateView
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.storage import default_storage
@@ -13,11 +13,9 @@ from django_datatables_view.base_datatable_view import DatatableMixin, BaseDatat
 from jsontableschema.model import SchemaModel
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.returns.models import ReturnType, Return, ReturnTable, ReturnRow
+from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow
 from wildlifelicensing.apps.returns import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
-from wildlifelicensing.apps.main.models import WildlifeLicence
-from datetime import date, datetime
 
 RETURNS_APP_PATH = os.path.join(os.path.dirname(__file__), 'excel_templates')
 
@@ -27,24 +25,21 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        return_type = get_object_or_404(ReturnType, licence_type__code=self.args[0])
+        ret = get_object_or_404(Return, pk=self.args[0])
+
+        kwargs['return'] = ret
 
         kwargs['tables'] = []
 
-        for schema_name in return_type.get_schema_names():
-            schema = SchemaModel(return_type.get_schema(schema_name))
+        for schema_name in ret.return_type.get_schema_names():
+            schema = SchemaModel(ret.return_type.get_schema(schema_name))
             kwargs['tables'].append({'name': schema_name, 'headers': schema.headers})
 
         kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
 
-        if len(self.args) > 1:
-            ret = get_object_or_404(ReturnType, pl=self.args[1])
-
         return super(EnterReturnView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        return_type = get_object_or_404(ReturnType, licence_type__code=args[0])
-
         context = self.get_context_data()
 
         if 'upload' in request.POST:
@@ -67,14 +62,14 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                 finally:
                     shutil.rmtree(temp_file_dir)
         elif 'submit' in request.POST:
-            ret = Return.objects.create(return_type=return_type, licence=WildlifeLicence.objects.first(), due_date=datetime.today())
+            ret = context['return']
 
             for table in context['tables']:
                 table_namespace = table.get('name') + '::'
 
                 table_data = dict([(key.replace(table_namespace, ''), request.POST.getlist(key)) for key in request.POST.keys() if key.startswith(table_namespace)])
 
-                return_table = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
+                return_table, created = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
 
                 # delete any existing rows as they will all be recreated
                 return_table.returnrow_set.all().delete()
@@ -91,7 +86,12 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
                 ReturnRow.objects.bulk_create(return_rows)
 
+            ret.status = 'submitted'
+            ret.save()
+
             messages.success(request, 'Return successfully created.')
+
+            return redirect('home')
 
         return render(request, self.template_name, context)
 
