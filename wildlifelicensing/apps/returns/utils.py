@@ -1,4 +1,5 @@
-from datetime import timedelta
+from datetime import timedelta, date
+from wildlifelicensing.apps.returns.models import Return
 
 
 def create_returns_due_dates(start_date, end_date, monthly_frequency):
@@ -14,3 +15,14 @@ def create_returns_due_dates(start_date, end_date, monthly_frequency):
             dates.append(start_date + timedelta(days=(return_num * monthly_frequency * 365) / 12))
 
     return dates
+
+
+def is_return_overdue(ret):
+    status = ret.status
+    return status in Return.CUSTOMER_EDITABLE_STATE and ret.due_date <= date.today()
+
+
+def is_return_due_soon(ret):
+    days_soon = 14
+    status = ret.status
+    return status in Return.CUSTOMER_EDITABLE_STATE and (ret.due_date - date.today()).days < days_soon or is_return_overdue(ret)

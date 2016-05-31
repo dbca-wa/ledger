@@ -22,6 +22,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAs
     AssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, get_all_officers, render_user_name
 from wildlifelicensing.apps.dashboard.forms import LoginForm
+from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
 
 logger = logging.getLogger(__name__)
 
@@ -1234,6 +1235,9 @@ class DataTableReturnsCustomerView(DataTableBaseView):
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
+        },
+        'status': {
+            'render': lambda self, instance: self._render_status(instance)
         }
     }
 
@@ -1244,6 +1248,19 @@ class DataTableReturnsCustomerView(DataTableBaseView):
             return '<a href="{0}">Enter Return</a>'.format(url)
         else:
             return 'View'
+
+    @staticmethod
+    def _render_status(instance):
+        status = instance.status
+        if status == 'new':
+            if is_return_overdue(instance):
+                return '<span class="label label-danger">Overdue</span>'
+            elif is_return_due_soon(instance):
+                return '<span class="label label-warning">Due soon</span>'
+            else:
+                return ''
+        else:
+            return status
 
     def get_initial_queryset(self):
         return Return.objects.filter(licence__holder=self.request.user)
