@@ -66,13 +66,6 @@ def _render_licence_number(licence):
         return ''
 
 
-def _render_return_number(instance):
-    if instance is not None and instance.lodgement_number and instance.lodgement_sequence:
-        return '%s-%d' % (instance.lodgement_number, instance.lodgement_sequence)
-    else:
-        return ''
-
-
 def _render_licence_document(licence):
     if licence is not None and licence.licence_document is not None:
         return '<a href="{0}" target="_blank">View PDF</a><img height="20" src="{1}"></img>'.format(
@@ -785,7 +778,7 @@ class TableReturnsOfficerView(OfficerRequiredMixin, TableBaseView):
         del data['licences']
         data['returns']['columnDefinitions'] = [
             {
-                'title': 'Return Number'
+                'title': 'Lodge Number'
             },
             {
                 'title': 'Licence Type'
@@ -854,7 +847,7 @@ class DataTableReturnsOfficerView(DataTableBaseView):
         '']
     columns_helpers = {
         'lodgement_number': {
-            'render': lambda self, instance: _render_return_number(instance)
+            'render': lambda self, instance: instance.lodgement_number
         },
         'lodgement_date': {
             'render': lambda self, instance: _render_date(instance.lodgement_date)
@@ -878,7 +871,11 @@ class DataTableReturnsOfficerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        return 'View'
+        if instance.status == 'submitted':
+            url = reverse('returns:curate_return', args=(instance.pk,))
+            return '<a href="{0}">Curate Return</a>'.format(url)
+        else:
+            return 'View'
 
     @staticmethod
     def filter_licence_type(value):
@@ -1085,7 +1082,7 @@ class TableCustomerView(LoginRequiredMixin, TableBaseView):
         # Returns
         data['returns']['columnDefinitions'] = [
             {
-                'title': 'Return Number'
+                'title': 'Lodge Number'
             },
             {
                 'title': 'Licence Type'
@@ -1222,7 +1219,7 @@ class DataTableReturnsCustomerView(DataTableBaseView):
     order_columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', '', '']
     columns_helpers = {
         'lodgement_number': {
-            'render': lambda self, instance: _render_return_number(instance)
+            'render': lambda self, instance: instance.lodgement_number
         },
         'lodgement_date': {
             'render': lambda self, instance: _render_date(instance.lodgement_date)
@@ -1243,9 +1240,12 @@ class DataTableReturnsCustomerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        if instance.status == 'new' or instance.status == 'draft':
+        if instance.status == 'new':
             url = reverse('returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Enter Return</a>'.format(url)
+        elif instance.status == 'draft':
+            url = reverse('returns:enter_return', args=(instance.pk,))
+            return '<a href="{0}">Edit Return</a>'.format(url)
         else:
             return 'View'
 
@@ -1260,7 +1260,7 @@ class DataTableReturnsCustomerView(DataTableBaseView):
             else:
                 return ''
         else:
-            return status
+            return dict(Return.STATUS_CHOICES)[status]
 
     def get_initial_queryset(self):
         return Return.objects.filter(licence__holder=self.request.user)
