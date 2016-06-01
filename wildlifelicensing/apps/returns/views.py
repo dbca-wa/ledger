@@ -60,7 +60,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for resource in ret.return_type.resources:
+        for resource in ret.return_type.get_resources_names:
             schema = SchemaModel(resource.get('schema'))
             table = {'name': resource.get('name'), 'title': resource.get('title', resource.get('name')),
                      'headers': schema.headers}
@@ -193,8 +193,8 @@ class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for schema_name in ret.return_type.get_schema_names():
-            schema = SchemaModel(ret.return_type.get_schema(schema_name))
+        for schema_name in ret.return_type.get_resources_names():
+            schema = SchemaModel(ret.return_type.get_schema_by_name(schema_name))
             table = {'name': schema_name, 'headers': schema.headers}
 
             try:
