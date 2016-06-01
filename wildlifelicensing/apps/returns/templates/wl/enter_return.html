@@ -16,7 +16,7 @@
 
 {% block requirements %}
     require(["{% static 'wl/js/return_table.js' %}"], function (returnTable) {
-        returnTable.initTables();
+    returnTable.initTables();
     });
 {% endblock %}
 
@@ -41,12 +41,15 @@
                     <h2 class="inline">{{ return.licence.licence_type.name }}</h2>
                     <h3>Enter Return Data</h3>
                     <p>
-                        Please enter the return data for the relevant period as specified in your licence conditions. The data can be entered directly in the
-                        table(s) below or uploaded from the appropriate Excel spreadsheet template. If you upload an Excel template, this will pre-fill the 
+                        Please enter the return data for the relevant period as specified in your licence conditions.
+                        The data can be entered directly in the
+                        table(s) below or uploaded from the appropriate Excel spreadsheet template. If you upload an
+                        Excel template, this will pre-fill the
                         corresponding tables. When finished, click "Lodge" to lodge the return.
                     </p>
                     <p>
-                        At any point you can save the return data as a draft by clicking the Save Draft button at the bottom-left, allowing you to complete the
+                        At any point you can save the return data as a draft by clicking the Save Draft button at the
+                        bottom-left, allowing you to complete the
                         return at a later time.
                     </p>
                     <hr>
@@ -82,9 +85,15 @@
                                     {% for row in table.data %}
                                         <tr>
                                             {% for header in table.headers %}
-                                                <td>
-                                                    <input name="{{ table.name }}::{{ header }}" value="{{ row|get_item:header }}"></input>
-                                                </td>
+                                                {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
+                                                    <td>
+                                                        <input name="{{ table.name }}::{{ header }}"
+                                                               value="{{ value }}"/>
+                                                        {% if error %}
+                                                            <div><span class="text-danger">{{ error }}</span></div>
+                                                        {% endif %}
+                                                    </td>
+                                                {% endwith %}
                                             {% endfor %}
                                         </tr>
                                     {% endfor %}
@@ -93,7 +102,7 @@
                                         <tr>
                                             {% for header in table.headers %}
                                                 <td>
-                                                    <input name="{{ table.name }}::{{ header }}"></input>
+                                                    <input name="{{ table.name }}::{{ header }}"/>
                                                 </td>
                                             {% endfor %}
                                         </tr>
@@ -106,8 +115,11 @@
                 </div>
             {% endfor %}
             <button type="submit" class="btn btn-primary pull-right" name="lodge">Lodge</button>
-            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft_continue">Save Draft and Continue Editing</button>
-            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>
+            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft_continue">Save
+                Draft and Continue Editing
+            </button>
+            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft
+            </button>
         </form>
     </div>
 {% endblock %}
