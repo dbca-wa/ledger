@@ -28,7 +28,8 @@ def _create_return_data_from_post_data(ret, tables_info, post_data):
     for table in tables_info:
         table_namespace = table.get('name') + '::'
 
-        table_data = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if key.startswith(table_namespace)])
+        table_data = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if
+                           key.startswith(table_namespace)])
 
         return_table, created = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
 
@@ -59,12 +60,13 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for schema_name in ret.return_type.get_schema_names():
-            schema = SchemaModel(ret.return_type.get_schema(schema_name))
-            table = {'name': schema_name, 'headers': schema.headers}
+        for resource in ret.return_type.resources:
+            schema = SchemaModel(resource.get('schema'))
+            table = {'name': resource.get('name'), 'title': resource.get('title', resource.get('name')),
+                     'headers': schema.headers}
 
             try:
-                return_table = ret.returntable_set.get(name=schema_name)
+                return_table = ret.returntable_set.get(name=resource)
                 table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
             except ReturnTable.DoesNotExist:
                 pass
@@ -91,11 +93,12 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                     workbook = excel.load_workbook_content(path)
 
                     for table in context['tables']:
-                        worksheet = excel.get_sheet(workbook, table.get('name'))
-
+                        worksheet = excel.get_sheet(workbook, table.get('title'))
                         if worksheet is not None:
                             table_data = excel.TableData(worksheet)
                             table['data'] = list(table_data.rows_by_col_header_it())
+                        else:
+                            messages.warning(request, 'Missing worksheet ' + table.get('name'))
                 finally:
                     shutil.rmtree(temp_file_dir)
         elif 'draft' in request.POST or 'draft_continue' in request.POST:
@@ -149,8 +152,8 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for schema_name in ret.return_type.get_schema_names():
-            schema = SchemaModel(ret.return_type.get_schema(schema_name))
+        for schema_name in ret.return_type.get_resources_names():
+            schema = SchemaModel(ret.return_type.get_schema_by_name(schema_name))
             table = {'name': schema_name, 'headers': schema.headers}
 
             try:

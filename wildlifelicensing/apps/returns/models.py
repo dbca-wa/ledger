@@ -2,6 +2,10 @@ from __future__ import unicode_literals
 
 from django.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.core.exceptions import ValidationError
+
+import datapackage
+import jsontableschema
 
 from ledger.accounts.models import RevisionedMixin, EmailUser
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence
@@ -9,29 +13,60 @@ from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLice
 
 class ReturnType(models.Model):
     licence_type = models.OneToOneField(WildlifeLicenceType)
+    #  data_descriptor should follow the Tabular Data Package format described at:
+    #  http://data.okfn.org/doc/tabular-data-package
+    #  also in:
+    #  http://dataprotocols.org/data-packages/
+    #  The schema inside the 'resources' must follow the JSON Table Schema defined at:
+    #  http://dataprotocols.org/json-table-schema/
     data_descriptor = JSONField()
 
     month_frequency = models.IntegerField(choices=WildlifeLicence.MONTH_FREQUENCY_CHOICES,
                                           default=WildlifeLicence.DEFAULT_FREQUENCY)
 
-    def get_schema_names(self):
-        resources = self.data_descriptor.get('resources', [])
+    def clean(self):
+        """
+        Validate the data descriptor
+        """
+        #  Validate the data package
+        validator = datapackage.DataPackage(self.data_descriptor)
+        try:
+            validator.validate()
+        except Exception as e:
+            raise ValidationError('Data package errors: {}'.format([str(e[0]) for e in validator.iter_errors()]))
+        # Check that there is at least one resources defined (not required by the standard)
+        if len(self.resources) == 0:
+            raise ValidationError('You must define at least one resource')
+        # Validate the schema for all resources
+        for resource in self.resources:
+            if 'schema' not in resource:
+                raise ValidationError("Resource without a 'schema'.")
+            else:
+                schema = resource.get('schema')
+                try:
+                    jsontableschema.validate(schema)
+                except Exception as e:
+                    raise ValidationError(
+                        'Schema errors for resource "{}": {}'.format(
+                            resource.get('name'),
+                            [str(e[0]) for e in jsontableschema.validator.iter_errors(schema)]))
 
-        names = []
-        for resource in resources:
-            if 'name' in resource:
-                names.append(resource.get('name'))
+    @property
+    def resources(self):
+        return self.data_descriptor.get('resources', [])
 
-        return names
-
-    def get_schema(self, table_name):
-        resources = self.data_descriptor.get('resources', [])
-
-        for resource in resources:
-            if resource.get('name') == table_name:
-                return resource.get('schema', {})
-
+    def get_resource_by_name(self, name):
+        for resource in self.resources:
+            if resource.get('name') == name:
+                return resource
         return None
+
+    def get_resources_names(self):
+        return [r.get('name') for r in self.resources]
+
+    def get_schema_by_name(self, name):
+        resource = self.get_resource_by_name(name)
+        return resource.get('schema', {}) if resource else None
 
 
 class Return(RevisionedMixin):
