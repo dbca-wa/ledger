@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
 
-from ledger.accounts.models import RevisionedMixin
+from ledger.accounts.models import RevisionedMixin, EmailUser
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence
 
 
@@ -51,6 +51,8 @@ class Return(RevisionedMixin):
     lodgement_date = models.DateField(blank=True, null=True)
 
     due_date = models.DateField(null=False, blank=False)
+
+    proxy_customer = models.ForeignKey(EmailUser, blank=True, null=True)
 
 
 class ReturnTable(RevisionedMixin):

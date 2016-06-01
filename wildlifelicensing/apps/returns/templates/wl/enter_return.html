@@ -26,7 +26,7 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li class="active">Enter Return</li>
+                    <li class="active">Enter Return Data</li>
                 </ol>
             </div>
         </div>
@@ -37,6 +37,24 @@
     <div class="container bottom-buffer">
         <div class="row">
             <div class="col-md-12">
+                <div class="top-buffer">
+                    <h2 class="inline">{{ return.licence.licence_type.name }}</h2>
+                    <h3>Enter Return Data</h3>
+                    <p>
+                        Please enter the return data for the relevant period as specified in your licence conditions. The data can be entered directly in the
+                        table(s) below or uploaded from the appropriate Excel spreadsheet template. If you upload an Excel template, this will pre-fill the 
+                        corresponding tables. When finished, click "Lodge" to lodge the return.
+                    </p>
+                    <p>
+                        At any point you can save the return data as a draft by clicking the Save Draft button at the bottom-left, allowing you to complete the
+                        return at a later time.
+                    </p>
+                    <hr>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% bootstrap_form upload_spreadsheet_form %}
@@ -44,12 +62,13 @@
                 </form>
             </div>
         </div>
+        <hr>
         <form method="POST">
             {% csrf_token %}
             {% for table in tables %}
                 <div class="row top-buffer">
                     <div class="col-md-12">
-                        <h3>{{ table.name }}</h3>
+                        <h4>{{ table.name }}</h4>
                         <table class="return-table table table-striped table-bordered dataTable">
                             <thead>
                                 <tr>
@@ -86,7 +105,7 @@
                     </div>
                 </div>
             {% endfor %}
-            <button type="submit" class="btn btn-primary pull-right" name="submit">Submit</button>
+            <button type="submit" class="btn btn-primary pull-right" name="lodge">Lodge</button>
             <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft_continue">Save Draft and Continue Editing</button>
             <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>
         </form>

@@ -9,7 +9,6 @@ from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
-from django_datatables_view.base_datatable_view import DatatableMixin, BaseDatatableView
 from jsontableschema.model import SchemaModel
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
@@ -17,6 +16,7 @@ from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow
 from wildlifelicensing.apps.returns import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
 from datetime import date
+from wildlifelicensing.apps.main.helpers import is_officer
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -55,6 +55,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ret = get_object_or_404(Return, pk=self.args[0])
 
+        kwargs['return'] = ret
+
         kwargs['tables'] = []
 
         for schema_name in ret.return_type.get_schema_names():
@@ -75,7 +77,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data()
-        ret = get_object_or_404(Return, pk=self.args[0])
+        ret = context['return']
 
         if 'upload' in request.POST:
             form = UploadSpreadsheetForm(request.POST, request.FILES)
@@ -99,11 +101,15 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         elif 'draft' in request.POST or 'draft_continue' in request.POST:
             _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
+            if is_officer(request.user):
+                ret.proxy_customer = request.user
+
             ret.status = 'draft'
             ret.save()
 
             messages.warning(request, 'Return saved as draft.')
 
+            # redirect or reshow page depending on whether save or save/continue was clicked
             if 'draft' in request.POST:
                 return redirect('home')
             else:
@@ -111,13 +117,16 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                     return_table = ReturnTable.objects.get(ret=ret, name=table.get('name'))
                     table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
 
-        elif 'submit' in request.POST:
+        elif 'lodge' in request.POST:
             _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
             ret.return_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
                                            str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
             ret.lodgement_date = date.today()
+
+            if is_officer(request.user):
+                ret.proxy_customer = request.user
 
             ret.status = 'submitted'
             ret.save()
@@ -168,3 +177,29 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         messages.success(request, 'Return successfully curated.')
 
         return redirect('home')
+
+
+class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
+    template_name = 'wl/view_return_read_only.html'
+    login_url = '/'
+
+    def get_context_data(self, **kwargs):
+        ret = get_object_or_404(Return, pk=self.args[0])
+
+        kwargs['return'] = ret
+
+        kwargs['tables'] = []
+
+        for schema_name in ret.return_type.get_schema_names():
+            schema = SchemaModel(ret.return_type.get_schema(schema_name))
+            table = {'name': schema_name, 'headers': schema.headers}
+
+            try:
+                return_table = ret.returntable_set.get(name=schema_name)
+                table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
+            except ReturnTable.DoesNotExist:
+                pass
+
+            kwargs['tables'].append(table)
+
+        return super(ViewReturnReadonlyView, self).get_context_data(**kwargs)

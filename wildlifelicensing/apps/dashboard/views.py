@@ -833,7 +833,7 @@ class DataTableReturnsOfficerView(DataTableBaseView):
         'lodgement_date',
         'due_date',
         'status',
-        'licence',
+        'licence_number',
         'action',
     ]
     order_columns = [
@@ -861,8 +861,8 @@ class DataTableReturnsOfficerView(DataTableBaseView):
         'due_date': {
             'render': lambda self, instance: _render_date(instance.due_date)
         },
-        'licence': {
-            'render': lambda self, instance: _render_licence_document(instance.licence)
+        'licence_number': {
+            'render': lambda self, instance: _render_licence_number(instance.licence)
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
@@ -874,8 +874,11 @@ class DataTableReturnsOfficerView(DataTableBaseView):
         if instance.status == 'submitted':
             url = reverse('returns:curate_return', args=(instance.pk,))
             return '<a href="{0}">Curate Return</a>'.format(url)
+        elif instance.status == 'accepted' or instance.status == 'declined':
+            url = reverse('returns:view_return', args=(instance.pk,))
+            return '<a href="{0}">View Return (read-only)</a>'.format(url)
         else:
-            return 'View'
+            return 'N/A'
 
     @staticmethod
     def filter_licence_type(value):
@@ -1247,7 +1250,8 @@ class DataTableReturnsCustomerView(DataTableBaseView):
             url = reverse('returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
         else:
-            return 'View'
+            url = reverse('returns:view_return', args=(instance.pk,))
+            return '<a href="{0}">View Return (read-only)</a>'.format(url)
 
     @staticmethod
     def _render_status(instance):
