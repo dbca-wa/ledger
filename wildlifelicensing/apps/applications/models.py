@@ -11,7 +11,7 @@ from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceT
 
 class Application(RevisionedMixin):
     CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('under_review', 'Under Review'),
-                               ('id_required', 'Identification Required'), ('return_completion_required', 'Return Completion Required'),
+                               ('id_required', 'Identification Required'), ('returns_required', 'Returns Completion Required'),
                                ('amendment_required', 'Amendment Required'),
                                ('id_and_amendment_required', 'Identification/Amendments Required'),
                                ('id_and_returns_required', 'Identification/Returns Required'),
@@ -24,7 +24,7 @@ class Application(RevisionedMixin):
                                'id_and_returns_and_amendment_required']
 
     # List of statuses from above that allow a customer to view an application (read-only)
-    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'return_completion_required', 'approved']
+    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved']
 
     PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
@@ -36,7 +36,7 @@ class Application(RevisionedMixin):
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
 
     RETURNS_CHECK_STATUS_CHOICES = (
-        ('not_checked', 'Not Checked'), ('awaiting_completion', 'Awaiting Completion'), ('completed', 'Completion'),
+        ('not_checked', 'Not Checked'), ('awaiting_returns', 'Awaiting Returns'), ('completed', 'Completed'),
         ('accepted', 'Accepted'))
 
     CHARACTER_CHECK_STATUS_CHOICES = (

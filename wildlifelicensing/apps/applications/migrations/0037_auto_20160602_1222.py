@@ -27,11 +27,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='application',
             name='returns_check_status',
-            field=models.CharField(choices=[('not_checked', 'Not Checked'), ('awaiting_completion', 'Awaiting Completion'), ('completed', 'Completion'), ('accepted', 'Accepted')], default='not_checked', max_length=30, verbose_name='Return Check Status'),
+            field=models.CharField(choices=[('not_checked', 'Not Checked'), ('awaiting_returns', 'Awaiting Returns'), ('completed', 'Completion'), ('accepted', 'Accepted')], default='not_checked', max_length=30, verbose_name='Return Check Status'),
         ),
         migrations.AlterField(
             model_name='application',
             name='customer_status',
-            field=models.CharField(choices=[('draft', 'Draft'), ('under_review', 'Under Review'), ('id_required', 'Identification Required'), ('return_completion_required', 'Return Completion Required'), ('amendment_required', 'Amendment Required'), ('id_and_amendment_required', 'Identification/Amendments Required'), ('id_and_returns_required', 'Identification/Returns Required'), ('returns_and_amendment_required', 'Returns/Amendments Required'), ('id_and_returns_and_amendment_required', 'Identification/Returns/Amendments Required'), ('approved', 'Approved'), ('declined', 'Declined')], default='draft', max_length=40, verbose_name='Customer Status'),
+            field=models.CharField(choices=[('draft', 'Draft'), ('under_review', 'Under Review'), ('id_required', 'Identification Required'), ('returns_required', 'Returns Completion Required'), ('amendment_required', 'Amendment Required'), ('id_and_amendment_required', 'Identification/Amendments Required'), ('id_and_returns_required', 'Identification/Returns Required'), ('returns_and_amendment_required', 'Returns/Amendments Required'), ('id_and_returns_and_amendment_required', 'Identification/Returns/Amendments Required'), ('approved', 'Approved'), ('declined', 'Declined')], default='draft', max_length=40, verbose_name='Customer Status'),
         ),
     ]

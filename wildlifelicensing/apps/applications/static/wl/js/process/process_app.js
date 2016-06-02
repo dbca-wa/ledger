@@ -112,6 +112,10 @@ define([
     }
 
     function initPreviousApplication() {
+        if(!application.previous_application) {
+            return;
+        }
+
         var $table = $('#previousApplication');
 
         var $row = $('<tr>'), $compareLink;
@@ -245,7 +249,7 @@ define([
             $resetLink = $done.find('a'),
             $status = $container.find('.status');
 
-        if (application.id_check_status === 'Accepted') {
+        if (application.returns_check_status === 'Accepted') {
             $actionButtonsContainer.addClass('hidden');
             $status.addClass('hidden');
             $done.removeClass('hidden');
@@ -295,7 +299,7 @@ define([
             $returnsText = $returnsRequestForm.find('#id_text');
 
         $requestReturnsButton.click(function () {
-        	$requestReturnsModal.modal('show');
+            $requestReturnsModal.modal('show');
         });
 
         $returnsRequestForm.submit(function (e) {
@@ -319,7 +323,7 @@ define([
             e.preventDefault();
         });
     }
-    
+
     function initCharacterCheck() {
         var $container = $('#characterCheck'),
             $actionButtonsContainer = $container.find('.action-buttons-group'),
@@ -730,9 +734,11 @@ define([
         var approvable = false;
 
         if ((application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required) {
-            if (application.character_check_status === 'Accepted') {
-                if (application.review_status === 'Accepted') {
-                    approvable = true;
+            if ((application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application) {
+                if (application.character_check_status === 'Accepted') {
+                    if (application.review_status === 'Accepted') {
+                        approvable = true;
+                    }
                 }
             }
         }
@@ -752,10 +758,9 @@ define([
 
             initAssignee(data.officers, data.user);
             initLodgedVersions(data.previous_versions);
-            if(application.previous_application) {
-                initPreviousApplication();
-            }
+            initPreviousApplication();
             initIDCheck();
+            initReturnsCheck();
             initCharacterCheck();
             initReview();
             initAssessment(data.assessor_groups);

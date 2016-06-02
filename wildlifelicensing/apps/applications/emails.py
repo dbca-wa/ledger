@@ -7,7 +7,7 @@ from django.conf import settings
 from django_hosts import reverse as hosts_reverse
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
-from wildlifelicensing.apps.applications.models import EmailLogEntry, AmendmentRequest, IDRequest
+from wildlifelicensing.apps.applications.models import EmailLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +123,27 @@ def send_id_update_request_email(id_request, request):
     msg = email.send(id_request.application.applicant_profile.email, context=context)
     _log_email(msg, application=id_request.application, sender=request.user)
 
+
+class ApplicationReturnsRequestedEmail(TemplateEmailBase):
+    subject = 'Completion of returns for a wildlife licensing application is required.'
+    html_template = 'wl/emails/application_returns_request.html'
+    txt_template = 'wl/emails/application_returns_request.txt'
+
+
+def send_returns_request_email(returns_request, request):
+    email = ApplicationReturnsRequestedEmail()
+    url = request.build_absolute_uri(
+        reverse('dashboard:home')
+    )
+    context = {
+        'url': url
+    }
+    if returns_request.reason:
+        context['request_reason'] = dict(ReturnsRequest.REASON_CHOICES)[returns_request.reason]
+    if returns_request.text:
+        context['request_text'] = returns_request.text
+    msg = email.send(returns_request.application.applicant_profile.email, context=context)
+    _log_email(msg, application=returns_request.application, sender=request.user)
 
 class LicenceIssuedEmail(TemplateEmailBase):
     subject = 'Your wildlife licensing licence has been issued.'

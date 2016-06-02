@@ -5,7 +5,7 @@ from wildlifelicensing.apps.applications.views.entry import NewApplicationView, 
     EnterDetailsView, PreviewView, RenewLicenceView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
-    IDRequestView, ReturnsRequestView, SetReturnsStatusView, SetCharacterCheckStatusView, \
+    IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
     SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, RemindAssessmentView, AddLogEntryView, \
     CommunicationLogListView
 
@@ -41,7 +41,7 @@ urlpatterns = [
     url('^set-id-check-status/$', SetIDCheckStatusView.as_view(), name='set_id_check_status'),
     url('^id-request/$', IDRequestView.as_view(), name='id_request'),
     url('^returns-request/$', ReturnsRequestView.as_view(), name='returns_request'),
-    url('^set-returns-status/$', SetReturnsStatusView.as_view(), name='set_returns_status'),
+    url('^set-returns-check-status/$', SetReturnsCheckStatusView.as_view(), name='set_returns_check_status'),
     url('^set-character-check-status/$', SetCharacterCheckStatusView.as_view(), name='set_character_check_status'),
     url('^set-review-status/$', SetReviewStatusView.as_view(), name='set_review_status'),
     url('^amendment-request/$', AmendmentRequestView.as_view(), name='amendment_request'),

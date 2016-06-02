@@ -20,8 +20,7 @@ from wildlifelicensing.apps.applications.models import Application, AmendmentReq
 from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm, \
     ApplicationLogEntryForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
-    send_assessment_reminder_email, \
-    send_id_update_request_email
+    send_id_update_request_email, send_returns_request_email, send_assessment_reminder_email
 from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
 
@@ -164,13 +163,13 @@ class ReturnsRequestView(OfficerRequiredMixin, View):
             returns_request = returns_request_form.save()
 
             application = returns_request.application
-            application.returns_check_status = 'awaiting_completion'
+            application.returns_check_status = 'awaiting_returns'
             application.customer_status = determine_customer_status(application)
             application.processing_status = determine_processing_status(application)
             application.save()
-            send_id_update_request_email(returns_request, request)
+            send_returns_request_email(returns_request, request)
 
-            response = {'returns_check_status': RETURNS_CHECK_STATUSES[application.id_check_status],
+            response = {'returns_check_status': RETURNS_CHECK_STATUSES[application.returns_check_status],
                         'processing_status': PROCESSING_STATUSES[application.processing_status]}
 
             return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
@@ -178,11 +177,12 @@ class ReturnsRequestView(OfficerRequiredMixin, View):
             return JsonResponse(returns_request_form.errors, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class SetReturnsStatusView(OfficerRequiredMixin, View):
+class SetReturnsCheckStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
         application.returns_check_status = request.POST['status']
 
+        application.customer_status = determine_customer_status(application)
         application.processing_status = determine_processing_status(application)
         application.save()
 
@@ -286,10 +286,21 @@ def determine_processing_status(application):
 def determine_customer_status(application):
     status = 'under_review'
 
-    if application.id_check_status == 'awaiting_update' and application.review_status == 'awaiting_amendments':
-        status = 'id_and_amendment_required'
-    elif application.id_check_status == 'awaiting_update':
-        status = 'id_required'
+    if application.id_check_status == 'awaiting_update':
+        if application.returns_check_status == 'awaiting_returns':
+            if application.review_status == 'awaiting_amendments':
+                status = 'id_and_returns_and_amendment_required'
+            else:
+                status = 'id_and_returns_required'
+        elif application.review_status == 'awaiting_amendments':
+            status = 'id_and_amendment_required'
+        else:
+            status = 'id_required'
+    elif application.returns_check_status == 'awaiting_returns':
+        if application.review_status == 'awaiting_amendments':
+            status = 'returns_and_amendments_required'
+        else:
+            status = 'returns_required'
     elif application.review_status == 'awaiting_amendments':
         status = 'amendment_required'
 
