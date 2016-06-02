@@ -27,7 +27,7 @@ define(
             $applicationsStatusTypeFilter,
             $applicationsAssigneeTypeFilter,
             $licencesLicenceTypeFilter,
-            $licencesDateFilter,
+            $licencesStatusFilter,
             $returnsLicenceTypeFilter,
             $returnsStatusTypeFilter;
 
@@ -173,17 +173,16 @@ define(
                     licencesTable.ajax.reload();
                 });
             }
-            // date drop down
-            if ($licencesDateFilter && $licencesDateFilter.length && data.licences.filters.date) {
-                _.forEach(data.licences.filters.date.values, function (value) {
+            // status drop down
+            if ($licencesStatusFilter && $licencesStatusFilter.length && data.licences.filters.status) {
+                _.forEach(data.licences.filters.status.values, function (value) {
                     $node = createOptionNode(value);
-                    $licencesDateFilter.append($node);
+                    $licencesStatusFilter.append($node);
                 });
-                $licencesDateFilter.on('change', function () {
+                $licencesStatusFilter.on('change', function () {
                     licencesTable.ajax.reload();
                 });
             }
-            
         }
 
         function initReturnsTable(){
@@ -280,7 +279,7 @@ define(
                     licencesAccordion: '#licences-collapse',
                     licencesFilterForm: '#licences-filter-form',
                     licencesLicenceTypeFilter: '#licences-filter-licence-type',
-                    licencesDateFilter: '#licences-filter-date',
+                    licencesStatusFilter: '#licences-filter-status',
 
                     returnsTable: '#returns-table',
                     returnsAccordion: '#returns-collapse',
@@ -312,7 +311,7 @@ define(
                 $applicationsAssigneeTypeFilter = $(options.selectors.applicationsAssigneeFilter);
 
                 $licencesLicenceTypeFilter = $(options.selectors.licencesLicenceTypeFilter);
-                $licencesDateFilter = $(options.selectors.licencesDateFilter);
+                $licencesStatusFilter = $(options.selectors.licencesStatusFilter);
 
                 $returnsLicenceTypeFilter = $(options.selectors.returnsLicenceTypeFilter);
                 $returnsStatusTypeFilter = $(options.selectors.returnsStatusFilter);
