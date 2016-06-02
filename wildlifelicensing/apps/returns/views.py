@@ -60,7 +60,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for resource in ret.return_type.get_resources_names:
+        for resource in ret.return_type.resources:
             schema = SchemaModel(resource.get('schema'))
             table = {'name': resource.get('name'), 'title': resource.get('title', resource.get('name')),
                      'headers': schema.headers}
