@@ -232,6 +232,94 @@ define([
         });
     }
 
+    function initReturnsCheck() {
+        var $container = $('#returnsCheck');
+
+        if (!application.previous_application) {
+            $container.addClass('hidden');
+            return;
+        }
+
+        var $actionButtonsContainer = $container.find('.action-buttons-group'),
+            $done = $container.find('.done'),
+            $resetLink = $done.find('a'),
+            $status = $container.find('.status');
+
+        if (application.id_check_status === 'Accepted') {
+            $actionButtonsContainer.addClass('hidden');
+            $status.addClass('hidden');
+            $done.removeClass('hidden');
+        }
+
+        $resetLink.click(function () {
+            $.post('/applications/set-returns-check-status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'not_checked'
+                },
+                function (data) {
+                    $processingStatus.text(data.processing_status);
+                    $actionButtonsContainer.removeClass('hidden');
+                    $status.text(data.returns_check_status);
+                    $status.removeClass('hidden');
+                    $done.addClass('hidden');
+
+                    application.returns_check_status = data.returns_check_status;
+                    determineApplicationApprovable();
+                });
+        });
+
+        var $acceptButton = $actionButtonsContainer.find('.btn-success'),
+            $requestReturnsButton = $actionButtonsContainer.find('.btn-warning');
+
+        $acceptButton.click(function () {
+            $.post('/applications/set-returns-check-status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'accepted'
+                },
+                function (data) {
+                    $processingStatus.text(data.processing_status);
+                    $status.addClass('hidden');
+                    $done.removeClass('hidden');
+                    $actionButtonsContainer.addClass('hidden');
+
+                    application.returns_check_status = data.returns_check_status;
+                    determineApplicationApprovable();
+                });
+        });
+
+        var $requestReturnsModal = $('#requestReturnsModal'),
+            $returnsRequestForm = $requestReturnsModal.find('#returnsRequestForm'),
+            $returnsReason = $returnsRequestForm.find('#id_reason'),
+            $returnsText = $returnsRequestForm.find('#id_text');
+
+        $requestReturnsButton.click(function () {
+        	$requestReturnsModal.modal('show');
+        });
+
+        $returnsRequestForm.submit(function (e) {
+            $.ajax({
+                type: $(this).attr('method'),
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (data) {
+                    $processingStatus.text(data.processing_status);
+                    $container.find('.status').text(data.returns_check_status);
+                    $returnsReason.find('option:eq(0)').prop('selected', true);
+                    $returnsText.val('');
+
+                    application.returns_check_status = data.returns_check_status;
+                    determineApplicationApprovable();
+
+                    $requestReturnsModal.modal('hide');
+                }
+            });
+
+            e.preventDefault();
+        });
+    }
+    
     function initCharacterCheck() {
         var $container = $('#characterCheck'),
             $actionButtonsContainer = $container.find('.action-buttons-group'),
