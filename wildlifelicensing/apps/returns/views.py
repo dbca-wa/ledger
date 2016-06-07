@@ -242,13 +242,13 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
                 messages.success(request, 'Return was accepted.')
                 return redirect('home')
-		    else:
-		        for table in context['tables']:
-		            table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
-		            if len(table['data']) == 0:
-		                messages.warning(request, "You must enter data for {}".format(table.get('name')))
+            else:
+                for table in context['tables']:
+                    table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+                    if len(table['data']) == 0:
+                        messages.warning(request, "You must enter data for {}".format(table.get('name')))
 
-		        return render(request, self.template_name, context)
+                return render(request, self.template_name, context)
         else:
             ret.status = 'declined'
             ret.save()
