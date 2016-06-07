@@ -1,6 +1,10 @@
 #from django.contrib.auth.models import User
 from .models import EmailUser, EmailIdentity
 
+#convert email address to lower case.
+def lower_email_address(backend, details, *args, **kwargs):
+    if "email" in details:
+        details["email"] = details["email"].lower()
 
 # Custom pipeline to retrieve the user by the email in the details and log it
 # in. The code checks for a verification_code parameter in order to validate
