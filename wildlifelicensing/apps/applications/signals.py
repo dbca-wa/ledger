@@ -35,7 +35,6 @@ def identification_uploaded_callback(sender, **kwargs):
 def return_submitted_callback(sender, **kwargs):
     if 'ret' in kwargs:
         ret = kwargs.get('ret')
-        print ret.licence
         previous_application = Application.objects.get(licence=ret.licence)
         try:
             application = Application.objects.get(previous_application=previous_application)

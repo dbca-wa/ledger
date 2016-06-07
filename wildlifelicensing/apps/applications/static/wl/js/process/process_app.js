@@ -54,21 +54,6 @@ define([
             );
         });
     }
-//
-//    function createVersionRow(assessment) {
-//        var row = $('<tr></tr>');
-//        row.append('<td>' + assessment.assessor.first_name + ' ' + assessment.assessor.last_name + '</td>');
-//        var statusColumn = $('<td></td>').css('text-align', 'right');
-//        if (assessment.status === 'Awaiting Assessment') {
-//            statusColumn.append(assessment.status);
-//        } else {
-//            statusColumn.append('<a href="' + assessment.url + '">View Assessment</a>');
-//        }
-//
-//        row.append(statusColumn);
-//
-//        return row;
-//    }
 
     function initLodgedVersions(previousData) {
         var $table = $('#lodgedVersions');
