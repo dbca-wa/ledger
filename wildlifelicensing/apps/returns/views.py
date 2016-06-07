@@ -30,6 +30,8 @@ RETURNS_APP_PATH = os.path.join(os.path.dirname(__file__), 'excel_templates')
 def _is_post_data_valid(ret, tables_info, post_data):
     for table in tables_info:
         table_rows = _get_table_rows_from_post(table.get('name'), post_data)
+        if len(table_rows) == 0:
+            return False
         schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
         if not schema.is_all_valid(table_rows):
             return False
@@ -189,6 +191,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
             else:
                 for table in context['tables']:
                     table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+                    if len(table['data']) == 0:
+                        messages.warning(request, "You must enter data for {}".format(table.get('name')))
 
         return render(request, self.template_name, context)
 
@@ -239,6 +243,8 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         else:
             for table in context['tables']:
                 table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+                if len(table['data']) == 0:
+                    messages.warning(request, "You must enter data for {}".format(table.get('name')))
 
             return render(request, self.template_name, context)
 

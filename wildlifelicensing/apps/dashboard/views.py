@@ -797,7 +797,6 @@ class TableReturnsOfficerView(OfficerRequiredMixin, TableBaseView):
             },
             {
                 'title': 'Licence',
-                'searchable': False,
                 'orderable': False
             },
             {
@@ -814,9 +813,9 @@ class TableReturnsOfficerView(OfficerRequiredMixin, TableBaseView):
         filters = {
             'status': {
                 'values': [
-                    (self.STATUS_FILTER_ALL_BUT_DRAFT, 'All (but draft)'),
-                    (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
-                ] + list(Return.STATUS_CHOICES)
+                              (self.STATUS_FILTER_ALL_BUT_DRAFT, 'All (but draft)'),
+                              (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
+                          ] + list(Return.STATUS_CHOICES)
             }
         }
         data['returns']['filters'].update(filters)
@@ -862,7 +861,10 @@ class DataTableReturnsOfficerView(DataTableBaseView):
             'render': lambda self, instance: _render_date(instance.due_date)
         },
         'licence_number': {
-            'render': lambda self, instance: _render_licence_number(instance.licence)
+            'render': lambda self, instance: _render_licence_number(instance.licence),
+            'search': lambda self, search: _build_field_query([
+                'licence__licence_number', 'licence__licence_sequence'],
+                search),
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
@@ -883,7 +885,6 @@ class DataTableReturnsOfficerView(DataTableBaseView):
         else:
             url = reverse('returns:view_return', args=(instance.pk,))
             return '<a href="{0}">View Return (read-only)</a>'.format(url)
-
 
     @staticmethod
     def filter_licence_type(value):
@@ -1106,7 +1107,6 @@ class TableCustomerView(LoginRequiredMixin, TableBaseView):
             },
             {
                 'title': 'Licence',
-                'searchable': False,
                 'orderable': False
             },
             {
@@ -1236,7 +1236,10 @@ class DataTableReturnsCustomerView(DataTableBaseView):
             'render': lambda self, instance: _render_date(instance.due_date)
         },
         'licence': {
-            'render': lambda self, instance: _render_licence_number(instance.licence)
+            'render': lambda self, instance: _render_licence_number(instance.licence),
+            'search': lambda self, search: _build_field_query([
+                'licence__licence_number', 'licence__licence_sequence'],
+                search),
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
