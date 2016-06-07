@@ -262,6 +262,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         super(EmailUser,self).clean()
+        self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 
     def save(self, *args, **kwargs):
@@ -402,6 +403,7 @@ class Profile(RevisionedMixin):
 
     def clean(self):
         super(Profile,self).clean()
+        self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 
     def __str__(self):

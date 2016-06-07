@@ -77,6 +77,7 @@ SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
 SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.social_details',
+    'ledger.accounts.pipeline.lower_email_address',
     'social.pipeline.social_auth.social_uid',
     'social.pipeline.social_auth.auth_allowed',
     'social.pipeline.social_auth.social_user',
