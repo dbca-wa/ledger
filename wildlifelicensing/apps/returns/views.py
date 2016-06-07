@@ -191,6 +191,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
             else:
                 for table in context['tables']:
                     table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+                    if len(table['data']) == 0:
+                        messages.warning(request, "You must enter data for {}".format(table.get('name')))
 
         return render(request, self.template_name, context)
 
@@ -241,6 +243,8 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         else:
             for table in context['tables']:
                 table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+                if len(table['data']) == 0:
+                    messages.warning(request, "You must enter data for {}".format(table.get('name')))
 
             return render(request, self.template_name, context)
 
