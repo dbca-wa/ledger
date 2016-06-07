@@ -9,7 +9,6 @@ class UserCanEditReturnMixin(UserPassesTestMixin):
     """
     CBV mixin that check that the user is the applicant and that the status of the application is
     in editable mode.
-    This mixin assume that the url contains the pk of the application on 2nd position.
     If the user is not logged-in it redirects to the login page, else it throws a 403
     Officers can edit an application
     """
