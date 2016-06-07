@@ -179,10 +179,10 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                 if is_officer(request.user):
                     ret.proxy_customer = request.user
 
-            ret.status = 'submitted'
-            ret.save()
+                ret.status = 'submitted'
+                ret.save()
 
-            return_submitted.send(sender=self.__class__, ret=ret)
+                return_submitted.send(sender=self.__class__, ret=ret)
 
                 messages.success(request, 'Return successfully submitted.')
 
