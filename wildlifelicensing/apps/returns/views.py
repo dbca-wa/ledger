@@ -17,6 +17,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCu
 from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow
 from wildlifelicensing.apps.returns import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
+from wildlifelicensing.apps.returns.utils_schema import Schema
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
 
@@ -24,6 +25,43 @@ LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
 
 RETURNS_APP_PATH = os.path.join(os.path.dirname(__file__), 'excel_templates')
+
+
+def _is_post_data_valid(ret, tables_info, post_data):
+    for table in tables_info:
+        table_rows = _get_table_rows_from_post(table.get('name'), post_data)
+        schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
+        if not schema.is_all_valid(table_rows):
+            return False
+    return True
+
+
+def _get_validated_rows_from_post(ret, table_name, post_data):
+    rows = _get_table_rows_from_post(table_name, post_data)
+    schema = Schema(ret.return_type.get_schema_by_name(table_name))
+    return list(schema.rows_validator(rows))
+
+
+def _get_table_rows_from_post(table_name, post_data):
+    table_namespace = table_name + '::'
+    by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if
+                      key.startswith(table_namespace)])
+    # by_column is of format {'col_header':[row1_val, row2_val,...],...}
+    num_rows = len(by_column.values()[0])
+    rows = []
+    for row_num in range(num_rows):
+        row_data = {}
+        for key, value in by_column.items():
+            row_data[key] = value[row_num]
+        # filter empty rows.
+        is_empty = True
+        for value in row_data.values():
+            if len(value.strip()) > 0:
+                is_empty = False
+                break
+        if not is_empty:
+            rows.append(row_data)
+    return rows
 
 
 def _create_return_data_from_post_data(ret, tables_info, post_data):
@@ -63,13 +101,16 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         kwargs['tables'] = []
 
         for resource in ret.return_type.resources:
-            schema = SchemaModel(resource.get('schema'))
-            table = {'name': resource.get('name'), 'title': resource.get('title', resource.get('name')),
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            table = {'name': resource_name, 'title': resource.get('title', resource.get('name')),
                      'headers': schema.headers}
 
             try:
-                return_table = ret.returntable_set.get(name=resource)
-                table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
+                return_table = ret.returntable_set.get(name=resource_name)
+                rows = [return_row.data for return_row in return_table.returnrow_set.all()]
+                validated_rows = list(schema.rows_validator(rows))
+                table['data'] = validated_rows
             except ReturnTable.DoesNotExist:
                 pass
 
@@ -98,7 +139,9 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                         worksheet = excel.get_sheet(workbook, table.get('title'))
                         if worksheet is not None:
                             table_data = excel.TableData(worksheet)
-                            table['data'] = list(table_data.rows_by_col_header_it())
+                            schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
+                            validated_rows = list(schema.rows_validator(table_data.rows_by_col_header_it()))
+                            table['data'] = validated_rows
                         else:
                             messages.warning(request, 'Missing worksheet ' + table.get('name'))
                 finally:
@@ -123,24 +166,29 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                     table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
 
         elif 'lodge' in request.POST:
-            _create_return_data_from_post_data(ret, context['tables'], request.POST)
+            if _is_post_data_valid(ret, context['tables'], request.POST):
 
-            ret.return_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
-                                           str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
+                _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
-            ret.lodgement_date = date.today()
+                ret.return_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
+                                               str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
-            if is_officer(request.user):
-                ret.proxy_customer = request.user
+                ret.lodgement_date = date.today()
 
-            ret.status = 'submitted'
-            ret.save()
+                if is_officer(request.user):
+                    ret.proxy_customer = request.user
 
-            return_submitted.send(sender=self.__class__, ret=ret)
+                ret.status = 'submitted'
+                ret.save()
 
-            messages.success(request, 'Return successfully submitted.')
+                return_submitted.send(sender=self.__class__, ret=ret)
 
-            return redirect('home')
+                messages.success(request, 'Return successfully submitted.')
+
+                return redirect('home')
+            else:
+                for table in context['tables']:
+                    table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
 
         return render(request, self.template_name, context)
 
@@ -156,13 +204,17 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for schema_name in ret.return_type.get_resources_names():
-            schema = SchemaModel(ret.return_type.get_schema_by_name(schema_name))
-            table = {'name': schema_name, 'headers': schema.headers}
+        for resource in ret.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            table = {'name': resource_name, 'title': resource.get('title', resource.get('name')),
+                     'headers': schema.headers}
 
             try:
-                return_table = ret.returntable_set.get(name=schema_name)
-                table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
+                return_table = ret.returntable_set.get(name=resource_name)
+                rows = [return_row.data for return_row in return_table.returnrow_set.all()]
+                validated_rows = list(schema.rows_validator(rows))
+                table['data'] = validated_rows
             except ReturnTable.DoesNotExist:
                 pass
 
@@ -176,14 +228,19 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         context = self.get_context_data()
         ret = get_object_or_404(Return, pk=self.args[0])
 
-        _create_return_data_from_post_data(ret, context['tables'], request.POST)
+        if _is_post_data_valid(ret, context['tables'], request.POST):
+            _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
-        ret.status = 'accepted'
-        ret.save()
+            ret.status = 'accepted'
+            ret.save()
 
-        messages.success(request, 'Return successfully curated.')
+            messages.success(request, 'Return successfully curated.')
+            return redirect('home')
+        else:
+            for table in context['tables']:
+                table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
 
-        return redirect('home')
+            return render(request, self.template_name, context)
 
 
 class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
