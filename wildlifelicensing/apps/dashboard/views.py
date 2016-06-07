@@ -420,7 +420,8 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, DashboardTreeViewBase):
 
         # Returns
         url = reverse_lazy('dashboard:tables_returns_officer')
-        all_returns_node = self._create_node('All returns', href=url, count=WildlifeLicence.objects.count())
+        all_returns_node = self._create_node('All returns', href=url,
+                                             count=Return.objects.exclude(status__in=['draft', 'future']).count())
         result.append(all_returns_node)
 
         return result
