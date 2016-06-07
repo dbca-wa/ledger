@@ -262,6 +262,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         super(EmailUser, self).clean()
+        self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 
     def save(self, *args, **kwargs):
@@ -402,6 +403,7 @@ class Profile(RevisionedMixin):
 
     def clean(self):
         super(Profile, self).clean()
+        self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 
     def __str__(self):
@@ -483,3 +485,4 @@ class EmailIdentityListener(object):
             if EmailIdentity.objects.filter(email=instance.email).exclude(user=instance).exists():
                 # Email already used by other user in email identity.
                 raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
+
