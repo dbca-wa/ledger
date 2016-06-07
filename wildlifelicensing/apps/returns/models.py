@@ -70,11 +70,11 @@ class ReturnType(models.Model):
 
 
 class Return(RevisionedMixin):
-    STATUS_CHOICES = [('new', 'New'), ('draft', 'Draft'), ('submitted', 'Submitted'),
+    STATUS_CHOICES = [('current', 'Current'), ('future', 'Future'), ('draft', 'Draft'), ('submitted', 'Submitted'),
                       ('accepted', 'Accepted'), ('declined', 'Declined')]
-    DEFAULT_STATUS = STATUS_CHOICES[0][0]
+    DEFAULT_STATUS = STATUS_CHOICES[1][0]
 
-    CUSTOMER_EDITABLE_STATE = ['new', 'draft']
+    CUSTOMER_EDITABLE_STATE = ['current', 'draft']
 
     return_type = models.ForeignKey(ReturnType)
     licence = models.ForeignKey(WildlifeLicence)

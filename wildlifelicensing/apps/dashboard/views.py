@@ -769,7 +769,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
 class TableReturnsOfficerView(OfficerRequiredMixin, TableBaseView):
     template_name = 'wl/dash_tables_returns_officer.html'
 
-    STATUS_FILTER_ALL_BUT_DRAFT = 'all_but_draft'
+    STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE = 'all_but_draft_or_future'
     OVERDUE_FILTER = 'overdue'
 
     def _build_data(self):
@@ -813,9 +813,9 @@ class TableReturnsOfficerView(OfficerRequiredMixin, TableBaseView):
         filters = {
             'status': {
                 'values': [
-                              (self.STATUS_FILTER_ALL_BUT_DRAFT, 'All (but draft)'),
-                              (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
-                          ] + list(Return.STATUS_CHOICES)
+                    (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
+                    (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
+                ] + list(Return.STATUS_CHOICES)
             }
         }
         data['returns']['filters'].update(filters)
@@ -873,13 +873,13 @@ class DataTableReturnsOfficerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        if instance.status == 'new':
+        if instance.status == 'current' or instance.status == 'future':
             url = reverse('returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Enter Return</a>'.format(url)
         elif instance.status == 'draft':
             url = reverse('returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
-        if instance.status == 'submitted':
+        elif instance.status == 'submitted':
             url = reverse('returns:curate_return', args=(instance.pk,))
             return '<a href="{0}">Curate Return</a>'.format(url)
         else:
@@ -895,10 +895,10 @@ class DataTableReturnsOfficerView(DataTableBaseView):
 
     @staticmethod
     def filter_status(value):
-        if value == TableReturnsOfficerView.STATUS_FILTER_ALL_BUT_DRAFT:
-            return ~Q(status='draft')
+        if value == TableReturnsOfficerView.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE:
+            return ~Q(status__in=['draft', 'future'])
         elif value == TableReturnsOfficerView.OVERDUE_FILTER:
-            return Q(due_date__lt=datetime.date.today()) & ~Q(status__in=['submitted', 'accepted', 'declined'])
+            return Q(due_date__lt=datetime.date.today()) & ~Q(status__in=['future', 'submitted', 'accepted', 'declined'])
         elif value:
             return Q(status=value)
         else:
@@ -1251,7 +1251,7 @@ class DataTableReturnsCustomerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        if instance.status == 'new':
+        if instance.status == 'current':
             url = reverse('returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Enter Return</a>'.format(url)
         elif instance.status == 'draft':
@@ -1264,15 +1264,15 @@ class DataTableReturnsCustomerView(DataTableBaseView):
     @staticmethod
     def _render_status(instance):
         status = instance.status
-        if status == 'new':
+        if status == 'current':
             if is_return_overdue(instance):
                 return '<span class="label label-danger">Overdue</span>'
             elif is_return_due_soon(instance):
                 return '<span class="label label-warning">Due soon</span>'
             else:
-                return ''
+                return 'Current'
         else:
             return dict(Return.STATUS_CHOICES)[status]
 
     def get_initial_queryset(self):
-        return Return.objects.filter(licence__holder=self.request.user)
+        return Return.objects.filter(licence__holder=self.request.user).exclude(status='future')

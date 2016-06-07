@@ -8,6 +8,7 @@ from wildlifelicensing.apps.returns.models import ReturnType, Return
 
 return_submitted = Signal(providing_args=['ret'])
 
+
 @receiver(licence_issued)
 def licence_issued_callback(sender, **kwargs):
     if 'wildlife_licence' in kwargs:
@@ -22,7 +23,7 @@ def licence_issued_callback(sender, **kwargs):
 
         if existing_returns.count() > 0:
             # delete existing returns that haven't been edited
-            existing_returns.filter(status='new').delete()
+            existing_returns.filter(status__in=['current', 'future']).delete()
 
             # remove due dates before that latest edited return
             latest_edited_return = existing_returns.order_by('due_date').last()
@@ -33,5 +34,8 @@ def licence_issued_callback(sender, **kwargs):
         returns = []
         for due_date in due_dates:
             returns.append(Return(licence=licence, return_type=return_type, due_date=due_date))
+
+        if returns:
+            returns[0].status = 'current'
 
         Return.objects.bulk_create(returns)

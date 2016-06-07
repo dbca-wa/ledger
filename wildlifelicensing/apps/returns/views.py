@@ -19,7 +19,6 @@ from wildlifelicensing.apps.returns import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
 from wildlifelicensing.apps.returns.utils_schema import Schema
 from wildlifelicensing.apps.returns.signals import return_submitted
-from wildlifelicensing.apps.returns.mixins import UserCanEditReturnMixin
 from wildlifelicensing.apps.main.helpers import is_officer
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -184,6 +183,13 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                 ret.status = 'submitted'
                 ret.save()
 
+                # update next return in line's status to become the new current return
+                next_ret = Return.objects.filter(licence=ret.licence, status='future').order_by('due_date').first()
+
+                if next_ret is not None:
+                    next_ret.status = 'current'
+                    next_ret.save()
+
                 return_submitted.send(sender=self.__class__, ret=ret)
 
                 messages.success(request, 'Return successfully submitted.')
@@ -255,7 +261,6 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
             messages.warning(request, 'Return was declined.')
             return redirect('home')
-
 
 
 class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
