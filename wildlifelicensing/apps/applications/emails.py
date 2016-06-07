@@ -145,6 +145,7 @@ def send_returns_request_email(returns_request, request):
     msg = email.send(returns_request.application.applicant_profile.email, context=context)
     _log_email(msg, application=returns_request.application, sender=request.user)
 
+
 class LicenceIssuedEmail(TemplateEmailBase):
     subject = 'Your wildlife licensing licence has been issued.'
     html_template = 'wl/emails/licence_issued.html'
@@ -200,7 +201,6 @@ def send_licence_renewal_email_notification(licence):
     email.send(licence.profile.email, context=context)
 
 
-
 class UserNameChangeNotificationEmail(TemplateEmailBase):
     subject = 'User has changed name and requires licence reissue.'
     html_template = 'wl/emails/user_name_change_notification.html'
@@ -216,7 +216,7 @@ def send_user_name_change_notification_email(licence):
         'licence': licence,
         'url': url
     }
-    msg = email.send(licence.issuer.email, context=context)
+    email.send(licence.issuer.email, context=context)
 
 
 def _log_email(email_message, application, sender=None):

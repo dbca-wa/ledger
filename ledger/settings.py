@@ -185,6 +185,7 @@ MEDIA_URL = '/media/'
 
 CRON_CLASSES = [
     'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
+    'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
 
 # Logging settings
