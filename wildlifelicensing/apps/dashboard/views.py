@@ -1050,6 +1050,11 @@ class TableCustomerView(LoginRequiredMixin, TableBaseView):
         # no filters
         if 'filters' in data['applications']:
             del data['applications']['filters']
+        # global table options
+        data['applications']['tableOptions'] = {
+            'order': [[0, 'desc']]
+        }
+
         data['applications']['ajax']['url'] = reverse('dashboard:data_application_customer')
 
         # Licences
