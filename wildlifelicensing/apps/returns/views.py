@@ -19,6 +19,7 @@ from wildlifelicensing.apps.returns import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
 from wildlifelicensing.apps.returns.utils_schema import Schema
 from wildlifelicensing.apps.returns.signals import return_submitted
+from wildlifelicensing.apps.returns.mixins import UserCanEditReturnMixin
 from wildlifelicensing.apps.main.helpers import is_officer
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -89,7 +90,7 @@ def _create_return_data_from_post_data(ret, tables_info, post_data):
         ReturnRow.objects.bulk_create(return_rows)
 
 
-class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
+class EnterReturnView(UserCanEditReturnMixin, TemplateView):
     template_name = 'wl/enter_return.html'
     login_url = '/'
 
@@ -170,8 +171,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
                 _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
-                ret.return_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
-                                               str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
+                ret.lodgement_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
+                                                  str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
                 ret.lodgement_date = date.today()
 
@@ -228,19 +229,26 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         context = self.get_context_data()
         ret = get_object_or_404(Return, pk=self.args[0])
 
-        if _is_post_data_valid(ret, context['tables'], request.POST):
-            _create_return_data_from_post_data(ret, context['tables'], request.POST)
+        if 'accept' in request.POST:
+            if _is_post_data_valid(ret, context['tables'], request.POST):
+                _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
-            ret.status = 'accepted'
+                ret.status = 'accepted'
+                ret.save()
+
+                messages.success(request, 'Return was accepted.')
+                return redirect('home')
+            else:
+                for table in context['tables']:
+                    table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+
+                return render(request, self.template_name, context)
+        else:
+            ret.status = 'declined'
             ret.save()
 
-            messages.success(request, 'Return successfully curated.')
+            messages.warning(request, 'Return was declined.')
             return redirect('home')
-        else:
-            for table in context['tables']:
-                table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
-
-            return render(request, self.template_name, context)
 
 
 class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
