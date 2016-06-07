@@ -9,6 +9,7 @@ from models import Application, ApplicationCondition, AmendmentRequest, Assessme
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
 ID_CHECK_STATUSES = dict(Application.ID_CHECK_STATUS_CHOICES)
+RETURNS_CHECK_STATUSES = dict(Application.RETURNS_CHECK_STATUS_CHOICES)
 CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
 REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
 AMENDMENT_REQUEST_REASONS = dict(AmendmentRequest.REASON_CHOICES)
@@ -248,6 +249,7 @@ def clone_application_for_renewal(application, save=False):
 def format_application(instance, attrs):
     attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
     attrs['id_check_status'] = ID_CHECK_STATUSES[attrs['id_check_status']]
+    attrs['returns_check_status'] = RETURNS_CHECK_STATUSES[attrs['returns_check_status']]
     attrs['character_check_status'] = CHARACTER_CHECK_STATUSES[attrs['character_check_status']]
     attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
 

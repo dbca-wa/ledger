@@ -4,6 +4,8 @@
 
 {% load bootstrap3 %}
 
+{% load users %}
+
 {% load dict_helpers %}
 
 {% block extra_css %}
@@ -35,11 +37,25 @@
 
 {% block content %}
     <div class="container bottom-buffer">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="top-buffer">
+        <div class="top-buffer">
+            <div class="row">
+                <div class="col-md-12">
                     <h2 class="inline">{{ return.licence.licence_type.name }}</h2>
-                    <h3>Enter Return Data</h3>
+                    {% if request.user|is_officer %}
+                        <h4 class="pull-right">Customer: {{ return.licence.holder.get_full_name }}</h4>
+                    {% else %}
+                        <p></p> <!-- empty paragraph for spacing purposes -->
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 class="inline">Enter Return Data</h3>
+                    <h4 class="pull-right">Due Date: {{ return.due_date }}</h4>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
                     <p>
                         Please enter the return data for the relevant period as specified in your licence conditions.
                         The data can be entered directly in the

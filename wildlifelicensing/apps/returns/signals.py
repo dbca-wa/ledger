@@ -1,11 +1,12 @@
-from django.dispatch import receiver
+from django.dispatch import Signal, receiver
+from django.shortcuts import get_object_or_404
 
 from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.returns.utils import create_returns_due_dates
 from wildlifelicensing.apps.returns.models import ReturnType, Return
-from django.shortcuts import get_object_or_404
 
+return_submitted = Signal(providing_args=['ret'])
 
 @receiver(licence_issued)
 def licence_issued_callback(sender, **kwargs):
