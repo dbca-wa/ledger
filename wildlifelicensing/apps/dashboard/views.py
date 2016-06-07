@@ -593,7 +593,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, DataTableAp
             'render': lambda self, instance: _render_date(instance.lodgement_date)
         },
         'action': {
-            'render': lambda self, action: self._render_action_column,
+            'render': lambda self, instance: self._render_action_column(instance),
         },
     })
 
