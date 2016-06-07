@@ -16,7 +16,7 @@
 
 {% block requirements %}
     require(["{% static 'wl/js/return_table.js' %}"], function (returnTable) {
-        returnTable.initTables();
+    returnTable.initTables();
     });
 {% endblock %}
 
@@ -76,7 +76,7 @@
                                         <p>{{ return.status }}</p>
                                     </div>
                                 </div>
-                             </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -101,9 +101,15 @@
                                         {% for row in table.data %}
                                             <tr>
                                                 {% for header in table.headers %}
-                                                    <td>
-                                                        <input name="{{ table.name }}::{{ header }}" value="{{ row|get_item:header }}"></input>
-                                                    </td>
+                                                    {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
+                                                        <td>
+                                                            <input name="{{ table.name }}::{{ header }}"
+                                                                   value="{{ value }}"/>
+                                                            {% if error %}
+                                                                <div><span class="text-danger">{{ error }}</span></div>
+                                                            {% endif %}
+                                                        </td>
+                                                    {% endwith %}
                                                 {% endfor %}
                                             </tr>
                                         {% endfor %}

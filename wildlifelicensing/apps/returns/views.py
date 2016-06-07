@@ -21,7 +21,6 @@ from wildlifelicensing.apps.returns.utils_schema import Schema
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
 
-
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
 
@@ -205,13 +204,17 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for schema_name in ret.return_type.get_resources_names():
-            schema = SchemaModel(ret.return_type.get_schema_by_name(schema_name))
-            table = {'name': schema_name, 'headers': schema.headers}
+        for resource in ret.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            table = {'name': resource_name, 'title': resource.get('title', resource.get('name')),
+                     'headers': schema.headers}
 
             try:
-                return_table = ret.returntable_set.get(name=schema_name)
-                table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
+                return_table = ret.returntable_set.get(name=resource_name)
+                rows = [return_row.data for return_row in return_table.returnrow_set.all()]
+                validated_rows = list(schema.rows_validator(rows))
+                table['data'] = validated_rows
             except ReturnTable.DoesNotExist:
                 pass
 
@@ -225,14 +228,19 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         context = self.get_context_data()
         ret = get_object_or_404(Return, pk=self.args[0])
 
-        _create_return_data_from_post_data(ret, context['tables'], request.POST)
+        if _is_post_data_valid(ret, context['tables'], request.POST):
+            _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
-        ret.status = 'accepted'
-        ret.save()
+            ret.status = 'accepted'
+            ret.save()
 
-        messages.success(request, 'Return successfully curated.')
+            messages.success(request, 'Return successfully curated.')
+            return redirect('home')
+        else:
+            for table in context['tables']:
+                table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
 
-        return redirect('home')
+            return render(request, self.template_name, context)
 
 
 class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
