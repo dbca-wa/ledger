@@ -7,7 +7,7 @@
     {% endif %}
     {% if request_text %}
     Detail:
-        {{ request_text }}<
+        {{ request_text }}
     {% endif %}
     {% if url %}
         Please copy and paste the following link into your browser to lodge your returns:

@@ -35,8 +35,8 @@ def identification_uploaded_callback(sender, **kwargs):
 def return_submitted_callback(sender, **kwargs):
     if 'ret' in kwargs:
         ret = kwargs.get('ret')
-        previous_application = Application.objects.get(licence=ret.licence)
         try:
+            previous_application = Application.objects.get(licence=ret.licence)
             application = Application.objects.get(previous_application=previous_application)
             if application.returns_check_status == 'awaiting_returns':
                 if not Return.objects.filter(licence=ret.licence).exclude(status='submitted').\
