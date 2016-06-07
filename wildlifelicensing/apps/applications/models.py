@@ -11,14 +11,20 @@ from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceT
 
 class Application(RevisionedMixin):
     CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('under_review', 'Under Review'),
-                               ('id_required', 'Identification Required'), ('amendment_required', 'Amendment Required'),
+                               ('id_required', 'Identification Required'), ('returns_required', 'Returns Completion Required'),
+                               ('amendment_required', 'Amendment Required'),
                                ('id_and_amendment_required', 'Identification/Amendments Required'),
+                               ('id_and_returns_required', 'Identification/Returns Required'),
+                               ('returns_and_amendment_required', 'Returns/Amendments Required'),
+                               ('id_and_returns_and_amendment_required', 'Identification/Returns/Amendments Required'),
                                ('approved', 'Approved'), ('declined', 'Declined'))
+
     # List of statuses from above that allow a customer to edit an application.
-    CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required']
+    CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required', 'returns_and_amendment_required',
+                               'id_and_returns_and_amendment_required']
 
     # List of statuses from above that allow a customer to view an application (read-only)
-    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'approved', 'id_required']
+    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved']
 
     PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
@@ -29,6 +35,10 @@ class Application(RevisionedMixin):
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
 
+    RETURNS_CHECK_STATUS_CHOICES = (
+        ('not_checked', 'Not Checked'), ('awaiting_returns', 'Awaiting Returns'), ('completed', 'Completed'),
+        ('accepted', 'Accepted'))
+
     CHARACTER_CHECK_STATUS_CHOICES = (
         ('not_checked', 'Not Checked'), ('accepted', 'Accepted'))
 
@@ -37,7 +47,7 @@ class Application(RevisionedMixin):
         ('accepted', 'Accepted'))
 
     licence_type = models.ForeignKey(WildlifeLicenceType)
-    customer_status = models.CharField('Customer Status', max_length=30, choices=CUSTOMER_STATUS_CHOICES,
+    customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
     data = JSONField()
     documents = models.ManyToManyField(Document)
@@ -57,6 +67,8 @@ class Application(RevisionedMixin):
                                          default=PROCESSING_STATUS_CHOICES[0][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
                                        default=ID_CHECK_STATUS_CHOICES[0][0])
+    returns_check_status = models.CharField('Return Check Status', max_length=30, choices=RETURNS_CHECK_STATUS_CHOICES,
+                                            default=RETURNS_CHECK_STATUS_CHOICES[0][0])
     character_check_status = models.CharField('Character Check Status', max_length=30,
                                               choices=CHARACTER_CHECK_STATUS_CHOICES,
                                               default=CHARACTER_CHECK_STATUS_CHOICES[0][0])
@@ -98,6 +110,12 @@ class IDRequest(ApplicationLogEntry):
                       ('not_recognised',
                        'The current identification is not recognised by the Department of Parks and Wildlife'),
                       ('illegible', 'The current identification image is of poor quality and cannot be made out.'),
+                      ('other', 'Other'))
+    reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+
+
+class ReturnsRequest(ApplicationLogEntry):
+    REASON_CHOICES = (('outstanding', 'There are currently outstanding returns for the previous licence'),
                       ('other', 'Other'))
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
 

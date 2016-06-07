@@ -871,14 +871,19 @@ class DataTableReturnsOfficerView(DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
+        if instance.status == 'new':
+            url = reverse('returns:enter_return', args=(instance.pk,))
+            return '<a href="{0}">Enter Return</a>'.format(url)
+        elif instance.status == 'draft':
+            url = reverse('returns:enter_return', args=(instance.pk,))
+            return '<a href="{0}">Edit Return</a>'.format(url)
         if instance.status == 'submitted':
             url = reverse('returns:curate_return', args=(instance.pk,))
             return '<a href="{0}">Curate Return</a>'.format(url)
-        elif instance.status == 'accepted' or instance.status == 'declined':
+        else:
             url = reverse('returns:view_return', args=(instance.pk,))
             return '<a href="{0}">View Return (read-only)</a>'.format(url)
-        else:
-            return 'N/A'
+
 
     @staticmethod
     def filter_licence_type(value):

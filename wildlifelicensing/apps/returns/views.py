@@ -2,6 +2,8 @@ import os
 import shutil
 import tempfile
 
+from datetime import date
+
 from django.views.generic.base import TemplateView
 from django.shortcuts import render, get_object_or_404, redirect
 from django.conf import settings
@@ -15,7 +17,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCu
 from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow
 from wildlifelicensing.apps.returns import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
-from datetime import date
+from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -60,7 +62,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for resource in ret.return_type.get_resources_names:
+        for resource in ret.return_type.resources:
             schema = SchemaModel(resource.get('schema'))
             table = {'name': resource.get('name'), 'title': resource.get('title', resource.get('name')),
                      'headers': schema.headers}
@@ -133,6 +135,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
             ret.status = 'submitted'
             ret.save()
+
+            return_submitted.send(sender=self.__class__, ret=ret)
 
             messages.success(request, 'Return successfully submitted.')
 

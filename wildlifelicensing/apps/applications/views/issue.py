@@ -120,7 +120,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 # customer applied offline and did not provide an email address
                 messages.success(request, 'The licence has now been issued and must be posted to the licencee. Click '
                                  'this link to show the licence <a href="{0}" target="_blank">Licence PDF'
-                                 '</a><img height="20px" src="{1}"></img> and this link to show the cover letter'
+                                 '</a><img height="20px" src="{1}"></img> and this link to show the cover letter '
                                  '<a href="{2}" target="_blank">Cover Letter PDF</a><img height="20px" src="{3}">'
                                  '</img>'.format(licence.licence_document.file.url, static('wl/img/pdf.png'),
                                                  licence.cover_letter_document.file.url, static('wl/img/pdf.png')))

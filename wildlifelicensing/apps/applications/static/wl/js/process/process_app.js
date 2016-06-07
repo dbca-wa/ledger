@@ -55,47 +55,81 @@ define([
         });
     }
 
-    function createVersionRow(assessment) {
-        var row = $('<tr></tr>');
-        row.append('<td>' + assessment.assessor.first_name + ' ' + assessment.assessor.last_name + '</td>');
-        var statusColumn = $('<td></td>').css('text-align', 'right');
-        if (assessment.status === 'Awaiting Assessment') {
-            statusColumn.append(assessment.status);
-        } else {
-            statusColumn.append('<a href="' + assessment.url + '">View Assessment</a>');
-        }
-
-        row.append(statusColumn);
-
-        return row;
-    }
-
     function initLodgedVersions(previousData) {
         var $table = $('#lodgedVersions');
         $.each(previousData, function (index, version) {
-            var $row = $('<tr>'), $compareLink;
+            var $row = $('<tr>'), $compareLink, $comparingText, $actionSpan;
+
             $row.append($('<td>').text(version.lodgement_number));
             $row.append($('<td>').text(version.date));
 
             if (index === 0) {
-                $compareLink = $('<a>Show</a>').addClass('hidden');
+                $compareLink = $('<a>').text('Show').addClass('hidden');
+                $comparingText = $('<p>').css('font-style', 'italic').text('Showing').addClass('no-margin');
+
                 $row.addClass('small-table-selected-row');
             } else {
-                $compareLink = $('<a>Compare</a>');
+                $compareLink = $('<a>').text('Compare');
+                $comparingText = $('<p>').css('font-style', 'italic').text('Comparing').addClass('no-margin').addClass('hidden');
             }
 
+            $actionSpan = $('<span>').append($compareLink).append($comparingText);
+
             $compareLink.click(function (e) {
-                $table.find('tr').removeClass('small-table-selected-row');
-                $table.find('a').removeClass('hidden');
+                $(document).trigger('application-version-selected');
                 $row.addClass('small-table-selected-row');
-                $row.find('a').addClass('hidden');
+                $compareLink.addClass('hidden');
+                $comparingText.removeClass('hidden');
                 $previewContainer.empty();
                 previewVersions.layoutPreviewItems($previewContainer, moduleData.form_structure, application.data, version.data);
             });
 
-            $row.append($('<td>').html($compareLink));
+            $row.append($('<td>').html($actionSpan));
 
             $table.append($row);
+        });
+
+        $(document).on('application-version-selected', function() {
+            $table.find('tr').removeClass('small-table-selected-row');
+            $table.find('a').removeClass('hidden');
+            $table.find('p').addClass('hidden');
+        });
+    }
+
+    function initPreviousApplication() {
+        if(!application.previous_application) {
+            return;
+        }
+
+        var $table = $('#previousApplication');
+
+        var $row = $('<tr>'), $compareLink;
+        $row.append($('<td>').text(application.previous_application.lodgement_number));
+        $row.append($('<td>').text(application.previous_application.lodgement_date));
+
+        var $compareLink = $('<a>Compare</a>');
+
+        var $comparingText = $('<p>').css('font-style', 'italic').text('Comparing').addClass('no-margin').addClass('hidden');
+
+        var $actionSpan = $('<span>').append($compareLink).append($comparingText);
+
+        $compareLink.click(function (e) {
+            $(document).trigger('application-version-selected');
+            $row.addClass('small-table-selected-row');
+            $compareLink.addClass('hidden');
+            $comparingText.removeClass('hidden');
+            $previewContainer.empty();
+            previewVersions.layoutPreviewItems($previewContainer, moduleData.form_structure, application.data, application.previous_application.data);
+        });
+
+        $row.append($('<td>').html($actionSpan));
+
+        $table.append($row);
+
+        $(document).on('application-version-selected', function() {
+            $table.find('tr').removeClass('small-table-selected-row');
+            $compareLink.removeClass('hidden');
+            $comparingText.addClass('hidden');
         });
     }
 
@@ -180,6 +214,94 @@ define([
                     determineApplicationApprovable();
 
                     $requestIDUpdateModal.modal('hide');
+                }
+            });
+
+            e.preventDefault();
+        });
+    }
+
+    function initReturnsCheck() {
+        var $container = $('#returnsCheck');
+
+        if (!application.previous_application) {
+            $container.addClass('hidden');
+            return;
+        }
+
+        var $actionButtonsContainer = $container.find('.action-buttons-group'),
+            $done = $container.find('.done'),
+            $resetLink = $done.find('a'),
+            $status = $container.find('.status');
+
+        if (application.returns_check_status === 'Accepted') {
+            $actionButtonsContainer.addClass('hidden');
+            $status.addClass('hidden');
+            $done.removeClass('hidden');
+        }
+
+        $resetLink.click(function () {
+            $.post('/applications/set-returns-check-status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'not_checked'
+                },
+                function (data) {
+                    $processingStatus.text(data.processing_status);
+                    $actionButtonsContainer.removeClass('hidden');
+                    $status.text(data.returns_check_status);
+                    $status.removeClass('hidden');
+                    $done.addClass('hidden');
+
+                    application.returns_check_status = data.returns_check_status;
+                    determineApplicationApprovable();
+                });
+        });
+
+        var $acceptButton = $actionButtonsContainer.find('.btn-success'),
+            $requestReturnsButton = $actionButtonsContainer.find('.btn-warning');
+
+        $acceptButton.click(function () {
+            $.post('/applications/set-returns-check-status/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    status: 'accepted'
+                },
+                function (data) {
+                    $processingStatus.text(data.processing_status);
+                    $status.addClass('hidden');
+                    $done.removeClass('hidden');
+                    $actionButtonsContainer.addClass('hidden');
+
+                    application.returns_check_status = data.returns_check_status;
+                    determineApplicationApprovable();
+                });
+        });
+
+        var $requestReturnsModal = $('#requestReturnsModal'),
+            $returnsRequestForm = $requestReturnsModal.find('#returnsRequestForm'),
+            $returnsReason = $returnsRequestForm.find('#id_reason'),
+            $returnsText = $returnsRequestForm.find('#id_text');
+
+        $requestReturnsButton.click(function () {
+            $requestReturnsModal.modal('show');
+        });
+
+        $returnsRequestForm.submit(function (e) {
+            $.ajax({
+                type: $(this).attr('method'),
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (data) {
+                    $processingStatus.text(data.processing_status);
+                    $container.find('.status').text(data.returns_check_status);
+                    $returnsReason.find('option:eq(0)').prop('selected', true);
+                    $returnsText.val('');
+
+                    application.returns_check_status = data.returns_check_status;
+                    determineApplicationApprovable();
+
+                    $requestReturnsModal.modal('hide');
                 }
             });
 
@@ -597,9 +719,11 @@ define([
         var approvable = false;
 
         if ((application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required) {
-            if (application.character_check_status === 'Accepted') {
-                if (application.review_status === 'Accepted') {
-                    approvable = true;
+            if ((application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application) {
+                if (application.character_check_status === 'Accepted') {
+                    if (application.review_status === 'Accepted') {
+                        approvable = true;
+                    }
                 }
             }
         }
@@ -619,7 +743,9 @@ define([
 
             initAssignee(data.officers, data.user);
             initLodgedVersions(data.previous_versions);
+            initPreviousApplication();
             initIDCheck();
+            initReturnsCheck();
             initCharacterCheck();
             initReview();
             initAssessment(data.assessor_groups);
