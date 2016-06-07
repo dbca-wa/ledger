@@ -28,6 +28,13 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         } else if(item.type === 'declaration') {
             itemContainer.append($('<label>').text(item.label));
             itemContainer.append($('<p>').text(item.valueCurrent ? 'Declaration checked' : 'Declaration not checked'));
+        } else if(item.type === 'file') {
+            var fileLink = $('<a>');
+            fileLink.attr('href', item.value);
+            fileLink.attr('target', '_blank');
+            fileLink.text(item.value.substr(item.value.lastIndexOf('/') + 1));
+            itemContainer.append($('<label>').text(item.label));
+            itemContainer.append($('<p>').append(fileLink));
         } else {
             itemContainer.append($('<label>').text(item.label));
             itemContainer.append($('<p>').text(item.value));
@@ -80,7 +87,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
     }
 
     return {
-        layoutPreviewItems: function(containerSelector, formStructure, data) {
+        layoutPreviewItems: function(containerSelector, formStructure, data, tempFilesUrl) {
             var container = $(containerSelector);
 
             $.each(formStructure, function(index, item) {

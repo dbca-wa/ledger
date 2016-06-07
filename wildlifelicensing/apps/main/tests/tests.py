@@ -54,6 +54,7 @@ class AccountsTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         post_params = {
+            'user': self.customer.pk,
             'name': 'Test Profile',
             'email': 'test@testplace.net.au',
             'institution': 'Test Institution',
@@ -84,6 +85,7 @@ class AccountsTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         post_params = {
+            'user': self.customer.pk,
             'name': 'Test Profile 2',
             'email': profile.email,
             'institution': profile.institution,

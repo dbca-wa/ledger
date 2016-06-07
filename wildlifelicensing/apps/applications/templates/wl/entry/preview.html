@@ -64,7 +64,7 @@
                 <p>
                     Note that once you have lodged the application, you will not be able to alter it unless a Wildlife Licensing officer requests
                     amendments be made. Should amendments be required, you will be notified via email (using the email address for the profile selected) whereby
-                    you will be able to alter the application according to the amendments requested.
+                    you will need to alter the application according to the amendments requested.
                 </p>
             </div>
         </div>
@@ -89,6 +89,12 @@
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
+                    {% if is_proxy_applicant %}
+                        <h3 class="section">Original Application Document</h3>
+                        <hr>
+                            <label>Application Document</label>
+                            <p></p>
+                    {% endif %}
                     <hr>
                     <h3>Disclaimer</h3>
                     <div id="disclaimers" class="children-anchor-point">

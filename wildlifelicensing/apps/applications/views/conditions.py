@@ -14,7 +14,8 @@ from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
-from wildlifelicensing.apps.applications.utils import format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
+from wildlifelicensing.apps.applications.utils import convert_application_data_files_to_url, format_application, \
+    format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from wildlifelicensing.apps.applications.mixins import CanEditAssessmentMixin
@@ -31,6 +32,8 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code)) as data_file:
             form_structure = json.load(data_file)
 
+        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = form_structure
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
@@ -43,17 +46,18 @@ class EnterConditionsAssessorView(CanEditAssessmentMixin, EnterConditionsView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
 
     def get_context_data(self, **kwargs):
-        ctx = super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
         try:
-            application_pk = ctx['application']['id']
+            application_pk = kwargs['application']['id']
         except KeyError:
             application_pk = get_object_or_404(Application, pk=self.args[0]).pk
+
         assessment = get_object_or_404(Assessment, pk=self.args[1])
-        ctx['assessment'] = assessment
+
+        kwargs['assessment'] = assessment
         #  override action url
-        ctx['action_url'] = reverse('applications:submit_conditions_assessor',
-                                    args=[application_pk, assessment.pk])
-        return ctx
+        kwargs['action_url'] = reverse('applications:submit_conditions_assessor', args=[application_pk, assessment.pk])
+
+        return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
 
 class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
@@ -130,6 +134,11 @@ class SubmitConditionsAssessorView(CanEditAssessmentMixin, View):
         comment = request.POST.get('comment', '')
         if len(comment.strip()) > 0:
             assessment.comment = comment
+
+        purpose = request.POST.get('purpose', '')
+        if len(purpose.strip()) > 0:
+            assessment.purpose = purpose
+
         assessment.save()
 
         # set application status process

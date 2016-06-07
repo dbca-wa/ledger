@@ -5,14 +5,18 @@ from wildlifelicensing.apps.applications.views.entry import NewApplicationView, 
     EnterDetailsView, PreviewView, RenewLicenceView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
-    IDRequestView, SetCharacterCheckStatusView, SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, \
-    RemindAssessmentView, AddLogEntryView, CommunicationLogListView
+    IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
+    SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, RemindAssessmentView, AddLogEntryView, \
+    CommunicationLogListView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
     CreateConditionView, SetAssessmentConditionState, SubmitConditionsView, EnterConditionsAssessorView, \
     SubmitConditionsAssessorView
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
+
+from wildlifelicensing.apps.applications.views.view import ViewReadonlyView
+
 
 urlpatterns = [
     # application entry / licence renewal
@@ -36,11 +40,14 @@ urlpatterns = [
     url('^assign-officer/$', AssignOfficerView.as_view(), name='assign_officer'),
     url('^set-id-check-status/$', SetIDCheckStatusView.as_view(), name='set_id_check_status'),
     url('^id-request/$', IDRequestView.as_view(), name='id_request'),
+    url('^returns-request/$', ReturnsRequestView.as_view(), name='returns_request'),
+    url('^set-returns-check-status/$', SetReturnsCheckStatusView.as_view(), name='set_returns_check_status'),
     url('^set-character-check-status/$', SetCharacterCheckStatusView.as_view(), name='set_character_check_status'),
     url('^set-review-status/$', SetReviewStatusView.as_view(), name='set_review_status'),
     url('^amendment-request/$', AmendmentRequestView.as_view(), name='amendment_request'),
     url('^send-for-assessment/$', SendForAssessmentView.as_view(), name='send_for_assessment'),
     url('^remind-assessment/$', RemindAssessmentView.as_view(), name='remind_assessment'),
+
     # communication log
     url('^add-log-entry/([0-9]+)/', AddLogEntryView.as_view(), name='add_log_entry'),
     url('log-list/([0-9]+)/$', CommunicationLogListView.as_view(), name='log_list'),
@@ -60,4 +67,7 @@ urlpatterns = [
     url('^issue-licence/([0-9]+)/$', IssueLicenceView.as_view(), name='issue_licence'),
     url('^reissue-licence/([0-9]+)/$', ReissueLicenceView.as_view(), name='reissue_licence'),
     url('^preview-licence/([0-9]+)/$', PreviewLicenceView.as_view(), name='preview_licence'),
+
+    # view
+    url('^view-application/([0-9]+)/$', ViewReadonlyView.as_view(), name='view_application')
 ]

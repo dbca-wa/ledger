@@ -62,19 +62,24 @@ class ProfileForm(ProfileBaseForm):
     class Meta:
         model = Profile
         fields = ['user','name', 'email', 'institution']
-        widgets = {'user':forms.HiddenInput()}
+        widgets = {'user': forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         initial_display_name = kwargs.pop('initial_display_name', None)
         initial_email = kwargs.pop('initial_email', None)
 
         super(ProfileForm, self).__init__(*args, **kwargs)
+
+        if user is not None:
+            self.fields['user'].initial = user
 
         if initial_display_name is not None:
             self.fields['name'].initial = initial_display_name
 
         if initial_email is not None:
             self.fields['email'].initial = initial_email
+
 
 class EmailUserForm(forms.ModelForm):
     class Meta:

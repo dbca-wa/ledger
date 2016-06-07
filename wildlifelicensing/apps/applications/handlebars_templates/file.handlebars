@@ -2,9 +2,9 @@
     <label>{{label}}</label>
     {{#if value }}
         <p>
-            Currently: {{value}}
+            Currently: <a href="{{value}}" target="_blank">{{{getURLFilename value}}}</a>
         </p>
-        <input name="{{name}}-existing" type="hidden" value="{{value}}"/>
+        <input name="{{name}}-existing" type="hidden" value="{{{getURLFilename value}}}"/>
     {{/if}}
     <input name="{{name}}" type="file" class="form-control" {{#if file_types }}accept="{{fileTypes}}"{{/if}} {{#if required}}required{{/if}}
         {{#if fileTypes }}accept="{{fileTypes}}"{{/if}} >

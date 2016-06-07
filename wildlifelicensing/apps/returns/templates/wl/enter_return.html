@@ -1,0 +1,141 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load users %}
+
+{% load dict_helpers %}
+
+{% block extra_css %}
+    <link rel="stylesheet"
+          href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css">
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
+          rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(["{% static 'wl/js/return_table.js' %}"], function (returnTable) {
+    returnTable.initTables();
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li class="active">Enter Return Data</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container bottom-buffer">
+        <div class="top-buffer">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2 class="inline">{{ return.licence.licence_type.name }}</h2>
+                    {% if request.user|is_officer %}
+                        <h4 class="pull-right">Customer: {{ return.licence.holder.get_full_name }}</h4>
+                    {% else %}
+                        <p></p> <!-- empty paragraph for spacing purposes -->
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 class="inline">Enter Return Data</h3>
+                    <h4 class="pull-right">Due Date: {{ return.due_date }}</h4>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <p>
+                        Please enter the return data for the relevant period as specified in your licence conditions.
+                        The data can be entered directly in the
+                        table(s) below or uploaded from the appropriate Excel spreadsheet template. If you upload an
+                        Excel template, this will pre-fill the
+                        corresponding tables. When finished, click "Lodge" to lodge the return.
+                    </p>
+                    <p>
+                        At any point you can save the return data as a draft by clicking the Save Draft button at the
+                        bottom-left, allowing you to complete the
+                        return at a later time.
+                    </p>
+                    <hr>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% bootstrap_form upload_spreadsheet_form %}
+                    <button type="submit" class="btn btn-primary pull-right" name="upload">Upload File</button>
+                </form>
+            </div>
+        </div>
+        <hr>
+        <form method="POST">
+            {% csrf_token %}
+            {% for table in tables %}
+                <div class="row top-buffer">
+                    <div class="col-md-12">
+                        <h3>{{ table.title }}</h3>
+                        <table class="return-table table table-striped table-bordered dataTable">
+                            <thead>
+                                <tr>
+                                    {% for header in table.headers %}
+                                        <th>{{ header }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if table.data %}
+                                    {% for row in table.data %}
+                                        <tr>
+                                            {% for header in table.headers %}
+                                                {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
+                                                    <td>
+                                                        <input name="{{ table.name }}::{{ header }}"
+                                                               value="{{ value }}"/>
+                                                        {% if error %}
+                                                            <div><span class="text-danger">{{ error }}</span></div>
+                                                        {% endif %}
+                                                    </td>
+                                                {% endwith %}
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for i in '01234' %}
+                                        <tr>
+                                            {% for header in table.headers %}
+                                                <td>
+                                                    <input name="{{ table.name }}::{{ header }}"/>
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        <a class="add-return-row">Add Row</a>
+                    </div>
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary pull-right" name="lodge">Lodge</button>
+            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft_continue">Save
+                Draft and Continue Editing
+            </button>
+            <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft
+            </button>
+        </form>
+    </div>
+{% endblock %}

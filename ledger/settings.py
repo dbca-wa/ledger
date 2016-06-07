@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
     'wildlifelicensing.apps.applications',
-    'wildlifelicensing.apps.emails'
+    'wildlifelicensing.apps.emails',
+    'wildlifelicensing.apps.returns'
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
@@ -185,6 +186,7 @@ MEDIA_URL = '/media/'
 
 CRON_CLASSES = [
     'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
+    'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
 
 # Logging settings

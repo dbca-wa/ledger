@@ -7,7 +7,7 @@ from django.conf import settings
 from django_hosts import reverse as hosts_reverse
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
-from wildlifelicensing.apps.applications.models import EmailLogEntry, AmendmentRequest, IDRequest
+from wildlifelicensing.apps.applications.models import EmailLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 logger = logging.getLogger(__name__)
 
@@ -124,37 +124,61 @@ def send_id_update_request_email(id_request, request):
     _log_email(msg, application=id_request.application, sender=request.user)
 
 
+class ApplicationReturnsRequestedEmail(TemplateEmailBase):
+    subject = 'Completion of returns for a wildlife licensing application is required.'
+    html_template = 'wl/emails/application_returns_request.html'
+    txt_template = 'wl/emails/application_returns_request.txt'
+
+
+def send_returns_request_email(returns_request, request):
+    email = ApplicationReturnsRequestedEmail()
+    url = request.build_absolute_uri(
+        reverse('dashboard:home')
+    )
+    context = {
+        'url': url
+    }
+    if returns_request.reason:
+        context['request_reason'] = dict(ReturnsRequest.REASON_CHOICES)[returns_request.reason]
+    if returns_request.text:
+        context['request_text'] = returns_request.text
+    msg = email.send(returns_request.application.applicant_profile.email, context=context)
+    _log_email(msg, application=returns_request.application, sender=request.user)
+
+
 class LicenceIssuedEmail(TemplateEmailBase):
     subject = 'Your wildlife licensing licence has been issued.'
     html_template = 'wl/emails/licence_issued.html'
     txt_template = 'wl/emails/licence_issued.txt'
 
 
-def send_licence_issued_email(licence, application, cover_letter_message, request):
+def send_licence_issued_email(licence, application, request):
     email = LicenceIssuedEmail()
     url = request.build_absolute_uri(
         reverse('dashboard:home')
     )
     context = {
         'url': url,
-        'cover_letter_message': cover_letter_message
+        'cover_letter_message': licence.cover_letter_message
     }
-    if licence.document is not None:
+    if licence.licence_document is not None:
         file_name = 'WL_licence_' + str(licence.licence_type.code)
-        if licence.licence_no:
-            file_name += '_' + str(licence.licence_no)
+        if licence.licence_number:
+            file_name += '_' + str(licence.licence_number)
+        if licence.licence_sequence:
+            file_name += '-' + str(licence.licence_sequence)
         elif licence.start_date:
             file_name += '_' + str(licence.start_date)
         file_name += '.pdf'
-        attachment = (file_name, licence.document.file.read(), 'application/pdf')
+        attachment = (file_name, licence.licence_document.file.read(), 'application/pdf')
         attachments = [attachment]
     else:
         logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
         attachments = None
     msg = email.send(licence.profile.email, context=context, attachments=attachments)
     log_entry = _log_email(msg, application=application, sender=request.user)
-    if licence.document is not None:
-        log_entry.document = licence.document
+    if licence.licence_document is not None:
+        log_entry.document = licence.licence_document
         log_entry.save()
     return log_entry
 
@@ -175,6 +199,24 @@ def send_licence_renewal_email_notification(licence):
     }
 
     email.send(licence.profile.email, context=context)
+
+
+class UserNameChangeNotificationEmail(TemplateEmailBase):
+    subject = 'User has changed name and requires licence reissue.'
+    html_template = 'wl/emails/user_name_change_notification.html'
+    txt_template = 'wl/emails/user_name_change_notification.txt'
+
+
+def send_user_name_change_notification_email(licence):
+    email = UserNameChangeNotificationEmail()
+
+    url = 'http:' + hosts_reverse('applications:reissue_licence', args=(licence.pk,))
+
+    context = {
+        'licence': licence,
+        'url': url
+    }
+    email.send(licence.issuer.email, context=context)
 
 
 def _log_email(email_message, application, sender=None):

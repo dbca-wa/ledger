@@ -8,4 +8,8 @@ define(['handlebars.runtime'], function(Handlebars) {
             return options.fn(this);
         }
     });
+
+    Handlebars.registerHelper('getURLFilename', function(url) {
+        return new Handlebars.SafeString(url.substr(url.lastIndexOf('/') + 1));
+    });
 });
