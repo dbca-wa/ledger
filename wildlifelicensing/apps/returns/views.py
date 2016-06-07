@@ -31,6 +31,8 @@ RETURNS_APP_PATH = os.path.join(os.path.dirname(__file__), 'excel_templates')
 def _is_post_data_valid(ret, tables_info, post_data):
     for table in tables_info:
         table_rows = _get_table_rows_from_post(table.get('name'), post_data)
+        if len(table_rows) == 0:
+            return False
         schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
         if not schema.is_all_valid(table_rows):
             return False
@@ -90,7 +92,7 @@ def _create_return_data_from_post_data(ret, tables_info, post_data):
         ReturnRow.objects.bulk_create(return_rows)
 
 
-class EnterReturnView(UserCanEditReturnMixin, TemplateView):
+class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
     template_name = 'wl/enter_return.html'
     login_url = '/'
 
@@ -190,6 +192,8 @@ class EnterReturnView(UserCanEditReturnMixin, TemplateView):
             else:
                 for table in context['tables']:
                     table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+                    if len(table['data']) == 0:
+                        messages.warning(request, "You must enter data for {}".format(table.get('name')))
 
         return render(request, self.template_name, context)
 
@@ -238,17 +242,20 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
                 messages.success(request, 'Return was accepted.')
                 return redirect('home')
-            else:
-                for table in context['tables']:
-                    table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+		    else:
+		        for table in context['tables']:
+		            table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
+		            if len(table['data']) == 0:
+		                messages.warning(request, "You must enter data for {}".format(table.get('name')))
 
-                return render(request, self.template_name, context)
+		        return render(request, self.template_name, context)
         else:
             ret.status = 'declined'
             ret.save()
 
             messages.warning(request, 'Return was declined.')
             return redirect('home')
+
 
 
 class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
