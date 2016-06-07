@@ -35,7 +35,7 @@ class SchemaField:
 
     def cast(self, value):
         """
-        Returns o native Python object of the expected format. Will throw an exception
+        Returns a native Python object of the expected format. Will throw an exception
         if the value doesn't complies with any constraints. See for details:
         https://github.com/frictionlessdata/jsontableschema-py#types
         This method is mainly a helper for the validation_error
