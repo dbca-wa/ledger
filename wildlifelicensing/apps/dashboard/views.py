@@ -627,10 +627,10 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, DataTableAp
 class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
     template_name = 'wl/dash_tables_licences_officer.html'
 
-    DATE_FILTER_ACTIVE = 'active'
-    DATE_FILTER_RENEWABLE = 'renewable'
-    DATE_FILTER_EXPIRED = 'expired'
-    DATE_FILTER_ALL = 'all'
+    STATUS_FILTER_ACTIVE = 'active'
+    STATUS_FILTER_RENEWABLE = 'renewable'
+    STATUS_FILTER_EXPIRED = 'expired'
+    STATUS_FILTER_ALL = 'all'
 
     def _build_data(self):
         data = super(TableLicencesOfficerView, self)._build_data()
@@ -671,12 +671,12 @@ class TableLicencesOfficerView(OfficerRequiredMixin, TableBaseView):
         data['licences']['ajax']['url'] = reverse('dashboard:data_licences_officer')
         # filters (note: there is already the licenceType from the super class)
         filters = {
-            'date': {
+            'status': {
                 'values': [
-                    (self.DATE_FILTER_ACTIVE, self.DATE_FILTER_ACTIVE.capitalize()),
-                    (self.DATE_FILTER_RENEWABLE, self.DATE_FILTER_RENEWABLE.capitalize()),
-                    (self.DATE_FILTER_EXPIRED, self.DATE_FILTER_EXPIRED.capitalize()),
-                    (self.DATE_FILTER_ALL, self.DATE_FILTER_ALL.capitalize()),
+                    (self.STATUS_FILTER_ACTIVE, self.STATUS_FILTER_ACTIVE.capitalize()),
+                    (self.STATUS_FILTER_RENEWABLE, self.STATUS_FILTER_RENEWABLE.capitalize()),
+                    (self.STATUS_FILTER_EXPIRED, self.STATUS_FILTER_EXPIRED.capitalize()),
+                    (self.STATUS_FILTER_ALL, self.STATUS_FILTER_ALL.capitalize()),
                 ]
             }
         }
@@ -739,13 +739,13 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, DataTableBaseView):
     }
 
     @staticmethod
-    def filter_date(value):
+    def filter_status(value):
         today = datetime.date.today()
-        if value == TableLicencesOfficerView.DATE_FILTER_ACTIVE:
+        if value == TableLicencesOfficerView.STATUS_FILTER_ACTIVE:
             return Q(start_date__lte=today) & Q(end_date__gte=today)
-        elif value == TableLicencesOfficerView.DATE_FILTER_RENEWABLE:
+        elif value == TableLicencesOfficerView.STATUS_FILTER_RENEWABLE:
             return Q(is_renewable=True) & Q(end_date__gte=today) & Q(end_date__lte=today + datetime.timedelta(days=30))
-        elif value == TableLicencesOfficerView.DATE_FILTER_EXPIRED:
+        elif value == TableLicencesOfficerView.STATUS_FILTER_EXPIRED:
             return Q(end_date__lt=today)
         else:
             return None
