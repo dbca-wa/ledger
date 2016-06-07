@@ -61,26 +61,35 @@
                                     </p>
                                 {% endwith %}
                                 <div class="row">
-                                    <div class="col-md-7">
-                                        <label>Lodgement No.</label>
+                                    <div class="col-md-6">
+                                        <label>Lodge No.</label>
                                         <p>{{ return.lodgement_number }}</p>
                                     </div>
-                                    <div class="col-md-5">
+                                    <div class="col-md-6">
                                         <label>Lodged on</label>
                                         <p>{{ return.lodgement_date|date:'d/m/Y' }}</p>
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <label>Status</label>
                                         <p>{{ return.status }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label>Licence</label>
+                                        <p>{{ return.licence.licence_number }}-{{ return.licence.licence_sequence }}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button id="conclude" type="button" class="btn btn-sm btn-success pull-right">Conclude Curation</button>
+                <button id="accept" type="submit" name="accept" type="button"
+                        class="btn btn-sm btn-success pull-right">Accept
+                </button>
+                <button id="decline" type="submit" name="decline" type="button"
+                        class="btn btn-sm btn-danger">Decline
+                </button>
             </div>
             <div class="col-md-9">
                 <form method="POST">

@@ -20,8 +20,16 @@ define(['jQuery', 'datatables.net', 'datatables.bootstrap', 'datatables.datetime
                 $tbody.append($rowCopy);
             });
 
-            $('#conclude').click(function() {
-                $('form').submit();
+            $('#accept').click(function() {
+                var $form = $('form');
+                $form.append(this);
+                $form.submit();
+            })
+
+            $('#decline').click(function() {
+                var $form = $('form');
+                $form.append(this);
+                $form.submit();
             })
         }
     }
