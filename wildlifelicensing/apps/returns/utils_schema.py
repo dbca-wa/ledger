@@ -1,5 +1,5 @@
-from collections import OrderedDict
 from jsontableschema.model import SchemaModel
+from jsontableschema import types
 
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -50,13 +50,32 @@ class SchemaField:
             value = unicode(value)
         return self.type.cast(value)
 
+    def validate(self, value):
+        return self.validation_error(value)
+
     def validation_error(self, value):
         """
-        Try to cast and catch the exception if any
+        Return an error message if the value is not valid according to the schema.
+        It relies on exception thrown by the 'cast1 method of Type method.
         :param value:
         :return: None if value is valid or an error message string
         """
         error = None
+        # override the integer validation. The default message is a bit cryptic if there's an error casting a string
+        # like '1.2' into an int.
+        if isinstance(self.type, types.IntegerType):
+            if not is_blank_value(value):
+                not_integer = False
+                try:
+                    casted = self.cast(value)
+                    # there's also the case where the case where a float 1.2 is successfully casted in 1
+                    # (ex: int(1.2) = 1)
+                    if str(casted) != str(value):
+                        not_integer = True
+                except Exception:
+                    not_integer = True
+                if not_integer:
+                    return 'The field "{}" must be a whole number.'.format(self.name)
         try:
             self.cast(value)
         except Exception as e:
