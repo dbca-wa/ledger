@@ -30,6 +30,8 @@ RETURNS_APP_PATH = os.path.join(os.path.dirname(__file__), 'excel_templates')
 def _is_post_data_valid(ret, tables_info, post_data):
     for table in tables_info:
         table_rows = _get_table_rows_from_post(table.get('name'), post_data)
+        if len(table_rows) == 0:
+            return False
         schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
         if not schema.is_all_valid(table_rows):
             return False
