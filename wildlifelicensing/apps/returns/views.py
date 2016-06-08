@@ -68,27 +68,16 @@ def _get_table_rows_from_post(table_name, post_data):
 
 def _create_return_data_from_post_data(ret, tables_info, post_data):
     for table in tables_info:
-        table_namespace = table.get('name') + '::'
-
-        table_data = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if
-                           key.startswith(table_namespace)])
-
-        return_table, created = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
-
-        # delete any existing rows as they will all be recreated
-        return_table.returnrow_set.all().delete()
-
-        num_rows = len(table_data.values()[0])
-
-        return_rows = []
-        for row_num in range(num_rows):
-            row_data = {}
-            for key, value in table_data.items():
-                row_data[key] = value[row_num]
-
-            return_rows.append(ReturnRow(return_table=return_table, data=row_data))
-
-        ReturnRow.objects.bulk_create(return_rows)
+        rows = _get_table_rows_from_post(table.get('name'), post_data)
+        if rows:
+            return_table, created = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [ReturnRow(return_table=return_table, data=row) for row in rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            return return_rows
+        else:
+            return []
 
 
 class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
