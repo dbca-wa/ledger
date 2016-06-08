@@ -2,7 +2,7 @@ from django.conf.urls import url, include, static
 from django.conf import settings
 
 from wildlifelicensing.admin import wildlife_licensing_admin_site
-from wildlifelicensing.apps.dashboard.views import DashBoardRoutingView
+from wildlifelicensing.apps.dashboard.views.base import DashBoardRoutingView
 from ledger.urls import urlpatterns as ledger_patterns
 
 urlpatterns = [
