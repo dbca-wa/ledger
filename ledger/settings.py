@@ -79,6 +79,7 @@ SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
 SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.social_details',
     'ledger.accounts.pipeline.lower_email_address',
+    'ledger.accounts.pipeline.logout_previous_session',
     'social.pipeline.social_auth.social_uid',
     'social.pipeline.social_auth.auth_allowed',
     'social.pipeline.social_auth.social_user',
