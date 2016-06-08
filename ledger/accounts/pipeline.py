@@ -1,5 +1,18 @@
 #from django.contrib.auth.models import User
 from .models import EmailUser, EmailIdentity
+from django.contrib.auth import logout
+
+#logout previous session if exists and does not match
+def logout_previos_session(backend,user, details, *args, **kwargs):
+    strategy = backend.strategy
+    request_data = strategy.request_data()
+    if request_data.get('verification_code') and details.get('email') and user and user.is_authenticated():
+        if user.email != details["email"]:
+            #already authenticated with another user, logout before.
+            logout(strategy.request)
+            return strategy.redirect("{}?verification_code={}&email={}".format(strategy.request_path(),request_data['verification_code'],request_data['email']))
+            
+
 
 #convert email address to lower case.
 def lower_email_address(backend, details, *args, **kwargs):
