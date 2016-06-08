@@ -3,6 +3,7 @@ import json
 import urllib
 import logging
 import datetime
+from dateutil.parser import parse as date_parse
 
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.shortcuts import redirect
@@ -240,6 +241,14 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
     }
 
     def _build_global_search_query(self, search):
+        # a bit of a hack for searching for date with a '/', ex 27/05/2016
+        # to search a date the format should be the ISO format YYYY-MM-DD.
+        # the dateutil parser to infer a date
+        if search and search.find('/') >= 0:
+            try:
+                search = str(date_parse(search, dayfirst=True).date())
+            except:
+                pass
         query = Q()
         col_data = super(DataTableBaseView, self).extract_datatables_column_data()
         for col_no, col in enumerate(col_data):
