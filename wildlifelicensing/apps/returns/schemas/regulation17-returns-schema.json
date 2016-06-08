@@ -1,0 +1,70 @@
+{
+  "name": "reg-17",
+  "title": "Returns for regulation 17",
+  "resources": [
+    {
+      "name": "species",
+      "title": "Species",
+      "path": "",
+      "schema": {
+        "fields": [
+          {
+            "name": "Species",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Species Count",
+            "type": "integer",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Latitude",
+            "type": "number",
+            "constraints": {
+              "required": true,
+              "minimum": -90.0,
+              "maximum": 90.0
+            }
+          },
+          {
+            "name": "Longitude",
+            "type": "number",
+            "constraints": {
+              "required": true,
+              "minimum": -180.0,
+              "maximum": 180.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "turtles",
+      "title": "Turtles",
+      "path": "",
+      "schema": {
+        "fields": [
+          {
+            "name": "Species",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Species Count",
+            "type": "integer",
+            "constraints": {
+              "required": true
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
