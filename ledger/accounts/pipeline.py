@@ -3,7 +3,7 @@ from .models import EmailUser, EmailIdentity
 from django.contrib.auth import logout
 
 #logout previous session if exists and does not match
-def logout_previos_session(backend,user, details, *args, **kwargs):
+def logout_previous_session(backend,details,user=None, *args, **kwargs):
     strategy = backend.strategy
     request_data = strategy.request_data()
     if request_data.get('verification_code') and details.get('email') and user and user.is_authenticated():
