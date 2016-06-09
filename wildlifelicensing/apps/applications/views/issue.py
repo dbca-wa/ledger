@@ -97,27 +97,14 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             application.save()
 
             # The licence should be emailed to the customer if they applied for it online. If an officer entered
-            # the application on their behalf, the licence needs to be posted to the user, although if they provided
-            # an email address in their offline application, they should receive the licence both via email and in the
-            # post
+            # the application on their behalf, the licence needs to be posted to the user.
             if application.proxy_applicant is None:
                 # customer applied online
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
                                  'licencee.')
                 send_licence_issued_email(licence, application, request)
-            elif not application.applicant_profile.user.is_dummy_user:
-                # customer applied offline but provided an email address
-                messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
-                                 'licencee. However, as the application was entered on behalf of the licencee by '
-                                 'staff, it should also be posted to the licencee. Click this link to show '
-                                 'the licence <a href="{0}" target="_blank">Licence PDF</a><img height="20px" '
-                                 'src="{1}"></img> and this link to show the cover letter <a href="{2}" target="_blank">'
-                                 'Cover Letter PDF</a><img height="20px" src="{3}"></img>'.
-                                 format(licence.licence_document.file.url, static('wl/img/pdf.png'),
-                                        licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
-                send_licence_issued_email(licence, application, request)
             else:
-                # customer applied offline and did not provide an email address
+                # customer applied offline
                 messages.success(request, 'The licence has now been issued and must be posted to the licencee. Click '
                                  'this link to show the licence <a href="{0}" target="_blank">Licence PDF'
                                  '</a><img height="20px" src="{1}"></img> and this link to show the cover letter '

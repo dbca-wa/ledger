@@ -121,8 +121,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        kwargs['licence_types'] = dict([(licence_type.code_slug, licence_type.name) for licence_type
-                                        in WildlifeLicenceType.objects.all()])
+        kwargs['licence_type_dicts'] = WildlifeLicenceType.objects.all().values('code_slug', 'name', 'code')
 
         return super(SelectLicenceTypeView, self).get_context_data(**kwargs)
 
