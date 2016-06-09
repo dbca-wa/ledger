@@ -19,6 +19,7 @@ class Condition(RevisionedMixin):
 
 
 class WildlifeLicenceType(LicenceType):
+    code_slug = models.SlugField(max_length=64)
     identification_required = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
 

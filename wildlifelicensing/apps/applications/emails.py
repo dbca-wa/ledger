@@ -28,7 +28,7 @@ def send_amendment_requested_email(application, amendment_request, request):
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
         reverse('applications:edit_application',
-                args=[application.licence_type.code, application.pk])
+                args=[application.licence_type.code_slug, application.pk])
     )
     context = {
         'amendment_detail': amendment_request.text,
@@ -162,7 +162,7 @@ def send_licence_issued_email(licence, application, request):
         'cover_letter_message': licence.cover_letter_message
     }
     if licence.licence_document is not None:
-        file_name = 'WL_licence_' + str(licence.licence_type.code)
+        file_name = 'WL_licence_' + str(licence.licence_type.code_slug)
         if licence.licence_number:
             file_name += '_' + str(licence.licence_number)
         if licence.licence_sequence:

@@ -38,7 +38,7 @@ class ApplicationEntryBaseView(TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        kwargs['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
+        kwargs['licence_type'] = get_object_or_404(WildlifeLicenceType, code_slug=self.args[0])
 
         if is_officer(self.request.user) and is_app_session_data_set(self.request.session, 'customer_pk'):
             kwargs['customer'] = EmailUser.objects.get(pk=get_app_session_data(self.request.session, 'customer_pk'))
@@ -110,8 +110,7 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
                 customer = create_customer_form.save()
                 set_app_session_data(request.session, 'customer_pk', customer.id)
             else:
-                context = {'licence_type': get_object_or_404(WildlifeLicenceType, code=self.args[0]),
-                           'create_customer_form': create_customer_form}
+                context = {'create_customer_form': create_customer_form}
                 return render(request, self.template_name, context)
 
         return redirect('applications:select_licence_type', *args, **kwargs)
@@ -122,7 +121,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        kwargs['licence_types'] = dict([(licence_type.code, licence_type.name) for licence_type
+        kwargs['licence_types'] = dict([(licence_type.code_slug, licence_type.name) for licence_type
                                         in WildlifeLicenceType.objects.all()])
 
         return super(SelectLicenceTypeView, self).get_context_data(**kwargs)
@@ -133,7 +132,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
     form_class = IdentificationForm
 
     def get(self, *args, **kwargs):
-        licence_type = get_object_or_404(WildlifeLicenceType, code=args[1])
+        licence_type = get_object_or_404(WildlifeLicenceType, code_slug=args[1])
 
         try:
             applicant = determine_applicant(self.request)
@@ -202,7 +201,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                                                           user=get_app_session_data(self.request.session, 'customer_pk'))
 
         kwargs['address_form'] = AddressForm()
-        kwargs['licence_type'] = get_object_or_404(WildlifeLicenceType, code=self.args[0])
+        kwargs['licence_type'] = get_object_or_404(WildlifeLicenceType, code_slug=self.args[0])
 
         return super(CreateSelectProfileView, self).get_context_data(**kwargs)
 
@@ -213,7 +212,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
             messages.error(request, e.message)
             return redirect('applications:create_select_customer')
 
-        licence_type = WildlifeLicenceType.objects.get(code=args[0])
+        licence_type = WildlifeLicenceType.objects.get(code_slug=args[0])
 
         if 'select' in request.POST:
             profile_selection_form = ProfileSelectionForm(request.POST, user=applicant)
@@ -250,7 +249,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
 
-        licence_type = WildlifeLicenceType.objects.get(code=self.args[0])
+        licence_type = WildlifeLicenceType.objects.get(code_slug=self.args[0])
         if is_app_session_data_set(self.request.session, 'profile_pk'):
             profile = get_object_or_404(Profile, pk=get_app_session_data(self.request.session, 'profile_pk'))
         else:
@@ -301,7 +300,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 application.proxy_applicant = request.user
 
             application.data = get_app_session_data(request.session, 'data')
-            application.licence_type = WildlifeLicenceType.objects.get(code=args[0])
+            application.licence_type = WildlifeLicenceType.objects.get(code_slug=args[0])
             application.applicant_profile = get_object_or_404(Profile,
                                                               pk=get_app_session_data(request.session, 'profile_pk'))
             application.customer_status = 'draft'
@@ -333,7 +332,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
             finally:
                 try:
-                    if temp_files_dir is not None:
+                    if temp_files_dir is not None and os.path.isdir(temp_files_dir):
                         shutil.rmtree(temp_files_dir)
                 except (shutil.Error, OSError) as e:
                     messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
@@ -373,7 +372,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0])) as data_file:
             form_structure = json.load(data_file)
 
-        licence_type = WildlifeLicenceType.objects.get(code=self.args[0])
+        licence_type = WildlifeLicenceType.objects.get(code_slug=self.args[0])
 
         application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
 
@@ -416,7 +415,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             application.proxy_applicant = request.user
 
         application.data = get_app_session_data(self.request.session, 'data')
-        application.licence_type = get_object_or_404(WildlifeLicenceType, code=args[0])
+        application.licence_type = get_object_or_404(WildlifeLicenceType, code_slug=args[0])
         application.correctness_disclaimer = request.POST.get('correctnessDisclaimer', '') == 'on'
         application.further_information_disclaimer = request.POST.get('furtherInfoDisclaimer', '') == 'on'
         application.applicant_profile = get_object_or_404(Profile, pk=get_app_session_data(request.session, 'profile_pk'))
@@ -473,7 +472,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.error(request, 'There was a problem creating the application: %s' % e)
         finally:
             try:
-                if temp_files_dir is not None:
+                if temp_files_dir is not None and os.path.exists(temp_files_dir):
                     shutil.rmtree(temp_files_dir)
             except (shutil.Error, OSError) as e:
                 messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
@@ -503,4 +502,4 @@ class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
         set_app_session_data(request.session, 'data', application.data)
         set_app_session_data(request.session, 'temp_files_dir', tempfile.mkdtemp(dir=settings.MEDIA_ROOT))
 
-        return redirect('applications:enter_details', application.licence_type.code, application.pk, **kwargs)
+        return redirect('applications:enter_details', application.licence_type.code_slug, application.pk, **kwargs)

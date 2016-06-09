@@ -15,12 +15,14 @@ TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 't
 
 
 class ApplicationEntryTestCase(TestCase):
+    fixtures = ['licences.json']
+
     def setUp(self):
         self.customer = get_or_create_default_customer()
 
         self.client = SocialClient()
 
-        licence_type = WildlifeLicenceType.objects.get(code='regulation17')
+        licence_type = WildlifeLicenceType.objects.get(code_slug='regulation-17')
         licence_type.identification_required = True
         licence_type.save()
 
@@ -69,17 +71,17 @@ class ApplicationEntryTestCase(TestCase):
         session.save()
 
         # check that client can access the identification required page
-        response = self.client.get(reverse('applications:check_identification', args=('regulation17',)))
+        response = self.client.get(reverse('applications:check_identification', args=('regulation-17',)))
         self.assertEqual(200, response.status_code)
 
         with open(TEST_ID_PATH) as fp:
             post_params = {
                 'identification_file': fp
             }
-            response = self.client.post(reverse('applications:check_identification', args=('regulation17',)),
+            response = self.client.post(reverse('applications:check_identification', args=('regulation-17',)),
                                         post_params)
 
-            self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation17',)),
+            self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation-17',)),
                                  status_code=302, target_status_code=200, fetch_redirect_response=False)
 
             # update customer
@@ -109,8 +111,8 @@ class ApplicationEntryTestCase(TestCase):
             self.customer.save()
 
         # check that client is redirected to profile creation / selection page
-        response = self.client.get(reverse('applications:check_identification', args=('regulation17',)))
-        self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation17',)),
+        response = self.client.get(reverse('applications:check_identification', args=('regulation-17',)))
+        self.assertRedirects(response, reverse('applications:create_select_profile', args=('regulation-17',)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
     def test_create_select_profile_create(self):
@@ -131,7 +133,7 @@ class ApplicationEntryTestCase(TestCase):
         session.save()
 
         # check that client can access the profile create/select page
-        response = self.client.get(reverse('applications:create_select_profile', args=('regulation17',)))
+        response = self.client.get(reverse('applications:create_select_profile', args=('regulation-17',)))
         self.assertEqual(200, response.status_code)
 
         # check there is not a profile selection form, meaning there is no profile
@@ -150,10 +152,10 @@ class ApplicationEntryTestCase(TestCase):
             'create': True
         }
 
-        response = self.client.post(reverse('applications:create_select_profile', args=('regulation17',)), post_params)
+        response = self.client.post(reverse('applications:create_select_profile', args=('regulation-17',)), post_params)
 
         # check that client is redirected to enter details page
-        self.assertRedirects(response, reverse('applications:enter_details', args=('regulation17',)),
+        self.assertRedirects(response, reverse('applications:enter_details', args=('regulation-17',)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         # chech that a new profile was created
@@ -188,7 +190,7 @@ class ApplicationEntryTestCase(TestCase):
         session.save()
 
         # check that client can access the profile create/select page
-        response = self.client.get(reverse('applications:create_select_profile', args=('regulation17',)))
+        response = self.client.get(reverse('applications:create_select_profile', args=('regulation-17',)))
         self.assertEqual(200, response.status_code)
 
         # check there is a profile selection form, meaning there at least one existing profile
@@ -199,10 +201,10 @@ class ApplicationEntryTestCase(TestCase):
             'select': True
         }
 
-        response = self.client.post(reverse('applications:create_select_profile', args=('regulation17',)), post_params)
+        response = self.client.post(reverse('applications:create_select_profile', args=('regulation-17',)), post_params)
 
         # check that client is redirected to enter details page
-        self.assertRedirects(response, reverse('applications:enter_details', args=('regulation17',)),
+        self.assertRedirects(response, reverse('applications:enter_details', args=('regulation-17',)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         # check the profile has been set in the session
@@ -234,7 +236,7 @@ class ApplicationEntryTestCase(TestCase):
         original_applications_count = profile.application_set.count()
 
         # check that client can access the enter details page
-        response = self.client.get(reverse('applications:enter_details', args=('regulation17',)))
+        response = self.client.get(reverse('applications:enter_details', args=('regulation-17',)))
         self.assertEqual(200, response.status_code)
 
         post_params = {
@@ -242,7 +244,7 @@ class ApplicationEntryTestCase(TestCase):
             'draft': True
         }
 
-        response = self.client.post(reverse('applications:enter_details', args=('regulation17',)), post_params)
+        response = self.client.post(reverse('applications:enter_details', args=('regulation-17',)), post_params)
 
         # check that client is redirected to the dashboard
         self.assertRedirects(response, reverse('dashboard:home'), status_code=302, target_status_code=200,
@@ -277,7 +279,7 @@ class ApplicationEntryTestCase(TestCase):
         original_applications_count = profile.application_set.count()
 
         # check that client can access the enter details page
-        response = self.client.get(reverse('applications:enter_details', args=('regulation17',)))
+        response = self.client.get(reverse('applications:enter_details', args=('regulation-17',)))
         self.assertEqual(200, response.status_code)
 
         post_params = {
@@ -285,11 +287,11 @@ class ApplicationEntryTestCase(TestCase):
             'draft_continue': True
         }
 
-        response = self.client.post(reverse('applications:enter_details', args=('regulation17',)), post_params)
+        response = self.client.post(reverse('applications:enter_details', args=('regulation-17',)), post_params)
 
         # check that client is redirected to enter details page
         self.assertRedirects(response, reverse('applications:enter_details',
-                                               args=('regulation17', profile.application_set.first().pk)),
+                                               args=('regulation-17', profile.application_set.first().pk)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         # check that a new application was created
@@ -320,7 +322,7 @@ class ApplicationEntryTestCase(TestCase):
         session.save()
 
         # check that client can access the enter details page
-        response = self.client.get(reverse('applications:enter_details', args=('regulation17',)))
+        response = self.client.get(reverse('applications:enter_details', args=('regulation-17',)))
         self.assertEqual(200, response.status_code)
 
         post_params = {
@@ -328,7 +330,7 @@ class ApplicationEntryTestCase(TestCase):
             'lodge': True
         }
 
-        response = self.client.post(reverse('applications:enter_details', args=('regulation17',)), post_params)
+        response = self.client.post(reverse('applications:enter_details', args=('regulation-17',)), post_params)
 
         # check the data has been set in the session
         self.assertTrue('data' in self.client.session['application'])
@@ -362,14 +364,14 @@ class ApplicationEntryTestCase(TestCase):
         original_applications_count = profile.application_set.count()
 
         # check that client can access the enter details page
-        response = self.client.get(reverse('applications:enter_details', args=('regulation17',)))
+        response = self.client.get(reverse('applications:enter_details', args=('regulation-17',)))
         self.assertEqual(200, response.status_code)
 
         post_params = {
             'lodge': True
         }
 
-        response = self.client.post(reverse('applications:preview', args=('regulation17',)), post_params)
+        response = self.client.post(reverse('applications:preview', args=('regulation-17',)), post_params)
 
         # chech that a new applicaiton was created
         self.assertEqual(profile.application_set.count(), original_applications_count + 1)
@@ -396,15 +398,15 @@ class ApplicationEntrySecurity(TestCase):
         # login as user1
         self.client.login(customer1.email)
         my_url = reverse('applications:enter_details_existing_application',
-                         args=[application1.licence_type.code, application1.pk])
+                         args=[application1.licence_type.code_slug, application1.pk])
         response = self.client.get(my_url)
         self.assertEqual(200, response.status_code)
 
         forbidden_urls = [
-            reverse('applications:edit_application', args=[application2.licence_type.code, application2.pk]),
+            reverse('applications:edit_application', args=[application2.licence_type.code_slug, application2.pk]),
             reverse('applications:enter_details_existing_application',
-                    args=[application2.licence_type.code, application2.pk]),
-            reverse('applications:preview', args=[application2.licence_type.code, application2.pk])
+                    args=[application2.licence_type.code_slug, application2.pk]),
+            reverse('applications:preview', args=[application2.licence_type.code_slug, application2.pk])
         ]
 
         for forbidden_url in forbidden_urls:
@@ -423,10 +425,10 @@ class ApplicationEntrySecurity(TestCase):
 
         self.assertEqual('draft', application.customer_status)
         my_urls = [
-            reverse('applications:edit_application', args=[application.licence_type.code, application.pk]),
+            reverse('applications:edit_application', args=[application.licence_type.code_slug, application.pk]),
             reverse('applications:enter_details_existing_application',
-                    args=[application.licence_type.code, application.pk]),
-            reverse('applications:preview', args=[application.licence_type.code, application.pk])
+                    args=[application.licence_type.code_slug, application.pk]),
+            reverse('applications:preview', args=[application.licence_type.code_slug, application.pk])
         ]
         for url in my_urls:
             response = self.client.get(url, follow=True)
@@ -434,7 +436,7 @@ class ApplicationEntrySecurity(TestCase):
                              msg="Wrong status code {1} for {0}".format(url, response.status_code))
 
         # lodge the application
-        url = reverse('applications:preview', args=[application.licence_type.code, application.pk])
+        url = reverse('applications:preview', args=[application.licence_type.code_slug, application.pk])
         session = self.client.session
         session['application'] = {
             'customer_pk': customer1.pk,
@@ -459,10 +461,10 @@ class ApplicationEntrySecurity(TestCase):
         application = helpers.create_application(user=customer1)
         self.assertEqual('draft', application.customer_status)
         my_urls = [
-            reverse('applications:edit_application', args=[application.licence_type.code, application.pk]),
+            reverse('applications:edit_application', args=[application.licence_type.code_slug, application.pk]),
             reverse('applications:enter_details_existing_application',
-                    args=[application.licence_type.code, application.pk]),
-            reverse('applications:preview', args=[application.licence_type.code, application.pk])
+                    args=[application.licence_type.code_slug, application.pk]),
+            reverse('applications:preview', args=[application.licence_type.code_slug, application.pk])
         ]
         for url in my_urls:
             response = self.client.get(url, follow=True)
@@ -472,7 +474,7 @@ class ApplicationEntrySecurity(TestCase):
 
         # lodge the application
         self.client.login(customer1.email)
-        url = reverse('applications:preview', args=[application.licence_type.code, application.pk])
+        url = reverse('applications:preview', args=[application.licence_type.code_slug, application.pk])
         session = self.client.session
         session['application'] = {
             'customer_pk': customer1.pk,

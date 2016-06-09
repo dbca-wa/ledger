@@ -1,4 +1,4 @@
-Django>=1.9.1
+Django<1.10.0
 https://static.dpaw.wa.gov.au/static/py/dpaw-utils/dist/dpaw-utils-0.3a7.tar.gz
 django-oscar>=1.1
 git+https://github.com/scottp-dpaw/python-social-auth@securityfix#egg=python-social-auth

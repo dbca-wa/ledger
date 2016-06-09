@@ -24,7 +24,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
 
                 var $contentContainer = $('<div>'),
                     $assessorRow = $('<tr>'),
-                    $viewDetails = $('<a>').text('View Feedback');
+                    $viewFeedback = $('<a>').text('View Feedback').attr('data-toggle', 'popover');
 
                 $contentContainer.append($('<label>').text("Assessor's Suggested Conditions"));
 
@@ -105,7 +105,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
                     $contentContainer.append($('<p>').append($('<em>').text('No comment')));
                 }
 
-                $viewDetails.popover({
+                $viewFeedback.popover({
                     container: 'body',
                     title: 'Conditions / Comments from ' + assessment.assessor_group.name,
                     content: $contentContainer,
@@ -113,7 +113,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
                 });
 
                 $assessorRow.append($('<td>').html(assessment.assessor_group.name));
-                $assessorRow.append($('<td>').html($viewDetails));
+                $assessorRow.append($('<td>').html($viewFeedback));
 
                 $assessments.append($assessorRow);
             }
