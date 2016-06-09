@@ -155,12 +155,12 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         status = obj.customer_status
         if status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
                 'Continue application'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:edit_application', args=[obj.licence_type.code, obj.pk]),
+                reverse('applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
                 'Amend application'
             )
         elif status == 'id_required' and obj.id_check_status == 'awaiting_update':

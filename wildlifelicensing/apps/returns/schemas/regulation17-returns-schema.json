@@ -3,8 +3,8 @@
   "title": "Returns for regulation 17",
   "resources": [
     {
-      "name": "species",
-      "title": "Species",
+      "name": "species-information",
+      "title": "Species Information",
       "path": "",
       "schema": {
         "fields": [
@@ -44,8 +44,8 @@
       }
     },
     {
-      "name": "turtles",
-      "title": "Turtles",
+      "name": "more-species-information",
+      "title": "More Species Information",
       "path": "",
       "schema": {
         "fields": [

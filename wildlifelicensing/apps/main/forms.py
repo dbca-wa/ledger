@@ -28,7 +28,7 @@ class BetterJSONField(JSONField):
 
 
 class IdentificationForm(forms.Form):
-    VALID_FILE_TYPES = ['png', 'jpg', 'jpeg', 'gif', 'pdf']
+    VALID_FILE_TYPES = ['png', 'jpg', 'jpeg', 'gif', 'pdf', 'PNG', 'JPG', 'JPEG', 'GIF', 'PDF']
 
     identification_file = forms.FileField(label='Image containing Identification',
                                           help_text='E.g. drivers licence, passport, proof-of-age')

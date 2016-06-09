@@ -94,7 +94,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
 
     @staticmethod
     def render_action_column(obj):
-        return '<a href="{0}">Review</a>'.format(
+        return '<a href="{0}">Assess</a>'.format(
             reverse('applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
         )
 

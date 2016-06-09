@@ -36,8 +36,12 @@
             <div class="row">
                 <div class="col-md-12">
                     <ul>
-                        {% for key, value in licence_types.items %}
-                            <li><a href="{% url 'applications:check_identification' key %}">{{ value }}</a></li>
+                        {% for licence_type_dict in licence_type_dicts %}
+                            <li>
+                                <a href="{% url 'applications:check_identification' licence_type_dict.code_slug %}">
+                                    {{ licence_type_dict.name }} ({{ licence_type_dict.code }})
+                                </a>
+                            </li>
                         {% endfor %}
                     </ul>
                 </div>
