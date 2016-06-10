@@ -12,4 +12,4 @@ class LicenceTypeAdmin(VersionAdmin):
 
 @admin.register(Licence)
 class LicenceAdmin(VersionAdmin):
-    list_display = ('user', 'licence_type')
+    list_display = ('holder', 'licence_type')

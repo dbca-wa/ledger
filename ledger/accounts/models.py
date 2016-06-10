@@ -18,7 +18,7 @@ from social.apps.django_app.default.models import UserSocialAuth
 
 from datetime import datetime
 
-from ledger.accounts.signals import name_changed,post_clean
+from ledger.accounts.signals import name_changed, post_clean
 
 
 class EmailUserManager(BaseUserManager):
@@ -261,7 +261,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             return '{}'.format(self.email)
 
     def clean(self):
-        super(EmailUser,self).clean()
+        super(EmailUser, self).clean()
+        self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 
     def save(self, *args, **kwargs):
@@ -401,7 +402,8 @@ class Profile(RevisionedMixin):
         return self._auth_identity
 
     def clean(self):
-        super(Profile,self).clean()
+        super(Profile, self).clean()
+        self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 
     def __str__(self):
@@ -464,7 +466,6 @@ class ProfileListener(object):
             UserSocialAuth.objects.filter(provider="email", uid=original_instance.email, user=original_instance.user).delete()
 
 
-
 class EmailIdentityListener(object):
     """
     Event listener for EmailIdentity
@@ -474,7 +475,7 @@ class EmailIdentityListener(object):
     def _profile_post_clean(sender, instance, **kwargs):
         if instance.email:
             if EmailIdentity.objects.filter(email=instance.email).exclude(user=instance.user).exists():
-                #Email already used by other user in email identity.
+                # Email already used by other user in email identity.
                 raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
 
     @staticmethod
@@ -482,7 +483,6 @@ class EmailIdentityListener(object):
     def _emailuser_post_clean(sender, instance, **kwargs):
         if instance.email:
             if EmailIdentity.objects.filter(email=instance.email).exclude(user=instance).exists():
-                #Email already used by other user in email identity.
+                # Email already used by other user in email identity.
                 raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
-
 

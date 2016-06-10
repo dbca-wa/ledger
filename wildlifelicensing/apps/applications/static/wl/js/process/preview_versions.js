@@ -64,6 +64,30 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                 itemContainer.append($('<p>').addClass('current-data').text(item.valueCurrent ? 'Declaration checked' : 'Declaration not checked'));
                 itemContainer.append($('<p>').addClass('previous-data').text(item.valuePrevious ? 'Declaration checked' : 'Declaration not checked'));
             }
+        } else if(item.type === 'file') {
+            itemContainer.append($('<label>').text(item.label));
+
+            if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
+                var fileLink = $('<a>');
+                fileLink.attr('href', item.valueCurrent);
+                fileLink.attr('target', '_blank');
+                fileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
+                itemContainer.append($('<p>').append(fileLink));
+            } else {
+                var currentFileLink = $('<a>'),
+                    previousFileLink = $('<a>');
+
+                currentFileLink.attr('href', item.valueCurrent);
+                currentFileLink.attr('target', '_blank');
+                currentFileLink.text(item.value.substr(item.valueCurrent.lastIndexOf('/') + 1));
+
+                previousFileLink.attr('href', item.valueCurrent);
+                previousFileLink.attr('target', '_blank');
+                previousFileLink.text(item.value.substr(item.valuePrevious.lastIndexOf('/') + 1));
+
+                itemContainer.append(currentFileLink).addClass('current-data');
+                itemContainer.append(previousFileLink).addClass('previous-data');
+            }
         } else {
             itemContainer.append($('<label>').text(item.label));
 

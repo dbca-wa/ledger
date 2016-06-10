@@ -1,17 +1,15 @@
-import os
 import shutil
 
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import EmailUser
-
-from wildlifelicensing.apps.main.helpers import is_officer
+from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
 ID_CHECK_STATUSES = dict(Application.ID_CHECK_STATUS_CHOICES)
+RETURNS_CHECK_STATUSES = dict(Application.RETURNS_CHECK_STATUS_CHOICES)
 CHARACTER_CHECK_STATUSES = dict(Application.CHARACTER_CHECK_STATUS_CHOICES)
 REVIEW_STATUSES = dict(Application.REVIEW_STATUS_CHOICES)
 AMENDMENT_REQUEST_REASONS = dict(AmendmentRequest.REASON_CHOICES)
@@ -83,7 +81,7 @@ def get_all_filenames_from_application_data(item, data):
 
     if isinstance(item, list):
         for child in item:
-            if child.get('type', '') == 'group':
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
                 for child_data in data[child['name']]:
                     filenames += get_all_filenames_from_application_data(child, child_data)
             else:
@@ -95,13 +93,64 @@ def get_all_filenames_from_application_data(item, data):
 
         if 'children' in item:
             for child in item['children']:
-                if child.get('type', '') == 'group':
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
                     for child_data in data[child['name']]:
                         filenames += get_all_filenames_from_application_data(child, child_data)
                 else:
                     filenames += get_all_filenames_from_application_data(child, data)
 
     return filenames
+
+
+def prepend_url_to_application_data_files(item, data, root_url):
+    # ensure root url ends with a /
+    if root_url[-1] != '/':
+        root_url += '/'
+
+    if isinstance(item, list):
+        for child in item:
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
+                for child_data in data[child['name']]:
+                    prepend_url_to_application_data_files(child, child_data, root_url)
+            else:
+                prepend_url_to_application_data_files(child, data, root_url)
+    else:
+        if item.get('type', '') == 'file':
+            if item['name'] in data and len(data[item['name']]) > 0:
+                data[item['name']] = root_url + data[item['name']]
+
+        if 'children' in item:
+            for child in item['children']:
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
+                    for child_data in data[child['name']]:
+                        prepend_url_to_application_data_files(child, child_data, root_url)
+                else:
+                    prepend_url_to_application_data_files(child, data, root_url)
+
+
+def convert_application_data_files_to_url(item, data, document_queryset):
+    if isinstance(item, list):
+        for child in item:
+            if child.get('type', '') == 'group' and child.get('name', '') in data:
+                for child_data in data[child['name']]:
+                    convert_application_data_files_to_url(child, child_data, document_queryset)
+            else:
+                convert_application_data_files_to_url(child, data, document_queryset)
+    else:
+        if item.get('type', '') == 'file':
+            if item['name'] in data and len(data[item['name']]) > 0:
+                try:
+                    data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
+                except Document.DoesNotExist:
+                    pass
+
+        if 'children' in item:
+            for child in item['children']:
+                if child.get('type', '') == 'group' and child.get('name', '') in data:
+                    for child_data in data[child['name']]:
+                        convert_application_data_files_to_url(child, child_data, document_queryset)
+                else:
+                    convert_application_data_files_to_url(child, data, document_queryset)
 
 
 class SessionDataMissingException(Exception):
@@ -125,15 +174,36 @@ def determine_applicant(request):
     return applicant
 
 
-def delete_application_session_data(session):
-    if 'application' in session:
-        if 'files' in session['application']:
-            if os.path.exists(session.get('application').get('files')):
-                try:
-                    shutil.rmtree(session.get('application').get('files'))
-                except:
-                    pass
+def set_app_session_data(session, key, value):
+    if 'application' not in session:
+        session['application'] = {}
 
+    session['application'][key] = value
+
+    session.modified = True
+
+
+def is_app_session_data_set(session, key):
+    return 'application' in session and key in session['application']
+
+
+def get_app_session_data(session, key):
+    if is_app_session_data_set(session, key):
+        return session['application'][key]
+    else:
+        return None
+
+
+def delete_app_session_data(session):
+    temp_files_dir = get_app_session_data(session, 'temp_files_dir')
+
+    if temp_files_dir is not None:
+        try:
+            shutil.rmtree(temp_files_dir)
+        except:
+            pass
+
+    if 'application' in session:
         del session['application']
 
 
@@ -179,6 +249,7 @@ def clone_application_for_renewal(application, save=False):
 def format_application(instance, attrs):
     attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
     attrs['id_check_status'] = ID_CHECK_STATUSES[attrs['id_check_status']]
+    attrs['returns_check_status'] = RETURNS_CHECK_STATUSES[attrs['returns_check_status']]
     attrs['character_check_status'] = CHARACTER_CHECK_STATUSES[attrs['character_check_status']]
     attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
 

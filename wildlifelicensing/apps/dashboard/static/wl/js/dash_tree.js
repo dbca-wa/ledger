@@ -21,9 +21,9 @@ define(
                         data: options.treeData,
                         showBorder: false,
                         enableLinks: true,
-                        expandIcon: 'glyphicon glyphicon-arrow-down',
-                        collapseIcon: 'glyphicon glyphicon-arrow-up',
-                        emptyIcon: 'glyphicon glyphicon-minus',
+                        expandIcon: 'glyphicon glyphicon-plus',
+                        collapseIcon: 'glyphicon glyphicon-minus',
+                        emptyIcon: '',
                         highlightSelected: true,
                         onhoverColor: '#FFFFFF',
                         showTags: true

@@ -44,7 +44,6 @@ class ListProfilesView(CustomerRequiredMixin, TemplateView):
             attr["auth_identity"] = instance.auth_identity
             return attr
 
-        #context['data'] = serialize(Profile.objects.filter(user=self.request.user),posthook=posthook)
         context['data'] = serialize(Profile.objects.filter(user=self.request.user))
 
         return context
@@ -55,17 +54,20 @@ class CreateProfilesView(CustomerRequiredMixin, TemplateView):
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'profile_form': ProfileForm(),
+        return render(request, self.template_name, {'profile_form': ProfileForm(instance=Profile(user=request.user)),
                                                     'address_form': AddressForm()})
 
     def post(self, request, *args, **kwargs):
+        if request.user.pk != int(request.POST['user']):
+            return HttpResponse('Unauthorized', status=401)
+
         profile_form = ProfileForm(request.POST)
         address_form = AddressForm(request.POST)
 
         if profile_form.is_valid() and address_form.is_valid():
             profile = profile_form.save(commit=False)
             profile.postal_address = address_form.save()
-            profile.user = request.user
+            #profile.user = request.user
             profile.save()
         else:
             return render(request, self.template_name, {'profile_form': profile_form,
@@ -75,11 +77,12 @@ class CreateProfilesView(CustomerRequiredMixin, TemplateView):
 
         return redirect('wl_main:list_profiles')
 
+
 class DeleteProfileView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/list_profiles.html'
     login_url = '/'
 
-    def get(self,request,id, *args, **kwargs):
+    def get(self, request, id, *args, **kwargs):
         profile = get_object_or_404(Profile, pk=id)
         profile.delete()
         messages.success(request, "The profile '%s' was deleted." % profile.name)
@@ -102,7 +105,7 @@ class EditProfilesView(CustomerRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         profile = get_object_or_404(Profile, pk=args[0])
 
-        if profile.user != request.user:
+        if profile.user != request.user or request.user.pk != int(request.POST['user']):
             return HttpResponse('Unauthorized', status=401)
         profile_form = ProfileForm(request.POST, instance=profile)
         address_form = AddressForm(request.POST, instance=profile.postal_address)

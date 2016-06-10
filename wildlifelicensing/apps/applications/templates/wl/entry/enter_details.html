@@ -69,10 +69,10 @@
             <div class="row">
                 <div class="col-sm-2 col-md-10 col-md-offset-2">
                     <div id="amendments-panel">
-                    <h4>
-                        <span class="icon glyphicon glyphicon-alert text-warning"></span>
-                        <label>Your application requires the following amendment(s) before approval:</label>
-                    </h4>
+                        <h4>
+                            <span class="icon glyphicon glyphicon-alert text-warning"></span>
+                            <label>Your application requires the following amendment(s) before approval:</label>
+                        </h4>
                         {%  for amendment in amendments %}
                             <div class="alert alert-warning">
                                 {{ amendment.text }}
@@ -103,6 +103,15 @@
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
+                    {% if is_proxy_applicant %}
+                        <h3 class="section">Original Application Document</h3>
+                        <hr>
+                        <div class="form-group">
+                            <label>Application Document</label>
+                            <input name="application_document" type="file" class="form-control" accept=".pdf, .docx, .doc">
+                            <p class="help-block">Attach a scanned copy of the original application as a Word or PDF document</p>
+                        </div>
+                    {% endif %}
                     <button type="submit" class="btn btn-primary pull-right" name="preview">Preview Application</button>
                     <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft_continue">Save Draft and Continue Editing</button>
                     <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft</button>

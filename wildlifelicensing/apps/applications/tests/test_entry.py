@@ -30,6 +30,21 @@ class ApplicationEntryTestCase(TestCase):
         if self.customer.identification:
             os.remove(self.customer.identification.path)
 
+    def test_new_application(self):
+        """Testing that a user begin the process of creating an application"""
+        self.client.login(self.customer.email)
+
+        # check that client can access the licence type selection list
+        response = self.client.get(reverse('wl_applications:new_application'))
+
+        self.assertRedirects(response, reverse('wl_applications:select_licence_type'),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+
+        # check the customer pk has been set in the session
+        self.assertTrue('customer_pk' in self.client.session['application'])
+
+        self.assertEqual(self.client.session['application']['customer_pk'], self.customer.pk)
+
     def test_select_licence_type(self):
         """Testing that a user can display the licence type selection list"""
         self.client.login(self.customer.email)
@@ -43,6 +58,15 @@ class ApplicationEntryTestCase(TestCase):
         current identification, and upload an ID.
         """
         self.client.login(self.customer.email)
+
+        # create the application dict in the session first
+        # the session must be stored in a variable in order to be modifyable
+        # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
+        session = self.client.session
+        session['application'] = {
+            'customer_pk': self.customer.pk,
+        }
+        session.save()
 
         # check that client can access the identification required page
         response = self.client.get(reverse('wl_applications:check_identification', args=('regulation17',)))
@@ -61,14 +85,20 @@ class ApplicationEntryTestCase(TestCase):
             # update customer
             self.customer = EmailUser.objects.get(email=self.customer.email)
 
-            # assert customer's ID is the uploaded file
-            self.assertEqual(self.customer.identification.filename, 'test_id.jpg')
-
     def test_check_identification_required_current_id(self):
         """Testing that a user can display the identification required page in the case the user has a
         current identification.
         """
         self.client.login(self.customer.email)
+
+        # create the application dict in the session first
+        # the session must be stored in a variable in order to be modifyable
+        # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
+        session = self.client.session
+        session['application'] = {
+            'customer_pk': self.customer.pk,
+        }
+        session.save()
 
         with open(TEST_ID_PATH, 'rb') as fp:
             self.customer.identification = Document.objects.create(name='test_id')
@@ -92,7 +122,9 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {}
+        session['application'] = {
+            'customer_pk': self.customer.pk,
+        }
         session.save()
 
         # check that client can access the profile create/select page
@@ -103,6 +135,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertFalse('profile_selection_form' in response.context)
 
         post_params = {
+            'user': self.customer.pk,
             'name': 'Test Profile',
             'email': 'test@testplace.net.au',
             'institution': 'Test Institution',
@@ -134,8 +167,8 @@ class ApplicationEntryTestCase(TestCase):
 
         # create profiles
         address1 = Address.objects.create(line1='1 Test Street', locality='Test Suburb', state='WA', postcode='0001')
-        Profile.objects.create(user=self.customer, name='Test Profile', email='test@testplace.net.au',
-                               institution='Test Institution', postal_address=address1)
+        profile1 = Profile.objects.create(user=self.customer, name='Test Profile', email='test@testplace.net.au',
+                                          institution='Test Institution', postal_address=address1)
 
         address2 = Address.objects.create(line1='2 Test Street', locality='Test Suburb', state='WA', postcode='0001')
         profile2 = Profile.objects.create(user=self.customer, name='Test Profile 2', email='test@testplace.net.au',
@@ -145,7 +178,10 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {}
+        session['application'] = {
+            'customer_pk': self.customer.pk,
+            'profile_pk': profile1.pk
+        }
         session.save()
 
         # check that client can access the profile create/select page
@@ -186,7 +222,10 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {'profile_pk': profile.pk}
+        session['application'] = {
+            'customer_pk': self.customer.pk,
+            'profile_pk': profile.pk
+        }
         session.save()
 
         original_applications_count = profile.application_set.count()
@@ -226,7 +265,10 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {'profile_pk': profile.pk}
+        session['application'] = {
+            'customer_pk': self.customer.pk,
+            'profile_pk': profile.pk
+        }
         session.save()
 
         original_applications_count = profile.application_set.count()
@@ -268,7 +310,10 @@ class ApplicationEntryTestCase(TestCase):
         # the session must be stored in a variable in order to be modifyable
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
-        session['application'] = {'profile_pk': profile.pk}
+        session['application'] = {
+            'customer_pk': self.customer.pk,
+            'profile_pk': profile.pk
+        }
         session.save()
 
         # check that client can access the enter details page
@@ -303,7 +348,8 @@ class ApplicationEntryTestCase(TestCase):
         # https://docs.djangoproject.com/en/1.9/topics/testing/tools/#persistent-state
         session = self.client.session
         session['application'] = {
-            'profile_pk': profile.pk, 
+            'customer_pk': self.customer.pk,
+            'profile_pk': profile.pk,
             'data': {
                 'project_title': 'Test Title'
             }
@@ -313,7 +359,7 @@ class ApplicationEntryTestCase(TestCase):
         original_applications_count = profile.application_set.count()
 
         # check that client can access the enter details page
-        response = self.client.get(reverse('wl_applications:preview', args=('regulation17',)))
+        response = self.client.get(reverse('wl_applications:enter_details', args=('regulation17',)))
         self.assertEqual(200, response.status_code)
 
         post_params = {
@@ -371,6 +417,7 @@ class ApplicationEntrySecurity(TestCase):
         self.client.login(customer1.email)
 
         application = helpers.create_application(user=customer1)
+
         self.assertEqual('draft', application.customer_status)
         my_urls = [
             reverse('wl_applications:edit_application', args=[application.licence_type.code, application.pk]),
@@ -387,6 +434,7 @@ class ApplicationEntrySecurity(TestCase):
         url = reverse('wl_applications:preview', args=[application.licence_type.code, application.pk])
         session = self.client.session
         session['application'] = {
+            'customer_pk': customer1.pk,
             'profile_pk': application.applicant_profile.pk,
             'data': {
                 'project_title': 'Test'
@@ -424,6 +472,7 @@ class ApplicationEntrySecurity(TestCase):
         url = reverse('wl_applications:preview', args=[application.licence_type.code, application.pk])
         session = self.client.session
         session['application'] = {
+            'customer_pk': customer1.pk,
             'profile_pk': application.applicant_profile.pk,
             'data': {
                 'project_title': 'Test'

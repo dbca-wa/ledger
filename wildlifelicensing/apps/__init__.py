@@ -17,3 +17,7 @@ class WLMain(AppConfig):
 class WLEmails(AppConfig):
     name = 'wildlifelicensing.apps.emails'
     label = 'wl_emails'
+
+class WLReturns(AppConfig):
+    name = 'wildlifelicensing.apps.returns'
+    label = 'wl_returns'

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'wildlifelicensing.apps.WLMain',
     'wildlifelicensing.apps.WLApplications',
     'wildlifelicensing.apps.WLEmails',
+    'wildlifelicensing.apps.WLReturns'
 ]
 
 SITE_ID = 1
@@ -89,11 +90,14 @@ SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
 SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.social_details',
+    'ledger.accounts.pipeline.lower_email_address',
+    'ledger.accounts.pipeline.logout_previous_session',
     'social.pipeline.social_auth.social_uid',
     'social.pipeline.social_auth.auth_allowed',
     'social.pipeline.social_auth.social_user',
     'social.pipeline.user.get_username',
-    'social.pipeline.mail.mail_validation',
+    #'social.pipeline.mail.mail_validation',
+    'ledger.accounts.pipeline.mail_validation',
     'ledger.accounts.pipeline.user_by_email',
     'social.pipeline.user.create_user',
     'social.pipeline.social_auth.associate_user',
@@ -212,6 +216,7 @@ MEDIA_URL = '/media/'
 
 CRON_CLASSES = [
     'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
+    'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
 
 # Logging settings
