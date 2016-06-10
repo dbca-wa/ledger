@@ -2,6 +2,7 @@ import logging
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader, Template, Context
 from django.utils.html import strip_tags
+import six
 
 logger = logging.getLogger('log')
 
@@ -9,7 +10,7 @@ logger = logging.getLogger('log')
 def _render(template, context):
     if isinstance(context, dict):
         context = Context(context)
-    if isinstance(template, basestring):
+    if not isinstance(template, Template):
         template = Template(template)
     return template.render(context)
 
@@ -44,7 +45,7 @@ class TemplateEmailBase(object):
             txt_body = strip_tags(html_body)
 
         # build message
-        if isinstance(to_addresses, basestring):
+        if isinstance(to_addresses, six.string_types):
             to_addresses = [to_addresses]
         if attachments is not None and not isinstance(attachments, list):
             attachments = list(attachments)
