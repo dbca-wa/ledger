@@ -3,6 +3,8 @@ import os
 import tempfile
 import shutil
 
+import six
+
 from datetime import datetime
 
 from django.views.generic.base import View, TemplateView
@@ -131,7 +133,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         try:
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, six.text_type(e))
             return redirect('wl_applications:create_select_customer', *args)
 
         if licence_type.identification_required and applicant.identification is None:
@@ -148,7 +150,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         try:
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, six.text_type(e))
             return redirect('wl_applications:create_select_customer', *self.args)
 
         if applicant.identification is not None:
@@ -176,7 +178,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
         try:
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, six.text_type(e))
             return redirect('wl_applications:create_select_customer', *self.args)
 
         profile_exists = applicant.profile_set.count() > 0
@@ -202,7 +204,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
         try:
             applicant = determine_applicant(request)
         except SessionDataMissingException as e:
-            messages.error(request, e.message)
+            messages.error(request, six.text_type(e))
             return redirect('wl_applications:create_select_customer', *args)
 
         licence_type = WildlifeLicenceType.objects.get(code=args[0])
