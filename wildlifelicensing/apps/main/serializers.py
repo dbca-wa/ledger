@@ -2,7 +2,7 @@ from django.core.serializers.json import DjangoJSONEncoder  # to handle the date
 from django.db.models.fields.files import FieldFile
 from django_countries.fields import Country
 from django.utils.encoding import smart_text
-
+import six
 
 class WildlifeLicensingJSONEncoder(DjangoJSONEncoder):
     """
@@ -14,4 +14,9 @@ class WildlifeLicensingJSONEncoder(DjangoJSONEncoder):
         elif isinstance(o, Country):
             return smart_text(o.name)
         else:
-            return super(WildlifeLicensingJSONEncoder, self).default(o)
+            try:
+                result = super(WildlifeLicensingJSONEncoder, self).default(o)
+            except:
+                # workaround for django __proxy__ objects
+                result = six.text_type(o)
+            return result
