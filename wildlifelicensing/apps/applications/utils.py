@@ -7,7 +7,7 @@ from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.helpers import is_officer
 
-from models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
+from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)

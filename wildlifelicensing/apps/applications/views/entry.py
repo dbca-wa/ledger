@@ -251,7 +251,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         else:
             profile = application.applicant_profile
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0]), 'r') as data_file:
             form_structure = json.load(data_file)
 
         kwargs['licence_type'] = licence_type
@@ -270,7 +270,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         return super(EnterDetailsView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0]), 'r') as data_file:
             form_structure = json.load(data_file)
 
         request.session['application']['data'] = create_data_from_form(form_structure, request.POST, request.FILES)
@@ -344,7 +344,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/preview.html'
 
     def get_context_data(self, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0]), 'r') as data_file:
             form_structure = json.load(data_file)
 
         application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
@@ -369,7 +369,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         return super(PreviewView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0]), 'r') as data_file:
             form_structure = json.load(data_file)
 
         if len(args) > 1:

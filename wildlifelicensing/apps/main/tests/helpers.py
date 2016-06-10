@@ -12,6 +12,7 @@ from social.apps.django_app.default.models import UserSocialAuth
 from ledger.accounts.models import EmailUser
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, AssessorGroup
 from wildlifelicensing.apps.main import helpers as accounts_helpers
+from django.utils.encoding import smart_text
 
 
 class TestData(object):
@@ -79,8 +80,8 @@ def add_to_group(user, group_name):
 
 def get_or_create_user(email, defaults):
     user, created = EmailUser.objects.get_or_create(defaults=defaults, email=email)
-    if created:
-        UserSocialAuth.create_social_auth(user, user.email, 'email')
+    #if created:
+    #    UserSocialAuth.create_social_auth(user, user.email, 'email')
     return user, created
 
 
@@ -129,8 +130,8 @@ def is_login_page(response):
     if hasattr(response, 'content'):
         content = response.content
     else:
-        content = str(response)
-    return content.find('<div id="wl-login-container">') > 0
+        content = smart_text(response)
+    return content.find(b'<div id="wl-login-container">') > 0
 
 
 def get_emails():
@@ -151,7 +152,7 @@ def clear_mailbox():
 
 
 def upload_id(user):
-    with open(TestData.TEST_ID_PATH) as fp:
+    with open(TestData.TEST_ID_PATH, 'rb') as fp:
         post_params = {
             'identification_file': fp
         }
@@ -237,13 +238,13 @@ class TestClient(TestCase):
         self.assertFalse(is_client_authenticated(client))
         client.login(user.email)
         self.assertTrue(is_client_authenticated(client))
-        self.assertEqual(unicode(user.pk), client.session.get('_auth_user_id'))
+        self.assertEqual(smart_text(user.pk), client.session.get('_auth_user_id'))
         client.logout()
         officer = get_or_create_default_officer()
         client.login(officer.email)
         self.assertTrue(is_client_authenticated(client))
-        self.assertEqual(unicode(officer.pk), client.session.get('_auth_user_id'))
+        self.assertEqual(smart_text(officer.pk), client.session.get('_auth_user_id'))
         client.logout()
         client.login(user.email)
         self.assertTrue(is_client_authenticated(client))
-        self.assertEqual(unicode(user.pk), client.session.get('_auth_user_id'))
+        self.assertEqual(smart_text(user.pk), client.session.get('_auth_user_id'))

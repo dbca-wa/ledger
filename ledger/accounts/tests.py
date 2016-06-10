@@ -19,7 +19,7 @@ class AccountsTestCase(TestCase):
 
     def setUp(self):
         user = EmailUser.objects.create(email=REGISTERED_USER_EMAIL)
-        UserSocialAuth.create_social_auth(user, user.email, 'email')
+        #UserSocialAuth.create_social_auth(user, user.email, 'email')
 
         self.client = Client()
 

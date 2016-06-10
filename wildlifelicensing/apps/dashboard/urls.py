@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from . import views
+from wildlifelicensing.apps.dashboard import views
 
 urlpatterns = [
     url(r'^dashboard/?$', views.DashBoardRoutingView.as_view(), name='home'),

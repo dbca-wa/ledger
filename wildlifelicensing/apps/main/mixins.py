@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from django.contrib.auth.mixins import UserPassesTestMixin
 
-from .helpers import is_customer, is_officer, is_assessor
+from wildlifelicensing.apps.main.helpers import is_customer, is_officer, is_assessor
 
 
 class CustomerRequiredMixin(UserPassesTestMixin):

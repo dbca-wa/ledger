@@ -48,7 +48,7 @@ class ApplicationEntryTestCase(TestCase):
         response = self.client.get(reverse('wl_applications:check_identification', args=('regulation17',)))
         self.assertEqual(200, response.status_code)
 
-        with open(TEST_ID_PATH) as fp:
+        with open(TEST_ID_PATH, 'rb') as fp:
             post_params = {
                 'identification_file': fp
             }
@@ -70,7 +70,7 @@ class ApplicationEntryTestCase(TestCase):
         """
         self.client.login(self.customer.email)
 
-        with open(TEST_ID_PATH) as fp:
+        with open(TEST_ID_PATH, 'rb') as fp:
             self.customer.identification = Document.objects.create(name='test_id')
             self.customer.identification.file.save('test_id.jpg', File(fp), save=True)
             self.customer.save()

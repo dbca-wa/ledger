@@ -4,7 +4,7 @@ from reversion.admin import VersionAdmin
 
 from wildlifelicensing.apps.main.models import AssessorGroup
 
-from models import Application
+from wildlifelicensing.apps.applications.models import Application
 
 
 @admin.register(Application)

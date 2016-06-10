@@ -28,7 +28,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code)) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code), 'r') as data_file:
             form_structure = json.load(data_file)
 
         kwargs['application'] = serialize(application, posthook=format_application)

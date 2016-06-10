@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 import json
-import urllib
 import logging
 import datetime
 
@@ -10,8 +9,8 @@ from django.views.generic import TemplateView
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from django.db.models import Q
 from django.contrib.staticfiles.templatetags.staticfiles import static
-
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.http import urlencode
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.main.models import WildlifeLicence
@@ -25,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def _build_url(base, query):
-    return base + '?' + urllib.urlencode(query)
+    return base + '?' + urlencode(query)
 
 
 def _get_user_applications(user):

@@ -10,7 +10,7 @@ from reportlab.lib.utils import ImageReader
 from django.core.files import File
 from django.conf import settings
 
-from helpers import render_user_name
+from wildlifelicensing.apps.main.helpers import render_user_name
 
 from ledger.accounts.models import Document
 

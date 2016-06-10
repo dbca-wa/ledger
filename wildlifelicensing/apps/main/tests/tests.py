@@ -8,7 +8,7 @@ from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser, Address, Profile, Document
 
-from helpers import SocialClient, get_or_create_default_customer, get_or_create_default_officer, TestData
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, get_or_create_default_officer, TestData
 
 TEST_ID_PATH = TestData.TEST_ID_PATH
 
@@ -119,7 +119,7 @@ class AccountsTestCase(TestCase):
         response = self.client.get(reverse('wl_main:identification'))
         self.assertEqual(200, response.status_code)
 
-        with open(TEST_ID_PATH) as fp:
+        with open(TEST_ID_PATH, 'rb') as fp:
             post_params = {
                 'identification_file': fp
             }

@@ -3,6 +3,7 @@ import logging
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.utils.encoding import smart_text
 
 from django_hosts import reverse as hosts_reverse
 
@@ -140,11 +141,11 @@ def send_licence_issued_email(licence, application, cover_letter_message, reques
         'cover_letter_message': cover_letter_message
     }
     if licence.document is not None:
-        file_name = 'WL_licence_' + str(licence.licence_type.code)
+        file_name = 'WL_licence_' + smart_text(licence.licence_type.code)
         if licence.licence_no:
-            file_name += '_' + str(licence.licence_no)
+            file_name += '_' + smart_text(licence.licence_no)
         elif licence.start_date:
-            file_name += '_' + str(licence.start_date)
+            file_name += '_' + smart_text(licence.start_date)
         file_name += '.pdf'
         attachment = (file_name, licence.document.file.read(), 'application/pdf')
         attachments = [attachment]
@@ -182,17 +183,17 @@ def _log_email(email_message, application, sender=None):
         # TODO this will log the plain text body, should we log the html instead
         text = email_message.body
         subject = email_message.subject
-        from_email = unicode(sender) if sender else unicode(email_message.from_email)
+        from_email = smart_text(sender) if sender else smart_text(email_message.from_email)
         # the to email is normally a list
         if isinstance(email_message.to, list):
             to = ';'.join(email_message.to)
         else:
-            to = unicode(email_message.to)
+            to = smart_text(email_message.to)
     else:
-        text = unicode(email_message)
+        text = smart_text(email_message)
         subject = ''
         to = application.applicant_profile.user.email
-        from_email = unicode(sender) if sender else ''
+        from_email = smart_text(sender) if sender else ''
 
     kwargs = {
         'subject': subject,

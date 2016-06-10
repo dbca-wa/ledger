@@ -33,7 +33,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
     template_name = 'wl/process/process_app.html'
 
     def _build_data(self, request, application):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code)) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code), 'r') as data_file:
             form_structure = json.load(data_file)
 
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]

@@ -12,10 +12,10 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import Profile, Document, EmailUser
 from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, DocumentForm
 
-from forms import IdentificationForm
-from mixins import CustomerRequiredMixin, OfficerRequiredMixin
-from signals import identification_uploaded
-from serializers import WildlifeLicensingJSONEncoder
+from wildlifelicensing.apps.main.forms import IdentificationForm
+from wildlifelicensing.apps.main.mixins import CustomerRequiredMixin, OfficerRequiredMixin
+from wildlifelicensing.apps.main.signals import identification_uploaded
+from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 
 
 class SearchCustomersView(OfficerRequiredMixin, View):
