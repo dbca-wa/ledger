@@ -131,8 +131,6 @@ class AccountsTestCase(TestCase):
             self.customer = EmailUser.objects.get(email=self.customer.email)
 
             self.assertIsNotNone(self.customer.identification)
-            # assert customer's ID is the uploaded file
-            self.assertEqual(self.customer.identification.filename, 'test_id.jpg')
 
             # assert image url is the customer ID's url path
             self.assertEqual(response.context['existing_id_image_url'], self.customer.identification.file.url)
