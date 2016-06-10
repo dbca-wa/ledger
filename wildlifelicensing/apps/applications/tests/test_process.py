@@ -45,7 +45,7 @@ class TestStatusLifeCycle(TestCase):
         self.assertFalse(is_email())
         response = self.client.post(url, data)
         self.assertEqual(200, response.status_code)
-        resp_data = json.loads(response.content)
+        resp_data = json.loads(response.content.decode('utf8'))
         self.assertIn('id_check_status', resp_data)
         self.assertIn('processing_status', resp_data)
         application.refresh_from_db()
