@@ -27,7 +27,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             });
         } else if(item.type === 'declaration') {
             itemContainer.append($('<label>').text(item.label));
-            itemContainer.append($('<p>').text(item.valueCurrent ? 'Declaration checked' : 'Declaration not checked'));
+            itemContainer.append($('<p>').text(item.value ? 'Declaration checked' : 'Declaration not checked'));
         } else if(item.type === 'file') {
             var fileLink = $('<a>');
             fileLink.attr('href', item.value);
