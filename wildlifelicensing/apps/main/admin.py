@@ -14,6 +14,7 @@ class DefaultConditionInline(admin.TabularInline):
 @admin.register(WildlifeLicenceType)
 class WildlifeLicenceTypeAdmin(VersionAdmin):
     list_display = ('name', 'code')
+    prepopulated_fields = {'code_slug': ('code',)}
     filter_horizontal = ('default_conditions',)
     inlines = (DefaultConditionInline,)
 

@@ -29,7 +29,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code)) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug)) as data_file:
             form_structure = json.load(data_file)
 
         convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
@@ -42,20 +42,25 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
 
-class EnterConditionsAssessorView(CanEditAssessmentMixin, EnterConditionsView):
+class EnterConditionsAssessorView(CanEditAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
 
     def get_context_data(self, **kwargs):
-        try:
-            application_pk = kwargs['application']['id']
-        except KeyError:
-            application_pk = get_object_or_404(Application, pk=self.args[0]).pk
+        application = get_object_or_404(Application, pk=self.args[0])
+
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug)) as data_file:
+            form_structure = json.load(data_file)
+
+        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+
+        kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['form_structure'] = form_structure
 
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
         kwargs['assessment'] = assessment
-        #  override action url
-        kwargs['action_url'] = reverse('applications:submit_conditions_assessor', args=[application_pk, assessment.pk])
+
+        kwargs['action_url'] = reverse('applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 

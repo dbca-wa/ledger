@@ -57,7 +57,7 @@
                         </div>
                     {% endwith %}
                     <button type="submit" class="btn btn-primary pull-right">Upload</button>
-                    <a class="btn btn-info pull-right" href="{% url 'applications:create_select_profile' licence_type.code %}" style="margin-right: 20px;">Skip this step</a>
+                    <a class="btn btn-info pull-right right-buffer" href="{% url 'applications:create_select_profile' licence_type.code_slug %}">Skip this step</a>
                 </form>
             </div>
         </div>

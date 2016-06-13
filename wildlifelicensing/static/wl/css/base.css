@@ -35,6 +35,14 @@
     margin-bottom: 20px;
 }
 
+.left-buffer {
+    margin-left: 20px;
+}
+
+.right-buffer {
+    margin-right: 20px;
+}
+
 .wl-breadcrumbs {
     background-color: white;
     margin-top: -20px;

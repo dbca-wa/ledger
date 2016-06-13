@@ -26,6 +26,7 @@ LODGEMENT_NUMBER_NUM_CHARS = 6
 
 RETURNS_APP_PATH = os.path.join(os.path.dirname(__file__), 'excel_templates')
 
+DATE_FORMAT = '%d/%m/%Y'
 
 def _is_post_data_valid(ret, tables_info, post_data):
     for table in tables_info:
@@ -68,27 +69,13 @@ def _get_table_rows_from_post(table_name, post_data):
 
 def _create_return_data_from_post_data(ret, tables_info, post_data):
     for table in tables_info:
-        table_namespace = table.get('name') + '::'
-
-        table_data = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if
-                           key.startswith(table_namespace)])
-
-        return_table, created = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
-
-        # delete any existing rows as they will all be recreated
-        return_table.returnrow_set.all().delete()
-
-        num_rows = len(table_data.values()[0])
-
-        return_rows = []
-        for row_num in range(num_rows):
-            row_data = {}
-            for key, value in table_data.items():
-                row_data[key] = value[row_num]
-
-            return_rows.append(ReturnRow(return_table=return_table, data=row_data))
-
-        ReturnRow.objects.bulk_create(return_rows)
+        rows = _get_table_rows_from_post(table.get('name'), post_data)
+        if rows:
+            return_table, created = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [ReturnRow(return_table=return_table, data=row) for row in rows]
+            ReturnRow.objects.bulk_create(return_rows)
 
 
 class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
@@ -164,9 +151,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                 return redirect('home')
             else:
                 for table in context['tables']:
-                    return_table = ReturnTable.objects.get(ret=ret, name=table.get('name'))
-                    table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
-
+                    table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
         elif 'lodge' in request.POST:
             if _is_post_data_valid(ret, context['tables'], request.POST):
 
@@ -183,6 +168,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                 ret.status = 'submitted'
                 ret.save()
 
+                message = 'Return successfully submitted.'
+
                 # update next return in line's status to become the new current return
                 next_ret = Return.objects.filter(licence=ret.licence, status='future').order_by('due_date').first()
 
@@ -190,9 +177,12 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                     next_ret.status = 'current'
                     next_ret.save()
 
+                    message += ' The next return for this licence can now be entered and is due on {}.'.\
+                        format(next_ret.due_date.strftime(DATE_FORMAT))
+
                 return_submitted.send(sender=self.__class__, ret=ret)
 
-                messages.success(request, 'Return successfully submitted.')
+                messages.success(request, message)
 
                 return redirect('home')
             else:

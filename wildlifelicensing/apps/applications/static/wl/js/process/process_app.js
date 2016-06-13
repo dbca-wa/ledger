@@ -435,7 +435,9 @@ define([
                     $actionButtonsContainer.removeClass('hidden');
                     $status.text(data.review_status);
                     $status.removeClass('hidden');
-                    $showAmendmentRequests.removeClass('hidden');
+                    if (amendmentRequests.length > 0) {
+                        $showAmendmentRequests.removeClass('hidden');
+                    }
                     $done.addClass('hidden');
 
                     application.review_status = data.review_status;
@@ -517,7 +519,7 @@ define([
 
             $actions.append($remind);
         } else {
-            var $viewComment = $('<a>').text('View Comment');
+            var $viewComment = $('<a>').text('View Comment').attr('data-toggle', 'popover');
             $viewComment.popover({container: 'body', content: assessment.comment, html: true});
             $actions.append($viewComment);
         }
@@ -716,7 +718,8 @@ define([
 
 
     function determineApplicationApprovable() {
-        var approvable = false;
+        var approvable = false,
+            $approve = $('#approve');
 
         if ((application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required) {
             if ((application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application) {
@@ -728,7 +731,13 @@ define([
             }
         }
 
-        $('#approve').prop('disabled', !approvable);
+        if(approvable) {
+            $approve.removeClass('disabled');
+            $approve.tooltip('destroy');
+        } else {
+            $approve.addClass('disabled');
+            $approve.tooltip({});
+        }
     }
 
     return {

@@ -35,7 +35,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
     template_name = 'wl/process/process_app.html'
 
     def _build_data(self, request, application):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code)) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug)) as data_file:
             form_structure = json.load(data_file)
 
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
@@ -111,13 +111,12 @@ class AssignOfficerView(OfficerRequiredMixin, View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                                                               (application.assigned_officer.first_name,
-                                                                                application.assigned_officer.last_name)}
+                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
         return JsonResponse({'assigned_officer': assigned_officer,
-                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
+                            'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
@@ -339,7 +338,9 @@ class AddLogEntryView(OfficerRequiredMixin, View):
         form = ApplicationLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
             application = get_object_or_404(Application, pk=args[0])
+
             user = request.user
+
             document = None
             if request.FILES and 'document' in request.FILES:
                 document = Document.objects.create(file=request.FILES['document'])
@@ -350,7 +351,9 @@ class AddLogEntryView(OfficerRequiredMixin, View):
                 'text': form.cleaned_data['text'],
                 'subject': form.cleaned_data['subject']
             }
-            entry = CustomLogEntry.objects.create(**data)
+
+            CustomLogEntry.objects.create(**data)
+
             return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
         else:
             return JsonResponse(

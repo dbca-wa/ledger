@@ -2,19 +2,18 @@ import json
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from django.core import mail
 
 from wildlifelicensing.apps.applications.models import IDRequest
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, is_login_page, \
     get_or_create_default_officer, get_or_create_default_assessor_group, is_email, get_email, clear_mailbox, upload_id, \
-    clear_all_id_files, is_client_authenticated, create_random_customer
+    clear_all_id_files, is_client_authenticated
 from wildlifelicensing.apps.applications.tests.helpers import create_and_lodge_application, get_or_create_assessment
 from wildlifelicensing.apps.applications.emails import ApplicationIDUpdateRequestedEmail
 
 
-
-
 class TestStatusLifeCycle(TestCase):
+    fixtures = ['licences.json']
+
     def setUp(self):
         self.client = SocialClient()
         self.officer = get_or_create_default_officer()
