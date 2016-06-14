@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'wildlifelicensing.apps.main',
     'wildlifelicensing.apps.applications',
     'wildlifelicensing.apps.emails',
-    'wildlifelicensing.apps.returns'
+    'wildlifelicensing.apps.returns',
+    'wildlifelicensing.apps.customer_management'
 ]
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')

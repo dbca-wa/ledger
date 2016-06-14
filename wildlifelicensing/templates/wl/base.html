@@ -85,7 +85,7 @@
                                                 <li><a href="{% url 'main:identification' %}">Manage ID</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
-                                            {% if request.user.is_superuser %}
+                                            {% if request.user.is_staff %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
@@ -107,9 +107,12 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-12">
-                        {% autoescape off %}
-                            {% bootstrap_messages %}
-                        {% endautoescape %}
+                        {% for message in messages %}
+                            <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
+                                {{ message|safe }}
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>

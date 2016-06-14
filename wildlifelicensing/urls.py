@@ -12,6 +12,7 @@ urlpatterns = [
     url(r'', include('wildlifelicensing.apps.dashboard.urls', namespace='dashboard')),
     url(r'^applications/', include('wildlifelicensing.apps.applications.urls', namespace='applications')),
     url(r'^returns/', include('wildlifelicensing.apps.returns.urls', namespace='returns')),
+    url(r'^customer_management/', include('wildlifelicensing.apps.customer_management.urls', namespace='customer_management')),
 ] + ledger_patterns
 
 if settings.DEBUG:
