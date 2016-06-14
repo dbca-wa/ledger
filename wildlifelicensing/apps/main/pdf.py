@@ -184,7 +184,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     date_values = [Paragraph(licence.issue_date.strftime(DATE_FORMAT), styles['Left']),
                    Paragraph(licence.start_date.strftime(DATE_FORMAT), styles['Left']),
                    Paragraph(licence.end_date.strftime(DATE_FORMAT), styles['Left'])]
-    
+
     if original_issue_date is not None:
         date_headings.insert(0, Paragraph('Original Date of Issue', styles['BoldLeft']))
         date_values.insert(0, Paragraph(original_issue_date.strftime(DATE_FORMAT), styles['Left']))
@@ -230,17 +230,20 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph("You'll find your licence document in this envelope. Please read it carefully.", styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('You also can access it from your Wildlife Licensing dashboard by copying and pasting '
-                    'the following link in your browser:' , styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph(site_url, styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph("Note: If you haven't been on the Wildlife Licensing site recently you might have to "
-                              "login first before using the provided link.", styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    if licence.cover_letter_message:
-        elements.append(Paragraph(licence.cover_letter_message, styles['Left']))
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    # Removed link to online system for beta
+#     elements.append(Paragraph('You also can access it from your Wildlife Licensing dashboard by copying and pasting '
+#                     'the following link in your browser:', styles['Left']))
+#     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+#     elements.append(Paragraph(site_url, styles['Left']))
+#     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+#     elements.append(Paragraph("Note: If you haven't been on the Wildlife Licensing site recently you might have to "
+#                               "login first before using the provided link.", styles['Left']))
+#     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+#     if licence.cover_letter_message:
+#         elements.append(Paragraph(licence.cover_letter_message, styles['Left']))
+#         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
     elements.append(Paragraph('Best regards,', styles['Left']))
     elements.append(Paragraph('Parks and Wildlife Customer Portal', styles['Left']))
 

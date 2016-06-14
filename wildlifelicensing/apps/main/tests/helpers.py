@@ -103,8 +103,8 @@ def get_or_create_default_officer():
     return user
 
 
-def create_licence_type(code='regulation17'):
-    return WildlifeLicenceType.objects.get_or_create(code=code)[0]
+def create_licence_type(code_slug='regulation-17'):
+    return WildlifeLicenceType.objects.get_or_create(code_slug=code_slug)[0]
 
 
 def get_or_create_default_assessor():

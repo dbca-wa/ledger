@@ -33,7 +33,7 @@ def lodge_application(application):
     """
     client = SocialClient()
     client.login(application.applicant_profile.user.email)
-    url = reverse_lazy('wl_applications:preview', args=[application.licence_type.code, application.pk])
+    url = reverse_lazy('wl_applications:preview', args=[application.licence_type.code_slug, application.pk])
     session = client.session
     session['application'] = {
         'profile': application.applicant_profile.pk,

@@ -1,0 +1,25 @@
+[
+{
+    "model": "licence.licencetype",
+    "pk": 1,
+    "fields": {
+        "effective_to": null,
+        "name": "Licence to take fauna for scientific purposes",
+        "code": "Regulation 17",
+        "act": "Wildlife Conservation Act 1950",
+        "statement": "The undermentioned person may take fauna for research or other scientific purposes and where authorised, keep it in captivity, subject to the following and attached conditions, which may be added to, suspended or otherwise varied as considered fit.",
+        "authority": "Director General",
+        "replaced_by": null,
+        "is_renewable": true,
+        "keywords": "[]"
+    }
+},
+{
+    "model": "wl_main.wildlifelicencetype",
+    "pk": 1,
+    "fields": {
+        "code_slug": "regulation-17",
+        "identification_required": true
+    }
+}
+]

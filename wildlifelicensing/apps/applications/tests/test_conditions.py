@@ -6,7 +6,7 @@ from wildlifelicensing.apps.main.helpers import is_assessor, get_user_assessor_g
 
 
 class TestViewAccess(TestCase):
-    fixtures = ['conditions.json']
+    fixtures = ['licences.json', 'conditions.json']
 
     def setUp(self):
         self.client = SocialClient()

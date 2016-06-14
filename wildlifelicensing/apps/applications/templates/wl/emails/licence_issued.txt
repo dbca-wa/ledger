@@ -3,11 +3,14 @@
 {%  block content %}
     Congratulations, your Wildlife Licensing application has been approved and the corresponding licence has been issued.
     You'll find your licence in attachment. Please read it carefully.
+
+    {% comment 'Removed link to online system for beta' %}
     {% if url %}
         You also can access it from your Wildlife Licensing dashboard by copying and pasting the following link in your browser:
         {{ url }}
         Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.
     {% endif %}
+    {% endcomment %}
 
     {{ cover_letter_message }}
 {%  endblock %}

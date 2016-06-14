@@ -32,13 +32,13 @@
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
                     {% if application_pk %}
-                        <li><a href="{% url 'wl_applications:create_select_profile_existing_application' licence_type.code application_pk %}">Select Profile</a></li>
+                        <li><a href="{% url 'wl_applications:create_select_profile_existing_application' licence_type.code_slug application_pk %}">Select Profile</a></li>
                     {% else %}
                         {% if request.user|is_officer %}
                             <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
                         {% endif %}
                         <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
-                        <li><a href="{% url 'wl_applications:create_select_profile' licence_type.code %}">Select Profile</a></li>
+                        <li><a href="{% url 'wl_applications:create_select_profile' licence_type.code_slug %}">Select Profile</a></li>
                     {% endif %}
                     <li class="active">Enter Application Details</li>
                 </ol>
@@ -87,9 +87,9 @@
                 <label class="top-buffer">Selected Profile:</label>
                 <p>{{ profile.name }}</p>
                 {% if application_pk %}
-                    <p><em><a href="{% url 'wl_applications:create_select_profile_existing_application' licence_type.code application_pk %}">Change Profile</a></em></p>
+                    <p><em><a href="{% url 'wl_applications:create_select_profile_existing_application' licence_type.code_slug application_pk %}">Change Profile</a></em></p>
                 {% else %}
-                    <p><em><a href="{% url 'wl_applications:create_select_profile' licence_type.code %}">Change Profile</a></em></p>
+                    <p><em><a href="{% url 'wl_applications:create_select_profile' licence_type.code_slug %}">Change Profile</a></em></p>
                 {% endif %}
                 <nav class="hidden-xs top-buffer">
                     <div id="sectionList">
