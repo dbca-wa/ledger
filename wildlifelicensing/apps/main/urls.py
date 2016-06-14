@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from .views import (
+from wildlifelicensing.apps.main.views import (
         ListProfilesView, CreateProfilesView, EditProfilesView, DeleteProfileView,
         IdentificationView,
         EditAccountView,

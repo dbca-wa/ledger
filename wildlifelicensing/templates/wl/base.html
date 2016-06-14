@@ -54,7 +54,7 @@
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
-                                    <li><a href="{% url 'applications:new_application' %}">New Licence Application</a></li>
+                                    <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">
@@ -80,9 +80,9 @@
                                         </a>
                                         <ul class="dropdown-menu">
                                             {% if request.user|is_customer %}
-                                                <li><a href="{% url 'main:edit_account' %}">Manage Account</a></li>
-                                                <li><a href="{% url 'main:list_profiles' %}">Manage Profiles</a></li>
-                                                <li><a href="{% url 'main:identification' %}">Manage ID</a></li>
+                                                <li><a href="{% url 'wl_main:edit_account' %}">Manage Account</a></li>
+                                                <li><a href="{% url 'wl_main:list_profiles' %}">Manage Profiles</a></li>
+                                                <li><a href="{% url 'wl_main:identification' %}">Manage ID</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
                                             {% if request.user.is_superuser %}

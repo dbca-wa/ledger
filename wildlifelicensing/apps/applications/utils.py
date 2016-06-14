@@ -4,7 +4,7 @@ from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser, Document
 
-from models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
+from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)

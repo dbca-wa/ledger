@@ -27,9 +27,9 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'dashboard:tables_applications_officer' %}">Applications</a></li>
-                    <li><a href="{% url 'applications:process' application.id %}">Process Application</a></li>
-                    <li><a href="{% url 'applications:enter_conditions' application.id %}">Enter Conditions</a></li>
+                    <li><a href="{% url 'wl_dashboard:tables_applications_officer' %}">Applications</a></li>
+                    <li><a href="{% url 'wl_applications:process' application.id %}">Process Application</a></li>
+                    <li><a href="{% url 'wl_applications:enter_conditions' application.id %}">Enter Conditions</a></li>
                     {% if application.licence %}
                         <li class="active">Reissue Licence</li>
                     {% else %}
@@ -104,8 +104,8 @@
                         Issue
                     {% endif %}
                 </button>
-                <a class="btn btn-sm btn-default" href="{% url 'applications:enter_conditions' application.id %}" role="button">Back to Enter Conditions</a>
-                <a href="{% url 'applications:preview_licence' application.id %}" id="previewLicence" class="top-buffer pull-right" target="_blank">
+                <a class="btn btn-sm btn-default" href="{% url 'wl_applications:enter_conditions' application.id %}" role="button">Back to Enter Conditions</a>
+                <a href="{% url 'wl_applications:preview_licence' application.id %}" id="previewLicence" class="top-buffer pull-right" target="_blank">
                     Preview Licence PDF <img height="20px" src="{% static 'wl/img/pdf.png' %}"></img>
                 </a>
             </div>

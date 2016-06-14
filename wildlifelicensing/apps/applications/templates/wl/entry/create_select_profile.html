@@ -17,10 +17,10 @@
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
                     {% if not application_pk %}
-                        <li><a href="{% url 'applications:select_licence_type' %}">Select Licence Type</a></li>
+                        <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
                     {% endif %}
                     {% if request.user|is_officer %}
-                        <li><a href="{% url 'applications:create_select_customer' %}">Select or Create Customer</a></li>
+                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
                     {% endif %}
                     <li class="active">{% if profile_selection_form %}Select{% else %}Create{% endif %} Profile</li>
                 </ol>

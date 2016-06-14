@@ -3,6 +3,8 @@ import os
 import tempfile
 import shutil
 
+import six
+
 from datetime import datetime
 
 from django.views.generic.base import View, TemplateView
@@ -64,9 +66,9 @@ class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
         if is_customer(request.user):
             set_app_session_data(request.session, 'customer_pk', request.user.pk)
 
-            return redirect('applications:select_licence_type', *args, **kwargs)
+            return redirect('wl_applications:select_licence_type', *args, **kwargs)
         else:
-            return redirect('applications:create_select_customer')
+            return redirect('wl_applications:create_select_customer')
 
 
 class EditApplicationView(UserCanEditApplicationMixin, View):
@@ -89,7 +91,7 @@ class EditApplicationView(UserCanEditApplicationMixin, View):
             if application.hard_copy is not None:
                 shutil.copyfile(application.hard_copy.file.path, os.path.join(temp_files_dir, application.hard_copy.name))
 
-        return redirect('applications:enter_details', *args, **kwargs)
+        return redirect('wl_applications:enter_details', *args, **kwargs)
 
 
 class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
@@ -113,7 +115,7 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
                 context = {'create_customer_form': create_customer_form}
                 return render(request, self.template_name, context)
 
-        return redirect('applications:select_licence_type', *args, **kwargs)
+        return redirect('wl_applications:select_licence_type', *args, **kwargs)
 
 
 class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
@@ -136,13 +138,13 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         try:
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
-            messages.error(self.request, e.message)
-            return redirect('applications:create_select_customer')
+            messages.error(self.request, six.text_type(e))
+            return redirect('wl_applications:create_select_customer')
 
         if licence_type.identification_required and applicant.identification is None:
             return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
         else:
-            return redirect('applications:create_select_profile', args[1], **kwargs)
+            return redirect('wl_applications:create_select_profile', args[1], **kwargs)
 
     def get_context_data(self, **kwargs):
         kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
@@ -153,8 +155,8 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         try:
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
-            messages.error(self.request, e.message)
-            return redirect('applications:create_select_customer')
+            messages.error(self.request, six.text_type(e))
+            return redirect('wl_applications:create_select_customer')
 
         if applicant.identification is not None:
             applicant.identification.delete()
@@ -168,7 +170,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
                 application.id_check_status = 'updated'
                 application.save()
 
-        return redirect('applications:create_select_profile', *self.args)
+        return redirect('wl_applications:create_select_profile', *self.args)
 
 
 class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
@@ -181,8 +183,8 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
         try:
             applicant = determine_applicant(self.request)
         except SessionDataMissingException as e:
-            messages.error(self.request, e.message)
-            return redirect('applications:create_select_customer')
+            messages.error(self.request, six.text_type(e))
+            return redirect('wl_applications:create_select_customer')
 
         profile_exists = applicant.profile_set.count() > 0
 
@@ -208,8 +210,8 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
         try:
             applicant = determine_applicant(request)
         except SessionDataMissingException as e:
-            messages.error(request, e.message)
-            return redirect('applications:create_select_customer')
+            messages.error(request, six.text_type(e))
+            return redirect('wl_applications:create_select_customer')
 
         licence_type = WildlifeLicenceType.objects.get(code_slug=args[0])
 
@@ -239,7 +241,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                                'profile_selection_form': ProfileSelectionForm(user=request.user),
                                'profile_creation_form': profile_form, 'address_form': address_form})
 
-        return redirect('applications:enter_details', *args)
+        return redirect('wl_applications:enter_details', *args)
 
 
 class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
@@ -254,7 +256,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         else:
             profile = application.applicant_profile
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0]), 'r') as data_file:
             form_structure = json.load(data_file)
 
         kwargs['licence_type'] = licence_type
@@ -282,7 +284,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         return super(EnterDetailsView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0]), 'r') as data_file:
             form_structure = json.load(data_file)
 
         set_app_session_data(request.session, 'data', create_data_from_form(form_structure, request.POST, request.FILES))
@@ -346,9 +348,9 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
             if 'draft' in request.POST:
                 delete_app_session_data(request.session)
-                return redirect('dashboard:home')
+                return redirect('wl_dashboard:home')
             else:
-                return redirect('applications:enter_details', args[0], application.pk)
+                return redirect('wl_applications:enter_details', args[0], application.pk)
         else:
             if len(request.FILES) > 0:
                 temp_files_dir = get_app_session_data(request.session, 'temp_files_dir')
@@ -361,14 +363,14 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                         for chunk in request.FILES[f].chunks():
                             destination.write(chunk)
 
-            return redirect('applications:preview', *args)
+            return redirect('wl_applications:preview', *args)
 
 
 class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/preview.html'
 
     def get_context_data(self, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0]), 'r') as data_file:
             form_structure = json.load(data_file)
 
         licence_type = WildlifeLicenceType.objects.get(code_slug=self.args[0])
@@ -402,7 +404,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         return super(PreviewView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0])) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0]), 'r') as data_file:
             form_structure = json.load(data_file)
 
         if len(args) > 1:
@@ -478,7 +480,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         delete_app_session_data(request.session)
 
-        return redirect('dashboard:home')
+        return redirect('wl_dashboard:home')
 
 
 class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
@@ -492,7 +494,7 @@ class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
             application = Application.objects.get(previous_application=previous_application)
             if application.customer_status == 'under_review':
                 messages.warning(request, 'A renewal for this licence has already been lodged and is awaiting review.')
-                return redirect('dashboard:home')
+                return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = clone_application_for_renewal(previous_application)
 
@@ -501,4 +503,4 @@ class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
         set_app_session_data(request.session, 'data', application.data)
         set_app_session_data(request.session, 'temp_files_dir', tempfile.mkdtemp(dir=settings.MEDIA_ROOT))
 
-        return redirect('applications:enter_details', application.licence_type.code_slug, application.pk, **kwargs)
+        return redirect('wl_applications:enter_details', application.licence_type.code_slug, application.pk, **kwargs)

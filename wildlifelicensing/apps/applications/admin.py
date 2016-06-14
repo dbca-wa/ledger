@@ -5,7 +5,7 @@ from reversion.admin import VersionAdmin
 from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.main.forms import BetterJSONField
 
-from models import Application
+from wildlifelicensing.apps.applications.models import Application
 
 
 class ApplicationAdminForm(forms.ModelForm):

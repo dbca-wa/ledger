@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import datetime
 import json
 import logging
-import urllib
 
 from dateutil.parser import parse as date_parse
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,6 +13,7 @@ from django.db.models.query import EmptyQuerySet
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django_datatables_view.base_datatable_view import BaseDatatableView
+from django.utils.http import urlencode
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def build_url(base, query):
-    return base + '?' + urllib.urlencode(query)
+    return base + '?' + urlencode(query)
 
 
 def get_processing_statuses_but_draft():
@@ -68,11 +68,11 @@ class DashBoardRoutingView(TemplateView):
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
             if is_officer(self.request.user):
-                return redirect('dashboard:tree_officer')
+                return redirect('wl_dashboard:tree_officer')
             elif is_assessor(self.request.user):
-                return redirect('dashboard:tables_assessor')
+                return redirect('wl_dashboard:tables_assessor')
 
-            return redirect('dashboard:tables_customer')
+            return redirect('wl_dashboard:tables_customer')
         else:
             kwargs['form'] = LoginForm
             return super(DashBoardRoutingView, self).get(*args, **kwargs)
@@ -80,7 +80,7 @@ class DashBoardRoutingView(TemplateView):
 
 class DashboardTreeViewBase(TemplateView):
     template_name = 'wl/dash_tree.html'
-    url = reverse_lazy('dashboard:tables_applications_officer')
+    url = reverse_lazy('wl_dashboard:tables_applications_officer')
 
     @staticmethod
     def _create_node(title, href=None, count=None):

@@ -3,6 +3,7 @@ import logging
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.utils.encoding import smart_text
 
 from django_hosts import reverse as hosts_reverse
 
@@ -27,7 +28,7 @@ class ApplicationAssessmentReminderEmail(TemplateEmailBase):
 def send_amendment_requested_email(application, amendment_request, request):
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('applications:edit_application',
+        reverse('wl_applications:edit_application',
                 args=[application.licence_type.code_slug, application.pk])
     )
     context = {
@@ -51,7 +52,7 @@ def send_assessment_requested_email(assessment, request):
 
     email = ApplicationAssessmentRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('applications:enter_conditions_assessor',
+        reverse('wl_applications:enter_conditions_assessor',
                 args=[application.pk, assessment.pk])
     )
     context = {
@@ -67,7 +68,7 @@ def send_assessment_reminder_email(assessment, request):
 
     email = ApplicationAssessmentReminderEmail()
     url = request.build_absolute_uri(
-        reverse('applications:enter_conditions_assessor',
+        reverse('wl_applications:enter_conditions_assessor',
                 args=[application.pk, assessment.pk])
     )
     context = {
@@ -89,7 +90,7 @@ def send_assessment_done_email(assessment, request):
 
     email = ApplicationAssessmentDoneEmail()
     url = request.build_absolute_uri(
-        reverse('applications:enter_conditions',
+        reverse('wl_applications:enter_conditions',
                 args=[application.pk])
     )
     context = {
@@ -111,7 +112,7 @@ class ApplicationIDUpdateRequestedEmail(TemplateEmailBase):
 def send_id_update_request_email(id_request, request):
     email = ApplicationIDUpdateRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('main:identification')
+        reverse('wl_main:identification')
     )
     context = {
         'url': url
@@ -133,7 +134,7 @@ class ApplicationReturnsRequestedEmail(TemplateEmailBase):
 def send_returns_request_email(returns_request, request):
     email = ApplicationReturnsRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('dashboard:home')
+        reverse('wl_dashboard:home')
     )
     context = {
         'url': url
@@ -155,20 +156,20 @@ class LicenceIssuedEmail(TemplateEmailBase):
 def send_licence_issued_email(licence, application, request):
     email = LicenceIssuedEmail()
     url = request.build_absolute_uri(
-        reverse('dashboard:home')
+        reverse('wl_dashboard:home')
     )
     context = {
         'url': url,
         'cover_letter_message': licence.cover_letter_message
     }
     if licence.licence_document is not None:
-        file_name = 'WL_licence_' + str(licence.licence_type.code_slug)
+        file_name = 'WL_licence_' + smart_text(licence.licence_type.code_slug)
         if licence.licence_number:
-            file_name += '_' + str(licence.licence_number)
+            file_name += '_' + smart_text(licence.licence_number)
         if licence.licence_sequence:
-            file_name += '-' + str(licence.licence_sequence)
+            file_name += '-' + smart_text(licence.licence_sequence)
         elif licence.start_date:
-            file_name += '_' + str(licence.start_date)
+            file_name += '_' + smart_text(licence.start_date)
         file_name += '.pdf'
         attachment = (file_name, licence.licence_document.file.read(), 'application/pdf')
         attachments = [attachment]
@@ -191,7 +192,7 @@ class LicenceRenewalNotificationEmail(TemplateEmailBase):
 
 def send_licence_renewal_email_notification(licence):
     email = LicenceRenewalNotificationEmail()
-    url = 'http:' + hosts_reverse('applications:renew_licence', args=(licence.pk,))
+    url = 'http:' + hosts_reverse('wl_applications:renew_licence', args=(licence.pk,))
 
     context = {
         'url': url,
@@ -210,7 +211,7 @@ class UserNameChangeNotificationEmail(TemplateEmailBase):
 def send_user_name_change_notification_email(licence):
     email = UserNameChangeNotificationEmail()
 
-    url = 'http:' + hosts_reverse('applications:reissue_licence', args=(licence.pk,))
+    url = 'http:' + hosts_reverse('wl_applications:reissue_licence', args=(licence.pk,))
 
     context = {
         'licence': licence,
@@ -224,17 +225,17 @@ def _log_email(email_message, application, sender=None):
         # TODO this will log the plain text body, should we log the html instead
         text = email_message.body
         subject = email_message.subject
-        from_email = unicode(sender) if sender else unicode(email_message.from_email)
+        from_email = smart_text(sender) if sender else smart_text(email_message.from_email)
         # the to email is normally a list
         if isinstance(email_message.to, list):
             to = ';'.join(email_message.to)
         else:
-            to = unicode(email_message.to)
+            to = smart_text(email_message.to)
     else:
-        text = unicode(email_message)
+        text = smart_text(email_message)
         subject = ''
         to = application.applicant_profile.user.email
-        from_email = unicode(sender) if sender else ''
+        from_email = smart_text(sender) if sender else ''
 
     kwargs = {
         'subject': subject,

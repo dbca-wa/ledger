@@ -1,7 +1,8 @@
 from django.core.serializers.json import DjangoJSONEncoder  # to handle the datetime serialization
 from django.db.models.fields.files import FieldFile
 from django_countries.fields import Country
-
+from django.utils.encoding import smart_text
+import six
 
 class WildlifeLicensingJSONEncoder(DjangoJSONEncoder):
     """
@@ -11,6 +12,11 @@ class WildlifeLicensingJSONEncoder(DjangoJSONEncoder):
         if isinstance(o, FieldFile):
             return o.url
         elif isinstance(o, Country):
-            return unicode(o.name)
+            return smart_text(o.name)
         else:
-            return super(WildlifeLicensingJSONEncoder, self).default(o)
+            try:
+                result = super(WildlifeLicensingJSONEncoder, self).default(o)
+            except:
+                # workaround for django __proxy__ objects
+                result = six.text_type(o)
+            return result

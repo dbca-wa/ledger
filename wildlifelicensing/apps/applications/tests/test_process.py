@@ -40,11 +40,11 @@ class TestStatusLifeCycle(TestCase):
             'reason': IDRequest.REASON_CHOICES[0][0],
             'text': 'you to upload an ID.'
         }
-        url = reverse('applications:id_request')
+        url = reverse('wl_applications:id_request')
         self.assertFalse(is_email())
         response = self.client.post(url, data)
         self.assertEqual(200, response.status_code)
-        resp_data = json.loads(response.content)
+        resp_data = json.loads(response.content.decode('utf8'))
         self.assertIn('id_check_status', resp_data)
         self.assertIn('processing_status', resp_data)
         application.refresh_from_db()
@@ -61,7 +61,7 @@ class TestStatusLifeCycle(TestCase):
         self.assertIsNone(self.user.identification)
         self.client.login(self.user.email)
         self.assertTrue(is_client_authenticated(self.client))
-        self.client.get(reverse('main:identification'))
+        self.client.get(reverse('wl_main:identification'))
         upload_id(self.user)
         self.user.refresh_from_db()
         self.assertIsNotNone(self.user.identification)
@@ -82,58 +82,58 @@ class TestViewAccess(TestCase):
             }
         })
         self.process_urls_get = [
-            reverse('applications:process', args=[self.application.pk]),
+            reverse('wl_applications:process', args=[self.application.pk]),
         ]
 
         self.process_urls_post = [
             {
-                'url': reverse('applications:process', args=[self.application.pk]),
+                'url': reverse('wl_applications:process', args=[self.application.pk]),
                 'data': {
                     'applicationID': self.application.pk,
                 }
             },
             {
-                'url': reverse('applications:assign_officer'),
+                'url': reverse('wl_applications:assign_officer'),
                 'data': {
                     'applicationID': self.application.pk,
                     'userID': self.officer.pk,
                 }
             },
             {
-                'url': reverse('applications:set_id_check_status'),
+                'url': reverse('wl_applications:set_id_check_status'),
                 'data': {
                     'applicationID': self.application.pk,
                     'status': 'accepted',
                 }
             },
             {
-                'url': reverse('applications:id_request'),
+                'url': reverse('wl_applications:id_request'),
                 'data': {
                     'applicationID': self.application.pk,
                 }
             },
             {
-                'url': reverse('applications:set_character_check_status'),
-                'data': {
-                    'applicationID': self.application.pk,
-                    'status': 'accepted',
-                }
-            },
-            {
-                'url': reverse('applications:set_review_status'),
+                'url': reverse('wl_applications:set_character_check_status'),
                 'data': {
                     'applicationID': self.application.pk,
                     'status': 'accepted',
                 }
             },
             {
-                'url': reverse('applications:amendment_request'),
+                'url': reverse('wl_applications:set_review_status'),
+                'data': {
+                    'applicationID': self.application.pk,
+                    'status': 'accepted',
+                }
+            },
+            {
+                'url': reverse('wl_applications:amendment_request'),
                 'data': {
                     'applicationID': self.application.pk,
                 }
             },
             {
-                'url': reverse('applications:send_for_assessment'),
+                'url': reverse('wl_applications:send_for_assessment'),
                 'data': {
                     'applicationID': self.application.pk,
                     'assGroupID': get_or_create_default_assessor_group().pk,
@@ -141,7 +141,7 @@ class TestViewAccess(TestCase):
                 }
             },
             {
-                'url': reverse('applications:remind_assessment'),
+                'url': reverse('wl_applications:remind_assessment'),
                 'data': {
                     'applicationID': self.application.pk,
                     'assessmentID': get_or_create_assessment(self.application).pk
@@ -169,11 +169,11 @@ class TestViewAccess(TestCase):
         self.client.login(self.user.email)
         for url in self.process_urls_get:
             response = self.client.get(url, follow=True)
-            self.assertRedirects(response, reverse('dashboard:tables_customer'), status_code=302,
+            self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
                                  target_status_code=200)
         for url in self.process_urls_post:
             response = self.client.post(url['url'], url['data'], follow=True)
-            self.assertRedirects(response, reverse('dashboard:tables_customer'), status_code=302,
+            self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
                                  target_status_code=200)
 
     def test_officer_access(self):

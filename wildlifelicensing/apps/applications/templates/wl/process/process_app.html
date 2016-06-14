@@ -30,7 +30,7 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'dashboard:tables_applications_officer' %}">Applications</a></li>
+                    <li><a href="{% url 'wl_dashboard:tables_applications_officer' %}">Applications</a></li>
                     <li class="active">Process Application</li>
                 </ol>
             </div>
@@ -153,7 +153,7 @@
                                             <label>Returns</label>
                                             {% if data.returns_outstanding %}
                                                 <p>Returns outstanding.</p>
-                                                <p><a href="{% url 'dashboard:tables_returns_officer' %}" target="_blank">View Returns List</a></p>
+                                                <p><a href="{% url 'wl_dashboard:tables_returns_officer' %}" target="_blank">View Returns List</a></p>
                                             {% else %}
                                                 <p>No returns outstanding.</p>
                                             {% endif %}
@@ -280,7 +280,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <form method="post" action="{% url 'applications:process' data.application.id %}">
+                            <form method="post" action="{% url 'wl_applications:process' data.application.id %}">
                                 {% csrf_token %}
                                 <button id="approve" type="submit" name="enterConditions" type="button"
                                         class="btn btn-sm btn-success pull-right disabled"
@@ -343,7 +343,7 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                         <h4 class="modal-title">Request Photo Identification Upload</h4>
                     </div>
-                    <form id="idRequestForm" method="post" action="{% url 'applications:id_request' %}">
+                    <form id="idRequestForm" method="post" action="{% url 'wl_applications:id_request' %}">
                         {% csrf_token %}
                         <div class="modal-body">
                             {% bootstrap_form id_request_form %}
@@ -363,7 +363,7 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                         <h4 class="modal-title">Request Return Completion</h4>
                     </div>
-                    <form id="returnsRequestForm" method="post" action="{% url 'applications:returns_request' %}">
+                    <form id="returnsRequestForm" method="post" action="{% url 'wl_applications:returns_request' %}">
                         {% csrf_token %}
                         <div class="modal-body">
                             {% bootstrap_form returns_request_form %}
@@ -383,7 +383,7 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                         <h4 class="modal-title">Request Amendments to Application</h4>
                     </div>
-                    <form id="amendmentRequestForm" method="post" action="{% url 'applications:amendment_request' %}">
+                    <form id="amendmentRequestForm" method="post" action="{% url 'wl_applications:amendment_request' %}">
                         {% csrf_token %}
                         <div class="modal-body">
                             <div class="modal-body">
@@ -406,7 +406,7 @@
                             <h4 class="modal-title">Add log entry to application</h4>
                         </div>
                         <form id="addLogEntryForm" method="post"
-                              action="{% url 'applications:add_log_entry' data.application.id %}" enctype="multipart/form-data">
+                              action="{% url 'wl_applications:add_log_entry' data.application.id %}" enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class="modal-body">
                                 <div class="modal-body">

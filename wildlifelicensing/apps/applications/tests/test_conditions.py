@@ -23,34 +23,34 @@ class TestViewAccess(TestCase):
                                                                        condition=self.condition,
                                                                        order=1)
         self.urls_get = [
-            reverse('applications:enter_conditions', args=[self.application.pk]),
-            reverse('applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
-            reverse('applications:search_conditions')
+            reverse('wl_applications:enter_conditions', args=[self.application.pk]),
+            reverse('wl_applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
+            reverse('wl_applications:search_conditions')
         ]
 
         self.urls_post = [
             {
-                'url': reverse('applications:create_condition'),
+                'url': reverse('wl_applications:create_condition'),
                 'data': {
                     'code': '123488374',
                     'text': 'condition text'
                 }
             },
             {
-                'url': reverse('applications:set_assessment_condition_state'),
+                'url': reverse('wl_applications:set_assessment_condition_state'),
                 'data': {
                     'assessmentConditionID': self.assessment_condition.pk,
                     'acceptanceStatus': 'accepted',
                 }
             },
             {
-                'url': reverse('applications:submit_conditions', args=[self.application.pk]),
+                'url': reverse('wl_applications:submit_conditions', args=[self.application.pk]),
                 'data': {
                     'conditionID': [self.condition.pk],
                 }
             },
             {
-                'url': reverse('applications:submit_conditions_assessor',
+                'url': reverse('wl_applications:submit_conditions_assessor',
                                args=[self.application.pk, self.assessment.pk]),
                 'data': {
                     'conditionID': [self.condition.pk],
@@ -79,12 +79,12 @@ class TestViewAccess(TestCase):
         for url in self.urls_get:
             response = self.client.get(url, follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:tables_customer'), status_code=302,
+                self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
                                      target_status_code=200)
         for url in self.urls_post:
             response = self.client.post(url['url'], url['data'], follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:tables_customer'), status_code=302,
+                self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
                                      target_status_code=200)
 
     def test_officer_access(self):
@@ -112,32 +112,32 @@ class TestViewAccess(TestCase):
 
         # forbidden
         urls_get_forbidden = [
-            reverse('applications:enter_conditions', args=[self.application.pk]),
-            reverse('applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
+            reverse('wl_applications:enter_conditions', args=[self.application.pk]),
+            reverse('wl_applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
         ]
         urls_post_forbidden = [
             {
-                'url': reverse('applications:create_condition'),
+                'url': reverse('wl_applications:create_condition'),
                 'data': {
                     'code': '123488374',
                     'text': 'condition text'
                 }
             },
             {
-                'url': reverse('applications:set_assessment_condition_state'),
+                'url': reverse('wl_applications:set_assessment_condition_state'),
                 'data': {
                     'assessmentConditionID': self.assessment_condition.pk,
                     'acceptanceStatus': 'accepted',
                 }
             },
             {
-                'url': reverse('applications:submit_conditions', args=[self.application.pk]),
+                'url': reverse('wl_applications:submit_conditions', args=[self.application.pk]),
                 'data': {
                     'conditionID': [self.condition.pk],
                 }
             },
             {
-                'url': reverse('applications:submit_conditions_assessor',
+                'url': reverse('wl_applications:submit_conditions_assessor',
                                args=[self.application.pk, self.assessment.pk]),
                 'data': {
                     'conditionID': [self.condition.pk],
@@ -146,19 +146,19 @@ class TestViewAccess(TestCase):
         ]
         # Allowed
         urls_get_allowed = [
-            reverse('applications:search_conditions')
+            reverse('wl_applications:search_conditions')
         ]
         urls_post_allowed = [
         ]
         for url in urls_get_forbidden:
             response = self.client.get(url, follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:tables_assessor'), status_code=302,
+                self.assertRedirects(response, reverse('wl_dashboard:tables_assessor'), status_code=302,
                                      target_status_code=200)
         for url in urls_post_forbidden:
             response = self.client.post(url['url'], url['data'], follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:tables_assessor'), status_code=302,
+                self.assertRedirects(response, reverse('wl_dashboard:tables_assessor'), status_code=302,
                                      target_status_code=200)
         for url in urls_get_allowed:
             response = self.client.get(url, follow=True)
@@ -183,25 +183,25 @@ class TestViewAccess(TestCase):
 
         # forbidden
         urls_get_forbidden = [
-            reverse('applications:enter_conditions', args=[self.application.pk]),
+            reverse('wl_applications:enter_conditions', args=[self.application.pk]),
         ]
         urls_post_forbidden = [
             {
-                'url': reverse('applications:create_condition'),
+                'url': reverse('wl_applications:create_condition'),
                 'data': {
                     'code': '123488374',
                     'text': 'condition text'
                 }
             },
             {
-                'url': reverse('applications:set_assessment_condition_state'),
+                'url': reverse('wl_applications:set_assessment_condition_state'),
                 'data': {
                     'assessmentConditionID': self.assessment_condition.pk,
                     'acceptanceStatus': 'accepted',
                 }
             },
             {
-                'url': reverse('applications:submit_conditions', args=[self.application.pk]),
+                'url': reverse('wl_applications:submit_conditions', args=[self.application.pk]),
                 'data': {
                     'conditionID': [self.condition.pk],
                 }
@@ -209,12 +209,12 @@ class TestViewAccess(TestCase):
         ]
         # Allowed
         urls_get_allowed = [
-            reverse('applications:search_conditions'),
-            reverse('applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
+            reverse('wl_applications:search_conditions'),
+            reverse('wl_applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
         ]
         urls_post_allowed = [
             {
-                'url': reverse('applications:submit_conditions_assessor',
+                'url': reverse('wl_applications:submit_conditions_assessor',
                                args=[self.application.pk, self.assessment.pk]),
                 'data': {
                     'conditionID': [self.condition.pk],
@@ -224,12 +224,12 @@ class TestViewAccess(TestCase):
         for url in urls_get_forbidden:
             response = self.client.get(url, follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:tables_assessor'), status_code=302,
+                self.assertRedirects(response, reverse('wl_dashboard:tables_assessor'), status_code=302,
                                      target_status_code=200)
         for url in urls_post_forbidden:
             response = self.client.post(url['url'], url['data'], follow=True)
             if response.status_code != 403:
-                self.assertRedirects(response, reverse('dashboard:tables_assessor'), status_code=302,
+                self.assertRedirects(response, reverse('wl_dashboard:tables_assessor'), status_code=302,
                                      target_status_code=200)
         for url in urls_get_allowed:
             response = self.client.get(url, follow=True)
