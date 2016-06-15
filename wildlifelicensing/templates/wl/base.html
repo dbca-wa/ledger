@@ -85,7 +85,7 @@
                                                 <li><a href="{% url 'wl_main:identification' %}">Manage ID</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
-                                            {% if request.user.is_superuser %}
+                                            {% if request.user.is_staff %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
