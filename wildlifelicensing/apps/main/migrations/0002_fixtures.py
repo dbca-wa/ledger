@@ -10,7 +10,7 @@ from django.db import migrations
 from django.core.management import call_command
 
 def load_fixture(apps, schema_editor):
-    call_command('loaddata', os.path.join(fixture_dir, 'initial_data.json'))
+    call_command('loaddata', os.path.join(fixture_dir, 'groups.json'))
     call_command('loaddata', os.path.join(fixture_dir, 'conditions.json'))
     call_command('loaddata', os.path.join(fixture_dir, 'licences.json'))
 

@@ -518,7 +518,7 @@ define([
             });
 
             $actions.append($remind);
-        } else {
+        } else if (assessment.comment) {
             var $viewComment = $('<a>').text('View Comment').attr('data-toggle', 'popover');
             $viewComment.popover({container: 'body', content: assessment.comment, html: true});
             $actions.append($viewComment);
