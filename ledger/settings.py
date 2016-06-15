@@ -1,4 +1,7 @@
 from confy import env, database
+from oscar.defaults import *
+from oscar import get_core_apps, OSCAR_MAIN_TEMPLATE_DIR
+
 import os
 
 # Project paths
@@ -27,22 +30,28 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.flatpages',
     'social.apps.django_app.default',
     'django_extensions',
     'django_hosts',
     'bootstrap3',
     'reversion',
+    'widget_tweaks',
     'django_countries',
     'django_cron',
-    'ledger.accounts',  # Defines custom user model, passwordless auth pipeline.
+    ] + get_core_apps([  # django-oscar overrides
+        'ledger.basket', 
+        'ledger.order'
+    ]) + [
+    'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
-    'wildlifelicensing.apps.dashboard',
-    'wildlifelicensing.apps.main',
-    'wildlifelicensing.apps.applications',
-    'wildlifelicensing.apps.emails',
-    'wildlifelicensing.apps.returns',
-    'wildlifelicensing.apps.customer_management'
+    'wildlifelicensing.apps.WLDashboard',
+    'wildlifelicensing.apps.WLMain',
+    'wildlifelicensing.apps.WLApplications',
+    'wildlifelicensing.apps.WLEmails',
+    'wildlifelicensing.apps.WLReturns'
 ]
+
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
 MIDDLEWARE_CLASSES = [
@@ -58,6 +67,8 @@ MIDDLEWARE_CLASSES = [
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
     'ledger.middleware.FirstTimeNagScreenMiddleware',
+    'oscar.apps.basket.middleware.BasketMiddleware',
+    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django_hosts.middleware.HostsResponseMiddleware',
 ]
 
@@ -113,6 +124,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             os.path.join(PROJECT_DIR, 'templates'),
+            OSCAR_MAIN_TEMPLATE_DIR,
             os.path.join(BASE_DIR, 'wildlifelicensing', 'templates'),
         ],
         'APP_DIRS': True,
@@ -122,6 +134,13 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                # django-oscar default templates
+                'oscar.apps.search.context_processors.search_form',
+                'oscar.apps.promotions.context_processors.promotions',
+                'oscar.apps.checkout.context_processors.checkout',
+                'oscar.apps.customer.notifications.context_processors.notifications',
+                'oscar.core.context_processors.metadata',
             ],
         },
     },
@@ -138,6 +157,14 @@ BOOTSTRAP3 = {
     'include_jquery': False,
     'required_css_class': 'required-form-field',
     'set_placeholder': False,
+}
+
+OSCAR_DEFAULT_CURRENCY = 'AUD'
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+    },
 }
 
 

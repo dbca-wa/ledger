@@ -38,7 +38,7 @@
                     <ul>
                         {% for licence_type_dict in licence_type_dicts %}
                             <li>
-                                <a href="{% url 'applications:check_identification' licence_type_dict.code_slug %}">
+                                <a href="{% url 'wl_applications:check_identification' licence_type_dict.code_slug %}">
                                     {{ licence_type_dict.name }} ({{ licence_type_dict.code }})
                                 </a>
                             </li>

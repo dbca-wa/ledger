@@ -14,7 +14,7 @@
 
 {% block requirements %}
     require(['js/profiles_table'], function (profilesTable) {
-    profilesTable.initProfilesTable('#profiles', {{ data|jsonify }}, '{% url 'main:edit_profile_prefix' %}');
+    profilesTable.initProfilesTable('#profiles', {{ data|jsonify }}, '{% url 'wl_main:edit_profile_prefix' %}');
     });
 {% endblock %}
 
@@ -39,7 +39,7 @@
                     <h3>Profiles</h3>
                 </div>
                 <div class="panel-body">
-                    <a href="{% url 'main:create_profile' %}">Create new profile</a>
+                    <a href="{% url 'wl_main:create_profile' %}">Create new profile</a>
                     <table id="profiles" class="table table-striped table-bordered dataTable"></table>
                 </div>
             </div>

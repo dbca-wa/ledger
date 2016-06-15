@@ -112,7 +112,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                  '</img>'.format(licence.licence_document.file.url, static('wl/img/pdf.png'),
                                                  licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
 
-            return redirect('dashboard:home')
+            return redirect('wl_dashboard:home')
         else:
             messages.error(request, issue_licence_form.errors)
 
@@ -129,7 +129,7 @@ class ReissueLicenceView(OfficerRequiredMixin, View):
 
         application = get_object_or_404(Application, licence=licence)
 
-        return redirect('applications:issue_licence', application.pk)
+        return redirect('wl_applications:issue_licence', application.pk)
 
 
 class PreviewLicenceView(OfficerRequiredMixin, View):

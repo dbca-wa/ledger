@@ -1,0 +1,14 @@
+[
+    {
+        "model": "auth.Group",
+        "fields": {
+            "name": "Officers"
+        }
+    },
+        {
+        "model": "auth.Group",
+        "fields": {
+            "name": "Assessors"
+        }
+    }
+]

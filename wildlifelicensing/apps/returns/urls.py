@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from views import EnterReturnView, CurateReturnView, ViewReturnReadonlyView
+from wildlifelicensing.apps.returns.views import EnterReturnView, CurateReturnView, ViewReturnReadonlyView
 
 
 urlpatterns = [

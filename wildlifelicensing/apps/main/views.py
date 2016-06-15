@@ -12,10 +12,10 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import Profile, Document, EmailUser
 from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, DocumentForm
 
-from forms import IdentificationForm
-from mixins import CustomerRequiredMixin, OfficerRequiredMixin
-from signals import identification_uploaded
-from serializers import WildlifeLicensingJSONEncoder
+from wildlifelicensing.apps.main.forms import IdentificationForm
+from wildlifelicensing.apps.main.mixins import CustomerRequiredMixin, OfficerRequiredMixin
+from wildlifelicensing.apps.main.signals import identification_uploaded
+from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 
 
 class SearchCustomersView(OfficerRequiredMixin, View):
@@ -75,7 +75,7 @@ class CreateProfilesView(CustomerRequiredMixin, TemplateView):
 
         messages.success(request, "The profile '%s' was created." % profile.name)
 
-        return redirect('main:list_profiles')
+        return redirect('wl_main:list_profiles')
 
 
 class DeleteProfileView(CustomerRequiredMixin, TemplateView):
@@ -86,7 +86,7 @@ class DeleteProfileView(CustomerRequiredMixin, TemplateView):
         profile = get_object_or_404(Profile, pk=id)
         profile.delete()
         messages.success(request, "The profile '%s' was deleted." % profile.name)
-        return redirect('main:list_profiles')
+        return redirect('wl_main:list_profiles')
 
 
 class EditProfilesView(CustomerRequiredMixin, TemplateView):
@@ -120,14 +120,14 @@ class EditProfilesView(CustomerRequiredMixin, TemplateView):
 
         messages.success(request, "The profile '%s' was updated." % profile.name)
 
-        return redirect('main:list_profiles')
+        return redirect('wl_main:list_profiles')
 
 
 class IdentificationView(LoginRequiredMixin, FormView):
     template_name = 'wl/manage_identification.html'
     login_url = '/'
     form_class = IdentificationForm
-    success_url = reverse_lazy('main:identification')
+    success_url = reverse_lazy('wl_main:identification')
 
     def form_valid(self, form):
         if self.request.user.identification is not None:
@@ -152,7 +152,7 @@ class IdentificationView(LoginRequiredMixin, FormView):
 class EditAccountView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/edit_account.html'
     login_url = '/'
-    identification_url = reverse_lazy('main:identification')
+    identification_url = reverse_lazy('wl_main:identification')
 
     def get(self, request, *args, **kwargs):
         emailuser = get_object_or_404(EmailUser, pk=request.user.id)
@@ -318,7 +318,7 @@ class CreateDocumentView(CustomerRequiredMixin, TemplateView):
             document = document_form.save()
             user.documents.add(document)
             messages.success(request, "The document '%s' was created." % document.name)
-            return redirect('main:list_documents')
+            return redirect('wl_main:list_documents')
         else:
             return render(request, self.template_name, {'document_form': document_form})
 
@@ -330,7 +330,7 @@ class DeleteDocumentView(CustomerRequiredMixin, TemplateView):
         document = get_object_or_404(Document, pk=id)
         document.delete()
         messages.success(request, "The document '%s' was deleted." % document.name)
-        return redirect('main:list_documents')
+        return redirect('wl_main:list_documents')
 
 
 
@@ -349,7 +349,7 @@ class EditDocumentView(CustomerRequiredMixin, TemplateView):
         if document_form.is_valid() :
             document = document_form.save()
             messages.success(request, "The document '%s' was edited." % document.name)
-            return redirect('main:list_documents')
+            return redirect('wl_main:list_documents')
         else:
             return render(request, self.template_name, {'document_form': document_form})
 

@@ -38,7 +38,7 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
                 'orderable': False
             }
         ]
-        data['applications']['ajax']['url'] = reverse('dashboard:data_application_assessor')
+        data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_assessor')
         return data
 
 
@@ -95,7 +95,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     @staticmethod
     def render_action_column(obj):
         return '<a href="{0}">Assess</a>'.format(
-            reverse('applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
+            reverse('wl_applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
         )
 
     def get_initial_queryset(self):

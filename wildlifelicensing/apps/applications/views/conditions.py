@@ -29,7 +29,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug)) as data_file:
+        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug), 'r') as data_file:
             form_structure = json.load(data_file)
 
         convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
@@ -37,7 +37,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = form_structure
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
-        kwargs['action_url'] = reverse('applications:submit_conditions', args=[application.pk])
+        kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
@@ -59,8 +59,7 @@ class EnterConditionsAssessorView(CanEditAssessmentMixin, TemplateView):
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
         kwargs['assessment'] = assessment
-
-        kwargs['action_url'] = reverse('applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
+        kwargs['action_url'] = reverse('wl_applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
@@ -118,13 +117,13 @@ class SubmitConditionsView(OfficerRequiredMixin, View):
                                                 application=application, order=order)
 
         if request.POST.get('submissionType') == 'backToProcessing':
-            return redirect('applications:process', *args)
+            return redirect('wl_applications:process', *args)
         else:
-            return redirect('applications:issue_licence', *self.args, **self.kwargs)
+            return redirect('wl_applications:issue_licence', *self.args, **self.kwargs)
 
 
 class SubmitConditionsAssessorView(CanEditAssessmentMixin, View):
-    success_url = reverse_lazy('dashboard:home')
+    success_url = reverse_lazy('wl_dashboard:home')
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])

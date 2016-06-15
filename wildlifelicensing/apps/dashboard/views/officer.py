@@ -27,7 +27,7 @@ def _render_cover_letter_document(licence):
 class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'Officer Dashboard'
-    url = reverse_lazy('dashboard:tables_applications_officer')
+    url = reverse_lazy('wl_dashboard:tables_applications_officer')
 
     def _build_tree_nodes(self):
         """
@@ -73,7 +73,7 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
 
         on_behalf_applications = _get_current_onbehalf_applications(self.request.user)
         if on_behalf_applications.count() > 0:
-            url = reverse_lazy('dashboard:tables_applications_officer_onbehalf')
+            url = reverse_lazy('wl_dashboard:tables_applications_officer_onbehalf')
             on_behalf_applications_node = self._create_node('My current proxied applications', href=url,
                                                             count=on_behalf_applications.count())
             result.append(on_behalf_applications_node)
@@ -81,12 +81,12 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
         result.append(all_applications_node)
 
         # Licences
-        url = reverse_lazy('dashboard:tables_licences_officer')
+        url = reverse_lazy('wl_dashboard:tables_licences_officer')
         all_licences_node = self._create_node('All licences', href=url, count=WildlifeLicence.objects.count())
         result.append(all_licences_node)
 
         # Returns
-        url = reverse_lazy('dashboard:tables_returns_officer')
+        url = reverse_lazy('wl_dashboard:tables_returns_officer')
         all_returns_node = self._create_node('All returns', href=url,
                                              count=Return.objects.exclude(status__in=['draft', 'future']).count())
         result.append(all_returns_node)
@@ -135,7 +135,7 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         data['applications']['filters']['assignee'] = {
             'values': [('all', 'All')] + [(user.pk, base.render_user_name(user),) for user in get_all_officers()]
         }
-        data['applications']['ajax']['url'] = reverse('dashboard:data_application_officer')
+        data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer')
         # global table options
         data['applications']['tableOptions'] = {
             'pageLength': 25
@@ -195,20 +195,20 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
     def _render_action_column(obj):
         if obj.processing_status == 'ready_for_conditions':
             return '<a href="{0}">Enter Conditions</a>'.format(
-                reverse('applications:enter_conditions', args=[obj.pk]),
+                reverse('wl_applications:enter_conditions', args=[obj.pk]),
             )
         if obj.processing_status == 'ready_to_issue':
             return '<a href="{0}">Issue Licence</a>'.format(
-                reverse('applications:issue_licence', args=[obj.pk]),
+                reverse('wl_applications:issue_licence', args=[obj.pk]),
             )
         elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.licence_document is not None:
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:view_application', args=[obj.pk]),
+                reverse('wl_applications:view_application', args=[obj.pk]),
                 'View application (read-only)'
             )
         else:
             return '<a href="{0}">Process</a>'.format(
-                reverse('applications:process', args=[obj.pk]),
+                reverse('wl_applications:process', args=[obj.pk]),
             )
 
 
@@ -239,7 +239,7 @@ class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseV
                 'orderable': False
             }
         ]
-        data['applications']['ajax']['url'] = reverse('dashboard:data_application_officer_onbehalf')
+        data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer_onbehalf')
 
         return data
 
@@ -270,21 +270,21 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
         status = obj.customer_status
         if status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
                 'Continue application'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
                 'Amend application'
             )
         elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('main:identification'),
+                reverse('wl_main:identification'),
                 'Update ID')
         else:
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:view_application', args=[obj.pk]),
+                reverse('wl_applications:view_application', args=[obj.pk]),
                 'View application (read-only)'
             )
 
@@ -336,7 +336,7 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        data['licences']['ajax']['url'] = reverse('dashboard:data_licences_officer')
+        data['licences']['ajax']['url'] = reverse('wl_dashboard:data_licences_officer')
         # filters (note: there is already the licenceType from the super class)
         filters = {
             'status': {
@@ -427,7 +427,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     @staticmethod
     def _render_action(instance):
-        url = reverse('applications:reissue_licence', args=(instance.pk,))
+        url = reverse('wl_applications:reissue_licence', args=(instance.pk,))
         return '<a href="{0}">Reissue</a>'.format(url)
 
     def get_initial_queryset(self):
@@ -473,7 +473,7 @@ class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        data['returns']['ajax']['url'] = reverse('dashboard:data_returns_officer')
+        data['returns']['ajax']['url'] = reverse('wl_dashboard:data_returns_officer')
         # global table options
         data['returns']['tableOptions'] = {
             'pageLength': 25
@@ -543,16 +543,16 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
     @staticmethod
     def _render_action(instance):
         if instance.status == 'current' or instance.status == 'future':
-            url = reverse('returns:enter_return', args=(instance.pk,))
+            url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Enter Return</a>'.format(url)
         elif instance.status == 'draft':
-            url = reverse('returns:enter_return', args=(instance.pk,))
+            url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
         elif instance.status == 'submitted':
-            url = reverse('returns:curate_return', args=(instance.pk,))
+            url = reverse('wl_returns:curate_return', args=(instance.pk,))
             return '<a href="{0}">Curate Return</a>'.format(url)
         else:
-            url = reverse('returns:view_return', args=(instance.pk,))
+            url = reverse('wl_returns:view_return', args=(instance.pk,))
             return '<a href="{0}">View Return (read-only)</a>'.format(url)
 
     @staticmethod

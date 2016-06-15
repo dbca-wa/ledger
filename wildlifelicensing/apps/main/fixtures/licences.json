@@ -15,7 +15,7 @@
     }
 },
 {
-    "model": "main.wildlifelicencetype",
+    "model": "wl_main.wildlifelicencetype",
     "pk": 1,
     "fields": {
         "code_slug": "regulation-17",

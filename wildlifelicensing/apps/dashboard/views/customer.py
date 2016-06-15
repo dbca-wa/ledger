@@ -54,7 +54,7 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
             'order': [[0, 'desc']]
         }
 
-        data['applications']['ajax']['url'] = reverse('dashboard:data_application_customer')
+        data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_customer')
 
         # Licences
         data['licences']['columnDefinitions'] = [
@@ -84,7 +84,7 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        data['licences']['ajax']['url'] = reverse('dashboard:data_licences_customer')
+        data['licences']['ajax']['url'] = reverse('wl_dashboard:data_licences_customer')
         # no filters
         if 'filters' in data['licences']:
             del data['licences']['filters']
@@ -120,7 +120,7 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        data['returns']['ajax']['url'] = reverse('dashboard:data_returns_customer')
+        data['returns']['ajax']['url'] = reverse('wl_dashboard:data_returns_customer')
         # no filters
         if 'filters' in data['returns']:
             del data['returns']['filters']
@@ -155,21 +155,21 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         status = obj.customer_status
         if status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
                 'Continue application'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
                 'Amend application'
             )
         elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('main:identification'),
+                reverse('wl_main:identification'),
                 'Update ID')
         else:
             return '<a href="{0}"">{1}</a>'.format(
-                reverse('applications:view_application', args=[obj.pk]),
+                reverse('wl_applications:view_application', args=[obj.pk]),
                 'View application (read-only)'
             )
 
@@ -216,7 +216,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
                 pass
             expiry_days = (instance.end_date - datetime.date.today()).days
             if expiry_days <= 30:
-                url = reverse('applications:renew_licence', args=(instance.pk,))
+                url = reverse('wl_applications:renew_licence', args=(instance.pk,))
                 return '<a href="{0}">Renew</a>'.format(url)
             else:
                 return 'Renewable in ' + str(expiry_days - 30) + ' days'
@@ -257,13 +257,13 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
     @staticmethod
     def _render_action(instance):
         if instance.status == 'current':
-            url = reverse('returns:enter_return', args=(instance.pk,))
+            url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Enter Return</a>'.format(url)
         elif instance.status == 'draft':
-            url = reverse('returns:enter_return', args=(instance.pk,))
+            url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
         else:
-            url = reverse('returns:view_return', args=(instance.pk,))
+            url = reverse('wl_returns:view_return', args=(instance.pk,))
             return '<a href="{0}">View Return (read-only)</a>'.format(url)
 
     @staticmethod
