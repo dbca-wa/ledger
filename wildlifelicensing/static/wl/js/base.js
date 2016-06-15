@@ -8,4 +8,10 @@ require(['jQuery', 'bootstrap'], function ($) { // bootstrap returns nothing so 
             }
         });
     });
+
+    // fix for bootstrap 3.3.6 bug for when popovers don't reshow after hiding via popover('hide).
+    // see https://github.com/twbs/bootstrap/issues/16732
+    $('body').on('hidden.bs.popover', function (e) {
+        $(e.target).data("bs.popover").inState.click = false;
+    });
 });
