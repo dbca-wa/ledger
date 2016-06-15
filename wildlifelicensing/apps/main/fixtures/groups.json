@@ -2,19 +2,13 @@
     {
         "model": "auth.Group",
         "fields": {
-            "name": "Customers"
-        }
-    },
-    {
-        "model": "auth.Group",
-        "fields": {
             "name": "Officers"
         }
     },
         {
         "model": "auth.Group",
         "fields": {
-            "name": "Others"
+            "name": "Assessors"
         }
     }
 ]
