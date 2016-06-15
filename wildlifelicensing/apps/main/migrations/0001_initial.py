@@ -14,7 +14,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ('licence', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('accounts', '0002_fixtures'),
     ]
 
     operations = [
