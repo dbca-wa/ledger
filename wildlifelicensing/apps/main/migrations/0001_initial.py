@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
                 ('licencetype_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='licence.LicenceType')),
                 ('identification_required', models.BooleanField(default=False)),
                 ('default_conditions', models.ManyToManyField(blank=True, through='wl_main.DefaultCondition', to='wl_main.Condition')),
-                ('code_slug', models.SlugField(default='', max_length=64)),
+                ('code_slug', models.SlugField(max_length=64)),
             ],
             options={
                 'abstract': False,
