@@ -213,7 +213,7 @@ define(
                 returnsColumns
             );
         }
-        
+
         function initReturnsFilters() {
             var data = options.data,
                 optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),

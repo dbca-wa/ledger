@@ -67,7 +67,7 @@
                              <td>{{ customer.first_name }}</td>
                              <td>{{ customer.dob }}</td>
                              <td>{{ customer.email }}</td>
-                             <td><a href="{% url 'customer_management:view_customer' customer.pk %}">View</a></td>
+                             <td><a href="{% url 'wl_customer_management:view_customer' customer.pk %}">View</a></td>
                          </tr>
                         {% endfor %}
                     </tbody>

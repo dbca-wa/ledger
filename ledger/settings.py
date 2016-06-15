@@ -45,11 +45,12 @@ INSTALLED_APPS = [
     ]) + [
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
-    'wildlifelicensing.apps.WLDashboard',
     'wildlifelicensing.apps.WLMain',
+    'wildlifelicensing.apps.WLDashboard',
     'wildlifelicensing.apps.WLApplications',
     'wildlifelicensing.apps.WLEmails',
-    'wildlifelicensing.apps.WLReturns'
+    'wildlifelicensing.apps.WLReturns',
+    'wildlifelicensing.apps.WLCustomerManagement'
 ]
 
 SITE_ID = 1

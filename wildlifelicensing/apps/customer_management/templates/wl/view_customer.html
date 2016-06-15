@@ -11,13 +11,22 @@
     <link href="{% static 'wl/css/customer_management.css' %}" rel="stylesheet"/>
 {% endblock %}
 
+{% block requirements %}
+    require(["{% static 'wl/js/dash_tables.js' %}"], function (app) {
+        var options = {
+            data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}
+        };
+        app(options);
+    });
+{% endblock %}
+
 {% block breadcrumbs %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'customer_management:lookup_customer' %}">Customer Lookup</a></li>
+                    <li><a href="{% url 'wl_customer_management:lookup_customer' %}">Customer Lookup</a></li>
                     <li class="active">View Customer</li>
                 </ol>
             </div>
@@ -29,12 +38,12 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h2>Customer Overview for {{ customer.get_full_name }}</h2>
+                <h2>{{ customer.get_full_name }}</h2>
                 <hr>
             </div>
         </div>
         <div class="panel panel-default" id="applications">
-            <div class="panel-heading" role="tab" id="applications-heading">
+            <div class="panel-heading" id="applications-heading">
                 <h4 class="panel-title">
                     <a role="button" data-toggle="collapse" href="#details-collapse"
                        aria-expanded="true" aria-controls="collapseOne">
@@ -129,14 +138,14 @@
                     </div>
                     <div class="row details-row-buffer">
                          <div class="col-md-12">
-                            <a href="{% url 'customer_management:edit_customer_details' customer.pk %}" class="pull-right add-link">Edit Customer Details</a>
+                            <a href="{% url 'wl_customer_management:edit_customer_details' customer.pk %}" class="pull-right add-link">Edit Customer Details</a>
                          </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="panel panel-default" id="applications">
-            <div class="panel-heading" role="tab" id="applications-heading">
+            <div class="panel-heading" id="applications-heading">
                 <h4 class="panel-title">
                     <a role="button" data-toggle="collapse" href="#profiles-collapse"
                        aria-expanded="true" aria-controls="collapseOne">
@@ -147,7 +156,7 @@
             <div id="profiles-collapse" class="panel-collapse collapse in" role="tabpanel"
                  aria-labelledby="profiles-heading">
                 <div class="panel-body">
-                    <a href="{% url 'customer_management:edit_customer_profile' customer.pk %}" class="pull-right add-link">Add Profile</a>
+                    <a href="{% url 'wl_customer_management:edit_customer_profile' customer.pk %}" class="pull-right add-link">Add Profile</a>
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
@@ -165,7 +174,7 @@
                                     <td>{{ profile.email }}</td>
                                     <td>{{ profile.postal_address }}</td>
                                     <td>{{ profile.institution }}</td>
-                                    <td><a href="{% url 'customer_management:edit_customer_profile' customer.pk profile.pk %}">Edit</a></td>
+                                    <td><a href="{% url 'wl_customer_management:edit_customer_profile' customer.pk profile.pk %}">Edit</a></td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -174,7 +183,7 @@
             </div>
         </div>
         <div class="panel panel-default" id="applications">
-            <div class="panel-heading" role="tab" id="applications-heading">
+            <div class="panel-heading" id="applications-heading">
                 <h4 class="panel-title">
                     <a role="button" data-toggle="collapse" href="#applications-collapse"
                        aria-expanded="true" aria-controls="collapseOne">
@@ -196,7 +205,7 @@
             </div>
         </div>
         <div class="panel panel-default" id="licences">
-            <div class="panel-heading" role="tab" id="licences-heading">
+            <div class="panel-heading" id="licences-heading">
                 <h4 class="panel-title">
                     <a role="button" data-toggle="collapse" href="#licences-collapse"
                        aria-expanded="true" aria-controls="collapseOne">
@@ -218,7 +227,7 @@
             </div>
         </div>
         <div class="panel panel-default" id="returns">
-            <div class="panel-heading" role="tab" id="returns-heading">
+            <div class="panel-heading" id="returns-heading">
                 <h4 class="panel-title">
                     <a role="button" data-toggle="collapse" href="#returns-collapse"
                        aria-expanded="true" aria-controls="collapseOne">
