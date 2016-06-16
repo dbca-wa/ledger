@@ -10,7 +10,7 @@ logger = logging.getLogger('log')
 def _render(template, context):
     if isinstance(context, dict):
         context = Context(context)
-    if not isinstance(template, Template):
+    if isinstance(template, six.string_types):
         template = Template(template)
     return template.render(context)
 
