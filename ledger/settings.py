@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'wildlifelicensing.apps.applications',
     'wildlifelicensing.apps.emails',
     'wildlifelicensing.apps.returns',
-    'wildlifelicensing.apps.customer_management'
+    'wildlifelicensing.apps.customer_management',
+    'wildlifelicensing.apps.reports'
 ]
 
 SITE_ID = 1

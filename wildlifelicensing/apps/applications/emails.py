@@ -19,12 +19,6 @@ class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_amendment_requested.txt'
 
 
-class ApplicationAssessmentReminderEmail(TemplateEmailBase):
-    subject = 'Reminder: An amendment to you wildlife licensing application is required.'
-    html_template = 'wl/emails/application_assessment_reminder.html'
-    txt_template = 'wl/emails/application_assessment_reminder.txt'
-
-
 def send_amendment_requested_email(application, amendment_request, request):
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
@@ -56,11 +50,17 @@ def send_assessment_requested_email(assessment, request):
                 args=[application.pk, assessment.pk])
     )
     context = {
-        'assessor': assessment.assessor_group,
         'url': url
     }
     msg = email.send(assessment.assessor_group.email, context=context)
+
     _log_email(msg, application=application, sender=request.user)
+
+
+class ApplicationAssessmentReminderEmail(TemplateEmailBase):
+    subject = 'Reminder: An amendment to you wildlife licensing application is required.'
+    html_template = 'wl/emails/application_assessment_reminder.html'
+    txt_template = 'wl/emails/application_assessment_reminder.txt'
 
 
 def send_assessment_reminder_email(assessment, request):

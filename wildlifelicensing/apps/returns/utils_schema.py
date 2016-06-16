@@ -3,7 +3,7 @@ from jsontableschema import types
 
 from django.utils.encoding import python_2_unicode_compatible
 
-from wildlifelicensing.apps.returns.excel import is_blank_value
+from wildlifelicensing.apps.main.excel import is_blank_value
 
 
 @python_2_unicode_compatible

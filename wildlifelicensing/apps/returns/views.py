@@ -15,7 +15,7 @@ from jsontableschema.model import SchemaModel
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow
-from wildlifelicensing.apps.returns import excel
+from wildlifelicensing.apps.main import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
 from wildlifelicensing.apps.returns.utils_schema import Schema
 from wildlifelicensing.apps.returns.signals import return_submitted

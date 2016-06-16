@@ -1,9 +1,5 @@
 {% extends 'wl/emails/base_email.txt' %}
 
-{% block greetings %}
-    Hi,
-{% endblock %}
-
 {% block content %}
     A Wildlife Licensing application has been assessed by {{ assessor }} of {{ assessor_department }}.
     {% if url %}
