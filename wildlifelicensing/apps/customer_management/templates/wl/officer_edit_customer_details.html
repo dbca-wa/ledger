@@ -1,0 +1,36 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><a href="{% url 'wl_customer_management:lookup_customer' %}">Customer Lookup</a></li>
+                    <li><a href="{% url 'wl_customer_management:view_customer' customer.pk %}">View Customer</a></li>
+                    <li class="active">Edit Customer Details</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container bottom-buffer">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Edit Customer Details</h2>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% bootstrap_form_errors form %}
+                    {% bootstrap_form form %}
+                    <button type="submit" class="btn btn-primary pull-right">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

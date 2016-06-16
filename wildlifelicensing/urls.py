@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^admin/', wildlife_licensing_admin_site.urls),
     url(r'^$', DashBoardRoutingView.as_view(), name='wl_home'),
     url(r'', include('wildlifelicensing.apps.main.urls', namespace='wl_main')),
+    url(r'', include('wildlifelicensing.apps.customer_management.urls', namespace='wl_customer_management')),
     url(r'', include('wildlifelicensing.apps.dashboard.urls', namespace='wl_dashboard')),
     url(r'^applications/', include('wildlifelicensing.apps.applications.urls', namespace='wl_applications')),
     url(r'^returns/', include('wildlifelicensing.apps.returns.urls', namespace='wl_returns')),
