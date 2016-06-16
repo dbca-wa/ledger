@@ -54,7 +54,17 @@
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
-                                    <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
+                                    {% if request.user|is_customer %}
+                                        <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
+                                    {% elif request.user|is_officer %}
+                                        <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
+                                        <li><a href="{% url 'wl_dashboard:tables_applications_officer' %}">Applications</a></li>
+                                        <li><a href="{% url 'wl_dashboard:tables_licences_officer' %}">Licences</a></li>
+                                        <li><a href="{% url 'wl_dashboard:tables_returns_officer' %}">Returns</a></li>
+                                        <li><a href="{% url 'wl_customer_management:lookup_customer' %}">Customers</a></li>
+                                    {% else %}
+                                        <li><a href="{% url 'wl_dashboard:tables_applications_assessor' %}">Applications</a></li>
+                                    {% endif %}
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">
