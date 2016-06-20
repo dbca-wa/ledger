@@ -95,35 +95,37 @@
                 <form method="POST">
                     {% csrf_token %}
                     {% for table in tables %}
-                        <div class="row bottom-buffer">
+                        <div class="row top-buffer">
                             <div class="col-md-12">
                                 <h3 class="no-margin">{{ table.name }}</h3>
-                                <table class="return-table table table-striped table-bordered dataTable">
-                                    <thead>
-                                        <tr>
-                                            {% for header in table.headers %}
-                                                <th>{{ header }}</th>
-                                            {% endfor %}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for row in table.data %}
+                                <div class=" horizontal-scroll bottom-buffer">
+                                    <table class="return-table table table-striped table-bordered dataTable">
+                                        <thead>
                                             <tr>
                                                 {% for header in table.headers %}
-                                                    {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
-                                                        <td>
-                                                            <input name="{{ table.name }}::{{ header }}"
-                                                                   value="{{ value }}"/>
-                                                            {% if error %}
-                                                                <div><span class="text-danger">{{ error }}</span></div>
-                                                            {% endif %}
-                                                        </td>
-                                                    {% endwith %}
+                                                    <th>{{ header }}</th>
                                                 {% endfor %}
                                             </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in table.data %}
+                                                <tr>
+                                                    {% for header in table.headers %}
+                                                        {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
+                                                            <td>
+                                                                <input name="{{ table.name }}::{{ header }}"
+                                                                       value="{{ value }}"/>
+                                                                {% if error %}
+                                                                    <div><span class="text-danger">{{ error }}</span></div>
+                                                                {% endif %}
+                                                            </td>
+                                                        {% endwith %}
+                                                    {% endfor %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <a class="add-return-row">Add Row</a>
                             </div>
                         </div>

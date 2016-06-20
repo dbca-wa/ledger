@@ -62,8 +62,9 @@
                                         <li><a href="{% url 'wl_dashboard:tables_licences_officer' %}">Licences</a></li>
                                         <li><a href="{% url 'wl_dashboard:tables_returns_officer' %}">Returns</a></li>
                                         <li><a href="{% url 'wl_customer_management:lookup_customer' %}">Customers</a></li>
+                                        <li><a href="{% url 'wl_reports:reports' %}">Reports</a></li>
                                     {% else %}
-                                        <li><a href="{% url 'wl_dashboard:tables_applications_assessor' %}">Applications</a></li>
+                                        <li><a href="{% url 'wl_dashboard:tables_assessor' %}">Applications</a></li>
                                     {% endif %}
                                 {% endblock %}
                             </ul>

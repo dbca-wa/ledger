@@ -62,6 +62,10 @@
     margin: 0px;
 }
 
+.horizontal-scroll {
+    overflow-x:scroll;
+}
+
 .modal-header {
     background-color: #529b6b;
     color: #fcb13f;

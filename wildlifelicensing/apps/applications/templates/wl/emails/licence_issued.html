@@ -1,6 +1,6 @@
-{%  extends 'wl/emails/base_email.html' %}
+{% extends 'wl/emails/base_email.html' %}
 
-{%  block content %}
+{% block content %}
     Congratulations, your Wildlife Licensing application has been approved and the corresponding licence has been issued.
     <p>You'll find your licence in attachment. Please read it carefully.</p>
     {% comment 'Removed link to online system for beta' %}
@@ -10,4 +10,4 @@
     {% endif %}
     {% endcomment %}
     <p>{{ cover_letter_message }}</p>
-{%  endblock %}
+{% endblock %}

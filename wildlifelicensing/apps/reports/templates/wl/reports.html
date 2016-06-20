@@ -1,0 +1,103 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block requirements %}
+    require(['jQuery', 'bootstrap-datetimepicker'], function ($) {
+        $("[name$='date']").datetimepicker({
+            format: 'DD/MM/YYYY'
+        });
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li class="active">Reports</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container bottom-buffer">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Reports</h2>
+                <hr>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Applications</h3>
+                <form method="get" action="{% url 'wl_reports:applications_report' %}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% bootstrap_field form.from_date %}
+                        </div>
+                        <div class="col-md-4">
+                            {% bootstrap_field form.to_date %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <button type=submit class="btn btn-primary">Generate Applications Report</button>
+                            <hr>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Licences</h3>
+                <form method="get" action="{% url 'wl_reports:licences_report' %}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% bootstrap_field form.from_date %}
+                        </div>
+                        <div class="col-md-4">
+                            {% bootstrap_field form.to_date %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <button type=submit class="btn btn-primary">Generate Licences Report</button>
+                            <hr>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Returns</h3>
+                <form method="get" action="{% url 'wl_reports:returns_report' %}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% bootstrap_field form.from_date %}
+                        </div>
+                        <div class="col-md-4">
+                            {% bootstrap_field form.to_date %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <button type=submit class="btn btn-primary">Generate Returns Report</button>
+                            <hr>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

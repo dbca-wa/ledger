@@ -15,8 +15,14 @@ define(['jQuery', 'datatables.net', 'datatables.bootstrap', 'datatables.datetime
                 var $tbody = $(this).parent().find('table').find('tbody'),
                     $row = $tbody.find('tr:first');
 
+                // clone the top row
                 $rowCopy = $row.clone();
+
+                // clear any values/errors in the cloned row
                 $rowCopy.find('input').val('');
+                $rowCopy.find('.text-danger').parent().remove();
+
+                // append cloned row
                 $tbody.append($rowCopy);
             });
 

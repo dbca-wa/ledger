@@ -6,7 +6,7 @@ from django.apps import AppConfig
 class ReturnsConfig(AppConfig):
     name = 'wildlifelicensing.apps.returns'
     label = 'wl_returns'
-    verbose_name = 'returns'
+    verbose_name = 'WL Returns'
 
     run_once = False
 
