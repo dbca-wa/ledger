@@ -35,9 +35,9 @@
     <div class="container">
         <div class="row top-buffer">
             <div class="col-md-12">
-                <h3>Customer Lookup</h3>
+                <h2>Customer Lookup</h2>
                 <p>
-                    Enter the of the customer name in the form: "first-name last-name", or "last-name, first-name".
+                    Enter the customer name in the form: "first-name last-name", or "last-name, first-name".
                 </p>
                 <form method="post">
                     {% csrf_token %}
@@ -67,7 +67,7 @@
                              <td>{{ customer.first_name }}</td>
                              <td>{{ customer.dob }}</td>
                              <td>{{ customer.email }}</td>
-                             <td><a href="{% url 'wl_customer_management:view_customer' customer.pk %}">View</a></td>
+                             <td><a href="{% url 'wl_customer_management:view_customer' customer.pk %}">Manage</a></td>
                          </tr>
                         {% endfor %}
                     </tbody>
