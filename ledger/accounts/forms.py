@@ -71,9 +71,7 @@ class ProfileForm(ProfileBaseForm):
 
         super(ProfileForm, self).__init__(*args, **kwargs)
 
-        print user
         if user is not None:
-            print user
             self.fields['user'].initial = user
 
         if initial_display_name is not None:
