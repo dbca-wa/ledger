@@ -3,27 +3,35 @@
   "title": "Returns for regulation 17",
   "resources": [
     {
-      "name": "species-information",
-      "title": "Species Information",
+      "name": "regulation-17",
+      "title": "Regulation 17",
       "path": "",
       "schema": {
         "fields": [
           {
-            "name": "Species",
+            "name": "location",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "Species Count",
-            "type": "integer",
+            "name": "site",
+            "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "Latitude",
+            "name": "datum",
+            "type": "string",
+            "default": "GDA94",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "latitude",
             "type": "number",
             "constraints": {
               "required": true,
@@ -32,36 +40,108 @@
             }
           },
           {
-            "name": "Longitude",
+            "name": "longitude",
             "type": "number",
             "constraints": {
-              "required": true,
               "minimum": -180.0,
               "maximum": 180.0
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "more-species-information",
-      "title": "More Species Information",
-      "path": "",
-      "schema": {
-        "fields": [
+          },
           {
-            "name": "Species",
+            "name": "zone",
+            "type": "string"
+          },
+          {
+            "name": "Easting",
+            "type": "number"
+          },
+          {
+            "name": "Northing",
+            "type": "number"
+          },
+          {
+            "name": "accuracy",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "Species Count",
-            "type": "integer",
+            "name": "date",
+            "type": "string",
             "constraints": {
               "required": true
             }
+          },
+          {
+            "name": "name_id",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "species_name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "common_name",
+            "type": "string"
+          },
+          {
+            "name": "species_group",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "count",
+            "type": "number",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "identifier",
+            "type": "string"
+          },
+          {
+            "name": "certainty",
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "fate",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "samples",
+            "type": "string"
+          },
+          {
+            "name": "marking",
+            "type": "string"
+          },
+          {
+            "name": "transmitter",
+            "type": "string"
+          },
+          {
+            "name": "voucher_ref",
+            "type": "string"
           }
         ]
       }

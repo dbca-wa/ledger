@@ -88,44 +88,46 @@
                 <div class="row top-buffer">
                     <div class="col-md-12">
                         <h3>{{ table.title }}</h3>
-                        <table class="return-table table table-striped table-bordered dataTable">
-                            <thead>
-                                <tr>
-                                    {% for header in table.headers %}
-                                        <th>{{ header }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if table.data %}
-                                    {% for row in table.data %}
-                                        <tr>
-                                            {% for header in table.headers %}
-                                                {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
+                        <div class=" horizontal-scroll bottom-buffer">
+                            <table class="return-table table table-striped table-bordered dataTable">
+                                <thead>
+                                    <tr>
+                                        {% for header in table.headers %}
+                                            <th>{{ header }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if table.data %}
+                                        {% for row in table.data %}
+                                            <tr>
+                                                {% for header in table.headers %}
+                                                    {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
+                                                        <td>
+                                                            <input name="{{ table.name }}::{{ header }}"
+                                                                   value="{{ value }}"/>
+                                                            {% if error %}
+                                                                <div><span class="text-danger">{{ error }}</span></div>
+                                                            {% endif %}
+                                                        </td>
+                                                    {% endwith %}
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for i in '01234' %}
+                                            <tr>
+                                                {% for header in table.headers %}
                                                     <td>
-                                                        <input name="{{ table.name }}::{{ header }}"
-                                                               value="{{ value }}"/>
-                                                        {% if error %}
-                                                            <div><span class="text-danger">{{ error }}</span></div>
-                                                        {% endif %}
+                                                        <input name="{{ table.name }}::{{ header }}"/>
                                                     </td>
-                                                {% endwith %}
-                                            {% endfor %}
-                                        </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    {% for i in '01234' %}
-                                        <tr>
-                                            {% for header in table.headers %}
-                                                <td>
-                                                    <input name="{{ table.name }}::{{ header }}"/>
-                                                </td>
-                                            {% endfor %}
-                                        </tr>
-                                    {% endfor %}
-                                {% endif %}
-                            </tbody>
-                        </table>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
                         <a class="add-return-row">Add Row</a>
                     </div>
                 </div>
