@@ -219,7 +219,7 @@ class TableData:
         for row in self.rows:
             data = {}
             for i, value in enumerate(row):
-                data[get_column_letter(i+1)] = value
+                data[get_column_letter(i + 1)] = value
             yield data
 
     def _parse_column_headers(self):
@@ -262,4 +262,5 @@ class TableData:
     def _get_row_cells(self, row_index):
         start = self.top_left_column - 1
         end = start + len(self.column_headers)
+
         return self.worksheet.rows[row_index][start:end]

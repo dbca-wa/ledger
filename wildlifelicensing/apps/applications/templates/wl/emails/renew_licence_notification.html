@@ -1,9 +1,9 @@
-{%  extends 'wl/emails/base_email.html' %}
+{% extends 'wl/emails/base_email.html' %}
 
-{%  block content %}
+{% block content %}
     <p>Your Wildlife Licence:</p>
     <p><strong>{{ licence.licence_type.name }}</strong></p>
     <p>is due to expire on {{ licence.end_date }}. If you wish to renew the licence, please follow the following URL:</p>
     <p><a href='{{ url }}'>{{ url }}</a></p>
     <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.</p>
-{%  endblock %}
+{% endblock %}

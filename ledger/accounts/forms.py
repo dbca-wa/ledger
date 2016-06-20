@@ -61,7 +61,7 @@ class ProfileForm(ProfileBaseForm):
     # auth_identity = forms.BooleanField(required=False)
     class Meta:
         model = Profile
-        fields = ['user','name', 'email', 'institution']
+        fields = ['user', 'name', 'email', 'institution']
         widgets = {'user': forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
