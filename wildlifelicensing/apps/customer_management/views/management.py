@@ -266,7 +266,7 @@ class EditProfileView(OfficerRequiredMixin, TemplateView):
         customer = get_object_or_404(EmailUser, pk=self.args[0])
 
         if len(self.args) > 1:
-            profile = get_object_or_404(Profile, pk=args[0])
+            profile = get_object_or_404(Profile, pk=args[1])
             profile_form = ProfileForm(request.POST, instance=profile)
             address_form = AddressForm(request.POST, instance=profile.postal_address)
         else:

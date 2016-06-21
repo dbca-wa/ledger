@@ -18,7 +18,7 @@ from wildlifelicensing.apps.applications.utils import convert_application_data_f
     format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
-from wildlifelicensing.apps.applications.mixins import CanEditAssessmentMixin
+from wildlifelicensing.apps.applications.mixins import CanPerformAssessmentMixin
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -42,7 +42,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
 
-class EnterConditionsAssessorView(CanEditAssessmentMixin, TemplateView):
+class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
 
     def get_context_data(self, **kwargs):
@@ -122,7 +122,7 @@ class SubmitConditionsView(OfficerRequiredMixin, View):
             return redirect('wl_applications:issue_licence', *self.args, **self.kwargs)
 
 
-class SubmitConditionsAssessorView(CanEditAssessmentMixin, View):
+class SubmitConditionsAssessorView(CanPerformAssessmentMixin, View):
     success_url = reverse_lazy('wl_dashboard:home')
 
     def post(self, request, *args, **kwargs):

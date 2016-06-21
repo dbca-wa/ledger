@@ -40,7 +40,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         else:
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
-            kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable)
+            kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable,
+                                                            return_frequency=application.licence_type.returntype.month_frequency)
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
@@ -64,7 +65,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             if application.previous_application is not None:
                 licence.licence_number = application.previous_application.licence.licence_number
 
-                # if licence is renewal, want to use previous licence's sequence number
+                # if licence is renewal, use previous licence's sequence number
                 if licence.licence_sequence == 0:
                     licence.licence_sequence = application.previous_application.licence.licence_sequence
 
@@ -123,7 +124,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
 
 class ReissueLicenceView(OfficerRequiredMixin, View):
-
     def get(self, request, *args, **kwargs):
         licence = get_object_or_404(WildlifeLicence, pk=self.args[0])
 

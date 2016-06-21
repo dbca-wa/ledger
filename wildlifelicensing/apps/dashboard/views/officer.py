@@ -10,6 +10,7 @@ from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.dashboard.views import base
 from wildlifelicensing.apps.main.helpers import get_all_officers
+from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
 
 
 def _get_current_onbehalf_applications(officer):
@@ -427,8 +428,14 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     @staticmethod
     def _render_action(instance):
-        url = reverse('wl_applications:reissue_licence', args=(instance.pk,))
-        return '<a href="{0}">Reissue</a>'.format(url)
+        reissue_url = reverse('wl_applications:reissue_licence', args=(instance.pk,))
+        expiry_days = (instance.end_date - datetime.date.today()).days
+
+        if expiry_days <= 30 and instance.is_renewable:
+            renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
+            return '<a href="{0}">Renew</a> / <a href="{1}">Reissue</a>'.format(renew_url, reissue_url)
+        else:
+            return '<a href="{0}">Reissue</a>'.format(reissue_url)
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()
@@ -481,9 +488,9 @@ class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         filters = {
             'status': {
                 'values': [
-                              (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
-                              (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
-                          ] + list(Return.STATUS_CHOICES)
+                    (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
+                    (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
+                ] + list(Return.STATUS_CHOICES)
             }
         }
         data['returns']['filters'].update(filters)
@@ -529,6 +536,9 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         'due_date': {
             'render': lambda self, instance: base.render_date(instance.due_date)
         },
+        'status': {
+            'render': lambda self, instance: self._render_status(instance)
+        },
         'licence_number': {
             'render': lambda self, instance: base.render_licence_number(instance.licence),
             'search': lambda self, search: base.build_field_query([
@@ -539,6 +549,19 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             'render': lambda self, instance: self._render_action(instance)
         }
     }
+
+    @staticmethod
+    def _render_status(instance):
+        status = instance.status
+        if status == 'current':
+            if is_return_overdue(instance):
+                return '<span class="label label-danger">Overdue</span>'
+            elif is_return_due_soon(instance):
+                return '<span class="label label-warning">Due soon</span>'
+            else:
+                return 'Current'
+        else:
+            return dict(Return.STATUS_CHOICES)[status]
 
     @staticmethod
     def _render_action(instance):

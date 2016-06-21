@@ -230,7 +230,7 @@ class AmendmentRequestView(OfficerRequiredMixin, View):
             application.processing_status = determine_processing_status(application)
             application.save()
 
-            send_amendment_requested_email(application, amendment_request, request=request)
+            send_amendment_requested_email(amendment_request, request=request)
 
             response = {'review_status': REVIEW_STATUSES[application.review_status],
                         'processing_status': PROCESSING_STATUSES[application.processing_status],
@@ -251,6 +251,7 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 
         application.processing_status = determine_processing_status(application)
         application.save()
+
         send_assessment_requested_email(assessment, request)
 
         return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment),

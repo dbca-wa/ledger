@@ -240,9 +240,10 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 #     elements.append(Paragraph("Note: If you haven't been on the Wildlife Licensing site recently you might have to "
 #                               "login first before using the provided link.", styles['Left']))
 #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-#     if licence.cover_letter_message:
-#         elements.append(Paragraph(licence.cover_letter_message, styles['Left']))
-#         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    if licence.cover_letter_message:
+        elements.append(Paragraph(licence.cover_letter_message, styles['Left']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     elements.append(Paragraph('Best regards,', styles['Left']))
     elements.append(Paragraph('Parks and Wildlife Customer Portal', styles['Left']))

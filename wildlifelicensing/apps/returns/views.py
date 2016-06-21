@@ -28,6 +28,7 @@ RETURNS_APP_PATH = os.path.join(os.path.dirname(__file__), 'excel_templates')
 
 DATE_FORMAT = '%d/%m/%Y'
 
+
 def _is_post_data_valid(ret, tables_info, post_data):
     for table in tables_info:
         table_rows = _get_table_rows_from_post(table.get('name'), post_data)
@@ -125,7 +126,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                     workbook = excel.load_workbook_content(path)
 
                     for table in context['tables']:
-                        worksheet = excel.get_sheet(workbook, table.get('title'))
+                        worksheet = excel.get_sheet(workbook, table.get('name'))
                         if worksheet is not None:
                             table_data = excel.TableData(worksheet)
                             schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
