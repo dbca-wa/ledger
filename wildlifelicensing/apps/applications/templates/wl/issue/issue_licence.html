@@ -16,8 +16,17 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/issue/issue_licence'], function(issueLicence) {
+    require(['js/issue/issue_licence', 'js/communications_log'], function(issueLicence, commsLog) {
         issueLicence.initialise();
+
+        commsLog.initCommunicationLog({
+            showLogPopoverSelector: '#showLog',
+            showLogEntryModalSelector: '#addLogEntry',
+            logEntryModalSelector: '#logEntryModal',
+            logEntryFormSelector: '#addLogEntryForm',
+            logListURL: "{% url 'wl_applications:log_list' application.id %}",
+            addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+        });
     });
 {% endblock %}
 
@@ -95,6 +104,9 @@
                                 </div>
                              </div>
                         </div>
+                        {% with add_text='Add application log entry' %}
+                            {% include 'wl/communications_panel.html' %}
+                        {% endwith %}
                     </div>
                 </div>
                 <button id="issue" type="button" class="btn btn-sm btn-success pull-right">
@@ -120,4 +132,5 @@
 {% endblock %}
 
 {% block modals %}
+    {% include 'wl/communications_modal.html' %}
 {% endblock %}

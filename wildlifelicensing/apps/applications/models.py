@@ -6,7 +6,8 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
-from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceType, Condition, AbstractLogEntry, AssessorGroup
+from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceType, Condition, \
+    CommunicationsLogEntry, AssessorGroup
 
 
 class Application(RevisionedMixin):
@@ -100,7 +101,7 @@ class Application(RevisionedMixin):
         return self.customer_status in self.CUSTOMER_VIEWABLE_STATE
 
 
-class ApplicationLogEntry(AbstractLogEntry):
+class ApplicationLogEntry(CommunicationsLogEntry):
     application = models.ForeignKey(Application)
 
 
@@ -157,16 +158,6 @@ class AssessmentCondition(models.Model):
 
     class Meta:
         unique_together = ('condition', 'assessment', 'order')
-
-
-class EmailLogEntry(ApplicationLogEntry):
-    subject = models.CharField(max_length=500, blank=True)
-    to = models.CharField(max_length=500, blank=True, verbose_name="To")
-    from_email = models.CharField(max_length=200, blank=True, verbose_name="From")
-
-
-class CustomLogEntry(ApplicationLogEntry):
-    subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
 
 
 @receiver(pre_delete, sender=Application)

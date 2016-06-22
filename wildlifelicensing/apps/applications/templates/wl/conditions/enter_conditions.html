@@ -7,6 +7,7 @@
 {% load jsonify %}
 
 {% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css" rel="stylesheet" />
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
           rel="stylesheet"/>
@@ -14,9 +15,16 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/conditions/enter_conditions'], function (enter_conditions) {
-        $(function () {
-            enter_conditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}}, '{{ csrf_token }}');
+    require(['js/conditions/enter_conditions', 'js/communications_log'], function (enterConditions, commLog) {
+        enterConditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}}, '{{ csrf_token }}');
+
+        commLog.initCommunicationLog({
+            showLogPopoverSelector: '#showLog',
+            showLogEntryModalSelector: '#addLogEntry',
+            logEntryModalSelector: '#logEntryModal',
+            logEntryFormSelector: '#addLogEntryForm',
+            logListURL: "{% url 'wl_applications:log_list' application.id %}",
+            addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
         });
     });
 {% endblock %}
@@ -93,6 +101,9 @@
                         </div>
                     </div>
                 </div>
+                {% with disable_collapse=True add_text='Add application log entry' %}
+                    {% include 'wl/communications_panel.html' %}
+                {% endwith %}
                 <div class="row">
                     <div class="col-md-12">
                         <div class="panel panel-default">
@@ -223,4 +234,5 @@
             </div>
         </div>
     </div>
+    {% include 'wl/communications_modal.html' %}
 {% endblock %}

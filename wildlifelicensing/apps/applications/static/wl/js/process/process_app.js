@@ -2,6 +2,7 @@ define([
     'jQuery',
     'js/process/preview_versions',
     'js/wl.dataTable',
+    'js/communications_log',
     'moment',
     'lodash',
     'bootstrap',
@@ -581,142 +582,6 @@ define([
         });
     }
 
-    function initCommunicationLog() {
-
-        var $showLogButton = $('#showLog'),
-            $logEntryModal = $('#logEntryModal'),
-            $logEntryForm = $logEntryModal.find('form'),
-            $addLogEntryButton = $('#addLogEntry'),
-            $logListContent = $('<div>'),
-            $logTable = $('<table class="table table-bordered">');
-
-        $logListContent.append($logTable);
-        dataTable = initLogTable($logTable);
-        $addLogEntryButton.click(function () {
-            $logEntryModal.modal('show');
-        });
-
-        $showLogButton.popover({
-            container: 'body',
-            title: 'Communication log',
-            content: $logListContent,
-            placement: 'right',
-            trigger: "manual",
-            html: true
-        }).click(function () {
-            // Check popover visibility.
-            var isVisible = $(this).data()['bs.popover'].tip().hasClass('in');
-            if (!isVisible) {
-                dataTable.ajax.reload();
-                $showLogButton.popover('show');
-                $('[data-toggle="tooltip"]').tooltip();
-            } else {
-                $showLogButton.popover('hide');
-            }
-        });
-
-        $logEntryForm.submit(function (e) {
-            var formData;
-            e.preventDefault();
-            formData = new FormData($(this).get(0));
-            $.ajax({
-                type: $(this).attr('method'),
-                url: $(this).attr('action'),
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function () {
-                    $logEntryModal.modal('hide');
-                }
-            });
-        });
-    }
-
-    function initLogTable($table) {
-        var dateFormat = 'DD/MM/YYYY',
-            tableOptions = {
-                paging: true,
-                info: true,
-                searching: true,
-                processing: true,
-                deferRender: true,
-                serverSide: false,
-                autowidth: true,
-                order: [[0, 'desc']],
-                ajax: {
-                    url: '/applications/log-list/' + application.id
-                }
-            },
-            colDefinitions = [
-                {
-                    title: 'Date',
-                    data: 'date',
-                    'render': function (date) {
-                        return moment(date).format(dateFormat);
-                    }
-                },
-                {
-                    title: 'Type',
-                    data: 'type'
-                },
-                {
-                    title: 'Subject/Desc.',
-                    data: 'subject'
-                },
-                {
-                    title: 'Text',
-                    data: 'text',
-                    'render': function (value) {
-                        var ellipsis = '...',
-                            truncated = _.truncate(value, {
-                            length: 100,
-                            omission: ellipsis,
-                            separator: ' '
-                        }),
-                            result = '<span>' + truncated +'</span>',
-                            popTemplate = _.template('<a href="#" ' +
-                                'role="button" ' +
-                                'data-toggle="popover" ' +
-                                'data-trigger="click" ' +
-                                'data-placement="top auto"' +
-                                'data-html="true" ' +
-                                'data-content="<%= text %>" ' +
-                                '>more</a>');
-                        if (_.endsWith(truncated, ellipsis)) {
-                            result += popTemplate({
-                               text: value
-                            });
-                        }
-                        return result;
-                    },
-                    'createdCell': function (cell) {
-                        //TODO why this is not working?
-                        // the call to popover is done in the 'draw' event
-                        $(cell).popover();
-                    }
-                },
-                {
-                    title: 'Document',
-                    data: 'document',
-                    'render': function (value) {
-                        if (value) {
-                            return '<a href="' + value + '" target="_blank"><p>View</p></a>';
-                        } else {
-                            return '';
-                        }
-                    }
-                }
-            ];
-        // set DT date format sorting
-        dataTable.setDateTimeFormat(dateFormat);
-        // activate popover when table is drawn.
-        $table.on('draw.dt', function () {
-            $table.find('[data-toggle="popover"]').popover();
-        });
-        return dataTable.initTable($table, tableOptions, colDefinitions);
-    }
-
-
     function determineApplicationApprovable() {
         var approvable = false,
             $approve = $('#approve');
@@ -758,7 +623,6 @@ define([
             initCharacterCheck();
             initReview();
             initAssessment(data.assessor_groups);
-            initCommunicationLog();
             determineApplicationApprovable();
 
             previewVersions.layoutPreviewItems($previewContainer, data.form_structure, application.data, application.data);

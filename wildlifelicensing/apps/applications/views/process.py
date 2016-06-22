@@ -10,15 +10,14 @@ from django.utils import formats
 from reversion import revisions
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import EmailUser, Document
+from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment, EmailLogEntry, \
-    CustomLogEntry
-from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm, \
-    ApplicationLogEntryForm
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
+from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
     send_id_update_request_email, send_returns_request_email, send_assessment_reminder_email
 from wildlifelicensing.apps.main.models import AssessorGroup
@@ -43,6 +42,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         current_ass_groups = [ass_request.assessor_group for ass_request in
                               Assessment.objects.filter(application=application)]
+
         ass_groups = [{'id': ass_group.id, 'text': ass_group.name} for ass_group in
                       AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups])]
 
@@ -82,10 +82,10 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         application = get_object_or_404(Application, pk=self.args[0])
         if 'data' not in kwargs:
             kwargs['data'] = self._build_data(self.request, application)
-        kwargs['id_request_form'] = IDRequestForm(application=application, user=self.request.user)
-        kwargs['returns_request_form'] = ReturnsRequestForm(application=application, user=self.request.user)
-        kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, user=self.request.user)
-        kwargs['application_log_entry_form'] = ApplicationLogEntryForm()
+        kwargs['id_request_form'] = IDRequestForm(application=application, officer=self.request.user)
+        kwargs['returns_request_form'] = ReturnsRequestForm(application=application, officer=self.request.user)
+        kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, officer=self.request.user)
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
 
         return super(ProcessView, self).get_context_data(**kwargs)
 
@@ -305,66 +305,3 @@ def determine_customer_status(application):
         status = 'amendment_required'
 
     return status
-
-
-class CommunicationLogListView(OfficerRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        application = get_object_or_404(Application, pk=args[0])
-        data = []
-        for obj in EmailLogEntry.objects.filter(application=application):
-            r = {
-                'date': obj.created,
-                'type': 'Email',
-                'subject': obj.subject,
-                'text': obj.text,
-                'document': obj.document.file.url if obj.document else None
-            }
-            data.append(r)
-
-        for obj in CustomLogEntry.objects.filter(application=application):
-            r = {
-                'date': obj.created,
-                'type': 'Custom',
-                'subject': obj.subject,
-                'text': obj.text,
-                'document': obj.document.file.url if obj.document else None
-            }
-            data.append(r)
-
-        return JsonResponse({'data': data}, safe=False, encoder=WildlifeLicensingJSONEncoder)
-
-
-class AddLogEntryView(OfficerRequiredMixin, View):
-    def post(self, request, *args, **kwargs):
-        form = ApplicationLogEntryForm(data=request.POST, files=request.FILES)
-        if form.is_valid():
-            application = get_object_or_404(Application, pk=args[0])
-
-            user = request.user
-
-            document = None
-            if request.FILES and 'document' in request.FILES:
-                document = Document.objects.create(file=request.FILES['document'])
-            data = {
-                'document': document,
-                'user': user,
-                'application': application,
-                'text': form.cleaned_data['text'],
-                'subject': form.cleaned_data['subject']
-            }
-
-            CustomLogEntry.objects.create(**data)
-
-            return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
-        else:
-            return JsonResponse(
-                {
-                    "errors": [
-                        {
-                            'status': "422",
-                            'title': 'Data not valid',
-                            'detail': form.errors
-                        }
-                    ]
-                },
-                safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)

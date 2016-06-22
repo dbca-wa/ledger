@@ -19,7 +19,6 @@ define(
         };
 
         function decorateTable(table) {
-
             table.populate = function (data, append) {
                 if (data) {
                     if (typeof data === 'string') {

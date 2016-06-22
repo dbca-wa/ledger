@@ -11,7 +11,7 @@ from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.forms import IssueLicenceForm
+from wildlifelicensing.apps.main.forms import IssueLicenceForm, CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
@@ -42,6 +42,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable,
                                                             return_frequency=application.licence_type.returntype.month_frequency)
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
@@ -120,7 +122,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
-                                                        'issue_licence_form': IssueLicenceForm(purpose=purposes)})
+                                                        'issue_licence_form': IssueLicenceForm(purpose=purposes),
+                                                        'log_entry_form': CommunicationsLogEntryForm()})
 
 
 class ReissueLicenceView(OfficerRequiredMixin, View):

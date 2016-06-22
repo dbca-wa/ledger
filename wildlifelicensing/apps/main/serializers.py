@@ -4,6 +4,7 @@ from django_countries.fields import Country
 from django.utils.encoding import smart_text
 import six
 
+
 class WildlifeLicensingJSONEncoder(DjangoJSONEncoder):
     """
     DjangoJSONEncoder subclass that encode file file object as its URL and country object to its name

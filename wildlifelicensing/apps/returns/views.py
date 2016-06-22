@@ -4,22 +4,29 @@ import tempfile
 
 from datetime import date
 
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
 from django.shortcuts import render, get_object_or_404, redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.http.response import JsonResponse
+
 
 from jsontableschema.model import SchemaModel
+from preserialize.serialize import serialize
 
+from ledger.accounts.models import Document
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow
+from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry
 from wildlifelicensing.apps.main import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
 from wildlifelicensing.apps.returns.utils_schema import Schema
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
+from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
+from wildlifelicensing.apps.main.utils import format_communications_log_entry
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -224,6 +231,8 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
         kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
 
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
+
         return super(CurateReturnView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -278,3 +287,59 @@ class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
             kwargs['tables'].append(table)
 
         return super(ViewReturnReadonlyView, self).get_context_data(**kwargs)
+
+
+class ReturnLogListView(OfficerRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        ret = get_object_or_404(Return, pk=args[0])
+        data = serialize(ReturnLogEntry.objects.filter(ret=ret),
+                         posthook=format_communications_log_entry,
+                         exclude=['ret', 'communicationslogentry_ptr', 'customer', 'officer']),
+
+        return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
+
+
+class AddReturnLogEntryView(OfficerRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        form = CommunicationsLogEntryForm(data=request.POST, files=request.FILES)
+        if form.is_valid():
+            ret = get_object_or_404(Return, pk=args[0])
+
+            if ret.proxy_customer is None:
+                customer = ret.licence.holder
+            else:
+                customer = ret.proxy_customer
+
+            officer = request.user
+
+            document = None
+
+            if request.FILES and 'attachment' in request.FILES:
+                document = Document.objects.create(file=request.FILES['attachment'])
+
+            kwargs = {
+                'document': document,
+                'officer': officer,
+                'customer': customer,
+                'ret': ret,
+                'text': form.cleaned_data['text'],
+                'subject': form.cleaned_data['subject'],
+                'to': format.cleanred_data['to'],
+                'fromm': format.cleanred_data['fromm']
+            }
+
+            ReturnLogEntry.objects.create(**kwargs)
+
+            return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
+        else:
+            return JsonResponse(
+                {
+                    "errors": [
+                        {
+                            'status': "422",
+                            'title': 'Data not valid',
+                            'detail': form.errors
+                        }
+                    ]
+                },
+                safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)

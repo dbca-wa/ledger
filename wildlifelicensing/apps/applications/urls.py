@@ -6,8 +6,7 @@ from wildlifelicensing.apps.applications.views.entry import NewApplicationView, 
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
-    SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, RemindAssessmentView, AddLogEntryView, \
-    CommunicationLogListView
+    SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, RemindAssessmentView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
     CreateConditionView, SetAssessmentConditionState, SubmitConditionsView, EnterConditionsAssessorView, \
@@ -15,7 +14,7 @@ from wildlifelicensing.apps.applications.views.conditions import EnterConditions
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
-from wildlifelicensing.apps.applications.views.view import ViewReadonlyView
+from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, AddApplicationLogEntryView, ApplicationLogListView
 
 
 urlpatterns = [
@@ -49,8 +48,8 @@ urlpatterns = [
     url('^remind-assessment/$', RemindAssessmentView.as_view(), name='remind_assessment'),
 
     # communication log
-    url('^add-log-entry/([0-9]+)/', AddLogEntryView.as_view(), name='add_log_entry'),
-    url('log-list/([0-9]+)/$', CommunicationLogListView.as_view(), name='log_list'),
+    url('^add-log-entry/([0-9]+)/$', AddApplicationLogEntryView.as_view(), name='add_log_entry'),
+    url('^log-list/([0-9]+)/$', ApplicationLogListView.as_view(), name='log_list'),
 
     # conditions
     url('^enter-conditions/([0-9]+)/$', EnterConditionsView.as_view(), name='enter_conditions'),

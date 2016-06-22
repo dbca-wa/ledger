@@ -8,7 +8,9 @@ from django.utils.encoding import smart_text
 from django_hosts import reverse as hosts_reverse
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
-from wildlifelicensing.apps.applications.models import EmailLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
+from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
+
+SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 
 logger = logging.getLogger(__name__)
 
@@ -251,7 +253,7 @@ def _log_email(email_message, application, sender=None):
         # TODO this will log the plain text body, should we log the html instead
         text = email_message.body
         subject = email_message.subject
-        from_email = smart_text(sender) if sender else smart_text(email_message.from_email)
+        fromm = smart_text(sender) if sender else smart_text(email_message.from_email)
         # the to email is normally a list
         if isinstance(email_message.to, list):
             to = ';'.join(email_message.to)
@@ -261,15 +263,23 @@ def _log_email(email_message, application, sender=None):
         text = smart_text(email_message)
         subject = ''
         to = application.applicant_profile.user.email
-        from_email = smart_text(sender) if sender else ''
+        fromm = smart_text(sender) if sender else SYSTEM_NAME
+
+        if application.proxy_applicant is None:
+            customer = application.application_profile.user
+        else:
+            customer = application.proxy_applicant
+
+        officer = sender
 
     kwargs = {
         'subject': subject,
         'text': text,
         'application': application,
-        'user': sender,
+        'customer': customer,
+        'officer': officer,
         'to': to,
-        'from_email': from_email
+        'fromm': fromm
     }
-    email_entry = EmailLogEntry.objects.create(**kwargs)
+    email_entry = ApplicationLogEntry.objects.create(**kwargs)
     return email_entry

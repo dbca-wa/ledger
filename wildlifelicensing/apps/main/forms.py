@@ -4,7 +4,7 @@ from datetime import datetime
 from django import forms
 from django.contrib.postgres.forms import JSONField
 
-from wildlifelicensing.apps.main.models import WildlifeLicence
+from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
 
 DATE_FORMAT = '%d/%m/%Y'
 
@@ -82,3 +82,11 @@ class IssueLicenceForm(forms.ModelForm):
             self.fields['is_renewable'].initial = is_renewable
 
             self.fields['return_frequency'].initial = return_frequency
+
+
+class CommunicationsLogEntryForm(forms.ModelForm):
+    attachment = forms.FileField(required=False)
+
+    class Meta:
+        model = CommunicationsLogEntry
+        fields = ['to', 'fromm', 'type', 'subject', 'text', 'attachment']

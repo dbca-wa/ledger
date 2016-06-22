@@ -13,6 +13,7 @@ from preserialize.serialize import serialize
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
 from wildlifelicensing.apps.applications.utils import convert_application_data_files_to_url, format_application, \
     format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
@@ -38,6 +39,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['form_structure'] = form_structure
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
         kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
