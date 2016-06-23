@@ -36,13 +36,21 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             if(item.condition !== undefined) {
                 var inputSelector = itemContainer.find('input, select');
 
+                if(item.type === 'radiobuttons') {
+                    val = itemContainer.find('input:checked').val()
+                } else if (item.type === 'checkbox') {
+                    val = inputSelector.is(':checked') ? 'checked': '';
+                } else {
+                    val = inputSelector.val();
+                }
+
                 // hide children initially if current item value does not equal condition
-                if(inputSelector.val() !== item.condition) {
+                if(val !== item.condition) {
                     childrenAnchorPoint.hide();
                 }
 
                 inputSelector.change(function(e) {
-                    if ($(this).val() === item.condition) {
+                    if ($(this).val() === item.condition || (item.condition === 'checked' && $(this).is(':checked'))) {
                         childrenAnchorPoint.slideDown('medium');
                     } else {
                         childrenAnchorPoint.slideUp('medium');

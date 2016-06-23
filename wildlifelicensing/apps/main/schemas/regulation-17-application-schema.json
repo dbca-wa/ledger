@@ -206,5 +206,217 @@
                 "name": "ap_change_acknowledgement"
             }
        ]
+    },
+    {
+        "type": "section",
+        "label": "Locations",
+        "children": [
+            {
+                "type": "text_area",
+                "label": "Address",
+                "name": "address"
+            },
+            {
+                "type": "text",
+                "label": "Coordinate / GPS",
+                "name": "coordinates"
+            },
+            {
+                "type": "date",
+                "label": "Start Date",
+                "name": "start_date"
+            },
+            {
+                "type": "date",
+                "label": "End Date",
+                "name": "end_date"
+            },
+            {
+                "type": "select",
+                "label": "Regular Intervals",
+                "name": "regular_intervals",
+                "defaultBlank": false,
+                "options": [
+                    {"value": "weekly", "label": "Weekly"},
+                    {"value": "fortnightly", "label": "Fortnightly"},
+                    {"value": "monthly", "label": "Monthly"},
+                    {"value": "quarterly", "label": "Quarterly/Seasonally"},
+                    {"value": "biannually", "label": "Biannually/Six-monthly"},
+                    {"value": "annually", "label": "Annually"},
+                    {"value": "biennually", "label": "Biennially/Every two years"},
+                    {"value": "other", "label": "Other"}
+                ],
+                "condition": "other",
+                "children": [
+                    {
+                        "type": "text",
+                        "label": "Please Specify",
+                        "name": "regular_intervals_other"
+                    }
+                ]
+            },
+            {
+                "type": "label",
+                "label": "What survey type will you be conducting?",
+                "name": "survey"
+            },
+            {
+                "type": "checkbox",
+                "label": "Level 1 / reconnaissance",
+                "name": "reconnaissance"
+            },
+            {
+                "type": "checkbox",
+                "label": "Level 2 / detailed or comprehensive",
+                "name": "comprehensive"
+            },
+            {
+                "type": "checkbox",
+                "label": "Short range endemic (SRE)",
+                "name": "sre"
+            },
+            {
+                "type": "checkbox",
+                "label": "Aquatic (non-marine)",
+                "name": "aquatic"
+            },
+            {
+                "type": "checkbox",
+                "label": "Marine",
+                "name": "marine"
+            },
+            {
+                "type": "checkbox",
+                "label": "Targeted",
+                "name": "targeted",
+                "condition": "checked",
+                "children": [
+                    {
+                        "type": "group",
+                        "label": "Targeted Fauna Type",
+                        "name": "targeted_fauna",
+                        "isRepeatable": true,
+                        "children": [
+                            {
+                                "type": "text",
+                                "label": "Common name / Group name",
+                                "name": "tft_common_name"
+                            },
+                            {
+                                "type": "text",
+                                "label": "Scientific name",
+                                "name": "tft_scientific_name"
+                            },
+                            {
+                                "type": "text",
+                                "label": "Quantity",
+                                "name": "tft_quantity"
+                            },
+                            {
+                                "type": "text",
+                                "label": "Fate",
+                                "name": "tft_fate"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "checkbox",
+                "label": "Biennially/Every two years",
+                "name": "biennually"
+            },
+            {
+                "type": "checkbox",
+                "label": "Other",
+                "name": "other"
+            },
+            {
+                "type": "radiobuttons",
+                "label": "Will your activity interact with any threatened or priority fauna (including non-target species)?",
+                "name": "threatened_priority_fauna",
+                "options": [
+                    {"value": "yes", "label": "Yes"},
+                    {"value": "no", "label": "No"},
+                    {"value": "unknown", "label": "Unknown"}
+                ],
+                "condition": "yes",
+                "children": [
+                    {
+                        "type": "group",
+                        "label": "Threatened Fauna",
+                        "name": "threatened_fauna",
+                        "isRepeatable": true,
+                        "children": [
+                            {
+                                "type": "text",
+                                "label": "Common name / Group name",
+                                "name": "tf_common_name"
+                            },
+                            {
+                                "type": "text",
+                                "label": "Scientific name",
+                                "name": "tf_scientific_name"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "text",
+                "label": "If activity has been (or is being) assessed by an Animal Ethics Committee (AEC) provide committee name.",
+                "name": "aec_name"
+            },
+            {
+                "type": "text",
+                "label": "Provide AEC approval number.",
+                "name": "aec_approval_number"
+            },
+            {
+                "type": "file",
+                "label": "Attach a copy of the AEC project application and approval if not already been provided.",
+                "name": "aec_application_and_approval"
+            },
+            {
+                "type": "radiobuttons",
+                "label": "Will your activities be in accordance with Parks and Wildlife standard operating procedures?",
+                "name": "standard_operating_procedures",
+                "options": [
+                    {"value": "yes", "label": "Yes"},
+                    {"value": "no", "label": "No"}
+                ]
+            },
+            {
+                "type": "radiobuttons",
+                "label": "Will your activities be in accordance with EPA Guidance Statements, Position Statements or Technical Reports?",
+                "name": "epa_statements",
+                "options": [
+                    {"value": "yes", "label": "Yes"},
+                    {"value": "no", "label": "No"}
+                ]
+            },
+            {
+                "type": "radiobuttons",
+                "label": "Will your activities be in accordance with any other SOPs, protocols, guidelines or manuals?",
+                "name": "sops",
+                "options": [
+                    {"value": "yes", "label": "Yes"},
+                    {"value": "no", "label": "No"}
+                ],
+                "condition": "yes",
+                "children": [
+                    {
+                        "type": "text",
+                        "label": "Provide details",
+                        "name": "sops_details"
+                    },
+                    {
+                        "type": "file",
+                        "label": "Attach a copy of the relevent document(s)",
+                        "name": "sops_documents"
+                    }
+                ]
+            }
+        ]
     }
 ]

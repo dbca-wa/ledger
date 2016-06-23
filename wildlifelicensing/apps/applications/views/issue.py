@@ -20,8 +20,6 @@ from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 
 
-APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-
 LICENCE_TYPE_NUM_CHARS = 2
 LICENCE_NUMBER_NUM_CHARS = 6
 
