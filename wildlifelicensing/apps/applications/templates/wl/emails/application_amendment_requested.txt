@@ -1,13 +1,21 @@
 {% extends 'wl/emails/base_email.txt' %}
 {% block content %}
-    Your Wildlife Licensing application has been reviewed and requires an amendment before approval.
-    {% if amendment_reason %}
-    Amendment Reason: {{ amendment_reason }}
+    {% if id_request.application.proxy_applicant %}
+        The Wildlife Licensing application you made on behalf of {{ id_request.application.applicant_profile.user.get_full_name }} 
+        has been reviewed and requires an amendment before approval.
+    {% else %}
+        Your Wildlife Licensing application has been reviewed and requires an amendment before approval.
     {% endif %}
-    Amendment detail:
-     {{ amendment_detail }}
+
+    {% if reason %}
+        Amendment Reason: {{ reason }}
+    {% endif %}
+    {% if amendment_request.text %}
+        Amendment detail:
+        {{ amendment_request.text }}
+    {% endif %}
     {% if url %}
-        Please copy and paste the following link into your browser to access your application:
+        Please copy and paste the following link into your browser to access the application:
         {{ url }}
         Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.
     {% endif %}

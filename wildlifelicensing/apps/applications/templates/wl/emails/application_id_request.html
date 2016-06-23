@@ -1,17 +1,23 @@
 {% extends 'wl/emails/base_email.html' %}
 
 {% block content %}
-    Your Wildlife Licensing application has been reviewed and requires an update of your ID before approval.
-    {% if request_reason %}
+    {% if id_request.application.proxy_applicant %}
+        The Wildlife Licensing application you made on behalf of {{ id_request.application.applicant_profile.user.get_full_name }} 
+        has been reviewed and requires an update of their ID before approval.
+    {% else %}
+        Your Wildlife Licensing application has been reviewed and requires an update of your ID before approval.
+    {% endif %}
+
+    {% if id_request.reason %}
         <p>
-            <span>Reason: {{ request_reason }}</span>
+            <span>Reason: {{ id_request.reason }}</span>
         </p>
     {% endif %}
-    {% if request_text %}
-        <p>Detail: <br> {{ request_text }}</p>
+    {% if id_request.text %}
+        <p>Detail: <br> {{ id_request.text }}</p>
     {% endif %}
-    {% if url %}
-        <p>Click <a href='{{ url }}'>here</a> to update your ID.</p>
+    {% if url and not id_request.application.proxy_applicant %}
+        <p>Click <a href='{{ url }}'>here</a> to update the ID.</p>
         <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.</p>
     {% endif %}
 {% endblock %}

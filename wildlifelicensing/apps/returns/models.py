@@ -8,7 +8,7 @@ import datapackage
 import jsontableschema
 
 from ledger.accounts.models import RevisionedMixin, EmailUser
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence, CommunicationsLogEntry
 
 
 class ReturnType(models.Model):
@@ -107,3 +107,7 @@ class ReturnRow(RevisionedMixin):
     return_table = models.ForeignKey(ReturnTable)
 
     data = JSONField(blank=True, null=True)
+
+
+class ReturnLogEntry(CommunicationsLogEntry):
+    ret = models.ForeignKey(Return)

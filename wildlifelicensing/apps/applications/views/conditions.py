@@ -13,12 +13,13 @@ from preserialize.serialize import serialize
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
 from wildlifelicensing.apps.applications.utils import convert_application_data_files_to_url, format_application, \
     format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
-from wildlifelicensing.apps.applications.mixins import CanEditAssessmentMixin
+from wildlifelicensing.apps.applications.mixins import CanPerformAssessmentMixin
 
 APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
@@ -39,10 +40,17 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
         kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
 
+        if application.proxy_applicant is None:
+            to = application.applicant_profile.user.email
+        else:
+            to = application.proxy_applicant.email
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
+
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
 
-class EnterConditionsAssessorView(CanEditAssessmentMixin, TemplateView):
+class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
 
     def get_context_data(self, **kwargs):
@@ -122,7 +130,7 @@ class SubmitConditionsView(OfficerRequiredMixin, View):
             return redirect('wl_applications:issue_licence', *self.args, **self.kwargs)
 
 
-class SubmitConditionsAssessorView(CanEditAssessmentMixin, View):
+class SubmitConditionsAssessorView(CanPerformAssessmentMixin, View):
     success_url = reverse_lazy('wl_dashboard:home')
 
     def post(self, request, *args, **kwargs):

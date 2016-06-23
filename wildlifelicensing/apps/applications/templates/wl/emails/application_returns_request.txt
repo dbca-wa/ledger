@@ -1,7 +1,13 @@
 {% extends 'wl/emails/base_email.txt' %}
 
 {% block content %}
-    Your Wildlife Licensing application has been reviewed and requires completion of returns.
+    {% if amendment_request.application.proxy_applicant %}
+        The Wildlife Licensing application you made on behalf of {{ amendment_request.application.applicant_profile.user.get_full_name }} 
+        has been reviewed and requires completion of returns.
+    {% else %}
+        Your Wildlife Licensing application has been reviewed and requires completion of returns.
+    {% endif %}
+
     {% if request_reason %}
     Reason: {{ request_reason }}
     {% endif %}
@@ -10,7 +16,7 @@
         {{ request_text }}
     {% endif %}
     {% if url %}
-        Please copy and paste the following link into your browser to lodge your returns:
+        Please copy and paste the following link into your browser to lodge the returns:
         {{ url }}
         Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.
     {% endif %}

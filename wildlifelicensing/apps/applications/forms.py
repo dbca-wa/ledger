@@ -2,7 +2,7 @@ from django import forms
 
 from ledger.accounts.models import Profile
 
-from wildlifelicensing.apps.applications.models import IDRequest, ReturnsRequest, AmendmentRequest
+from wildlifelicensing.apps.applications.models import IDRequest, ReturnsRequest, AmendmentRequest, ApplicationLogEntry
 
 
 class ProfileSelectionForm(forms.Form):
@@ -28,65 +28,55 @@ class ProfileSelectionForm(forms.Form):
 class IDRequestForm(forms.ModelForm):
     class Meta:
         model = IDRequest
-        fields = ['application', 'user', 'reason', 'text']
-        widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
+        fields = ['application', 'officer', 'reason', 'text']
+        widgets = {'application': forms.HiddenInput(), 'officer': forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
         application = kwargs.pop('application', None)
-        user = kwargs.pop('user', None)
+        officer = kwargs.pop('officer', None)
 
         super(IDRequestForm, self).__init__(*args, **kwargs)
 
         if application is not None:
             self.fields['application'].initial = application
 
-        if user is not None:
-            self.fields['user'].initial = user
+        if officer is not None:
+            self.fields['officer'].initial = officer
 
 
 class ReturnsRequestForm(forms.ModelForm):
     class Meta:
         model = ReturnsRequest
-        fields = ['application', 'user', 'reason', 'text']
-        widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
+        fields = ['application', 'officer', 'reason', 'text']
+        widgets = {'application': forms.HiddenInput(), 'officer': forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
         application = kwargs.pop('application', None)
-        user = kwargs.pop('user', None)
+        officer = kwargs.pop('officer', None)
 
         super(ReturnsRequestForm, self).__init__(*args, **kwargs)
 
         if application is not None:
             self.fields['application'].initial = application
 
-        if user is not None:
-            self.fields['user'].initial = user
+        if officer is not None:
+            self.fields['officer'].initial = officer
 
 
 class AmendmentRequestForm(forms.ModelForm):
     class Meta:
         model = AmendmentRequest
-        fields = ['application', 'user', 'reason', 'text']
-        widgets = {'application': forms.HiddenInput(), 'user': forms.HiddenInput()}
+        fields = ['application', 'officer', 'reason', 'text']
+        widgets = {'application': forms.HiddenInput(), 'officer': forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
         application = kwargs.pop('application', None)
-        user = kwargs.pop('user', None)
+        officer = kwargs.pop('officer', None)
 
         super(AmendmentRequestForm, self).__init__(*args, **kwargs)
 
         if application is not None:
             self.fields['application'].initial = application
 
-        if user is not None:
-            self.fields['user'].initial = user
-
-
-class ApplicationLogEntryForm(forms.Form):
-    subject = forms.CharField(required=True, label="Subject / Description")
-    text = forms.CharField(widget=forms.Textarea, required=False)
-    document = forms.FileField(required=False)
-
-    def __init__(self, *args, **kwargs):
-        super(ApplicationLogEntryForm, self).__init__(*args, **kwargs)
-
+        if officer is not None:
+            self.fields['officer'].initial = officer

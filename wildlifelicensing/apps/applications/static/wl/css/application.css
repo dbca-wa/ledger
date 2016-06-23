@@ -127,10 +127,6 @@ a {
 
 /* conditions */
 
-.popover{
-    max-width: 100%;
-}
-
 .conditions-dropdown {
     width: 600px !important;
 }

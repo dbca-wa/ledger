@@ -11,7 +11,7 @@ from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.forms import IssueLicenceForm
+from wildlifelicensing.apps.main.forms import IssueLicenceForm, CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
@@ -40,7 +40,15 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         else:
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
-            kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable)
+            kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable,
+                                                            return_frequency=application.licence_type.returntype.month_frequency)
+
+        if application.proxy_applicant is None:
+            customer = application.applicant_profile.user
+        else:
+            customer = application.proxy_applicant
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.email, fromm=self.request.user.email)
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
@@ -64,7 +72,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             if application.previous_application is not None:
                 licence.licence_number = application.previous_application.licence.licence_number
 
-                # if licence is renewal, want to use previous licence's sequence number
+                # if licence is renewal, use previous licence's sequence number
                 if licence.licence_sequence == 0:
                     licence.licence_sequence = application.previous_application.licence.licence_sequence
 
@@ -118,12 +126,19 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
+            if application.proxy_applicant is None:
+                to = application.applicant_profile.user.email
+            else:
+                to = application.proxy_applicant.email
+
+            log_entry_form = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
+
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
-                                                        'issue_licence_form': IssueLicenceForm(purpose=purposes)})
+                                                        'issue_licence_form': IssueLicenceForm(purpose=purposes),
+                                                        'log_entry_form': log_entry_form})
 
 
 class ReissueLicenceView(OfficerRequiredMixin, View):
-
     def get(self, request, *args, **kwargs):
         licence = get_object_or_404(WildlifeLicence, pk=self.args[0])
 

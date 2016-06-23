@@ -1,12 +1,9 @@
 from django.conf.urls import url
 
-from wildlifelicensing.apps.main.views import (
-        ListProfilesView, CreateProfilesView, EditProfilesView, DeleteProfileView,
-        IdentificationView,
-        EditAccountView,
-		SearchCustomersView,
-        ListDocumentView,EditDocumentView,CreateDocumentView,DeleteDocumentView
-)
+from wildlifelicensing.apps.main.views import ListProfilesView, CreateProfilesView, EditProfilesView, \
+    DeleteProfileView, IdentificationView, EditAccountView, SearchCustomersView, ListDocumentView, \
+    EditDocumentView, CreateDocumentView ,DeleteDocumentView, CommunicationsLogListView, \
+    AddCommunicationsLogEntryView
 
 
 urlpatterns = [
@@ -28,4 +25,8 @@ urlpatterns = [
     #url('^profiles/delete/$', DeleteProfileView.as_view(), name='delete_profile_prefix'),
 
     url('^identification/$', IdentificationView.as_view(), name='identification'),
+
+    # general communications log
+    url('^add-log-entry/([0-9]+)/$', AddCommunicationsLogEntryView.as_view(), name='add_log_entry'),
+    url('^log-list/([0-9]+)/$', CommunicationsLogListView.as_view(), name='log_list'),
 ]

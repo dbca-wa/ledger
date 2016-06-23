@@ -12,10 +12,12 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import Profile, Document, EmailUser
 from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, DocumentForm
 
-from wildlifelicensing.apps.main.forms import IdentificationForm
+from wildlifelicensing.apps.main.models import CommunicationsLogEntry
+from wildlifelicensing.apps.main.forms import IdentificationForm, CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.mixins import CustomerRequiredMixin, OfficerRequiredMixin
 from wildlifelicensing.apps.main.signals import identification_uploaded
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
+from wildlifelicensing.apps.main.utils import format_communications_log_entry
 
 
 class SearchCustomersView(OfficerRequiredMixin, View):
@@ -40,7 +42,7 @@ class ListProfilesView(CustomerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(ListProfilesView, self).get_context_data(**kwargs)
 
-        def posthook(instance,attr):
+        def posthook(instance, attr):
             attr["auth_identity"] = instance.auth_identity
             return attr
 
@@ -154,75 +156,75 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         emailuser = get_object_or_404(EmailUser, pk=request.user.id)
-        #get address source type
-        #residential_address_source_type = "added" if emailuser.residential_address else "removed"
-        #postal_address_source_type =  "removed" if not emailuser.postal_address else ("residential_address" if emailuser.postal_address == emailuser.residential_address else "added")
-        #billing_address_source_type =  "removed" if not emailuser.billing_address else ("residential_address" if emailuser.billing_address == emailuser.residential_address else ("postal_address" if emailuser.billing_address == emailuser.postal_address else "added"))
+        # get address source type
+        # residential_address_source_type = "added" if emailuser.residential_address else "removed"
+        # postal_address_source_type =  "removed" if not emailuser.postal_address else ("residential_address" if emailuser.postal_address == emailuser.residential_address else "added")
+        # billing_address_source_type =  "removed" if not emailuser.billing_address else ("residential_address" if emailuser.billing_address == emailuser.residential_address else ("postal_address" if emailuser.billing_address == emailuser.postal_address else "added"))
  
-        #if user doesn't choose a identification, display a warning message
+        # if user doesn't choose a identification, display a warning message
         if not emailuser.identification:
             messages.warning(request, "Please upload your identification.")
 
         return render(request, self.template_name, {'emailuser_form': EmailUserForm(instance=emailuser),
-                                                    #'residential_address_form': AddressForm(prefix="residential_address",instance=emailuser.residential_address),
-                                                    #'postal_address_form': AddressForm(prefix="postal_address",instance=emailuser.postal_address),
-                                                    #'billing_address_form': AddressForm(prefix="billing_address",instance=emailuser.billing_address),
-                                                    #'residential_address_source_type':residential_address_source_type,
-                                                    #'postal_address_source_type':postal_address_source_type,
-                                                    #'billing_address_source_type':billing_address_source_type,
+                                                    # 'residential_address_form': AddressForm(prefix="residential_address",instance=emailuser.residential_address),
+                                                    # 'postal_address_form': AddressForm(prefix="postal_address",instance=emailuser.postal_address),
+                                                    # 'billing_address_form': AddressForm(prefix="billing_address",instance=emailuser.billing_address),
+                                                    # 'residential_address_source_type':residential_address_source_type,
+                                                    # 'postal_address_source_type':postal_address_source_type,
+                                                    # 'billing_address_source_type':billing_address_source_type,
                                                     })
 
     def post(self, request, *args, **kwargs):
-        #validate request
-        #residential_address_source_type = request.POST.get("residential_address-source_type")
-        #if not residential_address_source_type:
+        # validate request
+        # residential_address_source_type = request.POST.get("residential_address-source_type")
+        # if not residential_address_source_type:
         #    return HttpResponseBadRequest("Missing resiential address source type.")
 
-        #postal_address_source_type = request.POST.get("postal_address-source_type")
-        #if not postal_address_source_type:
+        # postal_address_source_type = request.POST.get("postal_address-source_type")
+        # if not postal_address_source_type:
         #    return HttpResponseBadRequest("Missing postal address source type.")
 
-        #billing_address_source_type = request.POST.get("billing_address-source_type")
-        #if not billing_address_source_type:
+        # billing_address_source_type = request.POST.get("billing_address-source_type")
+        # if not billing_address_source_type:
         #    return HttpResponseBadRequest("Missing billing address source type.")
 
 
         emailuser = get_object_or_404(EmailUser, pk=request.user.pk)
-        #Save the original user data.
+        # Save the original user data.
         original_first_name = emailuser.first_name
         original_last_name = emailuser.last_name
-        #original_identification = emailuser.identification
+        # original_identification = emailuser.identification
 
-        #original_residential_address_source_type = "added" if emailuser.residential_address else "removed"
-        #original_postal_address_source_type =  "removed" if not emailuser.postal_address else ("residential_address" if emailuser.postal_address == emailuser.residential_address else "added")
-        #original_billing_address_source_type =  "removed" if not emailuser.billing_address else ("residential_address" if emailuser.billing_address == emailuser.residential_address else ("postal_address" if emailuser.billing_address == emailuser.postal_address else "added"))
+        # original_residential_address_source_type = "added" if emailuser.residential_address else "removed"
+        # original_postal_address_source_type =  "removed" if not emailuser.postal_address else ("residential_address" if emailuser.postal_address == emailuser.residential_address else "added")
+        # original_billing_address_source_type =  "removed" if not emailuser.billing_address else ("residential_address" if emailuser.billing_address == emailuser.residential_address else ("postal_address" if emailuser.billing_address == emailuser.postal_address else "added"))
 
-        #original_residential_address = emailuser.residential_address
-        #original_postal_address =  emailuser.postal_address
-        #original_billing_address =  emailuser.billing_address
+        # original_residential_address = emailuser.residential_address
+        # original_postal_address =  emailuser.postal_address
+        # original_billing_address =  emailuser.billing_address
 
-        emailuser_form = EmailUserForm(request.POST,instance=emailuser)
+        emailuser_form = EmailUserForm(request.POST, instance=emailuser)
 
-        #populate address form to validate and save if required
-        #if residential_address_source_type == "added":
+        # populate address form to validate and save if required
+        # if residential_address_source_type == "added":
         #    residential_address_form = AddressForm(request.POST,prefix="residential_address",instance=emailuser.residential_address)
-        #else:
+        # else:
         #    residential_address_form = None
 
-        #if postal_address_source_type == "added":
+        # if postal_address_source_type == "added":
         #    if original_postal_address_source_type == "added":
         #        postal_address_form = AddressForm(request.POST,prefix="postal_address",instance=emailuser.postal_address)
         #    else:
         #        postal_address_form = AddressForm(request.POST,prefix="postal_address")
-        #else:
+        # else:
         #    postal_address_form = None
 
-        #if billing_address_source_type == "added":
+        # if billing_address_source_type == "added":
         #    if original_billing_address_source_type == "added":
         #        billing_address_form = AddressForm(request.POST,prefix="billing_address",instance=emailuser.billing_address)
         #    else:
         #        billing_address_form = AddressForm(request.POST,prefix="billing_address")
-        #else:
+        # else:
         #    billing_address_form = None
 
         if (emailuser_form.is_valid() 
@@ -231,45 +233,45 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
         #    and (not billing_address_form or billing_address_form.is_valid())
         ):
             emailuser = emailuser_form.save(commit=False)
-            is_name_changed = any([original_first_name != emailuser.first_name,original_last_name != emailuser.last_name])
+            is_name_changed = any([original_first_name != emailuser.first_name, original_last_name != emailuser.last_name])
 
-            #save user address information.
+            # save user address information.
 
-            #if residential_address_source_type == "added":
+            # if residential_address_source_type == "added":
             #    emailuser.residential_address = residential_address_form.save()
-            #else:
+            # else:
             #    emailuser.residential_address = None
 
-            #if postal_address_source_type == "added":
+            # if postal_address_source_type == "added":
             #    emailuser.postal_address = postal_address_form.save()
-            #elif postal_address_source_type == "residential_address":
+            # elif postal_address_source_type == "residential_address":
             #    emailuser.postal_address = emailuser.residential_address
-            #else:
+            # else:
             #    emailuser.postal_address = None
 
-            #if billing_address_source_type == "added":
+            # if billing_address_source_type == "added":
             #    emailuser.billing_address = billing_address_form.save()
-            #elif billing_address_source_type == "residential_address":
+            # elif billing_address_source_type == "residential_address":
             #    emailuser.billing_address = emailuser.residential_address
-            #elif billing_address_source_type == "postal_address":
+            # elif billing_address_source_type == "postal_address":
             #    emailuser.billing_address = emailuser.postal_address
-            #else:
+            # else:
             #    emailuser.billing_address = None
 
-            #save user info
+            # save user info
             emailuser.save()
 
-            #remove old address if required.
-            #if residential_address_source_type == "removed" and original_residential_address:
+            # remove old address if required.
+            # if residential_address_source_type == "removed" and original_residential_address:
             #    original_residential_address.delete()
 
-            #if original_postal_address_source_type == "added" and postal_address_source_type != "added":
+            # if original_postal_address_source_type == "added" and postal_address_source_type != "added":
             #    original_postal_address.delete()
                             
-            #if original_billing_address_source_type == "added" and billing_address_source_type != "added":
+            # if original_billing_address_source_type == "added" and billing_address_source_type != "added":
             #    original_billing_address.delete()
                             
-            #send signal if either first name or last name is changed
+            # send signal if either first name or last name is changed
             if is_name_changed:
                 messages.warning(request, "Please upload new identification after you changed your name.")
                 return redirect(self.identification_url)
@@ -279,12 +281,12 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
                 messages.success(request, "User account was saved.")
 
         return render(request, self.template_name, {'emailuser_form': emailuser_form,
-                                                    #'residential_address_form': residential_address_form or AddressForm(prefix="residential_address"),
-                                                    #'postal_address_form': postal_address_form or AddressForm(prefix="postal_address"),
-                                                    #'billing_address_form': billing_address_form or AddressForm(prefix="billing_address"),
-                                                    #'residential_address_source_type':residential_address_source_type,
-                                                    #'postal_address_source_type':postal_address_source_type,
-                                                    #'billing_address_source_type':billing_address_source_type,
+                                                    # 'residential_address_form': residential_address_form or AddressForm(prefix="residential_address"),
+                                                    # 'postal_address_form': postal_address_form or AddressForm(prefix="postal_address"),
+                                                    # 'billing_address_form': billing_address_form or AddressForm(prefix="billing_address"),
+                                                    # 'residential_address_source_type':residential_address_source_type,
+                                                    # 'postal_address_source_type':postal_address_source_type,
+                                                    # 'billing_address_source_type':billing_address_source_type,
                                                     })
 
 
@@ -310,7 +312,7 @@ class CreateDocumentView(CustomerRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         user = get_object_or_404(EmailUser, pk=request.user.id)
 
-        document_form = DocumentForm(request.POST,request.FILES)
+        document_form = DocumentForm(request.POST, request.FILES)
 
         if document_form.is_valid() :
             document = document_form.save()
@@ -320,31 +322,31 @@ class CreateDocumentView(CustomerRequiredMixin, TemplateView):
         else:
             return render(request, self.template_name, {'document_form': document_form})
 
+
 class DeleteDocumentView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/list_documents.html'
     login_url = '/'
 
-    def get(self,request,id, *args, **kwargs):
+    def get(self, request, id, *args, **kwargs):
         document = get_object_or_404(Document, pk=id)
         document.delete()
         messages.success(request, "The document '%s' was deleted." % document.name)
         return redirect('wl_main:list_documents')
 
 
-
 class EditDocumentView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/edit_document.html'
     login_url = '/'
 
-    def get(self, request,id, *args, **kwargs):
+    def get(self, request, id, *args, **kwargs):
         document = get_object_or_404(Document, pk=id)
         return render(request, self.template_name, {'document_form': DocumentForm(instance=document)})
 
-    def post(self, request,id, *args, **kwargs):
+    def post(self, request, id, *args, **kwargs):
         document = get_object_or_404(Document, pk=id)
-        document_form = DocumentForm(request.POST,request.FILES,instance=document)
+        document_form = DocumentForm(request.POST, request.FILES, instance=document)
 
-        if document_form.is_valid() :
+        if document_form.is_valid():
             document = document_form.save()
             messages.success(request, "The document '%s' was edited." % document.name)
             return redirect('wl_main:list_documents')
@@ -352,4 +354,44 @@ class EditDocumentView(CustomerRequiredMixin, TemplateView):
             return render(request, self.template_name, {'document_form': document_form})
 
 
+class CommunicationsLogListView(OfficerRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        q = Q(officer=args[0]) | Q(customer=args[0])
 
+        data = serialize(CommunicationsLogEntry.objects.filter(q).order_by('created'),
+                         posthook=format_communications_log_entry,
+                         exclude=['communicationslogentry_ptr', 'customer', 'officer']),
+
+        return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
+
+
+class AddCommunicationsLogEntryView(OfficerRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        customer = get_object_or_404(EmailUser, pk=args[0])
+
+        form = CommunicationsLogEntryForm(data=request.POST, files=request.FILES)
+
+        if form.is_valid():
+            communications_log_entry = form.save(commit=False)
+
+            communications_log_entry.customer = customer
+            communications_log_entry.officer = request.user
+
+            if request.FILES and 'attachment' in request.FILES:
+                communications_log_entry.document = Document.objects.create(file=request.FILES['attachment'])
+
+            communications_log_entry.save()
+
+            return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
+        else:
+            return JsonResponse(
+                {
+                    "errors": [
+                        {
+                            'status': "422",
+                            'title': 'Data not valid',
+                            'detail': form.errors
+                        }
+                    ]
+                },
+                safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)

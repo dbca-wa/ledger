@@ -8,7 +8,9 @@ from django.utils.encoding import smart_text
 from django_hosts import reverse as hosts_reverse
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
-from wildlifelicensing.apps.applications.models import EmailLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
+from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
+
+SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 
 logger = logging.getLogger(__name__)
 
@@ -19,19 +21,28 @@ class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_amendment_requested.txt'
 
 
-def send_amendment_requested_email(application, amendment_request, request):
+def send_amendment_requested_email(amendment_request, request):
+    application = amendment_request.application
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
         reverse('wl_applications:edit_application',
                 args=[application.licence_type.code_slug, application.pk])
     )
+
     context = {
-        'amendment_detail': amendment_request.text,
+        'amendment_request': amendment_request,
         'url': url
     }
+
     if amendment_request.reason:
-        context['amendment_reason'] = dict(AmendmentRequest.REASON_CHOICES)[amendment_request.reason]
-    msg = email.send(application.applicant_profile.email, context=context)
+        context['reason'] = dict(AmendmentRequest.REASON_CHOICES)[amendment_request.reason]
+
+    if application.proxy_applicant is None:
+        recipient_email = application.applicant_profile.email
+    else:
+        recipient_email = application.proxy_applicant.email
+
+    msg = email.send(recipient_email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
 
@@ -110,19 +121,27 @@ class ApplicationIDUpdateRequestedEmail(TemplateEmailBase):
 
 
 def send_id_update_request_email(id_request, request):
+    application = id_request.application
     email = ApplicationIDUpdateRequestedEmail()
     url = request.build_absolute_uri(
         reverse('wl_main:identification')
     )
+
+    if id_request.reason:
+        id_request.reason = dict(IDRequest.REASON_CHOICES)[id_request.reason]
+
     context = {
+        'id_request': id_request,
         'url': url
     }
-    if id_request.reason:
-        context['request_reason'] = dict(IDRequest.REASON_CHOICES)[id_request.reason]
-    if id_request.text:
-        context['request_text'] = id_request.text
-    msg = email.send(id_request.application.applicant_profile.email, context=context)
-    _log_email(msg, application=id_request.application, sender=request.user)
+
+    if application.proxy_applicant is None:
+        recipient_email = application.applicant_profile.email
+    else:
+        recipient_email = application.proxy_applicant.email
+
+    msg = email.send(recipient_email, context=context)
+    _log_email(msg, application=application, sender=request.user)
 
 
 class ApplicationReturnsRequestedEmail(TemplateEmailBase):
@@ -132,19 +151,27 @@ class ApplicationReturnsRequestedEmail(TemplateEmailBase):
 
 
 def send_returns_request_email(returns_request, request):
+    application = returns_request.application
     email = ApplicationReturnsRequestedEmail()
     url = request.build_absolute_uri(
         reverse('wl_dashboard:home')
     )
-    context = {
-        'url': url
-    }
+
     if returns_request.reason:
-        context['request_reason'] = dict(ReturnsRequest.REASON_CHOICES)[returns_request.reason]
-    if returns_request.text:
-        context['request_text'] = returns_request.text
-    msg = email.send(returns_request.application.applicant_profile.email, context=context)
-    _log_email(msg, application=returns_request.application, sender=request.user)
+        returns_request.reason = dict(ReturnsRequest.REASON_CHOICES)[returns_request.reason]
+
+    context = {
+        'url': url,
+        'returns_request': returns_request
+    }
+
+    if application.proxy_applicant is None:
+        recipient_email = application.applicant_profile.email
+    else:
+        recipient_email = application.proxy_applicant.email
+
+    msg = email.send(recipient_email, context=context)
+    _log_email(msg, application=application, sender=request.user)
 
 
 class LicenceIssuedEmail(TemplateEmailBase):
@@ -176,6 +203,7 @@ def send_licence_issued_email(licence, application, request):
     else:
         logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
         attachments = None
+
     msg = email.send(licence.profile.email, context=context, attachments=attachments)
     log_entry = _log_email(msg, application=application, sender=request.user)
     if licence.licence_document is not None:
@@ -225,7 +253,7 @@ def _log_email(email_message, application, sender=None):
         # TODO this will log the plain text body, should we log the html instead
         text = email_message.body
         subject = email_message.subject
-        from_email = smart_text(sender) if sender else smart_text(email_message.from_email)
+        fromm = smart_text(sender) if sender else smart_text(email_message.from_email)
         # the to email is normally a list
         if isinstance(email_message.to, list):
             to = ';'.join(email_message.to)
@@ -235,15 +263,23 @@ def _log_email(email_message, application, sender=None):
         text = smart_text(email_message)
         subject = ''
         to = application.applicant_profile.user.email
-        from_email = smart_text(sender) if sender else ''
+        fromm = smart_text(sender) if sender else SYSTEM_NAME
+
+    if application.proxy_applicant is None:
+        customer = application.applicant_profile.user
+    else:
+        customer = application.proxy_applicant
+
+    officer = sender
 
     kwargs = {
         'subject': subject,
         'text': text,
         'application': application,
-        'user': sender,
+        'customer': customer,
+        'officer': officer,
         'to': to,
-        'from_email': from_email
+        'fromm': fromm
     }
-    email_entry = EmailLogEntry.objects.create(**kwargs)
+    email_entry = ApplicationLogEntry.objects.create(**kwargs)
     return email_entry

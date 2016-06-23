@@ -9,21 +9,21 @@
       "schema": {
         "fields": [
           {
-            "name": "location",
+            "name": "LOCATION",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "site",
+            "name": "SITE",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "datum",
+            "name": "DATUM",
             "type": "string",
             "default": "GDA94",
             "constraints": {
@@ -31,7 +31,7 @@
             }
           },
           {
-            "name": "latitude",
+            "name": "LATITUDE",
             "type": "number",
             "constraints": {
               "required": true,
@@ -40,7 +40,7 @@
             }
           },
           {
-            "name": "longitude",
+            "name": "LONGITUDE",
             "type": "number",
             "constraints": {
               "minimum": -180.0,
@@ -48,99 +48,99 @@
             }
           },
           {
-            "name": "zone",
+            "name": "ZONE",
             "type": "string"
           },
           {
-            "name": "Easting",
+            "name": "EASTING",
             "type": "number"
           },
           {
-            "name": "Northing",
+            "name": "NORTHING",
             "type": "number"
           },
           {
-            "name": "accuracy",
+            "name": "ACCURACY",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "date",
+            "name": "DATE",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "name_id",
+            "name": "NAME_ID",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "species_name",
+            "name": "SPECIES_NAME",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "common_name",
+            "name": "COMMON_NAME",
             "type": "string"
           },
           {
-            "name": "species_group",
+            "name": "SPECIES_GROUP",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "count",
+            "name": "COUNT",
             "type": "number",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "identifier",
+            "name": "IDENTIFIER",
             "type": "string"
           },
           {
-            "name": "certainty",
+            "name": "CERTAINTY",
             "type": "string"
           },
           {
-            "name": "method",
+            "name": "METHOD",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "fate",
+            "name": "FATE",
             "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "samples",
+            "name": "SAMPLES",
             "type": "string"
           },
           {
-            "name": "marking",
+            "name": "MARKING",
             "type": "string"
           },
           {
-            "name": "transmitter",
+            "name": "TRANSMITTER",
             "type": "string"
           },
           {
-            "name": "voucher_ref",
+            "name": "VOUCHER_REF",
             "type": "string"
           }
         ]

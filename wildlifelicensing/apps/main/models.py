@@ -47,14 +47,22 @@ class DefaultCondition(models.Model):
         unique_together = ('condition', 'wildlife_licence_type', 'order')
 
 
-class AbstractLogEntry(models.Model):
-    user = models.ForeignKey(EmailUser, null=False, blank=False)
+class CommunicationsLogEntry(models.Model):
+    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('main', 'Mail'), ('person', 'In Person')]
+    DEFAULT_TYPE = TYPE_CHOICES[0][0]
+
+    to = models.CharField(max_length=200, blank=True, verbose_name="To")
+    fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
+
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
     document = models.ForeignKey(Document, null=True, blank=False)
-    created = models.DateField(auto_now_add=True, null=False, blank=False)
 
-    class Meta:
-        abstract = True
+    customer = models.ForeignKey(EmailUser, null=True, related_name='customer')
+    officer = models.ForeignKey(EmailUser, null=True, related_name='officer')
+
+    created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 
 
 @python_2_unicode_compatible

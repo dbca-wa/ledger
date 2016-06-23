@@ -41,7 +41,7 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
             return True
 
 
-class CanEditAssessmentMixin(UserPassesTestMixin):
+class CanPerformAssessmentMixin(UserPassesTestMixin):
     """
     CBV mixin that check the 'editability' of assessment that the user is a assessor and that he/she belongs to the right assessor group.
     This mixin assume that the url contains the pk of the assessment in 2nd position
@@ -66,10 +66,8 @@ class CanEditAssessmentMixin(UserPassesTestMixin):
             self.raise_exception = False
             return False
         self.raise_exception = True
-        if is_customer(user):
+        if is_customer(user) or is_officer(user):
             return False
-        if is_officer(user):
-            return True
         assessment = self.get_assessment()
         return assessment is not None and assessment.assessor_group in get_user_assessor_groups(user)
 

@@ -7,19 +7,28 @@
 {% load jsonify %}
 
 {% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css" rel="stylesheet" />
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
-    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
-          rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block requirements %}
-    require(['js/process/process_app'], function (app) {
+    require(['js/process/process_app', 'js/communications_log'], function (app, commsLog) {
         $(function () {
             data = {{ data|jsonify }};
             app.initialiseApplicationProcesssing(data);
+
+            commsLog.initCommunicationLog({
+                showLogPopoverSelector: '#showLog',
+                showLogEntryModalSelector: '#addLogEntry',
+                logEntryModalSelector: '#logEntryModal',
+                logEntryFormSelector: '#addLogEntryForm',
+                logListURL: "{% url 'wl_applications:log_list' data.application.id %}",
+                addLogEntryURL: "{% url 'wl_applications:add_log_entry' data.application.id %}"
+            });
+
             $('#mainContainer').removeClass('hidden');
-            //app.initialiseSidePanelAffix();
         });
     });
 {% endblock %}
@@ -90,15 +99,13 @@
                                         <input type="hidden" id="assignee" class="form-control">
                                         <a id="assignToMe" class="pull-right">Assign to me</a>
                                     </div>
-                                    <div class="form-group" id="application-log-group">
-                                        <div><label>Communication log</label></div>
-                                        <a id="showLog" data-toggle="popover" class="pull-left" role="button">Show log</a>
-                                        <a id="addLogEntry" class="pull-right">Add log entry</a>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    {% with disable_collapse=True add_text='Add application log entry' %}
+                        {% include 'wl/communications_panel.html' %}
+                    {% endwith %}
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">
@@ -397,29 +404,6 @@
                 </div>
             </div>
         </div>
-        {% if application_log_entry_form %}
-            <div class="modal fade" id="logEntryModal" tabindex="-1">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                            <h4 class="modal-title">Add log entry to application</h4>
-                        </div>
-                        <form id="addLogEntryForm" method="post"
-                              action="{% url 'wl_applications:add_log_entry' data.application.id %}" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="modal-body">
-                                <div class="modal-body">
-                                    {% bootstrap_form application_log_entry_form %}
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-default">Add Entry</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
+        {% include 'wl/communications_modal.html' %}
     {% endblock %}
 {% endblock %}

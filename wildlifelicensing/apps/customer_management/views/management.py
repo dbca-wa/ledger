@@ -12,6 +12,7 @@ from wildlifelicensing.apps.customer_management.forms import CustomerSearchForm,
 
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import ProfileForm, AddressForm
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 
 
 class CustomerLookupView(OfficerRequiredMixin, TemplateView):
@@ -202,7 +203,10 @@ class ViewCustomerView(OfficerRequiredMixin, base.TableBaseView):
         return data
 
     def get_context_data(self, **kwargs):
-        kwargs['customer'] = get_object_or_404(EmailUser, pk=self.args[0])
+        customer = get_object_or_404(EmailUser, pk=self.args[0])
+        kwargs['customer'] = customer
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.email, fromm=self.request.user.email)
 
         return super(ViewCustomerView, self).get_context_data(**kwargs)
 
@@ -266,7 +270,7 @@ class EditProfileView(OfficerRequiredMixin, TemplateView):
         customer = get_object_or_404(EmailUser, pk=self.args[0])
 
         if len(self.args) > 1:
-            profile = get_object_or_404(Profile, pk=args[0])
+            profile = get_object_or_404(Profile, pk=args[1])
             profile_form = ProfileForm(request.POST, instance=profile)
             address_form = AddressForm(request.POST, instance=profile.postal_address)
         else:

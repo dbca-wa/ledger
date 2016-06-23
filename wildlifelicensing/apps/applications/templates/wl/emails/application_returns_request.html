@@ -1,14 +1,20 @@
 {% extends 'wl/emails/base_email.html' %}
 
 {% block content %}
-    Your Wildlife Licensing application has been reviewed and requires completion of returns.
-    {% if request_reason %}
+    {% if returns_request.application.proxy_applicant %}
+        The Wildlife Licensing application you made on behalf of {{ returns_request.application.applicant_profile.user.get_full_name }} 
+        has been reviewed and requires completion of returns.
+    {% else %}
+        Your Wildlife Licensing application has been reviewed and requires completion of returns.
+    {% endif %}
+
+    {% if returns_request.reason %}
         <p>
-            <span>Reason: {{ request_reason }}</span>
+            <span>Reason: {{ returns_request.reason }}</span>
         </p>
     {% endif %}
-    {% if request_text %}
-        <p>Detail: <br> {{ request_text }}</p>
+    {% if returns_request.text %}
+        <p>Detail: <br> {{ returns_request.text }}</p>
     {% endif %}
     {% if url %}
         <p>Click <a href='{{ url }}'>here</a> to lodge your returns.</p>
