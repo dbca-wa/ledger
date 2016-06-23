@@ -79,3 +79,7 @@
 .modal-footer {
     background-color: #529b6b;
 }
+
+.popover {
+    max-width: 100%;
+}

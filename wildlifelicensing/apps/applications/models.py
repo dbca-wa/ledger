@@ -105,7 +105,14 @@ class ApplicationLogEntry(CommunicationsLogEntry):
     application = models.ForeignKey(Application)
 
 
-class IDRequest(ApplicationLogEntry):
+class ApplicationRequest(models.Model):
+    application = models.ForeignKey(Application)
+    subject = models.CharField(max_length=200, blank=True)
+    text = models.TextField(blank=True)
+    officer = models.ForeignKey(EmailUser, null=True)
+
+
+class IDRequest(ApplicationRequest):
     REASON_CHOICES = (('missing', 'There is currently no Photographic Identification uploaded'),
                       ('expired', 'The current identification has expired'),
                       ('not_recognised',
@@ -115,13 +122,13 @@ class IDRequest(ApplicationLogEntry):
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
 
 
-class ReturnsRequest(ApplicationLogEntry):
+class ReturnsRequest(ApplicationRequest):
     REASON_CHOICES = (('outstanding', 'There are currently outstanding returns for the previous licence'),
                       ('other', 'Other'))
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
 
 
-class AmendmentRequest(ApplicationLogEntry):
+class AmendmentRequest(ApplicationRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
     REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
                       ('missing_information', 'There was missing information'),
@@ -130,7 +137,7 @@ class AmendmentRequest(ApplicationLogEntry):
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
 
 
-class Assessment(ApplicationLogEntry):
+class Assessment(ApplicationRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
     assessor_group = models.ForeignKey(AssessorGroup)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])

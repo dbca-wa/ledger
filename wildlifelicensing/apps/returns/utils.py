@@ -1,6 +1,8 @@
-from datetime import timedelta, date
+from datetime import date
 from wildlifelicensing.apps.returns.models import Return
 from dateutil.relativedelta import relativedelta
+
+RETURN_STATUSES = dict(Return.STATUS_CHOICES)
 
 
 def create_returns_due_dates(start_date, end_date, monthly_frequency):
@@ -30,3 +32,9 @@ def is_return_due_soon(ret):
     days_soon = 14
     status = ret.status
     return status in Return.CUSTOMER_EDITABLE_STATE and (ret.due_date - date.today()).days < days_soon or is_return_overdue(ret)
+
+
+def format_return(instance, attrs):
+    attrs['status'] = RETURN_STATUSES[attrs['status']]
+
+    return attrs

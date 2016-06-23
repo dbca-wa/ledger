@@ -265,12 +265,12 @@ def _log_email(email_message, application, sender=None):
         to = application.applicant_profile.user.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
 
-        if application.proxy_applicant is None:
-            customer = application.application_profile.user
-        else:
-            customer = application.proxy_applicant
+    if application.proxy_applicant is None:
+        customer = application.applicant_profile.user
+    else:
+        customer = application.proxy_applicant
 
-        officer = sender
+    officer = sender
 
     kwargs = {
         'subject': subject,

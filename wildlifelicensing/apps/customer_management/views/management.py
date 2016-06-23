@@ -203,8 +203,10 @@ class ViewCustomerView(OfficerRequiredMixin, base.TableBaseView):
         return data
 
     def get_context_data(self, **kwargs):
-        kwargs['customer'] = get_object_or_404(EmailUser, pk=self.args[0])
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
+        customer = get_object_or_404(EmailUser, pk=self.args[0])
+        kwargs['customer'] = customer
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.email, fromm=self.request.user.email)
 
         return super(ViewCustomerView, self).get_context_data(**kwargs)
 

@@ -43,7 +43,12 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable,
                                                             return_frequency=application.licence_type.returntype.month_frequency)
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
+        if application.proxy_applicant is None:
+            customer = application.applicant_profile.user
+        else:
+            customer = application.proxy_applicant
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.email, fromm=self.request.user.email)
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
@@ -121,9 +126,16 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
+            if application.proxy_applicant is None:
+                to = application.applicant_profile.user.email
+            else:
+                to = application.proxy_applicant.email
+
+            log_entry_form = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
+
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
                                                         'issue_licence_form': IssueLicenceForm(purpose=purposes),
-                                                        'log_entry_form': CommunicationsLogEntryForm()})
+                                                        'log_entry_form': log_entry_form})
 
 
 class ReissueLicenceView(OfficerRequiredMixin, View):

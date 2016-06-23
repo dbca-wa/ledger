@@ -85,7 +85,13 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         kwargs['id_request_form'] = IDRequestForm(application=application, officer=self.request.user)
         kwargs['returns_request_form'] = ReturnsRequestForm(application=application, officer=self.request.user)
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, officer=self.request.user)
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
+
+        if application.proxy_applicant is None:
+            to = application.applicant_profile.user.email
+        else:
+            to = application.proxy_applicant.email
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
 
         return super(ProcessView, self).get_context_data(**kwargs)
 

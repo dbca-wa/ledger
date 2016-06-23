@@ -22,6 +22,7 @@ from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow
 from wildlifelicensing.apps.main import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
 from wildlifelicensing.apps.returns.utils_schema import Schema
+from wildlifelicensing.apps.returns.utils import format_return
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
@@ -79,7 +80,7 @@ def _create_return_data_from_post_data(ret, tables_info, post_data):
     for table in tables_info:
         rows = _get_table_rows_from_post(table.get('name'), post_data)
         if rows:
-            return_table, created = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)
+            return_table = ReturnTable.objects.get_or_create(name=table.get('name'), ret=ret)[0]
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
             return_rows = [ReturnRow(return_table=return_table, data=row) for row in rows]
@@ -209,7 +210,7 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ret = get_object_or_404(Return, pk=self.args[0])
 
-        kwargs['return'] = ret
+        kwargs['return'] = serialize(ret, posthook=format_return)
 
         kwargs['tables'] = []
 
@@ -231,7 +232,7 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
         kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=ret.licence.holder.email, fromm=self.request.user.email)
 
         return super(CurateReturnView, self).get_context_data(**kwargs)
 

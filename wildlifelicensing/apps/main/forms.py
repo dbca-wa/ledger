@@ -90,3 +90,15 @@ class CommunicationsLogEntryForm(forms.ModelForm):
     class Meta:
         model = CommunicationsLogEntry
         fields = ['to', 'fromm', 'type', 'subject', 'text', 'attachment']
+
+    def __init__(self, *args, **kwargs):
+        to = kwargs.pop('to', None)
+        fromm = kwargs.pop('fromm', None)
+
+        super(CommunicationsLogEntryForm, self).__init__(*args, **kwargs)
+
+        if to is not None:
+            self.fields['to'].initial = to
+
+        if fromm is not None:
+            self.fields['fromm'].initial = fromm

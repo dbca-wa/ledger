@@ -39,7 +39,13 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['form_structure'] = form_structure
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
         kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm()
+
+        if application.proxy_applicant is None:
+            to = application.applicant_profile.user.email
+        else:
+            to = application.proxy_applicant.email
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 

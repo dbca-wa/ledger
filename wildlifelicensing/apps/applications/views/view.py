@@ -38,7 +38,13 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
 
         if is_officer(self.request.user):
             kwargs['customer'] = application.applicant_profile.user
-            kwargs['log_entry_form'] = CommunicationsLogEntryForm()
+
+            if application.proxy_applicant is None:
+                to = application.applicant_profile.user.email
+            else:
+                to = application.proxy_applicant.email
+
+            kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
 
         return super(ViewReadonlyView, self).get_context_data(**kwargs)
 
