@@ -270,7 +270,7 @@
                 "label": "Level 1 / reconnaissance",
                 "name": "reconnaissance",
                 "conditions": {
-                    "checked": [
+                    "on": [
                         {
                             "type": "radiobuttons",
                             "label": "What survey method will you be using?",
@@ -378,7 +378,7 @@
                                                     "label": "Hook and Bag",
                                                     "name": "hook_and_bag",
                                                     "conditions": {
-                                                        "checked": [
+                                                        "on": [
                                                             {
                                                                 "type": "text_area",
                                                                 "label": "Please Provide Details",
@@ -392,7 +392,7 @@
                                                     "label": "Noose",
                                                     "name": "noose",
                                                     "conditions": {
-                                                        "checked": [
+                                                        "on": [
                                                             {
                                                                 "type": "text_area",
                                                                 "label": "Please Provide Details",
@@ -406,7 +406,7 @@
                                                     "label": "Foraging",
                                                     "name": "foraging",
                                                     "conditions": {
-                                                        "checked": [
+                                                        "on": [
                                                             {
                                                                 "type": "text_area",
                                                                 "label": "Please Provide Details",
@@ -420,7 +420,7 @@
                                                     "label": "Raking",
                                                     "name": "raking",
                                                     "conditions": {
-                                                        "checked": [
+                                                        "on": [
                                                             {
                                                                 "type": "text_area",
                                                                 "label": "Please Provide Details",
@@ -434,7 +434,7 @@
                                                     "label": "Sieving",
                                                     "name": "sieving",
                                                     "conditions": {
-                                                        "checked": [
+                                                        "on": [
                                                             {
                                                                 "type": "text_area",
                                                                 "label": "Please Provide Details",
@@ -448,7 +448,7 @@
                                                     "label": "Excavation",
                                                     "name": "excavation",
                                                     "conditions": {
-                                                        "checked": [
+                                                        "on": [
                                                             {
                                                                 "type": "text_area",
                                                                 "label": "Please Provide Details",
@@ -462,7 +462,7 @@
                                                     "label": "Other",
                                                     "name": "other_hand_capture_techniques",
                                                     "conditions": {
-                                                        "checked": [
+                                                        "on": [
                                                             {
                                                                 "type": "text_area",
                                                                 "label": "Please Provide Details",
@@ -491,7 +491,7 @@
                                             {"value": "retain", "label": "Retain"}
                                         ],
                                         "conditions": {
-                                            "retain": [
+                                            "release": [
                                                 {
                                                     "type": "select",
                                                     "label": "Release Schedule",
@@ -540,7 +540,7 @@
                                                                 "label": "Other",
                                                                 "name": "mophometric_other",
                                                                 "conditions": {
-                                                                    "checked": [
+                                                                    "on": [
                                                                         {
                                                                             "type": "text_area",
                                                                             "label": "Please provide details",
@@ -566,7 +566,7 @@
                                                                 "label": "Tissue",
                                                                 "name": "tissue",
                                                                 "conditions": {
-                                                                    "checked": [
+                                                                    "on": [
                                                                         {
                                                                             "type": "text_area",
                                                                             "label": "Please provide details",
@@ -580,7 +580,7 @@
                                                                 "label": "Scale",
                                                                 "name": "scale",
                                                                 "conditions": {
-                                                                    "checked": [
+                                                                    "on": [
                                                                         {
                                                                             "type": "text_area",
                                                                             "label": "Please provide details",
@@ -594,7 +594,7 @@
                                                                 "label": "Hair / feather",
                                                                 "name": "hair_feather",
                                                                 "conditions": {
-                                                                    "checked": [
+                                                                    "on": [
                                                                         {
                                                                             "type": "text_area",
                                                                             "label": "Please provide details",
@@ -608,7 +608,7 @@
                                                                 "label": "Blood",
                                                                 "name": "blood",
                                                                 "conditions": {
-                                                                    "checked": [
+                                                                    "on": [
                                                                         {
                                                                             "type": "text_area",
                                                                             "label": "Please provide details",
@@ -622,7 +622,7 @@
                                                                 "label": "Swabs",
                                                                 "name": "swabs",
                                                                 "conditions": {
-                                                                    "checked": [
+                                                                    "on": [
                                                                         {
                                                                             "type": "text_area",
                                                                             "label": "Please provide details",
@@ -636,7 +636,7 @@
                                                                 "label": "Other",
                                                                 "name": "samples_other",
                                                                 "conditions": {
-                                                                    "checked": [
+                                                                    "on": [
                                                                         {
                                                                             "type": "text_area",
                                                                             "label": "Please provide details",
@@ -662,7 +662,7 @@
                                                                             "label": "Tags",
                                                                             "name": "tags",
                                                                             "conditions": {
-                                                                                "checked": [
+                                                                                "on": [
                                                                                     {
                                                                                         "type": "text_area",
                                                                                         "label": "Please provide details",
@@ -676,7 +676,7 @@
                                                                             "label": "Microchips / implants",
                                                                             "name": "microchips",
                                                                             "conditions": {
-                                                                                "checked": [
+                                                                                "on": [
                                                                                     {
                                                                                         "type": "text_area",
                                                                                         "label": "Please provide details",
@@ -690,7 +690,7 @@
                                                                             "label": "Bands",
                                                                             "name": "bands",
                                                                             "conditions": {
-                                                                                "checked": [
+                                                                                "on": [
                                                                                     {
                                                                                         "type": "text_area",
                                                                                         "label": "Please provide details",
@@ -704,7 +704,7 @@
                                                                             "label": "Ear punching",
                                                                             "name": "ear_punching",
                                                                             "conditions": {
-                                                                                "checked": [
+                                                                                "on": [
                                                                                     {
                                                                                         "type": "text_area",
                                                                                         "label": "Please provide details",
@@ -718,7 +718,7 @@
                                                                             "label": "Other",
                                                                             "name": "marking_other",
                                                                             "conditions": {
-                                                                                "checked": [
+                                                                                "on": [
                                                                                     {
                                                                                         "type": "text_area",
                                                                                         "label": "Please provide details",
@@ -820,7 +820,7 @@
                                                     }
                                                 }
                                             ],
-                                            "release": [
+                                            "retain": [
                                                 
                                             ]
                                         }
@@ -856,7 +856,7 @@
                 "label": "Targeted",
                 "name": "targeted",
                 "conditions": {
-                    "checked": [
+                    "on": [
                         {
                             "type": "group",
                             "label": "Targeted Fauna Type",

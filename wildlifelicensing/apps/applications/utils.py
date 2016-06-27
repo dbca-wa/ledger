@@ -73,6 +73,11 @@ def _create_data_from_item(item, post_data, file_data, post_data_index=None):
             for child in item['children']:
                 item_data.update(_create_data_from_item(child, post_data, file_data, post_data_index))
 
+    if 'conditions' in item:
+        for condition in item['conditions'].keys():
+            for child in item['conditions'][condition]:
+                item_data.update(_create_data_from_item(child, post_data, file_data, post_data_index))
+
     return item_data
 
 

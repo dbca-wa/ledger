@@ -9,7 +9,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
-        	item.isRemovable = isRepeat;
+            item.isRemovable = isRepeat;
         }
 
         if(itemData != undefined && item.name in itemData) {
@@ -123,7 +123,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         if(item.type === 'radiobuttons') {
             return  $input.is(':checked') ? $input.val(): '';
         } else if (item.type === 'checkbox') {
-            return $input.is(':checked') ? 'checked': '';
+            return $input.is(':checked') ? 'on': '';
         } else {
             return $input.val();
         }

@@ -25,6 +25,9 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                     itemContainer.append($('<p>').text(option.label));
                 }
             });
+        } else if(item.type === 'checkbox') {
+            itemContainer.append($('<label>').text(item.label));
+            itemContainer.append($('<p>').text(item.value ? 'Checked' : 'Not checked'));
         } else if(item.type === 'declaration') {
             itemContainer.append($('<label>').text(item.label));
             itemContainer.append($('<p>').text(item.value ? 'Declaration checked' : 'Declaration not checked'));
@@ -43,7 +46,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.value = undefined;
 
-        if(item.children !== undefined) {
+        if(item.children !== undefined || item.conditions !== undefined) {
             var childrenAnchorPoint;
 
             // if no children anchor point was defined within the template, create one under current item
@@ -55,32 +58,39 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                 itemContainer.append(childrenAnchorPoint);
             }
 
-            $.each(item.children, function(childIndex, child) {
-                if(child.isRepeatable) {
-                    // only show children items when the item has no condition or the condition is met
-                    if(item.condition === undefined || item.condition === itemData[item.name]) {
+            if(item.conditions !== undefined) {
+                $.each(item.conditions, function(condition, children) {
+                    console.log(condition);
+                    if(condition === itemData[item.name]) {
+                        $.each(children, function(childIndex, child) {
+                            childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
+                        });
+                    }
+                });
+            }
+
+            if(item.children !== undefined) {
+                $.each(item.children, function(childIndex, child) {
+                    if(child.isRepeatable) {
                         var childData;
                         if(itemData !== undefined) {
                             childData = itemData[child.name][0];
                         }
                         childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
-                    }
 
-                    var repeatItemsAnchorPoint = $('<div>');
-                    childrenAnchorPoint.append(repeatItemsAnchorPoint);
+                        var repeatItemsAnchorPoint = $('<div>');
+                        childrenAnchorPoint.append(repeatItemsAnchorPoint);
 
-                    if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
-                        $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
-                            repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
-                        });
-                    }
-                } else {
-                    // only show children items when the item has no condition or the condition is met
-                    if(item.condition === undefined || item.condition === itemData[item.name]) {
+                        if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
+                            $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
+                                repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
+                            });
+                        }
+                    } else {
                         childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
                     }
-                }
-            });
+                });
+            }
         }
 
         return itemContainer;
