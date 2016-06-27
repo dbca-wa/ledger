@@ -6,7 +6,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    help = 'Compiles Handlebars template files into a precompiled JS files'
+    help = 'Compiles Handlebars template files into a precompiled JS file'
 
     def add_arguments(self, parser):
         parser.add_argument('-o',

@@ -29,19 +29,20 @@
                     {"value": "no", "label": "No"},
                     {"value": "unsure", "label": "Unsure"}
                 ],
-                "condition": "yes",
-                "children": [
-                    {
-                        "type": "file",
-                        "label": "Please provide detail and attach any applications made or permissions granted.",
-                        "name": "permits"
-                    },
-                    {
-                        "type": "declaration",
-                        "label": "I acknowledge that should other permissions/approvals be required it may affect the processing time for this Regulation 17 licence",
-                        "name": "permits_acknowledgement"
-                    }
-                ]
+                "conditions": {
+                    "yes": [
+                        {
+                            "type": "file",
+                            "label": "Please provide detail and attach any applications made or permissions granted.",
+                            "name": "permits"
+                        },
+                        {
+                            "type": "declaration",
+                            "label": "I acknowledge that should other permissions/approvals be required it may affect the processing time for this Regulation 17 licence",
+                            "name": "permits_acknowledgement"
+                        }
+                    ]
+                }
             }
         ]
     },
@@ -58,14 +59,15 @@
                     {"value": "contract", "label": "Contract / Consulting"},
                     {"value": "other", "label": "Other - Please provide details"}
                 ],
-                "condition": "other",
-                "children": [
-                    {
-                        "type": "text_area",
-                        "label": "Affiliated Organisation / Client / Sponsor",
-                        "name": "financial_details"
-                    }
-                ]
+                "conditions": {
+                    "other": [
+                        {
+                            "type": "text_area",
+                            "label": "Affiliated Organisation / Client / Sponsor",
+                            "name": "financial_details"
+                        }
+                    ]
+                }
             }
         ]
     },
@@ -152,14 +154,15 @@
                             {"value": "student", "label": "Student"},
                             {"value": "other", "label": "Other - Please provide details"}
                         ],
-                        "condition": "other",
-                        "children": [
-                            {
-                                "type": "text",
-                                "label": "Details",
-                                "name": "ap_association_other_details"
-                            }
-                        ]
+                        "conditions": {
+                            "other": [
+                                {
+                                    "type": "text",
+                                    "label": "Details",
+                                    "name": "ap_association_other_details"
+                                }
+                            ]
+                        }
                     },
                     {
                         "type": "select",
@@ -171,22 +174,23 @@
                             {"value": "scribe", "label": "Scribe"},
                             {"value": "assistant", "label": "Assistant"}
                         ],
-                        "condition": "handler",
-                        "children": [
-                            {
-                                "type": "select",
-                                "label": "Handler Type",
-                                "name": "ap_handler_type",
-                                "defaultBlank": true,
-                                "options": [
-                                    {"value": "biopsy", "label": "Biopsy"},
-                                    {"value": "chipping", "label": "Chipping"},
-                                    {"value": "collaring", "label": "Collaring"},
-                                    {"value": "anasthaesia", "label": "Anasthaesia"},
-                                    {"value": "other", "label": "Other"}
-                                ]
-                            }
-                        ]
+                        "conditions": {
+                            "handler": [
+                                {
+                                    "type": "select",
+                                    "label": "Handler Type",
+                                    "name": "ap_handler_type",
+                                    "defaultBlank": true,
+                                    "options": [
+                                        {"value": "biopsy", "label": "Biopsy"},
+                                        {"value": "chipping", "label": "Chipping"},
+                                        {"value": "collaring", "label": "Collaring"},
+                                        {"value": "anasthaesia", "label": "Anasthaesia"},
+                                        {"value": "other", "label": "Other"}
+                                    ]
+                                }
+                            ]
+                        }
                     },
                     {
                         "type": "file",
@@ -246,14 +250,15 @@
                     {"value": "biennually", "label": "Biennially/Every two years"},
                     {"value": "other", "label": "Other"}
                 ],
-                "condition": "other",
-                "children": [
-                    {
-                        "type": "text",
-                        "label": "Please Specify",
-                        "name": "regular_intervals_other"
-                    }
-                ]
+                "conditions": {
+                    "other": [
+                        {
+                            "type": "text",
+                            "label": "Please Specify",
+                            "name": "regular_intervals_other"
+                        }
+                    ]
+                }
             },
             {
                 "type": "label",
@@ -263,7 +268,568 @@
             {
                 "type": "checkbox",
                 "label": "Level 1 / reconnaissance",
-                "name": "reconnaissance"
+                "name": "reconnaissance",
+                "conditions": {
+                    "checked": [
+                        {
+                            "type": "radiobuttons",
+                            "label": "What survey method will you be using?",
+                            "name": "survey_method",
+                            "options": [
+                                {"value": "capture", "label": "Capture"},
+                                {"value": "remote_sensing", "label": "Remote Sensing"},
+                                {"value": "other", "label": "Other non-capture"}
+                            ],
+                            "conditions": {
+                                "capture": [
+                                    {
+                                        "type": "radiobuttons",
+                                        "label": "Capture Method",
+                                        "name": "capture_method",
+                                        "options": [
+                                            {"value": "trap", "label": "Trap"},
+                                            {"value": "net", "label": "Net"},
+                                            {"value": "hand", "label": "Hand"},
+                                            {"value": "other", "label": "Other"}
+                                        ],
+                                        "conditions": {
+                                            "trap": [
+                                                {
+                                                    "type": "number",
+                                                    "label": "What is the number of trap sites?",
+                                                    "name": "num_trap_sites"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "How many trapping sessions?",
+                                                    "name": "num_trap_sessions"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "How many days/nights will traps be open?",
+                                                    "name": "num_traps_open_days"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "Total number of traps per session?",
+                                                    "name": "num_traps_per_session"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "Maximum total number of traps per site per session?",
+                                                    "name": "max_num_traps_per_session_per_site"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "Minimum total number of traps per site per session?",
+                                                    "name": "min_num_traps_per_session_per_site"
+                                                },
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "If there is a different number of traps per session or sites then explain",
+                                                    "name": "different_num_traps_per_session_or_site_explanation"
+                                                }
+                                            ],
+                                            "net": [
+                                                {
+                                                    "type": "number",
+                                                    "label": "Number of sites where nets will be used?",
+                                                    "name": "num_net_sites"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "Number of sessions nets will be used?",
+                                                    "name": "num_net_sessions"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "Number of days/nights net will be used?",
+                                                    "name": "num_net_days"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "Total number of nets per session?",
+                                                    "name": "num_nets_per_session"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "Maximum total number of nets per site per session?",
+                                                    "name": "max_num_nets_per_session_per_site"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "label": "Minimum total number of nets per site per session?",
+                                                    "name": "min_num_net_per_session_per_site"
+                                                },
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "If the number of nets differs between sessions or sites then explain",
+                                                    "name": "different_num_nets_per_session_or_site_explanation"
+                                                }
+                                            ],
+                                            "hand": [
+                                                {
+                                                    "type": "label",
+                                                    "label": "What hand capture techniques will you be using?",
+                                                    "name": "hand_capture_techniques"
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Hook and Bag",
+                                                    "name": "hook_and_bag",
+                                                    "conditions": {
+                                                        "checked": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please Provide Details",
+                                                                "name": "hook_and_bag_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Noose",
+                                                    "name": "noose",
+                                                    "conditions": {
+                                                        "checked": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please Provide Details",
+                                                                "name": "Noose_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Foraging",
+                                                    "name": "foraging",
+                                                    "conditions": {
+                                                        "checked": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please Provide Details",
+                                                                "name": "foraging_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Raking",
+                                                    "name": "raking",
+                                                    "conditions": {
+                                                        "checked": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please Provide Details",
+                                                                "name": "raking_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Sieving",
+                                                    "name": "sieving",
+                                                    "conditions": {
+                                                        "checked": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please Provide Details",
+                                                                "name": "sieving_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Excavation",
+                                                    "name": "excavation",
+                                                    "conditions": {
+                                                        "checked": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please Provide Details",
+                                                                "name": "excavation_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Other",
+                                                    "name": "other_hand_capture_techniques",
+                                                    "conditions": {
+                                                        "checked": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please Provide Details",
+                                                                "name": "excavation_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ],
+                                            "other": [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Provide details of your fauna capture methodology if it doesn’t fit within previous questions for trap, net or hand capture techniques.",
+                                                    "name": "other_capture_methodology"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "select",
+                                        "label": "What will be the fate of the fauna captured?",
+                                        "name:": "fate",
+                                        "defaultBlank": true,
+                                        "options": [
+                                            {"value": "release", "label": "Release"},
+                                            {"value": "retain", "label": "Retain"}
+                                        ],
+                                        "conditions": {
+                                            "retain": [
+                                                {
+                                                    "type": "select",
+                                                    "label": "Release Schedule",
+                                                    "name": "release_schedule",
+                                                    "options": [
+                                                        {"value": "immediately", "label": "Immediately after species idenfication"},
+                                                        {"value": "after_morphometrics", "label": "After morphometrics and physical condition taken"},
+                                                        {"value": "after_samples", "label": "After samples taken"},
+                                                        {"value": "after_marking", "label": "After marking"},
+                                                        {"value": "after_temp_holding", "label": "After temporary holding (< 24 hours)"}
+                                                    ],
+                                                    "conditions": {
+                                                        "after_morphometrics": [
+                                                            {
+                                                                "type": "label",
+                                                                "label": "What morphometrics and condition details will be recorded?",
+                                                                "name": "mophometrics"
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Length",
+                                                                "name": "mophometric_length"
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Sex",
+                                                                "name": "mophometric_sex"
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Age",
+                                                                "name": "mophometric_age"
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Body condition",
+                                                                "name": "mophometric_body_condition"
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Reproductive condition",
+                                                                "name": "mophometric_reproductive_condition"
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Other",
+                                                                "name": "mophometric_other",
+                                                                "conditions": {
+                                                                    "checked": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Please provide details",
+                                                                            "name": "mophometric_other_details"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Provide any other details relating to measurements and condition",
+                                                                "name": "mophometric_other_details"
+                                                            }
+                                                        ],
+                                                        "after_samples": [
+                                                            {
+                                                                "type": "label",
+                                                                "label": "What samples will be taken?",
+                                                                "name": "samples"
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Tissue",
+                                                                "name": "tissue",
+                                                                "conditions": {
+                                                                    "checked": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Please provide details",
+                                                                            "name": "tissue_details"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Scale",
+                                                                "name": "scale",
+                                                                "conditions": {
+                                                                    "checked": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Please provide details",
+                                                                            "name": "scale_details"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Hair / feather",
+                                                                "name": "hair_feather",
+                                                                "conditions": {
+                                                                    "checked": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Please provide details",
+                                                                            "name": "hair_feather_details"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Blood",
+                                                                "name": "blood",
+                                                                "conditions": {
+                                                                    "checked": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Please provide details",
+                                                                            "name": "blood_details"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Swabs",
+                                                                "name": "swabs",
+                                                                "conditions": {
+                                                                    "checked": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Please provide details",
+                                                                            "name": "swabs_details"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "checkbox",
+                                                                "label": "Other",
+                                                                "name": "samples_other",
+                                                                "conditions": {
+                                                                    "checked": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Please provide details",
+                                                                            "name": "samples_other_details"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            }
+                                                        ],
+                                                        "after_marking": [
+                                                            {
+                                                                "type": "select",
+                                                                "label": "What marking will be done and why?",
+                                                                "name": "marking",
+                                                                "options": [
+                                                                    {"value": "temporary", "label": "Temporary"},
+                                                                    {"value": "permanent", "label": "Permanent"}
+                                                                ],
+                                                                "conditions": {
+                                                                    "permanent": [
+                                                                        {
+                                                                            "type": "checkbox",
+                                                                            "label": "Tags",
+                                                                            "name": "tags",
+                                                                            "conditions": {
+                                                                                "checked": [
+                                                                                    {
+                                                                                        "type": "text_area",
+                                                                                        "label": "Please provide details",
+                                                                                        "name": "tags_details"
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": "checkbox",
+                                                                            "label": "Microchips / implants",
+                                                                            "name": "microchips",
+                                                                            "conditions": {
+                                                                                "checked": [
+                                                                                    {
+                                                                                        "type": "text_area",
+                                                                                        "label": "Please provide details",
+                                                                                        "name": "microchips_details"
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": "checkbox",
+                                                                            "label": "Bands",
+                                                                            "name": "bands",
+                                                                            "conditions": {
+                                                                                "checked": [
+                                                                                    {
+                                                                                        "type": "text_area",
+                                                                                        "label": "Please provide details",
+                                                                                        "name": "bands_details"
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": "checkbox",
+                                                                            "label": "Ear punching",
+                                                                            "name": "ear_punching",
+                                                                            "conditions": {
+                                                                                "checked": [
+                                                                                    {
+                                                                                        "type": "text_area",
+                                                                                        "label": "Please provide details",
+                                                                                        "name": "ear_punching_details"
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": "checkbox",
+                                                                            "label": "Other",
+                                                                            "name": "marking_other",
+                                                                            "conditions": {
+                                                                                "checked": [
+                                                                                    {
+                                                                                        "type": "text_area",
+                                                                                        "label": "Please provide details",
+                                                                                        "name": "marking_other_details"
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            }
+                                                        ],
+                                                        "after_temporary_holding": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Why will/may the fauna be temporarily held?",
+                                                                "name": "why_temporarily_held"
+                                                            },
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "How will the fauna be held?",
+                                                                "name": "how_temporarily_held"
+                                                            },
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Where will the fauna be held?",
+                                                                "name": "where_temporarily_held"
+                                                            },
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "If fauna will be transported, provide details?",
+                                                                "name": "transported_details"
+                                                            },
+                                                            {
+                                                                "type": "select",
+                                                                "label": "Where will the fauna be released?",
+                                                                "name": "where_fauna_released",
+                                                                "options": [
+                                                                    {"value": "at_capture_site", "label": "At capture site"},
+                                                                    {"value": "near_capture_site", "label": "Near capture site into suitable habitat"},
+                                                                    {"value": "other", "label": "Other"}
+                                                                ],
+                                                                "conditions": {
+                                                                    "other": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Please provide details",
+                                                                            "name": "fauna_release_other_details"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            }
+                                                        ],
+                                                        "released": [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Why does the fauna need to be retained?",
+                                                                "name": "why_fauna_retained"
+                                                            },
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "What fauna could be retained?",
+                                                                "name": "what_fauna_retained"
+                                                            },
+                                                            {
+                                                                "type": "number",
+                                                                "label": "If fauna is to be retained, how many animals?",
+                                                                "name": "what_fauna_retained"
+                                                            },
+                                                            {
+                                                                "type": "select",
+                                                                "label": "Will fauna be euthanised?",
+                                                                "name": "fauna_euthanised",
+                                                                "options": [
+                                                                    {"value": "yes", "label": "Yes"},
+                                                                    {"value": "no", "label": "No"}
+                                                                ],
+                                                                "conditions": {
+                                                                    "yes": [
+                                                                        {
+                                                                            "type": "text_area",
+                                                                            "label": "Method",
+                                                                            "name": "euthanise_method"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "text",
+                                                                "label": "Where will the specimen(s) be held/lodged/stored?",
+                                                                "name": "where_specimen_stored"
+                                                            },
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "If specimen is to be deposited at the WA Museum, will the Museum be contacted prior to the fauna being retained or did the Museum request the specimen?",
+                                                                "name": "mesuem_storage_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ],
+                                            "release": [
+                                                
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
             },
             {
                 "type": "checkbox",
@@ -289,37 +855,38 @@
                 "type": "checkbox",
                 "label": "Targeted",
                 "name": "targeted",
-                "condition": "checked",
-                "children": [
-                    {
-                        "type": "group",
-                        "label": "Targeted Fauna Type",
-                        "name": "targeted_fauna",
-                        "isRepeatable": true,
-                        "children": [
-                            {
-                                "type": "text",
-                                "label": "Common name / Group name",
-                                "name": "tft_common_name"
-                            },
-                            {
-                                "type": "text",
-                                "label": "Scientific name",
-                                "name": "tft_scientific_name"
-                            },
-                            {
-                                "type": "text",
-                                "label": "Quantity",
-                                "name": "tft_quantity"
-                            },
-                            {
-                                "type": "text",
-                                "label": "Fate",
-                                "name": "tft_fate"
-                            }
-                        ]
-                    }
-                ]
+                "conditions": {
+                    "checked": [
+                        {
+                            "type": "group",
+                            "label": "Targeted Fauna Type",
+                            "name": "targeted_fauna",
+                            "isRepeatable": true,
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "label": "Common name / Group name",
+                                    "name": "tft_common_name"
+                                },
+                                {
+                                    "type": "text",
+                                    "label": "Scientific name",
+                                    "name": "tft_scientific_name"
+                                },
+                                {
+                                    "type": "text",
+                                    "label": "Quantity",
+                                    "name": "tft_quantity"
+                                },
+                               {
+                                    "type": "text",
+                                    "label": "Fate",
+                                    "name": "tft_fate"
+                                }
+                            ]
+                        }
+                    ]
+                }
             },
             {
                 "type": "checkbox",
@@ -340,27 +907,28 @@
                     {"value": "no", "label": "No"},
                     {"value": "unknown", "label": "Unknown"}
                 ],
-                "condition": "yes",
-                "children": [
-                    {
-                        "type": "group",
-                        "label": "Threatened Fauna",
-                        "name": "threatened_fauna",
-                        "isRepeatable": true,
-                        "children": [
-                            {
-                                "type": "text",
-                                "label": "Common name / Group name",
-                                "name": "tf_common_name"
-                            },
-                            {
-                                "type": "text",
-                                "label": "Scientific name",
-                                "name": "tf_scientific_name"
-                            }
-                        ]
-                    }
-                ]
+                "conditions": {
+                    "yes": [
+                        {
+                            "type": "group",
+                            "label": "Threatened Fauna",
+                            "name": "threatened_fauna",
+                            "isRepeatable": true,
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "label": "Common name / Group name",
+                                    "name": "tf_common_name"
+                                },
+                                {
+                                    "type": "text",
+                                    "label": "Scientific name",
+                                    "name": "tf_scientific_name"
+                                }
+                            ]
+                        }
+                    ]
+                }
             },
             {
                 "type": "text",
@@ -403,19 +971,20 @@
                     {"value": "yes", "label": "Yes"},
                     {"value": "no", "label": "No"}
                 ],
-                "condition": "yes",
-                "children": [
-                    {
-                        "type": "text",
-                        "label": "Provide details",
-                        "name": "sops_details"
-                    },
-                    {
-                        "type": "file",
-                        "label": "Attach a copy of the relevent document(s)",
-                        "name": "sops_documents"
-                    }
-                ]
+                "conditions": {
+                    "yes": [
+                        {
+                            "type": "text",
+                            "label": "Provide details",
+                            "name": "sops_details"
+                        },
+                        {
+                            "type": "file",
+                            "label": "Attach a copy of the relevent document(s)",
+                            "name": "sops_documents"
+                        }
+                    ]
+                }
             }
         ]
     }
