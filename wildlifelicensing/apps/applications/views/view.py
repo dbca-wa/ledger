@@ -84,8 +84,8 @@ class AddApplicationLogEntryView(OfficerRequiredMixin, View):
                 'application': application,
                 'text': form.cleaned_data['text'],
                 'subject': form.cleaned_data['subject'],
-                'to': format.cleanred_data['to'],
-                'fromm': format.cleanred_data['fromm']
+                'to': form.cleaned_data['to'],
+                'fromm': form.cleaned_data['fromm']
             }
 
             ApplicationLogEntry.objects.create(**kwargs)

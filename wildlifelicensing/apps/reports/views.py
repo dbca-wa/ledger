@@ -49,9 +49,9 @@ class ApplicationsReportView(View):
             excel.write_values(ws, 1, 1, APPLICATIONS_HEADER_FIELDS, direction='right', font=COLUMN_HEADER_FONT)
 
             row = 2
-            for application in Application.objects.filter(lodgement_date__range=(from_date, to_date)):
+            for application in Application.objects.filter(lodgement_date__range=(from_date, to_date)).exclude(processing_status='draft'):
                 row_values = (application.licence_type.name,
-                              '{}-{}'.format(application.lodgement_number, application.sequence_number),
+                              '{}-{}'.format(application.lodgement_number, application.lodgement_sequence),
                               application.lodgement_date, application.applicant_profile.user.get_full_name(),
                               application.applicant_profile.name)
                 excel.write_values(ws, row, 1, row_values, direction='right', font=None)
