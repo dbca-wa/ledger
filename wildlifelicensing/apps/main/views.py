@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,12 +12,14 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import Profile, Document, EmailUser
 from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, DocumentForm
 
-from wildlifelicensing.apps.main.models import CommunicationsLogEntry
+from wildlifelicensing.apps.main.models import CommunicationsLogEntry,\
+    WildlifeLicence
 from wildlifelicensing.apps.main.forms import IdentificationForm, CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.mixins import CustomerRequiredMixin, OfficerRequiredMixin
 from wildlifelicensing.apps.main.signals import identification_uploaded
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
+from wildlifelicensing.apps.main.pdf import create_licence_renewal_pdf_bytes
 
 
 class SearchCustomersView(OfficerRequiredMixin, View):
@@ -160,7 +162,7 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
         # residential_address_source_type = "added" if emailuser.residential_address else "removed"
         # postal_address_source_type =  "removed" if not emailuser.postal_address else ("residential_address" if emailuser.postal_address == emailuser.residential_address else "added")
         # billing_address_source_type =  "removed" if not emailuser.billing_address else ("residential_address" if emailuser.billing_address == emailuser.residential_address else ("postal_address" if emailuser.billing_address == emailuser.postal_address else "added"))
- 
+
         # if user doesn't choose a identification, display a warning message
         if not emailuser.identification:
             messages.warning(request, "Please upload your identification.")
@@ -187,7 +189,6 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
         # billing_address_source_type = request.POST.get("billing_address-source_type")
         # if not billing_address_source_type:
         #    return HttpResponseBadRequest("Missing billing address source type.")
-
 
         emailuser = get_object_or_404(EmailUser, pk=request.user.pk)
         # Save the original user data.
@@ -227,7 +228,7 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
         # else:
         #    billing_address_form = None
 
-        if (emailuser_form.is_valid() 
+        if (emailuser_form.is_valid()
         #    and (not residential_address_form or  residential_address_form.is_valid())
         #    and (not postal_address_form or postal_address_form.is_valid())
         #    and (not billing_address_form or billing_address_form.is_valid())
@@ -267,10 +268,10 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
 
             # if original_postal_address_source_type == "added" and postal_address_source_type != "added":
             #    original_postal_address.delete()
-                            
+
             # if original_billing_address_source_type == "added" and billing_address_source_type != "added":
             #    original_billing_address.delete()
-                            
+
             # send signal if either first name or last name is changed
             if is_name_changed:
                 messages.warning(request, "Please upload new identification after you changed your name.")
@@ -314,7 +315,7 @@ class CreateDocumentView(CustomerRequiredMixin, TemplateView):
 
         document_form = DocumentForm(request.POST, request.FILES)
 
-        if document_form.is_valid() :
+        if document_form.is_valid():
             document = document_form.save()
             user.documents.add(document)
             messages.success(request, "The document '%s' was created." % document.name)
@@ -352,6 +353,20 @@ class EditDocumentView(CustomerRequiredMixin, TemplateView):
             return redirect('wl_main:list_documents')
         else:
             return render(request, self.template_name, {'document_form': document_form})
+
+
+class LicenceRenewalPDFView(OfficerRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        licence = get_object_or_404(WildlifeLicence, pk=self.args[0])
+
+        filename = '{}-{}-renewal.pdf'.format(licence.licence_number, licence.licence_sequence)
+
+        response = HttpResponse(content_type='application/pdf')
+
+        response.write(create_licence_renewal_pdf_bytes(filename, licence,
+                                                        request.build_absolute_uri(reverse('home'))))
+
+        return response
 
 
 class CommunicationsLogListView(OfficerRequiredMixin, View):

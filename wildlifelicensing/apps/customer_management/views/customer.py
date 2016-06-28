@@ -84,6 +84,11 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
                 'orderable': False
             },
             {
+                'title': 'Renewal Letter',
+                'searchable': False,
+                'orderable': False
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False

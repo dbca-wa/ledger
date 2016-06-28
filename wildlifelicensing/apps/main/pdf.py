@@ -246,11 +246,42 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     elements.append(Paragraph('Best regards,', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('Parks and Wildlife Customer Portal', styles['Left']))
 
     doc.build(elements)
 
     return cover_letter_buffer
+
+
+def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
+    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
+                             PAGE_HEIGHT - 160, id='EveryPagesFrame')
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_header)
+
+    doc = BaseDocTemplate(licence_renewal_buffer, pageTemplates=[every_page_template], pagesize=A4)
+
+    # this is the only way to get data into the onPage callback function
+    doc.site_url = site_url
+
+    elements = []
+
+    elements.append(Paragraph('Dear Sir/Madam', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('Your wildlife licence:', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph(licence.licence_type.name, styles['BoldLeft']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('is due to expire on {}. If you wish to renew this licence, please lodge '
+                              'an application.'.format(licence.end_date.strftime(DATE_FORMAT)), styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('Best regards,', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('Parks and Wildlife Customer Portal', styles['Left']))
+
+    doc.build(elements)
+
+    return licence_renewal_buffer
 
 
 def create_licence_pdf_document(filename, licence, application, site_url, original_issue_date):
@@ -289,3 +320,14 @@ def create_cover_letter_pdf_document(filename, licence, site_url):
     cover_letter_buffer.close()
 
     return document
+
+
+def create_licence_renewal_pdf_bytes(filename, licence, site_url):
+    licence_renewal_buffer = BytesIO()
+
+    _create_licence_renewal(licence_renewal_buffer, licence, site_url)
+
+    value = licence_renewal_buffer.getvalue()
+    licence_renewal_buffer.close()
+
+    return value
