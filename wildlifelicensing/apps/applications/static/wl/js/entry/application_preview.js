@@ -26,8 +26,9 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                 }
             });
         } else if(item.type === 'checkbox') {
-            itemContainer.append($('<label>').text(item.label));
-            itemContainer.append($('<p>').text(item.value ? 'Checked' : 'Not checked'));
+            if(item.value) {
+                itemContainer.append($('<p>').text(item.label));
+            }
         } else if(item.type === 'declaration') {
             itemContainer.append($('<label>').text(item.label));
             itemContainer.append($('<p>').text(item.value ? 'Declaration checked' : 'Declaration not checked'));
