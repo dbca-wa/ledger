@@ -104,13 +104,13 @@
                 </button>
             </div>
             <div class="col-md-9">
-                <form method="POST">
+                <form id="curationForm" method="POST">
                     {% csrf_token %}
                     {% for table in tables %}
                         <div class="row top-buffer">
                             <div class="col-md-12">
                                 <h3 class="no-margin">{{ table.title }}</h3>
-                                <div class=" horizontal-scroll bottom-buffer">
+                                <div class="horizontal-scroll bottom-buffer">
                                     <table class="return-table table table-striped table-bordered dataTable">
                                         <thead>
                                             <tr>

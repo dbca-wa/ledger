@@ -2,7 +2,8 @@ define(['jQuery', 'datatables.net', 'datatables.bootstrap', 'datatables.datetime
 
     return {
         initTables: function() {
-            var $tables = $('.return-table');
+            var $tables = $('.return-table'),
+                $curationForm = $('#curationForm');
 
             $tables.DataTable({
                 paging: false,
@@ -27,15 +28,13 @@ define(['jQuery', 'datatables.net', 'datatables.bootstrap', 'datatables.datetime
             });
 
             $('#accept').click(function() {
-                var $form = $('form');
-                $form.append(this);
-                $form.submit();
+                $curationForm.append($('<input>').attr('name', 'accept').addClass('hidden'));
+                $curationForm.submit();
             })
 
             $('#decline').click(function() {
-                var $form = $('form');
-                $form.append(this);
-                $form.submit();
+                $curationForm.append($('<input>').attr('name', 'decline').addClass('hidden'));
+                $curationForm.submit();
             })
         }
     }

@@ -275,12 +275,13 @@ class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
 
         kwargs['tables'] = []
 
-        for schema_name in ret.return_type.get_resources_names():
-            schema = SchemaModel(ret.return_type.get_schema_by_name(schema_name))
-            table = {'name': schema_name, 'headers': schema.headers}
-
+        for resource in ret.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            table = {'name': resource_name, 'title': resource.get('title', resource.get('name')),
+                     'headers': schema.headers}
             try:
-                return_table = ret.returntable_set.get(name=schema_name)
+                return_table = ret.returntable_set.get(name=resource_name)
                 table['data'] = [return_row.data for return_row in return_table.returnrow_set.all()]
             except ReturnTable.DoesNotExist:
                 pass
@@ -325,8 +326,8 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                 'ret': ret,
                 'text': form.cleaned_data['text'],
                 'subject': form.cleaned_data['subject'],
-                'to': format.cleanred_data['to'],
-                'fromm': format.cleanred_data['fromm']
+                'to': form.cleaned_data['to'],
+                'fromm': form.cleaned_data['fromm']
             }
 
             ReturnLogEntry.objects.create(**kwargs)
