@@ -1,7 +1,7 @@
 define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker',
         'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, index, isRepeat, itemData) {
-        var itemContainer = $('<div>');
+        var $itemContainer = $('<div>');
 
         if(item.type == 'section') {
             item.index = index;
@@ -16,25 +16,16 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             item.value = itemData[item.name];
         }
 
-        itemContainer.append(Handlebars.templates[item.type](item));
+        $itemContainer.append(Handlebars.templates[item.type](item));
 
         // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.value = undefined;
 
-        if(item.children !== undefined || item.conditions !== undefined) {
-            var $childrenAnchorPoint;
-
-            // if no children anchor point was defined within the template, create one under current item
-            if(itemContainer.find('.children-anchor-point').length) {
-                $childrenAnchorPoint = itemContainer.find('.children-anchor-point');
-            } else {
-                $childrenAnchorPoint = $('<div>');
-                $childrenAnchorPoint.addClass('children-anchor-point');
-                itemContainer.append($childrenAnchorPoint);
-            }
+        if(item.conditions !== undefined) {
+            var $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
 
             if(item.conditions !== undefined) {
-                var $input = itemContainer.find('input, select'),
+                var $input = $itemContainer.find('input, select'),
                     initialInputValue = _getInputValue(item, $input);
 
                 // show/hide conditional children initially depending on input's initial value
@@ -75,18 +66,73 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                     }
                 });
             }
+        }
 
-            // append all children to item
-            $.each(item.children, function(childIndex, child) {
-                _appendChild(childIndex, child, $childrenAnchorPoint, itemData);
-            });
+        if (item.children !== undefined) {
+            if(item.type !== "table") {
+                var $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
+
+                // append all children to item
+                $.each(item.children, function(childIndex, child) {
+                    _appendChild(childIndex, child, $childrenAnchorPoint, itemData);
+                });
+            } else {
+                var $table = $itemContainer.find('table');
+
+                if(itemData !== undefined) {
+                    if(itemData[item.name]) {
+                        $.each(itemData[item.name], function(childDataIndex, childData) {
+                            _createTableRow(item, $table, childData);
+                        });
+                    } else {
+                        // make sure there is at least one blank road
+                        _createTableRow(item, $table);
+                    }
+                }
+
+                $itemContainer.find('.add-group').find('a').click(function() {
+                    _createTableRow(item, $table, itemData);
+                });
+            }
         }
 
         if(item.isRepeatable) {
-            _setupCopyRemoveEvents(item, itemContainer, index, true);
+            _setupCopyRemoveEvents(item, $itemContainer, index, true);
         }
 
-        return itemContainer;
+        return $itemContainer;
+    }
+
+    function _getCreateChildrenAnchorPoint($itemContainer) {
+        var $childrenAnchorPoint;
+
+        // if no children anchor point was defined within the template, create one under current item
+        if($itemContainer.find('.children-anchor-point').length) {
+            $childrenAnchorPoint = $itemContainer.find('.children-anchor-point');
+        } else {
+            $childrenAnchorPoint = $('<div>');
+            $childrenAnchorPoint.addClass('children-anchor-point');
+            $itemContainer.append($childrenAnchorPoint);
+        }
+
+        return $childrenAnchorPoint;
+    }
+
+    function _createTableRow(item, $table, itemData) {
+        var $row = $('<tr>');
+
+        $.each(item.children, function(index, child) {
+            var $col = $('<td>');
+            _appendChild(index, child, $col, itemData);
+            $col.find('label:first').remove();
+            $row.append($col);
+        });
+
+        $row.append($('<td>').append($('<a>').text('Remove').click(function() {
+            $row.remove();
+        })));
+
+        $table.append($row);
     }
 
     function _appendChild(childIndex, child, $childrenAnchorPoint, itemData) {
