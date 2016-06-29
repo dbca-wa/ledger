@@ -15,7 +15,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             item.value = itemData[item.name];
         }
 
-        if(item.type === 'section' || item.type === 'group') {
+        if(item.type === 'section' || item.type === 'group' || item.type === 'table') {
             item.isPreviewMode = true;
             itemContainer.append(Handlebars.templates[item.type](item));
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
@@ -47,21 +47,11 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.value = undefined;
 
-        if(item.children !== undefined || item.conditions !== undefined) {
-            var childrenAnchorPoint;
-
-            // if no children anchor point was defined within the template, create one under current item
-            if(itemContainer.find('.children-anchor-point').length) {
-                childrenAnchorPoint = itemContainer.find('.children-anchor-point');
-            } else {
-                childrenAnchorPoint = $('<div>');
-                childrenAnchorPoint.addClass('children-anchor-point');
-                itemContainer.append(childrenAnchorPoint);
-            }
+        if(item.conditions !== undefined) {
+            var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
 
             if(item.conditions !== undefined) {
                 $.each(item.conditions, function(condition, children) {
-                    console.log(condition);
                     if(condition === itemData[item.name]) {
                         $.each(children, function(childIndex, child) {
                             childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
@@ -69,8 +59,12 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                     }
                 });
             }
+        }
 
-            if(item.children !== undefined) {
+        if(item.children !== undefined) {
+            if(item.type !== "table") {
+                var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
+    
                 $.each(item.children, function(childIndex, child) {
                     if(child.isRepeatable) {
                         var childData;
@@ -78,10 +72,10 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                             childData = itemData[child.name][0];
                         }
                         childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
-
+    
                         var repeatItemsAnchorPoint = $('<div>');
                         childrenAnchorPoint.append(repeatItemsAnchorPoint);
-
+    
                         if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
                             $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
                                 repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
@@ -91,10 +85,53 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                         childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
                     }
                 });
+            } else {
+                var $table = itemContainer.find('table');
+
+                if(itemData !== undefined && itemData[item.name]) {
+                    $.each(itemData[item.name], function(childDataIndex, childData) {
+                        _createTableRow(item, $table, childData);
+                    });
+                } else {
+                    // make sure there is at least one blank road
+                    _createTableRow(item, $table);
+                }
+
+                itemContainer.find('.add-group').find('a').click(function() {
+                    _createTableRow(item, $table, itemData);
+                });
             }
         }
 
         return itemContainer;
+    }
+
+    function _getCreateChildrenAnchorPoint($itemContainer) {
+        var $childrenAnchorPoint;
+
+        // if no children anchor point was defined within the template, create one under current item
+        if($itemContainer.find('.children-anchor-point').length) {
+            $childrenAnchorPoint = $itemContainer.find('.children-anchor-point');
+        } else {
+            $childrenAnchorPoint = $('<div>');
+            $childrenAnchorPoint.addClass('children-anchor-point');
+            $itemContainer.append($childrenAnchorPoint);
+        }
+
+        return $childrenAnchorPoint;
+    }
+
+    function _createTableRow(item, $table, itemData) {
+        var $row = $('<tr>');
+
+        $.each(item.children, function(index, child) {
+            var $col = $('<td>');
+            $col.append(_layoutItem(child, index, false, itemData));
+            $col.find('label:first').remove();
+            $row.append($col);
+        });
+
+        $table.append($row);
     }
 
     return {

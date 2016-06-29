@@ -79,15 +79,13 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             } else {
                 var $table = $itemContainer.find('table');
 
-                if(itemData !== undefined) {
-                    if(itemData[item.name]) {
-                        $.each(itemData[item.name], function(childDataIndex, childData) {
-                            _createTableRow(item, $table, childData);
-                        });
-                    } else {
-                        // make sure there is at least one blank road
-                        _createTableRow(item, $table);
-                    }
+                if(itemData !== undefined && itemData[item.name]) {
+                    $.each(itemData[item.name], function(childDataIndex, childData) {
+                        _createTableRow(item, $table, childData);
+                    });
+                } else {
+                    // make sure there is at least one blank road
+                    _createTableRow(item, $table);
                 }
 
                 $itemContainer.find('.add-group').find('a').click(function() {

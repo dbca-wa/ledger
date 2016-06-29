@@ -5,13 +5,17 @@
             {{#each children}}
                 <td><label>{{this.label}}</label></td>
             {{/each}}
-            <td><label>Remove</label></td>
+            {{#unless isPreviewMode }}
+                <td><label>Remove</label></td>
+            {{/unless}}
         </tr>
     </thead>
     <tbody>
     
     </tbody>
 </table>
-<div class="add-group">
-    <a>Add Row</a>
-</div>
+{{#unless isPreviewMode }}
+    <div class="add-group">
+        <a>Add Row</a>
+    </div>
+{{/unless}}
