@@ -187,7 +187,7 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
 
         messages.success(request, 'The details were updated. Please note that this may require any licences held by the user to be reissued.')
 
-        return redirect('wl_customer_management:view_customer', customer.pk)
+        return redirect('wl_customer_management:customer_lookup', customer.pk)
 
 
 class EditProfileView(OfficerRequiredMixin, TemplateView):
@@ -233,4 +233,4 @@ class EditProfileView(OfficerRequiredMixin, TemplateView):
 
         messages.success(request, "The profile '%s' was updated." % profile.name)
 
-        return redirect('wl_customer_management:view_customer', profile.user.pk)
+        return redirect('wl_customer_management:customer_lookup', profile.user.pk)
