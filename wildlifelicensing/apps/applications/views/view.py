@@ -1,6 +1,3 @@
-import json
-import os
-
 from django.http import JsonResponse
 from django.views.generic.base import TemplateView, View
 from django.shortcuts import get_object_or_404
@@ -17,8 +14,6 @@ from wildlifelicensing.apps.main.utils import format_communications_log_entry
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 
-APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-
 
 class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
     template_name = 'wl/view/view_readonly.html'
@@ -26,13 +21,11 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug)) as data_file:
-            form_structure = json.load(data_file)
-
         kwargs['licence_type'] = application.licence_type
-        kwargs['structure'] = form_structure
+        kwargs['structure'] = application.licence_type.application_schema
 
-        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+        convert_application_data_files_to_url(application.licence_type.application_schema,
+                                              application.data, application.documents.all())
 
         kwargs['application'] = application
 

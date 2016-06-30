@@ -1,7 +1,7 @@
 define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker',
         'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, index, isRepeat, itemData) {
-        var itemContainer = $('<div>');
+        var $itemContainer = $('<div>');
 
         if(item.type == 'section') {
             item.index = index;
@@ -9,87 +9,172 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
-        	item.isRemovable = isRepeat;
+            item.isRemovable = isRepeat;
         }
 
         if(itemData != undefined && item.name in itemData) {
             item.value = itemData[item.name];
         }
 
-        itemContainer.append(Handlebars.templates[item.type](item));
+        $itemContainer.append(Handlebars.templates[item.type](item));
 
         // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.value = undefined;
 
-        if(item.children !== undefined) {
-            var childrenAnchorPoint;
+        if(item.conditions !== undefined) {
+            var $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
 
-            // if no children anchor point was defined within the template, create one under current item
-            if(itemContainer.find('.children-anchor-point').length) {
-                childrenAnchorPoint = itemContainer.find('.children-anchor-point');
-            } else {
-                childrenAnchorPoint = $('<div>');
-                childrenAnchorPoint.addClass('children-anchor-point');
-                itemContainer.append(childrenAnchorPoint);
-            }
+            if(item.conditions !== undefined) {
+                var $input = $itemContainer.find('input, select'),
+                    initialInputValue = _getInputValue(item, $input);
 
-            if(item.condition !== undefined) {
-                var inputSelector = itemContainer.find('input, select');
-
-                // hide children initially if current item value does not equal condition
-                if(inputSelector.val() !== item.condition) {
-                    childrenAnchorPoint.hide();
+                // show/hide conditional children initially depending on input's initial value
+                if(initialInputValue in item.conditions) {
+                    var $conditionalChildren = $('<div>');
+                    $conditionalChildren.attr('id', initialInputValue);
+                    $.each(item.conditions[initialInputValue], function(childIndex, child) {
+                        _appendChild(childIndex, child, $conditionalChildren, itemData);
+                    });
+                    $childrenAnchorPoint.append($conditionalChildren);
                 }
 
-                inputSelector.change(function(e) {
-                    if ($(this).val() === item.condition) {
-                        childrenAnchorPoint.slideDown('medium');
-                    } else {
-                        childrenAnchorPoint.slideUp('medium');
+                $input.change(function(e) {
+                    var inputValue = _getInputValue(item, $(this)),
+                        $conditionalChildren,
+                        $slideUpPromise;
+
+                    // hide any currently shown conditional children
+                    $slideUpPromise = $childrenAnchorPoint.children().slideUp('medium').promise();
+
+                    if(inputValue in item.conditions) {
+                        // get conditional child anchor point if it exists, else create it
+                        $conditionalChildren = $childrenAnchorPoint.find('#' + inputValue);
+
+                        if($conditionalChildren.length === 0) {
+                            $conditionalChildren = $('<div>');
+                            $conditionalChildren.attr('id', inputValue);
+                            $conditionalChildren.css('display', 'none');
+                            $.each(item.conditions[inputValue], function(childIndex, child) {
+                                _appendChild(childIndex, child, $conditionalChildren, itemData);
+                            });
+                            $childrenAnchorPoint.append($conditionalChildren);
+                        }
+
+                        $slideUpPromise.done(function() {
+                            $conditionalChildren.slideDown('medium');
+                        });
                     }
                 });
             }
+        }
 
-            $.each(item.children, function(childIndex, child) {
-                if(child.isRepeatable) {
-                    var childData;
-                    if(itemData !== undefined) {
-                        childData = itemData[child.name][0];
-                    }
-                    childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
+        if (item.children !== undefined) {
+            if(item.type !== "table") {
+                var $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
 
-                    var repeatItemsAnchorPoint = $('<div>');
-                    childrenAnchorPoint.append(repeatItemsAnchorPoint);
+                // append all children to item
+                $.each(item.children, function(childIndex, child) {
+                    _appendChild(childIndex, child, $childrenAnchorPoint, itemData);
+                });
+            } else {
+                var $table = $itemContainer.find('table');
 
-                    var addGroupDiv = $('<div>').addClass('add-group');
-                    var addGroupLink = $('<a>').text('Add ' + child.label, itemData);
-                    addGroupLink.click(function(e) {
-                        repeatItem = _layoutItem(child, childIndex, true, itemData);
-                        repeatItem.find('.hidden').removeClass('hidden');
-                        repeatItemsAnchorPoint.append(repeatItem);
+                if(itemData !== undefined && itemData[item.name]) {
+                    $.each(itemData[item.name], function(childDataIndex, childData) {
+                        _createTableRow(item, $table, childData);
                     });
-                    childrenAnchorPoint.append(addGroupDiv.append(addGroupLink));
-
-                    if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
-                        $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
-                            repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
-                        });
-                    }
                 } else {
-                    childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
+                    // make sure there is at least one blank road
+                    _createTableRow(item, $table);
                 }
-            });
+
+                $itemContainer.find('.add-group').find('a').click(function() {
+                    _createTableRow(item, $table, itemData);
+                });
+            }
         }
 
         if(item.isRepeatable) {
-            _setupCopyRemoveEvents(item, itemContainer, index, true);
+            _setupCopyRemoveEvents(item, $itemContainer, index, true);
         }
 
-        return itemContainer;
+        return $itemContainer;
+    }
+
+    function _getCreateChildrenAnchorPoint($itemContainer) {
+        var $childrenAnchorPoint;
+
+        // if no children anchor point was defined within the template, create one under current item
+        if($itemContainer.find('.children-anchor-point').length) {
+            $childrenAnchorPoint = $itemContainer.find('.children-anchor-point');
+        } else {
+            $childrenAnchorPoint = $('<div>');
+            $childrenAnchorPoint.addClass('children-anchor-point');
+            $itemContainer.append($childrenAnchorPoint);
+        }
+
+        return $childrenAnchorPoint;
+    }
+
+    function _createTableRow(item, $table, itemData) {
+        var $row = $('<tr>');
+
+        $.each(item.children, function(index, child) {
+            var $col = $('<td>');
+            _appendChild(index, child, $col, itemData);
+            $col.find('label:first').remove();
+            $row.append($col);
+        });
+
+        $row.append($('<td>').append($('<a>').text('Remove').click(function() {
+            $row.remove();
+        })));
+
+        $table.append($row);
+    }
+
+    function _appendChild(childIndex, child, $childrenAnchorPoint, itemData) {
+        if(child.isRepeatable) {
+            var childData;
+            if(itemData !== undefined) {
+                childData = itemData[child.name][0];
+            }
+            $childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
+
+            var repeatItemsAnchorPoint = $('<div>');
+            $childrenAnchorPoint.append(repeatItemsAnchorPoint);
+
+            var addGroupDiv = $('<div>').addClass('add-group');
+            var addGroupLink = $('<a>').text('Add ' + child.label, itemData);
+            addGroupLink.click(function(e) {
+                repeatItem = _layoutItem(child, childIndex, true, itemData);
+                repeatItem.find('.hidden').removeClass('hidden');
+                repeatItemsAnchorPoint.append(repeatItem);
+            });
+            $childrenAnchorPoint.append(addGroupDiv.append(addGroupLink));
+
+            if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
+                $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
+                    repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
+                });
+            }
+        } else {
+            $childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
+        }
+    }
+
+    function _getInputValue(item, $input) {
+        if(item.type === 'radiobuttons') {
+            return  $input.is(':checked') ? $input.val(): '';
+        } else if (item.type === 'checkbox') {
+            return $input.is(':checked') ? 'on': '';
+        } else {
+            return $input.val();
+        }
     }
 
     function _setupCopyRemoveEvents(item, itemSelector, index, isRepeat) {
-    	itemSelector.find('.copy').click(function(e) {
+        itemSelector.find('.copy').click(function(e) {
             var itemCopy = _layoutItem(item, index, true);
 
             itemSelector.find('input, select').each(function() {
@@ -110,7 +195,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         });
 
         // initialise all datapickers
-    	itemSelector.find('.date').datetimepicker({
+        itemSelector.find('.date').datetimepicker({
             format: 'DD/MM/YYYY'
         });
     }

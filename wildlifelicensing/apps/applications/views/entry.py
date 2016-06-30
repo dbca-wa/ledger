@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 import shutil
@@ -29,8 +28,6 @@ from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_customer
-
-APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -256,12 +253,9 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         else:
             profile = application.applicant_profile
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0]), 'r') as data_file:
-            form_structure = json.load(data_file)
-
         kwargs['licence_type'] = licence_type
         kwargs['profile'] = profile
-        kwargs['structure'] = form_structure
+        kwargs['structure'] = licence_type.application_schema
 
         kwargs['is_proxy_applicant'] = is_officer(self.request.user)
 
@@ -277,17 +271,17 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             temp_files_dir = get_app_session_data(self.request.session, 'temp_files_dir')
             if temp_files_dir is not None:
                 temp_files_url = settings.MEDIA_URL + os.path.basename(os.path.normpath(temp_files_dir))
-                prepend_url_to_application_data_files(form_structure, data, temp_files_url)
+                prepend_url_to_application_data_files(licence_type.application_schema, data, temp_files_url)
 
             kwargs['data'] = data
 
         return super(EnterDetailsView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0]), 'r') as data_file:
-            form_structure = json.load(data_file)
+        licence_type = WildlifeLicenceType.objects.get(code_slug=self.args[0])
 
-        set_app_session_data(request.session, 'data', create_data_from_form(form_structure, request.POST, request.FILES))
+        set_app_session_data(request.session, 'data', create_data_from_form(licence_type.application_schema,
+                                                                            request.POST, request.FILES))
 
         temp_files_dir = get_app_session_data(request.session, 'temp_files_dir')
 
@@ -319,7 +313,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             # need to create documents from all the existing files that haven't been replaced
             # (saved in temp_files_dir) as well as any new ones
             try:
-                for filename in get_all_filenames_from_application_data(form_structure,
+                for filename in get_all_filenames_from_application_data(licence_type.application_schema,
                                                                         get_app_session_data(request.session, 'data')):
 
                     # need to be sure file is in tmp directory (as it could be a freshly attached file)
@@ -370,9 +364,6 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/preview.html'
 
     def get_context_data(self, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, self.args[0]), 'r') as data_file:
-            form_structure = json.load(data_file)
-
         licence_type = WildlifeLicenceType.objects.get(code_slug=self.args[0])
 
         application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
@@ -384,7 +375,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         kwargs['licence_type'] = licence_type
         kwargs['profile'] = profile
-        kwargs['structure'] = form_structure
+        kwargs['structure'] = licence_type.application_schema
 
         kwargs['is_proxy_applicant'] = is_officer(self.request.user)
 
@@ -397,16 +388,13 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             temp_files_url = settings.MEDIA_URL + \
                 os.path.basename(os.path.normpath(get_app_session_data(self.request.session, 'temp_files_dir')))
 
-            prepend_url_to_application_data_files(form_structure, data, temp_files_url)
+            prepend_url_to_application_data_files(licence_type.application_schema, data, temp_files_url)
 
             kwargs['data'] = data
 
         return super(PreviewView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, args[0]), 'r') as data_file:
-            form_structure = json.load(data_file)
-
         if len(args) > 1:
             application = get_object_or_404(Application, pk=args[1])
         else:
@@ -451,7 +439,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         # if attached files were saved temporarily, add each to application as part of a Document
         temp_files_dir = get_app_session_data(request.session, 'temp_files_dir')
         try:
-            for filename in get_all_filenames_from_application_data(form_structure,
+            for filename in get_all_filenames_from_application_data(application.licence_type.application_schema,
                                                                     get_app_session_data(request.session, 'data')):
                 document = Document.objects.create(name=filename)
                 with open(os.path.join(temp_files_dir, filename), 'rb') as doc_file:

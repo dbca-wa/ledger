@@ -1,6 +1,3 @@
-import os
-import json
-
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import JsonResponse
@@ -21,8 +18,6 @@ from wildlifelicensing.apps.applications.emails import send_assessment_done_emai
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from wildlifelicensing.apps.applications.mixins import CanPerformAssessmentMixin
 
-APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-
 
 class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     template_name = 'wl/conditions/enter_conditions.html'
@@ -30,13 +25,11 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug), 'r') as data_file:
-            form_structure = json.load(data_file)
-
-        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+        convert_application_data_files_to_url(application.licence_type.application_schema,
+                                              application.data, application.documents.all())
 
         kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['form_structure'] = form_structure
+        kwargs['form_structure'] = application.licence_type.application_schema
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
         kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
 
@@ -56,13 +49,10 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug)) as data_file:
-            form_structure = json.load(data_file)
-
-        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+        convert_application_data_files_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
         kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['form_structure'] = form_structure
+        kwargs['form_structure'] = application.licence_type.application_schema
 
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 

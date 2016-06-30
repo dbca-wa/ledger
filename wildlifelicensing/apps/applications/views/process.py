@@ -1,6 +1,4 @@
 from django.core.context_processors import csrf
-import os
-import json
 
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
@@ -27,16 +25,11 @@ from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CH
     CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_application_data_files_to_url, format_application, \
     format_amendment_request, format_assessment
 
-APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-
 
 class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
     template_name = 'wl/process/process_app.html'
 
     def _build_data(self, request, application):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug), 'r') as data_file:
-            form_structure = json.load(data_file)
-
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
@@ -59,12 +52,12 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             previous_application_returns_outstanding = Return.objects.filter(licence=application.previous_application.licence).\
                 exclude(status='accepted').exclude(status='submitted').exists()
 
-        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+        convert_application_data_files_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
         data = {
             'user': serialize(request.user),
             'application': serialize(application, posthook=format_application),
-            'form_structure': form_structure,
+            'form_structure': application.licence_type.application_schema,
             'officers': officers,
             'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application),
                                             posthook=format_amendment_request),

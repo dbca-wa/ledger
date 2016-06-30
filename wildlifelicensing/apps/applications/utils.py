@@ -54,11 +54,11 @@ def _create_data_from_item(item, post_data, file_data, post_data_index=None):
                 item_data[item['name']] = post_data.get(item['name'])
 
     if 'children' in item:
-        if item.get('type', '') == 'group':
+        if item.get('type', '') == 'group' or item.get('type', '') == 'table':
             # check how many groups there are
             num_groups = 0
             for group_item in item.get('children'):
-                if group_item['type'] != 'section' and group_item['type'] != 'group':
+                if group_item['type'] != 'section' and group_item['type'] != 'group' and group_item['type'] != 'table':
                     num_groups = len(post_data.getlist(group_item['name']))
                     break
 
@@ -71,6 +71,11 @@ def _create_data_from_item(item, post_data, file_data, post_data_index=None):
             item_data[item['name']] = groups
         else:
             for child in item['children']:
+                item_data.update(_create_data_from_item(child, post_data, file_data, post_data_index))
+
+    if 'conditions' in item:
+        for condition in item['conditions'].keys():
+            for child in item['conditions'][condition]:
                 item_data.update(_create_data_from_item(child, post_data, file_data, post_data_index))
 
     return item_data
