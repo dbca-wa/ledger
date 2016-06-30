@@ -2,10 +2,11 @@
 
 {% block content %}
     {% if amendment_request.application.proxy_applicant %}
-        The Wildlife Licensing application you made on behalf of {{ amendment_request.application.applicant_profile.user.get_full_name }} 
-        has been reviewed and requires completion of returns.
+        The Wildlife Licensing application you made on behalf of {{ returns_request.application.applicant_profile.user.get_full_name }}
+        has been reviewed. Before this application can be finalised and approved,  outstanding returns need to be completed and submitted.
     {% else %}
-        Your Wildlife Licensing application has been reviewed and requires completion of returns.
+        Your Wildlife Licensing application has been reviewed. Before this application can be finalised and approved,
+        outstanding returns need to be completed and submitted.
     {% endif %}
 
     {% if request_reason %}

@@ -220,7 +220,7 @@ class LicenceRenewalNotificationEmail(TemplateEmailBase):
 
 def send_licence_renewal_email_notification(licence):
     email = LicenceRenewalNotificationEmail()
-    url = 'http:' + hosts_reverse('wl_applications:renew_licence', args=(licence.pk,))
+    url = 'http:' + hosts_reverse('wl_home')
 
     context = {
         'url': url,
