@@ -6,7 +6,7 @@ from wildlifelicensing.apps.returns.models import Return
 
 class DataTableApplicationView(officer.DataTableApplicationsOfficerView):
     def get_initial_queryset(self):
-        return Application.objects.filter(applicant_profile__user=self.args[0])
+        return Application.objects.filter(applicant_profile__user=self.args[0]).exclude(processing_status='draft')
 
 
 class DataTableLicencesView(officer.DataTableLicencesOfficerView):

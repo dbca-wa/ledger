@@ -11,13 +11,15 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
             showLogEntryModalSelector: null,
             logEntryModalSelector: null,
             logEntryFormSelector: null,
-            logTableSelector: $('<table class="table table-striped table-bordered">'),
+            logTableSelector: $('<table class="table table-striped table-bordered dataTable">'),
             logListURL: 'insert-default-url-here',
             addLogEntryURL: 'insert-default-url-here'
         });
 
         // multi-used selectors
-        var $logEntryModal = options.logEntryModalSelector ? $(options.logEntryModalSelector): null;
+        var $logEntryModal = options.logEntryModalSelector ? $(options.logEntryModalSelector): null,
+            $logListContent,
+            logDataTable;
 
         // init log entry modal if provided
         if($logEntryModal) {
@@ -26,11 +28,17 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
             });
         }
 
-        var logDataTable = initLogTable(options.logListURL, options.logTableSelector);
+        // if log table is in a popover, need to prepare log table container before initializing table or 
+        // search/paging/etc won't show 
+        if(options.showLogPopoverSelector) {
+            $logListContent = $('<div>').append($(options.logTableSelector));
+        }
+
+        // init log table
+        logDataTable = initLogTable(options.logListURL, options.logTableSelector);
 
         // init log table popover if provided
         if(options.showLogPopoverSelector) {
-            var $logListContent = $('<div>').append($(options.logTableSelector));
             $(options.showLogPopoverSelector).popover({
                 container: 'body',
                 title: 'Communication log',
@@ -69,12 +77,23 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                         processData: false,
                         type: 'POST'
                 });
-   
+
                 submitPromise.done(function() {
+                    logDataTable.ajax.reload();
+                });
+
+                submitPromise.done($.proxy(function() {
                     if($logEntryModal) {
                         $logEntryModal.modal('hide');
-                    }
-                });
+
+                        // clear/reset form fields
+                        $(this).find('#id_type').val($('#id_type option:first').val());
+                        $(this).find('#id_subject').val('');
+                        $(this).find('#id_text').val('');
+                        $(this).find('#id_attachment').val('');
+                    }},
+                    this)
+                );
             });
         }
     }
