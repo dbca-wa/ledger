@@ -13,18 +13,26 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
 
         if(itemData != undefined && item.name in itemData) {
             item.value = itemData[item.name];
+        } else {
+            item.value = "";
         }
 
         if(item.type === 'section' || item.type === 'group' || item.type === 'table') {
             item.isPreviewMode = true;
             itemContainer.append(Handlebars.templates[item.type](item));
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
+            var isSpecified = false;
             itemContainer.append($('<label>').text(item.label));
             $.each(item.options, function(index, option) {
                 if(option.value === item.value) {
                     itemContainer.append($('<p>').text(option.label));
+                    isSpecified = true;
                 }
             });
+
+            if(!isSpecified) {
+                itemContainer.append($('<p>').text("Not specified"));
+            }
         } else if(item.type === 'checkbox') {
             if(item.value) {
                 itemContainer.append($('<p>').text(item.label));
@@ -33,15 +41,23 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             itemContainer.append($('<label>').text(item.label));
             itemContainer.append($('<p>').text(item.value ? 'Declaration checked' : 'Declaration not checked'));
         } else if(item.type === 'file') {
-            var fileLink = $('<a>');
-            fileLink.attr('href', item.value);
-            fileLink.attr('target', '_blank');
-            fileLink.text(item.value.substr(item.value.lastIndexOf('/') + 1));
             itemContainer.append($('<label>').text(item.label));
-            itemContainer.append($('<p>').append(fileLink));
+            if(item.value) {
+                var fileLink = $('<a>');
+                fileLink.attr('href', item.value);
+                fileLink.attr('target', '_blank');
+                fileLink.text(item.value.substr(item.value.lastIndexOf('/') + 1));
+                itemContainer.append($('<p>').append(fileLink));
+            } else {
+                itemContainer.append($('<p>').text("No file attached"));
+            }
         } else {
             itemContainer.append($('<label>').text(item.label));
-            itemContainer.append($('<p>').text(item.value));
+            if(item.value) {
+                itemContainer.append($('<p>').text(item.value));
+            } else {
+                itemContainer.append($('<p>').text("Not specified"));
+            }
         }
 
         // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
