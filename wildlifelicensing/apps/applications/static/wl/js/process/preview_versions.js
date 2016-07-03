@@ -19,11 +19,11 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             item.valuePrevious = itemDataPrevious[item.name];
         }
 
-        if(item.type === 'section' || item.type === 'group') {
+        if(item.type === 'section' || item.type === 'group' || item.type === 'table') {
             item.isPreviewMode = true;
             var $template = $(Handlebars.templates[item.type](item));
 
-            if(item.type === 'group') {
+            if(item.type === 'group' || item.type === 'table') {
                 if(itemDataCurrent !== itemDataPrevious) {
                     if(itemDataPrevious === undefined && isRepeat) {
                         $template.addClass('current-data');
@@ -37,11 +37,17 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
             itemContainer.append($('<label>').text(item.label));
             if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
+                var isSpecified = false;
                 $.each(item.options, function(index, option) {
                     if(option.value === item.valueCurrent) {
                         itemContainer.append($('<p>').text(option.label));
+                        isSpecified = true;
                     }
                 });
+
+                if(!isSpecified) {
+                    itemContainer.append($('<p>').text("Not specified"));
+                }
             } else {
                 var labelCurrent, labelPrevious;
                 $.each(item.options, function(index, option) {
@@ -54,6 +60,16 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
 
                 itemContainer.append(labelCurrent);
                 itemContainer.append(labelPrevious);
+            }
+        } else if(item.type === 'checkbox') {
+            if((item.valueCurrent === item.valuePrevious && item.valueCurrent) || (item.valuePrevious === undefined && isRepeat)) {
+                itemContainer.append($('<p>').text(item.label));
+            } else {
+                if(item.valueCurrent) {
+                    itemContainer.append($('<p>').text(item.label).addClass('current-data'));
+                } else if (item.valuePrevious){
+                    itemContainer.append($('<p>').text(item.label).addClass('previous-data'));
+                }
             }
         } else if(item.type === 'declaration') {
             itemContainer.append($('<label>').text(item.label));
@@ -68,11 +84,15 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             itemContainer.append($('<label>').text(item.label));
 
             if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
-                var fileLink = $('<a>');
-                fileLink.attr('href', item.valueCurrent);
-                fileLink.attr('target', '_blank');
-                fileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
-                itemContainer.append($('<p>').append(fileLink));
+                if(item.valueCurrent) {
+                    var fileLink = $('<a>');
+                    fileLink.attr('href', item.valueCurrent);
+                    fileLink.attr('target', '_blank');
+                    fileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
+                    itemContainer.append($('<p>').append(fileLink));
+                } else {
+                    itemContainer.append($('<p>').text("No file attached"));
+                }
             } else {
                 var currentFileLink = $('<a>'),
                     previousFileLink = $('<a>');
@@ -103,22 +123,26 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         item.valueCurrent = undefined;
         item.valuePrevious = undefined;
 
-        if(item.children !== undefined) {
-            var childrenAnchorPoint;
+        if(item.conditions !== undefined) {
+            var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
 
-            // if no children anchor point was defined within the template, create one under current item
-            if(itemContainer.find('.children-anchor-point').length) {
-                childrenAnchorPoint = itemContainer.find('.children-anchor-point');
-            } else {
-                childrenAnchorPoint = $('<div>');
-                childrenAnchorPoint.addClass('children-anchor-point');
-                itemContainer.append(childrenAnchorPoint);
+            if(item.conditions !== undefined) {
+                $.each(item.conditions, function(condition, children) {
+                    if(condition === itemDataCurrent[item.name]) {
+                        $.each(children, function(childIndex, child) {
+                            childrenAnchorPoint.append(_layoutItem(child, childIndex, isRepeat, itemDataCurrent, itemDataPrevious));
+                        });
+                    }
+                });
             }
+        }
 
-            $.each(item.children, function(childIndex, child) {
-                if(child.isRepeatable) {
-                    // only show children items when the item has no condition or the condition is met
-                    if(item.condition === undefined || item.condition === itemDataCurrent[item.name]) {
+        if(item.children !== undefined) {
+            if(item.type !== "table") {
+                var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
+
+                $.each(item.children, function(childIndex, child) {
+                    if(child.isRepeatable) {
                         var childDataCurrent, childDataPrevious;
 
                         if(itemDataCurrent !== undefined) {
@@ -130,37 +154,76 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                         }
 
                         childrenAnchorPoint.append(_layoutItem(child, childIndex, isRepeat, childDataCurrent, childDataPrevious));
-                    }
 
-                    var repeatItemsAnchorPoint = $('<div>');
-                    childrenAnchorPoint.append(repeatItemsAnchorPoint);
+                        var repeatItemsAnchorPoint = $('<div>');
+                        childrenAnchorPoint.append(repeatItemsAnchorPoint);
 
-                    if((itemDataCurrent != undefined && child.name in itemDataCurrent && itemDataCurrent[child.name].length > 1) ||
-                       (itemDataPrevious != undefined && child.name in itemDataPrevious && itemDataPrevious[child.name].length > 1)) {
-                        var itemDataLength;
-                        if(itemDataCurrent[child.name] !== undefined && itemDataPrevious[child.name].length) {
-                            itemDataLength = Math.max(itemDataCurrent[child.name].length, itemDataPrevious[child.name].length);
-                        } else if (itemDataCurrent[child.name] !== undefined) {
-                            itemDataLength = itemDataCurrent[child.name].length;
-                        } else if (itemDataPrevious[child.name] !== undefined) {
-                            itemDataLength = itemDataPrevious[child.name].length;
-                        } 
-
-                        for(var i=1; i<itemDataLength; i++) {
-                            repeatItemsAnchorPoint.append(_layoutItem(child, index, true, itemDataCurrent[child.name][i], itemDataPrevious[child.name][i]));
+                        if((itemDataCurrent != undefined && child.name in itemDataCurrent && itemDataCurrent[child.name].length > 1) ||
+                                (itemDataPrevious != undefined && child.name in itemDataPrevious && itemDataPrevious[child.name].length > 1)) {
+                            var itemDataLength;
+                            if(itemDataCurrent[child.name] !== undefined && itemDataPrevious[child.name].length) {
+                                itemDataLength = Math.max(itemDataCurrent[child.name].length, itemDataPrevious[child.name].length);
+                            } else if (itemDataCurrent[child.name] !== undefined) {
+                                itemDataLength = itemDataCurrent[child.name].length;
+                            } else if (itemDataPrevious[child.name] !== undefined) {
+                                itemDataLength = itemDataPrevious[child.name].length;
+                            } 
+    
+                            for(var i=1; i<itemDataLength; i++) {
+                                repeatItemsAnchorPoint.append(_layoutItem(child, index, true, itemDataCurrent[child.name][i], itemDataPrevious[child.name][i]));
+                            }
                         }
-                    }
-                } else {
-                    // only show children items when the item has no condition or the condition is met
-                    if(item.condition === undefined || (itemDataCurrent !== undefined && item.condition === itemDataCurrent[item.name]) ||
-                            (itemDataPrevious !== undefined && item.condition === itemDataPrevious[item.name])) {
+                    } else {
                         childrenAnchorPoint.append(_layoutItem(child, childIndex, isRepeat, itemDataCurrent, itemDataPrevious));
                     }
+                });
+            } else {
+                var $table = itemContainer.find('table');
+
+                if(itemDataCurrent !== undefined && itemDataCurrent[item.name]) {
+                    for(var i = 0; i < Math.max(itemDataCurrent[item.name].length, itemDataPrevious[item.name].length); i++) {
+                        _createTableRow(item, $table, itemDataCurrent[item.name][i], itemDataPrevious[item.name][i]);
+                    };
+                } else {
+                    // make sure there is at least one blank road
+                    _createTableRow(item, $table);
                 }
-            });
+
+                itemContainer.find('.add-group').find('a').click(function() {
+                    _createTableRow(item, $table, itemData);
+                });
+            }
         }
 
         return itemContainer;
+    }
+
+    function _getCreateChildrenAnchorPoint($itemContainer) {
+        var $childrenAnchorPoint;
+
+        // if no children anchor point was defined within the template, create one under current item
+        if($itemContainer.find('.children-anchor-point').length) {
+            $childrenAnchorPoint = $itemContainer.find('.children-anchor-point');
+        } else {
+            $childrenAnchorPoint = $('<div>');
+            $childrenAnchorPoint.addClass('children-anchor-point');
+            $itemContainer.append($childrenAnchorPoint);
+        }
+
+        return $childrenAnchorPoint;
+    }
+
+    function _createTableRow(item, $table, itemDataCurrent, itemDataPrevious) {
+        var $row = $('<tr>');
+
+        $.each(item.children, function(index, child) {
+            var $col = $('<td>');
+            $col.append(_layoutItem(child, index, false, itemDataCurrent, itemDataPrevious));
+            $col.find('label:first').remove();
+            $row.append($col);
+        });
+
+        $table.append($row);
     }
 
     return {
