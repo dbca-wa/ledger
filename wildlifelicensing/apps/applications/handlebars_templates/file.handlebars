@@ -7,7 +7,7 @@
         <input name="{{name}}-existing" type="hidden" value="{{{getURLFilename value}}}"/>
     {{/if}}
     <input name="{{name}}" type="file" class="form-control" {{#if file_types }}accept="{{fileTypes}}"{{/if}} {{#if required}}required{{/if}}
-        {{#if fileTypes }}accept="{{fileTypes}}"{{/if}} >
+        {{#if fileTypes }}accept="{{fileTypes}}"{{/if}} value=" ">
     {{#if help_text}}
         <p class="help-block">{{ help_text }}</p>
     {{/if}}

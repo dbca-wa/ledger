@@ -1,24 +1,22 @@
 define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker',
         'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
-    function _layoutItem(item, index, isRepeat, itemData) {
+    function _layoutItem(item, repetition, suffix, itemData) {
         var $itemContainer = $('<div>');
 
-        if(item.type == 'section') {
-            item.index = index;
-        }
-
-        // if this is a repeatable item (such as a group), add repetitionIndex to item ID
-        if(item.isRepeatable) {
-            item.isRemovable = isRepeat;
-        }
+        item.isRemovable = repetition > 0;
 
         if(itemData != undefined && item.name in itemData) {
             item.value = itemData[item.name];
         }
 
+        suffix += '-' + repetition;
+
+        item.name += suffix;
+
         $itemContainer.append(Handlebars.templates[item.type](item));
 
-        // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
+        // unset item name and value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
+        item.name = item.name.slice(0, item.name.indexOf(suffix));
         item.value = undefined;
 
         if(item.conditions !== undefined) {
@@ -33,7 +31,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                     var $conditionalChildren = $('<div>');
                     $conditionalChildren.attr('id', initialInputValue);
                     $.each(item.conditions[initialInputValue], function(childIndex, child) {
-                        _appendChild(childIndex, child, $conditionalChildren, itemData);
+                        _appendChild(child, $conditionalChildren, repetition, suffix, itemData);
                     });
                     $childrenAnchorPoint.append($conditionalChildren);
                 }
@@ -55,7 +53,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                             $conditionalChildren.attr('id', inputValue);
                             $conditionalChildren.css('display', 'none');
                             $.each(item.conditions[inputValue], function(childIndex, child) {
-                                _appendChild(childIndex, child, $conditionalChildren, itemData);
+                                _appendChild(child, $conditionalChildren, repetition, suffix, itemData);
                             });
                             $childrenAnchorPoint.append($conditionalChildren);
                         }
@@ -74,7 +72,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
                 // append all children to item
                 $.each(item.children, function(childIndex, child) {
-                    _appendChild(childIndex, child, $childrenAnchorPoint, itemData);
+                    _appendChild(child, $childrenAnchorPoint, repetition, suffix, itemData);
                 });
             } else {
                 var $table = $itemContainer.find('table');
@@ -95,7 +93,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
 
         if(item.isRepeatable) {
-            _setupCopyRemoveEvents(item, $itemContainer, index, true);
+            _setupCopyRemoveEvents(item, $itemContainer, repetition, suffix);
         }
 
         return $itemContainer;
@@ -133,33 +131,41 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         $table.append($row);
     }
 
-    function _appendChild(childIndex, child, $childrenAnchorPoint, itemData) {
+    function _appendChild(child, $childrenAnchorPoint, repetition, suffix, itemData) {
         if(child.isRepeatable) {
             var childData;
             if(itemData !== undefined) {
                 childData = itemData[child.name][0];
             }
-            $childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
+            $childrenAnchorPoint.append(_layoutItem(child, repetition, suffix, childData));
 
             var repeatItemsAnchorPoint = $('<div>');
             $childrenAnchorPoint.append(repeatItemsAnchorPoint);
 
             var addGroupDiv = $('<div>').addClass('add-group');
             var addGroupLink = $('<a>').text('Add ' + child.label, itemData);
-            addGroupLink.click(function(e) {
-                repeatItem = _layoutItem(child, childIndex, true, itemData);
-                repeatItem.find('.hidden').removeClass('hidden');
-                repeatItemsAnchorPoint.append(repeatItem);
-            });
+
+            // closure to make sure repetition keeps incrementing each time add is clicked
+            addGroupLink.click((function(){
+                var rep = repetition;
+
+                return function() {
+                    rep += 1;
+                    repeatItem = _layoutItem(child, rep, suffix, itemData);
+                    repeatItem.find('.hidden').removeClass('hidden');
+                    repeatItemsAnchorPoint.append(repeatItem);
+                };
+            })());
+
             $childrenAnchorPoint.append(addGroupDiv.append(addGroupLink));
 
             if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
                 $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
-                    repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
+                    repeatItemsAnchorPoint.append(_layoutItem(child, repetition, suffix, repeatData));
                 });
             }
         } else {
-            $childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
+            $childrenAnchorPoint.append(_layoutItem(child, repetition, suffix, itemData));
         }
     }
 
@@ -173,9 +179,9 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
     }
 
-    function _setupCopyRemoveEvents(item, itemSelector, index, isRepeat) {
+    function _setupCopyRemoveEvents(item, itemSelector, repetition, suffix) {
         itemSelector.find('.copy').click(function(e) {
-            var itemCopy = _layoutItem(item, index, true);
+            var itemCopy = _layoutItem(item, repetition + 1, suffix);
 
             itemSelector.find('input, select').each(function() {
                 inputCopy = itemCopy.find("[name='" + $(this).attr('name') + "']");
@@ -187,7 +193,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             });
             itemCopy.find('.hidden').removeClass('hidden');
             itemSelector.after(itemCopy);
-            _setupCopyRemoveEvents(item, itemCopy, index, true);
+            _setupCopyRemoveEvents(item, itemCopy, repetition + 1, suffix);
         });
 
         itemSelector.find('.remove').click(function(e) {
@@ -205,7 +211,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             var formContainer = $(formContainerSelector);
 
             $.each(formStructure, function(index, item) {
-                formContainer.append(_layoutItem(item, index, false, data));
+                formContainer.append(_layoutItem(item, 0, '', data));
             });
 
             // initialise all datapickers
