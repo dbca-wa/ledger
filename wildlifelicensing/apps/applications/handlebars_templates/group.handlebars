@@ -1,5 +1,10 @@
-<div>
+<div class="top-buffer bottom-buffer">
     <h4>{{label}}</h4>
+    {{#unless isRemovable}}
+        {{#if help_text}}
+            <p>{{help_text}}</p>
+        {{/if}}
+    {{/unless}}
     <div class="panel panel-default">
         <div class="panel-body">
             <div class="children-anchor-point" style="padding-left: 0px">
