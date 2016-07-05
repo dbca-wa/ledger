@@ -565,12 +565,12 @@
                                 {
                                     "type": "label",
                                     "label": "What survey type will you be conducting?",
-                                    "name": "suacoustic_call_recorder_informationrvey_type"
+                                    "name": "survey_type"
                                 },
                                 {
                                     "type": "checkbox",
                                     "label": "Level 1 / reconnaissance",
-                                    "name": "level_1_level_1_reconnaissance",
+                                    "name": "level_1_reconnaissance",
                                     "conditions": 
                                     {
                                         "on": 
@@ -1989,7 +1989,7 @@
                                                         {
                                                             "type": "checkbox",
                                                             "label": "Bird Census",
-                                                            "name": "level_1_level_1_bird_census",
+                                                            "name": "level_1_bird_census",
                                                             "conditions": 
                                                             {
                                                                 "on": 
@@ -3510,7 +3510,7 @@
                                                         {
                                                             "type": "checkbox",
                                                             "label": "Bird Census",
-                                                            "name": "level_2_level_2_bird_census",
+                                                            "name": "level_2_bird_census",
                                                             "conditions": 
                                                             {
                                                                 "on": 
@@ -7692,6 +7692,1516 @@
                                                         "name": "tft_fate"
                                                     }
                                                 ]
+                                            },
+                                            {
+                                                "type": "radiobuttons",
+                                                "label": "What survey method will you be using?",
+                                                "name": "targeted_survey_method",
+                                                "options": 
+                                                [
+                                                    {
+                                                        "value": "capture",
+                                                        "label": "Capture"
+                                                    },
+                                                    {
+                                                        "value": "remote_sensing",
+                                                        "label": "Remote Sensing"
+                                                    },
+                                                    {
+                                                        "value": "other",
+                                                        "label": "Other non-capture"
+                                                    }
+                                                ],
+                                                "conditions": 
+                                                {
+                                                    "capture": 
+                                                    [
+                                                        {
+                                                            "type": "radiobuttons",
+                                                            "label": "Capture Method",
+                                                            "name": "targeted_capture_method",
+                                                            "options": 
+                                                            [
+                                                                {
+                                                                    "value": "trap",
+                                                                    "label": "Trap"
+                                                                },
+                                                                {
+                                                                    "value": "net",
+                                                                    "label": "Net"
+                                                                },
+                                                                {
+                                                                    "value": "hand",
+                                                                    "label": "Hand"
+                                                                },
+                                                                {
+                                                                    "value": "other",
+                                                                    "label": "Other"
+                                                                }
+                                                            ],
+                                                            "conditions": 
+                                                            {
+                                                                "trap": 
+                                                                [
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "What is the number of trap sites?",
+                                                                        "name": "targeted_num_trap_sites"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "How many days/nights will traps be open?",
+                                                                        "name": "targeted_num_traps_open_days"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "How many trapping sessions?",
+                                                                        "name": "targeted_num_trap_sessions"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "Total number of traps per session?",
+                                                                        "name": "targeted_num_traps_per_session"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "Maximum total number of traps per site per session?",
+                                                                        "name": "targeted_max_num_traps_per_session_per_site"
+                                                                    },
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "If the number of traps differs between sessions or sites, enter the highest number in the questions above, and explain differences below.",
+                                                                        "name": "targeted_different_num_traps_per_session_or_site_explanation"
+                                                                    },
+                                                                    {
+                                                                        "type": "label",
+                                                                        "label": "Traps",
+                                                                        "name": "targeted_traps"
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Cage",
+                                                                        "name": "targeted_cage",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_cage_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_cage_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of traps",
+                                                                                    "name": "targeted_num_cages"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Cage Placement",
+                                                                                    "name": "targeted_cage_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_cage_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_cage_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Box",
+                                                                        "name": "targeted_box",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_box_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_box_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of traps",
+                                                                                    "name": "targeted_num_boxs"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Box Placement",
+                                                                                    "name": "targeted_box_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_box_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_box_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Dry Pit",
+                                                                        "name": "targeted_dry_pit",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_dry_pit_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_dry_pit_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of traps",
+                                                                                    "name": "targeted_num_dry_pits"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Dry Pit Placement",
+                                                                                    "name": "targeted_dry_pit_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_dry_pit_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_dry_pit_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Funnel",
+                                                                        "name": "targeted_funnel",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_funnel_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_funnel_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of traps",
+                                                                                    "name": "targeted_num_funnels"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Funnel Placement",
+                                                                                    "name": "targeted_funnel_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_funnel_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_funnel_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Other",
+                                                                        "name": "targeted_trap_other",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Enter details",
+                                                                                    "name": "targeted_trap_type_other"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_trap_other_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_trap_other_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of traps",
+                                                                                    "name": "targeted_trap_other_num_traps"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Trap Placement",
+                                                                                    "name": "targeted_trap_other_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_trap_other_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_trap_other_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "net": 
+                                                                [
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "What is the number of sites where nets will be used?",
+                                                                        "name": "targeted_num_net_sites"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "How many days/nights will nets be used?",
+                                                                        "name": "targeted_num_net_days"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "How many sessions will nets be used?",
+                                                                        "name": "targeted_num_net_sessions"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "Total number of nets per session?",
+                                                                        "name": "targeted_num_nets_per_session"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "Maximum total number of nets per site per session?",
+                                                                        "name": "targeted_max_num_nets_per_session_per_site"
+                                                                    },
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "If the number of nets differs between sessions or sites then explain",
+                                                                        "name": "targeted_different_num_nets_per_session_or_site_explanation"
+                                                                    },
+                                                                    {
+                                                                        "type": "label",
+                                                                        "label": "Nets",
+                                                                        "name": "targeted_nets"
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Sweep",
+                                                                        "name": "targeted_sweep",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_sweep_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_sweep_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of nets",
+                                                                                    "name": "targeted_num_sweeps"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Net Placement",
+                                                                                    "name": "targeted_sweep_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_sweep_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_sweep_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Mist",
+                                                                        "name": "targeted_mist",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_mist_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_mist_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of nets",
+                                                                                    "name": "targeted_num_mists"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Net Placement",
+                                                                                    "name": "targeted_mist_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_mist_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_mist_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "name": "targeted_harp",
+                                                                        "label": "Harp",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_harp_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_harp_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of nets",
+                                                                                    "name": "targeted_num_harps"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Net Placement",
+                                                                                    "name": "targeted_harp_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_harp_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_harp_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Other",
+                                                                        "name": "targeted_net_other",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Enter details",
+                                                                                    "name": "targeted_net_type_other"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Make",
+                                                                                    "name": "targeted_net_other_make"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Size",
+                                                                                    "name": "targeted_net_other_size"
+                                                                                },
+                                                                                {
+                                                                                    "type": "number",
+                                                                                    "label": "Number of nets",
+                                                                                    "name": "targeted_net_other_num_nets"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Net Placement",
+                                                                                    "name": "targeted_net_other_placement"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Setting times",
+                                                                                    "name": "targeted_net_other_setting_times"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "Other details",
+                                                                                    "name": "targeted_net_other_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "hand": 
+                                                                [
+                                                                    {
+                                                                        "type": "label",
+                                                                        "label": "What hand capture techniques will you be using?",
+                                                                        "name": "targeted_hand_capture_techniques"
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Hook and Bag",
+                                                                        "name": "targeted_hook_and_bag",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Please Provide Details",
+                                                                                    "name": "targeted_hook_and_bag_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Noose",
+                                                                        "name": "targeted_noose",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Please Provide Details",
+                                                                                    "name": "targeted_Noose_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Foraging",
+                                                                        "name": "targeted_foraging",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Please Provide Details",
+                                                                                    "name": "targeted_foraging_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Raking",
+                                                                        "name": "targeted_raking",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Please Provide Details",
+                                                                                    "name": "targeted_raking_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Sieving",
+                                                                        "name": "targeted_sieving",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Please Provide Details",
+                                                                                    "name": "targeted_sieving_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Excavation",
+                                                                        "name": "targeted_excavation",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Please Provide Details",
+                                                                                    "name": "targeted_excavation_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Other",
+                                                                        "name": "targeted_other_hand_capture_techniques",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Please Provide Details",
+                                                                                    "name": "targeted_excavation_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "other": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Provide details of your fauna capture methodology if it doesn’t fit within previous questions for trap, net or hand capture techniques.",
+                                                                        "name": "targeted_other_capture_methodology"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "label",
+                                                            "label": "What will be the fate(s) of the fauna captured?",
+                                                            "name": "targeted_fate"
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Release",
+                                                            "name": "targeted_release",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "select",
+                                                                        "label": "Release Schedule",
+                                                                        "name": "targeted_release_schedule",
+                                                                        "options": 
+                                                                        [
+                                                                            {
+                                                                                "value": "immediately",
+                                                                                "label": "Immediately after species idenfication"
+                                                                            },
+                                                                            {
+                                                                                "value": "after_morphometrics",
+                                                                                "label": "After morphometrics and physical condition taken"
+                                                                            },
+                                                                            {
+                                                                                "value": "after_samples",
+                                                                                "label": "After samples taken"
+                                                                            },
+                                                                            {
+                                                                                "value": "after_marking",
+                                                                                "label": "After marking"
+                                                                            },
+                                                                            {
+                                                                                "value": "after_temp_holding",
+                                                                                "label": "After temporary holding (< 24 hours)"
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "type": "label",
+                                                                        "label": "Which of the following will occur before release?",
+                                                                        "name": "targeted_pre_release_occurences"
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Mophometrics and physical condition analysis",
+                                                                        "name": "targeted_mophometrics",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "label",
+                                                                                    "label": "What morphometrics and condition details will be recorded?",
+                                                                                    "name": "targeted_mophometrics"
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Length",
+                                                                                    "name": "targeted_mophometric_length"
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Sex",
+                                                                                    "name": "targeted_mophometric_sex"
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Age",
+                                                                                    "name": "targeted_mophometric_age"
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Body condition",
+                                                                                    "name": "targeted_mophometric_body_condition"
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Reproductive condition",
+                                                                                    "name": "targeted_mophometric_reproductive_condition"
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Other",
+                                                                                    "name": "targeted_mophometric_other",
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "on": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "text_area",
+                                                                                                "label": "Please provide details",
+                                                                                                "name": "targeted_mophometric_other_details"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Provide any other details relating to measurements and condition",
+                                                                                    "name": "targeted_mophometric_other_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Sampling",
+                                                                        "name": "targeted_sampling",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "label",
+                                                                                    "label": "What samples will be taken?",
+                                                                                    "name": "targeted_samples"
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Tissue",
+                                                                                    "name": "targeted_tissue",
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "on": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "text_area",
+                                                                                                "label": "Please provide details",
+                                                                                                "name": "targeted_tissue_details"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Scale",
+                                                                                    "name": "targeted_scale",
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "on": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "text_area",
+                                                                                                "label": "Please provide details",
+                                                                                                "name": "targeted_scale_details"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Hair / feather",
+                                                                                    "name": "targeted_hair_feather",
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "on": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "text_area",
+                                                                                                "label": "Please provide details",
+                                                                                                "name": "targeted_hair_feather_details"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Blood",
+                                                                                    "name": "targeted_blood",
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "on": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "text_area",
+                                                                                                "label": "Please provide details",
+                                                                                                "name": "targeted_blood_details"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Swabs",
+                                                                                    "name": "targeted_swabs",
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "on": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "text_area",
+                                                                                                "label": "Please provide details",
+                                                                                                "name": "targeted_swabs_details"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "type": "checkbox",
+                                                                                    "label": "Other",
+                                                                                    "name": "targeted_samples_other",
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "on": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "text_area",
+                                                                                                "label": "Please provide details",
+                                                                                                "name": "targeted_samples_other_details"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Marking",
+                                                                        "name": "targeted_marking",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "select",
+                                                                                    "label": "What marking will be done and why?",
+                                                                                    "name": "targeted_marking",
+                                                                                    "options": 
+                                                                                    [
+                                                                                        {
+                                                                                            "value": "temporary",
+                                                                                            "label": "Temporary"
+                                                                                        },
+                                                                                        {
+                                                                                            "value": "permanent",
+                                                                                            "label": "Permanent"
+                                                                                        }
+                                                                                    ],
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "permanent": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "checkbox",
+                                                                                                "label": "Tags",
+                                                                                                "name": "targeted_tags",
+                                                                                                "conditions": 
+                                                                                                {
+                                                                                                    "on": 
+                                                                                                    [
+                                                                                                        {
+                                                                                                            "type": "text_area",
+                                                                                                            "label": "Please provide details",
+                                                                                                            "name": "targeted_tags_details"
+                                                                                                        }
+                                                                                                    ]
+                                                                                                }
+                                                                                            },
+                                                                                            {
+                                                                                                "type": "checkbox",
+                                                                                                "label": "Microchips / implants",
+                                                                                                "name": "targeted_microchips",
+                                                                                                "conditions": 
+                                                                                                {
+                                                                                                    "on": 
+                                                                                                    [
+                                                                                                        {
+                                                                                                            "type": "text_area",
+                                                                                                            "label": "Please provide details",
+                                                                                                            "name": "targeted_microchips_details"
+                                                                                                        }
+                                                                                                    ]
+                                                                                                }
+                                                                                            },
+                                                                                            {
+                                                                                                "type": "checkbox",
+                                                                                                "label": "Bands",
+                                                                                                "name": "targeted_bands",
+                                                                                                "conditions": 
+                                                                                                {
+                                                                                                    "on": 
+                                                                                                    [
+                                                                                                        {
+                                                                                                            "type": "text_area",
+                                                                                                            "label": "Please provide details",
+                                                                                                            "name": "targeted_bands_details"
+                                                                                                        }
+                                                                                                    ]
+                                                                                                }
+                                                                                            },
+                                                                                            {
+                                                                                                "type": "checkbox",
+                                                                                                "label": "Ear punching",
+                                                                                                "name": "targeted_ear_punching",
+                                                                                                "conditions": 
+                                                                                                {
+                                                                                                    "on": 
+                                                                                                    [
+                                                                                                        {
+                                                                                                            "type": "text_area",
+                                                                                                            "label": "Please provide details",
+                                                                                                            "name": "targeted_ear_punching_details"
+                                                                                                        }
+                                                                                                    ]
+                                                                                                }
+                                                                                            },
+                                                                                            {
+                                                                                                "type": "checkbox",
+                                                                                                "label": "Other",
+                                                                                                "name": "targeted_marking_other",
+                                                                                                "conditions": 
+                                                                                                {
+                                                                                                    "on": 
+                                                                                                    [
+                                                                                                        {
+                                                                                                            "type": "text_area",
+                                                                                                            "label": "Please provide details",
+                                                                                                            "name": "targeted_marking_other_details"
+                                                                                                        }
+                                                                                                    ]
+                                                                                                }
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "checkbox",
+                                                                        "label": "Temporary Holding",
+                                                                        "name": "targeted_temporary_holding",
+                                                                        "conditions": 
+                                                                        {
+                                                                            "on": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Why will/may the fauna be temporarily held?",
+                                                                                    "name": "targeted_why_temporarily_held"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "How will the fauna be held?",
+                                                                                    "name": "targeted_how_temporarily_held"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Where will the fauna be held?",
+                                                                                    "name": "targeted_where_temporarily_held"
+                                                                                },
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "If fauna will be transported, provide details?",
+                                                                                    "name": "targeted_transported_details"
+                                                                                },
+                                                                                {
+                                                                                    "type": "select",
+                                                                                    "label": "Where will the fauna be released?",
+                                                                                    "name": "targeted_where_fauna_released",
+                                                                                    "options": 
+                                                                                    [
+                                                                                        {
+                                                                                            "value": "at_capture_site",
+                                                                                            "label": "At capture site"
+                                                                                        },
+                                                                                        {
+                                                                                            "value": "near_capture_site",
+                                                                                            "label": "Near capture site into suitable habitat"
+                                                                                        },
+                                                                                        {
+                                                                                            "value": "other",
+                                                                                            "label": "Other"
+                                                                                        }
+                                                                                    ],
+                                                                                    "conditions": 
+                                                                                    {
+                                                                                        "other": 
+                                                                                        [
+                                                                                            {
+                                                                                                "type": "text_area",
+                                                                                                "label": "Please provide details",
+                                                                                                "name": "targeted_fauna_release_other_details"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Retain",
+                                                            "name": "targeted_retain",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Why does the fauna need to be retained?",
+                                                                        "name": "targeted_why_fauna_retained"
+                                                                    },
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "What fauna could be retained?",
+                                                                        "name": "targeted_what_fauna_retained"
+                                                                    },
+                                                                    {
+                                                                        "type": "number",
+                                                                        "label": "If fauna is to be retained, how many animals?",
+                                                                        "name": "targeted_num_fauna_retained"
+                                                                    },
+                                                                    {
+                                                                        "type": "radiobuttons",
+                                                                        "label": "Will fauna be euthanised?",
+                                                                        "name": "targeted_fauna_euthanised",
+                                                                        "options": 
+                                                                        [
+                                                                            {
+                                                                                "value": "yes",
+                                                                                "label": "Yes"
+                                                                            },
+                                                                            {
+                                                                                "value": "no",
+                                                                                "label": "No"
+                                                                            }
+                                                                        ],
+                                                                        "conditions": 
+                                                                        {
+                                                                            "yes": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Method",
+                                                                                    "name": "targeted_euthanise_method"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "text",
+                                                                        "label": "Where will the specimen(s) be held/lodged/stored?",
+                                                                        "name": "targeted_where_specimen_stored"
+                                                                    },
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "If specimen is to be deposited at the WA Museum, will the Museum be contacted prior to the fauna being retained or did the Museum request the specimen?",
+                                                                        "name": "targeted_mesuem_storage_details"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "text_area",
+                                                            "label": "Describe measures that will be used to prevent/minimise vertebrate by-catch",
+                                                            "name": "targeted_prevent_vertebre_by_catch"
+                                                        },
+                                                        {
+                                                            "type": "text_area",
+                                                            "label": "Provide details of field hygiene and wildlife disease considerations.",
+                                                            "name": "targeted_hygiene_disease_considerations"
+                                                        },
+                                                        {
+                                                            "type": "text_area",
+                                                            "label": "Provide other details relating to fauna capture.",
+                                                            "name": "targeted_fauna_capture_other_details"
+                                                        }
+                                                    ],
+                                                    "remote_sensing": 
+                                                    [
+                                                        {
+                                                            "type": "label",
+                                                            "label": "What remote sensing aparatus will you be using?",
+                                                            "name": "targeted_remote_sensing_aparatus"
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Camera",
+                                                            "name": "targeted_camera",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "radiobuttons",
+                                                                        "label": "Will cameras be baited with an attractant/lure?",
+                                                                        "name": "targeted_camera_baited",
+                                                                        "options": 
+                                                                        [
+                                                                            {
+                                                                                "value": "yes",
+                                                                                "label": "Yes"
+                                                                            },
+                                                                            {
+                                                                                "value": "no",
+                                                                                "label": "No"
+                                                                            }
+                                                                        ],
+                                                                        "conditions": 
+                                                                        {
+                                                                            "yes": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text",
+                                                                                    "label": "What bait will be used?",
+                                                                                    "name": "targeted_what_bait"
+                                                                                },
+                                                                                {
+                                                                                    "type": "radiobuttons",
+                                                                                    "label": "Will the bait be consumable?",
+                                                                                    "name": "targeted_bait_consumable",
+                                                                                    "options": 
+                                                                                    [
+                                                                                        {
+                                                                                            "value": "yes",
+                                                                                            "label": "Yes"
+                                                                                        },
+                                                                                        {
+                                                                                            "value": "no",
+                                                                                            "label": "No"
+                                                                                        }
+                                                                                    ]
+                                                                                },
+                                                                                {
+                                                                                    "type": "radiobuttons",
+                                                                                    "label": "Will the bait be replenished?",
+                                                                                    "name": "targeted_bait_replenished",
+                                                                                    "options": 
+                                                                                    [
+                                                                                        {
+                                                                                            "value": "yes",
+                                                                                            "label": "Yes"
+                                                                                        },
+                                                                                        {
+                                                                                            "value": "no",
+                                                                                            "label": "No"
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "group",
+                                                                        "label": "Camera Information",
+                                                                        "name": "targeted_camera_information",
+                                                                        "isRepeatable": true,
+                                                                        "children": 
+                                                                        [
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Make",
+                                                                                "name": "targeted_camera_make"
+                                                                            },
+                                                                            {
+                                                                                "type": "number",
+                                                                                "label": "Number of devices",
+                                                                                "name": "targeted_num_cameras"
+                                                                            },
+                                                                            {
+                                                                                "type": "text_area",
+                                                                                "label": "Camera Placement",
+                                                                                "name": "targeted_camera_placement"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "How long in situ",
+                                                                                "name": "targeted_camera_situ"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Other details",
+                                                                                "name": "targeted_camera_other_details"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Ultrasonic bat detector",
+                                                            "name": "targeted_ultrasonic_bat_detector",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "group",
+                                                                        "label": "Ultrasonic Bat Detector Information",
+                                                                        "name": "targeted_ultrasonic_bat_detector_information",
+                                                                        "isRepeatable": true,
+                                                                        "children": 
+                                                                        [
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Make",
+                                                                                "name": "targeted_ubd_make"
+                                                                            },
+                                                                            {
+                                                                                "type": "number",
+                                                                                "label": "Number of devices",
+                                                                                "name": "targeted_num_ubds"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Ultrasonic bat detector Placement",
+                                                                                "name": "targeted_ubd_placement"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "How long in situ",
+                                                                                "name": "targeted_ubd_situ"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Other details",
+                                                                                "name": "targeted_ubd_other_details"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Acoustic call recorder",
+                                                            "name": "targeted_acoustic_call_recorder",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "group",
+                                                                        "label": "Acoustic call recorder Information",
+                                                                        "name": "targeted_acoustic_call_recorder_information",
+                                                                        "isRepeatable": true,
+                                                                        "children": 
+                                                                        [
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Make",
+                                                                                "name": "targeted_acr_make"
+                                                                            },
+                                                                            {
+                                                                                "type": "number",
+                                                                                "label": "Number of devices",
+                                                                                "name": "targeted_num_acrs"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Acoustic call recorder Placement",
+                                                                                "name": "targeted_acr_placement"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "How long in situ",
+                                                                                "name": "targeted_acr_situ"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Other details",
+                                                                                "name": "targeted_acr_other_details"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Aerial",
+                                                            "name": "targeted_aerial",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "group",
+                                                                        "label": "Aerial Information",
+                                                                        "name": "targeted_aerial_information",
+                                                                        "children": 
+                                                                        [
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Make",
+                                                                                "name": "targeted_aerial_make"
+                                                                            },
+                                                                            {
+                                                                                "type": "number",
+                                                                                "label": "Number of devices",
+                                                                                "name": "targeted_num_aerials"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Aerial Placement",
+                                                                                "name": "targeted_aerial_placement"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "How long in situ",
+                                                                                "name": "targeted_aerial_situ"
+                                                                            },
+                                                                            {
+                                                                                "type": "text",
+                                                                                "label": "Other details",
+                                                                                "name": "targeted_aerial_other_details"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "text_area",
+                                                            "label": "Provide any other details relating to remote sensing.",
+                                                            "name": "targeted_remote_sensing_other_details"
+                                                        }
+                                                    ],
+                                                    "other": 
+                                                    [
+                                                        {
+                                                            "type": "label",
+                                                            "label": "Please select any non-capture survey method you wil be using",
+                                                            "name": "targeted_non_capture_method"
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Aural survey",
+                                                            "name": "targeted_aural_survey",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Please provide Details",
+                                                                        "name": "targeted_aural_survey_details"
+                                                                    },
+                                                                    {
+                                                                        "type": "radiobuttons",
+                                                                        "label": "Will call play-back be used?",
+                                                                        "name": "targeted_call_playback",
+                                                                        "options": 
+                                                                        [
+                                                                            {
+                                                                                "value": "yes",
+                                                                                "label": "Yes"
+                                                                            },
+                                                                            {
+                                                                                "value": "no",
+                                                                                "label": "No"
+                                                                            }
+                                                                        ],
+                                                                        "conditions": 
+                                                                        {
+                                                                            "yes": 
+                                                                            [
+                                                                                {
+                                                                                    "type": "text_area",
+                                                                                    "label": "Please provide Details",
+                                                                                    "name": "targeted_call_playback_details"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Bird Census",
+                                                            "name": "targeted_bird_census",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Please provide Details",
+                                                                        "name": "targeted_bird_census_details"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Spotlighting / head torching",
+                                                            "name": "targeted_spotlighting",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Please provide Details",
+                                                                        "name": "targeted_spotlighting_details"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Hair tubes / sticky wicket",
+                                                            "name": "targeted_hair_tubes",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Please provide Details",
+                                                                        "name": "targeted_hair_tubes_details"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Secondary signs / evidence",
+                                                            "name": "targeted_secondary_signs",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Please provide Details",
+                                                                        "name": "targeted_secondary_signs_details"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Habitat Assessment",
+                                                            "name": "targeted_habitat_assessment",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Please provide Details",
+                                                                        "name": "targeted_habitat_assessment_details"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "checkbox",
+                                                            "label": "Other",
+                                                            "name": "targeted_non_capture_other",
+                                                            "conditions": 
+                                                            {
+                                                                "on": 
+                                                                [
+                                                                    {
+                                                                        "type": "text_area",
+                                                                        "label": "Please provide Details",
+                                                                        "name": "targeted_non_capture_other_details"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
                                             }
                                         ]
                                     }
@@ -7699,7 +9209,18 @@
                                 {
                                     "type": "checkbox",
                                     "label": "Other",
-                                    "name": "other"
+                                    "name": "other_survey_type",
+                                    "conditions": 
+                                    {
+                                        "on": 
+                                        [
+                                            {
+                                                "type": "text",
+                                                "label": "Provide details",
+                                                "name": "other_survey_type_details"
+                                            }
+                                        ]
+                                    }
                                 }
                             ]
                         }
