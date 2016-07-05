@@ -230,9 +230,20 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         layoutPreviewItems: function(containerSelector, formStructure, currentData, previousData) {
             var container = $(containerSelector);
 
-            $.each(formStructure, function(index, item) {
-                container.append(_layoutItem(item, index, false, currentData, previousData));
-            });
+            for(var i = 0; i < formStructure.length; i++) {
+                var currentItemData,
+                    previousItemData;
+
+                // ensure item data exists
+                if(data && i < currentData.length) {
+                    currentItemData = currentData[i][formStructure[i].name][0];
+                }
+                if(data && i < previousData.length) {
+                    previousItemData = previousData[i][formStructure[i].name][0];
+                }
+
+                container.append(_layoutItem(formStructure[i], i, false, currentItemData, previousItemData));
+            }
         }
     }
 });

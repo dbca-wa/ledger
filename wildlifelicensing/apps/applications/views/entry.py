@@ -56,7 +56,10 @@ class ApplicationEntryBaseView(TemplateView):
 
 class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        delete_app_session_data(request.session)
+        try:
+            delete_app_session_data(request.session)
+        except Exception as e:
+            messages.warning(request, 'There was a problem deleting session data: %s' % e)
 
         set_app_session_data(request.session, 'temp_files_dir', tempfile.mkdtemp(dir=settings.MEDIA_ROOT))
 
@@ -70,7 +73,10 @@ class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
 
 class EditApplicationView(UserCanEditApplicationMixin, View):
     def get(self, request, *args, **kwargs):
-        delete_app_session_data(request.session)
+        try:
+            delete_app_session_data(request.session)
+        except Exception as e:
+            messages.warning(request, 'There was a problem deleting session data: %s' % e)
 
         temp_files_dir = tempfile.mkdtemp(dir=settings.MEDIA_ROOT)
         set_app_session_data(request.session, 'temp_files_dir', temp_files_dir)
@@ -316,8 +322,6 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 for filename in get_all_filenames_from_application_data(licence_type.application_schema,
                                                                         get_app_session_data(request.session, 'data')):
 
-                    print filename
-
                     # need to be sure file is in tmp directory (as it could be a freshly attached file)
                     if os.path.exists(os.path.join(temp_files_dir, filename)):
                         document = Document.objects.create(name=filename)
@@ -326,13 +330,6 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                             application.documents.add(document)
             except Exception as e:
                 messages.error(request, 'There was a problem appending applications files: %s' % e)
-
-            finally:
-                try:
-                    if temp_files_dir is not None and os.path.isdir(temp_files_dir):
-                        shutil.rmtree(temp_files_dir)
-                except (shutil.Error, OSError) as e:
-                    messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
 
             for f in request.FILES:
                 if f == 'application_document':
@@ -343,9 +340,25 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.warning(request, 'The application was saved to draft.')
 
             if 'draft' in request.POST:
-                delete_app_session_data(request.session)
+                try:
+                    delete_app_session_data(request.session)
+                except Exception as e:
+                    messages.warning(request, 'There was a problem deleting session data: %s' % e)
+
                 return redirect('wl_dashboard:home')
             else:
+                # if continuing, need to save new files in temp so they can be previewed on enter details screen
+                if len(request.FILES) > 0:
+                    temp_files_dir = get_app_session_data(request.session, 'temp_files_dir')
+    
+                    for f in request.FILES:
+                        if f == 'application_document':
+                            set_app_session_data(request.session, 'application_document', str(request.FILES[f]))
+    
+                        with open(os.path.join(temp_files_dir, str(request.FILES[f])), 'wb+') as destination:
+                            for chunk in request.FILES[f].chunks():
+                                destination.write(chunk)
+
                 return redirect('wl_applications:enter_details', args[0], application.pk)
         else:
             if len(request.FILES) > 0:
@@ -461,21 +474,21 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.success(request, 'The application was successfully lodged.')
         except Exception as e:
             messages.error(request, 'There was a problem creating the application: %s' % e)
-        finally:
-            try:
-                if temp_files_dir is not None and os.path.exists(temp_files_dir):
-                    shutil.rmtree(temp_files_dir)
-            except (shutil.Error, OSError) as e:
-                messages.warning(request, 'There was a problem deleting temporary files: %s' % e)
-
-        delete_app_session_data(request.session)
+     
+        try:
+            delete_app_session_data(request.session)
+        except Exception as e:
+            messages.warning(request, 'There was a problem deleting session data: %s' % e)
 
         return redirect('wl_dashboard:home')
 
 
 class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
     def get(self, request, *args, **kwargs):
-        delete_app_session_data(request.session)
+        try:
+            delete_app_session_data(request.session)
+        except Exception as e:
+            messages.warning(request, 'There was a problem deleting session data: %s' % e)
 
         previous_application = get_object_or_404(Application, licence=args[0])
 

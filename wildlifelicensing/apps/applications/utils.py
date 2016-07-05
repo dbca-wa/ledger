@@ -274,8 +274,8 @@ def delete_app_session_data(session):
     if temp_files_dir is not None:
         try:
             shutil.rmtree(temp_files_dir)
-        except:
-            pass
+        except (shutil.Error, OSError) as e:
+            raise e
 
     if 'application' in session:
         del session['application']
