@@ -316,6 +316,8 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 for filename in get_all_filenames_from_application_data(licence_type.application_schema,
                                                                         get_app_session_data(request.session, 'data')):
 
+                    print filename
+
                     # need to be sure file is in tmp directory (as it could be a freshly attached file)
                     if os.path.exists(os.path.join(temp_files_dir, filename)):
                         document = Document.objects.create(name=filename)

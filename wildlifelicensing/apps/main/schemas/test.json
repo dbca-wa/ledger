@@ -33,7 +33,7 @@
                         "name": "ap_surname"
                     },
                     {
-                        "type": "text",
+                        "type": "checkbox",
                         "label": "Given name(s)",
                         "name": "ap_given_names"
                     },

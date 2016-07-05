@@ -154,14 +154,21 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         layoutPreviewItems: function(containerSelector, formStructure, data, tempFilesUrl) {
             var container = $(containerSelector);
 
-            $.each(formStructure, function(index, item) {
-                container.append(_layoutItem(item, index, false, data));
-            });
+            for(var i = 0; i < formStructure.length; i++) {
+                var itemData;
+
+                // ensure item data exists
+                if(data && i < data.length) {
+                    itemData = data[i][formStructure[i].name][0];
+                }
+
+                container.append(_layoutItem(formStructure[i], i, false, itemData));
+            }
         },
         initialiseSidebarMenu: function(sidebarMenuSelector) {
             $('.section').each(function(index, value) {
                 var link = $('<a>');
-                link.attr('href', '#section-' + index);
+                link.attr('href', '#' + $(this).attr('id'));
                 link.text($(this).text());
                 $('#sectionList ul').append($('<li>').append(link));
             });

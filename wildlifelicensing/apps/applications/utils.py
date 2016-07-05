@@ -17,16 +17,57 @@ ASSESSMENT_STATUSES = dict(Assessment.STATUS_CHOICES)
 ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES = dict(AssessmentCondition.ACCEPTANCE_STATUS_CHOICES)
 
 
+def _extend_item_name(name, suffix, repetition):
+    return '{}{}-{}'.format(name, suffix, repetition)
+
+
 def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):
-    data = {}
+    data = []
 
     for item in form_structure:
-        data.update(_create_data_from_item(item, post_data, file_data, post_data_index))
+        data.append(_create_data_from_item(item, post_data, file_data, 0, ''))
 
     return data
 
 
-def _create_data_from_item(item, post_data, file_data, post_data_index=None):
+def _create_data_from_item(item, post_data, file_data, repetition, suffix):
+    item_data = {}
+
+    extended_item_name = _extend_item_name(item['name'], suffix, repetition)
+
+    if 'children' not in item:
+        if item['type'] in ['checkbox' 'declaration']:
+            item_data[item['name']] = extended_item_name in post_data
+        elif item['type'] == 'file':
+            if extended_item_name in file_data:
+                item_data[item['name']] = str(file_data.get(extended_item_name))
+            elif extended_item_name + '-existing' in post_data and len(post_data[extended_item_name + '-existing']) > 0:
+                item_data[item['name']] = post_data.get(extended_item_name + '-existing')
+            else:
+                item_data[item['name']] = ''
+        else:
+            if extended_item_name in post_data:
+                item_data[item['name']] = post_data.get(extended_item_name)
+    else:
+        item_data_list = []
+        for rep in xrange(0, int(post_data.get(extended_item_name, 1))):
+            child_data = {}
+            for child_item in item.get('children'):
+                child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
+                                                         '{}-{}'.format(suffix, rep)))
+            item_data_list.append(child_data)
+
+        item_data[item['name']] = item_data_list
+
+    if 'conditions' in item:
+        for condition in item['conditions'].keys():
+            for child in item['conditions'][condition]:
+                item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
+
+    return item_data
+
+
+def _create_data_from_item2(item, post_data, file_data, post_data_index=None):
     item_data = {}
 
     if 'name' in item and item.get('type', '') != 'group':
@@ -81,7 +122,7 @@ def _create_data_from_item(item, post_data, file_data, post_data_index=None):
     return item_data
 
 
-def get_all_filenames_from_application_data(item, data):
+def get_all_filenames_from_application_data2(item, data):
     filenames = []
 
     if isinstance(item, list):
@@ -107,7 +148,43 @@ def get_all_filenames_from_application_data(item, data):
     return filenames
 
 
+def get_all_filenames_from_application_data(item, data):
+    filenames = []
+
+    if isinstance(item, list):
+        for i, child in enumerate(item):
+            filenames += get_all_filenames_from_application_data(child, data[i])
+    elif 'children' in item:
+        for child in item['children']:
+            for child_data in data[item['name']]:
+                filenames += get_all_filenames_from_application_data(child, child_data)
+    else:
+        if item.get('type', '') == 'file':
+            if item['name'] in data and len(data[item['name']]) > 0:
+                filenames.append(data[item['name']])
+
+    return filenames
+
+
 def prepend_url_to_application_data_files(item, data, root_url):
+    # ensure root url ends with a /
+    if root_url[-1] != '/':
+        root_url += '/'
+
+    if isinstance(item, list):
+        for i, child in enumerate(item):
+            prepend_url_to_application_data_files(child, data[i], root_url)
+    elif 'children' in item:
+        for child in item['children']:
+            for child_data in data[item['name']]:
+                prepend_url_to_application_data_files(child, child_data, root_url)
+    else:
+        if item.get('type', '') == 'file':
+            if item['name'] in data and len(data[item['name']]) > 0:
+                data[item['name']] = root_url + data[item['name']]
+
+
+def prepend_url_to_application_data_files2(item, data, root_url):
     # ensure root url ends with a /
     if root_url[-1] != '/':
         root_url += '/'
@@ -135,12 +212,12 @@ def prepend_url_to_application_data_files(item, data, root_url):
 
 def convert_application_data_files_to_url(item, data, document_queryset):
     if isinstance(item, list):
-        for child in item:
-            if child.get('type', '') == 'group' and child.get('name', '') in data:
-                for child_data in data[child['name']]:
-                    convert_application_data_files_to_url(child, child_data, document_queryset)
-            else:
-                convert_application_data_files_to_url(child, data, document_queryset)
+        for i, child in enumerate(item):
+            convert_application_data_files_to_url(child, data[i], document_queryset)
+    elif 'children' in item:
+        for child in item['children']:
+            for child_data in data[item['name']]:
+                convert_application_data_files_to_url(child, child_data, document_queryset)
     else:
         if item.get('type', '') == 'file':
             if item['name'] in data and len(data[item['name']]) > 0:
@@ -148,14 +225,6 @@ def convert_application_data_files_to_url(item, data, document_queryset):
                     data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
                 except Document.DoesNotExist:
                     pass
-
-        if 'children' in item:
-            for child in item['children']:
-                if child.get('type', '') == 'group' and child.get('name', '') in data:
-                    for child_data in data[child['name']]:
-                        convert_application_data_files_to_url(child, child_data, document_queryset)
-                else:
-                    convert_application_data_files_to_url(child, data, document_queryset)
 
 
 class SessionDataMissingException(Exception):
