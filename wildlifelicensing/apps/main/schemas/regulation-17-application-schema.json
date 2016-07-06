@@ -2,6 +2,7 @@
     {
         "type": "section",
         "label": "Project Details",
+        "name": "project_details",
         "children": 
         [
             {
@@ -39,6 +40,7 @@
     {
         "type": "section",
         "label": "Approvals and Permits",
+        "name": "approvals_and_permits",
         "children": 
         [
             {
@@ -97,6 +99,7 @@
     {
         "type": "section",
         "label": "Financial Basis",
+        "name": "financial_basis",
         "children": 
         [
             {
@@ -135,6 +138,7 @@
     {
         "type": "section",
         "label": "Personnel Details",
+        "name": "personnel_details",
         "children": 
         [
             {
@@ -304,6 +308,7 @@
     {
         "type": "section",
         "label": "Project Description",
+        "name": "project_description",
         "children": 
         [
             {

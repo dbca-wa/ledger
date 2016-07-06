@@ -1,10 +1,6 @@
 define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
-    function _layoutItem(item, index, isRepeat, itemData) {
+    function _layoutItem(item, isRepeat, itemData) {
         var itemContainer = $('<div>');
-
-        if(item.type == 'section') {
-            item.index = index;
-        }
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
@@ -17,7 +13,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             item.value = "";
         }
 
-        if(item.type === 'section' || item.type === 'group' || item.type === 'table') {
+        if(item.type === 'section' || item.type === 'group') {
             item.isPreviewMode = true;
             itemContainer.append(Handlebars.templates[item.type](item));
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
@@ -70,7 +66,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                 $.each(item.conditions, function(condition, children) {
                     if(condition === itemData[item.name]) {
                         $.each(children, function(childIndex, child) {
-                            childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
+                            _appendChild(child, childrenAnchorPoint, itemData);
                         });
                     }
                 });
@@ -78,48 +74,38 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         }
 
         if(item.children !== undefined) {
-            if(item.type !== "table") {
-                var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
-    
-                $.each(item.children, function(childIndex, child) {
-                    if(child.isRepeatable) {
-                        var childData;
-                        if(itemData !== undefined) {
-                            childData = itemData[child.name][0];
-                        }
-                        childrenAnchorPoint.append(_layoutItem(child, childIndex, false, childData));
-    
-                        var repeatItemsAnchorPoint = $('<div>');
-                        childrenAnchorPoint.append(repeatItemsAnchorPoint);
-    
-                        if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
-                            $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
-                                repeatItemsAnchorPoint.append(_layoutItem(child, index, true, repeatData));
-                            });
-                        }
-                    } else {
-                        childrenAnchorPoint.append(_layoutItem(child, childIndex, false, itemData));
-                    }
-                });
-            } else {
-                var $table = itemContainer.find('table');
+            var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
+            console.log('--------------------------');
+            console.log(item);
+            console.log(itemData);
 
-                if(itemData !== undefined && itemData[item.name]) {
-                    $.each(itemData[item.name], function(childDataIndex, childData) {
-                        _createTableRow(item, $table, childData);
-                    });
-                } else {
-                    // make sure there is at least one blank road
-                    _createTableRow(item, $table);
-                }
-
-                itemContainer.find('.add-group').find('a').click(function() {
-                    _createTableRow(item, $table, itemData);
-                });
-            }
+            $.each(item.children, function(childIndex, child) {
+                _appendChild(child, childrenAnchorPoint, itemData);
+            });
         }
 
         return itemContainer;
+    }
+
+    function _appendChild(child, childrenAnchorPoint, itemData) {
+        if(child.isRepeatable) {
+            var childData;
+            if(itemData !== undefined) {
+                childData = itemData[child.name][0];
+            }
+            childrenAnchorPoint.append(_layoutItem(child, false, childData));
+
+            var repeatItemsAnchorPoint = $('<div>');
+            childrenAnchorPoint.append(repeatItemsAnchorPoint);
+
+            if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
+                $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
+                    repeatItemsAnchorPoint.append(_layoutItem(child, true, repeatData));
+                });
+            }
+        } else {
+            childrenAnchorPoint.append(_layoutItem(child, false, itemData));
+        }
     }
 
     function _getCreateChildrenAnchorPoint($itemContainer) {
@@ -137,19 +123,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         return $childrenAnchorPoint;
     }
 
-    function _createTableRow(item, $table, itemData) {
-        var $row = $('<tr>');
-
-        $.each(item.children, function(index, child) {
-            var $col = $('<td>');
-            $col.append(_layoutItem(child, index, false, itemData));
-            $col.find('label:first').remove();
-            $row.append($col);
-        });
-
-        $table.append($row);
-    }
-
     return {
         layoutPreviewItems: function(containerSelector, formStructure, data, tempFilesUrl) {
             var container = $(containerSelector);
@@ -162,7 +135,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                     itemData = data[i][formStructure[i].name][0];
                 }
 
-                container.append(_layoutItem(formStructure[i], i, false, itemData));
+                container.append(_layoutItem(formStructure[i], false, itemData));
             }
         },
         initialiseSidebarMenu: function(sidebarMenuSelector) {

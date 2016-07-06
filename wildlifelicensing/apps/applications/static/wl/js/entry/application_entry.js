@@ -36,15 +36,18 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
                 $input.change(function(e) {
                     var inputValue = _getInputValue(item, $(this)),
+                        $internalChildrenAnchorPoint = $(this).parent().parent().find('.children-anchor-point'),
                         $conditionalChildren,
                         $slideUpPromise;
 
+                      console.log($internalChildrenAnchorPoint);
+                    
                     // hide any currently shown conditional children
-                    $slideUpPromise = $childrenAnchorPoint.children().slideUp('medium').promise();
+                    $slideUpPromise = $internalChildrenAnchorPoint.children().slideUp('medium').promise();
 
                     if(inputValue in item.conditions) {
                         // get conditional child anchor point if it exists, else create it
-                        $conditionalChildren = $childrenAnchorPoint.find('#' + inputValue);
+                        $conditionalChildren = $internalChildrenAnchorPoint.find('#' + inputValue);
 
                         if($conditionalChildren.length === 0) {
                             $conditionalChildren = $('<div>');
@@ -53,7 +56,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                             $.each(item.conditions[inputValue], function(childIndex, child) {
                                 _appendChild(child, $conditionalChildren, 0, suffix, itemData);
                             });
-                            $childrenAnchorPoint.append($conditionalChildren);
+                            $internalChildrenAnchorPoint.append($conditionalChildren);
                         }
 
                         $slideUpPromise.done(function() {
@@ -65,33 +68,16 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
 
         if (item.children !== undefined) {
-            if(item.type !== "table") {
-                var $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
+            var $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
 
-                // append all children to item
-                $.each(item.children, function(childIndex, child) {
-                    _appendChild(child, $childrenAnchorPoint, 0, suffix + '-' + repetition, itemData);
-                });
-            } else {
-                var $table = $itemContainer.find('table');
-
-                if(itemData !== undefined && itemData[item.name]) {
-                    $.each(itemData[item.name], function(childDataIndex, childData) {
-                        _createTableRow(item, $table, childData);
-                    });
-                } else {
-                    // make sure there is at least one blank road
-                    _createTableRow(item, $table);
-                }
-
-                $itemContainer.find('.add-group').find('a').click(function() {
-                    _createTableRow(item, $table, itemData);
-                });
-            }
+            // append all children to item
+            $.each(item.children, function(childIndex, child) {
+                _appendChild(child, $childrenAnchorPoint, 0, suffix + '-' + repetition, itemData);
+            });
         }
 
         if(item.isRepeatable) {
-            _setupCopyRemoveEvents(item, $itemContainer, repetition, suffix);
+            _setupCopyRemoveEvents(item, $itemContainer, suffix);
         }
 
         return $itemContainer;
@@ -119,7 +105,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             // closure to make sure repetition keeps incrementing each time add is clicked
             addGroupLink.click(function() {
                 var groupCount = parseInt(groupInput.val())
-                repeatItem = _layoutItem(child, groupCount, suffix, itemData);
+                repeatItem = _layoutItem(child, groupCount, suffix);
                 repeatItem.find('.hidden').removeClass('hidden');
                 repeatItemsAnchorPoint.append(repeatItem);
                 groupInput.val(groupCount + 1);
@@ -153,23 +139,6 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         return $childrenAnchorPoint;
     }
 
-    function _createTableRow(item, $table, itemData) {
-        var $row = $('<tr>');
-
-        $.each(item.children, function(index, child) {
-            var $col = $('<td>');
-            _appendChild(index, child, $col, itemData);
-            $col.find('label:first').remove();
-            $row.append($col);
-        });
-
-        $row.append($('<td>').append($('<a>').text('Remove').click(function() {
-            $row.remove();
-        })));
-
-        $table.append($row);
-    }
-
     function _getInputValue(item, $input) {
         if(item.type === 'radiobuttons') {
             return  $input.is(':checked') ? $input.val(): '';
@@ -180,25 +149,34 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
     }
 
-    function _setupCopyRemoveEvents(item, itemSelector, repetition, suffix) {
+    function _setupCopyRemoveEvents(item, itemSelector, suffix) {
         itemSelector.find('.copy').click(function(e) {
-            var itemCopy = _layoutItem(item, repetition + 1, suffix);
+            var itemCopy = itemSelector.clone(true, true);
+                groupInput = $('[name^="' + item.name + suffix + '"]'),
+                groupCount = parseInt(groupInput.val());
 
-            itemSelector.find('input, select').each(function() {
-                inputCopy = itemCopy.find("[name='" + $(this).attr('name') + "']");
-                inputCopy.val($(this).val());
+            // update field names to have correct suffix
+            itemCopy.find('input, select').each(function() {
+                var name = $(this).attr('name'),
+                    namePrefix = name.substring(0, name.indexOf(suffix) + suffix.length),
+                    nameSuffix = name.substring(namePrefix.length);
 
-                if(!$(this).parent().parent().find('.children-anchor-point').is(':hidden')) {
-                    inputCopy.parent().parent().find('.children-anchor-point').show();
-                }
+                    // cut out first section of nameSuffix to be replaced with current index
+                    nameSuffix = nameSuffix.substring(nameSuffix.indexOf('-', 1));
+
+                    $(this).attr('name', namePrefix + '-' + groupCount + nameSuffix);
             });
+
             itemCopy.find('.hidden').removeClass('hidden');
             itemSelector.after(itemCopy);
-            _setupCopyRemoveEvents(item, itemCopy, repetition + 1, suffix);
+            groupInput.val(groupCount + 1);
+            _setupCopyRemoveEvents(item, itemCopy, suffix);
         });
 
         itemSelector.find('.remove').click(function(e) {
+            var groupInput = $('[name^="' + item.name + suffix + '"]');
             itemSelector.remove();
+            groupInput.val(parseInt(groupInput.val()) - 1);
         });
 
         // initialise all datapickers

@@ -33,7 +33,10 @@ def create_data_from_form(form_structure, post_data, file_data, post_data_index=
 def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     item_data = {}
 
-    extended_item_name = _extend_item_name(item['name'], suffix, repetition)
+    if 'name' in item:
+        extended_item_name = _extend_item_name(item['name'], suffix, repetition)
+    else:
+        raise Exception('Missing name in item %s' % item['label'])
 
     if 'children' not in item:
         if item['type'] in ['checkbox' 'declaration']:
@@ -65,87 +68,6 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
     return item_data
-
-
-def _create_data_from_item2(item, post_data, file_data, post_data_index=None):
-    item_data = {}
-
-    if 'name' in item and item.get('type', '') != 'group':
-        if item.get('type', '') == 'declaration':
-            if post_data_index is not None:
-                post_data_list = post_data.getlist(item['name'])
-                if len(post_data_list) > 0:
-                    item_data[item['name']] = post_data_list[post_data_index]
-                else:
-                    item_data[item['name']] = False
-            else:
-                item_data[item['name']] = post_data.get(item['name'], 'off') == 'on'
-        elif item.get('type', '') == 'file':
-            if item['name'] in file_data:
-                item_data[item['name']] = str(file_data.get(item['name']))
-            elif item['name'] + '-existing' in post_data and len(post_data[item['name'] + '-existing']) > 0:
-                    item_data[item['name']] = post_data.get(item['name'] + '-existing')
-            else:
-                item_data[item['name']] = ''
-        else:
-            post_data_list = post_data.getlist(item['name'])
-            if post_data_index is not None and len(post_data_list) > 0:
-                item_data[item['name']] = post_data_list[post_data_index]
-            else:
-                item_data[item['name']] = post_data.get(item['name'])
-
-    if 'children' in item:
-        if item.get('type', '') == 'group' or item.get('type', '') == 'table':
-            # check how many groups there are
-            num_groups = 0
-            for group_item in item.get('children'):
-                if group_item['type'] != 'section' and group_item['type'] != 'group' and group_item['type'] != 'table':
-                    num_groups = len(post_data.getlist(group_item['name']))
-                    break
-
-            groups = []
-            for group_index in range(0, num_groups):
-                group_data = {}
-                for child in item['children']:
-                    group_data.update(_create_data_from_item(child, post_data, file_data, group_index))
-                groups.append(group_data)
-            item_data[item['name']] = groups
-        else:
-            for child in item['children']:
-                item_data.update(_create_data_from_item(child, post_data, file_data, post_data_index))
-
-    if 'conditions' in item:
-        for condition in item['conditions'].keys():
-            for child in item['conditions'][condition]:
-                item_data.update(_create_data_from_item(child, post_data, file_data, post_data_index))
-
-    return item_data
-
-
-def get_all_filenames_from_application_data2(item, data):
-    filenames = []
-
-    if isinstance(item, list):
-        for child in item:
-            if child.get('type', '') == 'group' and child.get('name', '') in data:
-                for child_data in data[child['name']]:
-                    filenames += get_all_filenames_from_application_data(child, child_data)
-            else:
-                filenames += get_all_filenames_from_application_data(child, data)
-    else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                filenames.append(data[item['name']])
-
-        if 'children' in item:
-            for child in item['children']:
-                if child.get('type', '') == 'group' and child.get('name', '') in data:
-                    for child_data in data[child['name']]:
-                        filenames += get_all_filenames_from_application_data(child, child_data)
-                else:
-                    filenames += get_all_filenames_from_application_data(child, data)
-
-    return filenames
 
 
 def get_all_filenames_from_application_data(item, data):
@@ -182,32 +104,6 @@ def prepend_url_to_application_data_files(item, data, root_url):
         if item.get('type', '') == 'file':
             if item['name'] in data and len(data[item['name']]) > 0:
                 data[item['name']] = root_url + data[item['name']]
-
-
-def prepend_url_to_application_data_files2(item, data, root_url):
-    # ensure root url ends with a /
-    if root_url[-1] != '/':
-        root_url += '/'
-
-    if isinstance(item, list):
-        for child in item:
-            if child.get('type', '') == 'group' and child.get('name', '') in data:
-                for child_data in data[child['name']]:
-                    prepend_url_to_application_data_files(child, child_data, root_url)
-            else:
-                prepend_url_to_application_data_files(child, data, root_url)
-    else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                data[item['name']] = root_url + data[item['name']]
-
-        if 'children' in item:
-            for child in item['children']:
-                if child.get('type', '') == 'group' and child.get('name', '') in data:
-                    for child_data in data[child['name']]:
-                        prepend_url_to_application_data_files(child, child_data, root_url)
-                else:
-                    prepend_url_to_application_data_files(child, data, root_url)
 
 
 def convert_application_data_files_to_url(item, data, document_queryset):
