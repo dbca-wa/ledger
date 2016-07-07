@@ -2,7 +2,7 @@
     <h4>{{label}}</h4>
     {{#unless isRemovable}}
         {{#if help_text}}
-            <p>{{help_text}}</p>
+            <p id="description_{{name}}" >{{help_text}}</p>
         {{/if}}
     {{/unless}}
     <div class="panel panel-default">
@@ -11,10 +11,10 @@
             </div>
             {{#unless isPreviewMode }}
                 {{#if isRepeatable }}
-                    <a class="copy">Copy {{label}}</a>
+                    <a id="copy_{{name}}">Copy {{label}}</a>
                 {{/if}}
-                <div class="remove pull-right {{#unless isRemovable}}hidden{{/unless}}">
-                    <a>Remove</a>
+                <div class="pull-right">
+                    <a id="remove_{{name}}" class="{{#unless isRemovable}}hidden{{/unless}}">Remove</a>
                 </div>
             {{/unless}}
         </div>

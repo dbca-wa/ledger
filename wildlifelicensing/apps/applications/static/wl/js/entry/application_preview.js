@@ -75,10 +75,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
 
         if(item.children !== undefined) {
             var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
-            console.log('--------------------------');
-            console.log(item);
-            console.log(itemData);
-
             $.each(item.children, function(childIndex, child) {
                 _appendChild(child, childrenAnchorPoint, itemData);
             });

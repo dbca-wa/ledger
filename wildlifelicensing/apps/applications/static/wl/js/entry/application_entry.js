@@ -36,12 +36,10 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
                 $input.change(function(e) {
                     var inputValue = _getInputValue(item, $(this)),
-                        $internalChildrenAnchorPoint = $(this).parent().parent().find('.children-anchor-point'),
+                        $internalChildrenAnchorPoint = _getInputChildrenAnchorPoint($(this)),
                         $conditionalChildren,
                         $slideUpPromise;
 
-                      console.log($internalChildrenAnchorPoint);
-                    
                     // hide any currently shown conditional children
                     $slideUpPromise = $internalChildrenAnchorPoint.children().slideUp('medium').promise();
 
@@ -139,6 +137,18 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         return $childrenAnchorPoint;
     }
 
+	function _getInputChildrenAnchorPoint($input) {
+		if($input.siblings('.children-anchor-point').length > 0) {
+			return $input.siblings('.children-anchor-point');
+		}
+
+		if($input.parent().length > 0) {
+			return _getInputChildrenAnchorPoint($input.parent());
+		} else {
+			return null;
+		}	
+	}
+
     function _getInputValue(item, $input) {
         if(item.type === 'radiobuttons') {
             return  $input.is(':checked') ? $input.val(): '';
@@ -150,7 +160,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
     }
 
     function _setupCopyRemoveEvents(item, itemSelector, suffix) {
-        itemSelector.find('.copy').click(function(e) {
+        itemSelector.find('[id^="copy_' + item.name + '"]').first().click(function(e) {
             var itemCopy = itemSelector.clone(true, true);
                 groupInput = $('[name^="' + item.name + suffix + '"]'),
                 groupCount = parseInt(groupInput.val());
@@ -167,13 +177,14 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                     $(this).attr('name', namePrefix + '-' + groupCount + nameSuffix);
             });
 
-            itemCopy.find('.hidden').removeClass('hidden');
+            itemCopy.find('[id^="remove_' + item.name + '"]').removeClass('hidden');
+            itemCopy.find('[id^="description_' + item.name + '"]').addClass('hidden');
             itemSelector.after(itemCopy);
             groupInput.val(groupCount + 1);
             _setupCopyRemoveEvents(item, itemCopy, suffix);
         });
 
-        itemSelector.find('.remove').click(function(e) {
+        itemSelector.find('[id^="remove_' + item.name + '"]').off('click').click(function(e) {
             var groupInput = $('[name^="' + item.name + suffix + '"]');
             itemSelector.remove();
             groupInput.val(parseInt(groupInput.val()) - 1);

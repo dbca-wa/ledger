@@ -1,10 +1,6 @@
 define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
-    function _layoutItem(item, index, isRepeat, itemDataCurrent, itemDataPrevious) {
+    function _layoutItem(item, isRepeat, itemDataCurrent, itemDataPrevious) {
         var itemContainer = $('<div>');
-
-        if(item.type == 'section') {
-            item.index = index;
-        }
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
@@ -23,7 +19,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             item.isPreviewMode = true;
             var $template = $(Handlebars.templates[item.type](item));
 
-            if(item.type === 'group' || item.type === 'table') {
+            if(item.type === 'group') {
                 if(itemDataCurrent !== itemDataPrevious) {
                     if(itemDataPrevious === undefined && isRepeat) {
                         $template.addClass('current-data');
@@ -112,7 +108,11 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             itemContainer.append($('<label>').text(item.label));
 
             if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
-                itemContainer.append($('<p>').text(item.valueCurrent));
+	            if(item.valueCurrent) {
+	                itemContainer.append($('<p>').text(item.valueCurrent));
+	            } else {
+	                itemContainer.append($('<p>').text("Not specified"));
+	            }
             } else {
                 itemContainer.append($('<p>').addClass('current-data').text(item.valueCurrent));
                 itemContainer.append($('<p>').addClass('previous-data').text(item.valuePrevious));
@@ -130,7 +130,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                 $.each(item.conditions, function(condition, children) {
                     if(condition === itemDataCurrent[item.name]) {
                         $.each(children, function(childIndex, child) {
-                            childrenAnchorPoint.append(_layoutItem(child, childIndex, isRepeat, itemDataCurrent, itemDataPrevious));
+                        	_appendChild(child, childrenAnchorPoint, itemDataCurrent, itemDataPrevious);
                         });
                     }
                 });
@@ -138,64 +138,50 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         }
 
         if(item.children !== undefined) {
-            if(item.type !== "table") {
-                var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
+            var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
 
-                $.each(item.children, function(childIndex, child) {
-                    if(child.isRepeatable) {
-                        var childDataCurrent, childDataPrevious;
+            $.each(item.children, function(childIndex, child) {
+				_appendChild(child, childrenAnchorPoint, itemDataCurrent, itemDataPrevious);
+            });
+        }
+        return itemContainer;
+    }
 
-                        if(itemDataCurrent !== undefined) {
-                            childDataCurrent = itemDataCurrent[child.name][0];
-                        }
+    function _appendChild(child, childrenAnchorPoint, itemDataCurrent, itemDataPrevious) {
+        if(child.isRepeatable) {
+            var childDataCurrent, childDataPrevious,
+            	repeatItemsAnchorPoint = $('<div>');
 
-                        if(itemDataPrevious !== undefined) {
-                            childDataPrevious = itemDataPrevious[child.name][0];
-                        }
+            if(itemDataCurrent !== undefined) {
+                childDataCurrent = itemDataCurrent[child.name][0];
+            }
 
-                        childrenAnchorPoint.append(_layoutItem(child, childIndex, isRepeat, childDataCurrent, childDataPrevious));
+            if(itemDataPrevious !== undefined) {
+                childDataPrevious = itemDataPrevious[child.name][0];
+            }
 
-                        var repeatItemsAnchorPoint = $('<div>');
-                        childrenAnchorPoint.append(repeatItemsAnchorPoint);
+            childrenAnchorPoint.append(_layoutItem(child, false, childDataCurrent, childDataPrevious));
+            
+            childrenAnchorPoint.append(repeatItemsAnchorPoint);
 
-                        if((itemDataCurrent != undefined && child.name in itemDataCurrent && itemDataCurrent[child.name].length > 1) ||
-                                (itemDataPrevious != undefined && child.name in itemDataPrevious && itemDataPrevious[child.name].length > 1)) {
-                            var itemDataLength;
-                            if(itemDataCurrent[child.name] !== undefined && itemDataPrevious[child.name].length) {
-                                itemDataLength = Math.max(itemDataCurrent[child.name].length, itemDataPrevious[child.name].length);
-                            } else if (itemDataCurrent[child.name] !== undefined) {
-                                itemDataLength = itemDataCurrent[child.name].length;
-                            } else if (itemDataPrevious[child.name] !== undefined) {
-                                itemDataLength = itemDataPrevious[child.name].length;
-                            } 
-    
-                            for(var i=1; i<itemDataLength; i++) {
-                                repeatItemsAnchorPoint.append(_layoutItem(child, index, true, itemDataCurrent[child.name][i], itemDataPrevious[child.name][i]));
-                            }
-                        }
-                    } else {
-                        childrenAnchorPoint.append(_layoutItem(child, childIndex, isRepeat, itemDataCurrent, itemDataPrevious));
-                    }
-                });
-            } else {
-                var $table = itemContainer.find('table');
-
-                if(itemDataCurrent !== undefined && itemDataCurrent[item.name]) {
-                    for(var i = 0; i < Math.max(itemDataCurrent[item.name].length, itemDataPrevious[item.name].length); i++) {
-                        _createTableRow(item, $table, itemDataCurrent[item.name][i], itemDataPrevious[item.name][i]);
-                    };
-                } else {
-                    // make sure there is at least one blank road
-                    _createTableRow(item, $table);
+            if((itemDataCurrent != undefined && child.name in itemDataCurrent && itemDataCurrent[child.name].length > 1) ||
+                    (itemDataPrevious != undefined && child.name in itemDataPrevious && itemDataPrevious[child.name].length > 1)) {
+                var itemDataLength;
+                if(itemDataCurrent[child.name] !== undefined && itemDataPrevious[child.name].length) {
+                    itemDataLength = Math.max(itemDataCurrent[child.name].length, itemDataPrevious[child.name].length);
+                } else if (itemDataCurrent[child.name] !== undefined) {
+                    itemDataLength = itemDataCurrent[child.name].length;
+                } else if (itemDataPrevious[child.name] !== undefined) {
+                    itemDataLength = itemDataPrevious[child.name].length;
                 }
 
-                itemContainer.find('.add-group').find('a').click(function() {
-                    _createTableRow(item, $table, itemData);
-                });
+                for(var i=1; i<itemDataLength; i++) {
+                    repeatItemsAnchorPoint.append(_layoutItem(child, true, itemDataCurrent[child.name][i], itemDataPrevious[child.name][i]));
+                }
             }
+        } else {
+            childrenAnchorPoint.append(_layoutItem(child, false, itemDataCurrent, itemDataPrevious));
         }
-
-        return itemContainer;
     }
 
     function _getCreateChildrenAnchorPoint($itemContainer) {
@@ -218,7 +204,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
 
         $.each(item.children, function(index, child) {
             var $col = $('<td>');
-            $col.append(_layoutItem(child, index, false, itemDataCurrent, itemDataPrevious));
+            $col.append(_layoutItem(child, false, itemDataCurrent, itemDataPrevious));
             $col.find('label:first').remove();
             $row.append($col);
         });
@@ -242,7 +228,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                     previousItemData = previousData[i][formStructure[i].name][0];
                 }
 
-                container.append(_layoutItem(formStructure[i], i, false, currentItemData, previousItemData));
+                container.append(_layoutItem(formStructure[i], false, currentItemData, previousItemData));
             }
         }
     }
