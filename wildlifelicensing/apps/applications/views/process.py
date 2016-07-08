@@ -22,7 +22,7 @@ from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
-    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_application_data_files_to_url, format_application, \
+    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
     format_amendment_request, format_assessment
 
 
@@ -52,7 +52,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             previous_application_returns_outstanding = Return.objects.filter(licence=application.previous_application.licence).\
                 exclude(status='accepted').exclude(status='submitted').exists()
 
-        convert_application_data_files_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
         data = {
             'user': serialize(request.user),

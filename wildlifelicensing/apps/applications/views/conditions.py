@@ -12,7 +12,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAs
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
-from wildlifelicensing.apps.applications.utils import convert_application_data_files_to_url, format_application, \
+from wildlifelicensing.apps.applications.utils import convert_documents_to_url, format_application, \
     format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
@@ -25,7 +25,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        convert_application_data_files_to_url(application.licence_type.application_schema,
+        convert_documents_to_url(application.licence_type.application_schema,
                                               application.data, application.documents.all())
 
         kwargs['application'] = serialize(application, posthook=format_application)
@@ -49,7 +49,7 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        convert_application_data_files_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = application.licence_type.application_schema

@@ -144,16 +144,6 @@
                         "name": "ap_qualification"
                     }
                 ]
-            },
-            {
-                "type": "text_area",
-                "label": "If a list of authorised persons is not currently available, please explain:",
-                "name": "ap_unavailable_explanation"
-            },
-            {
-                "type": "declaration",
-                "label": "I acknowledge that I will make changes in this system to authorised persons throughout licence duration if changes are required",
-                "name": "ap_change_acknowledgement"
             }
         ]
     }

@@ -1,10 +1,14 @@
+import os
 import shutil
+import string
+import random
 
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
+from collections import OrderedDict
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
@@ -70,6 +74,30 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     return item_data
 
 
+def _append_random_to_filename(file_name, random_string_size=5):
+    name, extention = os.path.splitext(file_name)
+
+    chars = string.ascii_uppercase + string.digits
+
+    random_string = ''.join(random.choice(chars) for _ in range(random_string_size))
+
+    return '{}-{}{}'.format(name, random_string, extention)
+
+
+def rename_filename_doubleups(post_data, file_data):
+    counter = 0
+
+    ordered_file_data = OrderedDict(file_data)
+    post_data_values = post_data.values()
+    file_data_values = [str(file_value) for file_value in ordered_file_data.values()]
+
+    for file_key, file_value in ordered_file_data.iteritems():
+        if str(file_value) in file_data_values[:counter] or str(file_value) in post_data_values:
+            file_data[file_key].name = _append_random_to_filename(file_value.name)
+
+        counter += 1
+
+
 def get_all_filenames_from_application_data(item, data):
     filenames = []
 
@@ -88,32 +116,32 @@ def get_all_filenames_from_application_data(item, data):
     return filenames
 
 
-def prepend_url_to_application_data_files(item, data, root_url):
+def prepend_url_to_files(item, data, root_url):
     # ensure root url ends with a /
     if root_url[-1] != '/':
         root_url += '/'
 
     if isinstance(item, list):
         for i, child in enumerate(item):
-            prepend_url_to_application_data_files(child, data[i], root_url)
+            prepend_url_to_files(child, data[i], root_url)
     elif 'children' in item:
         for child in item['children']:
             for child_data in data[item['name']]:
-                prepend_url_to_application_data_files(child, child_data, root_url)
+                prepend_url_to_files(child, child_data, root_url)
     else:
         if item.get('type', '') == 'file':
             if item['name'] in data and len(data[item['name']]) > 0:
                 data[item['name']] = root_url + data[item['name']]
 
 
-def convert_application_data_files_to_url(item, data, document_queryset):
+def convert_documents_to_url(item, data, document_queryset):
     if isinstance(item, list):
         for i, child in enumerate(item):
-            convert_application_data_files_to_url(child, data[i], document_queryset)
+            convert_documents_to_url(child, data[i], document_queryset)
     elif 'children' in item:
         for child in item['children']:
             for child_data in data[item['name']]:
-                convert_application_data_files_to_url(child, child_data, document_queryset)
+                convert_documents_to_url(child, child_data, document_queryset)
     else:
         if item.get('type', '') == 'file':
             if item['name'] in data and len(data[item['name']]) > 0:
