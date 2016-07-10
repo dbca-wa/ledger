@@ -1,1833 +1,916 @@
-{
-	"survey": 
-	[
-		{
-			"type": "radiobuttons",
-			"label": "Is the monitoring being done as a conditional requirement of an approval?",
-			"name": "monitoring_conditional_requirement",
-			"options": 
-			[
-				{
-					"value": "yes",
-					"label": "Yes"
-				},
-				{
-					"value": "no",
-					"label": "No"
-				}
-			],
-			"conditions": 
-			{
-				"yes": 
-				[
-					{
-						"type": "text",
-						"label": "Provide approval type and number.",
-						"name": "monitoring_approval_type"
-					}
-				]
-			}
-		},
-		{
-			"type": "radiobuttons",
-			"label": "Is there a monitoring plan?",
-			"name": "monitoring_monitoring_plan",
-			"options": 
-			[
-				{
-					"value": "yes",
-					"label": "Yes"
-				},
-				{
-					"value": "no",
-					"label": "No"
-				}
-			],
-			"conditions": 
-			{
-				"yes": 
-				[
-					{
-						"type": "file",
-						"label": "Please attach monitoring plan.",
-						"name": "monitoring_plan"
-					},
-					{
-						"type": "declaration",
-						"label": "I acknowledge that should additional monitoring plans be required it may affect the processing time for this Regulation 17 licence.",
-						"name": "monitoring_plan_acknowledgement"
-					}
-				]
-			}
-		},
-		{
-			"type": "number",
-			"label": "How many locations will be monitored?",
-			"name": "monitoring_num_monitoring_locations"
-		},
-		{
-			"type": "radiobuttons",
-			"label": "Are any locations on CALM Act land?",
-			"name": "monitoring_locations_calm_land",
-			"options": 
-			[
-				{
-					"value": "yes",
-					"label": "Yes"
-				},
-				{
-					"value": "no",
-					"label": "No"
-				},
-				{
-					"value": "unsure",
-					"label": "Unsure"
-				}
-			]
-		},
-		{
-			"type": "group",
-			"label": "Monitoring Details",
-			"name": "monitoring_survey_details",
-			"isRepeatable": true,
-			"help_text": "If multiple monitoring locations; provide details separately for each location and add an additional location after the methods section for the first location.",
-			"children": 
-			[
-				{
-					"type": "text_area",
-					"label": "Location / Address",
-					"name": "monitoring_address"
-				},
-				{
-					"type": "text",
-					"label": "Coordinate / GPS",
-					"name": "monitoring_coordinates"
-				},
-				{
-					"type": "group",
-					"label": "Field session",
-					"name": "monitoring_field_session",
-					"isRepeatable": true,
-					"children": 
-					[
-						{
-							"type": "date",
-							"label": "Start Date",
-							"name": "monitoring_field_session_start_date"
-						},
-						{
-							"type": "date",
-							"label": "End Date",
-							"name": "monitoring_field_session_end_date"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"label": "If field dates are unknown, use anticipated field dates in the start and end date above and explain below.",
-					"name": "monitoring_field_dates_unknown"
-				},
-				{
-					"type": "select",
-					"label": "Interval Regularity",
-					"name": "monitoring_interval_regularity",
-					"defaultBlank": false,
-					"options": 
-					[
-						{
-							"value": "not_regular_intervals",
-							"label": "Not regular intervals"
-						},
-						{
-							"value": "weekly",
-							"label": "Weekly"
-						},
-						{
-							"value": "fortnightly",
-							"label": "Fortnightly"
-						},
-						{
-							"value": "monthly",
-							"label": "Monthly"
-						},
-						{
-							"value": "quarterly",
-							"label": "Quarterly/Seasonally"
-						},
-						{
-							"value": "biannually",
-							"label": "Biannually/Six-monthly"
-						},
-						{
-							"value": "annually",
-							"label": "Annually"
-						},
-						{
-							"value": "biennually",
-							"label": "Biennially/Every two years"
-						},
-						{
-							"value": "other",
-							"label": "Other"
-						}
-					],
-					"conditions": 
-					{
-						"other": 
-						[
-							{
-								"type": "text",
-								"label": "Please Specify",
-								"name": "monitoring_regular_intervals_other"
-							}
-						]
-					}
-				},
-				{
-					"type": "radiobuttons",
-					"label": "Is the monitoring targeting species or fauna group?",
-					"name": "monitoring_targeting_species_or_fauna",
-					"options": 
-					[
-						{
-							"value": "yes",
-							"label": "Yes"
-						},
-						{
-							"value": "no",
-							"label": "No"
-						}
-					],
-					"conditions": 
-					{
-						"on": 
-						[
-							{
-								"type": "group",
-								"label": "Targeted Fauna Type",
-								"name": "monitoring_targeted_fauna",
-								"isRepeatable": true,
-								"children": 
-								[
-									{
-										"type": "text",
-										"label": "Common name / Group name",
-										"name": "monitoring_tft_common_name"
-									},
-									{
-										"type": "text",
-										"label": "Scientific name",
-										"name": "monitoring_tft_scientific_name"
-									}
-								]
-							}
-						]
-					}
-				},
-				{
-					"type": "radiobuttons",
-					"label": "Will your activity possibly interact with any threatened or priority fauna (including non-target species)?",
-					"name": "monitoring_threatened_priority_fauna",
-					"options": 
-					[
-						{
-							"value": "yes",
-							"label": "Yes"
-						},
-						{
-							"value": "no",
-							"label": "No"
-						},
-						{
-							"value": "unknown",
-							"label": "Unknown"
-						}
-					],
-					"conditions": 
-					{
-						"yes": 
-						[
-							{
-								"type": "group",
-								"label": "Threatened Fauna",
-								"name": "monitoring_threatened_fauna",
-								"isRepeatable": true,
-								"children": 
-								[
-									{
-										"type": "text",
-										"label": "Common name / Group name",
-										"name": "monitoring_threatened_tft_common_name"
-									},
-									{
-										"type": "text",
-										"label": "Scientific name",
-										"name": "monitoring_threatened_tft_scientific_name"
-									}
-								]
-							}
-						]
-					}
-				},
-				{
-					"type": "radiobuttons",
-					"label": "Will your activities be in accordance with Parks and Wildlife standard operating procedures?",
-					"name": "monitoring_standard_operating_procedures",
-					"options": 
-					[
-						{
-							"value": "yes",
-							"label": "Yes"
-						},
-						{
-							"value": "no",
-							"label": "No"
-						}
-					]
-				},
-				{
-					"type": "radiobuttons",
-					"label": "Will your activities be in accordance with any other SOPs, protocols, guidelines or manuals?",
-					"name": "monitoring_sops",
-					"options": 
-					[
-						{
-							"value": "yes",
-							"label": "Yes"
-						},
-						{
-							"value": "no",
-							"label": "No"
-						}
-					],
-					"conditions": 
-					{
-						"yes": 
-						[
-							{
-								"type": "text",
-								"label": "Provide details",
-								"name": "monitoring_sops_details"
-							},
-							{
-								"type": "file",
-								"label": "Attach a copy of the relevent document(s)",
-								"name": "monitoring_sops_documents"
-							}
-						]
-					}
-				},
-				{
-					"type": "radiobuttons",
-					"label": "What survey method will you be using?",
-					"name": "monitoring_survey_method",
-					"options": 
-					[
-						{
-							"value": "capture",
-							"label": "Capture"
-						},
-						{
-							"value": "remote_sensing",
-							"label": "Remote Sensing"
-						},
-						{
-							"value": "other",
-							"label": "Other non-capture"
-						}
-					],
-					"conditions": 
-					{
-						"capture": 
-						[
-							{
-								"type": "radiobuttons",
-								"label": "Capture Method",
-								"name": "monitoring_capture_method",
-								"options": 
-								[
-									{
-										"value": "trap",
-										"label": "Trap"
-									},
-									{
-										"value": "net",
-										"label": "Net"
-									},
-									{
-										"value": "hand",
-										"label": "Hand"
-									},
-									{
-										"value": "other",
-										"label": "Other"
-									}
-								],
-								"conditions": 
-								{
-									"trap": 
-									[
-										{
-											"type": "number",
-											"label": "What is the number of trap sites?",
-											"name": "monitoring_num_trap_sites"
-										},
-										{
-											"type": "number",
-											"label": "How many days/nights will traps be open?",
-											"name": "monitoring_num_traps_open_days"
-										},
-										{
-											"type": "number",
-											"label": "How many trapping sessions?",
-											"name": "monitoring_num_trap_sessions"
-										},
-										{
-											"type": "number",
-											"label": "Total number of traps per session?",
-											"name": "monitoring_num_traps_per_session"
-										},
-										{
-											"type": "number",
-											"label": "Maximum total number of traps per site per session?",
-											"name": "monitoring_max_num_traps_per_session_per_site"
-										},
-										{
-											"type": "text_area",
-											"label": "If the number of traps differs between sessions or sites, enter the highest number in the questions above, and explain differences below.",
-											"name": "monitoring_different_num_traps_per_session_or_site_explanation"
-										},
-										{
-											"type": "label",
-											"label": "Traps",
-											"name": "monitoring_traps"
-										},
-										{
-											"type": "checkbox",
-											"label": "Cage",
-											"name": "monitoring_cage",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_cage_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_cage_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of traps",
-														"name": "monitoring_num_cages"
-													},
-													{
-														"type": "text",
-														"label": "Cage Placement",
-														"name": "monitoring_cage_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_cage_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_cage_other_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Box",
-											"name": "monitoring_box",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_box_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_box_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of traps",
-														"name": "monitoring_num_boxs"
-													},
-													{
-														"type": "text",
-														"label": "Box Placement",
-														"name": "monitoring_box_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_box_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_box_other_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Dry Pit",
-											"name": "monitoring_dry_pit",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_dry_pit_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_dry_pit_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of traps",
-														"name": "monitoring_num_dry_pits"
-													},
-													{
-														"type": "text",
-														"label": "Dry Pit Placement",
-														"name": "monitoring_dry_pit_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_dry_pit_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_dry_pit_other_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Funnel",
-											"name": "monitoring_funnel",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_funnel_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_funnel_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of traps",
-														"name": "monitoring_num_funnels"
-													},
-													{
-														"type": "text",
-														"label": "Funnel Placement",
-														"name": "monitoring_funnel_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_funnel_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_funnel_other_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Other",
-											"name": "monitoring_trap_other",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Enter details",
-														"name": "monitoring_trap_type_other"
-													},
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_trap_other_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_trap_other_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of traps",
-														"name": "monitoring_trap_other_num_traps"
-													},
-													{
-														"type": "text",
-														"label": "Trap Placement",
-														"name": "monitoring_trap_other_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_trap_other_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_trap_other_other_details"
-													}
-												]
-											}
-										}
-									],
-									"net": 
-									[
-										{
-											"type": "number",
-											"label": "What is the number of sites where nets will be used?",
-											"name": "monitoring_num_net_sites"
-										},
-										{
-											"type": "number",
-											"label": "How many days/nights will nets be used?",
-											"name": "monitoring_num_net_days"
-										},
-										{
-											"type": "number",
-											"label": "How many sessions will nets be used?",
-											"name": "monitoring_num_net_sessions"
-										},
-										{
-											"type": "number",
-											"label": "Total number of nets per session?",
-											"name": "monitoring_num_nets_per_session"
-										},
-										{
-											"type": "number",
-											"label": "Maximum total number of nets per site per session?",
-											"name": "monitoring_max_num_nets_per_session_per_site"
-										},
-										{
-											"type": "text_area",
-											"label": "If the number of nets differs between sessions or sites then explain",
-											"name": "monitoring_different_num_nets_per_session_or_site_explanation"
-										},
-										{
-											"type": "label",
-											"label": "Nets",
-											"name": "monitoring_nets"
-										},
-										{
-											"type": "checkbox",
-											"label": "Sweep",
-											"name": "monitoring_sweep",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_sweep_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_sweep_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of nets",
-														"name": "monitoring_num_sweeps"
-													},
-													{
-														"type": "text",
-														"label": "Net Placement",
-														"name": "monitoring_sweep_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_sweep_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_sweep_other_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Mist",
-											"name": "monitoring_mist",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_mist_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_mist_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of nets",
-														"name": "monitoring_num_mists"
-													},
-													{
-														"type": "text",
-														"label": "Net Placement",
-														"name": "monitoring_mist_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_mist_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_mist_other_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"name": "monitoring_harp",
-											"label": "Harp",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_harp_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_harp_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of nets",
-														"name": "monitoring_num_harps"
-													},
-													{
-														"type": "text",
-														"label": "Net Placement",
-														"name": "monitoring_harp_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_harp_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_harp_other_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Other",
-											"name": "monitoring_net_other",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text",
-														"label": "Enter details",
-														"name": "monitoring_net_type_other"
-													},
-													{
-														"type": "text",
-														"label": "Make",
-														"name": "monitoring_net_other_make"
-													},
-													{
-														"type": "text",
-														"label": "Size",
-														"name": "monitoring_net_other_size"
-													},
-													{
-														"type": "number",
-														"label": "Number of nets",
-														"name": "monitoring_net_other_num_nets"
-													},
-													{
-														"type": "text",
-														"label": "Net Placement",
-														"name": "monitoring_net_other_placement"
-													},
-													{
-														"type": "text",
-														"label": "Setting times",
-														"name": "monitoring_net_other_setting_times"
-													},
-													{
-														"type": "text",
-														"label": "Other details",
-														"name": "monitoring_net_other_other_details"
-													}
-												]
-											}
-										}
-									],
-									"hand": 
-									[
-										{
-											"type": "label",
-											"label": "What hand capture techniques will you be using?",
-											"name": "monitoring_hand_capture_techniques"
-										},
-										{
-											"type": "checkbox",
-											"label": "Hook and Bag",
-											"name": "monitoring_hook_and_bag",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text_area",
-														"label": "Please Provide Details",
-														"name": "monitoring_hook_and_bag_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Noose",
-											"name": "monitoring_noose",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text_area",
-														"label": "Please Provide Details",
-														"name": "monitoring_Noose_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Foraging",
-											"name": "monitoring_foraging",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text_area",
-														"label": "Please Provide Details",
-														"name": "monitoring_foraging_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Raking",
-											"name": "monitoring_raking",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text_area",
-														"label": "Please Provide Details",
-														"name": "monitoring_raking_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Sieving",
-											"name": "monitoring_sieving",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text_area",
-														"label": "Please Provide Details",
-														"name": "monitoring_sieving_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Excavation",
-											"name": "monitoring_excavation",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text_area",
-														"label": "Please Provide Details",
-														"name": "monitoring_excavation_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Other",
-											"name": "monitoring_other_hand_capture_techniques",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text_area",
-														"label": "Please Provide Details",
-														"name": "monitoring_excavation_details"
-													}
-												]
-											}
-										}
-									],
-									"other": 
-									[
-										{
-											"type": "text_area",
-											"label": "Provide details of your fauna capture methodology if it doesn’t fit within previous questions for trap, net or hand capture techniques.",
-											"name": "monitoring_other_capture_methodology"
-										}
-									]
-								}
-							},
-							{
-								"type": "label",
-								"label": "What will be the fate(s) of the fauna captured?",
-								"name": "monitoring_fate"
-							},
-							{
-								"type": "checkbox",
-								"label": "Release",
-								"name": "monitoring_release",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "select",
-											"label": "Release Schedule",
-											"name": "monitoring_release_schedule",
-											"options": 
-											[
-												{
-													"value": "immediately",
-													"label": "Immediately after species idenfication"
-												},
-												{
-													"value": "after_morphometrics",
-													"label": "After morphometrics and physical condition taken"
-												},
-												{
-													"value": "after_samples",
-													"label": "After samples taken"
-												},
-												{
-													"value": "after_marking",
-													"label": "After marking"
-												},
-												{
-													"value": "after_temp_holding",
-													"label": "After temporary holding (< 24 hours)"
-												}
-											]
-										},
-										{
-											"type": "label",
-											"label": "Which of the following will occur before release?",
-											"name": "monitoring_pre_release_occurences"
-										},
-										{
-											"type": "checkbox",
-											"label": "Mophometrics and physical condition analysis",
-											"name": "monitoring_mophometrics",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "label",
-														"label": "What morphometrics and condition details will be recorded?",
-														"name": "monitoring_mophometrics"
-													},
-													{
-														"type": "checkbox",
-														"label": "Length",
-														"name": "monitoring_mophometric_length"
-													},
-													{
-														"type": "checkbox",
-														"label": "Sex",
-														"name": "monitoring_mophometric_sex"
-													},
-													{
-														"type": "checkbox",
-														"label": "Age",
-														"name": "monitoring_mophometric_age"
-													},
-													{
-														"type": "checkbox",
-														"label": "Body condition",
-														"name": "monitoring_mophometric_body_condition"
-													},
-													{
-														"type": "checkbox",
-														"label": "Reproductive condition",
-														"name": "monitoring_mophometric_reproductive_condition"
-													},
-													{
-														"type": "checkbox",
-														"label": "Other",
-														"name": "monitoring_mophometric_other",
-														"conditions": 
-														{
-															"on": 
-															[
-																{
-																	"type": "text_area",
-																	"label": "Please provide details",
-																	"name": "monitoring_mophometric_other_details"
-																}
-															]
-														}
-													},
-													{
-														"type": "text_area",
-														"label": "Provide any other details relating to measurements and condition",
-														"name": "monitoring_mophometric_other_details"
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Sampling",
-											"name": "monitoring_sampling",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "label",
-														"label": "What samples will be taken?",
-														"name": "monitoring_samples"
-													},
-													{
-														"type": "checkbox",
-														"label": "Tissue",
-														"name": "monitoring_tissue",
-														"conditions": 
-														{
-															"on": 
-															[
-																{
-																	"type": "text_area",
-																	"label": "Please provide details",
-																	"name": "monitoring_tissue_details"
-																}
-															]
-														}
-													},
-													{
-														"type": "checkbox",
-														"label": "Scale",
-														"name": "monitoring_scale",
-														"conditions": 
-														{
-															"on": 
-															[
-																{
-																	"type": "text_area",
-																	"label": "Please provide details",
-																	"name": "monitoring_scale_details"
-																}
-															]
-														}
-													},
-													{
-														"type": "checkbox",
-														"label": "Hair / feather",
-														"name": "monitoring_hair_feather",
-														"conditions": 
-														{
-															"on": 
-															[
-																{
-																	"type": "text_area",
-																	"label": "Please provide details",
-																	"name": "monitoring_hair_feather_details"
-																}
-															]
-														}
-													},
-													{
-														"type": "checkbox",
-														"label": "Blood",
-														"name": "monitoring_blood",
-														"conditions": 
-														{
-															"on": 
-															[
-																{
-																	"type": "text_area",
-																	"label": "Please provide details",
-																	"name": "monitoring_blood_details"
-																}
-															]
-														}
-													},
-													{
-														"type": "checkbox",
-														"label": "Swabs",
-														"name": "monitoring_swabs",
-														"conditions": 
-														{
-															"on": 
-															[
-																{
-																	"type": "text_area",
-																	"label": "Please provide details",
-																	"name": "monitoring_swabs_details"
-																}
-															]
-														}
-													},
-													{
-														"type": "checkbox",
-														"label": "Other",
-														"name": "monitoring_samples_other",
-														"conditions": 
-														{
-															"on": 
-															[
-																{
-																	"type": "text_area",
-																	"label": "Please provide details",
-																	"name": "monitoring_samples_other_details"
-																}
-															]
-														}
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Marking",
-											"name": "monitoring_marking",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "select",
-														"label": "What marking will be done and why?",
-														"name": "monitoring_marking",
-														"options": 
-														[
-															{
-																"value": "temporary",
-																"label": "Temporary"
-															},
-															{
-																"value": "permanent",
-																"label": "Permanent"
-															}
-														],
-														"conditions": 
-														{
-															"permanent": 
-															[
-																{
-																	"type": "checkbox",
-																	"label": "Tags",
-																	"name": "monitoring_tags",
-																	"conditions": 
-																	{
-																		"on": 
-																		[
-																			{
-																				"type": "text_area",
-																				"label": "Please provide details",
-																				"name": "monitoring_tags_details"
-																			}
-																		]
-																	}
-																},
-																{
-																	"type": "checkbox",
-																	"label": "Microchips / implants",
-																	"name": "monitoring_microchips",
-																	"conditions": 
-																	{
-																		"on": 
-																		[
-																			{
-																				"type": "text_area",
-																				"label": "Please provide details",
-																				"name": "monitoring_microchips_details"
-																			}
-																		]
-																	}
-																},
-																{
-																	"type": "checkbox",
-																	"label": "Bands",
-																	"name": "monitoring_bands",
-																	"conditions": 
-																	{
-																		"on": 
-																		[
-																			{
-																				"type": "text_area",
-																				"label": "Please provide details",
-																				"name": "monitoring_bands_details"
-																			}
-																		]
-																	}
-																},
-																{
-																	"type": "checkbox",
-																	"label": "Ear punching",
-																	"name": "monitoring_ear_punching",
-																	"conditions": 
-																	{
-																		"on": 
-																		[
-																			{
-																				"type": "text_area",
-																				"label": "Please provide details",
-																				"name": "monitoring_ear_punching_details"
-																			}
-																		]
-																	}
-																},
-																{
-																	"type": "checkbox",
-																	"label": "Other",
-																	"name": "monitoring_marking_other",
-																	"conditions": 
-																	{
-																		"on": 
-																		[
-																			{
-																				"type": "text_area",
-																				"label": "Please provide details",
-																				"name": "monitoring_marking_other_details"
-																			}
-																		]
-																	}
-																}
-															]
-														}
-													}
-												]
-											}
-										},
-										{
-											"type": "checkbox",
-											"label": "Temporary Holding",
-											"name": "monitoring_temporary_holding",
-											"conditions": 
-											{
-												"on": 
-												[
-													{
-														"type": "text_area",
-														"label": "Why will/may the fauna be temporarily held?",
-														"name": "monitoring_why_temporarily_held"
-													},
-													{
-														"type": "text_area",
-														"label": "How will the fauna be held?",
-														"name": "monitoring_how_temporarily_held"
-													},
-													{
-														"type": "text_area",
-														"label": "Where will the fauna be held?",
-														"name": "monitoring_where_temporarily_held"
-													},
-													{
-														"type": "text_area",
-														"label": "If fauna will be transported, provide details?",
-														"name": "monitoring_transported_details"
-													},
-													{
-														"type": "select",
-														"label": "Where will the fauna be released?",
-														"name": "monitoring_where_fauna_released",
-														"options": 
-														[
-															{
-																"value": "at_capture_site",
-																"label": "At capture site"
-															},
-															{
-																"value": "near_capture_site",
-																"label": "Near capture site into suitable habitat"
-															},
-															{
-																"value": "other",
-																"label": "Other"
-															}
-														],
-														"conditions": 
-														{
-															"other": 
-															[
-																{
-																	"type": "text_area",
-																	"label": "Please provide details",
-																	"name": "monitoring_fauna_release_other_details"
-																}
-															]
-														}
-													}
-												]
-											}
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Retain",
-								"name": "monitoring_retain",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "text_area",
-											"label": "Why does the fauna need to be retained?",
-											"name": "monitoring_why_fauna_retained"
-										},
-										{
-											"type": "text_area",
-											"label": "What fauna could be retained?",
-											"name": "monitoring_what_fauna_retained"
-										},
-										{
-											"type": "number",
-											"label": "If fauna is to be retained, how many animals?",
-											"name": "monitoring_num_fauna_retained"
-										},
-										{
-											"type": "radiobuttons",
-											"label": "Will fauna be euthanised?",
-											"name": "monitoring_fauna_euthanised",
-											"options": 
-											[
-												{
-													"value": "yes",
-													"label": "Yes"
-												},
-												{
-													"value": "no",
-													"label": "No"
-												}
-											],
-											"conditions": 
-											{
-												"yes": 
-												[
-													{
-														"type": "text_area",
-														"label": "Method",
-														"name": "monitoring_euthanise_method"
-													}
-												]
-											}
-										},
-										{
-											"type": "text",
-											"label": "Where will the specimen(s) be held/lodged/stored?",
-											"name": "monitoring_where_specimen_stored"
-										},
-										{
-											"type": "text_area",
-											"label": "If specimen is to be deposited at the WA Museum, will the Museum be contacted prior to the fauna being retained or did the Museum request the specimen?",
-											"name": "monitoring_mesuem_storage_details"
-										}
-									]
-								}
-							},
-							{
-								"type": "text_area",
-								"label": "Describe how unforeseen injuries or other related issues will be dealt with.",
-								"name": "monitoring_unforseen_injury_dealings"
-							},
-							{
-								"type": "text_area",
-								"label": "Provide details of field hygiene and wildlife disease considerations.",
-								"name": "monitoring_hygiene_disease_considerations"
-							},
-							{
-								"type": "text_area",
-								"label": "Provide other details relating to fauna capture.",
-								"name": "monitoring_fauna_capture_other_details"
-							}
-						],
-						"remote_sensing": 
-						[
-							{
-								"type": "label",
-								"label": "What remote sensing aparatus will you be using?",
-								"name": "monitoring_remote_sensing_aparatus"
-							},
-							{
-								"type": "checkbox",
-								"label": "Camera",
-								"name": "monitoring_camera",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "radiobuttons",
-											"label": "Will cameras be baited with an attractant/lure?",
-											"name": "monitoring_camera_baited",
-											"options": 
-											[
-												{
-													"value": "yes",
-													"label": "Yes"
-												},
-												{
-													"value": "no",
-													"label": "No"
-												}
-											],
-											"conditions": 
-											{
-												"yes": 
-												[
-													{
-														"type": "text",
-														"label": "What bait will be used?",
-														"name": "monitoring_what_bait"
-													},
-													{
-														"type": "radiobuttons",
-														"label": "Will the bait be consumable?",
-														"name": "monitoring_bait_consumable",
-														"options": 
-														[
-															{
-																"value": "yes",
-																"label": "Yes"
-															},
-															{
-																"value": "no",
-																"label": "No"
-															}
-														]
-													},
-													{
-														"type": "radiobuttons",
-														"label": "Will the bait be replenished?",
-														"name": "monitoring_bait_replenished",
-														"options": 
-														[
-															{
-																"value": "yes",
-																"label": "Yes"
-															},
-															{
-																"value": "no",
-																"label": "No"
-															}
-														]
-													}
-												]
-											}
-										},
-										{
-											"type": "group",
-											"label": "Camera Information",
-											"name": "monitoring_camera_information",
-											"isRepeatable": true,
-											"children": 
-											[
-												{
-													"type": "text",
-													"label": "Make",
-													"name": "monitoring_camera_make"
-												},
-												{
-													"type": "number",
-													"label": "Number of devices",
-													"name": "monitoring_num_cameras"
-												},
-												{
-													"type": "text_area",
-													"label": "Camera Placement",
-													"name": "monitoring_camera_placement"
-												},
-												{
-													"type": "text",
-													"label": "How long in situ",
-													"name": "monitoring_camera_situ"
-												},
-												{
-													"type": "text",
-													"label": "Other details",
-													"name": "monitoring_camera_other_details"
-												}
-											]
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Ultrasonic bat detector",
-								"name": "monitoring_ultrasonic_bat_detector",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "group",
-											"label": "Ultrasonic Bat Detector Information",
-											"name": "monitoring_ultrasonic_bat_detector_information",
-											"isRepeatable": true,
-											"children": 
-											[
-												{
-													"type": "text",
-													"label": "Make",
-													"name": "monitoring_ubd_make"
-												},
-												{
-													"type": "number",
-													"label": "Number of devices",
-													"name": "monitoring_num_ubds"
-												},
-												{
-													"type": "text",
-													"label": "Ultrasonic bat detector Placement",
-													"name": "monitoring_ubd_placement"
-												},
-												{
-													"type": "text",
-													"label": "How long in situ",
-													"name": "monitoring_ubd_situ"
-												},
-												{
-													"type": "text",
-													"label": "Other details",
-													"name": "monitoring_ubd_other_details"
-												}
-											]
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Acoustic call recorder",
-								"name": "monitoring_acoustic_call_recorder",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "group",
-											"label": "Acoustic call recorder Information",
-											"name": "monitoring_acoustic_call_recorder_information",
-											"isRepeatable": true,
-											"children": 
-											[
-												{
-													"type": "text",
-													"label": "Make",
-													"name": "monitoring_acr_make"
-												},
-												{
-													"type": "number",
-													"label": "Number of devices",
-													"name": "monitoring_num_acrs"
-												},
-												{
-													"type": "text",
-													"label": "Acoustic call recorder Placement",
-													"name": "monitoring_acr_placement"
-												},
-												{
-													"type": "text",
-													"label": "How long in situ",
-													"name": "monitoring_acr_situ"
-												},
-												{
-													"type": "text",
-													"label": "Other details",
-													"name": "monitoring_acr_other_details"
-												}
-											]
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Aerial",
-								"name": "monitoring_aerial",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "group",
-											"label": "Aerial Information",
-											"name": "monitoring_aerial_information",
-											"children": 
-											[
-												{
-													"type": "text",
-													"label": "Make",
-													"name": "monitoring_aerial_make"
-												},
-												{
-													"type": "number",
-													"label": "Number of devices",
-													"name": "monitoring_num_aerials"
-												},
-												{
-													"type": "text",
-													"label": "Aerial Placement",
-													"name": "monitoring_aerial_placement"
-												},
-												{
-													"type": "text",
-													"label": "How long in situ",
-													"name": "monitoring_aerial_situ"
-												},
-												{
-													"type": "text",
-													"label": "Other details",
-													"name": "monitoring_aerial_other_details"
-												}
-											]
-										}
-									]
-								}
-							},
-							{
-								"type": "text_area",
-								"label": "Provide any other details relating to remote sensing.",
-								"name": "monitoring_remote_sensing_other_details"
-							}
-						],
-						"other": 
-						[
-							{
-								"type": "label",
-								"label": "Please select any non-capture survey method you wil be using",
-								"name": "monitoring_non_capture_method"
-							},
-							{
-								"type": "checkbox",
-								"label": "Aural survey",
-								"name": "monitoring_aural_survey",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "text_area",
-											"label": "Please provide Details",
-											"name": "monitoring_aural_survey_details"
-										},
-										{
-											"type": "radiobuttons",
-											"label": "Will call play-back be used?",
-											"name": "monitoring_call_playback",
-											"options": 
-											[
-												{
-													"value": "yes",
-													"label": "Yes"
-												},
-												{
-													"value": "no",
-													"label": "No"
-												}
-											],
-											"conditions": 
-											{
-												"yes": 
-												[
-													{
-														"type": "text_area",
-														"label": "Please provide Details",
-														"name": "monitoring_call_playback_details"
-													}
-												]
-											}
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Bird Census",
-								"name": "monitoring_bird_census",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "text_area",
-											"label": "Please provide Details",
-											"name": "monitoring_bird_census_details"
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Spotlighting / head torching",
-								"name": "monitoring_spotlighting",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "text_area",
-											"label": "Please provide Details",
-											"name": "monitoring_spotlighting_details"
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Hair tubes / sticky wicket",
-								"name": "monitoring_hair_tubes",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "text_area",
-											"label": "Please provide Details",
-											"name": "monitoring_hair_tubes_details"
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Secondary signs / evidence",
-								"name": "monitoring_secondary_signs",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "text_area",
-											"label": "Please provide Details",
-											"name": "monitoring_secondary_signs_details"
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Habitat Assessment",
-								"name": "monitoring_habitat_assessment",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "text_area",
-											"label": "Please provide Details",
-											"name": "monitoring_habitat_assessment_details"
-										}
-									]
-								}
-							},
-							{
-								"type": "checkbox",
-								"label": "Other",
-								"name": "monitoring_non_capture_other",
-								"conditions": 
-								{
-									"on": 
-									[
-										{
-											"type": "text_area",
-											"label": "Please provide Details",
-											"name": "monitoring_non_capture_other_details"
-										}
-									]
-								}
-							}
-						]
-					}
-				}
-			]
-		}
-	]
-}
+[
+    {
+        "type": "label",
+        "label": "Note: ‘Research’ as a licence project type should only be select if the proposed activity does not fit within the methodology for research or survey.",
+        "name": "research_note_1"
+    },
+    {
+        "type": "label",
+        "label": "Monitoring should be selected if your study includes capture-mark-recapture or fauna tracking. Usually with field sessions at regular or irregular intervals, and total project duration greater than 12 months.",
+        "name": "research_note_2"
+    },
+    {
+        "type": "label",
+        "label": "Survey should be selected if your study includes capture and release, for one or a few field sessions, and total project duration up to but not greater than 12 months.",
+        "name": "research_note_2"
+    },
+    {
+        "type": "radiobuttons",
+        "label": "Which of the following describes your research?",
+        "name": "research_type",
+        "options": 
+        [
+            {
+                "value": "field_component_only",
+                "label": "Field component only"
+            },
+            {
+                "value": "field_and_laboratory",
+                "label": "Field and laboratory/specialised facility components"
+            }
+        ],
+        "conditions": 
+        {
+            "field_and_laboratory": 
+            [
+                {
+                    "type": "text_area",
+                    "label": "Provide details of laboratory/facility",
+                    "name": "research_lab_details"
+                },
+                {
+                    "type": "text_area",
+                    "label": "Provide specific details of animal husbandry",
+                    "name": "research_animal_husbandry"
+                },
+                {
+                    "type": "text_area",
+                    "label": "Provide specific details of fauna related activities that are proposed to occur within the laboratory/facility",
+                    "name": "research_fauna_activities"
+                },
+                {
+                    "type": "text_area",
+                    "label": "How long will the fauna be held?",
+                    "name": "research_fauna_hold_length"
+                },
+                {
+                    "type": "radiobuttons",
+                    "label": "What is the final fate of fauna that has been in the laboratory/specialised facility?",
+                    "name": "research_fauna_final_fate",
+                    "options": 
+                    [
+                        {
+                            "value": "research_transfer_alive",
+                            "label": "Transfer alive to another project"
+                        },
+                        {
+                            "value": "research_release_wild",
+                            "label": "Release to the wild"
+                        },
+                        {
+                            "value": "research_euthanase",
+                            "label": "Euthanase"
+                        }
+                    ],
+                    "conditions": 
+                    {
+                        "research_release_wild": 
+                        [
+                            {
+                                "type": "label",
+                                "label": "Provide details for the following",
+                                "name": "research_fauna_release_details"
+                            },
+                            {
+                                "type": "text_area",
+                                "label": "Risk assessment (release of fauna back to the wild after being held and studied in a laboratory/facility poses a risk of disease/parasite introduction to the wild fauna)",
+                                "name": "research_fauna_release_risk_assessment"
+                            },
+                            {
+                                "type": "text_area",
+                                "label": "Quarantine and health check requirements prior to release",
+                                "name": "research_fauna_release_quarantine"
+                            },
+                            {
+                                "type": "text_area",
+                                "label": "Proposed release site",
+                                "name": "research_fauna_release_site"
+                            },
+                            {
+                                "type": "text_area",
+                                "label": "Transportation to release site",
+                                "name": "research_fauna_release_site_transportation"
+                            },
+                            {
+                                "type": "text_area",
+                                "label": "Post release monitoring",
+                                "name": "research_fauna_post_release_monitoring"
+                            }
+                        ],
+                        "research_euthanase": 
+                        [
+                            {
+                                "type": "label",
+                                "label": "Method of euthanasia",
+                                "name": "research_fauna_euthanasia_details"
+                            },
+                            {
+                                "type": "radiobuttons",
+                                "label": "Will the fauna be retained as a specimen?",
+                                "name": "research_fauna_retained_specimen",
+                                "options": 
+                                [
+                                    {
+                                        "value": "yes",
+                                        "label": "Yes"
+                                    },
+                                    {
+                                        "value": "no",
+                                        "label": "No"
+                                    }
+                                ],
+                                "conditions": 
+                                {
+                                    "yes": 
+                                    [
+                                        {
+                                            "type": "text_area",
+                                            "label": "Where will the specimen(s) be held/lodged/stored?",
+                                            "name": "research_fauna_stored"
+                                        }
+                                    ],
+                                    "no": 
+                                    [
+                                        {
+                                            "type": "text_area",
+                                            "label": "Provide details of disposal",
+                                            "name": "research_fauna_disposal"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "text_area",
+                    "label": "Provide any other details relating to the Laboratory/specialised facility component",
+                    "name": "research_lab_other_details"
+                }
+            ]
+        }
+    },
+    {
+        "type": "number",
+        "label": "At how many locations will your research occur?",
+        "name": "research_num_research_locations"
+    },
+    {
+        "type": "group",
+        "label": "Monitoring Details",
+        "name": "research_details",
+        "isRepeatable": true,
+        "help_text": "If multiple research locations; provide details separately for each location and add an additional location after activity questions.",
+        "children": 
+        [
+            {
+                "type": "text_area",
+                "label": "Location / Address",
+                "name": "research_address"
+            },
+            {
+                "type": "text",
+                "label": "Coordinate / GPS",
+                "name": "research_coordinates"
+            },
+            {
+                "type": "group",
+                "label": "Field session",
+                "name": "research_field_session",
+                "isRepeatable": true,
+                "children": 
+                [
+                    {
+                        "type": "date",
+                        "label": "Start Date",
+                        "name": "research_field_session_start_date"
+                    },
+                    {
+                        "type": "date",
+                        "label": "End Date",
+                        "name": "research_field_session_end_date"
+                    }
+                ]
+            },
+            {
+                "type": "text",
+                "label": "If field dates are unknown, use anticipated field dates in the start and end date above and explain below.",
+                "name": "research_field_dates_unknown"
+            },
+            {
+                "type": "checkbox",
+                "label": "Is the research targeting species or fauna group?",
+                "name": "research_targeting_species_or_fauna",
+                "conditions": 
+                {
+                    "on": 
+                    [
+                        {
+                            "type": "group",
+                            "label": "Targeted Fauna Type",
+                            "name": "research_targeted_fauna",
+                            "isRepeatable": true,
+                            "children": 
+                            [
+                                {
+                                    "type": "text",
+                                    "label": "Common name / Group name",
+                                    "name": "research_tft_common_name"
+                                },
+                                {
+                                    "type": "text",
+                                    "label": "Scientific name",
+                                    "name": "research_tft_scientific_name"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "radiobuttons",
+                "label": "Will your activity possibly interact with any threatened or priority fauna (including non-target species)?",
+                "name": "research_threatened_priority_fauna",
+                "options": 
+                [
+                    {
+                        "value": "yes",
+                        "label": "Yes"
+                    },
+                    {
+                        "value": "no",
+                        "label": "No"
+                    },
+                    {
+                        "value": "unknown",
+                        "label": "Unknown"
+                    }
+                ],
+                "conditions": 
+                {
+                    "yes": 
+                    [
+                        {
+                            "type": "group",
+                            "label": "Threatened Fauna",
+                            "name": "research_threatened_fauna",
+                            "isRepeatable": true,
+                            "children": 
+                            [
+                                {
+                                    "type": "text",
+                                    "label": "Common name / Group name",
+                                    "name": "research_threatened_tft_common_name"
+                                },
+                                {
+                                    "type": "text",
+                                    "label": "Scientific name",
+                                    "name": "research_threatened_tft_scientific_name"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "radiobuttons",
+                "label": "Will your activities be in accordance with Parks and Wildlife standard operating procedures?",
+                "name": "research_standard_operating_procedures",
+                "options": 
+                [
+                    {
+                        "value": "yes",
+                        "label": "Yes"
+                    },
+                    {
+                        "value": "no",
+                        "label": "No"
+                    }
+                ]
+            },
+            {
+                "type": "radiobuttons",
+                "label": "Will your activities be in accordance with any other SOPs, protocols, guidelines or manuals?",
+                "name": "research_sops",
+                "options": 
+                [
+                    {
+                        "value": "yes",
+                        "label": "Yes"
+                    },
+                    {
+                        "value": "no",
+                        "label": "No"
+                    }
+                ],
+                "conditions": 
+                {
+                    "yes": 
+                    [
+                        {
+                            "type": "text",
+                            "label": "Provide details",
+                            "name": "research_sops_details"
+                        },
+                        {
+                            "type": "file",
+                            "label": "Attach a copy of the relevent document(s)",
+                            "name": "research_sops_documents"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "label",
+                "label": "Field component",
+                "name": "research_field_component"
+            },
+            {
+                "type": "checkbox",
+                "label": "Non-capture",
+                "name": "research_non_capture",
+                "conditions": 
+                {
+                    "on": 
+                    [
+                        {
+                            "type": "text",
+                            "label": "Provide specific details of non-capture methodology",
+                            "name": "research_non_capture_details"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "checkbox",
+                "label": "Capture",
+                "name": "research_capture",
+                "conditions": 
+                {
+                    "on": 
+                    [
+                        {
+                            "type": "text",
+                            "label": "Provide specific details of capture methodology",
+                            "name": "research_capture_details"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "label",
+                "label": "What will be the fate(s) of the fauna captured?",
+                "name": "research_fate"
+            },
+            {
+                "type": "checkbox",
+                "label": "Release",
+                "name": "research_release",
+                "conditions": 
+                {
+                    "on": 
+                    [
+                        {
+                            "type": "select",
+                            "label": "Release Schedule",
+                            "name": "research_release_schedule",
+                            "options": 
+                            [
+                                {
+                                    "value": "immediately",
+                                    "label": "Immediately after species idenfication"
+                                },
+                                {
+                                    "value": "after_transmitter_attachment",
+                                    "label": "After attachment of transmitter"
+                                },
+                                {
+                                    "value": "after_morphometrics",
+                                    "label": "After morphometrics and physical condition taken"
+                                },
+                                {
+                                    "value": "after_samples",
+                                    "label": "After samples taken"
+                                },
+                                {
+                                    "value": "after_marking",
+                                    "label": "After marking"
+                                },
+                                {
+                                    "value": "after_temp_holding",
+                                    "label": "After temporary holding (< 24 hours)"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "label",
+                            "label": "Which of the following will occur before release?",
+                            "name": "research_pre_release_occurences"
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Attachment of transmitter",
+                            "name": "research_release_transmitter",
+                            "conditions": 
+                            {
+                                "on": 
+                                [
+                                    {
+                                        "type": "text_area",
+                                        "label": "Transmitter type, make and model, and construction material",
+                                        "name": "research_prerelease_transmitter_type"
+                                    },
+                                    {
+                                        "type": "text_area",
+                                        "label": "Method of attachment to animal",
+                                        "name": "research_prerelease_method_attachment"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "label": "Maximum weight of transmitter and attachment materials",
+                                        "name": "research_prerelease_transmitter_max_weight"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "label": "Minimum body weight of animal to which transmitter will be attached",
+                                        "name": "research_prerelease_mim_body_weight"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "label": "How long will the transmitter remain attached to the animal?",
+                                        "name": "research_prerelease_transmitter_attachment_length"
+                                    },
+                                    {
+                                        "type": "radiobuttons",
+                                        "label": "Does the animal need to be recaptured to remove the transmitter?",
+                                        "name": "research_prerelease_recapture_remove",
+                                        "options": 
+                                        [
+                                            {
+                                                "label": "Yes",
+                                                "value": "yes"
+                                            },
+                                            {
+                                                "label": "No",
+                                                "value": "no"
+                                            }
+                                        ],
+                                        "conditions": 
+                                        {
+                                            "yes": 
+                                            [
+                                                {
+                                                    "type": "declaration",
+                                                    "label": "I acknowledge that every attempt will be made to recapture the animal to remove the transmitter, and will notify Wildlife Licensing if this cannot be done.",
+                                                    "name": "research_prerelease_acknowledge"
+                                                }
+                                            ],
+                                            "no": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Provide details of how the transmitter will detach from the animal",
+                                                    "name": "research_prerelease_detach_details"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Mophometrics and physical condition analysis",
+                            "name": "research_mophometrics",
+                            "conditions": 
+                            {
+                                "on": 
+                                [
+                                    {
+                                        "type": "label",
+                                        "label": "What morphometrics and condition details will be recorded?",
+                                        "name": "research_mophometrics"
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Length",
+                                        "name": "research_mophometric_length"
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Sex",
+                                        "name": "research_mophometric_sex"
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Age",
+                                        "name": "research_mophometric_age"
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Body condition",
+                                        "name": "research_mophometric_body_condition"
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Reproductive condition",
+                                        "name": "research_mophometric_reproductive_condition"
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Other",
+                                        "name": "research_mophometric_other",
+                                        "conditions": 
+                                        {
+                                            "on": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Please provide details",
+                                                    "name": "research_mophometric_other_details"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "text_area",
+                                        "label": "Provide any other details relating to measurements and condition",
+                                        "name": "research_mophometric_other_details"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Sampling",
+                            "name": "research_sampling",
+                            "conditions": 
+                            {
+                                "on": 
+                                [
+                                    {
+                                        "type": "label",
+                                        "label": "What samples will be taken?",
+                                        "name": "research_samples"
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Tissue",
+                                        "name": "research_tissue",
+                                        "conditions": 
+                                        {
+                                            "on": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Please provide details",
+                                                    "name": "research_tissue_details"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Scale",
+                                        "name": "research_scale",
+                                        "conditions": 
+                                        {
+                                            "on": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Please provide details",
+                                                    "name": "research_scale_details"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Hair / feather",
+                                        "name": "research_hair_feather",
+                                        "conditions": 
+                                        {
+                                            "on": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Please provide details",
+                                                    "name": "research_hair_feather_details"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Blood",
+                                        "name": "research_blood",
+                                        "conditions": 
+                                        {
+                                            "on": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Please provide details",
+                                                    "name": "research_blood_details"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Swabs",
+                                        "name": "research_swabs",
+                                        "conditions": 
+                                        {
+                                            "on": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Please provide details",
+                                                    "name": "research_swabs_details"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "checkbox",
+                                        "label": "Other",
+                                        "name": "research_samples_other",
+                                        "conditions": 
+                                        {
+                                            "on": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Please provide details",
+                                                    "name": "research_samples_other_details"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Marking",
+                            "name": "research_marking",
+                            "conditions": 
+                            {
+                                "on": 
+                                [
+                                    {
+                                        "type": "select",
+                                        "label": "What marking will be done and why?",
+                                        "name": "research_marking",
+                                        "options": 
+                                        [
+                                            {
+                                                "value": "temporary",
+                                                "label": "Temporary"
+                                            },
+                                            {
+                                                "value": "permanent",
+                                                "label": "Permanent"
+                                            }
+                                        ],
+                                        "conditions": 
+                                        {
+                                            "permanent": 
+                                            [
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Tags",
+                                                    "name": "research_tags",
+                                                    "conditions": 
+                                                    {
+                                                        "on": 
+                                                        [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please provide details",
+                                                                "name": "research_tags_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Microchips / implants",
+                                                    "name": "research_microchips",
+                                                    "conditions": 
+                                                    {
+                                                        "on": 
+                                                        [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please provide details",
+                                                                "name": "research_microchips_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Bands",
+                                                    "name": "research_bands",
+                                                    "conditions": 
+                                                    {
+                                                        "on": 
+                                                        [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please provide details",
+                                                                "name": "research_bands_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Ear punching",
+                                                    "name": "research_ear_punching",
+                                                    "conditions": 
+                                                    {
+                                                        "on": 
+                                                        [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please provide details",
+                                                                "name": "research_ear_punching_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "checkbox",
+                                                    "label": "Other",
+                                                    "name": "research_marking_other",
+                                                    "conditions": 
+                                                    {
+                                                        "on": 
+                                                        [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Please provide details",
+                                                                "name": "research_marking_other_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Temporary Holding",
+                            "name": "research_temporary_holding",
+                            "conditions": 
+                            {
+                                "on": 
+                                [
+                                    {
+                                        "type": "text_area",
+                                        "label": "Why will/may the fauna be temporarily held?",
+                                        "name": "research_why_temporarily_held"
+                                    },
+                                    {
+                                        "type": "text_area",
+                                        "label": "How will the fauna be held?",
+                                        "name": "research_how_temporarily_held"
+                                    },
+                                    {
+                                        "type": "text_area",
+                                        "label": "Where will the fauna be held?",
+                                        "name": "research_where_temporarily_held"
+                                    },
+                                    {
+                                        "type": "text_area",
+                                        "label": "If fauna will be transported, provide details?",
+                                        "name": "research_transported_details"
+                                    },
+                                    {
+                                        "type": "select",
+                                        "label": "Where will the fauna be released?",
+                                        "name": "research_where_fauna_released",
+                                        "options": 
+                                        [
+                                            {
+                                                "value": "at_capture_site",
+                                                "label": "At capture site"
+                                            },
+                                            {
+                                                "value": "near_capture_site",
+                                                "label": "Near capture site into suitable habitat"
+                                            },
+                                            {
+                                                "value": "other",
+                                                "label": "Other"
+                                            }
+                                        ],
+                                        "conditions": 
+                                        {
+                                            "other": 
+                                            [
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Please provide details",
+                                                    "name": "research_fauna_release_other_details"
+                                                },
+                                                {
+                                                    "type": "radiobuttons",
+                                                    "label": "Will fauna will be retained alive for study in laboratory/specialised facility?",
+                                                    "name": "research_retained_alived",
+                                                    "options": 
+                                                    [
+                                                        {
+                                                            "label": "Yes",
+                                                            "value": "yes"
+                                                        },
+                                                        {
+                                                            "label": "No",
+                                                            "value": "no"
+                                                        }
+                                                    ],
+                                                    "conditions": 
+                                                    {
+                                                        "yes": 
+                                                        [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Provide details of transportation",
+                                                                "name": "research_transportation_details"
+                                                            }
+                                                        ],
+                                                        "no": 
+                                                        [
+                                                            {
+                                                                "type": "text_area",
+                                                                "label": "Provide details on euthanasia",
+                                                                "name": "research_euthanasia_details"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "label": "Where will the specimen(s) be held/lodged/stored?",
+                                                    "name": "research_where_specimen_stored"
+                                                },
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Describe how unforeseen injuries or other related issues will be dealt with.",
+                                                    "name": "research_unforseen_injury_dealings"
+                                                },
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Provide details of field hygiene and wildlife disease considerations.",
+                                                    "name": "research_hygiene_disease_considerations"
+                                                },
+                                                {
+                                                    "type": "text_area",
+                                                    "label": "Provide other details relating to fauna capture.",
+                                                    "name": "research_fauna_capture_other_details"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "checkbox",
+                "label": "Retain",
+                "name": "research_retain",
+                "conditions": 
+                {
+                    "on": 
+                    [
+                        {
+                            "type": "text_area",
+                            "label": "Provide details on what species and how many individuals (per species) are to be retained",
+                            "name": "research_species_retained"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+]
