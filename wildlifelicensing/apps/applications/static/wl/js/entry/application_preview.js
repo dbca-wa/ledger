@@ -1,13 +1,14 @@
 define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, isRepeat, itemData) {
-        var itemContainer = $('<div>');
+        var itemContainer = $('<div>'),
+            childrenAnchorPoint;
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
             item.isRemovable = isRepeat;
         }
 
-        if(itemData != undefined && item.name in itemData) {
+        if(itemData !== undefined && item.name in itemData) {
             item.value = itemData[item.name];
         } else {
             item.value = "";
@@ -61,8 +62,9 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         // unset item value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.value = undefined;
 
+        childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
+
         if(item.conditions !== undefined) {
-            var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
 
             if(item.conditions !== undefined) {
                 $.each(item.conditions, function(condition, children) {
@@ -76,7 +78,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         }
 
         if(item.children !== undefined) {
-            var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
             $.each(item.children, function(childIndex, child) {
                 _appendChild(child, childrenAnchorPoint, itemData);
             });
@@ -96,7 +97,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             var repeatItemsAnchorPoint = $('<div>');
             childrenAnchorPoint.append(repeatItemsAnchorPoint);
 
-            if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
+            if(itemData !== undefined && child.name in itemData && itemData[child.name].length > 1) {
                 $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
                     repeatItemsAnchorPoint.append(_layoutItem(child, true, repeatData));
                 });
@@ -153,7 +154,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                 // enable lodge button if the number of checked checkboxes is the same as the number of
                 // checkboxes in the dislaimer div (which is the parent of the disclaimers selector's elements)
                 $(lodgeSelector).attr('disabled', $(disclaimersSelector).parent().find(':checked').length !== $(disclaimersSelector).length);
-            })
+            });
         }
-    }
+    };
 });

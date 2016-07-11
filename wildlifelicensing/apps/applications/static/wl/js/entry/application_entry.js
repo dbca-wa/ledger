@@ -1,11 +1,12 @@
 define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker',
         'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, repetition, suffix, itemData) {
-        var $itemContainer = $('<div>');
+        var $itemContainer = $('<div>'),
+            $childrenAnchorPoint;
 
         item.isRemovable = repetition > 0;
 
-        if(itemData != undefined && item.name in itemData) {
+        if(itemData !== undefined && item.name in itemData) {
             item.value = itemData[item.name];
         }
 
@@ -17,9 +18,9 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         item.name = item.name.slice(0, item.name.indexOf(suffix));
         item.value = undefined;
 
-        if(item.conditions !== undefined) {
-            var $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
+        $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
 
+        if(item.conditions !== undefined) {
             if(item.conditions !== undefined) {
                 var $input = $itemContainer.find('input, select'),
                     initialInputValue = _getInputValue(item, $input);
@@ -66,8 +67,6 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
 
         if (item.children !== undefined) {
-            var $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
-
             // append all children to item
             $.each(item.children, function(childIndex, child) {
                 _appendChild(child, $childrenAnchorPoint, 0, suffix + '-' + repetition, itemData);
@@ -102,8 +101,9 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
             // closure to make sure repetition keeps incrementing each time add is clicked
             addGroupLink.click(function() {
-                var groupCount = parseInt(groupInput.val())
-                repeatItem = _layoutItem(child, groupCount, suffix);
+                var groupCount = parseInt(groupInput.val()),
+                    repeatItem = _layoutItem(child, groupCount, suffix);
+
                 repeatItem.find('.hidden').removeClass('hidden');
                 repeatItemsAnchorPoint.append(repeatItem);
                 groupInput.val(groupCount + 1);
@@ -111,7 +111,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
             $childrenAnchorPoint.append(addGroupDiv.append(addGroupLink));
 
-            if(itemData != undefined && child.name in itemData && itemData[child.name].length > 1) {
+            if(itemData !== undefined && child.name in itemData && itemData[child.name].length > 1) {
                 $.each(itemData[child.name].slice(1), function(childRepetitionIndex, repeatData) {
                     repeatItemsAnchorPoint.append(_layoutItem(child, childRepetitionIndex + 1, suffix, repeatData));
                     groupInput.val(parseInt(groupInput.val()) + 1);
@@ -151,7 +151,13 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
     function _getInputValue(item, $input) {
         if(item.type === 'radiobuttons') {
-            return  $input.is(':checked') ? $input.val(): '';
+            var checkedRadiobuttonValue = '';
+            $input.each(function(index, radiobutton) {
+                if ($(radiobutton).is(':checked')) {
+                    checkedRadiobuttonValue = $(radiobutton).val();
+                }
+            });
+            return checkedRadiobuttonValue;
         } else if (item.type === 'checkbox') {
             return $input.is(':checked') ? 'on': '';
         } else {
@@ -253,5 +259,5 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             $('body').scrollspy({ target: '#sectionList' });
             sectionList.affix({ offset: { top: sectionList.offset().top }});
         }
-    }
+    };
 });

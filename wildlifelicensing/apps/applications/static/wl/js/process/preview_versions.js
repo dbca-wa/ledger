@@ -1,17 +1,18 @@
 define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, isRepeat, itemDataCurrent, itemDataPrevious) {
-        var itemContainer = $('<div>');
+        var itemContainer = $('<div>'),
+            childrenAnchorPoint;
 
         // if this is a repeatable item (such as a group), add repetitionIndex to item ID
         if(item.isRepeatable) {
             item.isRemovable = isRepeat;
         }
 
-        if(itemDataCurrent != undefined && item.name in itemDataCurrent) {
+        if(itemDataCurrent !== undefined && item.name in itemDataCurrent) {
             item.valueCurrent = itemDataCurrent[item.name];
         }
 
-        if(itemDataPrevious != undefined && item.name in itemDataPrevious) {
+        if(itemDataPrevious !== undefined && item.name in itemDataPrevious) {
             item.valuePrevious = itemDataPrevious[item.name];
         }
 
@@ -77,52 +78,47 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                 itemContainer.append($('<p>').addClass('previous-data').text(item.valuePrevious ? 'Declaration checked' : 'Declaration not checked'));
             }
         } else if(item.type === 'file') {
+            var currentFileLink = $('<a>'),
+                previousFileLink = $('<a>');
+
             itemContainer.append($('<label>').text(item.label));
 
             if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
                 if(item.valueCurrent) {
-                    var fileLink = $('<a>');
-                    fileLink.attr('href', item.valueCurrent);
-                    fileLink.attr('target', '_blank');
-                    fileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
-                    itemContainer.append($('<p>').append(fileLink));
+                    currentFileLink.attr('href', item.valueCurrent);
+                    currentFileLink.attr('target', '_blank');
+                    currentFileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
+                    itemContainer.append($('<p>').append(currentFileLink));
                 } else {
                     itemContainer.append($('<p>').text("No file attached"));
                 }
             } else {
                 if (item.valueCurrent && item.valuePrevious) {
-                    var currentFileLink = $('<a>'),
-                        previousFileLink = $('<a>');
-
                     currentFileLink.attr('href', item.valueCurrent);
                     currentFileLink.attr('target', '_blank');
                     currentFileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
-                    currentFileLink.addClass('current-data')
+                    currentFileLink.addClass('current-data');
 
                     previousFileLink.attr('href', item.valuePrevious);
                     previousFileLink.attr('target', '_blank');
                     previousFileLink.text(item.valuePrevious.substr(item.valuePrevious.lastIndexOf('/') + 1));
-                    previousFileLink.addClass('previous-data')
+                    previousFileLink.addClass('previous-data');
 
                     itemContainer.append($('<p>').append(currentFileLink));
                     itemContainer.append($('<p>').append(previousFileLink).addClass('previous-data'));
                 } else if (item.valueCurrent && !item.valuePrevious) {
-                    var currentFileLink = $('<a>');
-
                     currentFileLink.attr('href', item.valueCurrent);
                     currentFileLink.attr('target', '_blank');
                     currentFileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
-                    currentFileLink.addClass('current-data')
+                    currentFileLink.addClass('current-data');
 
                     itemContainer.append($('<p>').append(currentFileLink));
                     itemContainer.append($('<p>').addClass('previous-data').text("Not specified"));
                 } else if (!item.valueCurrent && item.valuePrevious) {
-                    var previousFileLink = $('<a>');
-
                     previousFileLink.attr('href', item.valuePrevious);
                     previousFileLink.attr('target', '_blank');
                     previousFileLink.text(item.valuePrevious.substr(item.valuePrevious.lastIndexOf('/') + 1));
-                    previousFileLink.addClass('previous-data')
+                    previousFileLink.addClass('previous-data');
 
                     itemContainer.append($('<p>').addClass('current-data').text("Not specified"));
                     itemContainer.append($('<p>').append(previousFileLink));
@@ -149,14 +145,14 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         item.valueCurrent = undefined;
         item.valuePrevious = undefined;
 
-        if(item.conditions !== undefined) {
-            var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
+        childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
 
+        if(item.conditions !== undefined) {
             if(item.conditions !== undefined) {
                 $.each(item.conditions, function(condition, children) {
                     if(condition === itemDataCurrent[item.name]) {
                         $.each(children, function(childIndex, child) {
-                        	_appendChild(child, childrenAnchorPoint, itemDataCurrent, itemDataPrevious);
+                            _appendChild(child, childrenAnchorPoint, itemDataCurrent, itemDataPrevious);
                         });
                     }
                 });
@@ -164,10 +160,8 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         }
 
         if(item.children !== undefined) {
-            var childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
-
             $.each(item.children, function(childIndex, child) {
-				_appendChild(child, childrenAnchorPoint, itemDataCurrent, itemDataPrevious);
+                _appendChild(child, childrenAnchorPoint, itemDataCurrent, itemDataPrevious);
             });
         }
         return itemContainer;
@@ -190,8 +184,8 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             
             childrenAnchorPoint.append(repeatItemsAnchorPoint);
 
-            if((itemDataCurrent != undefined && child.name in itemDataCurrent && itemDataCurrent[child.name].length > 1) ||
-                    (itemDataPrevious != undefined && child.name in itemDataPrevious && itemDataPrevious[child.name].length > 1)) {
+            if((itemDataCurrent !== undefined && child.name in itemDataCurrent && itemDataCurrent[child.name].length > 1) ||
+                    (itemDataPrevious !== undefined && child.name in itemDataPrevious && itemDataPrevious[child.name].length > 1)) {
                 var itemDataLength;
                 if(itemDataCurrent[child.name] !== undefined && itemDataPrevious[child.name].length) {
                     itemDataLength = Math.max(itemDataCurrent[child.name].length, itemDataPrevious[child.name].length);
@@ -225,19 +219,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         return $childrenAnchorPoint;
     }
 
-    function _createTableRow(item, $table, itemDataCurrent, itemDataPrevious) {
-        var $row = $('<tr>');
-
-        $.each(item.children, function(index, child) {
-            var $col = $('<td>');
-            $col.append(_layoutItem(child, false, itemDataCurrent, itemDataPrevious));
-            $col.find('label:first').remove();
-            $row.append($col);
-        });
-
-        $table.append($row);
-    }
-
     return {
         layoutPreviewItems: function(containerSelector, formStructure, currentData, previousData) {
             var container = $(containerSelector);
@@ -247,15 +228,16 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                     previousItemData;
 
                 // ensure item data exists
-                if(data && i < currentData.length) {
+                if(currentData && i < currentData.length) {
                     currentItemData = currentData[i][formStructure[i].name][0];
                 }
-                if(data && i < previousData.length) {
+
+                if(previousData && i < previousData.length) {
                     previousItemData = previousData[i][formStructure[i].name][0];
                 }
 
                 container.append(_layoutItem(formStructure[i], false, currentItemData, previousItemData));
             }
         }
-    }
+    };
 });
