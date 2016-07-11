@@ -9,8 +9,8 @@
 {% endblock %}
 
 {% block left_menu_items %}
-    <li><a href="">About</a></li>
-    <li><a href="">Contact Us</a></li>
+    <li><a href="{% url 'wl_main:contact_us' %}">Contact Us</a></li>
+    <li><a href="{% url 'wl_main:further_information' %}">Further Information</a></li>
 {% endblock %}
 
 {% block messages %}
@@ -23,7 +23,155 @@
                 <h2>
                     Welcome to Wildlife Licensing
                 </h2>
-                {% lorem 3 p %} 
+                <p>
+                    The Department of Parks and Wildlife can issue licences under the <em>Wildlife Conservation Act 1950</em>,
+                    the <em>Wildlife Conservation Regulations 1970</em> and the <em>Wildlife Conservation Regulations (Reptiles and Amphibians)
+                    2003</em> for a range of activities involving flora (plants, fungi and algae) or fauna (animals except fish). We also
+                    issue Restricted Keeping Permits for birds on behalf of the Department of Agriculture and Food under the <em>Biosecurity
+                    and Agriculture Management Act 2007</em>.
+                </p>
+                <p>
+                    This web portal allows you to apply for a licence, renew an existing licence and provide returns information.
+                </p>
+                <p>
+                    Simply set up a profile, select the licence type you wish to apply for and get started.
+                </p>
+                <p>
+                    If you wish to do any of the following activities, you may need a licence.
+                </p>
+                <h3>
+                    FLORA LICENCES
+                </h3>
+                <ul>
+                    <li>
+                        ‘Take’ flora (includes gather, pluck, cut, pull up, destroy, dig up, remove or injure plants or any part of a plant) from Crown land for:
+                        <ul>
+                            <li>
+                                commercial purposes (commercial purposes licence)
+                            </li>
+                            <li>
+                                scientific/non-commercial purposes (scientific or other prescribed purposes licence)
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        Sell flora taken from private land (commercial producers licence)
+                    </li>
+                </ul>
+                <h3>
+                    FAUNA LICENCES
+                </h3>
+                <ul>
+                    <li>
+                        ‘Take’ fauna (includes hunt, kill, capture, disturb or molest by any means mammals, reptiles, birds, 
+                        amphibians or any part of an animal) for any purpose, including:
+                        <ul>
+                            <li>
+                                mitigate damage to property being caused by fauna (damage licence)
+                            </li>
+                            <li>
+                                remove or destroy dangerous fauna (dangerous fauna licence)
+                            </li>
+                            <li>
+                                take kangaroos for sale (professional shooter’s licence)
+                            </li>
+                            <li>
+                                educational or public purposes (regulation 15 licence)
+                            </li>
+                            <li>
+                                scientific purposes (scientific regulation 17 licence)
+                            </li>
+                            <li>
+                                band birds (bird banding licence)
+                            </li>
+                            <li>
+                                taking of emu eggs by persons of Aboriginal descent for carving or cultural purposes
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        Process fauna carcasses (processing licence)
+                    </li>
+                    <li>
+                        Deal in fauna carcasses (direct dealer’s licence)
+                    </li>
+                    <li>
+                        Deal in fauna skins (skin dealers licence)
+                    </li>
+                </ul>
+                <h3>
+                    BIRD LICENCES
+                </h3>
+                <ul>
+                    <li>
+                        Keep and breed native birds as pets (avicultural licence)
+                    </li>
+                    <li>
+                        Keep certain introduced/exotic birds as pets (restricted keeping permit)
+                    </li>
+                    <li>
+                        Buy and sell or otherwise deal in birds (bird dealers licence)
+                    </li>
+                    <li>
+                        Keep and breed fauna other than birds (e.g. kangaroos and emus) (wildlife licence)
+                    </li>
+                    <li>
+                        Farm and breed fauna for sale and commercial display (fauna farm licence)
+                    </li>
+                    <li>
+                        Keep fauna for educational and public purposes (regulation 16 or wildlife park licence)
+                    </li>
+                </ul>
+                <h3>
+                    REPTILE LICENCES
+                </h3>
+                <ul>
+                    <li>
+                        Keep reptiles and amphibians like snakes, lizards, turtles and frogs (herpetofauna) as pets (herpetofauna keeper’s licence)
+                    </li>
+                    <li>
+                        Deal in pet herpetofauna (herpetofauna dealer’s licence)
+                    </li>
+                    <li>
+                        Take pet herpetofauna from the wild for sale (herpetofauna taker’s licence)
+                    </li>
+                    <li>
+                        Farm, breed, keep and sell pet herpetofauna (herpetofauna farmer’s licence)
+                    </li>
+                    <li>
+                        Bring pet herpetofauna into Western Australia (herpetofauna import licence)
+                    </li>
+                    <li>
+                        Take pet herpetofauna out of Western Australia (herpetofauna export licence)
+                    </li>
+                    <li>
+                        Remove venomous/dangerous and non-venomous reptiles from in or near residential or other premises
+                        frequented by people (reptile removalist’s licence)
+                    </li>
+                </ul>
+                <h3>
+                    IMPORT/EXPORT LICENCES
+                </h3>
+                <ul>
+                    <li>
+                        Take fauna out of Western Australia (export licence)
+                    </li>
+                    <li>
+                        Bring fauna into Western Australia (import licence)
+                    </li>
+                    <li>
+                        Import live exotic birds and other animals (exotic animal import licence)
+                    </li>
+                </ul>
+                <h3>
+                    CALM ACT LANDS AND WATERS
+                </h3>
+                <p>
+                    If you are intending to undertake activities on any lands or waters managed by the department under the
+                    <em>Conservation and Land Management Act 1984</em> (CALM Act land and waters), then you may need a lawful authority
+                    to do so. CALM Act land and waters includes nature reserves, national parks, conservation parks, marine nature
+                    reserves, marine parks, marine management areas, State forest and timber reserves, and a number of miscellaneous reserves.
+                </p>
             </div>
             <div class="col-md-4">
                 {% if not request.user.is_authenticated %}

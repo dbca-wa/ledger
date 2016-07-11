@@ -6,7 +6,7 @@ from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationLogEntry
 from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMixin
-from wildlifelicensing.apps.applications.utils import convert_application_data_files_to_url
+from wildlifelicensing.apps.applications.utils import convert_documents_to_url
 from wildlifelicensing.apps.main.models import Document
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.helpers import is_officer
@@ -24,7 +24,7 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
         kwargs['licence_type'] = application.licence_type
         kwargs['structure'] = application.licence_type.application_schema
 
-        convert_application_data_files_to_url(application.licence_type.application_schema,
+        convert_documents_to_url(application.licence_type.application_schema,
                                               application.data, application.documents.all())
 
         kwargs['application'] = application

@@ -22,7 +22,7 @@ from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
-    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_application_data_files_to_url, format_application, \
+    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
     format_amendment_request, format_assessment
 
 
@@ -42,17 +42,20 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         previous_lodgements = []
         for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
                 '-revision__date_created'):
-            previous_lodgements.append({'lodgement_number': revision.object_version.object.lodgement_number +
-                                        '-' + str(revision.object_version.object.lodgement_sequence),
+            previous_lodgement = revision.object_version.object
+            convert_documents_to_url(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
+                                     previous_lodgement.documents.all())
+            previous_lodgements.append({'lodgement_number': '{}-{}'.format(previous_lodgement.lodgement_number,
+                                                                           previous_lodgement.lodgement_sequence),
                                         'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
-                                        'data': revision.object_version.object.data})
+                                        'data': previous_lodgement.data})
 
         previous_application_returns_outstanding = False
         if application.previous_application is not None:
             previous_application_returns_outstanding = Return.objects.filter(licence=application.previous_application.licence).\
                 exclude(status='accepted').exclude(status='submitted').exists()
 
-        convert_application_data_files_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
         data = {
             'user': serialize(request.user),
