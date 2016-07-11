@@ -1270,7 +1270,7 @@
                                                                                 {
                                                                                     "type": "label",
                                                                                     "label": "What morphometrics and condition details will be recorded?",
-                                                                                    "name": "survey_level_1_mophometrics"
+                                                                                    "name": "survey_level_1_mophometrics_recorded"
                                                                                 },
                                                                                 {
                                                                                     "type": "checkbox",
@@ -2791,7 +2791,7 @@
                                                                                 {
                                                                                     "type": "label",
                                                                                     "label": "What morphometrics and condition details will be recorded?",
-                                                                                    "name": "survey_level_2_mophometrics"
+                                                                                    "name": "survey_level_2_mophometrics_recorded"
                                                                                 },
                                                                                 {
                                                                                     "type": "checkbox",
@@ -3889,7 +3889,7 @@
                                                                                 {
                                                                                     "type": "label",
                                                                                     "label": "What morphometrics and condition details will be recorded?",
-                                                                                    "name": "survey_sre_mophometrics"
+                                                                                    "name": "survey_sre_mophometrics_recorded"
                                                                                 },
                                                                                 {
                                                                                     "type": "checkbox",
@@ -4559,7 +4559,7 @@
                                                                     {
                                                                         "type": "label",
                                                                         "label": "What morphometrics and condition details will be recorded?",
-                                                                        "name": "survey_subterranean_mophometrics"
+                                                                        "name": "survey_subterranean_mophometrics_recorded"
                                                                     },
                                                                     {
                                                                         "type": "checkbox",
@@ -5656,7 +5656,7 @@
                                                                                 {
                                                                                     "type": "label",
                                                                                     "label": "What morphometrics and condition details will be recorded?",
-                                                                                    "name": "survey_aquatic_mophometrics"
+                                                                                    "name": "survey_aquatic_mophometrics_recorded"
                                                                                 },
                                                                                 {
                                                                                     "type": "checkbox",
@@ -6974,7 +6974,7 @@
                                                                                 {
                                                                                     "type": "label",
                                                                                     "label": "What morphometrics and condition details will be recorded?",
-                                                                                    "name": "survey_marine_mophometrics"
+                                                                                    "name": "survey_marine_mophometrics_recorded"
                                                                                 },
                                                                                 {
                                                                                     "type": "checkbox",
@@ -8388,7 +8388,7 @@
                                                                                 {
                                                                                     "type": "label",
                                                                                     "label": "What morphometrics and condition details will be recorded?",
-                                                                                    "name": "survey_targeted_mophometrics"
+                                                                                    "name": "survey_targeted_mophometrics_recorded"
                                                                                 },
                                                                                 {
                                                                                     "type": "checkbox",
@@ -10506,7 +10506,7 @@
                                                                     {
                                                                         "type": "label",
                                                                         "label": "What morphometrics and condition details will be recorded?",
-                                                                        "name": "monitoring_mophometrics"
+                                                                        "name": "monitoring_mophometrics_recorded"
                                                                     },
                                                                     {
                                                                         "type": "checkbox",
@@ -11930,7 +11930,7 @@
                                                         {
                                                             "type": "label",
                                                             "label": "What morphometrics and condition details will be recorded?",
-                                                            "name": "research_mophometrics"
+                                                            "name": "research_mophometrics_recorded"
                                                         },
                                                         {
                                                             "type": "checkbox",

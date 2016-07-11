@@ -137,17 +137,17 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         return $childrenAnchorPoint;
     }
 
-	function _getInputChildrenAnchorPoint($input) {
-		if($input.siblings('.children-anchor-point').length > 0) {
-			return $input.siblings('.children-anchor-point');
-		}
+    function _getInputChildrenAnchorPoint($input) {
+        if($input.siblings('.children-anchor-point').length > 0) {
+            return $input.siblings('.children-anchor-point');
+        }
 
-		if($input.parent().length > 0) {
-			return _getInputChildrenAnchorPoint($input.parent());
-		} else {
-			return null;
-		}	
-	}
+        if($input.parent().length > 0) {
+            return _getInputChildrenAnchorPoint($input.parent());
+        } else {
+            return null;
+        }
+    }
 
     function _getInputValue(item, $input) {
         if(item.type === 'radiobuttons') {
@@ -161,9 +161,14 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
     function _setupCopyRemoveEvents(item, itemSelector, suffix) {
         itemSelector.find('[id^="copy_' + item.name + '"]').first().click(function(e) {
-            var itemCopy = itemSelector.clone(true, true);
+            var itemCopy = itemSelector.clone(true, true),
                 groupInput = $('[name^="' + item.name + suffix + '"]'),
                 groupCount = parseInt(groupInput.val());
+
+            // clone doesn't copy selected item in select elements, so need to do it manually
+            itemSelector.find('select').each(function(index) {
+                $(itemCopy).find('select').eq(index).val($(this).val());
+            });
 
             // update field names to have correct suffix
             itemCopy.find('input, select').each(function() {
@@ -171,10 +176,10 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                     namePrefix = name.substring(0, name.indexOf(suffix) + suffix.length),
                     nameSuffix = name.substring(namePrefix.length);
 
-                    // cut out first section of nameSuffix to be replaced with current index
-                    nameSuffix = nameSuffix.substring(nameSuffix.indexOf('-', 1));
+                // cut out first section of nameSuffix to be replaced with current index
+                nameSuffix = nameSuffix.substring(nameSuffix.indexOf('-', 1));
 
-                    $(this).attr('name', namePrefix + '-' + groupCount + nameSuffix);
+                $(this).attr('name', namePrefix + '-' + groupCount + nameSuffix);
             });
 
             itemCopy.find('[id^="remove_' + item.name + '"]').removeClass('hidden');

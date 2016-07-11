@@ -47,6 +47,8 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             } else {
                 itemContainer.append($('<p>').text("No file attached"));
             }
+        } else if(item.type === 'label') {
+            itemContainer.append($('<label>').text(item.label));
         } else {
             itemContainer.append($('<label>').text(item.label));
             if(item.value) {

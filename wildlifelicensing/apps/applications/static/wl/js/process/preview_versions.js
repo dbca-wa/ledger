@@ -15,7 +15,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             item.valuePrevious = itemDataPrevious[item.name];
         }
 
-        if(item.type === 'section' || item.type === 'group' || item.type === 'table') {
+        if(item.type === 'section' || item.type === 'group') {
             item.isPreviewMode = true;
             var $template = $(Handlebars.templates[item.type](item));
 
@@ -90,29 +90,55 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
                     itemContainer.append($('<p>').text("No file attached"));
                 }
             } else {
-                var currentFileLink = $('<a>'),
-                    previousFileLink = $('<a>');
+                if (item.valueCurrent && item.valuePrevious) {
+                    var currentFileLink = $('<a>'),
+                        previousFileLink = $('<a>');
 
-                currentFileLink.attr('href', item.valueCurrent);
-                currentFileLink.attr('target', '_blank');
-                currentFileLink.text(item.value.substr(item.valueCurrent.lastIndexOf('/') + 1));
+                    currentFileLink.attr('href', item.valueCurrent);
+                    currentFileLink.attr('target', '_blank');
+                    currentFileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
+                    currentFileLink.addClass('current-data')
 
-                previousFileLink.attr('href', item.valueCurrent);
-                previousFileLink.attr('target', '_blank');
-                previousFileLink.text(item.value.substr(item.valuePrevious.lastIndexOf('/') + 1));
+                    previousFileLink.attr('href', item.valuePrevious);
+                    previousFileLink.attr('target', '_blank');
+                    previousFileLink.text(item.valuePrevious.substr(item.valuePrevious.lastIndexOf('/') + 1));
+                    previousFileLink.addClass('previous-data')
 
-                itemContainer.append(currentFileLink).addClass('current-data');
-                itemContainer.append(previousFileLink).addClass('previous-data');
+                    itemContainer.append($('<p>').append(currentFileLink));
+                    itemContainer.append($('<p>').append(previousFileLink).addClass('previous-data'));
+                } else if (item.valueCurrent && !item.valuePrevious) {
+                    var currentFileLink = $('<a>');
+
+                    currentFileLink.attr('href', item.valueCurrent);
+                    currentFileLink.attr('target', '_blank');
+                    currentFileLink.text(item.valueCurrent.substr(item.valueCurrent.lastIndexOf('/') + 1));
+                    currentFileLink.addClass('current-data')
+
+                    itemContainer.append($('<p>').append(currentFileLink));
+                    itemContainer.append($('<p>').addClass('previous-data').text("Not specified"));
+                } else if (!item.valueCurrent && item.valuePrevious) {
+                    var previousFileLink = $('<a>');
+
+                    previousFileLink.attr('href', item.valuePrevious);
+                    previousFileLink.attr('target', '_blank');
+                    previousFileLink.text(item.valuePrevious.substr(item.valuePrevious.lastIndexOf('/') + 1));
+                    previousFileLink.addClass('previous-data')
+
+                    itemContainer.append($('<p>').addClass('current-data').text("Not specified"));
+                    itemContainer.append($('<p>').append(previousFileLink));
+                }
             }
+        } else if (item.type == 'label') {
+            itemContainer.append($('<label>').text(item.label));
         } else {
             itemContainer.append($('<label>').text(item.label));
 
             if(item.valueCurrent === item.valuePrevious || (item.valuePrevious === undefined && isRepeat)) {
-	            if(item.valueCurrent) {
-	                itemContainer.append($('<p>').text(item.valueCurrent));
-	            } else {
-	                itemContainer.append($('<p>').text("Not specified"));
-	            }
+                if(item.valueCurrent) {
+                    itemContainer.append($('<p>').text(item.valueCurrent));
+                } else {
+                    itemContainer.append($('<p>').text("Not specified"));
+                }
             } else {
                 itemContainer.append($('<p>').addClass('current-data').text(item.valueCurrent));
                 itemContainer.append($('<p>').addClass('previous-data').text(item.valuePrevious));

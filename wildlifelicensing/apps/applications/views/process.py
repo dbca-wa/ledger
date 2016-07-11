@@ -42,10 +42,13 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         previous_lodgements = []
         for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
                 '-revision__date_created'):
-            previous_lodgements.append({'lodgement_number': revision.object_version.object.lodgement_number +
-                                        '-' + str(revision.object_version.object.lodgement_sequence),
+            previous_lodgement = revision.object_version.object
+            convert_documents_to_url(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
+                                     previous_lodgement.documents.all())
+            previous_lodgements.append({'lodgement_number': '{}-{}'.format(previous_lodgement.lodgement_number,
+                                                                           previous_lodgement.lodgement_sequence),
                                         'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
-                                        'data': revision.object_version.object.data})
+                                        'data': previous_lodgement.data})
 
         previous_application_returns_outstanding = False
         if application.previous_application is not None:
