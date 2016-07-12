@@ -121,34 +121,36 @@ def prepend_url_to_files(item, data, root_url):
     if root_url[-1] != '/':
         root_url += '/'
 
-    if isinstance(item, list):
-        for i, child in enumerate(item):
-            prepend_url_to_files(child, data[i], root_url)
-    elif 'children' in item:
-        for child in item['children']:
-            for child_data in data[item['name']]:
-                prepend_url_to_files(child, child_data, root_url)
-    else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                data[item['name']] = root_url + data[item['name']]
+    if item is not None:
+        if isinstance(item, list) and isinstance(data, list):
+            for i, child in enumerate(item):
+                prepend_url_to_files(child, data[i], root_url)
+        elif 'children' in item:
+            for child in item['children']:
+                for child_data in data[item['name']]:
+                    prepend_url_to_files(child, child_data, root_url)
+        else:
+            if not isinstance(item, list) and item.get('type', '') == 'file':
+                if item['name'] in data and len(data[item['name']]) > 0:
+                    data[item['name']] = root_url + data[item['name']]
 
 
 def convert_documents_to_url(item, data, document_queryset):
-    if isinstance(item, list):
-        for i, child in enumerate(item):
-            convert_documents_to_url(child, data[i], document_queryset)
-    elif 'children' in item:
-        for child in item['children']:
-            for child_data in data[item['name']]:
-                convert_documents_to_url(child, child_data, document_queryset)
-    else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                try:
-                    data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
-                except Document.DoesNotExist:
-                    pass
+    if item is not None:
+        if isinstance(item, list) and isinstance(data, list):
+            for i, child in enumerate(item):
+                convert_documents_to_url(child, data[i], document_queryset)
+        elif 'children' in item:
+            for child in item['children']:
+                for child_data in data[item['name']]:
+                    convert_documents_to_url(child, child_data, document_queryset)
+        else:
+            if not isinstance(item, list) and item.get('type', '') == 'file':
+                if item['name'] in data and len(data[item['name']]) > 0:
+                    try:
+                        data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
+                    except Document.DoesNotExist:
+                        pass
 
 
 class SessionDataMissingException(Exception):

@@ -6,7 +6,7 @@ from wildlifelicensing.apps.main.helpers import is_assessor, get_user_assessor_g
 
 
 class TestViewAccess(TestCase):
-    fixtures = ['licences.json', 'conditions.json']
+    fixtures = ['licences.json', 'conditions.json', 'returns.json']
 
     def setUp(self):
         self.client = SocialClient()
@@ -22,9 +22,10 @@ class TestViewAccess(TestCase):
         self.assessment_condition = AssessmentCondition.objects.create(assessment=self.assessment,
                                                                        condition=self.condition,
                                                                        order=1)
+
         self.urls_get = [
             reverse('wl_applications:enter_conditions', args=[self.application.pk]),
-            reverse('wl_applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
+            #reverse('wl_applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
             reverse('wl_applications:search_conditions')
         ]
 
@@ -45,13 +46,6 @@ class TestViewAccess(TestCase):
             },
             {
                 'url': reverse('wl_applications:submit_conditions', args=[self.application.pk]),
-                'data': {
-                    'conditionID': [self.condition.pk],
-                }
-            },
-            {
-                'url': reverse('wl_applications:submit_conditions_assessor',
-                               args=[self.application.pk, self.assessment.pk]),
                 'data': {
                     'conditionID': [self.condition.pk],
                 }

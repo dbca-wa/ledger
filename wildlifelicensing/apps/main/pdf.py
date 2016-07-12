@@ -113,12 +113,32 @@ def _create_header(canvas, doc):
 
 
 def _get_authorised_person_names(application):
-    authorised_persons = []
-    for ap in application.data.get('authorised_persons', []):
-        if ap.get('ap_given_names') and ap.get('ap_given_names'):
-            authorised_persons.append('%s %s' % (ap['ap_given_names'], ap['ap_surname']))
+    def __find_authorised_persons_dict(data):
+        authorised_persons = []
+        for item in data:
+            if isinstance(item, list):
+                authorised_persons = __find_authorised_persons_dict(item)
+                if len(authorised_persons) > 0:
+                    return authorised_persons
+            if isinstance(item, dict):
+                if 'authorised_persons' in item:
+                    return item['authorised_persons']
+                else:
+                    for value in item.values():
+                        if isinstance(value, list):
+                            authorised_persons = __find_authorised_persons_dict(value)
+                            if len(authorised_persons) > 0:
+                                return authorised_persons
 
-    return authorised_persons
+        return authorised_persons
+
+    authorised_person_names = []
+
+    for ap in __find_authorised_persons_dict(application.data):
+        if ap.get('ap_given_names') and ap.get('ap_given_names'):
+            authorised_person_names.append('%s %s' % (ap['ap_given_names'], ap['ap_surname']))
+
+    return authorised_person_names
 
 
 def _create_licence(licence_buffer, licence, application, site_url, original_issue_date):
@@ -126,8 +146,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
     every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_header)
 
-    doc = BaseDocTemplate(licence_buffer, pageTemplates=[every_page_template],
-                          pagesize=A4)
+    doc = BaseDocTemplate(licence_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
     # this is the only way to get data into the onPage callback function
     doc.licence = licence

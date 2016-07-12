@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 
 from wildlifelicensing.apps.applications.models import Assessment
 from wildlifelicensing.apps.dashboard.views import base
@@ -67,6 +68,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
 
     columns_helpers = dict(**{
         'application.lodgement_number': {
+            'search': lambda self, search: DataTableApplicationAssessorView._search_lodgement_number(self, search),
             'render': lambda self, instance: base.render_lodgement_number(instance.application)
         },
         'application.applicant_profile.user': {
@@ -98,8 +100,19 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
             reverse('wl_applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
         )
 
+    @staticmethod
+    def _search_lodgement_number(self, search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            lodgement_number, lodgement_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(application__lodgement_number__icontains=lodgement_number) & \
+                Q(application__lodgement_sequence__icontains=lodgement_sequence)
+        else:
+            return Q(application__lodgement_number__icontains=search)
+
     def get_initial_queryset(self):
         groups = self.request.user.assessorgroup_set.all()
-        assessments = Assessment.objects.filter(assessor_group__in=groups).filter(
-            status='awaiting_assessment')
+        assessments = Assessment.objects.filter(assessor_group__in=groups).filter(status='awaiting_assessment')
         return assessments

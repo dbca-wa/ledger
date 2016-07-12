@@ -35,7 +35,7 @@ class TestStatusLifeCycle(TestCase):
         self.assertTrue(is_client_authenticated(self.client))
         clear_mailbox()
         data = {
-            'user': self.officer.pk,
+            'officer': self.officer.pk,
             'application': application.pk,
             'reason': IDRequest.REASON_CHOICES[0][0],
             'text': 'you to upload an ID.'
