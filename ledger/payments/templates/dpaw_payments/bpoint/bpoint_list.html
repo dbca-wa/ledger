@@ -1,0 +1,106 @@
+{% extends 'dashboard/layout.html' %}
+{% load i18n %}
+
+{% block extrastyles %}
+    {{block.super }}
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/localforage/1.3.1/localforage.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+{% endblock %}
+
+{%block title %}
+    {% trans "BPAY Transactions" %} | {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url 'dashboard:index' %}">{% trans "Dashboard" %}</a>
+            <span class="divider"></span>
+        </li>
+        <li>
+            <a href="{% url 'bpoint-dash-list' %}">{% trans "BPOINT" %}</a>
+            <span class="divider"></span>
+        </li>
+        <li class="active">{% trans "Transactions" %}</li>
+    </ul>
+{% endblock %}
+
+{% block headertext %}
+    {% trans "BPOINT Transactions" %}
+{% endblock %}
+
+{% block dashboard_content %}
+    {% verbatim %}
+    <script id="bpay_transactions" type="text/x-handlebars-template" data-url="/dpaw_payments/api/bpoint.json" data-onload="upgradeTable">
+        <table id="transactions_table" class="table table-striped table-bordered responsive">
+            <thead>
+                <tr>
+                    <th>Transaction Number</th>
+                    <th>Order Number</th>
+                    <th>Amount</th>
+                    <th>Transaction Action</th>
+                    <th>Settlement Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>{{#each .}}
+                    <tr>
+                        <td>{{ this.txn_number }}</td>
+                        <td>{{ this.order }}</td>
+                        <td>{{ this.amount }}</td>
+                        <td>{{ this.action }}</td>
+                        <td>{{ this.settlement_date }}</td>
+                        <td>
+                            <a href="/dashboard/dpaw_payments/bpoint/transaction/{{this.txn_number }}" class="btn btn-info">View</a>
+                        </td>
+                    </tr>
+                    {{/each}}
+            </tbody>
+        </table>
+    </script>
+    {% endverbatim %}
+{% endblock %}
+
+{% block extrascripts %}
+    {{block.super}}
+    <script>
+        window._renderHandlebars = function(tmpl, data, callback) {
+            tmpl.after(data);
+            window[callback]();
+        }
+    
+        window.renderHandlebars = function() {
+            $("script[data-url]").each(function() {
+                var tmpl = $(this);
+                var url = tmpl.attr("data-url");
+                var callback = tmpl.attr("data-onload");
+                localforage.getItem(url).then(function(data) {
+                    if (data) { _renderHandlebars(tmpl, data, callback) }
+                    $.get(url, function(rawdata) {
+                        console.log(rawdata);
+                        var comp_data = Handlebars.compile(tmpl.html())(rawdata);
+                        localforage.setItem(url, comp_data);
+                        if (!data) { _renderHandlebars(tmpl, comp_data, callback) }
+                    });
+                });
+            });
+        }
+
+        $(document).ready(renderHandlebars);
+    </script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.10/css/dataTables.foundation.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.0/css/fixedHeader.foundation.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/scroller/1.4.0/css/scroller.foundation.css"/>
+ 
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.10/js/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.10/js/dataTables.foundation.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.0/js/dataTables.fixedHeader.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/scroller/1.4.0/js/dataTables.scroller.js"></script>
+    
+    <script>
+        window.upgradeTable = function(){
+            $('#transactions_table').DataTable();
+        }
+        
+    </script>
+{% endblock %}

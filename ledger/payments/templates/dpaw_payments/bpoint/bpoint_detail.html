@@ -1,0 +1,114 @@
+{% extends 'dashboard/layout.html' %}
+{% load i18n %}
+
+{% block extrastyles %}
+    {{block.super }}
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/localforage/1.3.1/localforage.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+{% endblock %}
+
+{%block title %}
+    {% trans "BOINT Transaction" %} | {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url 'dashboard:index' %}">{% trans "Dashboard" %}</a>
+            <span class="divider"></span>
+        </li>
+        <li>
+            <a href="{% url 'bpoint-dash-list' %}">{% trans "BPOINT" %}</a>
+            <span class="divider"></span>
+        </li>
+        <li class="active">{{ txn.txn_number }}</li>
+    </ul>
+{% endblock %}
+
+{% block headertext %}
+    {% blocktrans with id=txn.txn_number %}
+        Transaction {{ id}}
+    {% endblocktrans %}
+{% endblock %}
+
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-sm-4 col-sm-offset-3">
+            <h1>Order Details</h1>
+            <div>
+                <p><strong>Order Number:</strong> #{{txn.order.number}}</p>
+                <p><strong>Order Amount:</strong> {{txn.order.total_incl_tax}}</p>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <h1>Payment Amounts</h1>
+            <div>
+                <p><strong>Amount Paid:</strong> {{txn.amount}}</p>
+                <p><strong>Amount Original:</strong> {{txn.amount_original}}</p>
+                <p><strong>Amount Surchage:</strong> {{txn.amount_surcharge}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-4 col-sm-offset-3">
+            <h1>Financial Details</h1>
+            <div>
+                <p><strong>Type:</strong> {{txn.action}}</p>
+                <p><strong>Receipt Number:</strong> {{txn.receipt_number}}</p>
+                <p><strong>Payment Source:</strong> {{txn.type}}</p>
+                <p><strong>Payment Date:</strong> {{txn.processed}}</p>
+                <p><strong>Settlement Date:</strong> {{txn.settlement_date}}</p>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <h1>Response Details</h1>
+            <div>
+                <p><strong>Response Text:</strong> {{txn.response_txt}}</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extrascripts %}
+    {{block.super}}
+    <script>
+        window._renderHandlebars = function(tmpl, data, callback) {
+            tmpl.after(data);
+            window[callback]();
+        }
+    
+        window.renderHandlebars = function() {
+            $("script[data-url]").each(function() {
+                var tmpl = $(this);
+                var url = tmpl.attr("data-url");
+                var callback = tmpl.attr("data-onload");
+                localforage.getItem(url).then(function(data) {
+                    if (data) { _renderHandlebars(tmpl, data, callback) }
+                    $.get(url, function(rawdata) {
+                        console.log(rawdata);
+                        var comp_data = Handlebars.compile(tmpl.html())(rawdata);
+                        localforage.setItem(url, comp_data);
+                        if (!data) { _renderHandlebars(tmpl, comp_data, callback) }
+                    });
+                });
+            });
+        }
+
+        $(document).ready(renderHandlebars);
+    </script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.10/css/dataTables.foundation.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.0/css/fixedHeader.foundation.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/scroller/1.4.0/css/scroller.foundation.css"/>
+ 
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.10/js/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.10/js/dataTables.foundation.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.0/js/dataTables.fixedHeader.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/scroller/1.4.0/js/dataTables.scroller.js"></script>
+    
+    <script>
+        window.upgradeTable = function(){
+            $('#transactions_table').DataTable();
+        }
+        
+    </script>
+{% endblock %}

@@ -3,7 +3,6 @@ from oscar.defaults import *
 from oscar import get_core_apps, OSCAR_MAIN_TEMPLATE_DIR
 
 import os
-
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -45,6 +44,11 @@ INSTALLED_APPS = [
     ]) + [
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
+    'ledger.payments',
+    'ledger.payments.bpay',
+    'ledger.payments.bpoint',
+    'ledger.payments.cash',
+    'ledger.payments.invoice',
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
     'wildlifelicensing.apps.applications',
@@ -263,3 +267,36 @@ LOGGING = {
         },
     }
 }
+#BPAY settings
+BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
+# BPOINT settings
+BPOINT_CURRENCY='AUD'
+BPOINT_BILLER_CODE=env('BPOINT_BILLER_CODE')
+BPOINT_USERNAME=env('BPOINT_USERNAME')
+BPOINT_PASSWORD=env('BPOINT_PASSWORD')
+BPOINT_MERCHANT_NUM=env('BPOINT_MERCHANT_NUM')
+BPOINT_TEST=True
+# Oscar settings
+from oscar.defaults import *
+OSCAR_ALLOW_ANON_CHECKOUT = True
+
+OSCAR_DASHBOARD_NAVIGATION.append(
+    {
+        'label': 'P&W Payments',
+        'icon': 'icon-globe',
+        'children': [
+            {
+                'label': 'Invoices',
+                'url_name': 'invoices-list',
+            },
+            {
+                'label': 'BPAY collections',
+                'url_name': 'bpay-collection-list',
+            },
+            {
+                'label': 'BPOINT transactions',
+                'url_name': 'bpoint-dash-list',
+            },
+        ]
+    }
+)
