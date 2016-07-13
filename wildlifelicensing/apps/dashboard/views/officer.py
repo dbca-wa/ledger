@@ -157,7 +157,8 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
-            'render': lambda self, instance: base.render_lodgement_number(instance)
+            'search': lambda self, search: DataTableApplicationsOfficerView._search_lodgement_number(search),
+            'render': lambda self, instance: base.render_lodgement_number(instance),
         },
         'assigned_officer': {
             'search': lambda self, search: base.build_field_query(
@@ -193,6 +194,17 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         return Q(processing_status=value) if value != 'all' else ~Q(customer_status='draft')
 
     @staticmethod
+    def _search_lodgement_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            lodgement_number, lodgement_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(lodgement_number__icontains=lodgement_number) & Q(lodgement_sequence__icontains=lodgement_sequence)
+        else:
+            return Q(lodgement_number__icontains=search)
+
+    @staticmethod
     def _render_action_column(obj):
         if obj.processing_status == 'ready_for_conditions':
             return '<a href="{0}">Enter Conditions</a>'.format(
@@ -211,6 +223,9 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             return '<a href="{0}">Process</a>'.format(
                 reverse('wl_applications:process', args=[obj.pk]),
             )
+
+    def get_initial_queryset(self):
+        return Application.objects.exclude(processing_status='draft')
 
 
 class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
@@ -379,6 +394,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     columns_helpers = {
         'licence_number': {
+            'search': lambda self, search: DataTableLicencesOfficerView._search_licence_number(search),
             'render': lambda self, instance: base.render_licence_number(instance)
         },
         'profile.user': {
@@ -425,6 +441,17 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             return Q(licence_type__pk=value)
         else:
             return None
+
+    @staticmethod
+    def _search_licence_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(licence_number__icontains=licence_number) & Q(licence_sequence__icontains=licence_sequence)
+        else:
+            return Q(licence_number__icontains=search)
 
     @staticmethod
     def _render_action(instance):
@@ -541,9 +568,8 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         },
         'licence_number': {
             'render': lambda self, instance: base.render_licence_number(instance.licence),
-            'search': lambda self, search: base.build_field_query([
-                'licence__licence_number', 'licence__licence_sequence'],
-                search),
+            'search': lambda self, search: DataTableReturnsOfficerView._search_licence_number(search),
+
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
@@ -596,6 +622,17 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             return Q(status=value)
         else:
             return None
+
+    @staticmethod
+    def _search_licence_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(licence__licence_number__icontains=licence_number) & Q(licence__licence_sequence__icontains=licence_sequence)
+        else:
+            return Q(licence__licence_number__icontains=search)
 
     def get_initial_queryset(self):
         return Return.objects.all()

@@ -1,9 +1,19 @@
 {% block greetings %}
-    Dear Sir/Madam,
-{%  endblock %}
+Dear Sir/Madam,
+{% endblock %}
+
 {% block content %}
-{%  endblock %}
+{% endblock %}
+
 {% block signature %}
-Best regards,
-Parks and Wildlife Customer Portal
+Yours sincerely,
+
+Wildlife Licensing Section
+{% endblock %}
+
+
+
+{% block reply_statement %}
+Please do not replay directly to this email. Should you need to contact the licensing section of the Department of 
+Parks and Wildlife, please send emails to wildlifelicensing@dpaw.wa.gov.au or call (08) 9219 9000.</em></strong>
 {% endblock %}

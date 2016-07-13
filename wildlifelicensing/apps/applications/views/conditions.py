@@ -67,7 +67,7 @@ class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
         query = request.GET.get('q')
 
         if query is not None:
-            q = Q(code__icontains=query) | Q(text__icontains=query) & Q(one_off=False)
+            q = (Q(code__icontains=query) | Q(text__icontains=query)) & Q(one_off=False)
             qs = Condition.objects.filter(q)
         else:
             qs = Condition.objects.none()
