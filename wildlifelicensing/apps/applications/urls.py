@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from wildlifelicensing.apps.applications.views.entry import NewApplicationView, SelectLicenceTypeView, \
     CreateSelectCustomer, EditApplicationView, CheckIdentificationRequiredView, CreateSelectProfileView, \
-    EnterDetailsView, PreviewView, RenewLicenceView
+    EnterDetailsView, PreviewView, ApplicationCompleteView, RenewLicenceView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
@@ -32,6 +32,7 @@ urlpatterns = [
     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details_existing_application'),
     url('^([\w-]+)/preview/$', PreviewView.as_view(), name='preview'),
     url('^([\w-]+)/preview/([0-9]+)/$', PreviewView.as_view(), name='preview'),
+    url('^([\w-]+)/complete/([0-9]+)/$', ApplicationCompleteView.as_view(), name='complete'),
     url('^renew-licence/([0-9]+)/$', RenewLicenceView.as_view(), name='renew_licence'),
 
     # process
