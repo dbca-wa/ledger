@@ -232,7 +232,12 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
         kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=ret.licence.holder.email, fromm=self.request.user.email)
+        if ret.proxy_customer is None:
+            to = ret.licence.holder
+        else:
+            to = ret.proxy_customer
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.email, fromm=self.request.user.email)
 
         return super(CurateReturnView, self).get_context_data(**kwargs)
 
@@ -307,10 +312,7 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
         if form.is_valid():
             ret = get_object_or_404(Return, pk=args[0])
 
-            if ret.proxy_customer is None:
-                customer = ret.licence.holder
-            else:
-                customer = ret.proxy_customer
+            customer = ret.licence.holder
 
             officer = request.user
 

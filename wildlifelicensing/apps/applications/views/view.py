@@ -58,10 +58,7 @@ class AddApplicationLogEntryView(OfficerRequiredMixin, View):
         if form.is_valid():
             application = get_object_or_404(Application, pk=args[0])
 
-            if application.proxy_applicant is None:
-                customer = application.applicant_profile.user
-            else:
-                customer = application.proxy_applicant
+            customer = application.applicant_profile.user
 
             officer = request.user
 

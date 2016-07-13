@@ -163,11 +163,12 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     elements.append(Paragraph(licence.licence_type.authority, styles['InfoTitleLargeRight']))
 
     # licence conditions
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Conditions', styles['InfoTitleLargeCenter']))
-    conditionList = ListFlowable([Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
-                                 bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
-    elements.append(conditionList)
+    if application.conditions.exists():
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements.append(Paragraph('Conditions', styles['InfoTitleLargeCenter']))
+        conditionList = ListFlowable([Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
+                                     bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
+        elements.append(conditionList)
 
     # purpose
     if licence.purpose:
@@ -208,9 +209,8 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         date_headings.insert(0, Paragraph('Original Date of Issue', styles['BoldLeft']))
         date_values.insert(0, Paragraph(original_issue_date.strftime(DATE_FORMAT), styles['Left']))
 
-    elements.append(Table([[date_headings, date_values,
-                            Paragraph('Licensing Officer', styles['BoldRight'])]],
-                          colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 200, 80),
+    elements.append(Table([[date_headings, date_values]],
+                          colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                           style=dates_licensing_officer_table_style))
 
     # licensee details
@@ -224,6 +224,11 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                             [Paragraph(render_user_name(application.applicant_profile.user), styles['Left'])] + address_paragraphs]],
                           colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                           style=licence_table_style))
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('Issued by a Wildlife Licensing Officer of the Department of Parks and Wildlife '
+                              'under delegation from the Minister for Environment pursuant to section 133(1) '
+                              'of the Conservation and Land Management Act 1984.', styles['Left']))
 
     doc.build(elements)
 
