@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     ]) + [
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
+    'ledger.taxonomy',
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
     'wildlifelicensing.apps.applications',
@@ -120,6 +121,8 @@ EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
 WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wildlifelicensing@dpaw.wa.gov.au')
 
+KMI_WFS_URL = env('KMI_WFS_URL', 'https://kmi.dpaw.wa.gov.au/geoserver/ows?service=wfs&version=1.1.0&'
+                  'request=GetFeature&typeNames=dpaw:herbie_hbvspecies&outputFormat=application/json')
 
 TEMPLATES = [
     {

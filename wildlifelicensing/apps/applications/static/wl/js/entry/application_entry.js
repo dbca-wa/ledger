@@ -227,6 +227,15 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                 format: 'DD/MM/YYYY'
             });
 
+            // initialise species typeaheads
+            $('.species').typeahead({
+                source: function (query, process) {
+                    return $.get('search?q=' + query, function (data) {
+                        return process(data.search_results);
+                    });
+                }
+            });
+
             // initialise parsley form validation
             $('form').parsley({
                 successClass: "has-success",

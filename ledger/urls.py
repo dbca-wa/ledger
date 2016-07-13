@@ -24,5 +24,6 @@ urlpatterns = [
     url(r'^ledger/', include('ledger.accounts.urls', namespace='accounts')),
     url(r'^ledger/', include('social.apps.django_app.urls', namespace='social')),
     url(r'^ledger/checkout/', application.urls),
+    url(r'^taxonomy/', include('ledger.taxonomy.urls')),
     url(r'^$', TemplateView.as_view(template_name='customers/base.html'), name='home')
 ]
