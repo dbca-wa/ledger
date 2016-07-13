@@ -287,7 +287,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <form method="post" action="{% url 'wl_applications:process' data.application.id %}">
+                            <form id="submissionForm" method="post" action="{% url 'wl_applications:process' data.application.id %}">
                                 {% csrf_token %}
                                 <button id="approve" type="submit" name="enterConditions" type="button"
                                         class="btn btn-sm btn-success pull-right disabled"

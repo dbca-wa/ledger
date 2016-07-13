@@ -584,7 +584,8 @@ define([
 
     function determineApplicationApprovable() {
         var approvable = false,
-            $approve = $('#approve');
+            $submittionForm = $('#submissionForm'),
+            $approve = $submittionForm.find('#approve');
 
         if ((application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required) {
             if ((application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application) {
@@ -599,9 +600,13 @@ define([
         if(approvable) {
             $approve.removeClass('disabled');
             $approve.tooltip('destroy');
+            $submittionForm.off('submit');
         } else {
             $approve.addClass('disabled');
             $approve.tooltip({});
+            $submittionForm.submit(function(e) {
+                e.preventDefault();
+            });
         }
     }
 
