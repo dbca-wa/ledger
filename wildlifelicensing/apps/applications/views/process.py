@@ -1,5 +1,5 @@
 from django.core.context_processors import csrf
-
+from django.contrib import messages
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404, redirect
@@ -93,10 +93,21 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
-        application.processing_status = 'ready_for_conditions'
-        application.save()
 
-        return redirect('wl_applications:enter_conditions', *args, **kwargs)
+        if 'enterConditions' in request.POST:
+            application.processing_status = 'ready_for_conditions'
+            application.save()
+
+            return redirect('wl_applications:enter_conditions', *args, **kwargs)
+        elif 'decline' in request.POST:
+            application.processing_status = 'declined'
+            application.save()
+
+            messages.warning(request, 'The application was declined.')
+
+            return redirect('wl_dashboard:tables_applications_officer')
+        else:
+            return redirect('wl_applications:process', application.pk, **kwargs)
 
 
 class AssignOfficerView(OfficerRequiredMixin, View):
