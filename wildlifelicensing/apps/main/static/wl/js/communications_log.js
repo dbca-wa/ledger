@@ -184,7 +184,10 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
 
         // activate popover when table is drawn.
         $table.on('draw.dt', function () {
-            $table.find('[data-toggle="popover"]').popover();
+            var $tablePopover = $table.find('[data-toggle="popover"]');
+            if($tablePopover.length > 0) {
+                $tablePopover.popover();
+            }
         });
 
         return dataTable.initTable($table, tableOptions, colDefinitions);

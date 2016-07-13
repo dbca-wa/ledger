@@ -357,10 +357,10 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
         filters = {
             'status': {
                 'values': [
+                    (self.STATUS_FILTER_ALL, self.STATUS_FILTER_ALL.capitalize()),
                     (self.STATUS_FILTER_ACTIVE, self.STATUS_FILTER_ACTIVE.capitalize()),
                     (self.STATUS_FILTER_RENEWABLE, self.STATUS_FILTER_RENEWABLE.capitalize()),
                     (self.STATUS_FILTER_EXPIRED, self.STATUS_FILTER_EXPIRED.capitalize()),
-                    (self.STATUS_FILTER_ALL, self.STATUS_FILTER_ALL.capitalize()),
                 ]
             }
         }
