@@ -157,7 +157,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
-            'search': lambda self, search: DataTableApplicationsOfficerView._search_lodgement_number(self, search),
+            'search': lambda self, search: DataTableApplicationsOfficerView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance),
         },
         'assigned_officer': {
@@ -194,7 +194,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         return Q(processing_status=value) if value != 'all' else ~Q(customer_status='draft')
 
     @staticmethod
-    def _search_lodgement_number(self, search):
+    def _search_lodgement_number(search):
         # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
@@ -394,7 +394,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     columns_helpers = {
         'licence_number': {
-            'search': lambda self, search: DataTableLicencesOfficerView._search_licence_number(self, search),
+            'search': lambda self, search: DataTableLicencesOfficerView._search_licence_number(search),
             'render': lambda self, instance: base.render_licence_number(instance)
         },
         'profile.user': {
@@ -443,7 +443,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             return None
 
     @staticmethod
-    def _search_licence_number(self, search):
+    def _search_licence_number(search):
         # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
@@ -568,7 +568,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         },
         'licence_number': {
             'render': lambda self, instance: base.render_licence_number(instance.licence),
-            'search': lambda self, search: DataTableReturnsOfficerView._search_licence_number(self, search),
+            'search': lambda self, search: DataTableReturnsOfficerView._search_licence_number(search),
 
         },
         'action': {
@@ -624,7 +624,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             return None
 
     @staticmethod
-    def _search_licence_number(self, search):
+    def _search_licence_number(search):
         # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')

@@ -25,7 +25,6 @@ class TestViewAccess(TestCase):
 
         self.urls_get = [
             reverse('wl_applications:enter_conditions', args=[self.application.pk]),
-            #reverse('wl_applications:enter_conditions_assessor', args=[self.application.pk, self.assessment.pk]),
             reverse('wl_applications:search_conditions')
         ]
 

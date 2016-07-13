@@ -141,7 +141,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
-            'search': lambda self, search: DataTableApplicationCustomerView._search_lodgement_number(self, search),
+            'search': lambda self, search: DataTableApplicationCustomerView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance)
         },
         'action': {
@@ -153,7 +153,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
     })
 
     @staticmethod
-    def _search_lodgement_number(self, search):
+    def _search_lodgement_number(search):
         # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
@@ -197,7 +197,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
     columns_helpers = {
         'licence_number': {
-            'search': lambda self, search: DataTableLicencesCustomerView._search_licence_number(self, search),
+            'search': lambda self, search: DataTableLicencesCustomerView._search_licence_number(search),
             'render': lambda self, instance: base.render_licence_number(instance)
         },
         'issue_date': {
@@ -236,7 +236,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
                 return 'Renewable in ' + str(expiry_days - 30) + ' days'
 
     @staticmethod
-    def _search_licence_number(self, search):
+    def _search_licence_number(search):
         # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
@@ -267,7 +267,7 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
         },
         'licence': {
             'render': lambda self, instance: base.render_licence_number(instance.licence),
-            'search': lambda self, search: DataTableReturnsCustomerView._search_licence_number(self, search)
+            'search': lambda self, search: DataTableReturnsCustomerView._search_licence_number(search)
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
@@ -303,7 +303,7 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
             return dict(Return.STATUS_CHOICES)[status]
 
     @staticmethod
-    def _search_licence_number(self, search):
+    def _search_licence_number(search):
         # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')

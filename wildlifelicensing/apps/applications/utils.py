@@ -130,7 +130,7 @@ def prepend_url_to_files(item, data, root_url):
                 for child_data in data[item['name']]:
                     prepend_url_to_files(child, child_data, root_url)
         else:
-            if not isinstance(item, list) and item.get('type', '') == 'file':
+            if isinstance(item, dict) and item.get('type', '') == 'file':
                 if item['name'] in data and len(data[item['name']]) > 0:
                     data[item['name']] = root_url + data[item['name']]
 
@@ -145,7 +145,7 @@ def convert_documents_to_url(item, data, document_queryset):
                 for child_data in data[item['name']]:
                     convert_documents_to_url(child, child_data, document_queryset)
         else:
-            if not isinstance(item, list) and item.get('type', '') == 'file':
+            if isinstance(item, dict) and item.get('type', '') == 'file':
                 if item['name'] in data and len(data[item['name']]) > 0:
                     try:
                         data[item['name']] = document_queryset.get(name=data[item['name']]).file.url

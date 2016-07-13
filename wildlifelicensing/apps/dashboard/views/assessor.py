@@ -68,7 +68,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
 
     columns_helpers = dict(**{
         'application.lodgement_number': {
-            'search': lambda self, search: DataTableApplicationAssessorView._search_lodgement_number(self, search),
+            'search': lambda self, search: DataTableApplicationAssessorView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance.application)
         },
         'application.applicant_profile.user': {
@@ -101,7 +101,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
         )
 
     @staticmethod
-    def _search_lodgement_number(self, search):
+    def _search_lodgement_number(search):
         # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
