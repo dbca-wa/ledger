@@ -15,7 +15,7 @@ DEBUG = env('DEBUG', False)
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
-    ALLOWED_HOSTS = []  # FIXME in production
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS', []) 
 ROOT_URLCONF = 'ledger.urls'
 ROOT_HOSTCONF = 'ledger.hosts'
 DEFAULT_HOST = env('DEFAULT_HOST', 'ledger')
