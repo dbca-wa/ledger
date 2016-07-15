@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django_cron',
     ] + get_core_apps([  # django-oscar overrides
         'ledger.basket', 
-        'ledger.order'
+        'ledger.order',
+        'ledger.checkout'
     ]) + [
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
