@@ -185,6 +185,20 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                               colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                               style=licence_table_style))
 
+    # locations
+    if licence.locations:
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        locations = []
+        for location in licence.locations.split('\r\n'):
+            if location:
+                locations.append(Paragraph(location, styles['Left']))
+                locations.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        elements.append(Table([[Paragraph('Locations', styles['BoldLeft']), locations]],
+                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
+                              style=licence_table_style))
+
     # authorised persons
     authorised_persons = _get_authorised_person_names(application)
     if len(authorised_persons) > 0:

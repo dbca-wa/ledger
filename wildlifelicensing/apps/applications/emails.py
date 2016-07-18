@@ -69,7 +69,7 @@ def send_assessment_requested_email(assessment, request):
 
 
 class ApplicationAssessmentReminderEmail(TemplateEmailBase):
-    subject = 'Reminder: An amendment to you wildlife licensing application is required.'
+    subject = 'Reminder: An assessment to a wildlife licensing application is required.'
     html_template = 'wl/emails/application_assessment_reminder.html'
     txt_template = 'wl/emails/application_assessment_reminder.txt'
 
