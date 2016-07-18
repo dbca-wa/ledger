@@ -1,0 +1,47 @@
+[
+{
+    "model": "wl_main.defaultcondition",
+    "pk": 1,
+    "fields": {
+        "condition": 1,
+        "wildlife_licence_type": 1,
+        "order": 1
+    }
+},
+{
+    "model": "wl_main.defaultcondition",
+    "pk": 2,
+    "fields": {
+        "condition": 2,
+        "wildlife_licence_type": 1,
+        "order": 2
+    }
+},
+{
+    "model": "wl_main.defaultcondition",
+    "pk": 3,
+    "fields": {
+        "condition": 3,
+        "wildlife_licence_type": 1,
+        "order": 3
+    }
+},
+{
+    "model": "wl_main.defaultcondition",
+    "pk": 4,
+    "fields": {
+        "condition": 4,
+        "wildlife_licence_type": 1,
+        "order": 4
+    }
+},
+{
+    "model": "wl_main.defaultcondition",
+    "pk": 5,
+    "fields": {
+        "condition": 5,
+        "wildlife_licence_type": 1,
+        "order": 5
+    }
+}
+]

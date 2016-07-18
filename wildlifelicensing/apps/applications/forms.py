@@ -2,7 +2,7 @@ from django import forms
 
 from ledger.accounts.models import Profile
 
-from wildlifelicensing.apps.applications.models import IDRequest, ReturnsRequest, AmendmentRequest, ApplicationLogEntry
+from wildlifelicensing.apps.applications.models import IDRequest, ReturnsRequest, AmendmentRequest
 
 
 class ProfileSelectionForm(forms.Form):

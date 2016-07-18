@@ -123,12 +123,28 @@
                 ],
                 "conditions": 
                 {
+                    "grant": 
+                    [
+                        {
+                            "type": "text_area",
+                            "label": "Grant Details",
+                            "name": "grant_details"
+                        }
+                    ],
+                    "contract": 
+                    [
+                        {
+                            "type": "text_area",
+                            "label": "Contract Details",
+                            "name": "contract_details"
+                        }
+                    ],
                     "other": 
                     [
                         {
                             "type": "text_area",
                             "label": "Affiliated Organisation / Client / Sponsor",
-                            "name": "financial_details"
+                            "name": "financial_details_other"
                         }
                     ]
                 }
