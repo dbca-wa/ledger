@@ -1,5 +1,4 @@
 from django.dispatch import Signal, receiver
-from django.shortcuts import get_object_or_404
 
 from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.main.models import WildlifeLicence
@@ -14,7 +13,10 @@ def licence_issued_callback(sender, **kwargs):
     if 'wildlife_licence' in kwargs:
         licence = WildlifeLicence.objects.get(pk=kwargs.get('wildlife_licence'))
 
-        return_type = get_object_or_404(ReturnType, licence_type=licence.licence_type)
+        try:
+            return_type = ReturnType.objects.get(licence_type=licence.licence_type)
+        except ReturnType.DoesNotExist:
+            return
 
         due_dates = create_returns_due_dates(licence.start_date, licence.end_date, licence.return_frequency)
 

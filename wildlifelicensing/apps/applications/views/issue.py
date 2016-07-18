@@ -1,5 +1,3 @@
-import os
-
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
@@ -38,15 +36,20 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         else:
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
+            if hasattr(application.licence_type, 'returntype'):
+                return_frequency = application.licence_type.returntype.month_frequency
+            else:
+                return_frequency = -1
+
             kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable,
-                                                            return_frequency=application.licence_type.returntype.month_frequency)
+                                                            return_frequency=return_frequency)
 
         if application.proxy_applicant is None:
-            customer = application.applicant_profile.user
+            to = application.applicant_profile.user
         else:
-            customer = application.proxy_applicant
+            to = application.proxy_applicant
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.email, fromm=self.request.user.email)
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.email, fromm=self.request.user.email)
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
