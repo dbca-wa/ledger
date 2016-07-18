@@ -1,4 +1,4 @@
-define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker',
+define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker', 'bootstrap-3-typeahead',
         'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, repetition, suffix, itemData) {
         var $itemContainer = $('<div>'),
@@ -230,6 +230,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             // initialise species typeaheads
             $('.species').typeahead({
                 source: function (query, process) {
+                    console.log("typeahead", query);
                     return $.get('search?q=' + query, function (data) {
                         return process(data.search_results);
                     });
