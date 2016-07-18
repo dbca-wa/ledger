@@ -12,8 +12,6 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.http.response import JsonResponse
 
-
-from jsontableschema.model import SchemaModel
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
@@ -237,7 +235,7 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         else:
             to = ret.proxy_customer
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.email, fromm=self.request.user.email)
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
 
         return super(CurateReturnView, self).get_context_data(**kwargs)
 
@@ -326,6 +324,7 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                 'officer': officer,
                 'customer': customer,
                 'ret': ret,
+                'type': form.cleaned_data['type'],
                 'text': form.cleaned_data['text'],
                 'subject': form.cleaned_data['subject'],
                 'to': form.cleaned_data['to'],

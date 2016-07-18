@@ -72,6 +72,7 @@ class AddApplicationLogEntryView(OfficerRequiredMixin, View):
                 'officer': officer,
                 'customer': customer,
                 'application': application,
+                'type': form.cleaned_data['type'],
                 'text': form.cleaned_data['text'],
                 'subject': form.cleaned_data['subject'],
                 'to': form.cleaned_data['to'],

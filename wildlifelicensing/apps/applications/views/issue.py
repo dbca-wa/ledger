@@ -49,7 +49,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         else:
             to = application.proxy_applicant
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.email, fromm=self.request.user.email)
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
@@ -128,11 +128,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
             if application.proxy_applicant is None:
-                to = application.applicant_profile.user.email
+                to = application.applicant_profile.user.get_full_name()
             else:
-                to = application.proxy_applicant.email
+                to = application.proxy_applicant.get_full_name()
 
-            log_entry_form = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
+            log_entry_form = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
 
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
                                                         'issue_licence_form': IssueLicenceForm(purpose=purposes),

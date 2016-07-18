@@ -34,11 +34,11 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user.email
+            to = application.applicant_profile.user.get_full_name()
         else:
-            to = application.proxy_applicant.email
+            to = application.proxy_applicant.get_full_name()
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
