@@ -230,9 +230,8 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             // initialise species typeaheads
             $('.species').typeahead({
                 source: function (query, process) {
-                    console.log("typeahead", query);
-                    return $.get('search?q=' + query, function (data) {
-                        return process(data.search_results);
+                    return $.get('taxonomy/species_name?search=' + query, function (data) {
+                        return process(data);
                     });
                 }
             });
