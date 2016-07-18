@@ -193,7 +193,6 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         for location in licence.locations.split('\r\n'):
             if location:
                 locations.append(Paragraph(location, styles['Left']))
-                locations.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         elements.append(Table([[Paragraph('Locations', styles['BoldLeft']), locations]],
                               colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
