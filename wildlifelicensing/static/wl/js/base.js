@@ -3,7 +3,8 @@ require(['jQuery', 'bootstrap'], function ($) { // bootstrap returns nothing so 
         $('[data-toggle="popover"]').each(function () {
             //the 'is' for buttons that trigger popups
             //the 'has' for icons within a button that triggers a popup
-            if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
+            if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $(e.target).parents('.popover').length === 0 
+                    && $.contains(document, e.target)) {
                 $(this).popover('hide');
             }
         });

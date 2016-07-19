@@ -3,7 +3,7 @@ import os
 from io import BytesIO
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 
@@ -185,6 +185,19 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                               colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                               style=licence_table_style))
 
+    # locations
+    if licence.locations:
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        locations = []
+        for location in licence.locations.split('\r\n'):
+            if location:
+                locations.append(Paragraph(location, styles['Left']))
+
+        elements.append(Table([[Paragraph('Locations', styles['BoldLeft']), locations]],
+                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
+                              style=licence_table_style))
+
     # authorised persons
     authorised_persons = _get_authorised_person_names(application)
     if len(authorised_persons) > 0:
@@ -194,11 +207,14 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                               colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                               style=licence_table_style))
 
+    # delegation holds the dates, licencee and issuer details.
+    delegation = []
+
     # dates and licensing officer
     dates_licensing_officer_table_style = TableStyle([('VALIGN', (0, 0), (-2, -1), 'TOP'),
                                                       ('VALIGN', (0, 0), (-1, -1), 'BOTTOM')])
 
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     date_headings = [Paragraph('Date of Issue', styles['BoldLeft']), Paragraph('Valid From', styles['BoldLeft']),
                      Paragraph('Date of Expiry', styles['BoldLeft'])]
     date_values = [Paragraph(licence.issue_date.strftime(DATE_FORMAT), styles['Left']),
@@ -209,26 +225,28 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         date_headings.insert(0, Paragraph('Original Date of Issue', styles['BoldLeft']))
         date_values.insert(0, Paragraph(original_issue_date.strftime(DATE_FORMAT), styles['Left']))
 
-    elements.append(Table([[date_headings, date_values]],
-                          colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-                          style=dates_licensing_officer_table_style))
+    delegation.append(Table([[date_headings, date_values]],
+                            colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+                            style=dates_licensing_officer_table_style))
 
     # licensee details
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     address = application.applicant_profile.postal_address
     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
                           Paragraph(address.line3, styles['Left']),
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
                           Paragraph(address.country.name, styles['Left'])]
-    elements.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
+    delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
                             [Paragraph(render_user_name(application.applicant_profile.user), styles['Left'])] + address_paragraphs]],
-                          colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-                          style=licence_table_style))
+                            colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+                            style=licence_table_style))
 
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Issued by a Wildlife Licensing Officer of the Department of Parks and Wildlife '
-                              'under delegation from the Minister for Environment pursuant to section 133(1) '
-                              'of the Conservation and Land Management Act 1984.', styles['Left']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('Issued by a Wildlife Licensing Officer of the Department of Parks and Wildlife '
+                                'under delegation from the Minister for Environment pursuant to section 133(1) '
+                                'of the Conservation and Land Management Act 1984.', styles['Left']))
+
+    elements.append(KeepTogether(delegation))
 
     doc.build(elements)
 

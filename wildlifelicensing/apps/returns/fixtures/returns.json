@@ -47,7 +47,8 @@
                                 "name": "LONGITUDE",
                                 "constraints": {
                                     "minimum": -180.0,
-                                    "maximum": 180.0
+                                    "maximum": 180.0,
+                                    "required": true
                                 }
                             },
                             {

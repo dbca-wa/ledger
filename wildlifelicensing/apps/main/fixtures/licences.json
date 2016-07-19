@@ -131,8 +131,24 @@
                                 [
                                     {
                                         "type": "text_area",
-                                        "name": "financial_details",
+                                        "name": "financial_details_other",
                                         "label": "Affiliated Organisation / Client / Sponsor"
+                                    }
+                                ],
+                                "contract": 
+                                [
+                                    {
+                                        "type": "text_area",
+                                        "name": "contract_details",
+                                        "label": "Contract Details"
+                                    }
+                                ],
+                                "grant": 
+                                [
+                                    {
+                                        "type": "text_area",
+                                        "name": "grant_details",
+                                        "label": "Grant Details"
                                     }
                                 ]
                             },
