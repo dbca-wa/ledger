@@ -1,4 +1,4 @@
-{% extends 'wl/emails/base_email.html' %}
+{% extends 'wl/emails/base_email.txt' %}
 
 {% block content %}
     Congratulations, your Wildlife Licensing application has been approved and the corresponding licence has been issued.

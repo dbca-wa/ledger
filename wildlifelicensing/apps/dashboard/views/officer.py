@@ -359,7 +359,8 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'values': [
                     (self.STATUS_FILTER_ALL, self.STATUS_FILTER_ALL.capitalize()),
                     (self.STATUS_FILTER_ACTIVE, self.STATUS_FILTER_ACTIVE.capitalize()),
-                    (self.STATUS_FILTER_RENEWABLE, self.STATUS_FILTER_RENEWABLE.capitalize()),
+                    (self.STATUS_FILTER_RENEWABLE,
+                     self.STATUS_FILTER_RENEWABLE.capitalize() + ' (expires within 30 days)'),
                     (self.STATUS_FILTER_EXPIRED, self.STATUS_FILTER_EXPIRED.capitalize()),
                 ]
             }
@@ -515,9 +516,9 @@ class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         filters = {
             'status': {
                 'values': [
-                    (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
-                    (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
-                ] + list(Return.STATUS_CHOICES)
+                              (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
+                              (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
+                          ] + list(Return.STATUS_CHOICES)
             }
         }
         data['returns']['filters'].update(filters)
@@ -630,7 +631,8 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
 
-            return Q(licence__licence_number__icontains=licence_number) & Q(licence__licence_sequence__icontains=licence_sequence)
+            return Q(licence__licence_number__icontains=licence_number) & Q(
+                licence__licence_sequence__icontains=licence_sequence)
         else:
             return Q(licence__licence_number__icontains=search)
 
