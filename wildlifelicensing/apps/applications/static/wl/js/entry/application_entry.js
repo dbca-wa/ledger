@@ -152,8 +152,8 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
     function _initInputField(item, $itemContainer) {
         if(item.type === 'species') {
             var species_type_arg = '';
-            if(item.species_type !== undefined) {
-                species_type_arg = '&type=' + item.species_type; 
+            if(item.speciesType !== undefined) {
+                species_type_arg = '&type=' + item.speciesType; 
             }
 
             // initialise species typeahead
