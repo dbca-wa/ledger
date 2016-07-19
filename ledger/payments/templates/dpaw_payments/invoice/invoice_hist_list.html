@@ -29,7 +29,7 @@
             </tr>
             {% for invoice in invoices %}
                 <tr>
-                    <td><a href="{% url 'invoice-history-detail' invoice.order.number %}">{{ invoice.order.number }}</a></td>
+                    <td><a href="{% url 'payments:invoice-history-detail' invoice.order.number %}">{{ invoice.order.number }}</a></td>
                     <td>{{ invoice.order.num_items }}</td>
                     <td>{{ invoice.order.total_incl_tax|currency:invoice.order.currency }}</td>
                     <td>{{ invoice.created }}</td>
