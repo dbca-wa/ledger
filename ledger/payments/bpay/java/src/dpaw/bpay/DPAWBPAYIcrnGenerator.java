@@ -18,9 +18,10 @@ public class DPAWBPAYIcrnGenerator {
     }
     
     /** Method to generate BPAY iCRN using ICRNAMT **/
-    public String generateBPAYIcrnAmt(String aCRNWithoutCD, BigDecimal amt){
+    public String generateBPAYIcrnAmt(String aCRNWithoutCD, String amt){
         try{
-            return mCRNGeneratorHelper.generateIcrn(aCRNWithoutCD, "ICRNAMT", amt, null);
+            BigDecimal amount = new BigDecimal(amt);
+            return mCRNGeneratorHelper.generateIcrn(aCRNWithoutCD, "ICRNAMT", amount, null);
         }
         catch (CRNGenerationException e){
             String errorCode = e.getCheckDigitErrorReturnCode();
