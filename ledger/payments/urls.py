@@ -22,10 +22,10 @@ api_patterns = [
 ]
 
 urlpatterns = [
-    url(r'^dashboard/dpaw_payments/bpay/', include(bpay.urls)),
-    url(r'^dashboard/dpaw_payments/invoices/', include(invoice_dash.urls)),
-    url(r'^dashboard/dpaw_payments/', include(bpoint_dash.urls)),
-    url(r'^dpaw_payments/', include(api_patterns)),
-    url(r'^accounts/invoices/',InvoiceHistoryView.as_view(), name='invoice-history-list'),
-    url(r'^accounts/invoice/(?P<order>\d+)/$',invoice_dash.detail_view.as_view(), name='invoice-history-detail'),
+    url(r'checkout/dashboard/payments/bpay/', include(bpay.urls)),
+    url(r'checkout/dashboard/payments/invoices/', include(invoice_dash.urls)),
+    url(r'checkout/dashboard/payments/', include(bpoint_dash.urls)),
+    url(r'payments/', include(api_patterns)),
+    url(r'checkout/accounts/invoices/',InvoiceHistoryView.as_view(), name='invoice-history-list'),
+    url(r'checkout/accounts/invoice/(?P<order>\d+)/',invoice_dash.detail_view.as_view(), name='invoice-history-detail'),
 ]
