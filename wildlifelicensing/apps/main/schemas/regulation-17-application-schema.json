@@ -510,7 +510,8 @@
                                                         "name": "survey_tf_common_name"
                                                     },
                                                     {
-                                                        "type": "text",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
                                                         "label": "Scientific name",
                                                         "name": "survey_tf_scientific_name"
                                                     }
@@ -7698,7 +7699,8 @@
                                                         "name": "survey_tft_common_name"
                                                     },
                                                     {
-                                                        "type": "text",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
                                                         "label": "Scientific name",
                                                         "name": "survey_tft_scientific_name"
                                                     },
@@ -9451,7 +9453,8 @@
                                                         "name": "monitoring_tft_common_name"
                                                     },
                                                     {
-                                                        "type": "text",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
                                                         "label": "Scientific name",
                                                         "name": "monitoring_tft_scientific_name"
                                                     }
@@ -9496,7 +9499,8 @@
                                                         "name": "monitoring_threatened_tft_common_name"
                                                     },
                                                     {
-                                                        "type": "text",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
                                                         "label": "Scientific name",
                                                         "name": "monitoring_threatened_tft_scientific_name"
                                                     }
@@ -11675,7 +11679,8 @@
                                                         "name": "research_tft_common_name"
                                                     },
                                                     {
-                                                        "type": "text",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
                                                         "label": "Scientific name",
                                                         "name": "research_tft_scientific_name"
                                                     }
@@ -11720,7 +11725,8 @@
                                                         "name": "research_threatened_tft_common_name"
                                                     },
                                                     {
-                                                        "type": "text",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
                                                         "label": "Scientific name",
                                                         "name": "research_threatened_tft_scientific_name"
                                                     }
