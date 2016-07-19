@@ -15,7 +15,7 @@ DEBUG = env('DEBUG', False)
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
-    ALLOWED_HOSTS = env('ALLOWED_HOSTS', []) 
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS', [])
 ROOT_URLCONF = 'ledger.urls'
 ROOT_HOSTCONF = 'ledger.hosts'
 DEFAULT_HOST = env('DEFAULT_HOST', 'ledger')
@@ -23,36 +23,37 @@ PARENT_HOST = env('PARENT_HOST', 'localhost')
 HOST_PORT = env('HOST_PORT', '8000')
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.flatpages',
-    'social.apps.django_app.default',
-    'django_extensions',
-    'django_hosts',
-    'bootstrap3',
-    'reversion',
-    'widget_tweaks',
-    'django_countries',
-    'django_cron',
-    ] + get_core_apps([  # django-oscar overrides
-        'ledger.basket', 
-        'ledger.order'
-    ]) + [
-    'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
-    'ledger.licence',
-    'wildlifelicensing.apps.dashboard',
-    'wildlifelicensing.apps.main',
-    'wildlifelicensing.apps.applications',
-    'wildlifelicensing.apps.emails',
-    'wildlifelicensing.apps.returns',
-    'wildlifelicensing.apps.customer_management',
-    'wildlifelicensing.apps.reports'
-]
+                     'django.contrib.admin',
+                     'django.contrib.auth',
+                     'django.contrib.contenttypes',
+                     'django.contrib.sessions',
+                     'django.contrib.sites',
+                     'django.contrib.messages',
+                     'django.contrib.staticfiles',
+                     'django.contrib.flatpages',
+                     'social.apps.django_app.default',
+                     'django_extensions',
+                     'django_hosts',
+                     'bootstrap3',
+                     'reversion',
+                     'widget_tweaks',
+                     'django_countries',
+                     'django_cron',
+                 ] + get_core_apps([  # django-oscar overrides
+    'ledger.basket',
+    'ledger.order'
+]) + [
+                     'ledger.accounts',  # Defines custom user model, passwordless auth pipeline.
+                     'ledger.licence',
+                     'ledger.taxonomy',
+                     'wildlifelicensing.apps.dashboard',
+                     'wildlifelicensing.apps.main',
+                     'wildlifelicensing.apps.applications',
+                     'wildlifelicensing.apps.emails',
+                     'wildlifelicensing.apps.returns',
+                     'wildlifelicensing.apps.customer_management',
+                     'wildlifelicensing.apps.reports'
+                 ]
 
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
@@ -98,7 +99,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.auth_allowed',
     'social.pipeline.social_auth.social_user',
     'social.pipeline.user.get_username',
-    #'social.pipeline.mail.mail_validation',
+    # 'social.pipeline.mail.mail_validation',
     'ledger.accounts.pipeline.mail_validation',
     'ledger.accounts.pipeline.user_by_email',
     'social.pipeline.user.create_user',
@@ -111,7 +112,6 @@ SESSION_COOKIE_DOMAIN = env('SESSION_COOKIE_DOMAIN', None)
 if SESSION_COOKIE_DOMAIN:
     SESSION_COOKIE_NAME = (SESSION_COOKIE_DOMAIN + ".ledger_sessionid").replace(".", "_")
 
-
 # Email settings
 ADMINS = ('asi@dpaw.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
@@ -120,6 +120,9 @@ EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
 WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wildlifelicensing@dpaw.wa.gov.au')
 
+HERBIE_SPECIES_WFS_URL = env('HERBIE_SPECIES_WFS_URL',
+                             'https://kmi.dpaw.wa.gov.au/geoserver/ows?service=wfs&version=1.1.0&'
+                             'request=GetFeature&typeNames=dpaw:herbie_hbvspecies&outputFormat=application/json')
 
 TEMPLATES = [
     {
@@ -148,7 +151,6 @@ TEMPLATES = [
     },
 ]
 
-
 BOOTSTRAP3 = {
     'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
     'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
@@ -169,13 +171,11 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 
-
 # Database
 DATABASES = {
     # Defined in the DATABASE_URL env variable.
     'default': database.config(),
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
@@ -193,7 +193,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
