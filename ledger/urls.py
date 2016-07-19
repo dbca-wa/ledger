@@ -22,6 +22,7 @@ from oscar.app import application
 urlpatterns = [
     url(r'^ledger/admin/', admin.site.urls),
     url(r'^ledger/', include('ledger.accounts.urls', namespace='accounts')),
+    url(r'^ledger/', include('ledger.payments.urls', namespace='payments')),
     url(r'^ledger/', include('social.apps.django_app.urls', namespace='social')),
     url(r'^ledger/checkout/', application.urls),
     url(r'^$', TemplateView.as_view(template_name='customers/base.html'), name='home')

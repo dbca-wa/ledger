@@ -8,7 +8,7 @@
 {% endblock %}
 
 {%block title %}
-    {% trans "BOINT Transaction" %} | {{ block.super }}
+    {% trans "BPOINT Transaction" %} | {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -18,7 +18,7 @@
             <span class="divider"></span>
         </li>
         <li>
-            <a href="{% url 'bpoint-dash-list' %}">{% trans "BPOINT" %}</a>
+            <a href="{% url 'payments:bpoint-dash-list' %}">{% trans "BPOINT" %}</a>
             <span class="divider"></span>
         </li>
         <li class="active">{{ txn.txn_number }}</li>

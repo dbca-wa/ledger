@@ -27,7 +27,7 @@
 
 {% block dashboard_content %}
     {% verbatim %}
-    <script id="invoices" type="text/x-handlebars-template" data-url="/dpaw_payments/api/invoices.json" data-onload="upgradeTable">
+    <script id="invoices" type="text/x-handlebars-template" data-url="/ledger/payments/api/invoices.json" data-onload="upgradeTable">
         <table id="transactions_table" class="table table-striped table-bordered responsive">
             <thead>
                 <tr>
@@ -47,7 +47,7 @@
                         <td>{{ this.created }}</td>
                         <td>{{ this.payment_status }}</td>
                         <td>
-                            <a href="/dashboard/dpaw_payments/invoices/invoice/{{this.order_number }}" class="btn btn-info">View</a>
+                            <a href="/ledger/checkout/dashboard/payments/invoices/invoice/{{this.order_number }}" class="btn btn-info">View</a>
                         </td>
                     </tr>
                     {{/each}}
