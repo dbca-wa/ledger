@@ -337,12 +337,17 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'title': 'Expiry Date'
             },
             {
-                'title': 'Licence',
+                'title': 'Licence PDF',
                 'searchable': False,
                 'orderable': False
             },
             {
                 'title': 'Cover Letter',
+                'searchable': False,
+                'orderable': False
+            },
+            {
+                'title': 'Renewal Letter',
                 'searchable': False,
                 'orderable': False
             },
@@ -383,6 +388,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'end_date',
         'licence',
         'cover_letter',
+        'renewal_letter',
         'action']
     order_columns = [
         'licence_number',
@@ -419,6 +425,9 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'cover_letter': {
             'render': lambda self, instance: _render_cover_letter_document(instance)
         },
+        'renewal_letter': {
+            'render': lambda self, instance: self._render_renewal_letter(instance)
+        },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
@@ -453,6 +462,14 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             return Q(licence_number__icontains=licence_number) & Q(licence_sequence__icontains=licence_sequence)
         else:
             return Q(licence_number__icontains=search)
+
+    @staticmethod
+    def _render_renewal_letter(instance):
+        if instance.is_renewable:
+            return '<a href="{0}" target="_blank">Create PDF</a><img height="20" src="{1}"></img>'.\
+                format(reverse('wl_main:licence_renewal_pdf', args=(instance.pk,)), static('wl/img/pdf.png'))
+        else:
+            return 'Not renewable'
 
     @staticmethod
     def _render_action(instance):

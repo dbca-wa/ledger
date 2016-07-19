@@ -4,8 +4,8 @@ from django.views.generic.base import TemplateView, RedirectView
 
 from wildlifelicensing.apps.main.views import ListProfilesView, CreateProfilesView, EditProfilesView, \
     DeleteProfileView, IdentificationView, EditAccountView, SearchCustomersView, ListDocumentView, \
-    EditDocumentView, CreateDocumentView ,DeleteDocumentView, CommunicationsLogListView, \
-    AddCommunicationsLogEntryView
+    EditDocumentView, CreateDocumentView ,DeleteDocumentView, LicenceRenewalPDFView, \
+    CommunicationsLogListView, AddCommunicationsLogEntryView
 
 
 urlpatterns = [
@@ -31,6 +31,8 @@ urlpatterns = [
     #url('^profiles/delete/$', DeleteProfileView.as_view(), name='delete_profile_prefix'),
 
     url('^identification/$', IdentificationView.as_view(), name='identification'),
+
+    url('^licence-renewal-pdf/([0-9]+)/$', LicenceRenewalPDFView.as_view(), name='licence_renewal_pdf'),
 
     # general communications log
     url('^add-log-entry/([0-9]+)/$', AddCommunicationsLogEntryView.as_view(), name='add_log_entry'),
