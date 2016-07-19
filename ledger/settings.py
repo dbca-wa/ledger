@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     ] + get_core_apps([  # django-oscar overrides
         'ledger.basket', 
         'ledger.order',
-        'ledger.checkout'
+        'ledger.checkout',
+        'ledger.address',
     ]) + [
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
@@ -280,23 +281,23 @@ BPOINT_TEST=True
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True
-
+OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
 OSCAR_DASHBOARD_NAVIGATION.append(
     {
-        'label': 'P&W Payments',
+        'label': 'Payments',
         'icon': 'icon-globe',
         'children': [
             {
                 'label': 'Invoices',
-                'url_name': 'invoices-list',
+                'url_name': 'payments:invoices-list',
             },
             {
                 'label': 'BPAY collections',
-                'url_name': 'bpay-collection-list',
+                'url_name': 'payments:bpay-collection-list',
             },
             {
                 'label': 'BPOINT transactions',
-                'url_name': 'bpoint-dash-list',
+                'url_name': 'payments:bpoint-dash-list',
             },
         ]
     }
