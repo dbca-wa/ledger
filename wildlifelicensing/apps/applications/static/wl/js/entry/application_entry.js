@@ -1,4 +1,4 @@
-define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker',
+define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datetimepicker', 'bootstrap-3-typeahead',
         'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
     function _layoutItem(item, repetition, suffix, itemData) {
         var $itemContainer = $('<div>'),
@@ -14,6 +14,8 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
         $itemContainer.append(Handlebars.templates[item.type](item));
 
+        _initInputField(item, $itemContainer);
+
         // unset item name and value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.name = item.name.slice(0, item.name.indexOf(suffix));
         item.value = undefined;
@@ -21,49 +23,47 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
 
         if(item.conditions !== undefined) {
-            if(item.conditions !== undefined) {
-                var $input = $itemContainer.find('input, select'),
-                    initialInputValue = _getInputValue(item, $input);
+            var $input = $itemContainer.find('input, select'),
+                initialInputValue = _getInputValue(item, $input);
 
-                // show/hide conditional children initially depending on input's initial value
-                if(initialInputValue in item.conditions) {
-                    var $conditionalChildren = $('<div>');
-                    $conditionalChildren.attr('id', initialInputValue);
-                    $.each(item.conditions[initialInputValue], function(childIndex, child) {
-                        _appendChild(child, $conditionalChildren, 0, suffix, itemData);
-                    });
-                    $childrenAnchorPoint.append($conditionalChildren);
-                }
-
-                $input.change(function(e) {
-                    var inputValue = _getInputValue(item, $(this)),
-                        $internalChildrenAnchorPoint = _getInputChildrenAnchorPoint($(this)),
-                        $conditionalChildren,
-                        $slideUpPromise;
-
-                    // hide any currently shown conditional children
-                    $slideUpPromise = $internalChildrenAnchorPoint.children().slideUp('medium').promise();
-
-                    if(inputValue in item.conditions) {
-                        // get conditional child anchor point if it exists, else create it
-                        $conditionalChildren = $internalChildrenAnchorPoint.find('#' + inputValue);
-
-                        if($conditionalChildren.length === 0) {
-                            $conditionalChildren = $('<div>');
-                            $conditionalChildren.attr('id', inputValue);
-                            $conditionalChildren.css('display', 'none');
-                            $.each(item.conditions[inputValue], function(childIndex, child) {
-                                _appendChild(child, $conditionalChildren, 0, suffix, itemData);
-                            });
-                            $internalChildrenAnchorPoint.append($conditionalChildren);
-                        }
-
-                        $slideUpPromise.done(function() {
-                            $conditionalChildren.slideDown('medium');
-                        });
-                    }
+            // show/hide conditional children initially depending on input's initial value
+            if(initialInputValue in item.conditions) {
+                var $conditionalChildren = $('<div>');
+                $conditionalChildren.attr('id', initialInputValue);
+                $.each(item.conditions[initialInputValue], function(childIndex, child) {
+                    _appendChild(child, $conditionalChildren, 0, suffix, itemData);
                 });
+                $childrenAnchorPoint.append($conditionalChildren);
             }
+
+            $input.change(function(e) {
+                var inputValue = _getInputValue(item, $(this)),
+                    $internalChildrenAnchorPoint = _getInputChildrenAnchorPoint($(this)),
+                    $conditionalChildren,
+                    $slideUpPromise;
+
+                // hide any currently shown conditional children
+                $slideUpPromise = $internalChildrenAnchorPoint.children().slideUp('medium').promise();
+
+                if(inputValue in item.conditions) {
+                    // get conditional child anchor point if it exists, else create it
+                    $conditionalChildren = $internalChildrenAnchorPoint.find('#' + inputValue);
+
+                    if($conditionalChildren.length === 0) {
+                        $conditionalChildren = $('<div>');
+                        $conditionalChildren.attr('id', inputValue);
+                        $conditionalChildren.css('display', 'none');
+                        $.each(item.conditions[inputValue], function(childIndex, child) {
+                            _appendChild(child, $conditionalChildren, 0, suffix, itemData);
+                        });
+                        $internalChildrenAnchorPoint.append($conditionalChildren);
+                    }
+
+                    $slideUpPromise.done(function() {
+                        $conditionalChildren.slideDown('medium');
+                    });
+                }
+            });
         }
 
         if (item.children !== undefined) {
@@ -149,6 +149,31 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
     }
 
+    function _initInputField(item, $itemContainer) {
+        if(item.type === 'species') {
+            var species_type_arg = '';
+            if(item.speciesType !== undefined) {
+                species_type_arg = '&type=' + item.speciesType; 
+            }
+
+            // initialise species typeahead
+            $itemContainer.find('.species').typeahead({
+                minLength: 3,
+                items: 'all',
+                source: function (query, process) {
+                    return $.get('/taxonomy/species_name?search=' + query + species_type_arg, function (data) {
+                        return process(data);
+                    });
+                }
+            });
+        } else if(item.type === 'date') {
+            // initialise datapickers
+            $itemContainer.find('.date').datetimepicker({
+                format: 'DD/MM/YYYY'
+            });
+        }
+    }
+
     function _getInputValue(item, $input) {
         if(item.type === 'radiobuttons') {
             var checkedRadiobuttonValue = '';
@@ -188,6 +213,34 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                 $(this).attr('name', namePrefix + '-' + groupCount + nameSuffix);
             });
 
+            // need to replace date inputs with clones of themselves without event binding
+            // which causes the datetime picker to inadvertantly show on the original date input
+            itemCopy.find('.date').each(function() {
+                $(this).replaceWith($(this).clone(false));
+            })
+
+            // need to replace species inputs with clones of themselves without event binding
+            // which causes the typeahead to show on original species input
+            itemCopy.find('.species').each(function() {
+                var speciesClone = $(this).clone(false),
+                    species_type_arg = '';
+
+                if(speciesClone.attr('data-species-type')) {
+                    species_type_arg = '&type=' + speciesClone.attr('data-species-type');
+                }
+                speciesClone.typeahead({
+                    minLength: 3,
+                    items: 'all',
+                    source: function (query, process) {
+                        return $.get('/taxonomy/species_name?search=' + query + species_type_arg, function (data) {
+                            return process(data);
+                        });
+                    }
+                });
+
+                $(this).replaceWith(speciesClone);
+            });
+
             itemCopy.find('[id^="remove_' + item.name + '"]').removeClass('hidden');
             itemCopy.find('[id^="description_' + item.name + '"]').addClass('hidden');
             itemSelector.after(itemCopy);
@@ -221,11 +274,6 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
                 formContainer.append(_layoutItem(formStructure[i], 0, '', itemData));
             }
-
-            // initialise all datapickers
-            $('.date').datetimepicker({
-                format: 'DD/MM/YYYY'
-            });
 
             // initialise parsley form validation
             $('form').parsley({
