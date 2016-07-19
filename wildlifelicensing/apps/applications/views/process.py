@@ -1,7 +1,5 @@
 from django.core.context_processors import csrf
-import os
-import json
-
+from django.contrib import messages
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
 from django.shortcuts import get_object_or_404, redirect
@@ -24,19 +22,14 @@ from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
-    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_application_data_files_to_url, format_application, \
+    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
     format_amendment_request, format_assessment
-
-APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 
 class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
     template_name = 'wl/process/process_app.html'
 
     def _build_data(self, request, application):
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug), 'r') as data_file:
-            form_structure = json.load(data_file)
-
         officers = [{'id': officer.id, 'text': render_user_name(officer)} for officer in get_all_officers()]
         officers.insert(0, {'id': 0, 'text': 'Unassigned'})
 
@@ -49,22 +42,25 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         previous_lodgements = []
         for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
                 '-revision__date_created'):
-            previous_lodgements.append({'lodgement_number': revision.object_version.object.lodgement_number +
-                                        '-' + str(revision.object_version.object.lodgement_sequence),
+            previous_lodgement = revision.object_version.object
+            convert_documents_to_url(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
+                                     previous_lodgement.documents.all())
+            previous_lodgements.append({'lodgement_number': '{}-{}'.format(previous_lodgement.lodgement_number,
+                                                                           previous_lodgement.lodgement_sequence),
                                         'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
-                                        'data': revision.object_version.object.data})
+                                        'data': previous_lodgement.data})
 
         previous_application_returns_outstanding = False
         if application.previous_application is not None:
             previous_application_returns_outstanding = Return.objects.filter(licence=application.previous_application.licence).\
                 exclude(status='accepted').exclude(status='submitted').exists()
 
-        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
         data = {
             'user': serialize(request.user),
             'application': serialize(application, posthook=format_application),
-            'form_structure': form_structure,
+            'form_structure': application.licence_type.application_schema,
             'officers': officers,
             'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application),
                                             posthook=format_amendment_request),
@@ -97,10 +93,21 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
-        application.processing_status = 'ready_for_conditions'
-        application.save()
 
-        return redirect('wl_applications:enter_conditions', *args, **kwargs)
+        if 'enterConditions' in request.POST:
+            application.processing_status = 'ready_for_conditions'
+            application.save()
+
+            return redirect('wl_applications:enter_conditions', *args, **kwargs)
+        elif 'decline' in request.POST:
+            application.processing_status = 'declined'
+            application.save()
+
+            messages.warning(request, 'The application was declined.')
+
+            return redirect('wl_dashboard:tables_applications_officer')
+        else:
+            return redirect('wl_applications:process', application.pk, **kwargs)
 
 
 class AssignOfficerView(OfficerRequiredMixin, View):

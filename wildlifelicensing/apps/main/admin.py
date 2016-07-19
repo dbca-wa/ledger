@@ -1,13 +1,23 @@
 from django.contrib import admin
+from django import forms
 
 from reversion.admin import VersionAdmin
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, DefaultCondition
+from wildlifelicensing.apps.main.forms import BetterJSONField
 
 
 class DefaultConditionInline(admin.TabularInline):
     model = DefaultCondition
     ordering = ('order',)
+
+
+class WildlifeLicenceTypeAdminForm(forms.ModelForm):
+    application_schema = BetterJSONField()
+
+    class Meta:
+        model = WildlifeLicenceType
+        exclude = []
 
 
 # Register your models here.
@@ -17,6 +27,7 @@ class WildlifeLicenceTypeAdmin(VersionAdmin):
     prepopulated_fields = {'code_slug': ('code',)}
     filter_horizontal = ('default_conditions',)
     inlines = (DefaultConditionInline,)
+    form = WildlifeLicenceTypeAdminForm
 
 
 # Register your models here.

@@ -1,6 +1,3 @@
-import os
-import json
-
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import JsonResponse
@@ -15,13 +12,11 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAs
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
-from wildlifelicensing.apps.applications.utils import convert_application_data_files_to_url, format_application, \
+from wildlifelicensing.apps.applications.utils import convert_documents_to_url, format_application, \
     format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from wildlifelicensing.apps.applications.mixins import CanPerformAssessmentMixin
-
-APPLICATION_SCHEMA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 
 class EnterConditionsView(OfficerRequiredMixin, TemplateView):
@@ -30,13 +25,11 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug), 'r') as data_file:
-            form_structure = json.load(data_file)
-
-        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+        convert_documents_to_url(application.licence_type.application_schema,
+                                              application.data, application.documents.all())
 
         kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['form_structure'] = form_structure
+        kwargs['form_structure'] = application.licence_type.application_schema
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
         kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
 
@@ -56,13 +49,10 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        with open('%s/json/%s.json' % (APPLICATION_SCHEMA_PATH, application.licence_type.code_slug)) as data_file:
-            form_structure = json.load(data_file)
-
-        convert_application_data_files_to_url(form_structure, application.data, application.documents.all())
+        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
         kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['form_structure'] = form_structure
+        kwargs['form_structure'] = application.licence_type.application_schema
 
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
@@ -77,7 +67,7 @@ class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
         query = request.GET.get('q')
 
         if query is not None:
-            q = Q(code__icontains=query) | Q(text__icontains=query) & Q(one_off=False)
+            q = (Q(code__icontains=query) | Q(text__icontains=query)) & Q(one_off=False)
             qs = Condition.objects.filter(q)
         else:
             qs = Condition.objects.none()

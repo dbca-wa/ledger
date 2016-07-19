@@ -7,12 +7,14 @@
     .affix {
         top: 20px;
         width: auto;
+        max-width: 170px;
     }
 }
 
 @media (max-width: 991px) {
     .affix {
         position: static;
+        max-width: 170px;
     }
 }
 

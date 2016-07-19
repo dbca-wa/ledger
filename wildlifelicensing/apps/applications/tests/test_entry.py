@@ -2,7 +2,7 @@ import os
 
 from django.core.urlresolvers import reverse
 from django.core.files import File
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
@@ -323,7 +323,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         post_params = {
-            'project_title': 'Test Title',
+            'project_title-0-0': 'Test Title',
             'lodge': True
         }
 
@@ -333,7 +333,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertTrue('data' in self.client.session['application'])
 
         # check that the profile in the session is the selected profile
-        self.assertEqual(self.client.session['application']['data'].get('project_title', ''), 'Test Title')
+        self.assertEqual(self.client.session['application']['data'][0].get('project_details')[0].get('project_title'), 'Test Title')
 
     def test_enter_details_lodge(self):
         """Testing that a user can preview the details of an application form then lodge the application
@@ -377,7 +377,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertEqual(profile.application_set.first().processing_status, 'new')
 
 
-class ApplicationEntrySecurity(TestCase):
+class ApplicationEntrySecurity(TransactionTestCase):
     def setUp(self):
         self.client = SocialClient()
 
@@ -415,6 +415,7 @@ class ApplicationEntrySecurity(TestCase):
         Once the application if lodged the user should not be able to edit it
         """
         customer1 = create_random_customer()
+
         # login as user1
         self.client.login(customer1.email)
 

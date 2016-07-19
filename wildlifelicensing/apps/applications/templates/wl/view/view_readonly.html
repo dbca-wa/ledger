@@ -81,5 +81,7 @@
     </div>
 {% endblock %}
 {% block modals %}
-    {% include 'wl/communications_modal.html' %}
+ 	{% if customer %}
+    	{% include 'wl/communications_modal.html' %}
+   	{% endif %}
 {% endblock %}

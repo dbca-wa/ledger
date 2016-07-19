@@ -1,10 +1,14 @@
+import os
 import shutil
+import string
+import random
 
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
+from collections import OrderedDict
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
@@ -17,140 +21,136 @@ ASSESSMENT_STATUSES = dict(Assessment.STATUS_CHOICES)
 ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES = dict(AssessmentCondition.ACCEPTANCE_STATUS_CHOICES)
 
 
+def _extend_item_name(name, suffix, repetition):
+    return '{}{}-{}'.format(name, suffix, repetition)
+
+
 def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):
-    data = {}
+    data = []
 
     for item in form_structure:
-        data.update(_create_data_from_item(item, post_data, file_data, post_data_index))
+        data.append(_create_data_from_item(item, post_data, file_data, 0, ''))
 
     return data
 
 
-def _create_data_from_item(item, post_data, file_data, post_data_index=None):
+def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     item_data = {}
 
-    if 'name' in item and item.get('type', '') != 'group':
-        if item.get('type', '') == 'declaration':
-            if post_data_index is not None:
-                post_data_list = post_data.getlist(item['name'])
-                if len(post_data_list) > 0:
-                    item_data[item['name']] = post_data_list[post_data_index]
-                else:
-                    item_data[item['name']] = False
-            else:
-                item_data[item['name']] = post_data.get(item['name'], 'off') == 'on'
-        elif item.get('type', '') == 'file':
-            if item['name'] in file_data:
-                item_data[item['name']] = str(file_data.get(item['name']))
-            elif item['name'] + '-existing' in post_data and len(post_data[item['name'] + '-existing']) > 0:
-                    item_data[item['name']] = post_data.get(item['name'] + '-existing')
+    if 'name' in item:
+        extended_item_name = _extend_item_name(item['name'], suffix, repetition)
+    else:
+        raise Exception('Missing name in item %s' % item['label'])
+
+    if 'children' not in item:
+        if item['type'] in ['checkbox' 'declaration']:
+            item_data[item['name']] = extended_item_name in post_data
+        elif item['type'] == 'file':
+            if extended_item_name in file_data:
+                item_data[item['name']] = str(file_data.get(extended_item_name))
+            elif extended_item_name + '-existing' in post_data and len(post_data[extended_item_name + '-existing']) > 0:
+                item_data[item['name']] = post_data.get(extended_item_name + '-existing')
             else:
                 item_data[item['name']] = ''
         else:
-            post_data_list = post_data.getlist(item['name'])
-            if post_data_index is not None and len(post_data_list) > 0:
-                item_data[item['name']] = post_data_list[post_data_index]
-            else:
-                item_data[item['name']] = post_data.get(item['name'])
+            if extended_item_name in post_data:
+                item_data[item['name']] = post_data.get(extended_item_name)
+    else:
+        item_data_list = []
+        for rep in xrange(0, int(post_data.get(extended_item_name, 1))):
+            child_data = {}
+            for child_item in item.get('children'):
+                child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
+                                                         '{}-{}'.format(suffix, rep)))
+            item_data_list.append(child_data)
 
-    if 'children' in item:
-        if item.get('type', '') == 'group':
-            # check how many groups there are
-            num_groups = 0
-            for group_item in item.get('children'):
-                if group_item['type'] != 'section' and group_item['type'] != 'group':
-                    num_groups = len(post_data.getlist(group_item['name']))
-                    break
+        item_data[item['name']] = item_data_list
 
-            groups = []
-            for group_index in range(0, num_groups):
-                group_data = {}
-                for child in item['children']:
-                    group_data.update(_create_data_from_item(child, post_data, file_data, group_index))
-                groups.append(group_data)
-            item_data[item['name']] = groups
-        else:
-            for child in item['children']:
-                item_data.update(_create_data_from_item(child, post_data, file_data, post_data_index))
+    if 'conditions' in item:
+        for condition in item['conditions'].keys():
+            for child in item['conditions'][condition]:
+                item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
     return item_data
+
+
+def _append_random_to_filename(file_name, random_string_size=5):
+    name, extention = os.path.splitext(file_name)
+
+    chars = string.ascii_uppercase + string.digits
+
+    random_string = ''.join(random.choice(chars) for _ in range(random_string_size))
+
+    return '{}-{}{}'.format(name, random_string, extention)
+
+
+def rename_filename_doubleups(post_data, file_data):
+    counter = 0
+
+    ordered_file_data = OrderedDict(file_data)
+    post_data_values = post_data.values()
+    file_data_values = [str(file_value) for file_value in ordered_file_data.values()]
+
+    for file_key, file_value in ordered_file_data.iteritems():
+        if str(file_value) in file_data_values[:counter] or str(file_value) in post_data_values:
+            file_data[file_key].name = _append_random_to_filename(file_value.name)
+
+        counter += 1
 
 
 def get_all_filenames_from_application_data(item, data):
     filenames = []
 
     if isinstance(item, list):
-        for child in item:
-            if child.get('type', '') == 'group' and child.get('name', '') in data:
-                for child_data in data[child['name']]:
-                    filenames += get_all_filenames_from_application_data(child, child_data)
-            else:
-                filenames += get_all_filenames_from_application_data(child, data)
+        for i, child in enumerate(item):
+            filenames += get_all_filenames_from_application_data(child, data[i])
+    elif 'children' in item:
+        for child in item['children']:
+            for child_data in data[item['name']]:
+                filenames += get_all_filenames_from_application_data(child, child_data)
     else:
         if item.get('type', '') == 'file':
             if item['name'] in data and len(data[item['name']]) > 0:
                 filenames.append(data[item['name']])
 
-        if 'children' in item:
-            for child in item['children']:
-                if child.get('type', '') == 'group' and child.get('name', '') in data:
-                    for child_data in data[child['name']]:
-                        filenames += get_all_filenames_from_application_data(child, child_data)
-                else:
-                    filenames += get_all_filenames_from_application_data(child, data)
-
     return filenames
 
 
-def prepend_url_to_application_data_files(item, data, root_url):
+def prepend_url_to_files(item, data, root_url):
     # ensure root url ends with a /
     if root_url[-1] != '/':
         root_url += '/'
 
-    if isinstance(item, list):
-        for child in item:
-            if child.get('type', '') == 'group' and child.get('name', '') in data:
-                for child_data in data[child['name']]:
-                    prepend_url_to_application_data_files(child, child_data, root_url)
-            else:
-                prepend_url_to_application_data_files(child, data, root_url)
-    else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                data[item['name']] = root_url + data[item['name']]
-
-        if 'children' in item:
+    if item is not None:
+        if isinstance(item, list) and isinstance(data, list):
+            for i, child in enumerate(item):
+                prepend_url_to_files(child, data[i], root_url)
+        elif 'children' in item:
             for child in item['children']:
-                if child.get('type', '') == 'group' and child.get('name', '') in data:
-                    for child_data in data[child['name']]:
-                        prepend_url_to_application_data_files(child, child_data, root_url)
-                else:
-                    prepend_url_to_application_data_files(child, data, root_url)
+                for child_data in data[item['name']]:
+                    prepend_url_to_files(child, child_data, root_url)
+        else:
+            if isinstance(item, dict) and item.get('type', '') == 'file':
+                if item['name'] in data and len(data[item['name']]) > 0:
+                    data[item['name']] = root_url + data[item['name']]
 
 
-def convert_application_data_files_to_url(item, data, document_queryset):
-    if isinstance(item, list):
-        for child in item:
-            if child.get('type', '') == 'group' and child.get('name', '') in data:
-                for child_data in data[child['name']]:
-                    convert_application_data_files_to_url(child, child_data, document_queryset)
-            else:
-                convert_application_data_files_to_url(child, data, document_queryset)
-    else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                try:
-                    data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
-                except Document.DoesNotExist:
-                    pass
-
-        if 'children' in item:
+def convert_documents_to_url(item, data, document_queryset):
+    if item is not None:
+        if isinstance(item, list) and isinstance(data, list):
+            for i, child in enumerate(item):
+                convert_documents_to_url(child, data[i], document_queryset)
+        elif 'children' in item:
             for child in item['children']:
-                if child.get('type', '') == 'group' and child.get('name', '') in data:
-                    for child_data in data[child['name']]:
-                        convert_application_data_files_to_url(child, child_data, document_queryset)
-                else:
-                    convert_application_data_files_to_url(child, data, document_queryset)
+                for child_data in data[item['name']]:
+                    convert_documents_to_url(child, child_data, document_queryset)
+        else:
+            if isinstance(item, dict) and item.get('type', '') == 'file':
+                if item['name'] in data and len(data[item['name']]) > 0:
+                    try:
+                        data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
+                    except Document.DoesNotExist:
+                        pass
 
 
 class SessionDataMissingException(Exception):
@@ -200,8 +200,8 @@ def delete_app_session_data(session):
     if temp_files_dir is not None:
         try:
             shutil.rmtree(temp_files_dir)
-        except:
-            pass
+        except (shutil.Error, OSError) as e:
+            raise e
 
     if 'application' in session:
         del session['application']

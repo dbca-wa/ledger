@@ -113,12 +113,32 @@ def _create_header(canvas, doc):
 
 
 def _get_authorised_person_names(application):
-    authorised_persons = []
-    for ap in application.data.get('authorised_persons', []):
-        if ap.get('ap_given_names') and ap.get('ap_given_names'):
-            authorised_persons.append('%s %s' % (ap['ap_given_names'], ap['ap_surname']))
+    def __find_authorised_persons_dict(data):
+        authorised_persons = []
+        for item in data:
+            if isinstance(item, list):
+                authorised_persons = __find_authorised_persons_dict(item)
+                if len(authorised_persons) > 0:
+                    return authorised_persons
+            if isinstance(item, dict):
+                if 'authorised_persons' in item:
+                    return item['authorised_persons']
+                else:
+                    for value in item.values():
+                        if isinstance(value, list):
+                            authorised_persons = __find_authorised_persons_dict(value)
+                            if len(authorised_persons) > 0:
+                                return authorised_persons
 
-    return authorised_persons
+        return authorised_persons
+
+    authorised_person_names = []
+
+    for ap in __find_authorised_persons_dict(application.data):
+        if ap.get('ap_given_names') and ap.get('ap_given_names'):
+            authorised_person_names.append('%s %s' % (ap['ap_given_names'], ap['ap_surname']))
+
+    return authorised_person_names
 
 
 def _create_licence(licence_buffer, licence, application, site_url, original_issue_date):
@@ -126,8 +146,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
     every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_header)
 
-    doc = BaseDocTemplate(licence_buffer, pageTemplates=[every_page_template],
-                          pagesize=A4)
+    doc = BaseDocTemplate(licence_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
     # this is the only way to get data into the onPage callback function
     doc.licence = licence
@@ -144,11 +163,12 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     elements.append(Paragraph(licence.licence_type.authority, styles['InfoTitleLargeRight']))
 
     # licence conditions
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Conditions', styles['InfoTitleLargeCenter']))
-    conditionList = ListFlowable([Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
-                                 bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
-    elements.append(conditionList)
+    if application.conditions.exists():
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements.append(Paragraph('Conditions', styles['InfoTitleLargeCenter']))
+        conditionList = ListFlowable([Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
+                                     bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
+        elements.append(conditionList)
 
     # purpose
     if licence.purpose:
@@ -162,6 +182,19 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                 purposes.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         elements.append(Table([[Paragraph('Purpose', styles['BoldLeft']), purposes]],
+                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
+                              style=licence_table_style))
+
+    # locations
+    if licence.locations:
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        locations = []
+        for location in licence.locations.split('\r\n'):
+            if location:
+                locations.append(Paragraph(location, styles['Left']))
+
+        elements.append(Table([[Paragraph('Locations', styles['BoldLeft']), locations]],
                               colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                               style=licence_table_style))
 
@@ -189,9 +222,8 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         date_headings.insert(0, Paragraph('Original Date of Issue', styles['BoldLeft']))
         date_values.insert(0, Paragraph(original_issue_date.strftime(DATE_FORMAT), styles['Left']))
 
-    elements.append(Table([[date_headings, date_values,
-                            Paragraph('Licensing Officer', styles['BoldRight'])]],
-                          colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 200, 80),
+    elements.append(Table([[date_headings, date_values]],
+                          colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                           style=dates_licensing_officer_table_style))
 
     # licensee details
@@ -205,6 +237,11 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                             [Paragraph(render_user_name(application.applicant_profile.user), styles['Left'])] + address_paragraphs]],
                           colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                           style=licence_table_style))
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('Issued by a Wildlife Licensing Officer of the Department of Parks and Wildlife '
+                              'under delegation from the Minister for Environment pursuant to section 133(1) '
+                              'of the Conservation and Land Management Act 1984.', styles['Left']))
 
     doc.build(elements)
 

@@ -69,7 +69,7 @@ def send_assessment_requested_email(assessment, request):
 
 
 class ApplicationAssessmentReminderEmail(TemplateEmailBase):
-    subject = 'Reminder: An amendment to you wildlife licensing application is required.'
+    subject = 'Reminder: An assessment to a wildlife licensing application is required.'
     html_template = 'wl/emails/application_assessment_reminder.html'
     txt_template = 'wl/emails/application_assessment_reminder.txt'
 
@@ -220,7 +220,7 @@ class LicenceRenewalNotificationEmail(TemplateEmailBase):
 
 def send_licence_renewal_email_notification(licence):
     email = LicenceRenewalNotificationEmail()
-    url = 'http:' + hosts_reverse('wl_applications:renew_licence', args=(licence.pk,))
+    url = 'http:' + hosts_reverse('wl_home')
 
     context = {
         'url': url,
@@ -265,10 +265,7 @@ def _log_email(email_message, application, sender=None):
         to = application.applicant_profile.user.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
 
-    if application.proxy_applicant is None:
-        customer = application.applicant_profile.user
-    else:
-        customer = application.proxy_applicant
+    customer = application.applicant_profile.user
 
     officer = sender
 

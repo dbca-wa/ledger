@@ -1,4 +1,6 @@
 from django.conf.urls import url
+from django.views.generic.base import TemplateView, RedirectView
+
 
 from wildlifelicensing.apps.main.views import ListProfilesView, CreateProfilesView, EditProfilesView, \
     DeleteProfileView, IdentificationView, EditAccountView, SearchCustomersView, ListDocumentView, \
@@ -7,6 +9,10 @@ from wildlifelicensing.apps.main.views import ListProfilesView, CreateProfilesVi
 
 
 urlpatterns = [
+    url(r'contact-us/$', TemplateView.as_view(template_name="wl/contact_us.html"), name='contact_us'),
+    url(r'further-information/$', RedirectView.as_view(url='https://www.dpaw.wa.gov.au/plants-and-animals/licences-and-permits'),
+        name='further_information'),
+
     url('^account/$', EditAccountView.as_view(), name='edit_account'),
     url('^search_customers/$', SearchCustomersView.as_view(), name='search_customers'),
 

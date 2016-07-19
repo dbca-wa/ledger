@@ -584,7 +584,10 @@ define([
 
     function determineApplicationApprovable() {
         var approvable = false,
-            $approve = $('#approve');
+            $submissionForm = $('#submissionForm'),
+            $approve = $submissionForm.find('#approve'),
+            $decline = $submissionForm.find('#decline'),
+            $buttonClicked;
 
         if ((application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required) {
             if ((application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application) {
@@ -595,6 +598,21 @@ define([
                 }
             }
         }
+
+        // ensure form only submits when either approve (enterConditions) is enabled or decline is clicked
+        $($approve).click(function() {
+            $buttonClicked = $(this);
+        });
+
+        $($decline).click(function() {
+            $buttonClicked = $(this);
+        });
+
+        $submissionForm.submit(function(e) {
+            if($buttonClicked.is($approve) && $approve.hasClass('disabled')) {
+                e.preventDefault();
+            }
+        });
 
         if(approvable) {
             $approve.removeClass('disabled');

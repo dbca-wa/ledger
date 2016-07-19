@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
+from django.contrib.postgres.fields.jsonb import JSONField
 
 from ledger.accounts.models import RevisionedMixin, EmailUser, Document, Profile
 from ledger.licence.models import LicenceType, Licence
@@ -22,6 +23,7 @@ class WildlifeLicenceType(LicenceType):
     code_slug = models.SlugField(max_length=64)
     identification_required = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
+    application_schema = JSONField(blank=True, null=True)
 
 
 class WildlifeLicence(Licence):
@@ -31,6 +33,7 @@ class WildlifeLicence(Licence):
     profile = models.ForeignKey(Profile)
     sequence_number = models.IntegerField(default=1)
     purpose = models.TextField(blank=True)
+    locations = models.TextField(blank=True)
     cover_letter_message = models.TextField(blank=True)
     licence_document = models.ForeignKey(Document, blank=True, null=True, related_name='licence_document')
     cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
