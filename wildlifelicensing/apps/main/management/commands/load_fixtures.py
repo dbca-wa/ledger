@@ -8,6 +8,7 @@ class Command(BaseCommand):
     fixtures = ['conditions',
                 'groups',
                 'licences',
+                'default-conditions',
                 'returns']
 
     def handle(self, *args, **options):
