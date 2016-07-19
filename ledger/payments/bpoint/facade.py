@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 
 from models import BpointTransaction
 from gateway import Gateway
-from BPOINT.API import CardDetails
+from ledger.payments.bpoint.BPOINT.API import CardDetails
 
 from ledger.payments.bpoint import settings as bpoint_settings
 from ledger.payments.invoice.models import Invoice
@@ -57,7 +57,7 @@ class Facade(object):
             gateway
         '''
         res,card_details = None, None
-        
+
         if bank_card:
             card_details = self._get_card_details(bank_card,request_source)
         if amount:
