@@ -30,7 +30,7 @@ class SpeciesNamesJSON(View):
         params = {'propertyName': '(species_name,vernacular)', 'sortBy': 'species_name'}
         search = request.GET.get('search')
         if search:
-            filter_ = "species_name ILIKE '%{1}%' OR vernacular ILIKE '%{1}%'".format(search, search)
+            filter_ = "(species_name ILIKE '%{1}%' OR vernacular ILIKE '%{1}%')".format(search, search)
             add_filter(filter_, params)
         kingdom = request.GET.get('type')
         if kingdom == 'fauna':
