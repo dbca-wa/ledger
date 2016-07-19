@@ -1,0 +1,60 @@
+{% extends 'checkout/payment_details.html' %}
+{% load i18n %}
+
+{% block payment_details %}
+<div clas="container">
+    <!-- Pills -->
+    <ul class="nav nav-pills nav-justified">
+        <li class="active"><a data-toggle="tab" href="#card">CARD</a></li>
+        <li><a data-toggle="tab" href="#bpay">BPAY/Cash/Cheque/Money Order</a></li>
+    </ul>
+    <!-- Pills -->
+    <div class="tab-content">
+        <div id="card" class="tab-pane fade in active">
+            <div class="well">
+                <div class="sub-header">
+                    <h3>{% trans "Card Details" %}</h3>
+                </div>
+                <form method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
+                    {% csrf_token %}
+                    {% include "partials/form_fields.html" with form=bankcard_form %}
+                    <input type="hidden" name="payment_method" readonly value="card"/>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-large btn-primary pull-right">{% trans "Continue" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <!-- BPAY -->
+        <div id="bpay" class="tab-pane fade">
+            <div class="well">
+                <div class="sub-header">
+                    <h3>{% trans "BPAY/Cash/Cheque/Money Order" %}</h3>
+                </div>
+                <form method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
+                    {% csrf_token %}
+                    <input type="hidden" name="payment_method" readonly value="other"/>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-large btn-primary pull-right">{% trans "Continue" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <!-- Cash -->
+        <div id="cash" class="tab-pane fade">
+            <div class="well">
+                <div class="sub-header">
+                    <h3>{% trans "Cash" %}</h3>
+                </div>
+                <form method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
+                    {% csrf_token %}
+                    <input type="hidden" name="payment_method" readonly value="cash"/>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-large btn-primary pull-right">{% trans "Continue" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> 
+{% endblock %}
