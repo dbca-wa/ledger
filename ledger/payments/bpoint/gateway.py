@@ -1,7 +1,7 @@
 import logging
 from . import settings
 logger = logging.getLogger('bpoint_dpaw')
-from BPOINT.API import TransactionRequest,Credentials,TransactionSearchRequest
+from ledger.payments.bpoint.BPOINT.API import TransactionRequest,Credentials,TransactionSearchRequest
 
 class Gateway(object):
 
@@ -57,7 +57,7 @@ class Gateway(object):
         txn = self._transaction(order_num,reference,action,amount,card_details,biller_code,_type,sub_type)
         if orig_txn_num:
             txn.original_txn_number = orig_txn_num
-
+        
         return txn.submit()
     
     

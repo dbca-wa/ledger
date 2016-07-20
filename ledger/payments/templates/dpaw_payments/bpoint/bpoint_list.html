@@ -18,7 +18,7 @@
             <span class="divider"></span>
         </li>
         <li>
-            <a href="{% url 'bpoint-dash-list' %}">{% trans "BPOINT" %}</a>
+            <a href="{% url 'payments:bpoint-dash-list' %}">{% trans "BPOINT" %}</a>
             <span class="divider"></span>
         </li>
         <li class="active">{% trans "Transactions" %}</li>
@@ -31,7 +31,7 @@
 
 {% block dashboard_content %}
     {% verbatim %}
-    <script id="bpay_transactions" type="text/x-handlebars-template" data-url="/dpaw_payments/api/bpoint.json" data-onload="upgradeTable">
+    <script id="bpay_transactions" type="text/x-handlebars-template" data-url="/ledger/payments/api/bpoint.json" data-onload="upgradeTable">
         <table id="transactions_table" class="table table-striped table-bordered responsive">
             <thead>
                 <tr>
@@ -51,7 +51,7 @@
                         <td>{{ this.action }}</td>
                         <td>{{ this.settlement_date }}</td>
                         <td>
-                            <a href="/dashboard/dpaw_payments/bpoint/transaction/{{this.txn_number }}" class="btn btn-info">View</a>
+                            <a href="/ledger/checkout/dashboard/payments/bpoint/transaction/{{this.txn_number }}" class="btn btn-info">View</a>
                         </td>
                     </tr>
                     {{/each}}

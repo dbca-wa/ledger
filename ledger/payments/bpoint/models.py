@@ -64,7 +64,5 @@ class BpointTransaction(models.Model):
     
     @property
     def order(self):
-        return Order.objects.get(number=self.crn1[:-1])
-    
-    
-    
+        from ledger.payments.models import Invoice
+        return Order.objects.get(number=Invoice.objects.get(reference=self.crn1).order_number)

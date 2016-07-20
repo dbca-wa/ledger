@@ -5,13 +5,14 @@ def  getCRN(number):
     crn = gateway.entry_point.getCRN()
     return crn.generateBPAYCrnWithMod10V01(str(number))
 
-def getICRN(number,amount,date,option='ICRNAMT'):
+def getICRN(number,amount,option='ICRNAMT'):
     gateway = JavaGateway()
-    crn = gateway.entry_point.getCRN()
-    number = str(number)
-    if option == 'ICRNDATE':
-        return crn.generateBPAYIcrnDate(number,date)
+    crn = gateway.entry_point.getiCRN()
+    if option == 'ICRNAMT':
+        return crn.generateBPAYIcrnAmt(str(number),str(amount))
+    '''For later implementation
     elif option == 'ICRNAMTDTE':
         return generateBPAYIcrnAmtDate(number,amount,date)
-    elif option == 'ICRNAMT':
-        return generateBPAYIcrnAmt(number,amount)
+    elif option == 'ICRNDATE':
+        return generateBPAYIcrnDate(number,amount)
+    '''

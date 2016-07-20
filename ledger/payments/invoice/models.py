@@ -18,11 +18,6 @@ class Invoice(models.Model):
     reference = models.CharField(max_length=50, unique=True)    
     def __unicode__(self):
         return 'Order #{0} Invoice #{1}'.format(self.reference,self.id)
-    
-    def save(self, *args, **kwargs):
-        self.reference = getCRN(self.order_number)
-
-        super(Invoice, self).save(*args, **kwargs)
 
     @property
     def biller_code(self):
