@@ -21,8 +21,32 @@
                 </select>
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="licences-filter-expiry-after">Expire After: </label>
+                <div class="input-group date" id="licences-filter-expiry-after-date">
+                    <input type="text" class="form-control" name="expiry_after"
+                           id="licences-filter-expiry-after" placeholder="DD/MM/YYYY">
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="licences-filter-expiry-before">Expire before: </label>
+                <div class="input-group date" id="licences-filter-expiry-before-date">
+                    <input type="text" class="form-control" name="expiry_before"
+                           id="licences-filter-expiry-before" placeholder="DD/MM/YYYY">
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
     </form>
 {% endblock %}
 
 {% block returns %}
-{%  endblock %}
+{% endblock %}

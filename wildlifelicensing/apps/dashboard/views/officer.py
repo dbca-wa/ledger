@@ -1,4 +1,5 @@
 import datetime
+from dateutil.parser import parse as date_parse
 
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
@@ -451,6 +452,26 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             return Q(licence_type__pk=value)
         else:
             return None
+
+    @staticmethod
+    def filter_expiry_after(value):
+        if value:
+            try:
+                date = date_parse(value, dayfirst=True).date()
+                return Q(end_date__gt=date)
+            except:
+                pass
+        return None
+
+    @staticmethod
+    def filter_expiry_before(value):
+        if value:
+            try:
+                date = date_parse(value, dayfirst=True).date()
+                return Q(end_date__lt=date)
+            except:
+                pass
+        return None
 
     @staticmethod
     def _search_licence_number(search):
