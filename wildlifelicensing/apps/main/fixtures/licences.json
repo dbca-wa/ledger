@@ -530,6 +530,11 @@
                                                             "children": 
                                                             [
                                                                 {
+                                                                    "type": "text",
+                                                                    "label": "Group name",
+                                                                    "name": "survey_tf_group_name"
+                                                                },
+                                                                {
                                                                     "type": "species",
                                                                     "speciesType": "fauna",
                                                                     "label": "Scientific or common name",
@@ -7714,6 +7719,11 @@
                                                             "children": 
                                                             [
                                                                 {
+                                                                    "type": "text",
+                                                                    "label": "Group name",
+                                                                    "name": "survey_tft_group_name"
+                                                                },
+                                                                {
                                                                     "type": "species",
                                                                     "speciesType": "fauna",
                                                                     "label": "Scientific or common name",
@@ -9474,6 +9484,11 @@
                                                             "children": 
                                                             [
                                                                 {
+                                                                    "type": "text",
+                                                                    "label": "Group name",
+                                                                    "name": "monitoring_tft_group_name"
+                                                                },
+                                                                {
                                                                     "type": "species",
                                                                     "speciesType": "fauna",
                                                                     "label": "Scientific or common name",
@@ -9515,10 +9530,15 @@
                                                             "children": 
                                                             [
                                                                 {
+                                                                    "type": "text",
+                                                                    "label": "Group name",
+                                                                    "name": "monitoring_threatened_group_name"
+                                                                },
+                                                                {
                                                                     "type": "species",
                                                                     "speciesType": "fauna",
                                                                     "label": "Scientific or common name",
-                                                                    "name": "monitoring_threatened_tft_scientific_name"
+                                                                    "name": "monitoring_threatened_scientific_name"
                                                                 }
                                                             ]
                                                         }
@@ -11690,6 +11710,11 @@
                                                             "children": 
                                                             [
                                                                 {
+                                                                    "type": "text",
+                                                                    "label": "Group name",
+                                                                    "name": "research_tft_group_name"
+                                                                },
+                                                                {
                                                                     "type": "species",
                                                                     "speciesType": "fauna",
                                                                     "label": "Scientific or common name",
@@ -11731,10 +11756,15 @@
                                                             "children": 
                                                             [
                                                                 {
+                                                                    "type": "text",
+                                                                    "label": "Group name",
+                                                                    "name": "research_threatened_group_name"
+                                                                },
+                                                                {
                                                                     "type": "species",
                                                                     "speciesType": "fauna",
                                                                     "label": "Scientific or common name",
-                                                                    "name": "research_threatened_tft_scientific_name"
+                                                                    "name": "research_threatened_scientific_name"
                                                                 }
                                                             ]
                                                         }
