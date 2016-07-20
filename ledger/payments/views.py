@@ -10,7 +10,7 @@ OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
 
-def createBasket(product_list,owner):
+def createBasket(product_list,owner,force_flush=True):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -34,7 +34,10 @@ def createBasket(product_list,owner):
             
         # Use the previously open basket if its present or create a new one    
         if old_basket:
-            basket = old_basket
+            if force_flush:
+                basket = old_basket.flush()
+            else:
+                basket = old_basket
         else:
             basket = Basket()
             
