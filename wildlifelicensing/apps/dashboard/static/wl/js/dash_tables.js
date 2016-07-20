@@ -148,8 +148,6 @@ define(
                 }),
                 licencesColumns = options.data.licences.columnDefinitions;
 
-            console.log("licencesColumns", licencesColumns);
-
             if (options.data.licences.tableOptions) {
                 $.extend(licencesTableOptions, options.data.licences.tableOptions);
             }
