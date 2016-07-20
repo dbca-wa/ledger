@@ -23,37 +23,37 @@ PARENT_HOST = env('PARENT_HOST', 'localhost')
 HOST_PORT = env('HOST_PORT', '8000')
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [
-                     'django.contrib.admin',
-                     'django.contrib.auth',
-                     'django.contrib.contenttypes',
-                     'django.contrib.sessions',
-                     'django.contrib.sites',
-                     'django.contrib.messages',
-                     'django.contrib.staticfiles',
-                     'django.contrib.flatpages',
-                     'social.apps.django_app.default',
-                     'django_extensions',
-                     'django_hosts',
-                     'bootstrap3',
-                     'reversion',
-                     'widget_tweaks',
-                     'django_countries',
-                     'django_cron',
-                 ] + get_core_apps([  # django-oscar overrides
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.sites',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.flatpages',
+    'social.apps.django_app.default',
+    'django_extensions',
+    'django_hosts',
+    'bootstrap3',
+    'reversion',
+    'widget_tweaks',
+    'django_countries',
+    'django_cron',
+] + get_core_apps([  # django-oscar overrides
     'ledger.basket',
     'ledger.order'
 ]) + [
-                     'ledger.accounts',  # Defines custom user model, passwordless auth pipeline.
-                     'ledger.licence',
-                     'ledger.taxonomy',
-                     'wildlifelicensing.apps.dashboard',
-                     'wildlifelicensing.apps.main',
-                     'wildlifelicensing.apps.applications',
-                     'wildlifelicensing.apps.emails',
-                     'wildlifelicensing.apps.returns',
-                     'wildlifelicensing.apps.customer_management',
-                     'wildlifelicensing.apps.reports'
-                 ]
+    'ledger.accounts',  # Defines custom user model, passwordless auth pipeline.
+    'ledger.licence',
+    'ledger.taxonomy',
+    'wildlifelicensing.apps.dashboard',
+    'wildlifelicensing.apps.main',
+    'wildlifelicensing.apps.applications',
+    'wildlifelicensing.apps.emails',
+    'wildlifelicensing.apps.returns',
+    'wildlifelicensing.apps.customer_management',
+    'wildlifelicensing.apps.reports'
+]
 
 SITE_ID = 1
 SITE_URL = env('SITE_URL', 'http://localhost:8000')
