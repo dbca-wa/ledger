@@ -16,7 +16,7 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def return_to(self, url):
         self._set('ledger','return_url',url)
 
-    def return_path(self):
+    def return_url(self):
         return self._get('ledger','return_url')
 
     # Template Methods
