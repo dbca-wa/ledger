@@ -33,10 +33,11 @@ class SpeciesNamesJSON(View):
             filter_ = "(species_name ILIKE '%{1}%' OR vernacular ILIKE '%{1}%')".format(search, search)
             add_filter(filter_, params)
         kingdom = request.GET.get('type')
+        fauna_kingdom = 5
         if kingdom == 'fauna':
-            add_filter('kingdom_id IN (5)', params)
+            add_filter('kingdom_id IN ({})'.format(fauna_kingdom), params)
         elif kingdom == 'flora':
-            add_filter('kingdom_id NOT IN (5)', params)
+            add_filter('kingdom_id NOT IN ({})'.format(fauna_kingdom), params)
         r = requests.get(base_url, params=params)
         names = []
         try:
