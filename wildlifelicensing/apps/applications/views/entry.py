@@ -475,7 +475,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.success(request, 'The application was successfully lodged.')
         except Exception as e:
             messages.error(request, 'There was a problem creating the application: %s' % e)
-     
+
         try:
             utils.delete_app_session_data(request.session)
         except Exception as e:
