@@ -11,6 +11,7 @@ from ledger.payments.bpoint.BPOINT.API import CardDetails
 from ledger.payments.bpoint import settings as bpoint_settings
 from ledger.payments.invoice.models import Invoice
 
+
 class Facade(object):
     """
         Bridge between oscars's objects and gateway object
@@ -57,16 +58,20 @@ class Facade(object):
             gateway
         '''
         res,card_details = None, None
-
         if bank_card:
             card_details = self._get_card_details(bank_card,request_source)
         if amount:
             amount = int(amount*100)
-        res = self.gateway.handle_txn(order_number,reference,action,amount,card_details,
+        # Handle any other exceptions that occur that are not from bpoint
+        try:
+            res = self.gateway.handle_txn(order_number,reference,action,amount,card_details,
                                                bpoint_settings.BPOINT_BILLER_CODE,_type,sub_type,orig_txn_number)
+        except Exception:
+            raise
+
         # Check if the transaction was successful
         if not res.api_response.response_code == 0:
-            raise ValueError(res.api_response.response_text)
+            raise UnableToTakePayment(res.api_response.response_text)
         
         return self._create_txn(
             res.action,
@@ -156,6 +161,6 @@ class Facade(object):
         
     def friendly_error_msg(self, txn):
         if not txn.approved:
-            raise Exception(txn.response_txt)
+            raise UnableToTakePayment(txn.response_txt)
         return False
     
