@@ -305,21 +305,28 @@ def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
 
     # this is the only way to get data into the onPage callback function
     doc.site_url = site_url
-
     elements = []
-
     elements.append(Paragraph('Dear Sir/Madam', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Your wildlife licence:', styles['Left']))
+    elements.append(Paragraph('This is a reminder that your licence:', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph(licence.licence_type.name, styles['BoldLeft']))
+    elements.append(Paragraph('{}-{}'.format(licence.licence_number, licence.licence_sequence), styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('is due to expire on {}. If you wish to renew this licence, please lodge '
-                              'an application.'.format(licence.end_date.strftime(DATE_FORMAT)), styles['Left']))
+    elements.append(Paragraph('is due to expire on {}.'.format(licence.end_date.strftime(DATE_FORMAT)), styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Best regards,', styles['Left']))
+
+    elements.append(Paragraph('Please note that you are required to submit an electronic return and that '
+                              'the licence cannot be renewed until this.', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Parks and Wildlife Customer Portal', styles['Left']))
+
+    elements.append(Paragraph('If you have any queries, please contact Mr Danny Stefoni on 9219 9833 or '
+                              'email to wildlifelicensing@dpaw.wa.gov.au.', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    elements.append(Paragraph('Yours sincerely,', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('Jim Sharp', styles['Left']))
+    elements.append(Paragraph('DIRECTOR GENERAL', styles['Left']))
 
     doc.build(elements)
 
