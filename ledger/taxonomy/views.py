@@ -34,9 +34,9 @@ class SpeciesNamesJSON(View):
             add_filter(filter_, params)
         kingdom = request.GET.get('type')
         if kingdom == 'fauna':
-            add_filter('kingdom_id in (5)', params)
+            add_filter('kingdom_id IN (5)', params)
         elif kingdom == 'flora':
-            add_filter('kingdom_id in (3)', params)
+            add_filter('kingdom_id NOT IN (5)', params)
         r = requests.get(base_url, params=params)
         names = []
         try:
