@@ -11,6 +11,15 @@ Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
 
 def createBasket(product_list,owner):
+    ''' Create a basket so that a user can check it out.
+        @param product_list - [
+            {
+                "id": "<id of the product in oscar>",
+                "quantity": "<quantity of the products to be added>"
+            }
+        ]
+        @param - owner (user id or user object)
+    '''
     try:
         old_basket = basket = None
         valid_products = []
