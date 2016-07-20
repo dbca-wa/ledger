@@ -19,7 +19,7 @@ from wildlifelicensing.apps.main.mixins import CustomerRequiredMixin, OfficerReq
 from wildlifelicensing.apps.main.signals import identification_uploaded
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
-from wildlifelicensing.apps.main.pdf import create_licence_renewal_pdf_bytes
+from wildlifelicensing.apps.main.pdf import create_licence_renewal_pdf_bytes, bulk_licence_renewal_pdf_bytes
 
 
 class SearchCustomersView(OfficerRequiredMixin, View):
@@ -366,6 +366,18 @@ class LicenceRenewalPDFView(OfficerRequiredMixin, View):
         response.write(create_licence_renewal_pdf_bytes(filename, licence,
                                                         request.build_absolute_uri(reverse('home'))))
 
+        return response
+
+
+class BulkLicenceRenewalPDFView(OfficerRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        query = request.POST.get('query')
+        licences = []
+        if query:
+            licences = WildlifeLicence.objects.filter(query)
+        filename = 'bulk-renewals.pdf'
+        response = HttpResponse(content_type='application/pdf')
+        response.write(bulk_licence_renewal_pdf_bytes(licences, request.build_absolute_uri(reverse('home'))))
         return response
 
 
