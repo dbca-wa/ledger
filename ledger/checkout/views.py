@@ -12,11 +12,14 @@ from oscar.core.loading import get_class, get_model, get_classes
 from oscar.apps.checkout import signals
 from oscar.apps.shipping.methods import NoShippingRequired
 #
+from ledger.payments.models import Invoice
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
 
+Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
 CoreIndexView = get_class('checkout.views','IndexView')
+CoreThankYouView = get_class('checkout.views','ThankYouView')
 UserAddress = get_model('address','UserAddress')
 RedirectRequired, UnableToTakePayment, PaymentError \
     = get_classes('payment.exceptions', ['RedirectRequired',
@@ -30,8 +33,12 @@ logger = logging.getLogger('oscar.checkout')
 class IndexView(CoreIndexView):
 
     success_url = reverse_lazy('checkout:payment-details')
+    class FallbackMissing(Exception):
+        pass
 
     def validate_ledger(self,details):
+        # validate there is a fallback url
+        self.__validate_url(details.get('fallback_url'),'fallback')
         # validate card method to be used
         self.__validate_card_method(details.get('card_method'))
         # validate template if its present
@@ -39,9 +46,9 @@ class IndexView(CoreIndexView):
         # validate system id
         self.__validate_system(details.get('system_id'))
         # validate application id
-        self.__validate_application_id(details.get('app_id'),details.get('system_id'))
+        #self.__validate_application_id(details.get('app_id'),details.get('system_id'))
         # validate return url
-        self.__validate_return_url(details.get('return_url'))
+        self.__validate_url(details.get('return_url'),'return')
         # validate bpay if present
         self.__validate_bpay(details.get('bpay_details'))
         # validate basket owner if present
@@ -56,17 +63,22 @@ class IndexView(CoreIndexView):
             try:
                 user = EmailUser.objects.get(id=user_id)
             except EmailUser.DoesNotExist:
-                pass
+                raise
             if user:
                 self.checkout_session.owned_by(user.id)
 
     def __validate_system(self, system):
         ''' Validate the system id
         '''
+        valid_systems = [
+            '0369'
+        ]
         if not system:
-            raise ValueError('System id required.')
+            raise ValueError('System id required. eg ?system_id=<id>')
         elif not len(system) == 4:
-            raise ValueError('The system should be 4 characters long.')
+            raise ValueError('The system id should be 4 characters long.')
+        elif system not in valid_systems:
+            raise ValueError('The System id is not valid.')
         self.checkout_session.use_system(system)
 
     def __validate_application_id(self, _id,system_id):
@@ -77,17 +89,23 @@ class IndexView(CoreIndexView):
             '0369': 9,
         }
         if not _id:
-            raise ValueError('An application id is required')
+            raise ValueError('An application id is required. eg ?')
         else:
             if len(_id) != application_id_length.get(system_id):
-                raise ValueError('The application id needs to be {0} characters long'.format(application_id_length.get(system_id)))
+                raise ValueError('The application id needs to be {0} characters long.'.format(application_id_length.get(system_id)))
             # 
             self.checkout_session.use_application(_id)
         return True
 
-    def __validate_return_url(self, url):
-        if not url:
-            raise ValueError('A return url is required')
+    def __validate_url(self, url, _type):
+        if not url and _type == 'return':
+            raise ValueError('Return url is required. eg ?return_url=')
+        elif not url and _type == 'fallback':
+            msg = 'A fallback url is required. eg ?fallback_url=<url>'
+            messages.error(self.request,msg)
+            raise self.FallbackMissing()
+
+            #return HttpResponseRedirect(reverse('payments:payments-error'))
         self.checkout_session.return_to(url)
 
     def __validate_card_method(self, method):
@@ -139,16 +157,29 @@ class IndexView(CoreIndexView):
                 'card_method': request.GET.get('card_method','capture'),
                 'basket_owner': request.GET.get('basket_owner',None),
                 'template': request.GET.get('template',None),
+                'fallback_url': request.GET.get('fallback_url',None),
                 'return_url': request.GET.get('return_url',None),
                 'system_id': request.GET.get('system_id',None),
-                'app_id': request.GET.get('app_id',None),
+                #'app_id': request.GET.get('app_id',None),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
                     'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
                     'icrn_date': request.GET.get('icrn_date', None),
                 }
             }
-            self.validate_ledger(ledger_details)
+            # Check if all the required parameters are set
+            # and redirect to appropriate page if not
+            try:
+                self.validate_ledger(ledger_details)
+            except ValueError as e:
+                messages.error(request,str(e))
+                return HttpResponseRedirect(ledger_details.get('fallback_url'))
+            except EmailUser.DoesNotExist as e:
+                messages.error(request,str(e))
+                return HttpResponseRedirect(ledger_details.get('fallback_url'))
+            except self.FallbackMissing as e:
+                return HttpResponseRedirect(reverse('payments:payments-error'))
+
             return self.get_success_response()
         return super(IndexView, self).get(request, *args, **kwargs)
 
@@ -398,3 +429,53 @@ class PaymentDetailsView(CorePaymentDetailsView):
             self.restore_frozen_basket()
             return self.render_preview(
                 self.request, error=msg, **payment_kwargs)
+
+# =========
+# Thank you
+# =========
+
+class ThankYouView(CoreThankYouView):
+    """
+    Displays the 'thank you' page which summarises the order just submitted.
+    """
+    template_name = 'checkout/thank_you.html'
+    context_object_name = 'order'
+    order_id = None
+    return_url = None
+
+    def get_context_data(self, **kwargs):
+        # Override method so the return_url and order and invoice_id can be
+        # added to the context.
+        ctx = super(ThankYouView, self).get_context_data(**kwargs)
+        order = ctx['order']
+        invoice_ref = Invoice.objects.get(order_number=order.number).reference
+        ctx['invoice_ref'] = invoice_ref
+        ctx['return_url'] = '{}?order_id={}&invoice_ref={}'.format(self.return_url,order.id,invoice_ref)
+        return ctx
+
+    def get_object(self):
+        # We allow superusers to force an order thank-you page for testing
+        order = None
+        if self.request.user.is_superuser:
+            if 'order_number' in self.request.GET:
+                order = Order._default_manager.get(
+                    number=self.request.GET['order_number'])
+            elif 'order_id' in self.request.GET:
+                order = Order._default_manager.get(
+                    id=self.request.GET['order_id'])
+
+        if not order:
+            print self.request.session['checkout_order_id']
+            if 'checkout_order_id' in self.request.session:
+                order = Order._default_manager.get(
+                    pk=self.request.session['checkout_order_id'])
+
+                self.order_id = self.request.session['checkout_order_id']
+            else:
+                raise http.Http404(_("No order found"))
+
+            if'checkout_return_url' in self.request.session:
+                self.return_url = self.request.session['checkout_return_url']
+                #del self.request.session['checkout_return_url']
+
+        return order
