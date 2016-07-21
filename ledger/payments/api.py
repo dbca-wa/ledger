@@ -405,6 +405,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceTransactionSerializer
     authentication_classes = []
+    lookup_field = 'reference'
 
 #######################################################
 #                                                     #
