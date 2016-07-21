@@ -12,6 +12,7 @@ from oscar.core.loading import get_class, get_model, get_classes
 from oscar.apps.checkout import signals
 from oscar.apps.shipping.methods import NoShippingRequired
 #
+from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
 
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -43,7 +44,21 @@ class IndexView(CoreIndexView):
         self.__validate_return_url(details.get('return_url'))
         # validate bpay if present
         self.__validate_bpay(details.get('bpay_details'))
+        # validate basket owner if present
+        self.__validate_basket_owner(details.get('basket_owner'))
         return True
+
+    def __validate_basket_owner(self,user_id):
+        ''' Check if the user entered for basket and order swapping is valid
+        '''
+        user = None
+        if user_id:
+            try:
+                user = EmailUser.objects.get(id=user_id)
+            except EmailUser.DoesNotExist:
+                pass
+            if user:
+                self.checkout_session.owned_by(user.id)
 
     def __validate_system(self, system):
         ''' Validate the system id
@@ -122,6 +137,7 @@ class IndexView(CoreIndexView):
             # Set session variables that are required by ledger
             ledger_details = {
                 'card_method': request.GET.get('card_method','capture'),
+                'basket_owner': request.GET.get('basket_owner',None),
                 'template': request.GET.get('template',None),
                 'return_url': request.GET.get('return_url',None),
                 'system_id': request.GET.get('system_id',None),
