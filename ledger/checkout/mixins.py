@@ -45,7 +45,7 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         order is submitted.
         """
         # Get the return url
-        success_url = self.checkout_session.return_url()
+        return_url = self.checkout_session.return_url()
 
         # Send confirmation message (normally an email)
         self.send_confirmation_message(order, self.communication_type_code)
@@ -55,7 +55,7 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
 
         # Save order and invoice id in session so thank-you page can load it
         self.request.session['checkout_order_id'] = order.id
-        self.request.session['checkout_invoice_id'] = Invoice.objects.get(order_number=order.number).id
+        self.request.session['checkout_return_url'] = return_url
 
         response = HttpResponseRedirect(self.get_success_url())
         self.send_signal(self.request, response, order)
