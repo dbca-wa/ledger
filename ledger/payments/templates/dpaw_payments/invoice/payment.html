@@ -30,86 +30,89 @@
             <div class="content">
                 <div class="row align-center">
                     <div class="align-center columns show-for-large hide-for-print"><a target="_blank" href="//www.dpaw.wa.gov.au">
-                        <img class="align-center" src="//static.dpaw.wa.gov.au/images/oimlogo_left.svg" alt="Department of Parks and Wildlife"></a>
+                        <img class="align-right" src="//static.dpaw.wa.gov.au/images/oimlogo_left.svg" alt="Department of Parks and Wildlife"></a>
                     </div>
                 </div>
                 <div class="row align-justify">
-                    
-                    <!-- Search for Invoice -->
-                    <div class="columns large-12">
-                        <h3>Search For Invoice</h3>
-                        <div class="row">
-                            <!-- Show Errors -->
-                            <div id="errors" class="columns large-12">
-                                <div id="errors_row" class="row">
-                                    
-                                </div>
+                    <div class="medium-12 columns">
+                        <h2 class="text-center">Pay For Invoice</h2>
+                    </div>
+                    <div class="medium-4 columns">
+                        <ul class="tabs vertical" id="payment-tabs" data-tabs>
+                            <li class="tabs-title is-active"><a href="#cash" aria-selected="true">Cash</a></li>
+                            <li class="tabs-title"><a href="#card">Card</a></li>
+                        </ul>
+                    </div>
+                    <div class="medium-8 columns">
+                        <div class="tabs-content vertical" data-tabs-content="payment-tabs">
+                            <div class="tabs-panel is-active" id="cash">
+                                <form>
+                                    <label>
+                                        Amount
+                                        <input type="number" value=""/>
+                                    </label>
+                                    <label>Select Payment Type
+                                        <select>
+                                            <option value="payment">Payment</option>
+                                            <option value="refund">Refund</option>
+                                            <option value="reversal">Reversal</option>
+                                        </select>
+                                    </label>
+                                </form>
                             </div>
-                            <!-- /Show Errors -->
-                            <div class="columns small-12">
-                                <form id="search_invoice_form">
+                            <div class="tabs-panel" id="card">
+                                <form>
+                                    <label>
+                                        Amount
+                                        <input type="number" value=""/>
+                                    </label>
+                                    <label>Select Payment Type
+                                        <select>
+                                            <option value="payment">Payment</option>
+                                            <option value="capture">Capture</option>
+                                            <option value="refund">Refund</option>
+                                            <option value="reversal">Reversal</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Card Number
+                                        <input type="text" value=""/>
+                                    </label>
                                     <div class="row">
-                                        <div id="invoice-label" class="small-9 columns">
-                                            <div class="input-group">
-                                                <span class="input-group-label">Reference</span>
-                                                <input id="invoice_num" class="input-group-field" type="text"/>
-                                                <div class="input-group-button">
-                                                    <input id="search_invoice" type="submit" class="button" value="Submit" onsubmit="getInvoice();"/>
-                                                </div>
-                                            </div>
+                                        <div class="columns medium-2">
+                                            <label>
+                                                Expiry Month
+                                                <input type="text" value=""/>
+                                            </label>
+                                        </div>
+                                        <div class="columns medium-2">
+                                            <label>
+                                                Expiry Year
+                                                <input type="text" value=""/>
+                                            </label>
                                         </div>
                                     </div>
+                                    <!-- /Card Details -->
+                                    <div class="row">
+                                        <div class="columns medium-2">
+                                            <label>
+                                                CCV
+                                                <input type="text" value=""/>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <!-- /CVN -->
+                                    <div class="row align-right">
+                                        <div class="columns medium-3">
+                                            <input id="" type="submit" class="float-right button" value="Pay"/>
+                                        </div>
+                                    </div>
+                                    <!-- Pay Button -->
                                 </form>
                             </div>
                         </div>
                     </div>
-                    <!-- /Search for Invoice -->
-                    <!-- Show invoice details -->
-                    <div id="invoice_details" class="hide columns large-12">
-                        <div class="row">
-                            <!-- Invoice info -->
-                            <div class="columns small-12">
-                                <h3 id="invoice_ref"></h3>
-                                <div class="row">
-                                    <div class="columns small-6">
-                                        <h4>Invoice Details</h4>
-                                        <p id="order_num"></p>
-                                        <p id="created_on"></p>
-                                        <p id="item_count"></p>
-                                        <a id="pdf_btn" class="button">View PDF Invoice</a>
-                                    </div>
-                                    <div class="columns small-6">
-                                        <h4>Payment Information</h4>
-                                        <p id="amount"></p>
-                                        <p id="payment_status"></p>
-                                        <p id="payment_amount"></p>
-                                        <a id="pay_btn" href="" class="hide button">Pay Invoice</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- /Invoice info -->
-                        <!-- Previous txns -->
-                        <div class="row">
-                            <div id="cash_txns" class="columns small-4">
-                                <h4>Cash Transactions</h4>
-                            </div>
-                            <div id="bpoint_txns" class="columns small-4">
-                                <h4>Card Transactions</h4>
-                            </div>
-                            <div id="bpay_txns" class="columns small-4">
-                                <h4>BPAY Transactions</h4>
-                            </div>
-                        </div>
-                        <!-- /Previous txns -->
-                    </div>
-                    <!-- /Show invoice details -->
-                    <!-- Payment Options -->
-                    <div class="columns large-12">
-                        
-                    </div>
-                    <!-- /Payment OPtions -->
-                </div>
+                </div>    
             </div>
             <div class="footer">
                 <style type="text/css">.row {min-width:100% !important;}</style>
@@ -117,6 +120,7 @@
         </div>
         <script type="text/javascript">
             $(function(){
+                $(document).foundation();
                 var $submit_btn = $('#search_invoice');
                 var $details_div = $('#invoice_details');
                 var $errors_div = $('#errors');
