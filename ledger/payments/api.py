@@ -380,6 +380,7 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
     cash_transactions=CashSerializer(many=True)
     bpay_transactions=BpayTransactionSerializer(many=True)
     bpoint_transactions=BpointTransactionSerializer(many=True)
+    created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = Invoice
         fields = (
