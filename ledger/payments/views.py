@@ -81,6 +81,10 @@ class InvoiceDetailView(generic.DetailView):
 class PaymentErrorView(generic.TemplateView):
     template_name = 'dpaw_payments/payment_error.html'
 
-class ManualPaymentView(generic.TemplateView):
+class InvoiceSearchView(generic.TemplateView):
 
-    template_name = 'dpaw_payments/payment.html'
+    template_name = 'dpaw_payments/invoice/invoice_search.html'
+    
+class InvoicePaymentView(generic.TemplateView):
+
+    template_name = 'dpaw_payments/invoice/payment.html'
