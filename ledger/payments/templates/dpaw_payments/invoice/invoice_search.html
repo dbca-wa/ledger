@@ -1,0 +1,191 @@
+{% load  static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>{% block title %}{% if self.seo_title %}{{ self.seo_title }}{% else %}{{ self.title }}{% endif %}{% endblock %}{% block title_suffix %} - Office for Information Management - Department of Parks and Wildlife{% endblock %}</title>
+        <meta name="description" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
+        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/localforage/1.3.1/localforage.min.js"></script>
+        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation.min.js"></script>
+        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
+        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/js/egg.js"></script>
+        <script type="text/javascript" src="{% static 'js/f6_oim_cms.js' %}"></script>
+        <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
+        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/fonts/Lato2OFLWeb/Lato/latofonts.css" />
+        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation-flex.css">
+        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
+        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
+        <link rel="stylesheet" type="text/css" media="all" href="{% static 'css/f6_oim_cms.css' %}" />
+        {% block extra_css %}
+
+        {% endblock %}
+    </head>
+    <body>
+        <div class="inner-wrap">
+            <div class="content">
+                <div class="row align-center">
+                    <div class="align-center columns show-for-large hide-for-print"><a target="_blank" href="//www.dpaw.wa.gov.au">
+                        <img class="align-center" src="//static.dpaw.wa.gov.au/images/oimlogo_left.svg" alt="Department of Parks and Wildlife"></a>
+                    </div>
+                </div>
+                <div class="row align-justify">
+                    
+                    <!-- Search for Invoice -->
+                    <div class="columns large-12">
+                        <h3>Search For Invoice</h3>
+                        <div class="row">
+                            <!-- Show Errors -->
+                            <div id="errors" class="columns large-12">
+                                <div id="errors_row" class="row">
+                                    
+                                </div>
+                            </div>
+                            <!-- /Show Errors -->
+                            <div class="columns small-12">
+                                <form id="search_invoice_form">
+                                    <div class="row">
+                                        <div id="invoice-label" class="small-9 columns">
+                                            <div class="input-group">
+                                                <span class="input-group-label">Reference</span>
+                                                <input id="invoice_num" class="input-group-field" type="text"/>
+                                                <div class="input-group-button">
+                                                    <input id="search_invoice" type="submit" class="button" value="Submit" onsubmit="getInvoice();"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /Search for Invoice -->
+                    <!-- Show invoice details -->
+                    <div id="invoice_details" class="hide columns large-12">
+                        <div class="row">
+                            <!-- Invoice info -->
+                            <div class="columns small-12">
+                                <h3 id="invoice_ref"></h3>
+                                <div class="row">
+                                    <div class="columns small-6">
+                                        <h4>Invoice Details</h4>
+                                        <p id="order_num"></p>
+                                        <p id="created_on"></p>
+                                        <p id="item_count"></p>
+                                        <a id="pdf_btn" class="button">View PDF Invoice</a>
+                                    </div>
+                                    <div class="columns small-6">
+                                        <h4>Payment Information</h4>
+                                        <p id="amount"></p>
+                                        <p id="payment_status"></p>
+                                        <p id="payment_amount"></p>
+                                        <a id="pay_btn" href="" class="hide button">Pay Invoice</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /Invoice info -->
+                        <!-- Previous txns -->
+                        <div class="row">
+                            <div id="cash_txns" class="columns small-4">
+                                <h4>Cash Transactions</h4>
+                            </div>
+                            <div id="bpoint_txns" class="columns small-4">
+                                <h4>Card Transactions</h4>
+                            </div>
+                            <div id="bpay_txns" class="columns small-4">
+                                <h4>BPAY Transactions</h4>
+                            </div>
+                        </div>
+                        <!-- /Previous txns -->
+                    </div>
+                    <!-- /Show invoice details -->
+                    <!-- Payment Options -->
+                    <div class="columns large-12">
+                        
+                    </div>
+                    <!-- /Payment OPtions -->
+                </div>
+            </div>
+            <div class="footer">
+                <style type="text/css">.row {min-width:100% !important;}</style>
+            </div>
+        </div>
+        <script type="text/javascript">
+            $(function(){
+                var $submit_btn = $('#search_invoice');
+                var $details_div = $('#invoice_details');
+                var $errors_div = $('#errors');
+                var $errors_row = $('#errors_row');
+                var $pay_button = $('#pay_btn');
+                var $pdf_button = $('#pdf_btn');
+                function getInvoice(){
+                    var ref = null;
+                    // Hide div if not hiiden
+                    if (!$details_div.hasClass('hide')) {
+                        $details_div.addClass('hide');
+                    }
+                    // Hide div if not hiiden
+                    if (!$errors_div.hasClass('hide')) {
+                        $errors_div.addClass('hide');
+                    }
+                    // Get value of invoice field
+                    ref = $('#invoice_num').val();
+                    // Make api call to retrieve invoice data
+                    $.get("/ledger/payments/api/invoices/"+ref+".json", function(resp){
+                        console.log(resp);
+                        success(resp);
+                    })
+                    .fail(function(resp){
+                        console.log(resp);
+                        error(resp);
+                    });
+                }
+                function success(resp){
+                    // Invoice Info
+                    $('#invoice_ref').html('Invoice #'+resp.reference);
+                    $('#order_num').html('Order Number: #'+resp.order_number);
+                    $('#created_on').html('Created On: '+resp.created);
+                    $('#item_count').html('Item Count: '+resp.num_items);
+                    // Payment Info
+                    $('#amount').html('Amount: $'+resp.amount);
+                    $('#payment_status').html('Payment Status: '+resp.payment_status);
+                    $('#payment_amount').html('Paid Amount: $'+resp.payment_amount.toFixed(2));
+                    // Add correct url for pdf view
+                    $pdf_button.attr('href','/ledger/payments/invoice/'+resp.reference);
+                    // Display Pay Button if invoice is unpaid
+                    if (resp.payment_status === 'unpaid') {
+                        $pay_button.removeClass('hide');
+                    }
+                    else{
+                        $pay_button.addClass('hide');
+                    }
+                    $details_div.removeClass('hide');
+                }
+                function error(resp){
+                    var error_str = '';
+                    // Show Errors
+                    if (resp.status === 404) {
+                        error_str = 'An invoice with this reference number could not be found';
+                    }
+                    error_html = '<div class="columns small-6"><div class="alert callout" data-closable="slide-out-right"> \
+                        <p>'+error_str+'</p> \
+                        <button class="close-button" aria-label="Dismiss alert" type="button" data-close> \
+                            <span aria-hidden="true">&times;</span> \
+                        </button> \
+                    </div></div>';
+                    $errors_row.html(error_html);
+                    $errors_div.removeClass('hide');
+                }
+                $('#search_invoice_form').submit(function(e){
+                    e.preventDefault();
+                    getInvoice();
+                });
+            });
+        </script>
+    </body>
+</html>
