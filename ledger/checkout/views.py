@@ -154,7 +154,7 @@ class IndexView(CoreIndexView):
                 sender=self, request=request)
             # Set session variables that are required by ledger
             ledger_details = {
-                'card_method': request.GET.get('card_method','capture'),
+                'card_method': request.GET.get('card_method','payment'),
                 'basket_owner': request.GET.get('basket_owner',None),
                 'template': request.GET.get('template',None),
                 'fallback_url': request.GET.get('fallback_url',None),
@@ -286,7 +286,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 #Generate Invoice
                 invoice = self.doInvoice(order_number,total)
                 card_method = self.checkout_session.card_method()
-                resp = bpoint_facade.post_transaction(card_method,'internet','single','checkout',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
+                resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
             except Exception as e:
                 raise
 
