@@ -7,7 +7,7 @@ from bpoint.models import BpointTransaction
 from cash.models import CashTransaction
 from facade import bpoint_facade
 from oscar.apps.order.models import Order
-
+from oscar.apps.payment import forms
 #######################################################
 #                                                     #
 #                        BPAY                         #
@@ -211,7 +211,7 @@ class CardSerializer(serializers.Serializer):
     cardholdername = serializers.CharField(required=False,max_length=50)
     number = serializers.CharField(min_length=13,max_length=16)
     cvn = serializers.CharField(min_length=3,max_length=4)
-    expiry = serializers.DateField(input_formats=['%m%y',])
+    expiry = serializers.DateField(input_formats=['%m%Y',])
 
 class BpointPaymentSerializer(serializers.Serializer):
     invoice_reference = serializers.CharField(max_length=50)
@@ -241,7 +241,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
             "card": {
                 "number": "4444333322221111",
                 "cvn": "123",
-                "expiry": "0517"
+                "expiry": "052017"
             }
         }
     '''
@@ -273,7 +273,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                 card = self.Bankcard(
                     card_data.get('number'),
                     card_data.get('cvn'),
-                    card_data.get('expiry').strftime("%m%y")
+                    card_data.get('expiry').strftime("%m%Y")
                 )
             # Check if the invoice exists if action is payment,preauth
             try:
@@ -283,15 +283,27 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                 raise serializers.ValidationError("The invoice doesn't exist.")
             # intialize the bpoint facade object
             facade = bpoint_facade
+            # Create card form data
+            form_data = {
+                'expiry_month_0': card.expiry[:2],
+                'expiry_month_1': card.expiry[2:],
+                'ccv': card.cvn,
+                'number': card.number
+            }
+            # Validate card data using BankcardForm from oscar payments
+            bankcard_form = forms.BankcardForm(form_data)
+            if not bankcard_form.is_valid():
+                errors = bankcard_form.errors
+                for e in errors:
+                    raise serializers.ValidationError(errors.get(e)[0])
             txn = facade.post_transaction(
                 serializer.validated_data['action'],
                 serializer.validated_data['type'],
                 serializer.validated_data['subtype'],
-                'api',
                 serializer.validated_data['invoice_reference'][:-1],
                 reference,
                 total,
-                card,
+                bankcard_form.bankcard,
                 original_txn
             )
             

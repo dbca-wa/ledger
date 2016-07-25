@@ -30,36 +30,24 @@ class Facade(object):
         '''
         return amount/100.0
     
-    def _get_card_details(self, bankcard, request_source):
+    def _get_card_details(self, bankcard):
         '''
-            Get card details from from applicable
-            request sources
-            Available sources are 'api' and 'checkout'
+            Get card details from bankcard object
         '''
-        if not request_source in ['checkout','api']:
-            raise Exception('Please enter a valid request source.')
-        
-        if request_source == 'checkout':
-            return CardDetails(
-                card_number=bankcard.number,
-                cvn=bankcard.ccv,
-                expiry_date=bankcard.expiry_date.strftime("%m%y")
-            )
-        elif request_source == 'api':
-            return CardDetails(
-                card_number=bankcard.number,
-                cvn=bankcard.cvn,
-                expiry_date=bankcard.expiry
-            )
-    
-    def _submit_info(self,order_number,reference,amount,action,_type,sub_type,request_source,bank_card=None,orig_txn_number=None):
+        return CardDetails(
+            card_number=bankcard.number,
+            cvn=bankcard.ccv,
+            expiry_date=bankcard.expiry_date.strftime("%m%y")
+        )
+
+    def _submit_info(self,order_number,reference,amount,action,_type,sub_type,bank_card=None,orig_txn_number=None):
         '''
             Submit the transaction info to the
             gateway
         '''
         res,card_details = None, None
         if bank_card:
-            card_details = self._get_card_details(bank_card,request_source)
+            card_details = self._get_card_details(bank_card)
         if amount:
             amount = int(amount*100)
         # Handle any other exceptions that occur that are not from bpoint
@@ -136,7 +124,7 @@ class Facade(object):
         '''
         self.gateway.get_txns()
 
-    def post_transaction(self, action,_type,sub_type,request_source,order_number=None,reference=None,total=None,bankcard=None,orig_txn_number=None):
+    def post_transaction(self, action,_type,sub_type,order_number=None,reference=None,total=None,bankcard=None,orig_txn_number=None):
         '''Create a new transaction.
             Actions are:
             payment - Debit the card immediately
@@ -152,7 +140,7 @@ class Facade(object):
                     raise ValidationError('This invoice has already been paid for.')
                 if decimal.Decimal(total) > inv.balance:
                     raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
-            txn = self._submit_info(order_number,reference,total,action,_type,sub_type,request_source,bankcard,orig_txn_number)
+            txn = self._submit_info(order_number,reference,total,action,_type,sub_type,bankcard,orig_txn_number)
             self.friendly_error_msg(txn)
             
             return txn
