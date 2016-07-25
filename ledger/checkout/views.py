@@ -225,7 +225,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
         else:
             payment_method = request.POST.get('payment_method','')
             self.checkout_session.pay_by(payment_method)
-
         bankcard_form = forms.BankcardForm(request.POST)
         if payment_method == 'card':
             if not bankcard_form.is_valid():
@@ -287,10 +286,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 #Generate Invoice
                 invoice = self.doInvoice(order_number,total)
                 card_method = self.checkout_session.card_method()
-                print invoice.reference
                 resp = bpoint_facade.post_transaction(card_method,'internet','single','checkout',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
             except Exception as e:
-                print str(e)
                 raise
 
             # Record payment source and event
@@ -465,7 +462,6 @@ class ThankYouView(CoreThankYouView):
                     id=self.request.GET['order_id'])
 
         if not order:
-            print self.request.session['checkout_order_id']
             if 'checkout_order_id' in self.request.session:
                 order = Order._default_manager.get(
                     pk=self.request.session['checkout_order_id'])
