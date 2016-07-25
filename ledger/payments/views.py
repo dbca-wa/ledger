@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from django.views import generic
 from django.contrib.auth import get_user_model
 from django.shortcuts import render
@@ -88,9 +89,21 @@ class InvoiceSearchView(generic.TemplateView):
 class InvoicePaymentView(generic.TemplateView):
 
     template_name = 'dpaw_payments/invoice/payment.html'
+    num_years = 10
+
+    def month_choices(self):
+        return ["%.2d" %x for x in range(1,13)]
+
+    def year_choices(self):
+        return [x for x in range(
+            date.today().year,
+            date.today().year + self.num_years
+        )]
 
     def get_context_data(self, **kwargs):
         ctx = super(InvoicePaymentView, self).get_context_data(**kwargs)
+        ctx['months'] = self.month_choices
+        ctx['years'] = self.year_choices
         if self.request.GET.get('amountProvided') == 'true':
             ctx['amountProvided'] = True
 
