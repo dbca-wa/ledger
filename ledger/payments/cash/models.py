@@ -11,13 +11,18 @@ class CashTransaction(models.Model):
         ('payment','payment'),
         ('refund','refund')
     )
-    
+    SOURCE_TYPES = (
+        ('cash','cash'),
+        ('cheque', 'cheque'),
+        ('money_order','money_order')
+    )
     invoice = models.ForeignKey(Invoice, related_name='cash_transactions', to_field='reference')
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     created = models.DateTimeField(auto_now_add=True)
     original_txn = models.ForeignKey('self', null=True, blank=True)
     type = models.CharField(choices=TRANSACTION_TYPES, max_length=7)
-    
+    source = models.CharField(choices=SOURCE_TYPES, max_length=11)
+
     def save(self, *args, **kwargs):
         if self.invoice.payment_status == 'paid':
             raise ValidationError('This invoice has already been paid for.')
