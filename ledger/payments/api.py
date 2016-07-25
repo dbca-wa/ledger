@@ -330,6 +330,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
 #######################################################
 class CashSerializer(serializers.ModelSerializer):
     original_txn = serializers.CharField(required=False)
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
     invoice = serializers.CharField(source='invoice.reference')
     class Meta:
         model = CashTransaction
@@ -362,13 +363,15 @@ class CashViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             invoice,txn = None, None
             #Check if the invoice being paid for exists
-            #print serializer.validated_data['invoice']
             # Check if the invoice exists if action is payment,preauth
             try:
-                serializer.validated_data['invoice'] = Invoice.objects.get(reference=serializer.validated_data['invoice']['reference'])
+                invoice = Invoice.objects.get(reference=serializer.validated_data['invoice']['reference'])
+                serializer.validated_data['invoice'] = invoice
             except Invoice.DoesNotExist:
                 raise serializers.ValidationError("The invoice doesn't exist.")
-            
+            # Check if the amount was specified otherwise pay the whole amount
+            if not serializer.validated_data.get('amount'):
+                serializer.validated_data['amount'] = invoice.amount
             txn = serializer.save()
             http_status = status.HTTP_201_CREATED
             serializer = CashSerializer(txn)
