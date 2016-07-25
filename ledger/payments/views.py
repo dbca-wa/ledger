@@ -67,7 +67,7 @@ def createBasket(product_list,owner,force_flush=True):
     except Product.DoesNotExist:
         raise
     except Exception as e:
-        raise str(e)
+        raise
 
 class InvoiceDetailView(generic.DetailView):
     model = Invoice
