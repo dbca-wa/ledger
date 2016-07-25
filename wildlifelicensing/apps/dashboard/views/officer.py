@@ -4,6 +4,7 @@ from dateutil.parser import parse as date_parse
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.http.response import HttpResponse
 
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
@@ -12,6 +13,7 @@ from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.dashboard.views import base
 from wildlifelicensing.apps.main.helpers import get_all_officers
 from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
+from wildlifelicensing.apps.main.pdf import bulk_licence_renewal_pdf_bytes
 
 
 def _get_current_onbehalf_applications(officer):
@@ -676,3 +678,20 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
 
     def get_initial_queryset(self):
         return Return.objects.all()
+
+
+class BulkLicenceRenewalPDFView(DataTableLicencesOfficerView):
+
+    def filter_queryset(self, qs):
+        qs = super(BulkLicenceRenewalPDFView, self).filter_queryset(qs)
+        self.qs = qs
+        return qs
+
+    def get(self, request, *args, **kwargs):
+        super(BulkLicenceRenewalPDFView, self).get(request, *args, **kwargs)
+        licences = []
+        if self.qs:
+            licences = self.qs
+        response = HttpResponse(content_type='application/pdf')
+        response.write(bulk_licence_renewal_pdf_bytes(licences, request.build_absolute_uri(reverse('home'))))
+        return response

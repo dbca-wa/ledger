@@ -139,12 +139,22 @@ define(
                             console.log("Error while loading licences data:", thrownError, textStatus, xhr.responseText, xhr.status);
                             //Stop the data table 'Processing'.
                             $(options.selectors.licencesTable + '_processing').hide();
+                        },
+                        complete: function () {
+                            // trick. Set the url for the bulk renewal. The bulk renewal view works uses the same
+                            // parameters than a datatable
+                            var $button = $(options.selectors.licencesBulkRenewalsButton),
+                                url ='/dashboard/bulk-licence-renewal-pdf',
+                                params;
+                            if ($button && $button.length) {
+                                params = this.url.split('?', 2);
+                                if (params.length > 1){
+                                    url += '?' + params[1];
+                                }
+                                $button.attr('href', url);
+                            }
                         }
-                    },
-                    buttons: [
-                        'copy', 'excel', 'pdf'
-                    ]
-
+                    }
                 }),
                 licencesColumns = options.data.licences.columnDefinitions;
 
@@ -310,6 +320,7 @@ define(
                     licencesStatusFilter: '#licences-filter-status',
                     licencesExpireAfterFilter: '#licences-filter-expiry-after-date',
                     licencesExpireBeforeFilter: '#licences-filter-expiry-before-date',
+                    licencesBulkRenewalsButton: '#licences-bulk-renewals',
 
                     returnsTable: '#returns-table',
                     returnsAccordion: '#returns-collapse',

@@ -4,7 +4,7 @@ from io import BytesIO
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
-    KeepTogether
+    KeepTogether, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 
@@ -58,7 +58,7 @@ styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
 
 
-def _create_header(canvas, doc):
+def _create_header(canvas, doc, draw_page_number=True):
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
@@ -99,7 +99,8 @@ def _create_header(canvas, doc):
     current_y -= 36
     current_x += 200
 
-    canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), 'PAGE')
+    if draw_page_number:
+        canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), 'PAGE')
 
     if hasattr(doc, 'licence') and doc.licence.licence_number is not None and doc.licence.licence_sequence:
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'NO.')
@@ -108,7 +109,8 @@ def _create_header(canvas, doc):
 
     current_x += 50
 
-    canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), str(canvas.getPageNumber()))
+    if draw_page_number:
+        canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), str(canvas.getPageNumber()))
 
     if hasattr(doc, 'licence') and doc.licence.licence_number is not None and doc.licence.licence_sequence:
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2,
@@ -302,6 +304,25 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
     return cover_letter_buffer
 
 
+def _create_licence_renewal_elements(licence):
+    return [
+        Paragraph('Dear Sir/Madam', styles['Left']), Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('This is a reminder that your licence:', styles['Left']), Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('{}-{}'.format(licence.licence_number, licence.licence_sequence), styles['BoldLeft']),
+        Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('is due to expire on {}.'.format(licence.end_date.strftime(DATE_FORMAT)), styles['Left']),
+        Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('Please note that you are required to submit an electronic return and that '
+                  'the licence cannot be renewed until this.', styles['Left']),
+        Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('If you have any queries, please contact Mr Danny Stefoni on 9219 9833 or '
+                  'email to wildlifelicensing@dpaw.wa.gov.au.', styles['Left']),
+        Spacer(1, SECTION_BUFFER_HEIGHT), Paragraph('Yours sincerely,', styles['Left']),
+        Spacer(1, SECTION_BUFFER_HEIGHT), Paragraph('Jim Sharp', styles['Left']),
+        Paragraph('DIRECTOR GENERAL', styles['Left'])
+    ]
+
+
 def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
@@ -311,32 +332,28 @@ def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
 
     # this is the only way to get data into the onPage callback function
     doc.site_url = site_url
-    elements = []
-    elements.append(Paragraph('Dear Sir/Madam', styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('This is a reminder that your licence:', styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('{}-{}'.format(licence.licence_number, licence.licence_sequence), styles['BoldLeft']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('is due to expire on {}.'.format(licence.end_date.strftime(DATE_FORMAT)), styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    elements.append(Paragraph('Please note that you are required to submit an electronic return and that '
-                              'the licence cannot be renewed until this.', styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    elements.append(Paragraph('If you have any queries, please contact Mr Danny Stefoni on 9219 9833 or '
-                              'email to wildlifelicensing@dpaw.wa.gov.au.', styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    elements.append(Paragraph('Yours sincerely,', styles['Left']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Jim Sharp', styles['Left']))
-    elements.append(Paragraph('DIRECTOR GENERAL', styles['Left']))
-
-    doc.build(elements)
-
+    doc.build(_create_licence_renewal_elements(licence))
     return licence_renewal_buffer
+
+
+def _create_bulk_licence_renewal(licences, site_url, buf=None):
+    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
+                             PAGE_HEIGHT - 160, id='EveryPagesFrame')
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame,
+                                       onPage=lambda canvas, doc_: _create_header(canvas, doc_, draw_page_number=False))
+
+    if buf is None:
+        buf = BytesIO()
+    doc = BaseDocTemplate(buf, pageTemplates=[every_page_template], pagesize=A4)
+
+    # this is the only way to get data into the onPage callback function
+    doc.site_url = site_url
+    all_elements = []
+    for licence in licences:
+        all_elements += _create_licence_renewal_elements(licence)
+        all_elements.append(PageBreak())
+    doc.build(all_elements)
+    return doc
 
 
 def create_licence_pdf_document(filename, licence, application, site_url, original_issue_date):
@@ -389,11 +406,11 @@ def create_licence_renewal_pdf_bytes(filename, licence, site_url):
 
 
 def bulk_licence_renewal_pdf_bytes(licences, site_url):
-    buf = BytesIO()
+    doc = None
     try:
-        for licence in licences:
-            _create_licence_renewal(buf, licence, site_url)
-        return buf.getvalue()
+        doc = _create_bulk_licence_renewal(licences, site_url)
+        return doc.filename.getvalue()
     finally:
-        buf.close()
+        if doc:
+            doc.filename.close()
 
