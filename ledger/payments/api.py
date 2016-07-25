@@ -235,7 +235,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
         Example of json request:
         {
             "invoice_reference": "1000025",
-            "total": 1,
+            "amount": 1,
             "action": "payment",
             "type": "internet",
             "card": {
