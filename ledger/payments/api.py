@@ -215,16 +215,16 @@ class CardSerializer(serializers.Serializer):
 
 class BpointPaymentSerializer(serializers.Serializer):
     invoice_reference = serializers.CharField(max_length=50)
-    total = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
     card = CardSerializer(required=False)
     original_txn = serializers.CharField(max_length=50,required=False)
-    action = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES)
+    action = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES, default='payment')
     subtype = serializers.ChoiceField(choices=BpointTransaction.SUB_TYPES,default='single')
     type = serializers.ChoiceField(choices=BpointTransaction.TRANSACTION_TYPES)
     
     def validate(self, data):
-        if data['action'] in ['payment','preauth','unmatched_refund'] and not ( data.get('card') and data.get('total')):
-            raise serializers.ValidationError("For the selected action you need to provide details for the following 'card' and 'total' details.")
+        if data['action'] in ['payment','preauth','unmatched_refund'] and not data.get('card'):
+            raise serializers.ValidationError("For the selected action you need to provide 'card' details.")
         
         if data['action'] in ['refund','capture','reversal'] and not data.get('original_txn'):
             raise serializers.ValidationError("For the selected action you need to provide the transaction number of the transaction matched to this one.")
@@ -265,7 +265,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             txn,res,card, invoice_number, total,original_txn, reference = None, None, None, None, None, None, None
             # Get the optional paramters for the transaction
-            if serializer.validated_data.get('total'): total = serializer.validated_data['total']
+            if serializer.validated_data.get('amount'): total = serializer.validated_data['amount']
             if serializer.validated_data.get('original_txn'): original_txn = serializer.validated_data['original_txn']
             #Get card details if it is there
             if serializer.validated_data.get('card'):
@@ -281,6 +281,8 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                 reference = inv.reference
             except Invoice.DoesNotExist:
                 raise serializers.ValidationError("The invoice doesn't exist.")
+            if not total and serializer.validated_data['action'] in ['payment','preauth','unmatched_refund']:
+                total = inv.amount
             # intialize the bpoint facade object
             facade = bpoint_facade
             # Create card form data
