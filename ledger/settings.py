@@ -122,7 +122,7 @@ WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wild
 
 HERBIE_SPECIES_WFS_URL = env('HERBIE_SPECIES_WFS_URL',
                              'https://kmi.dpaw.wa.gov.au/geoserver/ows?service=wfs&version=1.1.0&'
-                             'request=GetFeature&typeNames=dpaw:herbie_hbvspecies&outputFormat=application/json')
+                             'request=GetFeature&typeNames=public:herbie_hbvspecies_public&outputFormat=application/json')
 
 TEMPLATES = [
     {
