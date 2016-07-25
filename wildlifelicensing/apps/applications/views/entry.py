@@ -287,7 +287,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         utils.rename_filename_doubleups(request.POST, request.FILES)
 
         utils.set_app_session_data(request.session, 'data', utils.create_data_from_form(licence_type.application_schema,
-                                                                            request.POST, request.FILES))
+                                                                                        request.POST, request.FILES))
 
         temp_files_dir = utils.get_app_session_data(request.session, 'temp_files_dir')
 
@@ -350,11 +350,11 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 # if continuing, need to save new files in temp so they can be previewed on enter details screen
                 if len(request.FILES) > 0:
                     temp_files_dir = utils.get_app_session_data(request.session, 'temp_files_dir')
-    
+
                     for f in request.FILES:
                         if f == 'application_document':
                             utils.set_app_session_data(request.session, 'application_document', str(request.FILES[f]))
-    
+
                         with open(os.path.join(temp_files_dir, str(request.FILES[f])), 'wb+') as destination:
                             for chunk in request.FILES[f].chunks():
                                 destination.write(chunk)
