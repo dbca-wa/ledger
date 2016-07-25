@@ -23,7 +23,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         $childrenAnchorPoint = _getCreateChildrenAnchorPoint($itemContainer);
 
         if(item.conditions !== undefined) {
-            var $input = $itemContainer.find('input, select'),
+            var $input = $itemContainer.find('input, select, textarea'),
                 initialInputValue = _getInputValue(item, $input);
 
             // show/hide conditional children initially depending on input's initial value
@@ -202,7 +202,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
             });
 
             // update field names to have correct suffix
-            itemCopy.find('input, select').each(function() {
+            itemCopy.find('input, select, textarea').each(function() {
                 var name = $(this).attr('name'),
                     namePrefix = name.substring(0, name.indexOf(suffix) + suffix.length),
                     nameSuffix = name.substring(namePrefix.length);
