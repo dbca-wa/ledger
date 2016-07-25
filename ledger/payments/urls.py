@@ -6,7 +6,7 @@ from bpay.dashboard.app import application as bpay
 from invoice.dashboard.app import application as invoice_dash
 from bpoint.dashboard.app import application as bpoint_dash
 from invoice.views import InvoiceHistoryView
-
+import views
 # api patterns
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'^bpay/files', BpayFileList)
@@ -26,6 +26,8 @@ urlpatterns = [
     url(r'checkout/dashboard/payments/invoices/', include(invoice_dash.urls)),
     url(r'checkout/dashboard/payments/', include(bpoint_dash.urls)),
     url(r'payments/', include(api_patterns)),
-    url(r'checkout/accounts/invoices/',InvoiceHistoryView.as_view(), name='invoice-history-list'),
-    url(r'checkout/accounts/invoice/(?P<order>\d+)/',invoice_dash.detail_view.as_view(), name='invoice-history-detail'),
+    url(r'payments/invoice/(?P<reference>\d+)',views.InvoiceDetailView.as_view(), name='invoice-detail'),
+    url(r'payments/invoice/payment/(?P<reference>\d+)',views.InvoicePaymentView.as_view(), name='invoice-payment'),
+    url(r'payments/invoice/search$',views.InvoiceSearchView.as_view(), name='invoice-search'),
+    url(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
 ]

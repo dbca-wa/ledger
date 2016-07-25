@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% load staticfiles %}
+{% load promotion_tags %}
+{% load i18n %}
+{% load currency_filters %}
+{% load dpaw_extras %}
+
+{% block favicon %}
+    <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
+{% endblock %}
+
+{% block title %}
+    Payment Error
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/fonts/Lato2OFLWeb/Lato/latofonts.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation-flex.css">
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
+    <style>
+
+    </style>
+{% endblock %}
+{% block layout %}
+    <!-- Logo Row -->
+    <div class="row align-center">
+        <div class="column large-8">
+            <!-- Image row -->
+            <div class="row align-center">
+                <img class="align-center" src="http://static.dpaw.wa.gov.au/images/dpaw_logo.png"/>
+            </div>
+            <!-- /Image -->
+            <!-- Error Title Row -->
+            <div class="row align-center">
+                <div class="column large-offset-4">
+                    <h2>Payments Error</h2>
+                </div>
+            </div>
+            <!-- /Error Title -->
+            <!-- Error Message Row -->
+            <div class="row align-center">
+                <div class="column">
+                    {% for message in messages %}
+                        <div class="alert callout" data-closable="slide-out-right">
+                            <p>{{ message|safe }}</p>
+                            <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <!-- /Error Message -->
+        </div>
+    </div>
+    
+    <!-- /Logo -->
+{% endblock %}

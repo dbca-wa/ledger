@@ -59,6 +59,14 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def icrn_format(self):
         return self._get('ledger','icrn_format')
 
+    # Basket owner
+    # ===========================
+    def owned_by(self, user_id):
+        self._set('ledger','basket_owner',user_id)
+
+    def basket_owner(self):
+        return self._get('ledger','basket_owner')
+
     # BPAY due date
     # ===========================
     def bpay_by(self, due_date):

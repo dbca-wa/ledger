@@ -1,10 +1,14 @@
+import json
+from django.views import generic
+from django.contrib.auth import get_user_model
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404
+#
 from oscar.apps.basket.models import Basket
 from oscar.apps.catalogue.models import Product
-from rest_framework import serializers
-import json
 from oscar.core.loading import get_class
-from django.contrib.auth import get_user_model
+#
+from models import Invoice
 
 OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
@@ -64,3 +68,23 @@ def createBasket(product_list,owner,force_flush=True):
         raise
     except Exception as e:
         print str(e)
+
+class InvoiceDetailView(generic.DetailView):
+    model = Invoice
+    template_name = 'dpaw_payments/invoice/invoice.html'
+    context_object_name = 'invoice'
+
+    def get_object(self):
+        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        return invoice
+
+class PaymentErrorView(generic.TemplateView):
+    template_name = 'dpaw_payments/payment_error.html'
+
+class InvoiceSearchView(generic.TemplateView):
+
+    template_name = 'dpaw_payments/invoice/invoice_search.html'
+    
+class InvoicePaymentView(generic.TemplateView):
+
+    template_name = 'dpaw_payments/invoice/payment.html'

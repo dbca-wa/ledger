@@ -1,10 +1,42 @@
 from oscar.core.loading import get_class
 from ledger.payments.models import Invoice
 from django.http import HttpResponseRedirect
+from ledger.accounts.models import EmailUser
 CoreOrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 
 class OrderPlacementMixin(CoreOrderPlacementMixin):
     
+    def handle_order_placement(self, order_number, user, basket,
+                               shipping_address, shipping_method,
+                               shipping_charge, billing_address, order_total,
+                               **kwargs):
+        """
+        Write out the order models and return the appropriate HTTP response
+        We deliberately pass the basket in here as the one tied to the request
+        isn't necessarily the correct one to use in placing the order.  This
+        can happen when a basket gets frozen.
+        """
+        # Swap out the user if one is present in session
+        swap_user = None
+        try:
+            swap_user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
+
+        except:
+            pass
+        if swap_user:
+            # swap the user to be used for the basket and the order
+            user = swap_user
+            basket.owner = user
+            basket.save()
+
+        order = self.place_order(
+            order_number=order_number, user=user, basket=basket,
+            shipping_address=shipping_address, shipping_method=shipping_method,
+            shipping_charge=shipping_charge, order_total=order_total,
+            billing_address=billing_address, **kwargs)
+        basket.submit()
+        return self.handle_successful_order(order)
+
     def handle_successful_order(self, order):
         """
         Handle the various steps required after an order has been successfully
@@ -13,7 +45,7 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         order is submitted.
         """
         # Get the return url
-        success_url = self.checkout_session.return_url()
+        return_url = self.checkout_session.return_url()
 
         # Send confirmation message (normally an email)
         self.send_confirmation_message(order, self.communication_type_code)
@@ -23,11 +55,8 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
 
         # Save order and invoice id in session so thank-you page can load it
         self.request.session['checkout_order_id'] = order.id
-        self.request.session['checkout_invoice_id'] = Invoice.objects.get(order_number=order.number).id
-        # Check if return url is in session
-        if not success_url:
-            response = HttpResponseRedirect(self.get_success_url())
-        else:
-            response = HttpResponseRedirect(success_url)
+        self.request.session['checkout_return_url'] = return_url
+
+        response = HttpResponseRedirect(self.get_success_url())
         self.send_signal(self.request, response, order)
         return response
