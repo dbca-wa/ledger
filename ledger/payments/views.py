@@ -35,16 +35,14 @@ def createBasket(product_list,owner,force_flush=True):
         # Check if owner has previous baskets
         if owner.baskets.filter(status='Open'):
             old_basket = owner.baskets.get(status='Open')
-            
+
         # Use the previously open basket if its present or create a new one    
         if old_basket:
+            basket = old_basket
             if force_flush:
-                basket = old_basket.flush()
-            else:
-                basket = old_basket
+                basket.flush()
         else:
             basket = Basket()
-            
         # Set the owner and strategy being used to create the basket    
         basket.owner = owner
         basket.strategy = selector.strategy(user=owner)
@@ -55,6 +53,8 @@ def createBasket(product_list,owner,force_flush=True):
         product_dict_list = json.loads(product_list)
         for product in product_dict_list:
             p = Product.objects.get(id=product["id"])
+            if not product["quantity"]:
+                product["quantity"] = 1
             valid_products.append({'product': p, 'quantity': product["quantity"]})
             
         # Add the valid products to the basket
@@ -67,7 +67,7 @@ def createBasket(product_list,owner,force_flush=True):
     except Product.DoesNotExist:
         raise
     except Exception as e:
-        print str(e)
+        raise str(e)
 
 class InvoiceDetailView(generic.DetailView):
     model = Invoice
@@ -88,3 +88,10 @@ class InvoiceSearchView(generic.TemplateView):
 class InvoicePaymentView(generic.TemplateView):
 
     template_name = 'dpaw_payments/invoice/payment.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(InvoicePaymentView, self).get_context_data(**kwargs)
+        if self.request.GET.get('amountProvided') == 'true':
+            ctx['amountProvided'] = True
+
+        return ctx
