@@ -53,7 +53,7 @@ def createBasket(product_list,owner,force_flush=True):
         product_dict_list = json.loads(product_list)
         for product in product_dict_list:
             p = Product.objects.get(id=product["id"])
-            if not product["quantity"]:
+            if not product.get("quantity"):
                 product["quantity"] = 1
             valid_products.append({'product': p, 'quantity': product["quantity"]})
             
