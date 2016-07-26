@@ -94,7 +94,7 @@
                                 <thead>
                                     <tr>
                                         {% for header in table.headers %}
-                                            <th>{{ header }}</th>
+                                            <th>{{ header.title }}{% if header.required %} *{% endif %}</th>
                                         {% endfor %}
                                     </tr>
                                 </thead>

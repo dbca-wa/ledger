@@ -99,8 +99,9 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         for resource in ret.return_type.resources:
             resource_name = resource.get('name')
             schema = Schema(resource.get('schema'))
+            headers = [{"title": f.name, "required": f.required} for f in schema.fields]
             table = {'name': resource_name, 'title': resource.get('title', resource.get('name')),
-                     'headers': schema.headers}
+                     'headers': headers}
 
             try:
                 return_table = ret.returntable_set.get(name=resource_name)
