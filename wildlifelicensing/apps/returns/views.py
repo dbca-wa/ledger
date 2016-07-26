@@ -16,10 +16,10 @@ from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry
+from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType
 from wildlifelicensing.apps.main import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
-from wildlifelicensing.apps.returns.utils_schema import Schema
+from wildlifelicensing.apps.returns.utils_schema import Schema, create_return_template_workbook
 from wildlifelicensing.apps.returns.utils import format_return
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
@@ -346,3 +346,17 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                     ]
                 },
                 safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)
+
+
+class DownloadReturnTemplate(OfficerOrCustomerRequiredMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        return_type = get_object_or_404(ReturnType, pk=args[0])
+        filename = 'Return_{}_template.xlsx'.format(return_type.licence_type.code)
+        template = return_type.template
+        # if no template in db generates one from the data_descriptor
+        if bool(template):
+            return excel.ExcelFileResponse(template.file, filename)
+        else:
+            wb = create_return_template_workbook(return_type)
+            return excel.WorkbookResponse(wb, filename)

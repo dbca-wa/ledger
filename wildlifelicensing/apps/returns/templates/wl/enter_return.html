@@ -77,6 +77,7 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% bootstrap_form upload_spreadsheet_form %}
+                    <a href="{%  url 'wl_returns:download_return_template' return.return_type.id %}" class="pull-left" name="upload">Download Template</a>
                     <button type="submit" class="btn btn-primary pull-right" name="upload">Upload File</button>
                 </form>
             </div>

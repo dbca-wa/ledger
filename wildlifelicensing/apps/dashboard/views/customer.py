@@ -252,9 +252,10 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
 class DataTableReturnsCustomerView(base.DataTableBaseView):
     model = Return
-    columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', 'licence',
-               'action']
-    order_columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', '', '']
+    columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status',
+               'licence', 'action']
+    order_columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status',
+                     '', '']
     columns_helpers = {
         'lodgement_number': {
             'render': lambda self, instance: instance.lodgement_number

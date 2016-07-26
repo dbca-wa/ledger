@@ -1,9 +1,14 @@
 from jsontableschema.model import SchemaModel
 from jsontableschema import types
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from openpyxl.writer.write_only import WriteOnlyCell
 
 from django.utils.encoding import python_2_unicode_compatible
 
 from wildlifelicensing.apps.main.excel import is_blank_value
+
+COLUMN_HEADER_FONT = Font(bold=True)
 
 
 @python_2_unicode_compatible
@@ -168,3 +173,18 @@ class Schema:
             if not self.is_row_valid(row):
                 return False
         return True
+
+
+def create_return_template_workbook(return_type):
+    wb = Workbook(write_only=True)
+    for resource in return_type.resources:
+        schema = Schema(resource.get('schema'))
+        ws = wb.create_sheet()
+        ws.title = resource.get('name')
+        headers = []
+        for header in schema.headers:
+            cell = WriteOnlyCell(ws, value=header)
+            cell.font = COLUMN_HEADER_FONT
+            headers.append(cell)
+        ws.append(headers)
+    return wb
