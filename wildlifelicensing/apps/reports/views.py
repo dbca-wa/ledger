@@ -56,10 +56,8 @@ class ApplicationsReportView(View):
                               application.applicant_profile.name)
                 excel.write_values(ws, row, 1, row_values, direction='right', font=None)
 
-            response = HttpResponse(content=save_virtual_workbook(wb), content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename=applications_{}-{}.xlsx'.format(from_date, to_date)
-
-            return response
+            filename = 'applications_{}-{}.xlsx'.format(from_date, to_date)
+            return excel.WorkbookResponse(wb, filename)
         else:
             messages.error(request, form.errors)
             redirect('wl_reports:reports')
@@ -89,10 +87,8 @@ class LicencesReportView(View):
                               licence.start_date, licence.end_date)
                 excel.write_values(ws, row, 1, row_values, direction='right', font=None)
 
-            response = HttpResponse(content=save_virtual_workbook(wb), content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename=licences_{}-{}.xlsx'.format(from_date, to_date)
-
-            return response
+            filename = 'licences_{}-{}.xlsx'.format(from_date, to_date)
+            return excel.WorkbookResponse(wb, filename)
         else:
             messages.error(request, form.errors)
             redirect('wl_reports:reports')
@@ -120,10 +116,8 @@ class ReturnsReportView(View):
                               ret.licence.holder.get_full_name(), ret.due_date, ret.status)
                 excel.write_values(ws, row, 1, row_values, direction='right', font=None)
 
-            response = HttpResponse(content=save_virtual_workbook(wb), content_type='application/ms-excel')
-            response['Content-Disposition'] = 'attachment; filename=returns_{}-{}.xlsx'.format(from_date, to_date)
-
-            return response
+            filename = 'returns_{}-{}.xlsx'.format(from_date, to_date)
+            return excel.WorkbookResponse(wb, filename)
         else:
             messages.error(request, form.errors)
             redirect('wl_reports:reports')
