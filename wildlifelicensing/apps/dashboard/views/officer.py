@@ -378,6 +378,8 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
         data['licences']['tableOptions'] = {
             'pageLength': 25
         }
+        # other stuff
+        data['licences']['bulkRenewalURL'] = reverse('wl_dashboard:bulk_licence_renewal_pdf')
         return data
 
 

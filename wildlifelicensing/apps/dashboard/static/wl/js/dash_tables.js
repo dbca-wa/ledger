@@ -144,9 +144,10 @@ define(
                             // trick. Set the url for the bulk renewal. The bulk renewal view works uses the same
                             // parameters than a datatable
                             var $button = $(options.selectors.licencesBulkRenewalsButton),
-                                url ='/dashboard/bulk-licence-renewal-pdf',
+                                url,
                                 params;
                             if ($button && $button.length) {
+                                url = options.data.licences.bulkRenewalURL;
                                 params = this.url.split('?', 2);
                                 if (params.length > 1){
                                     url += '?' + params[1];
