@@ -45,15 +45,29 @@ class IndexView(CoreIndexView):
         self.__validate_template(details.get('template'))
         # validate system id
         self.__validate_system(details.get('system_id'))
-        # validate application id
-        #self.__validate_application_id(details.get('app_id'),details.get('system_id'))
         # validate return url
         self.__validate_url(details.get('return_url'),'return')
         # validate bpay if present
         self.__validate_bpay(details.get('bpay_details'))
         # validate basket owner if present
         self.__validate_basket_owner(details.get('basket_owner'))
+        # validate token details
+        self.__validate_token_details(details.get('token_details'))
         return True
+
+    def __validate_token_details(self, details):
+        ''' Check the token deails to set the checkout session data
+        '''
+        # Check pay by token parameter
+        if not details.get('payByToken'):
+            self.checkout_session.pay_using_token(False)
+        elif details.get('payByToken') == ('true' or 'True'):
+            self.checkout_session.pay_using_token(True)
+        # Check force store token parameter
+        if not details.get('forceStoreToken'):
+            self.checkout_session.store_token(False)
+        elif details.get('forceStoreToken') == ('true' or 'True'):
+            self.checkout_session.store_token(True)
 
     def __validate_basket_owner(self,user_id):
         ''' Check if the user entered for basket and order swapping is valid
@@ -80,22 +94,6 @@ class IndexView(CoreIndexView):
         elif system not in valid_systems:
             raise ValueError('The System id is not valid.')
         self.checkout_session.use_system(system)
-
-    def __validate_application_id(self, _id,system_id):
-        ''' Validate that the application ID is present
-        '''
-        # Add new application id lengths
-        application_id_length  = {
-            '0369': 9,
-        }
-        if not _id:
-            raise ValueError('An application id is required. eg ?')
-        else:
-            if len(_id) != application_id_length.get(system_id):
-                raise ValueError('The application id needs to be {0} characters long.'.format(application_id_length.get(system_id)))
-            # 
-            self.checkout_session.use_application(_id)
-        return True
 
     def __validate_url(self, url, _type):
         if not url and _type == 'return':
@@ -160,7 +158,10 @@ class IndexView(CoreIndexView):
                 'fallback_url': request.GET.get('fallback_url',None),
                 'return_url': request.GET.get('return_url',None),
                 'system_id': request.GET.get('system_id',None),
-                #'app_id': request.GET.get('app_id',None),
+                'token_details': {
+                    'payByToken': request.GET.get('payByToken',False),
+                    'forceStoreToken': request.GET.get('forceStoreToken',False),
+                },
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
                     'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
