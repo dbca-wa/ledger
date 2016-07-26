@@ -180,7 +180,7 @@ def create_return_template_workbook(return_type):
     for resource in return_type.resources:
         schema = Schema(resource.get('schema'))
         ws = wb.create_sheet()
-        ws.title = resource.get('name')
+        ws.title = resource.get('title', resource.get('name'))
         headers = []
         for header in schema.headers:
             cell = WriteOnlyCell(ws, value=header)

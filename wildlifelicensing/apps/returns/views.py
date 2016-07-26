@@ -132,7 +132,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                     workbook = excel.load_workbook_content(path)
 
                     for table in context['tables']:
-                        worksheet = excel.get_sheet(workbook, table.get('name'))
+                        worksheet = excel.get_sheet(workbook, table.get('title')) \
+                                    or excel.get_sheet(workbook, table.get('name'))
                         if worksheet is not None:
                             table_data = excel.TableData(worksheet)
                             schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
