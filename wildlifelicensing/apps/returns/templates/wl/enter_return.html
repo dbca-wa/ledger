@@ -106,7 +106,7 @@
                                                     {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
                                                         <td>
                                                             <input name="{{ table.name }}::{{ header }}"
-                                                                   value="{{ value }}"/>
+                                                                   value="{{ value|default_if_none:"" }}"/>
                                                             {% if error %}
                                                                 <div><span class="text-danger">{{ error }}</span></div>
                                                             {% endif %}
