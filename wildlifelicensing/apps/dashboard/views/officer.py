@@ -462,7 +462,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         if value:
             try:
                 date = date_parse(value, dayfirst=True).date()
-                return Q(end_date__gt=date)
+                return Q(end_date__gte=date)
             except:
                 pass
         return None
@@ -472,7 +472,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         if value:
             try:
                 date = date_parse(value, dayfirst=True).date()
-                return Q(end_date__lt=date)
+                return Q(end_date__lte=date)
             except:
                 pass
         return None
