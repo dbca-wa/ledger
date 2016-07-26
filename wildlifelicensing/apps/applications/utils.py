@@ -246,6 +246,17 @@ def clone_application_for_renewal(application, save=False):
     return application
 
 
+def append_app_document_to_schema_data(schema, data, app_doc):
+    section = {'type': 'section', 'label': 'Original Application Document', 'name': 'original_application_document'}
+    section['children'] = [{'type': 'file', 'label': 'Application Document File', 'name': 'application_document'}]
+
+    schema.append(section)
+
+    data.append({'original_application_document': [{'application_document': app_doc}]})
+
+    return schema, data
+
+
 def format_application(instance, attrs):
     attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
     attrs['id_check_status'] = ID_CHECK_STATUSES[attrs['id_check_status']]

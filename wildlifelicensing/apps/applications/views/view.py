@@ -6,7 +6,7 @@ from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationLogEntry
 from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMixin
-from wildlifelicensing.apps.applications.utils import convert_documents_to_url
+from wildlifelicensing.apps.applications.utils import convert_documents_to_url, append_app_document_to_schema_data
 from wildlifelicensing.apps.main.models import Document
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.helpers import is_officer
@@ -21,11 +21,13 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        kwargs['licence_type'] = application.licence_type
-        kwargs['structure'] = application.licence_type.application_schema
+        if application.hard_copy is not None:
+            application.licence_type.application_schema, application.data = \
+                append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
+                                                   application.hard_copy.file.url)
 
         convert_documents_to_url(application.licence_type.application_schema,
-                                              application.data, application.documents.all())
+                                 application.data, application.documents.all())
 
         kwargs['application'] = application
 

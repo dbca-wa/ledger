@@ -15,7 +15,7 @@
 
 {% block requirements %}
     require(['jQuery', 'js/entry/application_preview', 'js/communications_log'], function($, applicationPreview, commsLog) {
-        applicationPreview.layoutPreviewItems('#applicationContainer', {{ structure|jsonify }}, {{ application.data|jsonify }});
+        applicationPreview.layoutPreviewItems('#applicationContainer', {{ application.licence_type.application_schema|jsonify }}, {{ application.data|jsonify }});
 
         $('#mainContainer').removeClass('hidden');
 
