@@ -86,10 +86,15 @@ class InvoiceSearchView(generic.TemplateView):
 
     template_name = 'dpaw_payments/invoice/invoice_search.html'
     
-class InvoicePaymentView(generic.TemplateView):
+class InvoicePaymentView(generic.DetailView):
 
     template_name = 'dpaw_payments/invoice/payment.html'
     num_years = 10
+    context_object_name = 'invoice'
+
+    def get_object(self):
+        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        return invoice
 
     def month_choices(self):
         return ["%.2d" %x for x in range(1,13)]
