@@ -337,6 +337,7 @@ class CashSerializer(serializers.ModelSerializer):
         fields = (
             'invoice',
             'amount',
+            'source',
             'created',
             'type',
             'original_txn'
@@ -349,6 +350,7 @@ class CashViewSet(viewsets.ModelViewSet):
             "invoice": "1000025",
             "amount": 1,
             "type": "payment"
+            "source": "cash"
         }
     '''
     queryset = CashTransaction.objects.all()
@@ -379,7 +381,7 @@ class CashViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             raise
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 
 #######################################################
