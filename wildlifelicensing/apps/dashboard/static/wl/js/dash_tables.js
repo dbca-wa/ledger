@@ -4,7 +4,8 @@ define(
         'lodash',
         'js/wl.dataTable',
         'bootstrap',
-        'select2'
+        'select2',
+        'bootstrap-datetimepicker'
     ],
     function ($, _, dt) {
         "use strict";
@@ -28,6 +29,8 @@ define(
             $applicationsAssigneeTypeFilter,
             $licencesLicenceTypeFilter,
             $licencesStatusFilter,
+            $licencesExpireAfterFilter,
+            $licencesExpireBeforeFilter,
             $returnsLicenceTypeFilter,
             $returnsStatusTypeFilter;
 
@@ -87,6 +90,7 @@ define(
                     title: tuple[1] || tuple[0]
                 }));
             }
+
             // licence type
             if ($applicationsLicenceTypeFilter.length && data.applications.filters.licenceType) {
                 _.forEach(data.applications.filters.licenceType.values, function (value) {
@@ -135,6 +139,22 @@ define(
                             console.log("Error while loading licences data:", thrownError, textStatus, xhr.responseText, xhr.status);
                             //Stop the data table 'Processing'.
                             $(options.selectors.licencesTable + '_processing').hide();
+                        },
+                        complete: function () {
+                            // Trick. Set the url for the bulk renewal. The bulk renewal View uses the same parameters
+                            // for filtering than the server side licence datatable. Using these parameters will
+                            // ensure consistency between the table result and the bulk renewal.
+                            var $button = $(options.selectors.licencesBulkRenewalsButton),
+                                url,
+                                params;
+                            if ($button && $button.length) {
+                                url = options.data.licences.bulkRenewalURL;
+                                params = this.url.split('?', 2);
+                                if (params.length > 1){
+                                    url += '?' + params[1];
+                                }
+                                $button.attr('href', url);
+                            }
                         }
                     }
                 }),
@@ -162,6 +182,7 @@ define(
                     title: tuple[1] || tuple[0]
                 }));
             }
+
             // licence type
             if ($licencesLicenceTypeFilter && $licencesLicenceTypeFilter.length && data.licences.filters.licenceType) {
                 _.forEach(data.licences.filters.licenceType.values, function (value) {
@@ -183,9 +204,26 @@ define(
                     licencesTable.ajax.reload();
                 });
             }
+            // expiry dates
+            if ($licencesExpireAfterFilter && $licencesExpireAfterFilter.length) {
+                $licencesExpireAfterFilter.datetimepicker({
+                    format: 'DD/MM/YYYY'
+                });
+                $licencesExpireAfterFilter.on('dp.change', function () {
+                    licencesTable.ajax.reload();
+                });
+            }
+            if ($licencesExpireBeforeFilter && $licencesExpireBeforeFilter.length) {
+                $licencesExpireBeforeFilter.datetimepicker({
+                    format: 'DD/MM/YYYY'
+                });
+                $licencesExpireBeforeFilter.on('dp.change', function () {
+                    licencesTable.ajax.reload();
+                });
+            }
         }
 
-        function initReturnsTable(){
+        function initReturnsTable() {
             var returnsTableOptions = $.extend({}, tableOptions, {
                     ajax: {
                         url: options.data.returns.ajax.url,
@@ -197,6 +235,7 @@ define(
                         },
                         error: function (xhr, textStatus, thrownError) {
                             //Stop the data table 'Processing'.
+                            console.log("Error while loading returns data:", thrownError, textStatus, xhr.responseText, xhr.status);
                             $(options.selectors.returnsTable + '_processing').hide();
                         }
                     }
@@ -225,6 +264,7 @@ define(
                     title: tuple[1] || tuple[0]
                 }));
             }
+
             // licence type
             if ($returnsLicenceTypeFilter && $returnsLicenceTypeFilter.length && data.returns.filters.licenceType) {
                 _.forEach(data.returns.filters.licenceType.values, function (value) {
@@ -280,6 +320,9 @@ define(
                     licencesFilterForm: '#licences-filter-form',
                     licencesLicenceTypeFilter: '#licences-filter-licence-type',
                     licencesStatusFilter: '#licences-filter-status',
+                    licencesExpireAfterFilter: '#licences-filter-expiry-after-date',
+                    licencesExpireBeforeFilter: '#licences-filter-expiry-before-date',
+                    licencesBulkRenewalsButton: '#licences-bulk-renewals',
 
                     returnsTable: '#returns-table',
                     returnsAccordion: '#returns-collapse',
@@ -293,8 +336,7 @@ define(
                             url: "/dashboard/data/applications"
                         },
                         'columnDefinitions': [],
-                        'filters': {
-                        }
+                        'filters': {}
                     }
                 }
             };
@@ -312,6 +354,8 @@ define(
 
                 $licencesLicenceTypeFilter = $(options.selectors.licencesLicenceTypeFilter);
                 $licencesStatusFilter = $(options.selectors.licencesStatusFilter);
+                $licencesExpireAfterFilter = $(options.selectors.licencesExpireAfterFilter);
+                $licencesExpireBeforeFilter = $(options.selectors.licencesExpireBeforeFilter);
 
                 $returnsLicenceTypeFilter = $(options.selectors.returnsLicenceTypeFilter);
                 $returnsStatusTypeFilter = $(options.selectors.returnsStatusFilter);

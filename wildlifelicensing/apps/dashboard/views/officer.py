@@ -1,8 +1,10 @@
 import datetime
+from dateutil.parser import parse as date_parse
 
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.http.response import HttpResponse
 
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
@@ -11,6 +13,7 @@ from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.dashboard.views import base
 from wildlifelicensing.apps.main.helpers import get_all_officers
 from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
+from wildlifelicensing.apps.main.pdf import bulk_licence_renewal_pdf_bytes
 
 
 def _get_current_onbehalf_applications(officer):
@@ -337,12 +340,17 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'title': 'Expiry Date'
             },
             {
-                'title': 'Licence',
+                'title': 'Licence PDF',
                 'searchable': False,
                 'orderable': False
             },
             {
                 'title': 'Cover Letter',
+                'searchable': False,
+                'orderable': False
+            },
+            {
+                'title': 'Renewal Letter',
                 'searchable': False,
                 'orderable': False
             },
@@ -359,7 +367,8 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'values': [
                     (self.STATUS_FILTER_ALL, self.STATUS_FILTER_ALL.capitalize()),
                     (self.STATUS_FILTER_ACTIVE, self.STATUS_FILTER_ACTIVE.capitalize()),
-                    (self.STATUS_FILTER_RENEWABLE, self.STATUS_FILTER_RENEWABLE.capitalize()),
+                    (self.STATUS_FILTER_RENEWABLE,
+                     self.STATUS_FILTER_RENEWABLE.capitalize() + ' (expires within 30 days)'),
                     (self.STATUS_FILTER_EXPIRED, self.STATUS_FILTER_EXPIRED.capitalize()),
                 ]
             }
@@ -369,6 +378,8 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
         data['licences']['tableOptions'] = {
             'pageLength': 25
         }
+        # other stuff
+        data['licences']['bulkRenewalURL'] = reverse('wl_dashboard:bulk_licence_renewal_pdf')
         return data
 
 
@@ -382,6 +393,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'end_date',
         'licence',
         'cover_letter',
+        'renewal_letter',
         'action']
     order_columns = [
         'licence_number',
@@ -418,6 +430,9 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'cover_letter': {
             'render': lambda self, instance: _render_cover_letter_document(instance)
         },
+        'renewal_letter': {
+            'render': lambda self, instance: self._render_renewal_letter(instance)
+        },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
@@ -443,6 +458,26 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             return None
 
     @staticmethod
+    def filter_expiry_after(value):
+        if value:
+            try:
+                date = date_parse(value, dayfirst=True).date()
+                return Q(end_date__gte=date)
+            except:
+                pass
+        return None
+
+    @staticmethod
+    def filter_expiry_before(value):
+        if value:
+            try:
+                date = date_parse(value, dayfirst=True).date()
+                return Q(end_date__lte=date)
+            except:
+                pass
+        return None
+
+    @staticmethod
     def _search_licence_number(search):
         # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
@@ -452,6 +487,14 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             return Q(licence_number__icontains=licence_number) & Q(licence_sequence__icontains=licence_sequence)
         else:
             return Q(licence_number__icontains=search)
+
+    @staticmethod
+    def _render_renewal_letter(instance):
+        if instance.is_renewable:
+            return '<a href="{0}" target="_blank">Create PDF</a><img height="20" src="{1}"></img>'.\
+                format(reverse('wl_main:licence_renewal_pdf', args=(instance.pk,)), static('wl/img/pdf.png'))
+        else:
+            return 'Not renewable'
 
     @staticmethod
     def _render_action(instance):
@@ -515,9 +558,9 @@ class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         filters = {
             'status': {
                 'values': [
-                    (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
-                    (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
-                ] + list(Return.STATUS_CHOICES)
+                              (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
+                              (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
+                          ] + list(Return.STATUS_CHOICES)
             }
         }
         data['returns']['filters'].update(filters)
@@ -630,9 +673,27 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
 
-            return Q(licence__licence_number__icontains=licence_number) & Q(licence__licence_sequence__icontains=licence_sequence)
+            return Q(licence__licence_number__icontains=licence_number) & Q(
+                licence__licence_sequence__icontains=licence_sequence)
         else:
             return Q(licence__licence_number__icontains=search)
 
     def get_initial_queryset(self):
         return Return.objects.all()
+
+
+class BulkLicenceRenewalPDFView(DataTableLicencesOfficerView):
+
+    def filter_queryset(self, qs):
+        qs = super(BulkLicenceRenewalPDFView, self).filter_queryset(qs)
+        self.qs = qs
+        return qs
+
+    def get(self, request, *args, **kwargs):
+        super(BulkLicenceRenewalPDFView, self).get(request, *args, **kwargs)
+        licences = []
+        if self.qs:
+            licences = self.qs
+        response = HttpResponse(content_type='application/pdf')
+        response.write(bulk_licence_renewal_pdf_bytes(licences, request.build_absolute_uri(reverse('home'))))
+        return response
