@@ -15,7 +15,7 @@ DATE_FORMAT = '%d/%m/%Y'
 class BetterJSONField(JSONField):
     """
     A form field for the JSONField.
-    It fixes the double 'stringification' (see prepare_value)
+    It fixes the double 'stringification', avoid the null text and indents the json (see prepare_value).
     """
 
     def __init__(self, **kwargs):
@@ -23,11 +23,13 @@ class BetterJSONField(JSONField):
         super(JSONField, self).__init__(**kwargs)
 
     def prepare_value(self, value):
+        if value is None:
+            return ""
         if isinstance(value, basestring):
             # already a string
             return value
         else:
-            return json.dumps(value)
+            return json.dumps(value, indent=4)
 
 
 class IdentificationForm(forms.Form):
