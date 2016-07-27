@@ -75,18 +75,10 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def bpay_due(self):
         return self._get('ledger','due_date')
 
-    # Pay By Token
+    # Checkout using Token
     # ===========================
-    def pay_using_token(self, status):
-        self._set('ledger','pay_by_token',status)
+    def checkout_using_token(self, status):
+        self._set('ledger','checkout_by_token',status)
 
-    def payByToken(self):
-        return self._get('ledger','pay_by_token')
-
-    # Store Token
-    # ===========================
-    def store_token(self, status):
-        self._set('ledger','force_store_token',status)
-
-    def forceStoreToken(self):
-        return self._get('ledger','force_store_token')
+    def checkoutWithToken(self):
+        return self._get('ledger','checkout_by_token')
