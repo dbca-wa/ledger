@@ -14,10 +14,7 @@ from wildlifelicensing.apps.dashboard.views import base
 from wildlifelicensing.apps.main.helpers import get_all_officers
 from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
 from wildlifelicensing.apps.main.pdf import bulk_licence_renewal_pdf_bytes
-
-
-def _get_current_onbehalf_applications(officer):
-    return Application.objects.filter(proxy_applicant=officer)
+from wildlifelicensing.apps.dashboard.views.customer import DataTableReturnsCustomerView, DataTableLicencesCustomerView
 
 
 def _render_cover_letter_document(licence):
@@ -75,12 +72,25 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
                 self._add_node(assigned_applications_node, node)
         result.append(assigned_applications_node)
 
-        on_behalf_applications = _get_current_onbehalf_applications(self.request.user)
-        if on_behalf_applications.count() > 0:
+        on_behalf_applications_count = \
+            DataTableApplicationsOfficerOnBehalfView._get_proxy_applications(self.request.user).count()
+        # on_behalf_licences_count = DataTableLicencesOfficerOnBehalfView._get_proxy_licences(self.request.user).count()
+        on_behalf_returns_count = DataTableReturnsOfficerOnBehalfView._get_proxy_returns(self.request.user).count()
+        total_on_behalf = on_behalf_applications_count + on_behalf_returns_count
+        if total_on_behalf > 0:
             url = reverse_lazy('wl_dashboard:tables_applications_officer_onbehalf')
-            on_behalf_applications_node = self._create_node('My current proxied applications', href=url,
-                                                            count=on_behalf_applications.count())
-            result.append(on_behalf_applications_node)
+            on_behalf_node = self._create_node('My proxy page', href=url, count=total_on_behalf)
+            on_behalf_applications_node = self._create_node('Pending Applications', href=url + '?show=applications',
+                                                            count=on_behalf_applications_count)
+            # on_behalf_licences_node = self._create_node('Licenses', href=url + '?show=licences',
+            #                                             count=on_behalf_licences_count)
+            on_behalf_returns_node = self._create_node('Pending Returns', href=url + '?show=returns',
+                                                       count=on_behalf_returns_count)
+            self._add_node(on_behalf_node, on_behalf_applications_node)
+            # self._add_node(on_behalf_node, on_behalf_licences_node)
+            self._add_node(on_behalf_node, on_behalf_returns_node)
+            on_behalf_node['state']['expanded'] = False
+            result.append(on_behalf_node)
 
         result.append(all_applications_node)
 
@@ -232,7 +242,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
 
 
 class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
-    template_name = 'wl/dash_tables_applications_officer_onbehalf.html'
+    template_name = 'wl/dash_tables_officer_onbehalf.html'
 
     def _build_data(self):
         data = super(TableApplicationsOfficerOnBehalfView, self)._build_data()
@@ -260,6 +270,17 @@ class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseV
         ]
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer_onbehalf')
 
+        # licences
+        officer_data = TableLicencesOfficerView()._build_data()
+        data['licences'] = officer_data['licences']
+        # override url
+        data['licences']['ajax']['url'] = reverse('wl_dashboard:data_licences_officer_onbehalf')
+
+        # returns
+        officer_data = TableReturnsOfficerView()._build_data()
+        data['returns'] = officer_data['returns']
+        # override the url
+        data['returns']['ajax']['url'] = reverse('wl_dashboard:data_returns_officer_onbehalf')
         return data
 
 
@@ -307,8 +328,13 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
                 'View application (read-only)'
             )
 
+    @staticmethod
+    def _get_proxy_applications(user):
+        return Application.objects.filter(proxy_applicant=user).filter(
+            customer_status__in=Application.CUSTOMER_VIEWABLE_STATE)
+
     def get_initial_queryset(self):
-        return _get_current_onbehalf_applications(self.request.user)
+        return self._get_proxy_applications(self.request.user)
 
 
 class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
@@ -491,7 +517,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
     @staticmethod
     def _render_renewal_letter(instance):
         if instance.is_renewable:
-            return '<a href="{0}" target="_blank">Create PDF</a><img height="20" src="{1}"></img>'.\
+            return '<a href="{0}" target="_blank">Create PDF</a><img height="20" src="{1}"></img>'. \
                 format(reverse('wl_main:licence_renewal_pdf', args=(instance.pk,)), static('wl/img/pdf.png'))
         else:
             return 'Not renewable'
@@ -509,6 +535,20 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()
+
+
+class DataTableLicencesOfficerOnBehalfView(DataTableLicencesOfficerView):
+    @staticmethod
+    def _render_action(instance):
+        # same actions as a customer
+        return DataTableLicencesCustomerView._render_action(instance)
+
+    @staticmethod
+    def _get_proxy_licences(user):
+        return WildlifeLicence.objects.filter(application__proxy_applicant=user)
+
+    def get_initial_queryset(self):
+        return self._get_proxy_licences(self.request.user)
 
 
 class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
@@ -682,8 +722,23 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         return Return.objects.all()
 
 
-class BulkLicenceRenewalPDFView(DataTableLicencesOfficerView):
+class DataTableReturnsOfficerOnBehalfView(DataTableReturnsOfficerView):
+    @staticmethod
+    def _render_action(instance):
+        # same actions as a customer
+        return DataTableReturnsCustomerView._render_action(instance)
 
+    @staticmethod
+    def _get_proxy_returns(user):
+        return Return.objects.filter(
+            licence__in=WildlifeLicence.objects.filter(application__proxy_applicant=user)) \
+            .filter(status__in=Return.CUSTOMER_EDITABLE_STATE)
+
+    def get_initial_queryset(self):
+        return self._get_proxy_returns(self.request.user)
+
+
+class BulkLicenceRenewalPDFView(DataTableLicencesOfficerView):
     def filter_queryset(self, qs):
         qs = super(BulkLicenceRenewalPDFView, self).filter_queryset(qs)
         self.qs = qs

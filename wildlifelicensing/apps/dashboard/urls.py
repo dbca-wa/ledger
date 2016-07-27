@@ -31,12 +31,16 @@ urlpatterns = [
         name='data_licences_customer'),
     url(r'^dashboard/bulk-licence-renewal-pdf/?$', officer.BulkLicenceRenewalPDFView.as_view(),
         name='bulk_licence_renewal_pdf'),
+    url(r'^dashboard/data/licenses/officer/onbehalf/?$', officer.DataTableLicencesOfficerOnBehalfView.as_view(),
+        name='data_licences_officer_onbehalf'),
 
     # Returns
     url(r'^dashboard/tables/returns/officer/?$', officer.TableReturnsOfficerView.as_view(),
         name='tables_returns_officer'),
     url(r'^dashboard/data/returns/officer/?$', officer.DataTableReturnsOfficerView.as_view(),
         name='data_returns_officer'),
+    url(r'^dashboard/data/returns/officer/onbehalf/?$', officer.DataTableReturnsOfficerOnBehalfView.as_view(),
+        name='data_returns_officer_onbehalf'),
     url(r'^dashboard/data/returns/customer/?$', customer.DataTableReturnsCustomerView.as_view(),
         name='data_returns_customer'),
 ]
