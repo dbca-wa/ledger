@@ -7,7 +7,7 @@ import logging
 from dateutil.parser import parse as date_parse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles.templatetags.staticfiles import static
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.db.models.query import EmptyQuerySet
 from django.shortcuts import redirect
@@ -60,6 +60,11 @@ def render_licence_document(licence):
             licence.licence_document.file.url, static('wl/img/pdf.png'))
     else:
         return ''
+
+
+def render_download_return_template(ret):
+    url = reverse('wl_returns:download_return_template', args=[ret.return_type.pk])
+    return '<a href="{}">Download (XLSX)</a>'.format(url)
 
 
 class DashBoardRoutingView(TemplateView):
