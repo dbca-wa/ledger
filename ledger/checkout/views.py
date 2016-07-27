@@ -56,17 +56,17 @@ class IndexView(CoreIndexView):
         return True
 
     def __validate_token_details(self, details):
-        ''' Check the token deails to set the checkout session data
+        ''' Check the token details to set the checkout session data
         '''
         # Check pay by token parameter
         if not details.get('payByToken'):
             self.checkout_session.pay_using_token(False)
-        elif details.get('payByToken') == ('true' or 'True'):
+        elif details.get('payByToken') == 'true' or details.get('payByToken') == 'True':
             self.checkout_session.pay_using_token(True)
         # Check force store token parameter
         if not details.get('forceStoreToken'):
             self.checkout_session.store_token(False)
-        elif details.get('forceStoreToken') == ('true' or 'True'):
+        elif details.get('forceStoreToken') == 'true' or  details.get('forceStoreToken') == 'True':
             self.checkout_session.store_token(True)
 
     def __validate_basket_owner(self,user_id):
@@ -286,21 +286,26 @@ class PaymentDetailsView(CorePaymentDetailsView):
             try:
                 #Generate Invoice
                 invoice = self.doInvoice(order_number,total)
-                card_method = self.checkout_session.card_method()
-                resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
+                if self.checkout_session.payByToken() and self.checkout_session.forceStoreToken():
+                    if self.checkout_session.basket_owner():
+                        user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
+                    else:
+                        user = self.request.user
+                    resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
+                else:
+                    card_method = self.checkout_session.card_method()
+                    resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
+                    # Record payment source and event
+                    source_type, is_created = models.SourceType.objects.get_or_create(
+                        name='Bpoint')
+                    # amount_allocated if action is preauth and amount_debited if action is payment
+                    source = source_type.sources.model(
+                        source_type=source_type,
+                        amount_debited=total.incl_tax, currency=total.currency)
+                    self.add_payment_source(source)
+                    self.add_payment_event('Paid', total.incl_tax)
             except Exception as e:
                 raise
-
-            # Record payment source and event
-            source_type, is_created = models.SourceType.objects.get_or_create(
-                name='Bpoint')
-            # amount_allocated if action is preauth and amount_debited if action is payment
-            source = source_type.sources.model(
-                source_type=source_type,
-                amount_debited=total.incl_tax, currency=total.currency)
-            self.add_payment_source(source)
-            self.add_payment_event('Paid', total.incl_tax)
-
         else:
             #Generate Invoice
             self.doInvoice(order_number,total)
