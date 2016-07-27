@@ -103,9 +103,9 @@
                                         {% for row in table.data %}
                                             <tr>
                                                 {% for header in table.headers %}
-                                                    {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
+                                                    {% with value=row|get_item:header.title|get_item:'value' error=row|get_item:header.title|get_item:'error' %}
                                                         <td>
-                                                            <input name="{{ table.name }}::{{ header }}"
+                                                            <input name="{{ table.name }}::{{ header.title }}"
                                                                    value="{{ value|default_if_none:"" }}"/>
                                                             {% if error %}
                                                                 <div><span class="text-danger">{{ error }}</span></div>
@@ -120,7 +120,7 @@
                                             <tr>
                                                 {% for header in table.headers %}
                                                     <td>
-                                                        <input name="{{ table.name }}::{{ header }}"/>
+                                                        <input name="{{ table.name }}::{{ header.title }}"/>
                                                     </td>
                                                 {% endfor %}
                                             </tr>
