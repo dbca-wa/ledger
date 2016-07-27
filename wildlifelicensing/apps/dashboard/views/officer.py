@@ -331,7 +331,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
     @staticmethod
     def _get_proxy_applications(user):
         return Application.objects.filter(proxy_applicant=user).filter(
-            customer_status__in=Application.CUSTOMER_VIEWABLE_STATE)
+            customer_status__in=Application.CUSTOMER_EDITABLE_STATE)
 
     def get_initial_queryset(self):
         return self._get_proxy_applications(self.request.user)
