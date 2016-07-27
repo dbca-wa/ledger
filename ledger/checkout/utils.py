@@ -88,5 +88,5 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def store_token(self, status):
         self._set('ledger','force_store_token',status)
 
-    def forceStoreToken():
-        self._get('ledger','force_store_token')
+    def forceStoreToken(self):
+        return self._get('ledger','force_store_token')
