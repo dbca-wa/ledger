@@ -9,8 +9,8 @@ from gateway import Gateway
 from ledger.payments.bpoint.BPOINT.API import CardDetails
 
 from ledger.payments.bpoint import settings as bpoint_settings
-from ledger.payments.invoice.models import Invoice
 
+from ledger.payments.models import Invoice, BpointToken
 
 class Facade(object):
     """
@@ -124,6 +124,25 @@ class Facade(object):
         '''
         self.gateway.get_txns()
 
+    def request_token(self,reference,bank_card=None):
+        ''' Get a new DVToken
+        '''
+        res,card_details = None, None
+        if bank_card:
+            card_details = self._get_card_details(bank_card)
+        # Handle any other exceptions that occur that are not from bpoint
+        try:
+            res = self.gateway.request_new_token(card_details,reference)
+        except Exception as e:
+            print str(e)
+            raise
+
+        # Check if the transaction was successful
+        if not res.api_response.response_code == 0:
+            raise UnableToTakePayment(res.api_response.response_text)
+
+        return res
+
     def post_transaction(self, action,_type,sub_type,order_number=None,reference=None,total=None,bankcard=None,orig_txn_number=None):
         '''Create a new transaction.
             Actions are:
@@ -146,7 +165,39 @@ class Facade(object):
             return txn
         except Exception:
             raise
-        
+
+    def store_token(self, user,token,masked_card,expiry_date,card_type):
+        BpointToken.objects.get_or_create(
+            user=user,
+            DVToken=token,
+            masked_card=masked_card,
+            expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date(),
+            card_type=card_type
+        )
+
+    def checkout_with_token(self,user,reference,bankcard=None):
+        ''' Create a token on checkout
+            Used to create a token and store it against a
+            user when checking out
+        '''
+        resp =  self.request_token(reference,bankcard)
+        self.store_token(
+            user,
+            resp.dvtoken,
+            bankcard.obfuscated_number,
+            resp.card_details.expiry_date,
+            resp.card_type
+        )
+
+    def pay_with_token(self,action,_type,sub_type,token_id,order_number=None,reference=None,total=None,orig_txn_number=None):
+        ''' Make a payment using a stored card
+        '''
+        try:
+            token = BpointToken.objects.get(id=token_id)
+            return self.post_transaction(action,_type,sub_type,order_number,reference,total,token.bankcard,orig_txn_number)
+        except BpointToken.DoesNotExist as e:
+            raise UnableToTakePayment(str(e))
+
     def friendly_error_msg(self, txn):
         if not txn.approved:
             raise UnableToTakePayment(txn.response_txt)
