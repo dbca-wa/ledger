@@ -141,8 +141,9 @@ define(
                             $(options.selectors.licencesTable + '_processing').hide();
                         },
                         complete: function () {
-                            // trick. Set the url for the bulk renewal. The bulk renewal view works uses the same
-                            // parameters than a datatable
+                            // Trick. Set the url for the bulk renewal. The bulk renewal View uses the same parameters
+                            // for filtering than the server side licence datatable. Using these parameters will
+                            // ensure consistency between the table result and the bulk renewal.
                             var $button = $(options.selectors.licencesBulkRenewalsButton),
                                 url,
                                 params;
