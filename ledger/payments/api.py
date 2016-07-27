@@ -3,7 +3,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from bpay.models import BpayTransaction, BpayFile, BpayCollection
 from invoice.models import Invoice
-from bpoint.models import BpointTransaction
+from bpoint.models import BpointTransaction, BpointToken
 from cash.models import CashTransaction
 from facade import bpoint_facade
 from oscar.apps.order.models import Order
@@ -217,22 +217,30 @@ class BpointPaymentSerializer(serializers.Serializer):
     invoice_reference = serializers.CharField(max_length=50)
     amount = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
     card = CardSerializer(required=False)
+    using_token = serializers.BooleanField(default=False)
+    token = serializers.CharField(max_length=16)
     original_txn = serializers.CharField(max_length=50,required=False)
     action = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES, default='payment')
     subtype = serializers.ChoiceField(choices=BpointTransaction.SUB_TYPES,default='single')
     type = serializers.ChoiceField(choices=BpointTransaction.TRANSACTION_TYPES)
-    
+
     def validate(self, data):
-        if data['action'] in ['payment','preauth','unmatched_refund'] and not data.get('card'):
+        if data['action'] in ['payment','preauth','unmatched_refund'] and data.get('using_token') and data.get('token') and data.get('card'):
+            raise serializers.ValidationError("You can only use one method to make paymets ie 'card' or 'token'.")
+
+        if data['action'] in ['payment','preauth','unmatched_refund'] and not data.get('using_token') and not data.get('card'):
             raise serializers.ValidationError("For the selected action you need to provide 'card' details.")
-        
+
+        if data['action'] in ['payment','preauth','unmatched_refund'] and data.get('using_token') and not data.get('token'):
+            raise serializers.ValidationError("You need to supply a stored card token if you are paying using the token.")
+
         if data['action'] in ['refund','capture','reversal'] and not data.get('original_txn'):
             raise serializers.ValidationError("For the selected action you need to provide the transaction number of the transaction matched to this one.")
         return data
-    
+
 class BpointPaymentCreateView(generics.CreateAPIView):
     ''' Used to create a card point using the api:
-        Example of json request:
+        Example of json request using new card:
         {
             "invoice_reference": "1000025",
             "amount": 1,
@@ -244,12 +252,21 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                 "expiry": "052017"
             }
         }
+        Example of json request using stored card:
+        {
+            "invoice_reference": "1000025",
+            "amount": 1,
+            "action": "payment",
+            "type": "internet",
+            "using_token": "true",
+            "token": "<token_id"
+            }
+        }
     '''
     serializer_class = BpointPaymentSerializer
     renderer_classes = (JSONRenderer,)
     authentication_classes = []
-    
-    
+
     class Bankcard(object):
         def __init__(self,number,cvn,expiry,name=None):
             self.name = name
@@ -285,30 +302,47 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                 total = inv.amount
             # intialize the bpoint facade object
             facade = bpoint_facade
-            # Create card form data
-            form_data = {
-                'expiry_month_0': card.expiry[:2],
-                'expiry_month_1': card.expiry[2:],
-                'ccv': card.cvn,
-                'number': card.number
-            }
-            # Validate card data using BankcardForm from oscar payments
-            bankcard_form = forms.BankcardForm(form_data)
-            if not bankcard_form.is_valid():
-                errors = bankcard_form.errors
-                for e in errors:
-                    raise serializers.ValidationError(errors.get(e)[0])
-            txn = facade.post_transaction(
-                serializer.validated_data['action'],
-                serializer.validated_data['type'],
-                serializer.validated_data['subtype'],
-                serializer.validated_data['invoice_reference'][:-1],
-                reference,
-                total,
-                bankcard_form.bankcard,
-                original_txn
-            )
             
+            if card:
+                # Create card form data
+                form_data = {
+                    'expiry_month_0': card.expiry[:2],
+                    'expiry_month_1': card.expiry[2:],
+                    'ccv': card.cvn,
+                    'number': card.number
+                }
+                # Validate card data using BankcardForm from oscar payments
+                bankcard_form = forms.BankcardForm(form_data)
+                if not bankcard_form.is_valid():
+                    errors = bankcard_form.errors
+                    for e in errors:
+                        raise serializers.ValidationError(errors.get(e)[0])
+                txn = facade.post_transaction(
+                    serializer.validated_data['action'],
+                    serializer.validated_data['type'],
+                    serializer.validated_data['subtype'],
+                    inv.order_number,
+                    reference,
+                    total,
+                    bankcard_form.bankcard,
+                    original_txn
+                )
+            elif serializer.validated_data.get('using_token'):
+                # Get the token
+                try:
+                    token = BpointToken.objects.get(id=serializer.validated_data.get('token'))
+                except BpointToken.DoesNotExist:
+                    raise serializers.ValidationError("The selected stored card doesn't exist.")
+                txn = facade.pay_with_token(
+                    serializer.validated_data['action'],
+                    serializer.validated_data['type'],
+                    serializer.validated_data['subtype'],
+                    serializer.validated_data.get('token'),
+                    inv.order_number,
+                    reference,
+                    total,
+                    original_txn
+                )
             res = BpointTransactionSerializer(BpointTransaction.objects.get(txn_number=txn.txn_number))
             
             return Response(res.data)
