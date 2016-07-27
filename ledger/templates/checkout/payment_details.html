@@ -20,7 +20,7 @@
                     {% include "partials/form_fields.html" with form=bankcard_form %}
                     {% if store_card %}
                     <div class="checkbox">
-                        <label><input type="checkbox" name="store_card" value=""/>Store Card</label>
+                        <label><input type="checkbox" name="store_card" value="True"/>Store Card</label>
                     </div>
                     {% endif %}
                     <input type="hidden" name="payment_method" readonly value="card"/>
