@@ -218,8 +218,12 @@ class PaymentDetailsView(CorePaymentDetailsView):
             else:
                 return self.handle_place_order_submission(request)
         else:
+            # Get the payment method either card or other
             payment_method = request.POST.get('payment_method','')
             self.checkout_session.pay_by(payment_method)
+            # Get if user wants to store the card
+            store_card = request.POST.get('store_card',False)
+            self.checkout_session.permit_store_card(bool(store_card))
         bankcard_form = forms.BankcardForm(request.POST)
         if payment_method == 'card':
             if not bankcard_form.is_valid():
@@ -280,13 +284,19 @@ class PaymentDetailsView(CorePaymentDetailsView):
             try:
                 #Generate Invoice
                 invoice = self.doInvoice(order_number,total)
+                # Swap user if in session
+                if self.checkout_session.basket_owner():
+                    user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
+                else:
+                    user = self.request.user
+                # Check if the system only uses checkout with token for cards
                 if self.checkout_session.checkoutWithToken():
-                    if self.checkout_session.basket_owner():
-                        user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-                    else:
-                        user = self.request.user
                     resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
                 else:
+                    # Store card if user wants to store card
+                    if self.checkout_session.store_card():
+                        bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
+                    # Get the payment action for bpoint
                     card_method = self.checkout_session.card_method()
                     resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
                     # Record payment source and event
