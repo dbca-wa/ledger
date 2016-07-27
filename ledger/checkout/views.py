@@ -52,22 +52,17 @@ class IndexView(CoreIndexView):
         # validate basket owner if present
         self.__validate_basket_owner(details.get('basket_owner'))
         # validate token details
-        self.__validate_token_details(details.get('token_details'))
+        self.__validate_token_details(details.get('checkoutWithToken'))
         return True
 
     def __validate_token_details(self, details):
         ''' Check the token details to set the checkout session data
         '''
-        # Check pay by token parameter
-        if not details.get('payByToken'):
-            self.checkout_session.pay_using_token(False)
-        elif details.get('payByToken') == 'true' or details.get('payByToken') == 'True':
-            self.checkout_session.pay_using_token(True)
-        # Check force store token parameter
-        if not details.get('forceStoreToken'):
-            self.checkout_session.store_token(False)
-        elif details.get('forceStoreToken') == 'true' or  details.get('forceStoreToken') == 'True':
-            self.checkout_session.store_token(True)
+        # Check checkout with token parameter
+        if not details:
+            self.checkout_session.checkout_using_token(False)
+        elif details == 'true' or details == 'True':
+            self.checkout_session.checkout_using_token(True)
 
     def __validate_basket_owner(self,user_id):
         ''' Check if the user entered for basket and order swapping is valid
@@ -158,10 +153,7 @@ class IndexView(CoreIndexView):
                 'fallback_url': request.GET.get('fallback_url',None),
                 'return_url': request.GET.get('return_url',None),
                 'system_id': request.GET.get('system_id',None),
-                'token_details': {
-                    'payByToken': request.GET.get('payByToken',False),
-                    'forceStoreToken': request.GET.get('forceStoreToken',False),
-                },
+                'checkoutWithToken': request.GET.get('checkoutWithToken',False),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
                     'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
@@ -205,6 +197,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
         ctx = super(PaymentDetailsView, self).get_context_data(**kwargs)
         method = self.checkout_session.payment_method()
         custom_template = self.checkout_session.custom_template()
+        if not self.checkout_session.checkoutWithToken():
+            ctx['store_card'] = True
         ctx['custom_template'] = custom_template
         ctx['payment_method'] = method
         ctx['bankcard_form'] = kwargs.get(
@@ -286,7 +280,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             try:
                 #Generate Invoice
                 invoice = self.doInvoice(order_number,total)
-                if self.checkout_session.payByToken() and self.checkout_session.forceStoreToken():
+                if self.checkout_session.checkoutWithToken():
                     if self.checkout_session.basket_owner():
                         user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
                     else:
