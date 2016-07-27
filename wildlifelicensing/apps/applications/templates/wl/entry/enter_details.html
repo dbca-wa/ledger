@@ -8,6 +8,8 @@
 
 {% load users %}
 
+{% load url_helpers %}
+
 {% block extra_css %}
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
@@ -110,6 +112,12 @@
                         <hr>
                         <div class="form-group">
                             <label>Application Document</label>
+                            {% if application_document %}
+                                <p>
+                                    Currently: <a href="{{ application_document }}" target="_blank">{{ application_document|get_url_filename }}</a>
+                                </p>
+                                <input name="application_document-existing" type="hidden" value="{{ application_document|get_url_filename }}"/>
+                            {% endif %}
                             <input name="application_document" type="file" class="form-control" accept=".pdf, .docx, .doc">
                             <p class="help-block">Attach a scanned copy of the original application as a Word or PDF document</p>
                         </div>

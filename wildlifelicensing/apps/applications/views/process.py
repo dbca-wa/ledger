@@ -8,7 +8,7 @@ from django.utils import formats
 from reversion import revisions
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
@@ -23,7 +23,7 @@ from wildlifelicensing.apps.returns.models import Return
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
     CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
-    format_amendment_request, format_assessment
+    format_amendment_request, format_assessment, append_app_document_to_schema_data
 
 
 class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
@@ -39,12 +39,22 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         ass_groups = [{'id': ass_group.id, 'text': ass_group.name} for ass_group in
                       AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups])]
 
+        # extract and format the previous lodgements of the application
         previous_lodgements = []
         for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
                 '-revision__date_created'):
             previous_lodgement = revision.object_version.object
+
+            if previous_lodgement.hard_copy is not None:
+                previous_lodgement.licence_type.application_schema, previous_lodgement.data = \
+                    append_app_document_to_schema_data(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
+                                                       previous_lodgement.hard_copy.file.url)
+
+            # reversion won't reference the previous many-to-many sets, only the latest one, so need to get documents as per below
+            previous_lodgement_documents = Document.objects.filter(pk__in=revision.field_dict['documents'])
+
             convert_documents_to_url(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
-                                     previous_lodgement.documents.all())
+                                     previous_lodgement_documents)
             previous_lodgements.append({'lodgement_number': '{}-{}'.format(previous_lodgement.lodgement_number,
                                                                            previous_lodgement.lodgement_sequence),
                                         'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
@@ -54,6 +64,11 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         if application.previous_application is not None:
             previous_application_returns_outstanding = Return.objects.filter(licence=application.previous_application.licence).\
                 exclude(status='accepted').exclude(status='submitted').exists()
+
+        if application.hard_copy is not None:
+            application.licence_type.application_schema, application.data = \
+                append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
+                                                   application.hard_copy.file.url)
 
         convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
