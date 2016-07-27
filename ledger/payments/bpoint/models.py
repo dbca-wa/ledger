@@ -1,9 +1,10 @@
 from __future__ import unicode_literals
-
+import datetime
 from django.db import models
 from ledger.payments.bpoint import settings as bpoint_settings
 from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.order.models import Order
+from ledger.accounts.models import EmailUser
 
 class BpointTransaction(models.Model):
     ACTION_TYPES = (
@@ -66,3 +67,30 @@ class BpointTransaction(models.Model):
     def order(self):
         from ledger.payments.models import Invoice
         return Order.objects.get(number=Invoice.objects.get(reference=self.crn1).order_number)
+
+class TempBankCard(object):
+    def __init__(self,card_number,expiry_date,ccv=None):
+        self.number=card_number
+        self.expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date()
+        self.ccv=ccv
+
+class BpointToken(models.Model):
+    CARD_TYPES = (
+        ('AX','American Express'),
+        ('DC','Diners Club'),
+        ('JC','JCB Card'),
+        ('MC','MasterCard'),
+        ('VC','Visa')
+    )
+    user = models.OneToOneField(EmailUser, related_name='bpoint_token')
+    DVToken = models.CharField(max_length=128)
+    masked_card = models.CharField(max_length=50)
+    expiry_date = models.DateField()
+    card_type = models.CharField(max_length=2, choices=CARD_TYPES, blank=True, null=True)
+
+    @property
+    def bankcard(self):
+        return TempBankCard(
+            self.DVToken,
+            self.expiry_date.strftime("%m%y")
+        )
