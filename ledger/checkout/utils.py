@@ -82,3 +82,11 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def checkoutWithToken(self):
         return self._get('ledger','checkout_by_token')
+
+    # Store Card
+    # ===========================
+    def permit_store_card(self, status):
+        self._set('ledger','store_card',status)
+
+    def store_card(self):
+        return self._get('ledger','store_card')
