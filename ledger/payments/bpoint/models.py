@@ -82,7 +82,7 @@ class BpointToken(models.Model):
         ('MC','MasterCard'),
         ('VC','Visa')
     )
-    user = models.OneToOneField(EmailUser, related_name='bpoint_token')
+    user = models.ForeignKey(EmailUser, related_name='stored_cards')
     DVToken = models.CharField(max_length=128)
     masked_card = models.CharField(max_length=50)
     expiry_date = models.DateField()
