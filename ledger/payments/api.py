@@ -366,6 +366,8 @@ class CashSerializer(serializers.ModelSerializer):
     original_txn = serializers.CharField(required=False)
     amount = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
     invoice = serializers.CharField(source='invoice.reference')
+    external = serializers.BooleanField(default=False)
+    location = serializers.CharField(source='collection_point',required=False)
     class Meta:
         model = CashTransaction
         fields = (
@@ -374,9 +376,17 @@ class CashSerializer(serializers.ModelSerializer):
             'source',
             'created',
             'type',
+            'external',
+            'location',
+            'receipt',
             'original_txn'
         )
         
+    def validate(self,data):
+        if data['external'] and not data.get('collection_point'):
+            raise serializers.ValidationError('A location must be specified for an external payment')
+        return data
+
 class CashViewSet(viewsets.ModelViewSet):
     '''Used to create a cash payment using the api:
         Example of json request:
