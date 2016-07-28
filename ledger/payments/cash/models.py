@@ -25,19 +25,24 @@ class CashTransaction(models.Model):
     source = models.CharField(choices=SOURCE_TYPES, max_length=11)
     collection_point = models.TextField()
     external = models.BooleanField(default=False)
-    receipt_number = models.CharField(max_length=128,null=True,blank=True)
+    receipt = models.CharField(max_length=128,null=True,blank=True)
 
     def save(self, *args, **kwargs):
+        # Validations
+        self.ledger_validations()
+
+        super(CashTransaction, self).save(*args, **kwargs)
+
+    def ledger_validations(self):
+        if not self.receipt and self.external:
+            raise ValidationError("A receipt number is required for an external payment.ie receipt")
+        if not self.collection_point and self.external:
+            raise ValidationError("A collection point is required for an external payment.ie collection_point")
+        if self.type in ['reversal','refund'] and not self.original_txn:
+            raise ValidationError("This transaction type requires a previous transaction.ie original_txn")
         if self.invoice.payment_status == 'paid':
             raise ValidationError('This invoice has already been paid for.')
         if decimal.Decimal(self.amount) > self.invoice.balance:
             raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
-
-        super(CashTransaction, self).save(*args, **kwargs)
-
-    def clean(self):
-        if self.type in ['reversal','refund'] and not self.orig_txn:
-            raise ValidationError("This transaction type requires a previous transaction.")
-        
-        if self.external and not self.receipt_number:
-            raise ValidationEError("A receipt number is required for an external payment.")
+        if not self.external and not self.collection_point:
+            self.collection_point = 'Kensington'
