@@ -32,6 +32,10 @@ class Invoice(models.Model):
         return Order.objects.get(number=self.order_number)
     
     @property
+    def owner(self):
+        return self.order.user
+
+    @property
     def num_items(self):
         ''' Get the number of items in this invoice.
         '''
