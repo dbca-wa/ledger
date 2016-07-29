@@ -89,6 +89,10 @@ class BpointToken(models.Model):
     card_type = models.CharField(max_length=2, choices=CARD_TYPES, blank=True, null=True)
 
     @property
+    def last_digits(self):
+        return self.masked_card[-4:]
+
+    @property
     def bankcard(self):
         return TempBankCard(
             self.DVToken,
