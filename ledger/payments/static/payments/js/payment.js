@@ -36,7 +36,30 @@ $(function(){
         $other_form[0].reset();
         $card_form[0].reset();
     }
-    //reset_forms();
+    // Disable PayButtons
+    function disablePayButtons() {
+        $('.pay_btn').addClass('disabled');
+    }
+    // Check if invoice is paid
+    function checkInvoiceStatus(){
+        var status = '';
+        $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
+            status = resp.payment_status;
+            /*if (status === 'paid') {
+                disablePayButtons();
+            }*/
+            updateBanner(status);
+        });
+    }
+    function updateBanner(value) {
+        $('#invoice_status').html(value);
+        if (!$success_div.hasClass('hide')) {
+            setTimeout(function(){$success_div.addClass('hide');},3000);
+        }
+    }
+    /*
+    * Make cash payments
+    */
     function otherPayment(){
         var type,source,payload,ref;
         var amount, orig_txn = null;
@@ -58,9 +81,8 @@ $(function(){
         }
         // Check if the original transaction field is there and has a value
         if ($('#other_orig_txn').val()) {
-            payload["orig_txn"] = $('#other_orig_txn');
+            payload["orig_txn"] = invoice;
         }
-        
         
         // Check if the external checkbox is selected
         if ($('#other_external').is(':checked')){
@@ -70,18 +92,20 @@ $(function(){
         }
         
         $.post("/ledger/payments/api/cash.json",payload, function(resp){
-            console.log(resp);
-            success(resp,invoice,source);
+            success(resp,invoice,$('#other_source').val());
         })
         .fail(function(resp){
-            console.log(resp);
             error(resp);
+        })
+        .always(function(){
+            checkInvoiceStatus()
         });
     }
+    /*
+    *  Make card payments with either stored cards or new cards
+    */
     function cardPayment(){
-        /*
-         *  Make card payments with either stored cards or new cards
-         */
+        
         // Hide div if not hidden
         if (!$errors_div.hasClass('hide')) {
             $errors_div.addClass('hide');
@@ -124,6 +148,9 @@ $(function(){
             },
             error: function(resp){
                 error(resp);
+            },
+            complete: function(resp){
+                checkInvoiceStatus();  
             }
         });
     }
