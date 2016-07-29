@@ -36,6 +36,13 @@
                     <div class="medium-12 columns">
                         <h2 class="text-center">Pay For Invoice</h2>
                     </div>
+                    <div class="medium-12 columns">
+                        {% block custom_block %}
+                            {% if custom_block %}
+                                {% include custom_block %}
+                            {% endif %}
+                        {% endblock %}
+                    </div>
                     <div class="medium-4 columns">
                         <ul class="tabs vertical" id="payment-tabs" data-tabs>
                             <li class="tabs-title is-active"><a href="#details" aria-selected="true">Invoice Details</a></li>
@@ -44,6 +51,16 @@
                         </ul>
                     </div>
                     <div class="medium-8 columns">
+                        <!-- Show Invoice status -->
+                        <div class="columns row large-12">
+                            <div class="row">
+                                <div class="columns small-12">
+                                    <div class="primary callout" data-closable="slide-out-right">
+                                        <p class="text-center">Status: <strong id="invoice_status">{{invoice.payment_status}}</strong></p>
+                                    </div></div>
+                            </div>
+                        </div>
+                        <!-- /Show Invoice Status -->
                         <!-- Show Errors -->
                         <div id="errors" class="columns row large-12">
                             <div id="errors_row" class="row">
@@ -164,6 +181,7 @@
                                     <label>Source
                                         <select id="other_source" name="other_source">
                                             <option value="cash">Cash</option>
+                                            <option value="eft">EFT</option>
                                             <option value="cheque">Cheque</option>
                                             <option value="money_order">Money Order</option>
                                         </select>
@@ -197,7 +215,7 @@
                                     </fieldset>
                                     <div class="row align-right">
                                         <div class="columns medium-3">
-                                            <input id="" type="submit" class="float-right button" value="Pay"/>
+                                            <input id="" type="submit" class="pay_btn float-right button" value="Pay"/>
                                         </div>
                                     </div>
                                     <!-- Pay Button -->
@@ -287,7 +305,7 @@
                                     {% endif %}
                                     <div class="row align-right">
                                         <div class="columns medium-3">
-                                            <input id="" type="submit" class="float-right button" value="Pay"/>
+                                            <input type="submit" class="pay_btn float-right button" value="Pay"/>
                                         </div>
                                     </div>
                                     <!-- Pay Button -->
