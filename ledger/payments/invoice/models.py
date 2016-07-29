@@ -10,7 +10,6 @@ from ledger.payments.bpay.crn import getCRN
 from ledger.payments.bpay.models import BpayTransaction
 from ledger.payments.bpoint.models import BpointTransaction
 
-
 class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     amount = models.DecimalField(decimal_places=2,max_digits=12)
@@ -23,14 +22,14 @@ class Invoice(models.Model):
     def biller_code(self):
         ''' Return the biller code for bpay.
         '''
-        return settings.BPAY_BILLER_CODE
+        return settings.BPAY_BILLER_COD
 
     @property
     def order(self):
         ''' Get order matched to this invoice.
         '''
         return Order.objects.get(number=self.order_number)
-    
+
     @property
     def owner(self):
         return self.order.user
@@ -40,13 +39,13 @@ class Invoice(models.Model):
         ''' Get the number of items in this invoice.
         '''
         return self.order.num_items
-    
+
     @property
     def bpay_transactions(self):
         ''' Get this invoice's bpay transactions.
         '''
         return BpayTransaction.objects.filter(crn=self.reference)
-        
+
     @property
     def bpoint_transactions(self):
         ''' Get this invoice's bpoint transactions.
@@ -59,9 +58,9 @@ class Invoice(models.Model):
         '''
         payments = dict(self.cash_transactions.filter(type='payment').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
         reversals = dict(self.cash_transactions.filter(type='reversal').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
-        
+
         return payments - reversals
-        
+
     def __calculate_bpoint_payments(self):
         ''' Calcluate the total amount of bpoint payments and
             captures made less the reversals for this invoice.
@@ -70,9 +69,9 @@ class Invoice(models.Model):
         payments = payments + dict(self.bpoint_transactions.filter(action='payment', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
         payments = payments + dict(self.bpoint_transactions.filter(action='capture', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
         reversals = dict(self.bpoint_transactions.filter(action='reversal', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
-        
+
         return payments - reversals
-    
+
     def __calculate_bpay_payments(self):
         ''' Calcluate the amount of bpay payments made
             less the reversals for this invoice.
@@ -81,25 +80,25 @@ class Invoice(models.Model):
         if self.bpay_transactions:
             payments = payments + dict(self.bpay_transactions.filter(p_instruction_code='payment', type=399).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
             reversals = dict(self.bpoint_transactions.filter(p_instruction_code='reversal', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
-        
+
         return payments - reversals    
-    
+
     @property
     def payment_amount(self):
         ''' Total amount paid from bpay,bpoint and cash.
         '''
         return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
-    
+
     @property
     def balance(self):
         return self.amount - self.payment_amount
-    
+
     @property
     def payment_status(self):
         ''' Payment status of the invoice.
         '''
         amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
-        
+
         if amount_paid == decimal.Decimal('0'):
             return 'unpaid'
         elif amount_paid < self.amount:
