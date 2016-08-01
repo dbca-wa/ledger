@@ -49,9 +49,9 @@ class BpayFile(models.Model):
 def update_file_view(sender, instance, **kwargs):
     try:
         cursor = connection.cursor()
-        cursor.execute('CREATE OR REPLACE VIEW dpaw_payments_bpaycollection_v AS SELECT date(created),\
+        cursor.execute('CREATE OR REPLACE VIEW payments_bpaycollection_v AS SELECT date(created),\
                        count(*),sum(credit_amount) AS credit_total\
-                       , sum(cheque_amount) as cheque_total, sum(debit_amount) as debit_total,sum(file_total) as total  from dpaw_payments_bpayfile GROUP BY date(created)')
+                       , sum(cheque_amount) as cheque_total, sum(debit_amount) as debit_total,sum(file_total) as total  from bpay_bpayfile GROUP BY date(created)')
     except Exception as e:
         connection.rollback()
         raise ValidationError(e)
@@ -134,7 +134,7 @@ class BpayCollection(models.Model):
     
     class Meta:
         managed = False
-        db_table = 'dpaw_payments_bpaycollection_v'
+        db_table = 'bpay_bpaycollection_v'
         
     @property
     def files(self):
