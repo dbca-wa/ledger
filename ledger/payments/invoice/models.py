@@ -22,7 +22,7 @@ class Invoice(models.Model):
     def biller_code(self):
         ''' Return the biller code for bpay.
         '''
-        return settings.BPAY_BILLER_COD
+        return settings.BPAY_BILLER_CODE
 
     @property
     def order(self):
@@ -78,8 +78,8 @@ class Invoice(models.Model):
         '''
         payments = reversals = 0
         if self.bpay_transactions:
-            payments = payments + dict(self.bpay_transactions.filter(p_instruction_code='payment', type=399).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
-            reversals = dict(self.bpoint_transactions.filter(p_instruction_code='reversal', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+            payments = payments + dict(self.bpay_transactions.filter(p_instruction_code='05', type=399).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+            reversals = dict(self.bpay_transactions.filter(p_instruction_code='25', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
 
         return payments - reversals    
 

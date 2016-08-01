@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 #
 from oscar.apps.basket.models import Basket
-from oscar.apps.catalogue.models import Product
+from ledger.catalogue.models import Product
 from oscar.core.loading import get_class
 #
 from models import Invoice
