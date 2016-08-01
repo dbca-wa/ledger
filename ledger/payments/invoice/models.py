@@ -22,7 +22,7 @@ class Invoice(models.Model):
     def biller_code(self):
         ''' Return the biller code for bpay.
         '''
-        return settings.BPAY_BILLER_COD
+        return settings.BPAY_BILLER_CODE
 
     @property
     def order(self):
