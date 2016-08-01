@@ -396,6 +396,8 @@ define(
 
                 // apply the bootstrap select2 to the filters.
                 $(options.selectors.applicationsFilterForm + ' select').select2();
+                $(options.selectors.licencesFilterForm + ' select').select2();
+                $(options.selectors.returnsFilterForm + ' select').select2();
             });
         };
     }
