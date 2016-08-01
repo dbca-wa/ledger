@@ -78,13 +78,13 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
         on_behalf_returns_count = DataTableReturnsOfficerOnBehalfView._get_proxy_returns(self.request.user).count()
         total_on_behalf = on_behalf_applications_count + on_behalf_returns_count
         if total_on_behalf > 0:
-            url = reverse_lazy('wl_dashboard:tables_applications_officer_onbehalf')
+            url = reverse_lazy('wl_dashboard:tables_officer_onbehalf')
             on_behalf_node = self._create_node('My proxy page', href=url, count=total_on_behalf)
-            on_behalf_applications_node = self._create_node('Pending Applications', href=url + '?show=applications',
+            on_behalf_applications_node = self._create_node('Applications', href=url + '?show=applications',
                                                             count=on_behalf_applications_count)
             # on_behalf_licences_node = self._create_node('Licenses', href=url + '?show=licences',
             #                                             count=on_behalf_licences_count)
-            on_behalf_returns_node = self._create_node('Pending Returns', href=url + '?show=returns',
+            on_behalf_returns_node = self._create_node('Returns', href=url + '?show=returns',
                                                        count=on_behalf_returns_count)
             self._add_node(on_behalf_node, on_behalf_applications_node)
             # self._add_node(on_behalf_node, on_behalf_licences_node)
@@ -241,11 +241,15 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         return Application.objects.exclude(processing_status='draft')
 
 
-class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
+class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
     template_name = 'wl/dash_tables_officer_onbehalf.html'
 
+    RETURN_STATUS_FILTER_ALL_BUT_FUTURE = 'all_but_future'
+
     def _build_data(self):
-        data = super(TableApplicationsOfficerOnBehalfView, self)._build_data()
+        data = super(TablesOfficerOnBehalfView, self)._build_data()
+        officer_data = TableApplicationsOfficerView()._build_data()
+        data['applications'] = officer_data['applications']
         data['applications']['columnDefinitions'] = [
             {
                 'title': 'Lodge Number'
@@ -269,6 +273,10 @@ class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseV
             }
         ]
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer_onbehalf')
+        data['applications']['filters']['status']['values'] = \
+            [('all', 'All')] + \
+            [(TableApplicationsOfficerView.STATUS_PENDING, TableApplicationsOfficerView.STATUS_PENDING.capitalize())] + \
+            [s for s in Application.PROCESSING_STATUS_CHOICES]
 
         # licences
         officer_data = TableLicencesOfficerView()._build_data()
@@ -276,11 +284,23 @@ class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseV
         # override url
         data['licences']['ajax']['url'] = reverse('wl_dashboard:data_licences_officer_onbehalf')
 
+
         # returns
         officer_data = TableReturnsOfficerView()._build_data()
         data['returns'] = officer_data['returns']
         # override the url
         data['returns']['ajax']['url'] = reverse('wl_dashboard:data_returns_officer_onbehalf')
+        # and the filters (proxy officer should see the drafts)
+        filters = {
+            'status': {
+                'values': [
+                              (self.RETURN_STATUS_FILTER_ALL_BUT_FUTURE, 'All (but future)'),
+                              (TableReturnsOfficerView.OVERDUE_FILTER, TableReturnsOfficerView.OVERDUE_FILTER.capitalize())
+                          ] + list(Return.STATUS_CHOICES)
+            }
+        }
+        data['returns']['filters'].update(filters)
+
         return data
 
 
@@ -304,6 +324,11 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
             'render': lambda self, instance: self._render_action_column(instance),
         },
     })
+
+    @staticmethod
+    def _get_pending_processing_statuses():
+        return [s[0] for s in Application.PROCESSING_STATUS_CHOICES
+                if s[0] != 'issued' and s[0] != 'declined']
 
     @staticmethod
     def _render_action_column(obj):
@@ -330,8 +355,14 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
 
     @staticmethod
     def _get_proxy_applications(user):
-        return Application.objects.filter(proxy_applicant=user).filter(
-            customer_status__in=Application.CUSTOMER_EDITABLE_STATE)
+        return Application.objects.filter(proxy_applicant=user)
+
+    @staticmethod
+    def filter_status(value):
+        if value.lower() == TableApplicationsOfficerView.STATUS_PENDING:
+            return Q(processing_status__in=DataTableApplicationsOfficerOnBehalfView._get_pending_processing_statuses())
+        else:
+            return base.DataTableApplicationBaseView.filter_status(value)
 
     def get_initial_queryset(self):
         return self._get_proxy_applications(self.request.user)
@@ -731,8 +762,14 @@ class DataTableReturnsOfficerOnBehalfView(DataTableReturnsOfficerView):
     @staticmethod
     def _get_proxy_returns(user):
         return Return.objects.filter(
-            licence__in=WildlifeLicence.objects.filter(application__proxy_applicant=user)) \
-            .filter(status__in=Return.CUSTOMER_EDITABLE_STATE)
+            licence__in=WildlifeLicence.objects.filter(application__proxy_applicant=user))
+
+    @staticmethod
+    def filter_status(value):
+        if value == TablesOfficerOnBehalfView.RETURN_STATUS_FILTER_ALL_BUT_FUTURE:
+            return ~Q(status__in=['future'])
+        else:
+            return DataTableReturnsOfficerView.filter_status(value)
 
     def get_initial_queryset(self):
         return self._get_proxy_returns(self.request.user)
