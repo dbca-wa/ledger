@@ -85,7 +85,6 @@ class DashBoardRoutingView(TemplateView):
 
 class DashboardTreeViewBase(TemplateView):
     template_name = 'wl/dash_tree.html'
-    url = reverse_lazy('wl_dashboard:tables_applications_officer')
 
     @staticmethod
     def _create_node(title, href=None, count=None):
