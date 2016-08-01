@@ -12,7 +12,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAs
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
-from wildlifelicensing.apps.applications.helpers import convert_documents_to_url, format_application, \
+from wildlifelicensing.apps.applications.utils import convert_documents_to_url, format_application, \
     format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status

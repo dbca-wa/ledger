@@ -82,6 +82,10 @@ class Application(RevisionedMixin):
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
 
+    order_number = models.CharField(max_length=50, blank=True, default='')
+
+    invoice_number = models.CharField(max_length=50, blank=True, default='')
+
     @property
     def is_assigned(self):
         return self.assigned_officer is not None

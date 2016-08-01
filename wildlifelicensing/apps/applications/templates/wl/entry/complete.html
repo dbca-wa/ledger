@@ -49,7 +49,10 @@
                     <div class="panel-body">
                         <p><label>Licence Type:</label> {{ application.licence_type.name }}</p>
                         <p><label>Lodgement Number:</label> {{ application.lodgement_number }}-{{ application.lodgement_sequence }}</p>
-                        <p><label>Lodgement Date:</label>{{ application.lodgement_date }}</p>
+                        <p><label>Lodgement Date:</label> {{ application.lodgement_date|date:'d/m/Y' }}</p>
+                        {% if application.invoice_number %}
+                            <p><a href="{% url 'payments:invoice-detail' application.invoice_number %}" target="_blank">View Invoice</a></p>
+                        {% endif %}
                     </div>
                 </div>
                     <div>

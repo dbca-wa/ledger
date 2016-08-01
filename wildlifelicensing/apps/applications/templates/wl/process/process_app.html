@@ -94,6 +94,20 @@
                                             <p id="processingStatus">{{ data.application.processing_status }}</p>
                                         </div>
                                     </div>
+                                    {% if data.application.order_number %}
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <label>Payment Status</label>
+                                            <p>
+                                                {{ data.application.order_number }}
+                                                <span class="pull-right">
+                                                    <a href="">Enter Payment</a>
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    {% endif %}
                                     <div class="form-group">
                                         <label>Currently assigned to</label>
                                         <input type="hidden" id="assignee" class="form-control">

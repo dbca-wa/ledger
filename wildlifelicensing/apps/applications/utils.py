@@ -6,8 +6,8 @@ import random
 from preserialize.serialize import serialize
 
 from oscar.apps.partner.strategy import Selector
-from oscar.apps.catalogue.models import Product
 
+from ledger.catalogue.models import Product
 from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
