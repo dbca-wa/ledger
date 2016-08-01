@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal as D
 from django.utils import six
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -186,7 +187,31 @@ class PaymentDetailsView(CorePaymentDetailsView):
     ]
 
     def get(self, request, *args, **kwargs):
+        if self.skip_preview_if_free(request):
+             return self.handle_place_order_submission(request)
         return super(PaymentDetailsView, self).get(request, *args, **kwargs)
+
+    def skip_preview_if_free(self, request):
+        if self.preview:
+            # Check to see if payment is actually required for this order.
+            shipping_address = self.get_shipping_address(request.basket)
+            shipping_method = self.get_shipping_method(
+                request.basket, shipping_address)
+            if shipping_method:
+                shipping_charge = shipping_method.calculate(request.basket)
+            else:
+                # It's unusual to get here as a shipping method should be set by
+                # the time this skip-condition is called. In the absence of any
+                # other evidence, we assume the shipping charge is zero.
+                shipping_charge = prices.Price(
+                    currency=request.basket.currency, excl_tax=D('0.00'),
+                    tax=D('0.00')
+                )
+            total = self.get_order_totals(request.basket, shipping_charge)
+            if total.excl_tax == D('0.00'):
+                self.checkout_session.is_free_basket(True)
+                return True
+        return False
 
     def get_context_data(self, **kwargs):
         """
@@ -280,39 +305,42 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # Using preauth here (two-stage model). You could use payment to
         # perform the preauth and capture in one step.  
         method = self.checkout_session.payment_method()
-        if method == 'card':
-            try:
-                #Generate Invoice
-                invoice = self.doInvoice(order_number,total)
-                # Swap user if in session
-                if self.checkout_session.basket_owner():
-                    user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-                else:
-                    user = self.request.user
-                # Check if the system only uses checkout with token for cards
-                if self.checkout_session.checkoutWithToken():
-                    resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
-                else:
-                    # Store card if user wants to store card
-                    if self.checkout_session.store_card():
-                        bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
-                    # Get the payment action for bpoint
-                    card_method = self.checkout_session.card_method()
-                    resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
-                    # Record payment source and event
-                    source_type, is_created = models.SourceType.objects.get_or_create(
-                        name='Bpoint')
-                    # amount_allocated if action is preauth and amount_debited if action is payment
-                    source = source_type.sources.model(
-                        source_type=source_type,
-                        amount_debited=total.incl_tax, currency=total.currency)
-                    self.add_payment_source(source)
-                    self.add_payment_event('Paid', total.incl_tax)
-            except Exception as e:
-                raise
-        else:
-            #Generate Invoice
+        if self.checkout_session.free_basket():
             self.doInvoice(order_number,total)
+        else:
+            if method == 'card':
+                try:
+                    #Generate Invoice
+                    invoice = self.doInvoice(order_number,total)
+                    # Swap user if in session
+                    if self.checkout_session.basket_owner():
+                        user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
+                    else:
+                        user = self.request.user
+                    # Check if the system only uses checkout with token for cards
+                    if self.checkout_session.checkoutWithToken():
+                        resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
+                    else:
+                        # Store card if user wants to store card
+                        if self.checkout_session.store_card():
+                            bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
+                        # Get the payment action for bpoint
+                        card_method = self.checkout_session.card_method()
+                        resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
+                        # Record payment source and event
+                        source_type, is_created = models.SourceType.objects.get_or_create(
+                            name='Bpoint')
+                        # amount_allocated if action is preauth and amount_debited if action is payment
+                        source = source_type.sources.model(
+                            source_type=source_type,
+                            amount_debited=total.incl_tax, currency=total.currency)
+                        self.add_payment_source(source)
+                        self.add_payment_event('Paid', total.incl_tax)
+                except Exception as e:
+                    raise
+            else:
+                #Generate Invoice
+                self.doInvoice(order_number,total)
 
     def submit(self, user, basket, shipping_address, shipping_method,  # noqa (too complex (10))
                shipping_charge, billing_address, order_total,

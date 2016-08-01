@@ -90,3 +90,11 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def store_card(self):
         return self._get('ledger','store_card')
+
+    # Basket Free
+    # ===========================
+    def is_free_basket(self, status):
+        self._set('ledger','free_basket',status)
+
+    def free_basket(self):
+        return self._get('ledger','free_basket')

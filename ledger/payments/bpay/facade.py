@@ -124,7 +124,7 @@ def validate_file(f):
     except:
         raise
 
-def parseFile(file_path='/mnt/storage/Apps/oscar-test/dpaw_payments/bpay/dpaw.csv'):
+def parseFile(file_path='/mnt/storage/Apps/ledger/ledger/payments/bpay/dpaw.csv'):
     '''Parse the file in order to create the relevant
         objects.
     '''
