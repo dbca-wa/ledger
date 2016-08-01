@@ -1,10 +1,11 @@
 {% load  static %}
+{% load dpaw_extras %}
 <!DOCTYPE html>
 <html>
     <head>
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>{% block title %}{% if self.seo_title %}{{ self.seo_title }}{% else %}{{ self.title }}{% endif %}{% endblock %}{% block title_suffix %} - Office for Information Management - Department of Parks and Wildlife{% endblock %}</title>
+        <title>Payments - Department of Parks and Wildlife</title>
         <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -14,13 +15,11 @@
         <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation.min.js"></script>
         <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
         <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/js/egg.js"></script>
-        <script type="text/javascript" src="{% static 'js/f6_oim_cms.js' %}"></script>
         <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
         <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/fonts/Lato2OFLWeb/Lato/latofonts.css" />
         <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation-flex.css">
         <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
         <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
-        <link rel="stylesheet" type="text/css" media="all" href="{% static 'css/f6_oim_cms.css' %}" />
         {% block extra_css %}
 
         {% endblock %}
@@ -37,74 +36,276 @@
                     <div class="medium-12 columns">
                         <h2 class="text-center">Pay For Invoice</h2>
                     </div>
+                    <div class="medium-12 columns">
+                        {% block custom_block %}
+                            {% if custom_block %}
+                                {% include custom_block %}
+                            {% endif %}
+                        {% endblock %}
+                    </div>
                     <div class="medium-4 columns">
                         <ul class="tabs vertical" id="payment-tabs" data-tabs>
-                            <li class="tabs-title is-active"><a href="#cash" aria-selected="true">Cash</a></li>
-                            <li class="tabs-title"><a href="#card">Card</a></li>
+                            <li class="tabs-title is-active"><a href="#details" aria-selected="true">Invoice Details</a></li>
+                            <li class="tabs-title"><a href="#other">Pay by Cash/Cheque/Money Order</a></li>
+                            <li class="tabs-title"><a href="#card">Pay by Card</a></li>
                         </ul>
                     </div>
                     <div class="medium-8 columns">
-                        <div class="tabs-content vertical" data-tabs-content="payment-tabs">
-                            <div class="tabs-panel is-active" id="cash">
-                                <form>
+                        <!-- Show Invoice status -->
+                        <div class="columns row large-12">
+                            <div class="row">
+                                <div class="columns small-12">
+                                    <div class="primary callout" data-closable="slide-out-right">
+                                        <p class="text-center">Status: <strong id="invoice_status">{{invoice.payment_status}}</strong></p>
+                                    </div></div>
+                            </div>
+                        </div>
+                        <!-- /Show Invoice Status -->
+                        <!-- Show Errors -->
+                        <div id="errors" class="columns row large-12">
+                            <div id="errors_row" class="row">
+                            </div>
+                        </div>
+                        <!-- /Show Errors -->
+                        <!-- Show Success -->
+                        <div id="success_div" class="columns hide row large-12">
+                            <div id="success_row" class="row">
+                            </div>
+                        </div>
+                        <!-- /Show Success -->
+                        <div class="tabs-content vertical" data-tabs-content="payment-tabs" id="payment_div" data-reference={{invoice.reference}}>
+                            <div class="tabs-panel is-active" id="details">
+                                <table class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Qty</th>
+                                            <th>Unit Price</th>
+                                            <th>GST</th>
+                                            <th>Amount</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for line in invoice.order.lines.all %}
+                                            {% with product=line.product %}
+                                                <tr>
+                                                    <td>
+                                                        <p>
+                                                            {{ line.description }}
+                                                        </p>
+                                                    </td>
+                                                    <td>{{ line.quantity }}</td>
+                                                    <td>${{ line.line_price_before_discounts_excl_tax}}</td>
+                                                    <td>${{ line.line_price_before_discounts_incl_tax|subtract:line.line_price_before_discounts_excl_tax }}</td>
+                                                    <td>${{ line.line_price_before_discounts_incl_tax }}</td>
+                                                </tr>
+                                            {% endwith %}
+                                        {% endfor %}
+                                        {% with discounts=invoice.order.basket_discounts %}
+                                            {% block discount_totals %}
+                                                {% if discounts %}
+                                                    <tr>
+                                                        <td colspan="4">Basket total (excl. discounts)</td>
+                                                        <td colspan="2">${{ order.basket_total_before_discounts_incl_tax }}</td>
+                                                    </tr>
+                                                    {% for discount in discounts %}
+                                                    <tr>
+                                                        <td colspan="4">
+                                                            <span class="label label-success">Discount</span>
+                                                            {{ discount.offer_name }}
+                                                        </td>
+                                                        <td colspan="2">- ${{ discount.amount }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endblock discount_totals %}
+                                            {% block basket_total %}
+                                                {% if discounts %}
+                                                    <tr>
+                                                        <th colspan="4">Basket total (inc. discounts)</th>
+                                                        <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
+                                                    </tr>
+                                                {% else %}
+                                                    <tr>
+                                                        <th colspan="4">Basket total</th>
+                                                        <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% endblock basket_total %}
+                                        {% endwith %}
+                                        {% block shipping_totals %}
+                                            {% if invoice.order.has_shipping_discounts %}
+                                                <tr>
+                                                    <td colspan="4">Shipping total (excl. discounts)</td>
+                                                    <td colspan="2">${{ invoice.order.shipping_before_discounts_incl_tax }}</td>
+                                                </tr>
+                                                {% for discount in invoice.order.shipping_discounts %}
+                                                <tr>
+                                                    <td colspan="4">
+                                                        <span class="label label-success">Discount</span>
+                                                        {{ discount.offer_name }}
+                                                    </td>
+                                                    <td colspan="2">- ${{ discount.amount }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr>
+                                                    <th colspan="4">Shipping total (inc. discounts)</th>
+                                                    <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
+                                                </tr>
+                                            {% else %}
+                                                <tr>
+                                                    <th colspan="4">Shipping total</th>
+                                                    <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endblock %}
+                                        {% block order_total %}
+                                            <tr>
+                                                <th colspan="4">Order total</th>
+                                                <td colspan="2">${{ invoice.order.total_incl_tax }}</td>
+                                            </tr>
+                                        {% endblock order_total %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- /Invoice Details -->
+                            <div class="tabs-panel" id="other">
+                                <form id="other_form">
+                                    {% if amountProvided %}
                                     <label>
                                         Amount
-                                        <input type="number" value=""/>
+                                        <input id="other_amount" name="other_amount" type="number" value=""/>
+                                    </label>
+                                    {% endif %}
+                                    <label>Source
+                                        <select id="other_source" name="other_source">
+                                            <option value="cash">Cash</option>
+                                            <option value="eft">EFT</option>
+                                            <option value="cheque">Cheque</option>
+                                            <option value="money_order">Money Order</option>
+                                        </select>
                                     </label>
                                     <label>Select Payment Type
-                                        <select>
+                                        <select id="other_type" name="other_type">
                                             <option value="payment">Payment</option>
                                             <option value="refund">Refund</option>
                                             <option value="reversal">Reversal</option>
                                         </select>
                                     </label>
+                                    <input id="other_external" type="checkbox" aria-describeby="externalHelp"/><label for="other_external">External</label>
+                                    <p class="help-text" id="externalHelp">If the payment is made outside Kensington select this option.</p>
+                                    <fieldset id="location_fieldset" class="hide">
+                                        <legend>External Location Details</legend>
+                                        <div class="row">
+                                            <div class="columns small-6">
+                                                <label>
+                                                    Location
+                                                    <textarea id="other_location" placeholder="eg. District or Region"></textarea>
+                                                </label>
+                                            </div>
+                                            <div class="columns small-6">
+                                                <label>
+                                                    Receipt Number
+                                                    <input aria-describeby="receiptHelp" id="receipt_number" name="receipt_number" type="text" value=""/>
+                                                </label>
+                                                <p class="help-text" id="receiptHelp">Enter the receipt number used to make a payment for this invoice.</p>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                    <div class="row align-right">
+                                        <div class="columns medium-3">
+                                            <input id="" type="submit" class="pay_btn float-right button" value="Pay"/>
+                                        </div>
+                                    </div>
+                                    <!-- Pay Button -->
                                 </form>
                             </div>
                             <div class="tabs-panel" id="card">
-                                <form>
+                                <form id="card_form">
+                                    {% if amountProvided %}
                                     <label>
                                         Amount
-                                        <input type="number" value=""/>
+                                        <input id="card_amount" type="number" value=""/>
                                     </label>
+                                    {% endif %}
                                     <label>Select Payment Type
-                                        <select>
+                                        <select id="card_action">
                                             <option value="payment">Payment</option>
                                             <option value="capture">Capture</option>
                                             <option value="refund">Refund</option>
                                             <option value="reversal">Reversal</option>
                                         </select>
                                     </label>
-                                    <label>
-                                        Card Number
-                                        <input type="text" value=""/>
-                                    </label>
-                                    <div class="row">
-                                        <div class="columns medium-2">
-                                            <label>
-                                                Expiry Month
-                                                <input type="text" value=""/>
-                                            </label>
+                                    <fieldset id="card_fieldset">
+                                        <legend>Card Details</legend>
+                                        <label>
+                                            Card Number
+                                            <input id="card_number" type="text" value=""/>
+                                        </label>
+                                        <div class="row">
+                                            <div class="columns medium-2">
+                                                <label>
+                                                    Expiry Month
+                                                    <select id="month_expiry">
+                                                        {% for m in months %}
+                                                        <option value="{{m}}">{{m}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </label>
+                                            </div>
+                                            <div class="columns medium-2">
+                                                <label>
+                                                    Expiry Year
+                                                    <select id="year_expiry">
+                                                        {% for y in years %}
+                                                        <option value="{{y}}">{{y}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div class="columns medium-2">
-                                            <label>
-                                                Expiry Year
-                                                <input type="text" value=""/>
-                                            </label>
+                                        <!-- /Card Details -->
+                                        <div class="row">
+                                            <div class="columns medium-2">
+                                                <label>
+                                                    CCV
+                                                    <input id="card_cvn" type="text" value=""/>
+                                                </label>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <!-- /Card Details -->
-                                    <div class="row">
-                                        <div class="columns medium-2">
-                                            <label>
-                                                CCV
-                                                <input type="text" value=""/>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <!-- /CVN -->
+                                        <!-- /CVN -->
+                                    </fieldset>
+                                    {% if invoice.owner.stored_cards.all %}
+                                    <input id="use_stored" type="checkbox" aria-describeby="storedCardHelp"/><label for="use_stored">Use stored card</label>
+                                    <p class="help-text" id="storedCardHelp">Select this option if you want to use the stored cards.</p>
+                                    <fieldset class="hide" id="storedcard_fieldset">
+                                        <legend>Stored Cards</legend>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Card Ending</th>
+                                                    <th>Expiry Date</th>
+                                                    <th>Type</th>
+                                                    <th>Use</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for card in invoice.owner.stored_cards.all %}
+                                                <tr>
+                                                    <td>{{card.last_digits}}</td>
+                                                    <td>{{card.expiry_date}}</td>
+                                                    <td>{{card.get_card_type_display}}</td>
+                                                    <td><input  type="radio" name="card" value="{{card.id}}" selected/></td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </fieldset>
+                                    {% endif %}
                                     <div class="row align-right">
                                         <div class="columns medium-3">
-                                            <input id="" type="submit" class="float-right button" value="Pay"/>
+                                            <input type="submit" class="pay_btn float-right button" value="Pay"/>
                                         </div>
                                     </div>
                                     <!-- Pay Button -->
@@ -112,84 +313,11 @@
                             </div>
                         </div>
                     </div>
-                </div>    
             </div>
             <div class="footer">
                 <style type="text/css">.row {min-width:100% !important;}</style>
             </div>
         </div>
-        <script type="text/javascript">
-            $(function(){
-                $(document).foundation();
-                var $submit_btn = $('#search_invoice');
-                var $details_div = $('#invoice_details');
-                var $errors_div = $('#errors');
-                var $errors_row = $('#errors_row');
-                var $pay_button = $('#pay_btn');
-                var $pdf_button = $('#pdf_btn');
-                function getInvoice(){
-                    var ref = null;
-                    // Hide div if not hiiden
-                    if (!$details_div.hasClass('hide')) {
-                        $details_div.addClass('hide');
-                    }
-                    // Hide div if not hiiden
-                    if (!$errors_div.hasClass('hide')) {
-                        $errors_div.addClass('hide');
-                    }
-                    // Get value of invoice field
-                    ref = $('#invoice_num').val();
-                    // Make api call to retrieve invoice data
-                    $.get("/ledger/payments/api/invoices/"+ref+".json", function(resp){
-                        console.log(resp);
-                        success(resp);
-                    })
-                    .fail(function(resp){
-                        console.log(resp);
-                        error(resp);
-                    });
-                }
-                function success(resp){
-                    // Invoice Info
-                    $('#invoice_ref').html('Invoice #'+resp.reference);
-                    $('#order_num').html('Order Number: #'+resp.order_number);
-                    $('#created_on').html('Created On: '+resp.created);
-                    $('#item_count').html('Item Count: '+resp.num_items);
-                    // Payment Info
-                    $('#amount').html('Amount: $'+resp.amount);
-                    $('#payment_status').html('Payment Status: '+resp.payment_status);
-                    $('#payment_amount').html('Paid Amount: $'+resp.payment_amount.toFixed(2));
-                    // Add correct url for pdf view
-                    $pdf_button.attr('href','/ledger/payments/invoice/'+resp.reference);
-                    // Display Pay Button if invoice is unpaid
-                    if (resp.payment_status === 'unpaid') {
-                        $pay_button.removeClass('hide');
-                    }
-                    else{
-                        $pay_button.addClass('hide');
-                    }
-                    $details_div.removeClass('hide');
-                }
-                function error(resp){
-                    var error_str = '';
-                    // Show Errors
-                    if (resp.status === 404) {
-                        error_str = 'An invoice with this reference number could not be found';
-                    }
-                    error_html = '<div class="columns small-6"><div class="alert callout" data-closable="slide-out-right"> \
-                        <p>'+error_str+'</p> \
-                        <button class="close-button" aria-label="Dismiss alert" type="button" data-close> \
-                            <span aria-hidden="true">&times;</span> \
-                        </button> \
-                    </div></div>';
-                    $errors_row.html(error_html);
-                    $errors_div.removeClass('hide');
-                }
-                $('#search_invoice_form').submit(function(e){
-                    e.preventDefault();
-                    getInvoice();
-                });
-            });
-        </script>
+        <script type="text/javascript" src="{% static 'payments/js/payment.js'%}"></script>
     </body>
 </html>

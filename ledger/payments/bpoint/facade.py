@@ -155,10 +155,15 @@ class Facade(object):
         try:
             if reference:
                 inv = Invoice.objects.get(reference=reference)
-                if inv.payment_status == 'paid':
+                if action in ['reversal','refund'] and inv.payment_status == 'unpaid':
+                    raise ValidationError("A {} cannot be made for an unpaid invoice.".format(action))
+                if action == 'refund' and (inv.payment_amount < decimal.Decimal(amount)):
+                    raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
+                if inv.payment_status == 'paid' and action == 'payment':
                     raise ValidationError('This invoice has already been paid for.')
-                if decimal.Decimal(total) > inv.balance:
+                if (decimal.Decimal(amount) > inv.balance) and action == 'payment':
                     raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
+
             txn = self._submit_info(order_number,reference,total,action,_type,sub_type,bankcard,orig_txn_number)
             self.friendly_error_msg(txn)
             
