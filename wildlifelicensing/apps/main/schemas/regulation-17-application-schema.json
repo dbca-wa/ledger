@@ -127,7 +127,7 @@
                     [
                         {
                             "type": "text_area",
-                            "label": "Grant Details",
+                            "label": "Provide details of the grant or sponsorship, including name, address and contact details of the organisation funding the project",
                             "name": "grant_details"
                         }
                     ],
@@ -135,7 +135,7 @@
                     [
                         {
                             "type": "text_area",
-                            "label": "Contract Details",
+                            "label": "Provide details of the Client, including name, address and contact details",
                             "name": "contract_details"
                         }
                     ],
@@ -143,7 +143,7 @@
                     [
                         {
                             "type": "text_area",
-                            "label": "Affiliated Organisation / Client / Sponsor",
+                            "label": "Provide details of who is funding the project or how the project is being funded",
                             "name": "financial_details_other"
                         }
                     ]
@@ -159,7 +159,7 @@
         [
             {
                 "type": "text",
-                "label": "Provide relevant qualifications and/or experience details specific to this project (if not already provided in your profile)",
+                "label": "Provide relevant qualifications and/or experience details specific to this project",
                 "name": "qualifications"
             },
             {

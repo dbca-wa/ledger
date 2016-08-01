@@ -292,7 +292,12 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
     #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     if licence.cover_letter_message:
-        elements.append(Paragraph(licence.cover_letter_message, styles['Left']))
+        for message in licence.cover_letter_message.split('\r\n'):
+            if message:
+                elements.append(Paragraph(message, styles['Left']))
+            else:
+                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     elements.append(Paragraph('Best regards,', styles['Left']))

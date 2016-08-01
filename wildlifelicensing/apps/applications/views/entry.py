@@ -91,6 +91,7 @@ class EditApplicationView(UserCanEditApplicationMixin, View):
 
             if application.hard_copy is not None:
                 shutil.copyfile(application.hard_copy.file.path, os.path.join(temp_files_dir, application.hard_copy.name))
+                utils.set_app_session_data(request.session, 'application_document', application.hard_copy.name)
 
         return redirect('wl_applications:enter_details', *args, **kwargs)
 
@@ -269,15 +270,25 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 amendments = AmendmentRequest.objects.filter(application=application).filter(status='requested')
                 kwargs['amendments'] = amendments
 
+        temp_files_dir = utils.get_app_session_data(self.request.session, 'temp_files_dir')
+        if temp_files_dir is not None:
+            temp_files_url = settings.MEDIA_URL + os.path.basename(os.path.normpath(temp_files_dir))
+
         if utils.is_app_session_data_set(self.request.session, 'data'):
             data = utils.get_app_session_data(self.request.session, 'data')
 
-            temp_files_dir = utils.get_app_session_data(self.request.session, 'temp_files_dir')
             if temp_files_dir is not None:
-                temp_files_url = settings.MEDIA_URL + os.path.basename(os.path.normpath(temp_files_dir))
                 utils.prepend_url_to_files(licence_type.application_schema, data, temp_files_url)
 
             kwargs['data'] = data
+
+        if utils.is_app_session_data_set(self.request.session, 'application_document'):
+            application_document = utils.get_app_session_data(self.request.session, 'application_document')
+
+            if temp_files_dir is not None:
+                application_document = os.path.join(temp_files_url, application_document)
+
+            kwargs['application_document'] = application_document
 
         return super(EnterDetailsView, self).get_context_data(**kwargs)
 
@@ -311,10 +322,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
             application.save(version_user=application.applicant_profile.user)
 
-            # delete all existing documents for this application
-            application.documents.all().delete()
-            if application.hard_copy is not None:
-                application.hard_copy.delete()
+            application.documents.clear()
 
             # need to create documents from all the existing files that haven't been replaced
             # (saved in temp_files_dir) as well as any new ones
@@ -336,6 +344,8 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                     application.hard_copy = Document.objects.create(name=str(request.FILES[f]), file=request.FILES[f])
                 else:
                     application.documents.add(Document.objects.create(name=str(request.FILES[f]), file=request.FILES[f]))
+
+            application.save(no_revision=True)
 
             messages.warning(request, 'The application was saved to draft.')
 
@@ -397,15 +407,27 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         if len(self.args) > 1:
             kwargs['application_pk'] = self.args[1]
 
+        temp_files_dir = utils.get_app_session_data(self.request.session, 'temp_files_dir')
+        if temp_files_dir is not None:
+            temp_files_url = settings.MEDIA_URL + os.path.basename(os.path.normpath(temp_files_dir))
+
         if utils.is_app_session_data_set(self.request.session, 'data'):
             data = utils.get_app_session_data(self.request.session, 'data')
 
-            temp_files_url = settings.MEDIA_URL + \
-                os.path.basename(os.path.normpath(utils.get_app_session_data(self.request.session, 'temp_files_dir')))
-
-            utils.prepend_url_to_files(licence_type.application_schema, data, temp_files_url)
+            if temp_files_dir is not None:
+                utils.prepend_url_to_files(licence_type.application_schema, data, temp_files_url)
 
             kwargs['data'] = data
+
+        if utils.is_app_session_data_set(self.request.session, 'application_document'):
+            application_document = utils.get_app_session_data(self.request.session, 'application_document')
+
+            if temp_files_dir is not None:
+                application_document = os.path.join(temp_files_url, application_document)
+
+            kwargs['structure'], kwargs['data'] = utils.append_app_document_to_schema_data(kwargs['structure'],
+                                                                                           kwargs['data'],
+                                                                                           application_document)
 
         return super(PreviewView, self).get_context_data(**kwargs)
 
@@ -445,12 +467,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             application.lodgement_number = '%s-%s' % (str(application.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
                                                       str(application.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
-        application.save(version_user=application.applicant_profile.user, version_comment='Details Modified')
-
-        # delete all existing documents for this application
-        application.documents.all().delete()
-        if application.hard_copy is not None:
-            application.hard_copy.delete()
+        application.documents.clear()
 
         # if attached files were saved temporarily, add each to application as part of a Document
         temp_files_dir = utils.get_app_session_data(request.session, 'temp_files_dir')
@@ -470,11 +487,12 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                     document.file.save(filename, File(doc_file), save=True)
 
                     application.hard_copy = document
-                    application.save(no_revision=True)
 
             messages.success(request, 'The application was successfully lodged.')
         except Exception as e:
             messages.error(request, 'There was a problem creating the application: %s' % e)
+
+        application.save(version_user=application.applicant_profile.user, version_comment='Details Modified')
 
         try:
             utils.delete_app_session_data(request.session)
