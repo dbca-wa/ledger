@@ -50,7 +50,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     """
     columns = [
         'application.lodgement_number',
-        'application.licence_type.code',
+        'application.licence_type.display_name',
         'application.applicant_profile.user',
         'application.lodgement_date',
         'application.assigned_officer',
@@ -58,7 +58,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     ]
     order_columns = [
         'application.lodgement_number',
-        'application.licence_type.code',
+        'application.licence_type.display_name',
         ['application.applicant_profile.user.last_name', 'application.applicant_profile.user.first_name',
          'application.applicant_profile.user.email'],
         'application.lodgement_date',

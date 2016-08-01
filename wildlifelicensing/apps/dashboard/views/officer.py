@@ -168,9 +168,9 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
+    columns = ['lodgement_number', 'licence_type.display_name', 'applicant_profile.user', 'processing_status', 'lodgement_date',
                'assigned_officer', 'proxy_applicant', 'action']
-    order_columns = ['lodgement_number', 'licence_type.code',
+    order_columns = ['lodgement_number', 'licence_type.display_name',
                      ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
                       'applicant_profile.user.email'],
                      'processing_status', 'lodgement_date',
@@ -306,9 +306,9 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
+    columns = ['lodgement_number', 'licence_type.display_name', 'applicant_profile.user', 'processing_status', 'lodgement_date',
                'action']
-    order_columns = ['lodgement_number', 'licence_type.code',
+    order_columns = ['lodgement_number', 'licence_type.display_name',
                      ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
                       'applicant_profile.user.email'],
                      'processing_status', 'lodgement_date',
@@ -445,7 +445,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
     model = WildlifeLicence
     columns = [
         'licence_number',
-        'licence_type.code',
+        'licence_type.display_name',
         'profile.user',
         'start_date',
         'end_date',
@@ -455,7 +455,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'action']
     order_columns = [
         'licence_number',
-        'licence_type.code',
+        'licence_type.display_name',
         ['profile.user.last_name', 'profile.user.first_name'],
         'start_date',
         'end_date',
@@ -630,7 +630,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
     model = Return
     columns = [
         'lodgement_number',
-        'licence.licence_type.code',
+        'licence.licence_type.display_name',
         'licence.profile.user',
         'lodgement_date',
         'due_date',
@@ -640,7 +640,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
     ]
     order_columns = [
         'lodgement_number',
-        'licence.licence_type.code',
+        'licence.licence_type.display_name',
         ['licence.profile.user.last_name', 'licence.profile.user.first_name'],
         'lodgement_date',
         'due_date',

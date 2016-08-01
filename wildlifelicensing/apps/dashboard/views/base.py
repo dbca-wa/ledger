@@ -142,7 +142,7 @@ class TableBaseView(TemplateView):
         Build data skeleton for all the tables definitions, filters....
         :return:
         """
-        licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
+        licence_types = [('all', 'All')] + [(lt.pk, lt.display_name) for lt in LicenceType.objects.all()]
         data = {
             'applications': {
                 'columnDefinitions': [],
