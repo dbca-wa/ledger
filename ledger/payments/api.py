@@ -214,19 +214,19 @@ class CardSerializer(serializers.Serializer):
     expiry = serializers.DateField(input_formats=['%m%Y',])
 
 class BpointPaymentSerializer(serializers.Serializer):
-    invoice_reference = serializers.CharField(max_length=50)
+    invoice = serializers.CharField(max_length=50)
     amount = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
     card = CardSerializer(required=False)
     using_token = serializers.BooleanField(default=False)
-    token = serializers.CharField(max_length=16)
+    token = serializers.CharField(max_length=16, required=False)
     original_txn = serializers.CharField(max_length=50,required=False)
     action = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES, default='payment')
     subtype = serializers.ChoiceField(choices=BpointTransaction.SUB_TYPES,default='single')
     type = serializers.ChoiceField(choices=BpointTransaction.TRANSACTION_TYPES)
 
     def validate(self, data):
-        if data['action'] in ['payment','preauth','unmatched_refund'] and data.get('using_token') and data.get('token') and data.get('card'):
-            raise serializers.ValidationError("You can only use one method to make paymets ie 'card' or 'token'.")
+        if data.get('using_token') and data.get('token') and data.get('card'):
+            raise serializers.ValidationError("You can only use one method to make payments ie 'card' or 'token'.")
 
         if data['action'] in ['payment','preauth','unmatched_refund'] and not data.get('using_token') and not data.get('card'):
             raise serializers.ValidationError("For the selected action you need to provide 'card' details.")
@@ -242,7 +242,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
     ''' Used to create a card point using the api:
         Example of json request using new card:
         {
-            "invoice_reference": "1000025",
+            "invoice": "1000025",
             "amount": 1,
             "action": "payment",
             "type": "internet",
@@ -254,7 +254,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
         }
         Example of json request using stored card:
         {
-            "invoice_reference": "1000025",
+            "invoice": "1000025",
             "amount": 1,
             "action": "payment",
             "type": "internet",
@@ -294,7 +294,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                 )
             # Check if the invoice exists if action is payment,preauth
             try:
-                inv = Invoice.objects.get(reference=serializer.validated_data['invoice_reference'])
+                inv = Invoice.objects.get(reference=serializer.validated_data['invoice'])
                 reference = inv.reference
             except Invoice.DoesNotExist:
                 raise serializers.ValidationError("The invoice doesn't exist.")
@@ -302,7 +302,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                 total = inv.amount
             # intialize the bpoint facade object
             facade = bpoint_facade
-            
+
             if card:
                 # Create card form data
                 form_data = {
@@ -366,6 +366,8 @@ class CashSerializer(serializers.ModelSerializer):
     original_txn = serializers.CharField(required=False)
     amount = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
     invoice = serializers.CharField(source='invoice.reference')
+    external = serializers.BooleanField(default=False)
+    location = serializers.CharField(source='collection_point',required=False)
     class Meta:
         model = CashTransaction
         fields = (
@@ -374,9 +376,17 @@ class CashSerializer(serializers.ModelSerializer):
             'source',
             'created',
             'type',
+            'external',
+            'location',
+            'receipt',
             'original_txn'
         )
         
+    def validate(self,data):
+        if data['external'] and not data.get('collection_point'):
+            raise serializers.ValidationError('A location must be specified for an external payment')
+        return data
+
 class CashViewSet(viewsets.ModelViewSet):
     '''Used to create a cash payment using the api:
         Example of json request:
@@ -434,10 +444,12 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
     bpay_transactions=BpayTransactionSerializer(many=True)
     bpoint_transactions=BpointTransactionSerializer(many=True)
     created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    owner = serializers.CharField(source='owner.email')
     class Meta:
         model = Invoice
         fields = (
             'id',
+            'owner',
             'order_number',
             'num_items',
             'amount',
@@ -449,7 +461,7 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
             'bpay_transactions',
             'bpoint_transactions'
         )
-        read_only_feilds=(
+        read_only_fields=(
             'created',
             'id',
             'num_items'
