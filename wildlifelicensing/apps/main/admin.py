@@ -23,8 +23,8 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
 # Register your models here.
 @admin.register(WildlifeLicenceType)
 class WildlifeLicenceTypeAdmin(VersionAdmin):
-    list_display = ('name', 'code')
-    prepopulated_fields = {'code_slug': ('code',)}
+    list_display = ('name', 'display_name', 'code')
+    prepopulated_fields = {'code_slug': ('code', 'version')}
     filter_horizontal = ('default_conditions',)
     inlines = (DefaultConditionInline,)
     form = WildlifeLicenceTypeAdminForm

@@ -19,11 +19,16 @@ class Condition(RevisionedMixin):
         return self.code
 
 
+class WildlifeLicenceCategory(models.Model):
+    name = models.CharField(max_length=100, blank=False, unique=True)
+
+
 class WildlifeLicenceType(LicenceType):
-    code_slug = models.SlugField(max_length=64)
+    code_slug = models.SlugField(max_length=64, unique=True)
     identification_required = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
     application_schema = JSONField(blank=True, null=True)
+    category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)
 
 
 class WildlifeLicence(Licence):
