@@ -14,6 +14,7 @@ class CashTransaction(models.Model):
     SOURCE_TYPES = (
         ('cash','cash'),
         ('cheque', 'cheque'),
+        ('eft','eft'),
         ('money_order','money_order')
     )
     invoice = models.ForeignKey(Invoice, related_name='cash_transactions', to_field='reference')
@@ -22,6 +23,9 @@ class CashTransaction(models.Model):
     original_txn = models.ForeignKey('self', null=True, blank=True)
     type = models.CharField(choices=TRANSACTION_TYPES, max_length=7)
     source = models.CharField(choices=SOURCE_TYPES, max_length=11)
+    collection_point = models.TextField()
+    external = models.BooleanField(default=False)
+    receipt_number = models.CharField(max_length=128,null=True,blank=True)
 
     def save(self, *args, **kwargs):
         if self.invoice.payment_status == 'paid':
@@ -30,8 +34,10 @@ class CashTransaction(models.Model):
             raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
 
         super(CashTransaction, self).save(*args, **kwargs)
-    
+
     def clean(self):
         if self.type in ['reversal','refund'] and not self.orig_txn:
             raise ValidationError("This transaction type requires a previous transaction.")
         
+        if self.external and not self.receipt_number:
+            raise ValidationEError("A receipt number is required for an external payment.")

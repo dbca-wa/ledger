@@ -1,7 +1,7 @@
 import logging
 from . import settings
 logger = logging.getLogger('bpoint_dpaw')
-from ledger.payments.bpoint.BPOINT.API import TransactionRequest,Credentials,TransactionSearchRequest
+from ledger.payments.bpoint.BPOINT.API import TransactionRequest,Credentials,TransactionSearchRequest, AddDVTokenRequest
 
 class Gateway(object):
 
@@ -48,6 +48,12 @@ class Gateway(object):
             Get all transactions from BPOINT
         '''
         return TransactionSearchRequest(self.credentials).submit()
+
+    def request_new_token(self, card, reference):
+        req = AddDVTokenRequest(self.credentials)
+        req.card_details = card
+        req.crn1 = reference
+        return req.submit()
 
     def handle_txn(self,order_num,reference,action,amount,card_details,biller_code,_type,sub_type,orig_txn_num=None):
         '''

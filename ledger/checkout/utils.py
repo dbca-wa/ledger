@@ -70,7 +70,23 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     # BPAY due date
     # ===========================
     def bpay_by(self, due_date):
-        self._set('ledger','due_date','due_date')
+        self._set('ledger','due_date',due_date)
 
     def bpay_due(self):
         return self._get('ledger','due_date')
+
+    # Checkout using Token
+    # ===========================
+    def checkout_using_token(self, status):
+        self._set('ledger','checkout_by_token',status)
+
+    def checkoutWithToken(self):
+        return self._get('ledger','checkout_by_token')
+
+    # Store Card
+    # ===========================
+    def permit_store_card(self, status):
+        self._set('ledger','store_card',status)
+
+    def store_card(self):
+        return self._get('ledger','store_card')
