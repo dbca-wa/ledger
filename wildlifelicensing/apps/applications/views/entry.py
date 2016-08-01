@@ -1,6 +1,7 @@
 import os
 import tempfile
 import shutil
+import json
 
 import six
 
@@ -9,13 +10,17 @@ from datetime import datetime
 from django.views.generic.base import View, TemplateView
 from django.views.generic.edit import FormView
 from django.shortcuts import render, redirect, get_object_or_404
+from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.core.files import File
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from oscar.apps.catalogue.models import Product
+
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
+from ledger.payments.views import createBasket
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main.forms import IdentificationForm
@@ -26,6 +31,7 @@ from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_customer
+from django.utils.http import urlencode
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -403,6 +409,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
             kwargs['data'] = data
 
+        kwargs['requires_payment'] = helpers.licence_requires_payment(licence_type)
+
         return super(PreviewView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -471,18 +479,39 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         except Exception as e:
             messages.error(request, 'There was a problem creating the application: %s' % e)
 
-        try:
-            helpers.delete_app_session_data(request.session)
-        except Exception as e:
-            messages.warning(request, 'There was a problem deleting session data: %s' % e)
+        if helpers.licence_requires_payment(application.licence_type):
+            product = get_object_or_404(Product, title=application.licence_type.code_slug)
 
-        return redirect('wl_applications:complete', application.licence_type.code_slug, application.pk, **kwargs)
+            products_json = [{
+                "id": product.id,
+                "quantity": 1
+            }]
+
+            createBasket(json.dumps(products_json), request.user)
+
+            url_query_parameters = {
+                'system_id': '0369',
+                'basket_owner': application.applicant_profile.user.id,
+                'fallback_url': reverse('wl_applications:preview', args=(application.licence_type.code_slug, application.id,)),
+                'return_url': reverse('wl_applications:complete', args=(application.licence_type.code_slug, application.id,))
+            }
+
+            url = '{}?{}'.format(reverse('checkout:index'), urlencode(url_query_parameters))
+
+            return redirect(url)
+        else:
+            return redirect('wl_applications:complete', application.licence_type.code_slug, application.pk, **kwargs)
 
 
 class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/complete.html'
 
     def get_context_data(self, **kwargs):
+        try:
+            helpers.delete_app_session_data(self.request.session)
+        except Exception as e:
+            messages.warning(self.request, 'There was a problem deleting session data: %s' % e)
+
         kwargs['application'] = get_object_or_404(Application, pk=self.args[1])
 
         return super(ApplicationCompleteView, self).get_context_data(**kwargs)
