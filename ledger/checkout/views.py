@@ -1,4 +1,5 @@
 import logging
+import traceback
 from decimal import Decimal as D
 from django.utils import six
 from django.contrib import messages
@@ -333,10 +334,17 @@ class PaymentDetailsView(CorePaymentDetailsView):
                     # Check if the system only uses checkout with token for cards
                     if self.checkout_session.checkoutWithToken():
                         resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
+                        print resp
+                        if self.checkout_session.invoice_association():
+                            invoice.token = resp
+                            invoice.save()
                     else:
                         # Store card if user wants to store card
                         if self.checkout_session.store_card():
-                            bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
+                            resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'],True)
+                            if self.checkout_session.invoice_association():
+                                invoice.token = resp.token
+                                invoice.save()
                         # Get the payment action for bpoint
                         card_method = self.checkout_session.card_method()
                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
@@ -450,6 +458,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         except Exception as e:
             # Unhandled exception - hopefully, you will only ever see this in
             # development...
+            traceback.print_exc()
             logger.error(
                 "Order #%s: unhandled exception while taking payment (%s)",
                 order_number, e, exc_info=True)
