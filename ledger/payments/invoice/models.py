@@ -14,7 +14,8 @@ class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     order_number = models.CharField(max_length=50,unique=True)
-    reference = models.CharField(max_length=50, unique=True)    
+    reference = models.CharField(max_length=50, unique=True)
+    system = models.CharField(max_length=4,blank=True,null=True)
     def __unicode__(self):
         return 'Order #{0} Invoice #{1}'.format(self.reference,self.id)
 
