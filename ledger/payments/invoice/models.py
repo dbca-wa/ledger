@@ -8,7 +8,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.order.models import Order
 from ledger.payments.bpay.crn import getCRN
 from ledger.payments.bpay.models import BpayTransaction
-from ledger.payments.bpoint.models import BpointTransaction
+from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 
 class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -21,6 +21,8 @@ class Invoice(models.Model):
     def __unicode__(self):
         return 'Order #{0} Invoice #{1}'.format(self.reference,self.id)
 
+    # Properties
+    # =============================================
     @property
     def biller_code(self):
         ''' Return the biller code for bpay.
@@ -55,6 +57,33 @@ class Invoice(models.Model):
         '''
         return BpointTransaction.objects.filter(crn1=self.reference)
 
+    @property
+    def payment_amount(self):
+        ''' Total amount paid from bpay,bpoint and cash.
+        '''
+        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+
+    @property
+    def balance(self):
+        return self.amount - self.payment_amount
+
+    @property
+    def payment_status(self):
+        ''' Payment status of the invoice.
+        '''
+        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+
+        if amount_paid == decimal.Decimal('0'):
+            return 'unpaid'
+        elif amount_paid < self.amount:
+            return 'partially_paid'
+        elif amount_paid == self.amount:
+            return 'paid'
+        else:
+            return 'over_paid'
+
+    # Helper Functions
+    # =============================================
     def __calculate_cash_payments(self):
         ''' Calcluate the amount of cash payments made
             less the reversals for this invoice.
@@ -86,27 +115,34 @@ class Invoice(models.Model):
 
         return payments - reversals    
 
-    @property
-    def payment_amount(self):
-        ''' Total amount paid from bpay,bpoint and cash.
+    # Functions
+    # =============================================
+    def has_token(self):
+        ''' Check if the token stored against this invoice is a valid token.
+        :return: Boolean
         '''
-        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+        token = False
+        try:
+            if self.token:
+                BpointToken.objects.get(id=self.token)
+                token = True
+        except BpointToken.DoesNotExist:
+            pass
+        return token
 
-    @property
-    def balance(self):
-        return self.amount - self.payment_amount
-
-    @property
-    def payment_status(self):
-        ''' Payment status of the invoice.
+    def pay_using_token(self):
+        ''' Pay this invoice with the token attached to it.
+        :return: BpointTransaction
         '''
-        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
-
-        if amount_paid == decimal.Decimal('0'):
-            return 'unpaid'
-        elif amount_paid < self.amount:
-            return 'partially_paid'
-        elif amount_paid == self.amount:
-            return 'paid'
-        else:
-            return 'over_paid'
+        from ledger.payments.facade import bpoint_facade
+        if self.has_token():
+            return bpoint_facade.pay_with_token(
+                    'payment',
+                    'telephoneorder',
+                    'single',
+                    self.token,
+                    self.order_number,
+                    self.reference,
+                    self.amount,
+                    None
+                )
