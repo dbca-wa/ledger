@@ -31,6 +31,7 @@ class WildlifeLicenceType(LicenceType):
     category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)
 
 
+@python_2_unicode_compatible
 class WildlifeLicence(Licence):
     MONTH_FREQUENCY_CHOICES = [(-1, 'One off'), (1, 'Monthly'), (3, 'Quarterly'), (6, 'Twice-Yearly'), (12, 'Yearly')]
     DEFAULT_FREQUENCY = MONTH_FREQUENCY_CHOICES[0][0]
@@ -44,6 +45,13 @@ class WildlifeLicence(Licence):
     cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
+
+    def __str__(self):
+        return self.reference
+
+    @property
+    def reference(self):
+        return '{}-{}'.format(self.licence_number, self.sequence_number)
 
 
 class DefaultCondition(models.Model):

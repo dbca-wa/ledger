@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.db.models.signals import pre_delete
@@ -10,6 +11,7 @@ from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceT
     CommunicationsLogEntry, AssessorGroup
 
 
+@python_2_unicode_compatible
 class Application(RevisionedMixin):
     CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('under_review', 'Under Review'),
                                ('id_required', 'Identification Required'), ('returns_required', 'Returns Completion Required'),
@@ -81,6 +83,13 @@ class Application(RevisionedMixin):
     licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+
+    def __str__(self):
+        return self.reference
+
+    @property
+    def reference(self):
+        return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 
     @property
     def is_assigned(self):
