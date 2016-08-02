@@ -16,6 +16,8 @@ class Invoice(models.Model):
     order_number = models.CharField(max_length=50,unique=True)
     reference = models.CharField(max_length=50, unique=True)
     system = models.CharField(max_length=4,blank=True,null=True)
+    token = models.CharField(max_length=10,null=True,blank=True)
+
     def __unicode__(self):
         return 'Order #{0} Invoice #{1}'.format(self.reference,self.id)
 
