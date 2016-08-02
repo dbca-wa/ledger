@@ -83,6 +83,14 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def checkoutWithToken(self):
         return self._get('ledger','checkout_by_token')
 
+    # Associate token to invoice
+    # ===========================
+    def associate_invoice(self, status):
+        self._set('ledger','associate_invoice',status)
+
+    def invoice_association(self):
+        return self._get('ledger','associate_invoice')
+
     # Store Card
     # ===========================
     def permit_store_card(self, status):
