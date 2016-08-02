@@ -288,13 +288,15 @@ class PaymentDetailsView(CorePaymentDetailsView):
             return invoice_facade.create_invoice_crn(
                 order_number,
                 total.incl_tax,
-                crn_string) 
+                crn_string,
+                system)
         elif method == 'icrn':
             return invoice_facade.create_invoice_icrn(
                 order_number,
                 total.incl_tax,
                 crn_string,
-                icrn_format)
+                icrn_format,
+                system)
         else:
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
 
