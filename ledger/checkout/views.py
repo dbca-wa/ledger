@@ -45,7 +45,7 @@ class IndexView(CoreIndexView):
         # validate template if its present
         self.__validate_template(details.get('template'))
         # validate system id
-        self.__validate_system(details.get('system_id'))
+        self.__validate_system(self.request.basket.system)
         # validate return url
         self.__validate_url(details.get('return_url'),'return')
         # validate bpay if present
@@ -54,8 +54,19 @@ class IndexView(CoreIndexView):
         self.__validate_basket_owner(details.get('basket_owner'))
         # validate token details
         self.__validate_token_details(details.get('checkoutWithToken'))
+        # validate if to associate invoice with token
+        self.__validate_associate_token_details(details.get('associateInvoiceWithToken'))
         return True
 
+    def __validate_associate_token_details(self, details):
+        ''' Check the associate with token details to set the checkout session data
+        '''
+        # Check associate with token parameter
+        if not details:
+            self.checkout_session.associate_invoice(False)
+        elif details == 'true' or details == 'True':
+            self.checkout_session.associate_invoice(True)
+ 
     def __validate_token_details(self, details):
         ''' Check the token details to set the checkout session data
         '''
@@ -84,7 +95,7 @@ class IndexView(CoreIndexView):
             '0369'
         ]
         if not system:
-            raise ValueError('System id required. eg ?system_id=<id>')
+            raise ValueError('This basket is not associated with any system.')
         elif not len(system) == 4:
             raise ValueError('The system id should be 4 characters long.')
         elif system not in valid_systems:
@@ -153,7 +164,7 @@ class IndexView(CoreIndexView):
                 'template': request.GET.get('template',None),
                 'fallback_url': request.GET.get('fallback_url',None),
                 'return_url': request.GET.get('return_url',None),
-                'system_id': request.GET.get('system_id',None),
+                'associateInvoiceWithToken': request.GET.get('associateInvoiceWithToken',False),
                 'checkoutWithToken': request.GET.get('checkoutWithToken',False),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
