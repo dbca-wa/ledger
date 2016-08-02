@@ -8,7 +8,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.order.models import Order
 from ledger.payments.bpay.crn import getCRN
 from ledger.payments.bpay.models import BpayTransaction
-from ledger.payments.bpoint.models import BpointTransaction, BpointToken
+from ledger.payments.bpoint.models import BpointTransaction, TempBankCard
 
 class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -117,32 +117,27 @@ class Invoice(models.Model):
 
     # Functions
     # =============================================
-    def has_token(self):
-        ''' Check if the token stored against this invoice is a valid token.
-        :return: Boolean
-        '''
-        token = False
-        try:
-            if self.token:
-                BpointToken.objects.get(id=self.token)
-                token = True
-        except BpointToken.DoesNotExist:
-            pass
-        return token
-
     def pay_using_token(self):
         ''' Pay this invoice with the token attached to it.
         :return: BpointTransaction
         '''
         from ledger.payments.facade import bpoint_facade
-        if self.has_token():
-            return bpoint_facade.pay_with_token(
-                    'payment',
-                    'telephoneorder',
-                    'single',
-                    self.token,
-                    self.order_number,
-                    self.reference,
-                    self.amount,
-                    None
+        try:
+            if self.token:
+                card_details = self.token.split('|')
+                card = TempBankCard(
+                    card_details[0],
+                    card_details[1]
                 )
+                return bpoint_facade.pay_with_temptoken(
+                        'payment',
+                        'telephoneorder',
+                        'single',
+                        card,
+                        self.order_number,
+                        self.reference,
+                        self.amount,
+                        None
+                    )
+        except:
+            raise
