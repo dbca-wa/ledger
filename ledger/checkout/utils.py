@@ -99,6 +99,14 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def store_card(self):
         return self._get('ledger','store_card')
 
+    # Redirection
+    # ===========================
+    def redirect_forcefully(self, status):
+        self._set('ledger','force_redirect',status)
+
+    def force_redirect(self):
+        return self._get('ledger','force_redirect')
+
     # Basket Free
     # ===========================
     def is_free_basket(self, status):
