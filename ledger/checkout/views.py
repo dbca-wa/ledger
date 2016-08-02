@@ -334,7 +334,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                     # Check if the system only uses checkout with token for cards
                     if self.checkout_session.checkoutWithToken():
                         resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
-                        print resp
                         if self.checkout_session.invoice_association():
                             invoice.token = resp
                             invoice.save()
