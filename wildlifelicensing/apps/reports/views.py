@@ -55,6 +55,7 @@ class ApplicationsReportView(View):
                               application.lodgement_date, application.applicant_profile.user.get_full_name(),
                               application.applicant_profile.name)
                 excel.write_values(ws, row, 1, row_values, direction='right', font=None)
+                row += 1
 
             filename = 'applications_{}-{}.xlsx'.format(from_date, to_date)
             return excel.WorkbookResponse(wb, filename)
@@ -86,6 +87,7 @@ class LicencesReportView(View):
                               licence.holder.get_full_name(), licence.issue_date, licence.issuer.get_full_name(),
                               licence.start_date, licence.end_date)
                 excel.write_values(ws, row, 1, row_values, direction='right', font=None)
+                row += 1
 
             filename = 'licences_{}-{}.xlsx'.format(from_date, to_date)
             return excel.WorkbookResponse(wb, filename)
@@ -115,6 +117,7 @@ class ReturnsReportView(View):
                 row_values = (ret.licence.licence_type.name, ret.lodgement_number, ret.lodgement_date,
                               ret.licence.holder.get_full_name(), ret.due_date, ret.status)
                 excel.write_values(ws, row, 1, row_values, direction='right', font=None)
+                row += 1
 
             filename = 'returns_{}-{}.xlsx'.format(from_date, to_date)
             return excel.WorkbookResponse(wb, filename)

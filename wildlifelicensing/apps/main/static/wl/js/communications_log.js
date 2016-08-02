@@ -6,12 +6,12 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
 
     function initCommunicationLog(options) {
         // default options
-        var options = _.defaults(options || {}, {
+        options = _.defaults(options || {}, {
             showLogPopoverSelector: null,
             showLogEntryModalSelector: null,
             logEntryModalSelector: null,
             logEntryFormSelector: null,
-            logTableSelector: $('<table class="table table-striped table-bordered dataTable">'),
+            logTableSelector: $('<table id="communicationsLog-table" class="table table-striped table-bordered dataTable">'),
             logListURL: 'insert-default-url-here',
             addLogEntryURL: 'insert-default-url-here'
         });
@@ -187,6 +187,11 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
             var $tablePopover = $table.find('[data-toggle="popover"]');
             if($tablePopover.length > 0) {
                 $tablePopover.popover();
+                // the next line prevents from scrolling up to the top after clicking on the popover.
+                $($tablePopover).on('click', function(e){
+                    e.preventDefault();
+                    return true;
+                });
             }
         });
 
@@ -195,5 +200,5 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
 
     return {
         initCommunicationLog: initCommunicationLog
-    }
+    };
 });
