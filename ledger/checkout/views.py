@@ -57,6 +57,8 @@ class IndexView(CoreIndexView):
         self.__validate_token_details(details.get('checkoutWithToken'))
         # validate if to associate invoice with token
         self.__validate_associate_token_details(details.get('associateInvoiceWithToken'))
+        # validate force redirection
+        self.__validate_force_redirect(details.get('forceRedirect'))
         return True
 
     def __validate_associate_token_details(self, details):
@@ -67,7 +69,16 @@ class IndexView(CoreIndexView):
             self.checkout_session.associate_invoice(False)
         elif details == 'true' or details == 'True':
             self.checkout_session.associate_invoice(True)
- 
+
+    def __validate_force_redirect(self, details):
+        ''' Check the force redirect to set the checkout session data
+        '''
+        # Check associate with token parameter
+        if not details:
+            self.checkout_session.redirect_forcefully(False)
+        elif details == 'true' or details == 'True':
+            self.checkout_session.redirect_forcefully(True)
+
     def __validate_token_details(self, details):
         ''' Check the token details to set the checkout session data
         '''
@@ -166,6 +177,7 @@ class IndexView(CoreIndexView):
                 'fallback_url': request.GET.get('fallback_url',None),
                 'return_url': request.GET.get('return_url',None),
                 'associateInvoiceWithToken': request.GET.get('associateInvoiceWithToken',False),
+                'forceRedirect': request.GET.get('forceRedirect',False),
                 'checkoutWithToken': request.GET.get('checkoutWithToken',False),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
