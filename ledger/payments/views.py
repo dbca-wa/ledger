@@ -4,6 +4,7 @@ from django.views import generic
 from django.contrib.auth import get_user_model
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import ValidationError
 #
 from ledger.basket.models import Basket
 from ledger.catalogue.models import Product
@@ -32,22 +33,27 @@ def createBasket(product_list,owner,system,force_flush=True):
         # Check if owner is of class AUTH_USER_MODEL or id
         if not isinstance(owner,User):
             owner = User.objects.get(id=owner)
-            
+
         # Check if owner has previous baskets
         if owner.baskets.filter(status='Open'):
             old_basket = owner.baskets.get(status='Open')
 
         # Use the previously open basket if its present or create a new one    
         if old_basket:
-            basket = old_basket
-            if force_flush:
-                basket.flush()
+            print old_basket.system
+            if system == old_basket.system or not old_basket.system:
+                basket = old_basket
+                if force_flush:
+                    basket.flush()
+            else:
+                raise ValidationError('You have a basket that is not completed in this application {}'.format(old_basket.system))
         else:
             basket = Basket()
         # Set the owner and strategy being used to create the basket    
         basket.owner = owner
+        basket.system = system
         basket.strategy = selector.strategy(user=owner)
-        
+
         # Check if there are products to be added to the cart and if they are valid products
         if not product_list:
             raise ValueError('There are no products to add to the order.')
@@ -61,7 +67,7 @@ def createBasket(product_list,owner,system,force_flush=True):
         # Add the valid products to the basket
         for p in valid_products:
             basket.add_product(p['product'],p['quantity'])
-        
+
         # Save the basket
         basket.save()
         return basket
@@ -85,9 +91,8 @@ class PaymentErrorView(generic.TemplateView):
 class InvoiceSearchView(generic.TemplateView):
 
     template_name = 'dpaw_payments/invoice/invoice_search.html'
-    
-class InvoicePaymentView(generic.DetailView):
 
+class InvoicePaymentView(generic.DetailView):
     template_name = 'dpaw_payments/invoice/payment.html'
     num_years = 10
     context_object_name = 'invoice'
