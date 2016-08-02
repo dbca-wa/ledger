@@ -117,7 +117,7 @@ class Invoice(models.Model):
 
     # Functions
     # =============================================
-    def pay_using_token(self):
+    def make_payment(self):
         ''' Pay this invoice with the token attached to it.
         :return: BpointTransaction
         '''
