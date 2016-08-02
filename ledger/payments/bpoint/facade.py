@@ -161,7 +161,7 @@ class Facade(object):
                     raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
                 if inv.payment_status == 'paid' and action == 'payment':
                     raise ValidationError('This invoice has already been paid for.')
-                if (decimal.Decimal(amount) > inv.balance) and action == 'payment':
+                if (decimal.Decimal(total) > inv.balance) and action == 'payment':
                     raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
 
             txn = self._submit_info(order_number,reference,total,action,_type,sub_type,bankcard,orig_txn_number)
@@ -172,34 +172,46 @@ class Facade(object):
             raise
 
     def store_token(self, user,token,masked_card,expiry_date,card_type):
-        BpointToken.objects.get_or_create(
+        token,created = BpointToken.objects.get_or_create(
             user=user,
             DVToken=token,
             masked_card=masked_card,
             expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date(),
             card_type=card_type
         )
+        return token
 
-    def checkout_with_token(self,user,reference,bankcard=None):
+    def checkout_with_token(self,user,reference,bankcard=None,store_card=False):
         ''' Create a token on checkout
             Used to create a token and store it against a
             user when checking out
         '''
         resp =  self.request_token(reference,bankcard)
-        self.store_token(
-            user,
-            resp.dvtoken,
-            bankcard.obfuscated_number,
-            resp.card_details.expiry_date,
-            resp.card_type
-        )
+        if store_card:
+            return self.store_token(
+                user,
+                resp.dvtoken,
+                bankcard.obfuscated_number,
+                resp.card_details.expiry_date,
+                resp.card_type
+            )
+        else:
+            return '{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date)
 
-    def pay_with_token(self,action,_type,sub_type,token_id,order_number=None,reference=None,total=None,orig_txn_number=None):
+    def pay_with_storedtoken(self,action,_type,sub_type,token_id,order_number=None,reference=None,total=None,orig_txn_number=None):
         ''' Make a payment using a stored card
         '''
         try:
             token = BpointToken.objects.get(id=token_id)
             return self.post_transaction(action,_type,sub_type,order_number,reference,total,token.bankcard,orig_txn_number)
+        except BpointToken.DoesNotExist as e:
+            raise UnableToTakePayment(str(e))
+
+    def pay_with_temptoken(self,action,_type,sub_type,token,order_number=None,reference=None,total=None,orig_txn_number=None):
+        ''' Make a payment using a temp token
+        '''
+        try:
+            return self.post_transaction(action,_type,sub_type,order_number,reference,total,token,orig_txn_number)
         except BpointToken.DoesNotExist as e:
             raise UnableToTakePayment(str(e))
 

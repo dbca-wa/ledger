@@ -333,7 +333,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                     token = BpointToken.objects.get(id=serializer.validated_data.get('token'))
                 except BpointToken.DoesNotExist:
                     raise serializers.ValidationError("The selected stored card doesn't exist.")
-                txn = facade.pay_with_token(
+                txn = facade.pay_with_storedtoken(
                     serializer.validated_data['action'],
                     serializer.validated_data['type'],
                     serializer.validated_data['subtype'],

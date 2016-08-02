@@ -83,6 +83,14 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def checkoutWithToken(self):
         return self._get('ledger','checkout_by_token')
 
+    # Associate token to invoice
+    # ===========================
+    def associate_invoice(self, status):
+        self._set('ledger','associate_invoice',status)
+
+    def invoice_association(self):
+        return self._get('ledger','associate_invoice')
+
     # Store Card
     # ===========================
     def permit_store_card(self, status):
@@ -90,6 +98,14 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def store_card(self):
         return self._get('ledger','store_card')
+
+    # Redirection
+    # ===========================
+    def redirect_forcefully(self, status):
+        self._set('ledger','force_redirect',status)
+
+    def force_redirect(self):
+        return self._get('ledger','force_redirect')
 
     # Basket Free
     # ===========================
