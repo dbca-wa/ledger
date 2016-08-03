@@ -1,7 +1,7 @@
 import csv
+import datetime
 import StringIO
 from models import Invoice
-
 
 def generate_csv(system,start,end):
     # Get invoices matching the system and date range
@@ -27,9 +27,9 @@ def generate_csv(system,start,end):
                 item_names = '|'.join(item_names)
                 oracle_codes = '|'.join(oracle_codes)
             # Get all transactions for this invoice
-            cash = i.cash_transactions.filter(created__gte=start,created__lt=end)
-            bpoint = i.bpoint_transactions.filter(created__gte=start,created__lt=end)
-            bpay = i.bpay_transactions.filter(p_date__gte=start,p_date__lt=end)
+            cash = i.cash_transactions.filter(created__gte=start,created__lte=end+datetime.timedelta(days=1))
+            bpoint = i.bpoint_transactions.filter(created__gte=start,created__lte=end+datetime.timedelta(days=1))
+            bpay = i.bpay_transactions.filter(p_date__gte=start,p_date__lte=end+datetime.timedelta(days=1))
             # Write out the cash transactions
             for c in cash:
                 cash_info = {
