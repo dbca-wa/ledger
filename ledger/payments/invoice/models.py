@@ -33,7 +33,10 @@ class Invoice(models.Model):
     def order(self):
         ''' Get order matched to this invoice.
         '''
-        return Order.objects.get(number=self.order_number)
+        try:
+            return Order.objects.get(number=self.order_number)
+        except Order.DoesNotExist:
+            return None
 
     @property
     def owner(self):
