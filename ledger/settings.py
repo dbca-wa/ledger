@@ -21,6 +21,7 @@ ROOT_HOSTCONF = 'ledger.hosts'
 DEFAULT_HOST = env('DEFAULT_HOST', 'ledger')
 PARENT_HOST = env('PARENT_HOST', 'localhost')
 HOST_PORT = env('HOST_PORT', '8000')
+HOST_SCHEME = env('HOST_SCHEME', 'https')
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [
     'django.contrib.admin',
