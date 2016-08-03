@@ -5,12 +5,26 @@ from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.utils.http import urlencode
 
+from oscar.apps.partner.strategy import Selector
+
 from ledger.payments.views import createBasket
 from ledger.catalogue.models import Product
 
+SYSTEM_ID = '0369'
+
 
 def licence_requires_payment(licence_type):
-    raise NotImplementedError
+    try:
+        product = Product.objects.get(title=licence_type.code_slug)
+
+        selector = Selector()
+        strategy = selector.strategy()
+        purchase_info = strategy.fetch_for_product(product=product)
+
+        return purchase_info.price.excl_tax > 0
+
+    except Product.DoesNotExist:
+        return False
 
 
 class CheckoutView(RedirectView):
@@ -22,10 +36,10 @@ class CheckoutView(RedirectView):
             "quantity": 1
         }]
 
-        createBasket(json.dumps(products_json), self.request.user, '0369')
+        createBasket(json.dumps(products_json), self.request.user, SYSTEM_ID)
 
         url_query_parameters = {
-            'system_id': '0369',
+            'system_id': SYSTEM_ID,
             'basket_owner': self.request.GET.get('user', self.request.user),
             'checkoutWithToken': True,
             'fallback_url': self.request.GET.get('fallback_url'),

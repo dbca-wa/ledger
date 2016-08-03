@@ -5,9 +5,6 @@ import random
 
 from preserialize.serialize import serialize
 
-from oscar.apps.partner.strategy import Selector
-
-from ledger.catalogue.models import Product
 from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
@@ -245,20 +242,6 @@ def clone_application_for_renewal(application, save=False):
         application_condition.save()
 
     return application
-
-
-def licence_requires_payment(licence_type):
-    try:
-        product = Product.objects.get(title=licence_type.code_slug)
-
-        selector = Selector()
-        strategy = selector.strategy()
-        purchase_info = strategy.fetch_for_product(product=product)
-
-        return purchase_info.price.excl_tax > 0
-
-    except Product.DoesNotExist:
-        return False
 
 
 def format_application(instance, attrs):

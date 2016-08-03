@@ -1,7 +1,6 @@
 import os
 import tempfile
 import shutil
-import json
 
 import six
 
@@ -17,10 +16,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.http import urlencode
 
-from ledger.catalogue.models import Product
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
-from ledger.payments.views import createBasket
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main.forms import IdentificationForm
@@ -31,6 +28,7 @@ from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_customer
+from wildlifelicensing.apps.main import payment_utils as payments
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -408,7 +406,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
             kwargs['data'] = data
 
-        kwargs['requires_payment'] = utils.licence_requires_payment(licence_type)
+        kwargs['requires_payment'] = payments.licence_requires_payment(licence_type)
 
         return super(PreviewView, self).get_context_data(**kwargs)
 
@@ -478,25 +476,15 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         except Exception as e:
             messages.error(request, 'There was a problem creating the application: %s' % e)
 
-        if utils.licence_requires_payment(application.licence_type):
-            product = get_object_or_404(Product, title=application.licence_type.code_slug)
-
-            products_json = [{
-                "id": product.id,
-                "quantity": 1
-            }]
-
-            createBasket(json.dumps(products_json), request.user, '0369')
+        if payments.licence_requires_payment(application.licence_type):
 
             url_query_parameters = {
-                'system_id': '0369',
-                'basket_owner': application.applicant_profile.user.id,
-                'checkoutWithToken': True,
+                'user': application.applicant_profile.user.id,
                 'fallback_url': reverse('wl_applications:preview', args=(application.licence_type.code_slug, application.id,)),
                 'return_url': reverse('wl_applications:complete', args=(application.licence_type.code_slug, application.id,))
             }
 
-            url = '{}?{}'.format(reverse('checkout:index'), urlencode(url_query_parameters))
+            url = '{}?{}'.format(reverse('wl_main: checkout_product'), urlencode(url_query_parameters))
 
             return redirect(url)
         else:
