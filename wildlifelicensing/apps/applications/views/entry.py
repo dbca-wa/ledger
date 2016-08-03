@@ -15,6 +15,7 @@ from django.conf import settings
 from django.core.files import File
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.http import urlencode
 
 from ledger.catalogue.models import Product
 from ledger.accounts.models import EmailUser, Profile, Document
@@ -30,7 +31,6 @@ from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_customer
-from django.utils.http import urlencode
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -486,7 +486,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 "quantity": 1
             }]
 
-            createBasket(json.dumps(products_json), request.user)
+            createBasket(json.dumps(products_json), request.user, '0369')
 
             url_query_parameters = {
                 'system_id': '0369',
