@@ -10,7 +10,7 @@ from cash.models import CashTransaction
 from facade import bpoint_facade
 from oscar.apps.order.models import Order
 from oscar.apps.payment import forms
-from invoice.reports import generate_csv
+from reports import generate_csv
 #######################################################
 #                                                     #
 #                        BPAY                         #
