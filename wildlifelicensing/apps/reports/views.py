@@ -227,7 +227,7 @@ class ReturnsReportView(View):
             to_date = form.cleaned_data.get('to_date')
             statuses = ['submitted', 'accepted', 'declined']
             qs = Return.objects.filter(lodgement_date__range=(from_date, to_date)).filter(status__in=statuses)
-            wb = ReportHelper.to_workbook('Licences', self.ALL_HEADERS, self.row_generator(qs))
+            wb = ReportHelper.to_workbook('Returns', self.ALL_HEADERS, self.row_generator(qs))
             filename = 'returns_{}-{}.xlsx'.format(from_date, to_date)
             return excel.WorkbookResponse(wb, filename)
         else:
