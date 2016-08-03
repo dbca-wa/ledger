@@ -274,8 +274,10 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         ass_group = get_object_or_404(AssessorGroup, pk=request.POST['assGroupID'])
-        assessment = Assessment.objects.create(application=application, assessor_group=ass_group,
-                                               status=request.POST['status'])
+        assessment, created = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)
+
+        assessment.status = 'awaiting_assessment'
+        assessment.save()
 
         application.processing_status = determine_processing_status(application)
         application.save()

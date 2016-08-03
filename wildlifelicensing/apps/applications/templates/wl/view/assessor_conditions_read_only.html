@@ -14,9 +14,9 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/conditions/assessor_enter_conditions'], function (enter_conditions) {
+    require(['js/conditions/assessor_conditions_read_only'], function (conditions) {
         $(function () {
-            enter_conditions.init({{ assessment|jsonify }}, {{ application|jsonify }}, {{ form_structure|jsonify }});
+            conditions.init({{ assessment|jsonify }}, {{ application|jsonify }}, {{ form_structure|jsonify }});
         });
     });
 {% endblock %}
@@ -28,7 +28,7 @@
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
                     <li><a href="{% url 'wl_dashboard:tables_assessor' %}">Applications</a></li>
-                    <li class="active">Enter Conditions</li>
+                    <li class="active">View Conditions (read-only)</li>
                 </ol>
             </div>
         </div>
@@ -39,7 +39,7 @@
     <div class="container bottom-buffer">
         <div class="row">
             <div class="col-md-12">
-                <h2>Enter Licence Conditions</h2>
+                <h2>View Conditions (read-only)</h2>
                 <h3>{{ application.licence_type.name }}</h3>
                 <hr>
             </div>
@@ -88,30 +88,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                Add Additional Conditions
-                                <a data-toggle="collapse" href="#addAdditionalConditionsBody" class="pull-right">
-                                    <span class="glyphicon"></span>
-                                </a>
-                            </div>
-                            <div id="addAdditionalConditionsBody" class="panel-body panel-collapse in">
-                                <div>
-                                    <div class="form-group">
-                                        Search Conditions
-                                        <input type="hidden" id="searchConditions" class="form-control" />
-                                    </div>
-                                    <div style="text-align:right">
-                                        <button type="button" id="addCondition" class="btn btn-xs btn-primary" disabled>Add Condition</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button id="assessmentDone" type="button" class="btn btn-sm btn-success pull-right">Conclude Assessment</button>
+                <a href="{% url 'home' %}" type="button" class="btn btn-sm btn-primary pull-right">Close</a>
             </div>
             <div class="col-md-9">
                 <h3>Current Conditions</h3>
@@ -123,34 +100,31 @@
                     </div>
                     <strong>Additional Condition</strong>
                 </div>
-                <form method="post" action="{{ action_url }}" id="conditionsForm">
-                    {% csrf_token %}
-                    <table class="table table-bordered">
-                        <thead class="conditions-table-head">
-                            <tr>
-                                <th class="code">Code</th>
-                                <th class="condition">Condition</th>
-                                <th class="action">Action</th>
-                                <th class="order">Order</th>
-                            </tr>
-                        </thead>
-                        <tbody id="conditionsBody" class="conditions-table-body">
-                            <tr id="conditionsEmptyRow" class="hidden">
-                                <td colspan="4">No default conditions specified</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <table class="table table-bordered">
+                    <thead class="conditions-table-head">
+                        <tr>
+                            <th class="code">Code</th>
+                            <th class="condition">Condition</th>
+                        </tr>
+                    </thead>
+                    <tbody id="conditionsBody" class="conditions-table-body">
+                        <tr id="conditionsEmptyRow" class="hidden">
+                            <td colspan="2">No default conditions specified</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% if assessment.comment %}
                     <div class="form-group">
                         <label for="comment">Comments</label>
-                        <textarea name="comment" rows="4" id="commentText" class="form-control" placeholder="Enter comment">{{ assessment.comment }}</textarea>
+                        <p>{{ assessment.comment }}</p>
                     </div>
-                    {% if assessment.assessor_group.purpose %}
-                        <div class="form-group">
-                            <label for="purpose">Purpose</label>
-                            <textarea name="purpose" rows="4" id="purposeText" class="form-control" placeholder="Enter purpose">{{ assessment.purpose }}</textarea>
-                        </div>
-                    {% endif %}
-                </form>
+                {% endif %}
+                {% if assessment.assessor_group.purpose and assessment.purpose %}
+                    <div class="form-group">
+                        <label for="purpose">Purpose</label>
+                        <p>{{ assessment.purpose }}</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -4,9 +4,10 @@ from django.shortcuts import get_object_or_404
 
 from preserialize.serialize import serialize
 
-from wildlifelicensing.apps.applications.models import Application, ApplicationLogEntry
-from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMixin
-from wildlifelicensing.apps.applications.utils import convert_documents_to_url, append_app_document_to_schema_data
+from wildlifelicensing.apps.applications.models import Application, Assessment, ApplicationLogEntry
+from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMixin, CanPerformAssessmentMixin
+from wildlifelicensing.apps.applications.utils import convert_documents_to_url, append_app_document_to_schema_data, \
+    format_application, format_assessment
 from wildlifelicensing.apps.main.models import Document
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.helpers import is_officer
@@ -42,6 +43,29 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
             kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
 
         return super(ViewReadonlyView, self).get_context_data(**kwargs)
+
+
+class AssessorConditionsView(CanPerformAssessmentMixin, TemplateView):
+    template_name = 'wl/view/assessor_conditions_read_only.html'
+
+    def get_context_data(self, **kwargs):
+        application = get_object_or_404(Application, pk=self.args[0])
+
+        if application.hard_copy is not None:
+            application.licence_type.application_schema, application.data = \
+                append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
+                                                   application.hard_copy.file.url)
+
+        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+
+        kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['form_structure'] = application.licence_type.application_schema
+
+        assessment = get_object_or_404(Assessment, pk=self.args[1])
+
+        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
+
+        return super(AssessorConditionsView, self).get_context_data(**kwargs)
 
 
 class ApplicationLogListView(OfficerRequiredMixin, View):
