@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+from wsgiref.util import FileWrapper
 from rest_framework import viewsets, serializers, status, generics
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -8,6 +10,7 @@ from cash.models import CashTransaction
 from facade import bpoint_facade
 from oscar.apps.order.models import Order
 from oscar.apps.payment import forms
+from invoice.reports import generate_csv
 #######################################################
 #                                                     #
 #                        BPAY                         #
@@ -476,5 +479,47 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
 #######################################################
 #                                                     #
 #                    /INVOICE                         #
+#                                                     #
+#######################################################
+
+#######################################################
+#                                                     #
+#                    REPORTS                          #
+#                                                     #
+#######################################################
+
+class ReportSerializer(serializers.Serializer):
+    system = serializers.CharField(max_length=4)
+    start = serializers.DateField()
+    end = serializers.DateField()
+
+class ReportCreateView(generics.CreateAPIView):
+    serializer_class = BpointPaymentSerializer
+    renderer_classes = (JSONRenderer,)
+    authentication_classes = []
+
+    def create(self, request):
+        try:
+            http_status = status.HTTP_200_OK
+            #parse and validate data
+            report = None
+            serializer = ReportSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
+            # Generate Report
+            report = generate_csv(serializer.validated_data['system'],serializer.validated_data['start'], serializer.validated_data['end'])
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Dispostion'] = 'attachment; filename={}.csv'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+#######################################################
+#                                                     #
+#                    /REPORTS                         #
 #                                                     #
 #######################################################
