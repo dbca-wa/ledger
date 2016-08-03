@@ -5,9 +5,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils.encoding import smart_text
 
-from django_hosts import reverse as hosts_reverse
-
-from wildlifelicensing.apps.emails.emails import TemplateEmailBase
+from wildlifelicensing.apps.emails.emails import TemplateEmailBase, hosts_reverse
 from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
@@ -220,7 +218,7 @@ class LicenceRenewalNotificationEmail(TemplateEmailBase):
 
 def send_licence_renewal_email_notification(licence):
     email = LicenceRenewalNotificationEmail()
-    url = 'http:' + hosts_reverse('wl_home')
+    url = hosts_reverse('wl_home')
 
     context = {
         'url': url,
@@ -239,7 +237,7 @@ class UserNameChangeNotificationEmail(TemplateEmailBase):
 def send_user_name_change_notification_email(licence):
     email = UserNameChangeNotificationEmail()
 
-    url = 'http:' + hosts_reverse('wl_applications:reissue_licence', args=(licence.pk,))
+    url = hosts_reverse('wl_applications:reissue_licence', args=(licence.pk,))
 
     context = {
         'licence': licence,
