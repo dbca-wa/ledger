@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 from rest_framework import routers
-from api import BpayTransactionViewSet, BpayCollectionViewSet, InvoiceTransactionViewSet, BpointTransactionViewSet, BpointPaymentCreateView, CashViewSet, BpayFileList
+from api import BpayTransactionViewSet, BpayCollectionViewSet, InvoiceTransactionViewSet, BpointTransactionViewSet, BpointPaymentCreateView, CashViewSet, BpayFileList, ReportCreateView
 
 from bpay.dashboard.app import application as bpay
 from invoice.dashboard.app import application as invoice_dash
@@ -18,6 +18,7 @@ router.register(r'^cash', CashViewSet)
 
 api_patterns = [
     url(r'api/bpoint/payment$', BpointPaymentCreateView.as_view(), name='bpoint-payment'),
+    url(r'api/report$', ReportCreateView.as_view(),name='ledger-report'),
     url(r'api/', include(router.urls)),
 ]
 
