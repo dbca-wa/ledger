@@ -17,7 +17,7 @@ define([
         $viewApplicationDetails.popover({container: 'body', content: $contentContainer, html: true});
     }
 
-    function createConditionTableRow(condition, rowClass, readonly) {
+    function createConditionTableRow(condition, rowClass) {
         var $row = $('<tr>').addClass(rowClass);
 
         $row.append($('<td>').html(condition.code));
@@ -34,46 +34,18 @@ define([
             $conditionsTableBody.find('input[value="' + condition.id + '"]').remove();
         });
 
-        if(!readonly) {
-            $action = $('<div>').append($remove);
-
-            var $moveUp = $('<a>').append($('<span>').addClass('glyphicon').addClass('glyphicon-chevron-up'));
-            $moveUp.click(function(e) {
-                if(!$row.prev().hasClass('default')) {
-                    $row.insertBefore($row.prev());
-                }
-            });
-
-            var $moveDown = $('<a>').append($('<span>').addClass('glyphicon').addClass('glyphicon-chevron-down'));
-            $moveDown.click(function(e) {
-                $row.insertAfter($row.next());
-            });
-
-            $ordering = $('<div>').css('text-align', 'center').append($moveUp).append($('<hr>')).append($moveDown);
-        } else {
-            $action = $('<div>');
-            $ordering = $('<div>');
-        }
-
-        $row.append($('<td>').css('vertical-align', 'middle').html($action));
-        $row.append($('<td>').css('vertical-align', 'middle').html($ordering));
-
         $conditionsTableBody.append($row);
-
-        if(!readonly) {
-            $row.append($('<input>').attr('type', 'hidden').attr('name', 'conditionID').val(condition.id));
-        }
     }
 
     function initDefaultConditions(defaultConditions) {
         $.each(defaultConditions, function(index, condition) {
-            createConditionTableRow(condition, 'default', true);
+            createConditionTableRow(condition, 'default');
         });
     }
 
     function initAdditionalConditions(assessment) {
         $.each(assessment.conditions, function(index, condition) {
-            createConditionTableRow(condition, 'additional', true);
+            createConditionTableRow(condition, 'additional');
         });
     }
 
