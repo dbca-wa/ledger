@@ -116,7 +116,13 @@ class BpayTransaction(models.Model):
 
     class Meta:
         unique_together = ('crn', 'txn_ref', 'p_date')
-        
+
+    @property
+    def approved(self):
+        if self.service_code == '0':
+            return True
+        return False
+
     @property
     def system(self):
         pass
