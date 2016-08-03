@@ -83,3 +83,36 @@
 .popover {
     max-width: 100%;
 }
+
+.intro {
+    padding-left: 10px;
+    background-color: #F0FFF0;
+    border-top: 3px solid #529b6b;
+    border-bottom: 3px solid #529b6b;
+}
+
+.intro h3 {
+    margin-top: 0px;
+    padding-top: 10px;
+    font-style: italic;
+}
+
+.intro h4 {
+    margin-top: 0px;
+    padding-bottom: 10px;
+}
+
+.applications {
+    color: #fff !important;
+    background-color: #000080 !important;
+}
+
+.licences {
+    color: #fff !important;
+    background-color: #e6b800 !important;
+}
+
+.returns {
+    color: #fff !important;
+    background-color: #b30000 !important;
+}

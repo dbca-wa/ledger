@@ -25,27 +25,24 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}Select Licence Type{% endblock %}
+{% block intro_subtitle %}Select the type of licence you wish to apply for from the list below.{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h2>Select Licence Type</h2>
-                <hr>
+                <ul>
+                    {% for licence_type_dict in licence_type_dicts %}
+                        <li>
+                            <a href="{% url 'wl_applications:check_identification' licence_type_dict.code_slug %}">
+                                {{ licence_type_dict.name }} ({{ licence_type_dict.code }})
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <ul>
-                        {% for licence_type_dict in licence_type_dicts %}
-                            <li>
-                                <a href="{% url 'wl_applications:check_identification' licence_type_dict.code_slug %}">
-                                    {{ licence_type_dict.name }} ({{ licence_type_dict.code }})
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
+    </div>
     </div>
 {% endblock %}

@@ -49,13 +49,14 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            <a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Dashboard</div></a>
+                            <a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Home</div></a>
                         </div>
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
                                     {% if request.user|is_customer %}
-                                        <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
+                                        <li><a href="{% url 'wl_main:contact_us' %}">Contact Us</a></li>
+                                        <li><a href="{% url 'wl_main:further_information' %}">Further Information</a></li>
                                     {% elif request.user|is_officer %}
                                         <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
                                         <li><a href="{% url 'wl_dashboard:tables_applications_officer' %}">Applications</a></li>
@@ -125,6 +126,15 @@
                             </div>
                         {% endfor %}
                     </div>
+                </div>
+            </div>
+        {% endblock %}
+        {% block intro %}
+            <div class="container">
+                <div class="bottom-buffer intro">
+                    <h3>{% block intro_title %}{% endblock %}</h3>
+                    <h4>{% block intro_subtitle %}{% endblock %}</h4>
+                    <p>{% block intro_text%}{% endblock %}<p>
                 </div>
             </div>
         {% endblock %}

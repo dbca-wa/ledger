@@ -29,18 +29,18 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}Select Profile{% endblock %}
+{% block intro_subtitle %}Select the type of licence you wish to apply for from the list below.{% endblock %}
+{% block intro_text %}
+    The Wildlife Licensing system utilises the concept of profiles to allow users to apply for a licence under different circumstances, such holding a licence
+    for personal, commercial or research purposes. Please select an existing profile or alternatively create a new profile for this licence application.
+{% endblock %}
+
 {% block content %}
     <div class="container bottom-buffer">
         {% if profile_selection_form %}
             <div class="row">
                 <div class="col-md-12">
-                    {% with heading='Select Profile' %}
-                        {% include 'wl/entry/header.html' %}
-                    {% endwith %}
-                    <p>
-                        The Wildlife Licensing system utilises the concept of profiles to allow users to apply for a licence under different circumstances, such holding a licence
-                        for personal, commercial or research purposes. Please select an existing profile or alternatively create a new profile for this licence application.
-                    </p>
                     <form method="post">
                         {% csrf_token %}
                         {% bootstrap_form profile_selection_form %}

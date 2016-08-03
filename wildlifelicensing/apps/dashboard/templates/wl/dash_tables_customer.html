@@ -1,4 +1,27 @@
 {% extends 'wl/dash_tables.html' %}
 
+<p>
+
 {% block applications_filters %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="bottom-buffer">
+        <h3>Welcome to the Wildlife Licensing Online Portal.</h3>
+        <p>
+            On this sit you will be able to apply online for a wildlife licence, as well as view/download any current licences and
+            submit returns.
+        </p>
+        <p>
+            <a href="{% url 'wl_applications:new_application' %}">Apply for a new wildlife licence online</a>
+        </p>
+        <p>
+            The three tables below show the status of any applications you've submitted, any licences you hold and any returns due for
+            lodgement.
+        <p>
+        </div>
+    </div>
+    
+    {{ block.super }}
 {% endblock %}
