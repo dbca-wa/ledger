@@ -8,16 +8,21 @@ from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.order.models import Order
 from ledger.payments.bpay.crn import getCRN
 from ledger.payments.bpay.models import BpayTransaction
-from ledger.payments.bpoint.models import BpointTransaction
+from ledger.payments.bpoint.models import BpointTransaction, TempBankCard
 
 class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     order_number = models.CharField(max_length=50,unique=True)
-    reference = models.CharField(max_length=50, unique=True)    
+    reference = models.CharField(max_length=50, unique=True)
+    system = models.CharField(max_length=4,blank=True,null=True)
+    token = models.CharField(max_length=25,null=True,blank=True)
+
     def __unicode__(self):
         return 'Order #{0} Invoice #{1}'.format(self.reference,self.id)
 
+    # Properties
+    # =============================================
     @property
     def biller_code(self):
         ''' Return the biller code for bpay.
@@ -52,6 +57,33 @@ class Invoice(models.Model):
         '''
         return BpointTransaction.objects.filter(crn1=self.reference)
 
+    @property
+    def payment_amount(self):
+        ''' Total amount paid from bpay,bpoint and cash.
+        '''
+        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+
+    @property
+    def balance(self):
+        return self.amount - self.payment_amount
+
+    @property
+    def payment_status(self):
+        ''' Payment status of the invoice.
+        '''
+        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+
+        if amount_paid == decimal.Decimal('0'):
+            return 'unpaid'
+        elif amount_paid < self.amount:
+            return 'partially_paid'
+        elif amount_paid == self.amount:
+            return 'paid'
+        else:
+            return 'over_paid'
+
+    # Helper Functions
+    # =============================================
     def __calculate_cash_payments(self):
         ''' Calcluate the amount of cash payments made
             less the reversals for this invoice.
@@ -83,27 +115,29 @@ class Invoice(models.Model):
 
         return payments - reversals    
 
-    @property
-    def payment_amount(self):
-        ''' Total amount paid from bpay,bpoint and cash.
+    # Functions
+    # =============================================
+    def make_payment(self):
+        ''' Pay this invoice with the token attached to it.
+        :return: BpointTransaction
         '''
-        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
-
-    @property
-    def balance(self):
-        return self.amount - self.payment_amount
-
-    @property
-    def payment_status(self):
-        ''' Payment status of the invoice.
-        '''
-        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
-
-        if amount_paid == decimal.Decimal('0'):
-            return 'unpaid'
-        elif amount_paid < self.amount:
-            return 'partially_paid'
-        elif amount_paid == self.amount:
-            return 'paid'
-        else:
-            return 'over_paid'
+        from ledger.payments.facade import bpoint_facade
+        try:
+            if self.token:
+                card_details = self.token.split('|')
+                card = TempBankCard(
+                    card_details[0],
+                    card_details[1]
+                )
+                return bpoint_facade.pay_with_temptoken(
+                        'payment',
+                        'telephoneorder',
+                        'single',
+                        card,
+                        self.order_number,
+                        self.reference,
+                        self.amount,
+                        None
+                    )
+        except:
+            raise

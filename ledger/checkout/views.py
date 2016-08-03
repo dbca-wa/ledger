@@ -1,4 +1,5 @@
 import logging
+import traceback
 from decimal import Decimal as D
 from django.utils import six
 from django.contrib import messages
@@ -45,7 +46,7 @@ class IndexView(CoreIndexView):
         # validate template if its present
         self.__validate_template(details.get('template'))
         # validate system id
-        self.__validate_system(details.get('system_id'))
+        self.__validate_system(self.request.basket.system)
         # validate return url
         self.__validate_url(details.get('return_url'),'return')
         # validate bpay if present
@@ -54,7 +55,29 @@ class IndexView(CoreIndexView):
         self.__validate_basket_owner(details.get('basket_owner'))
         # validate token details
         self.__validate_token_details(details.get('checkoutWithToken'))
+        # validate if to associate invoice with token
+        self.__validate_associate_token_details(details.get('associateInvoiceWithToken'))
+        # validate force redirection
+        self.__validate_force_redirect(details.get('forceRedirect'))
         return True
+
+    def __validate_associate_token_details(self, details):
+        ''' Check the associate with token details to set the checkout session data
+        '''
+        # Check associate with token parameter
+        if not details:
+            self.checkout_session.associate_invoice(False)
+        elif details == 'true' or details == 'True':
+            self.checkout_session.associate_invoice(True)
+
+    def __validate_force_redirect(self, details):
+        ''' Check the force redirect to set the checkout session data
+        '''
+        # Check associate with token parameter
+        if not details:
+            self.checkout_session.redirect_forcefully(False)
+        elif details == 'true' or details == 'True':
+            self.checkout_session.redirect_forcefully(True)
 
     def __validate_token_details(self, details):
         ''' Check the token details to set the checkout session data
@@ -84,7 +107,7 @@ class IndexView(CoreIndexView):
             '0369'
         ]
         if not system:
-            raise ValueError('System id required. eg ?system_id=<id>')
+            raise ValueError('This basket is not associated with any system.')
         elif not len(system) == 4:
             raise ValueError('The system id should be 4 characters long.')
         elif system not in valid_systems:
@@ -153,7 +176,8 @@ class IndexView(CoreIndexView):
                 'template': request.GET.get('template',None),
                 'fallback_url': request.GET.get('fallback_url',None),
                 'return_url': request.GET.get('return_url',None),
-                'system_id': request.GET.get('system_id',None),
+                'associateInvoiceWithToken': request.GET.get('associateInvoiceWithToken',False),
+                'forceRedirect': request.GET.get('forceRedirect',False),
                 'checkoutWithToken': request.GET.get('checkoutWithToken',False),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
@@ -288,13 +312,15 @@ class PaymentDetailsView(CorePaymentDetailsView):
             return invoice_facade.create_invoice_crn(
                 order_number,
                 total.incl_tax,
-                crn_string) 
+                crn_string,
+                system)
         elif method == 'icrn':
             return invoice_facade.create_invoice_icrn(
                 order_number,
                 total.incl_tax,
                 crn_string,
-                icrn_format)
+                icrn_format,
+                system)
         else:
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
 
@@ -320,10 +346,16 @@ class PaymentDetailsView(CorePaymentDetailsView):
                     # Check if the system only uses checkout with token for cards
                     if self.checkout_session.checkoutWithToken():
                         resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
+                        if self.checkout_session.invoice_association():
+                            invoice.token = resp
+                            invoice.save()
                     else:
                         # Store card if user wants to store card
                         if self.checkout_session.store_card():
-                            bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
+                            resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'],True)
+                            if self.checkout_session.invoice_association():
+                                invoice.token = resp.token
+                                invoice.save()
                         # Get the payment action for bpoint
                         card_method = self.checkout_session.card_method()
                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
@@ -437,6 +469,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         except Exception as e:
             # Unhandled exception - hopefully, you will only ever see this in
             # development...
+            traceback.print_exc()
             logger.error(
                 "Order #%s: unhandled exception while taking payment (%s)",
                 order_number, e, exc_info=True)

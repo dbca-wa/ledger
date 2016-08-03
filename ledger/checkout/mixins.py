@@ -46,6 +46,8 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         """
         # Get the return url
         return_url = self.checkout_session.return_url()
+        force_redirect = self.checkout_session.force_redirect()
+        print 'r {}'.format(force_redirect)
 
         # Send confirmation message (normally an email)
         self.send_confirmation_message(order, self.communication_type_code)
@@ -57,6 +59,10 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         self.request.session['checkout_order_id'] = order.id
         self.request.session['checkout_return_url'] = return_url
 
-        response = HttpResponseRedirect(self.get_success_url())
+        if not force_redirect:
+            response = HttpResponseRedirect(self.get_success_url())
+        else:
+            response = HttpResponseRedirect('{}?invoice={}'.format(return_url, Invoice.objects.get(order_number=order.number).reference))
+
         self.send_signal(self.request, response, order)
         return response
