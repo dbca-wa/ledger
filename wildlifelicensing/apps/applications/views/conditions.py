@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import JsonResponse
@@ -66,7 +67,7 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
-        kwargs['assessment'] = assessment
+        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
         kwargs['action_url'] = reverse('wl_applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
@@ -137,6 +138,7 @@ class SubmitConditionsAssessorView(CanPerformAssessmentMixin, View):
         application = get_object_or_404(Application, pk=self.args[0])
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
+        assessment.assessmentcondition_set.all().delete()
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
             AssessmentCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
                                                assessment=assessment, order=order)
@@ -158,5 +160,7 @@ class SubmitConditionsAssessorView(CanPerformAssessmentMixin, View):
         application.save()
 
         send_assessment_done_email(assessment, request)
+
+        messages.success(request, 'The application assessment has been forwarded back to the Wildlife Licensing office for review.')
 
         return redirect(self.success_url)

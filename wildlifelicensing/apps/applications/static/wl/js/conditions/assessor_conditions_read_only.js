@@ -72,68 +72,8 @@ define([
     }
 
     function initAdditionalConditions(assessment) {
-        var conditions = {},
-            $searchConditions = $('#searchConditions'),
-            $addCondition = $('#addCondition'),
-            $conditionsForm = $('#conditionsForm');
-
-        $searchConditions.select2({
-            dropdownCssClass : 'conditions-dropdown',
-            minimumInputLength: 3,
-            ajax: {
-                url: '/applications/search-conditions',
-                dataType: 'json',
-                quietMillis: 250,
-                data: function (term, page) {
-                    return {
-                        q: term,
-                    };
-                },
-                results: function (data, page) {
-                    conditions = data;
-
-                    conditions = _.chain(data).keyBy('id').value();
-
-                    return { results: data };
-                },
-                cache: true
-            },
-            formatResult: function(object) {
-                var $container = $('<table>'),
-                    $row = $('<tr>');
-
-                $row.append($('<td>').html(object.code));
-                $row.append($('<td>').html(object.text));
-
-                $container.append($row);
-
-                return $container;
-            },
-            formatResultCssClass: function(object) {
-                return 'conditions-option';
-            }
-        });
-
-        $searchConditions.on('change', function(e) {
-            $addCondition.prop('disabled', false);
-        });
-
-        $addCondition.click(function(e) {
-            var condition = conditions[$searchConditions.val()];
-                existingConditions = $conditionsForm.find('input[type=hidden]');
-
-            // only add condition if it hasn't already been entered
-            if(!_.includes(_.map(existingConditions, function(condition) {return $(condition).val()}), String(condition.id), 1)) {
-                    createConditionTableRow(condition, 'additional');
-            } else {
-                window.alert('The specified condition has already been entered.')
-            }
-
-            $searchConditions.select2('val', '');
-        });
-
         $.each(assessment.conditions, function(index, condition) {
-            createConditionTableRow(condition, 'additional', false);
+            createConditionTableRow(condition, 'additional', true);
         });
     }
 
