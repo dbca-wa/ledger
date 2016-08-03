@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import View, TemplateView
 from django.core.urlresolvers import reverse, reverse_lazy
 
@@ -52,8 +52,13 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
 
-    def get_context_data(self, **kwargs):
-        application = get_object_or_404(Application, pk=self.args[0])
+    def get(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=args[0])
+        assessment = get_object_or_404(Assessment, pk=args[1])
+
+        if assessment.status == 'assessed':
+            messages.warning(request, 'This assessment has already been concluded and may only be viewed in read-only mode.')
+            return redirect('wl_applications:view_assessment', *args)
 
         if application.hard_copy is not None:
             application.licence_type.application_schema, application.data = \
@@ -62,15 +67,15 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
-        kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['form_structure'] = application.licence_type.application_schema
+        context = {}
 
-        assessment = get_object_or_404(Assessment, pk=self.args[1])
+        context['application'] = serialize(application, posthook=format_application)
+        context['form_structure'] = application.licence_type.application_schema
 
-        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
-        kwargs['action_url'] = reverse('wl_applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
+        context['assessment'] = serialize(assessment, post_hook=format_assessment)
+        context['action_url'] = reverse('wl_applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
 
-        return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
+        return render(request, self.template_name, context)
 
 
 class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
