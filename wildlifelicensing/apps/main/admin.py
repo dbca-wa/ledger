@@ -3,7 +3,8 @@ from django import forms
 
 from reversion.admin import VersionAdmin
 
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, DefaultCondition
+from wildlifelicensing.apps.main.models import WildlifeLicenceCategory, WildlifeLicenceType, Condition, \
+    DefaultCondition
 from wildlifelicensing.apps.main.forms import BetterJSONField
 
 
@@ -12,25 +13,40 @@ class DefaultConditionInline(admin.TabularInline):
     ordering = ('order',)
 
 
+class PreviousLicenceTypeChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return '{} (V{})'.format(obj.short_name or obj.name, obj.version)
+
+
+@admin.register(WildlifeLicenceCategory)
+class WildlifeLicenceCategoryAdmin(VersionAdmin):
+    pass
+
+
 class WildlifeLicenceTypeAdminForm(forms.ModelForm):
     application_schema = BetterJSONField()
+    replaced_by = PreviousLicenceTypeChoiceField(queryset=WildlifeLicenceType.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        super(WildlifeLicenceTypeAdminForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            self.fields['replaced_by'].queryset = WildlifeLicenceType.objects.exclude(id=self.instance.id)
+            self.fields['replaced_by'].required = False
 
     class Meta:
         model = WildlifeLicenceType
         exclude = []
 
 
-# Register your models here.
 @admin.register(WildlifeLicenceType)
 class WildlifeLicenceTypeAdmin(VersionAdmin):
-    list_display = ('name', 'code')
-    prepopulated_fields = {'code_slug': ('code',)}
+    list_display = ('name', 'display_name', 'version', 'code')
+    prepopulated_fields = {'code_slug': ('code', 'version')}
     filter_horizontal = ('default_conditions',)
     inlines = (DefaultConditionInline,)
     form = WildlifeLicenceTypeAdminForm
 
 
-# Register your models here.
 @admin.register(Condition)
 class ConditionAdmin(VersionAdmin):
     list_display = ['code', 'text']

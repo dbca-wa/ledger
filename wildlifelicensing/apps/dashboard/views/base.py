@@ -7,7 +7,7 @@ import logging
 from dateutil.parser import parse as date_parse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles.templatetags.staticfiles import static
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.db.models.query import EmptyQuerySet
 from django.shortcuts import redirect
@@ -62,6 +62,11 @@ def render_licence_document(licence):
         return ''
 
 
+def render_download_return_template(ret):
+    url = reverse('wl_returns:download_return_template', args=[ret.return_type.pk])
+    return '<a href="{}">Download (XLSX)</a>'.format(url)
+
+
 class DashBoardRoutingView(TemplateView):
     template_name = 'wl/index.html'
 
@@ -80,7 +85,6 @@ class DashBoardRoutingView(TemplateView):
 
 class DashboardTreeViewBase(TemplateView):
     template_name = 'wl/dash_tree.html'
-    url = reverse_lazy('wl_dashboard:tables_applications_officer')
 
     @staticmethod
     def _create_node(title, href=None, count=None):
@@ -138,7 +142,7 @@ class TableBaseView(TemplateView):
         Build data skeleton for all the tables definitions, filters....
         :return:
         """
-        licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
+        licence_types = [('all', 'All')] + [(lt.pk, lt.display_name) for lt in LicenceType.objects.all()]
         data = {
             'applications': {
                 'columnDefinitions': [],

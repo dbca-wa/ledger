@@ -19,13 +19,23 @@ class Condition(RevisionedMixin):
         return self.code
 
 
+@python_2_unicode_compatible
+class WildlifeLicenceCategory(models.Model):
+    name = models.CharField(max_length=100, blank=False, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class WildlifeLicenceType(LicenceType):
-    code_slug = models.SlugField(max_length=64)
+    code_slug = models.SlugField(max_length=64, unique=True)
     identification_required = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
     application_schema = JSONField(blank=True, null=True)
+    category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)
 
 
+@python_2_unicode_compatible
 class WildlifeLicence(Licence):
     MONTH_FREQUENCY_CHOICES = [(-1, 'One off'), (1, 'Monthly'), (3, 'Quarterly'), (6, 'Twice-Yearly'), (12, 'Yearly')]
     DEFAULT_FREQUENCY = MONTH_FREQUENCY_CHOICES[0][0]
@@ -39,6 +49,13 @@ class WildlifeLicence(Licence):
     cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
+
+    def __str__(self):
+        return self.reference
+
+    @property
+    def reference(self):
+        return '{}-{}'.format(self.licence_number, self.sequence_number)
 
 
 class DefaultCondition(models.Model):

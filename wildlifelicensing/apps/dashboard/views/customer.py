@@ -134,9 +134,9 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
+    columns = ['lodgement_number', 'licence_type.display_name', 'applicant_profile', 'customer_status', 'lodgement_date',
                'action']
-    order_columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
+    order_columns = ['lodgement_number', 'licence_type.display_name', 'applicant_profile', 'customer_status', 'lodgement_date',
                      '']
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
@@ -192,8 +192,8 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
 
 class DataTableLicencesCustomerView(base.DataTableBaseView):
     model = WildlifeLicence
-    columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
-    order_columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
+    columns = ['licence_number', 'licence_type.display_name', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
+    order_columns = ['licence_number', 'licence_type.display_name', 'issue_date', 'start_date', 'end_date', '', '']
 
     columns_helpers = {
         'licence_number': {
@@ -252,9 +252,10 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
 class DataTableReturnsCustomerView(base.DataTableBaseView):
     model = Return
-    columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', 'licence',
-               'action']
-    order_columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', '', '']
+    columns = ['lodgement_number', 'licence.licence_type.display_name', 'lodgement_date', 'due_date', 'status',
+               'licence', 'action']
+    order_columns = ['lodgement_number', 'licence.licence_type.display_name', 'lodgement_date', 'due_date', 'status',
+                     '', '']
     columns_helpers = {
         'lodgement_number': {
             'render': lambda self, instance: instance.lodgement_number

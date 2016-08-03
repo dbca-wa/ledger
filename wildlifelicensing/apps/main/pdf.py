@@ -3,7 +3,8 @@ import os
 from io import BytesIO
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, KeepTogether
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
+    KeepTogether, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 
@@ -14,7 +15,8 @@ from wildlifelicensing.apps.main.helpers import render_user_name
 
 from ledger.accounts.models import Document
 
-DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img', 'bw_dpaw_header_logo.png')
+DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
+                                'bw_dpaw_header_logo.png')
 
 HEADER_MARGIN = 10
 HEADER_SMALL_BUFFER = 3
@@ -38,7 +40,6 @@ SECTION_BUFFER_HEIGHT = 10
 
 DATE_FORMAT = '%d/%m/%Y'
 
-
 styles = getSampleStyleSheet()
 styles.add(ParagraphStyle(name='InfoTitleLargeCenter', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE,
                           spaceAfter=PARAGRAPH_BOTTOM_MARGIN, alignment=enums.TA_CENTER))
@@ -57,7 +58,7 @@ styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
 
 
-def _create_header(canvas, doc):
+def _create_header(canvas, doc, draw_page_number=True):
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
@@ -82,21 +83,24 @@ def _create_header(canvas, doc):
 
     current_x += 80
 
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER), '17 DICK PERRY AVE, KENSINGTON, WESTERN AUSTRALIA')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),
+                      '17 DICK PERRY AVE, KENSINGTON, WESTERN AUSTRALIA')
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, '08 9219 9000')
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, '08 9219 8242')
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, doc.site_url)
 
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Locked Bag 30')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'Bentley Delivery Centre WA 6983')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6,
+                      'Bentley Delivery Centre WA 6983')
 
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y -= 36
     current_x += 200
 
-    canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), 'PAGE')
+    if draw_page_number:
+        canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), 'PAGE')
 
     if hasattr(doc, 'licence') and doc.licence.licence_number is not None and doc.licence.licence_sequence:
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'NO.')
@@ -105,7 +109,8 @@ def _create_header(canvas, doc):
 
     current_x += 50
 
-    canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), str(canvas.getPageNumber()))
+    if draw_page_number:
+        canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), str(canvas.getPageNumber()))
 
     if hasattr(doc, 'licence') and doc.licence.licence_number is not None and doc.licence.licence_sequence:
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2,
@@ -166,8 +171,9 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     if application.conditions.exists():
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Conditions', styles['InfoTitleLargeCenter']))
-        conditionList = ListFlowable([Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
-                                     bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
+        conditionList = ListFlowable(
+            [Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
+            bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
         elements.append(conditionList)
 
     # purpose
@@ -237,7 +243,8 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
                           Paragraph(address.country.name, styles['Left'])]
     delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
-                            [Paragraph(render_user_name(application.applicant_profile.user), styles['Left'])] + address_paragraphs]],
+                              [Paragraph(render_user_name(application.applicant_profile.user),
+                                         styles['Left'])] + address_paragraphs]],
                             colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=licence_table_style))
 
@@ -268,20 +275,21 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
     elements.append(Paragraph('Dear Sir/Madam', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('Congratulations, your Wildlife Licensing application has been approved and the '
-                    'corresponding licence has been issued.', styles['Left']))
+                              'corresponding licence has been issued.', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph("You'll find your licence document in this envelope. Please read it carefully.", styles['Left']))
+    elements.append(
+        Paragraph("You'll find your licence document in this envelope. Please read it carefully.", styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     # Removed link to online system for beta
-#     elements.append(Paragraph('You also can access it from your Wildlife Licensing dashboard by copying and pasting '
-#                     'the following link in your browser:', styles['Left']))
-#     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-#     elements.append(Paragraph(site_url, styles['Left']))
-#     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-#     elements.append(Paragraph("Note: If you haven't been on the Wildlife Licensing site recently you might have to "
-#                               "login first before using the provided link.", styles['Left']))
-#     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    #     elements.append(Paragraph('You also can access it from your Wildlife Licensing dashboard by copying and pasting '
+    #                     'the following link in your browser:', styles['Left']))
+    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    #     elements.append(Paragraph(site_url, styles['Left']))
+    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    #     elements.append(Paragraph("Note: If you haven't been on the Wildlife Licensing site recently you might have to "
+    #                               "login first before using the provided link.", styles['Left']))
+    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     if licence.cover_letter_message:
         for message in licence.cover_letter_message.split('\r\n'):
@@ -293,11 +301,64 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     elements.append(Paragraph('Best regards,', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('Parks and Wildlife Customer Portal', styles['Left']))
 
     doc.build(elements)
 
     return cover_letter_buffer
+
+
+def _create_licence_renewal_elements(licence):
+    return [
+        Paragraph('Dear Sir/Madam', styles['Left']), Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('This is a reminder that your licence:', styles['Left']), Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('{}-{}'.format(licence.licence_number, licence.licence_sequence), styles['BoldLeft']),
+        Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('is due to expire on {}.'.format(licence.end_date.strftime(DATE_FORMAT)), styles['Left']),
+        Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('Please note that you are required to submit an electronic return and that '
+                  'the licence cannot be renewed until this.', styles['Left']),
+        Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('If you have any queries, please contact Mr Danny Stefoni on 9219 9833 or '
+                  'email to wildlifelicensing@dpaw.wa.gov.au.', styles['Left']),
+        Spacer(1, SECTION_BUFFER_HEIGHT), Paragraph('Yours sincerely,', styles['Left']),
+        Spacer(1, SECTION_BUFFER_HEIGHT), Paragraph('Jim Sharp', styles['Left']),
+        Paragraph('DIRECTOR GENERAL', styles['Left'])
+    ]
+
+
+def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
+    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
+                             PAGE_HEIGHT - 160, id='EveryPagesFrame')
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_header)
+
+    doc = BaseDocTemplate(licence_renewal_buffer, pageTemplates=[every_page_template], pagesize=A4)
+
+    # this is the only way to get data into the onPage callback function
+    doc.site_url = site_url
+    doc.build(_create_licence_renewal_elements(licence))
+    return licence_renewal_buffer
+
+
+def _create_bulk_licence_renewal(licences, site_url, buf=None):
+    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
+                             PAGE_HEIGHT - 160, id='EveryPagesFrame')
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame,
+                                       onPage=lambda canvas, doc_: _create_header(canvas, doc_, draw_page_number=False))
+
+    if buf is None:
+        buf = BytesIO()
+    doc = BaseDocTemplate(buf, pageTemplates=[every_page_template], pagesize=A4)
+
+    # this is the only way to get data into the onPage callback function
+    doc.site_url = site_url
+    all_elements = []
+    for licence in licences:
+        all_elements += _create_licence_renewal_elements(licence)
+        all_elements.append(PageBreak())
+    doc.build(all_elements)
+    return doc
 
 
 def create_licence_pdf_document(filename, licence, application, site_url, original_issue_date):
@@ -336,3 +397,25 @@ def create_cover_letter_pdf_document(filename, licence, site_url):
     cover_letter_buffer.close()
 
     return document
+
+
+def create_licence_renewal_pdf_bytes(filename, licence, site_url):
+    licence_renewal_buffer = BytesIO()
+
+    _create_licence_renewal(licence_renewal_buffer, licence, site_url)
+
+    value = licence_renewal_buffer.getvalue()
+    licence_renewal_buffer.close()
+
+    return value
+
+
+def bulk_licence_renewal_pdf_bytes(licences, site_url):
+    doc = None
+    try:
+        doc = _create_bulk_licence_renewal(licences, site_url)
+        return doc.filename.getvalue()
+    finally:
+        if doc:
+            doc.filename.close()
+

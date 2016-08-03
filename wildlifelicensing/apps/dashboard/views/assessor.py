@@ -50,7 +50,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     """
     columns = [
         'application.lodgement_number',
-        'application.licence_type.code',
+        'application.licence_type.display_name',
         'application.applicant_profile.user',
         'application.lodgement_date',
         'application.assigned_officer',
@@ -58,7 +58,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     ]
     order_columns = [
         'application.lodgement_number',
-        'application.licence_type.code',
+        'application.licence_type.display_name',
         ['application.applicant_profile.user.last_name', 'application.applicant_profile.user.first_name',
          'application.applicant_profile.user.email'],
         'application.lodgement_date',
@@ -96,9 +96,14 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
 
     @staticmethod
     def render_action_column(obj):
-        return '<a href="{0}">Assess</a>'.format(
-            reverse('wl_applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
-        )
+        if obj.status == 'awaiting_assessment':
+            return '<a href="{0}">Assess</a>'.format(
+                reverse('wl_applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
+            )
+        else:
+            return '<a href="{0}">View (read-only)</a>'.format(
+                reverse('wl_applications:view_assessment', args=[obj.application.pk, obj.pk])
+            )
 
     @staticmethod
     def _search_lodgement_number(search):
@@ -114,5 +119,5 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
 
     def get_initial_queryset(self):
         groups = self.request.user.assessorgroup_set.all()
-        assessments = Assessment.objects.filter(assessor_group__in=groups).filter(status='awaiting_assessment')
+        assessments = Assessment.objects.filter(assessor_group__in=groups).all()
         return assessments

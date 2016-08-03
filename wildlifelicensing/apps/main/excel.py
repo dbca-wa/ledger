@@ -2,7 +2,9 @@ from collections import defaultdict, OrderedDict
 from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
+
 from django.utils.text import Truncator
+from django.http import HttpResponse
 
 
 def load_workbook_content(filename):
@@ -264,3 +266,23 @@ class TableData:
         end = start + len(self.column_headers)
 
         return self.worksheet.rows[row_index][start:end]
+
+
+class ExcelFileResponse(HttpResponse):
+    def __init__(self, content, file_name=None):
+        content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        content_disposition = 'attachment;'
+
+        if file_name is not None:
+            if not file_name.lower().endswith('.xlsx'):
+                file_name += '.xlsx'
+            content_disposition += ' filename=' + file_name
+
+        super(ExcelFileResponse, self).__init__(content, content_type=content_type)
+        self['Content-Disposition'] = content_disposition
+
+
+class WorkbookResponse(ExcelFileResponse):
+    def __init__(self, wb, file_name=None):
+        super(WorkbookResponse, self).__init__([], file_name=file_name)
+        wb.save(self)
