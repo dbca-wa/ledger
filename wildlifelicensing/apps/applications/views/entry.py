@@ -17,7 +17,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
 
-from wildlifelicensing.apps.main.models import WildlifeLicenceType
+from wildlifelicensing.apps.main.models import WildlifeLicenceType,\
+    WildlifeLicenceCategory
 from wildlifelicensing.apps.main.forms import IdentificationForm
 
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
@@ -125,7 +126,14 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        kwargs['licence_type_dicts'] = WildlifeLicenceType.objects.all().values('code_slug', 'name', 'code')
+        categories = {}
+
+        for category in WildlifeLicenceCategory.objects.all():
+            categories[category.name] = WildlifeLicenceType.objects.\
+                filter(category=category, replaced_by__isnull=True).values('code_slug',
+                                                                           'name', 'code')
+
+        kwargs['licence_categories'] = categories
 
         return super(SelectLicenceTypeView, self).get_context_data(**kwargs)
 

@@ -3,7 +3,8 @@ from django import forms
 
 from reversion.admin import VersionAdmin
 
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, Condition, DefaultCondition
+from wildlifelicensing.apps.main.models import WildlifeLicenceCategory, WildlifeLicenceType, Condition, \
+    DefaultCondition
 from wildlifelicensing.apps.main.forms import BetterJSONField
 
 
@@ -17,6 +18,11 @@ class PreviousLicenceTypeChoiceField(forms.ModelChoiceField):
         return '{} (V{})'.format(obj.short_name or obj.name, obj.version)
 
 
+@admin.register(WildlifeLicenceCategory)
+class WildlifeLicenceCategoryAdmin(VersionAdmin):
+    pass
+
+
 class WildlifeLicenceTypeAdminForm(forms.ModelForm):
     application_schema = BetterJSONField()
     replaced_by = PreviousLicenceTypeChoiceField(queryset=WildlifeLicenceType.objects.all())
@@ -25,6 +31,7 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
         super(WildlifeLicenceTypeAdminForm, self).__init__(*args, **kwargs)
         if self.instance.id:
             self.fields['replaced_by'].queryset = WildlifeLicenceType.objects.exclude(id=self.instance.id)
+            self.fields['replaced_by'].required = False
 
     class Meta:
         model = WildlifeLicenceType
