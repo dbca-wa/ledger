@@ -31,7 +31,7 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
         super(WildlifeLicenceTypeAdminForm, self).__init__(*args, **kwargs)
         if self.instance.id:
             self.fields['replaced_by'].queryset = WildlifeLicenceType.objects.exclude(id=self.instance.id)
-            self.fields['replaced_by'].required = False
+        self.fields['replaced_by'].required = False
 
     class Meta:
         model = WildlifeLicenceType
