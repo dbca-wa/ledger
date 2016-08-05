@@ -217,7 +217,6 @@ class IndexView(CoreIndexView):
             except EmailUser.DoesNotExist as e:
                 return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
             except Exception as e:
-                print str(e)
                 return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
 
             return self.get_success_response()

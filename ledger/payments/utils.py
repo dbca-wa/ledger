@@ -72,7 +72,6 @@ def createBasket(product_list,owner,system,force_flush=True):
             old_basket = owner.baskets.get(status='Open')
         # Use the previously open basket if its present or create a new one    
         if old_basket:
-            print old_basket.system
             if system == old_basket.system or not old_basket.system:
                 basket = old_basket
                 if force_flush:
