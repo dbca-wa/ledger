@@ -3,6 +3,8 @@ import json
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import resolve
+from django.utils.six.moves.urllib.parse import urlparse
 #
 from ledger.basket.models import Basket
 from ledger.catalogue.models import Product
@@ -11,6 +13,26 @@ from oscar.core.loading import get_class
 OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
+
+def isLedgerURL(url):
+    ''' Check if the url is a ledger url
+    :return: Boolean
+    '''
+    match = None
+    try:
+        match = resolve(urlparse(url)[2])
+    except:
+        pass
+    if match:
+        return True
+    return False
+
+def checkURL(url):
+    try:
+        resp = requests.get(url)
+        resp.raise_for_status()
+    except:
+        raise
 
 def validSystem(system_id):
     ''' Check if the system is in the itsystems register.
