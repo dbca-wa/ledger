@@ -59,7 +59,17 @@ class IndexView(CoreIndexView):
         self.__validate_associate_token_details(details.get('associateInvoiceWithToken'))
         # validate force redirection
         self.__validate_force_redirect(details.get('forceRedirect'))
+        # validate send email
+        self.__validate_send_email(details.get('sendEmail'))
         return True
+
+    def __validate_send_email(self, details):
+        ''' Check send email details to set the checkout session data
+        '''
+        if not details:
+            self.checkout_session.return_email(False)
+        elif details == 'true' or details == 'True':
+            self.checkout_session.return_email(True)
 
     def __validate_associate_token_details(self, details):
         ''' Check the associate with token details to set the checkout session data
@@ -178,6 +188,7 @@ class IndexView(CoreIndexView):
                 'return_url': request.GET.get('return_url',None),
                 'associateInvoiceWithToken': request.GET.get('associateInvoiceWithToken',False),
                 'forceRedirect': request.GET.get('forceRedirect',False),
+                'sendEmail': request.GET.get('sendEmail',False),
                 'checkoutWithToken': request.GET.get('checkoutWithToken',False),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
