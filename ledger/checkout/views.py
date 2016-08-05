@@ -17,6 +17,7 @@ from oscar.apps.shipping.methods import NoShippingRequired
 from ledger.payments.models import Invoice
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
+from ledger.payments.utils import validSystem
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -113,14 +114,11 @@ class IndexView(CoreIndexView):
     def __validate_system(self, system):
         ''' Validate the system id
         '''
-        valid_systems = [
-            '0369'
-        ]
         if not system:
             raise ValueError('This basket is not associated with any system.')
         elif not len(system) == 4:
             raise ValueError('The system id should be 4 characters long.')
-        elif system not in valid_systems:
+        elif not validSystem(system):
             raise ValueError('The System id is not valid.')
         self.checkout_session.use_system(system)
 
