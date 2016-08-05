@@ -9,7 +9,7 @@ def generate_csv(system,start,end):
     invoices = Invoice.objects.filter(system=system)
     if invoices:
         strIO = StringIO.StringIO()
-        fieldnames = ['Created','Method','Transaction Type','Amount','Status','Source','Product Names','Product Codes']
+        fieldnames = ['Created','Payment Method','Transaction Type','Amount','Approved','Source','Product Names','Product Codes']
         writer = csv.DictWriter(strIO,fieldnames=fieldnames)
         writer.writeheader()
         for i in invoices:
@@ -34,10 +34,10 @@ def generate_csv(system,start,end):
             for c in cash:
                 cash_info = {
                     'Created':c.created.strftime('%Y-%m-%d'),
-                    'Method': 'Cash',
+                    'Payment Method': 'Cash',
                     'Transaction Type':c.type.lower(),
                     'Amount':c.amount,
-                    'Status':'True',
+                    'Approved':'True',
                     'Source':c.source,
                     'Product Names': item_names,
                     'Product Codes': oracle_codes
@@ -47,10 +47,10 @@ def generate_csv(system,start,end):
             for b in bpay:
                 bpay_info = {
                     'Created':b.created.strftime('%Y-%m-%d'),
-                    'Method': 'BPAY',
+                    'Payment Method': 'BPAY',
                     'Transaction Type':b.get_p_instruction_code_display(),
                     'Amount':b.amount,
-                    'Status':b.approved,
+                    'Approved':b.approved,
                     'Source':'N/A',
                     'Product Names': item_names,
                     'Product Codes': oracle_codes
@@ -58,13 +58,12 @@ def generate_csv(system,start,end):
                 writer.writerow(bpay_info)
             # Write out all bpoint transactions
             for bpt in bpoint:
-                #print item_names
                 bpoint_info = {
                     'Created':bpt.created.strftime('%Y-%m-%d'),
-                    'Method': 'BPOINT',
+                    'Payment Method': 'BPOINT',
                     'Transaction Type':bpt.action.lower(),
                     'Amount':bpt.amount,
-                    'Status':bpt.approved,
+                    'Approved':bpt.approved,
                     'Source':'N/A',
                     'Product Names': item_names,
                     'Product Codes': oracle_codes
@@ -72,9 +71,4 @@ def generate_csv(system,start,end):
                 writer.writerow(bpoint_info)
         strIO.flush()
         strIO.seek(0)
-            
     return strIO
-            
-        
-        
-    
