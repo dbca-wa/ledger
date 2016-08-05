@@ -12,7 +12,7 @@ OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
 
-def checkSystem(system_id):
+def validSystem(system_id):
     ''' Check if the system is in the itsystems register.
     :return: Boolean
     '''
@@ -37,7 +37,7 @@ def createBasket(product_list,owner,system,force_flush=True):
         @param - owner (user id or user object)
     '''
     try:
-        if not checkSystem(system):
+        if not validSystem(system):
             raise ValidationError('A system with the given id does not exist.')
         old_basket = basket = None
         valid_products = []
