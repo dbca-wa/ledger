@@ -114,3 +114,11 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def free_basket(self):
         return self._get('ledger','free_basket')
+
+    # Email
+    # ===========================
+    def return_email(self, status):
+        self._set('ledger','send_email',status)
+
+    def send_email(self):
+        return self._get('ledger','send_email')
