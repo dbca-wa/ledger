@@ -1,4 +1,5 @@
 import logging
+from requests.exceptions import HTTPError, ConnectionError
 import traceback
 from decimal import Decimal as D
 from django.utils import six
@@ -17,7 +18,7 @@ from oscar.apps.shipping.methods import NoShippingRequired
 from ledger.payments.models import Invoice
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
-from ledger.payments.utils import validSystem
+from ledger.payments.utils import validSystem, checkURL, isLedgerURL
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -129,8 +130,8 @@ class IndexView(CoreIndexView):
             msg = 'A fallback url is required. eg ?fallback_url=<url>'
             messages.error(self.request,msg)
             raise self.FallbackMissing()
-
-            #return HttpResponseRedirect(reverse('payments:payments-error'))
+        # Check if the url works
+        checkURL(url)
         self.checkout_session.return_to(url)
 
     def __validate_card_method(self, method):
@@ -169,6 +170,13 @@ class IndexView(CoreIndexView):
             else:
                 pass
 
+    def proper_errorpage(self,url,r,e):
+        messages.error(r,str(e))
+        if isLedgerURL(url):
+            return HttpResponseRedirect(url)
+        else:
+            return HttpResponseRedirect(reverse('payments:payments-error'))
+
     def get(self, request, *args, **kwargs):
         # We redirect immediately to shipping address stage if the user is
         # signed in.
@@ -198,14 +206,18 @@ class IndexView(CoreIndexView):
             # and redirect to appropriate page if not
             try:
                 self.validate_ledger(ledger_details)
-            except ValueError as e:
-                messages.error(request,str(e))
-                return HttpResponseRedirect(ledger_details.get('fallback_url'))
-            except EmailUser.DoesNotExist as e:
-                messages.error(request,str(e))
-                return HttpResponseRedirect(ledger_details.get('fallback_url'))
+            except HTTPError as e:
+                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
+            except ConnectionError as e:
+                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
             except self.FallbackMissing as e:
                 return HttpResponseRedirect(reverse('payments:payments-error'))
+            except ValueError as e:
+                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
+            except EmailUser.DoesNotExist as e:
+                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
+            except Exception as e:
+                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
 
             return self.get_success_response()
         return super(IndexView, self).get(request, *args, **kwargs)

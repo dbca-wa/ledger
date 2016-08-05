@@ -35,14 +35,6 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def system(self):
         return self._get('ledger','system_id')
     
-    # Aplication Methods
-    # ===========================
-    def use_application(self, _id):
-        self._set('ledger','app_id',_id)
- 
-    def application(self):
-        return self._get('ledger','app_id')
-
     # BPAY Methods
     # ===========================
     def bpay_using(self, method):
