@@ -55,9 +55,10 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     The model of this table is not Application but Assessment, it cannot extends the base.DataTableApplicationBaseView
      see: get_initial_queryset method
     """
+    model = Assessment
     columns = [
         'application.lodgement_number',
-        'application.licence_type.display_name',
+        'licence_type',
         'application.applicant_profile.user',
         'status',
         'application.lodgement_date',
@@ -66,7 +67,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     ]
     order_columns = [
         'application.lodgement_number',
-        'application.licence_type.display_name',
+        ['application.licence_type.short_name', 'application.licence_type.name'],
         ['application.applicant_profile.user.last_name', 'application.applicant_profile.user.first_name',
          'application.applicant_profile.user.email'],
         'status',
@@ -76,6 +77,13 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     ]
 
     columns_helpers = dict(**{
+        'licence_type': {
+            'render': lambda self, instance: instance.application.licence_type.display_name,
+            'search': lambda self, search: base.build_field_query(
+                ['application__licence_type__short_name', 'application__licence_type__name',
+                 'application__licence_type__version'],
+                search)
+        },
         'application.lodgement_number': {
             'search': lambda self, search: DataTableApplicationAssessorView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance.application)
@@ -122,7 +130,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
             lodgement_number, lodgement_sequence = '-'.join(components[:2]), '-'.join(components[2:])
 
             return Q(application__lodgement_number__icontains=lodgement_number) & \
-                Q(application__lodgement_sequence__icontains=lodgement_sequence)
+                   Q(application__lodgement_sequence__icontains=lodgement_sequence)
         else:
             return Q(application__lodgement_number__icontains=search)
 
@@ -136,5 +144,5 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
 
     def get_initial_queryset(self):
         groups = self.request.user.assessorgroup_set.all()
-        assessments = Assessment.objects.filter(assessor_group__in=groups).all()
+        assessments = self.model.objects.filter(assessor_group__in=groups).all()
         return assessments
