@@ -7,7 +7,7 @@ from django.utils.http import urlencode
 
 from oscar.apps.partner.strategy import Selector
 
-from ledger.payments.views import createBasket
+from ledger.payments.utils import createBasket
 from ledger.catalogue.models import Product
 
 SYSTEM_ID = '0369'
@@ -49,3 +49,11 @@ class CheckoutView(RedirectView):
         url = '{}?{}'.format(reverse('checkout:index'), urlencode(url_query_parameters))
 
         return redirect(url)
+
+
+def is_application_paid(application):
+    raise NotImplementedError
+
+
+class InitiatePayment(RedirectView):
+    raise NotImplementedError
