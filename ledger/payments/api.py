@@ -1,16 +1,24 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from wsgiref.util import FileWrapper
 from rest_framework import viewsets, serializers, status, generics
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from rest_framework.authentication import SessionAuthentication
 from bpay.models import BpayTransaction, BpayFile, BpayCollection
 from invoice.models import Invoice
 from bpoint.models import BpointTransaction, BpointToken
 from cash.models import CashTransaction
+from ledger.accounts.models import EmailUser
+from ledger.catalogue.models import Product
+from utils import checkURL, createBasket, validSystem
 from facade import bpoint_facade
 from oscar.apps.order.models import Order
 from oscar.apps.payment import forms
 from reports import generate_csv
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return
 #######################################################
 #                                                     #
 #                        BPAY                         #
@@ -482,6 +490,127 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
 #                                                     #
 #######################################################
 
+#######################################################
+#                                                     #
+#                    CHECKOUT                         #
+#                                                     #
+#######################################################
+class checkoutProductSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1,default=1)
+
+    def validate_id(self, value):
+        try:
+            Product.objects.get(id=value)
+        except Product.DoesNotExist as e:
+            raise serializers.ValidationError('{} (id={})'.format(str(e),value))
+        return value
+
+class checkoutSerializer(serializers.Serializer):
+    card_method = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES, default='payment')
+    system = serializers.CharField(max_length=4, min_length=4)
+    basket_owner = serializers.IntegerField(required=False)
+    template = serializers.CharField(required=False)
+    fallback_url = serializers.URLField()
+    return_url = serializers.URLField()
+    associateInvoiceWithToken = serializers.BooleanField(default=False)
+    forceRedirect = serializers.BooleanField(default=False)
+    sendEmail = serializers.BooleanField(default=False)
+    checkoutWithToken = serializers.BooleanField(default=False)
+    bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
+    icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
+    products = checkoutProductSerializer(many=True)
+
+    def validate_system(self, value):
+        try:
+            if not validSystem(value):
+                raise serializers.ValidationError('This is not a valid system')
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+        return value
+
+    def validate_basket_owner(self, value):
+        try:
+            EmailUser.objects.get(id=value)
+        except EmailUser.DoesNotExist as e:
+            raise serializers.ValidationError(str(e))
+        return value
+
+    def validate_fallback_url(self,value):
+        try:
+            checkURL(value)
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+        return value
+
+    def validate_return_url(self,value):
+        try:
+            checkURL(value)
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+        return value
+
+class CheckoutCreateView(generics.CreateAPIView):
+    ''' Initiate checkout process.
+    :return: HTTPResponseRedirect
+    Example:
+    {
+        "card_method": "payment", (optional, default='payment')
+        "template": "", (optional)
+        "system": "", (mandatory)
+        "fallback_url": "http://", (mandatory)
+        "return_url": "http://", (mandatory)
+        "associateInvoiceWithToken": "true", (optional, default=False)
+        "forceRedirect": "true", (optional, default=False)
+        "sendEmail": "false", (optional, default=False)
+        "checkoutWithToken": "true", (optional, default=False)
+        "bpay_format": "crn", (optional, default='crn')
+        "icrn_format": "ICRNAMT", (optional, default='ICRNAMT')
+        "products": [ (mandatory)
+            {"id": 1}
+        ]
+    }
+    '''
+    serializer_class = checkoutSerializer
+    renderer_classes = (JSONRenderer,)
+    authentication_classes = [CsrfExemptSessionAuthentication]
+
+    def get_redirect_value(self,serializer,value):
+        if serializer.validated_data.get(value) is not None:
+            return '{}={}'.format(value,serializer.validated_data[value])
+        return ''
+
+    def create(self, request):
+        try:
+            http_status = status.HTTP_200_OK
+            #parse and validate data
+            serializer = self.serializer_class(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            #create basket
+            createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
+            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(self.get_redirect_value(serializer,'card_method'),
+                                                                                                   self.get_redirect_value(serializer,'basket_owner'),
+                                                                                                   self.get_redirect_value(serializer,'template'),
+                                                                                                   self.get_redirect_value(serializer,'fallback_url'),
+                                                                                                   self.get_redirect_value(serializer,'return_url'),
+                                                                                                   self.get_redirect_value(serializer,'associateInvoiceWithToken'),
+                                                                                                   self.get_redirect_value(serializer,'forceRedirect'),
+                                                                                                   self.get_redirect_value(serializer,'sendEmail'),
+                                                                                                   self.get_redirect_value(serializer,'checkoutWithToken'),
+                                                                                                   self.get_redirect_value(serializer,'bpay_format'),
+                                                                                                   self.get_redirect_value(serializer,'icrn_format')))
+
+            return redirect
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+#######################################################
+#                                                     #
+#                    /CHECKOUT                        #
+#                                                     #
+#######################################################
 #######################################################
 #                                                     #
 #                    REPORTS                          #
