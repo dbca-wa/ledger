@@ -279,7 +279,7 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
     model = Return
     columns = [
         'lodgement_number',
-        'licence_type',
+        'licence.licence_type',
         'lodgement_date',
         'due_date',
         'status',
@@ -288,7 +288,7 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
     ]
     order_columns = [
         'lodgement_number',
-        ['licence_type.short_name', 'licence_type.name'],
+        ['licence.licence_type.short_name', 'licence.licence_type.name'],
         'lodgement_date',
         'due_date',
         'status',
@@ -298,6 +298,12 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
     columns_helpers = {
         'lodgement_number': {
             'render': lambda self, instance: instance.lodgement_number
+        },
+        'licence.licence_type': {
+            'render': lambda self, instance: instance.licence.licence_type.display_name,
+            'search': lambda self, search: base.build_field_query(
+                ['licence__licence_type__short_name', 'licence__licence_type__name', 'licence__licence_type__version'],
+                search)
         },
         'lodgement_date': {
             'render': lambda self, instance: base.render_date(instance.lodgement_date)
