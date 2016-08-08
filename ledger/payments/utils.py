@@ -87,8 +87,7 @@ def createBasket(product_list,owner,system,force_flush=True):
         # Check if there are products to be added to the cart and if they are valid products
         if not product_list:
             raise ValueError('There are no products to add to the order.')
-        product_dict_list = json.loads(product_list)
-        for product in product_dict_list:
+        for product in product_list:
             p = Product.objects.get(id=product["id"])
             if not product.get("quantity"):
                 product["quantity"] = 1
