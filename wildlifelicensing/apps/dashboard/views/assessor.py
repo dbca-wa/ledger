@@ -52,8 +52,7 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
 
 class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.DataTableBaseView):
     """
-    The model of this table is not Application but Assessment, it cannot extends the base.DataTableApplicationBaseView
-     see: get_initial_queryset method
+    The model of this table is not Application but Assessment.
     """
     model = Assessment
     columns = [
