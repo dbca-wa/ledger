@@ -381,6 +381,9 @@ class ApplicationEntrySecurity(TransactionTestCase):
     def setUp(self):
         self.client = SocialClient()
 
+    def tearDown(self):
+        self.client.logout()
+
     def test_user_access_other_user(self):
         """
         Test that a user cannot edit/view another user application
