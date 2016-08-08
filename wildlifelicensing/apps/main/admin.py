@@ -43,22 +43,29 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
         names = []
 
         def __check_name(schema):
-            if type(schema) == 'list':
+            if type(schema) is list:
                 for item in schema:
                     __check_name(item)
-            elif type(schema) == 'dict':
+            elif type(schema) is dict:
                 if 'type' in schema:
                     if 'name' in schema:
                         if schema['name'] in names:
-                            raise forms.ValidationError('Duplicate Name %s', schema['name'])
+                            raise forms.ValidationError('Duplicate Name %s' % schema.get('name'))
                         else:
                             names.append(schema['name'])
                     else:
-                        raise forms.ValidationError('Missing Name %s %s', schema['type'], schema['label'])
-                elif 'children' in schema:
+                        raise forms.ValidationError('Missing Name %s with label %s' % (schema.get('type'), schema.get('label')))
+                if 'children' in schema:
                     for item in schema['children']:
-                        print item
                         __check_name(item)
+                if 'conditions' in schema:
+                    for condition, condition_values in schema['conditions'].iteritems():
+                        if type(condition_values) is list:
+                            for item in condition_values:
+                                __check_name(item)
+                        else:
+                            raise forms.ValidationError('Condition values must be a list for condition %s of %s' %
+                                                        (condition, schema.get('name')))
 
         __check_name(schema)
 
