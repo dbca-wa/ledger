@@ -37,6 +37,33 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
         model = WildlifeLicenceType
         exclude = []
 
+    def clean_application_schema(self):
+        schema = self.cleaned_data['application_schema']
+
+        names = []
+
+        def __check_name(schema):
+            if type(schema) == 'list':
+                for item in schema:
+                    __check_name(item)
+            elif type(schema) == 'dict':
+                if 'type' in schema:
+                    if 'name' in schema:
+                        if schema['name'] in names:
+                            raise forms.ValidationError('Duplicate Name %s', schema['name'])
+                        else:
+                            names.append(schema['name'])
+                    else:
+                        raise forms.ValidationError('Missing Name %s %s', schema['type'], schema['label'])
+                elif 'children' in schema:
+                    for item in schema['children']:
+                        print item
+                        __check_name(item)
+
+        __check_name(schema)
+
+        return schema
+
 
 @admin.register(WildlifeLicenceType)
 class WildlifeLicenceTypeAdmin(VersionAdmin):
