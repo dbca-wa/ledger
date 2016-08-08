@@ -47,10 +47,10 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         # Get the return url
         return_url = self.checkout_session.return_url()
         force_redirect = self.checkout_session.force_redirect()
-        print 'r {}'.format(force_redirect)
 
-        # Send confirmation message (normally an email)
-        self.send_confirmation_message(order, self.communication_type_code)
+        if self.checkout_session.send_email():
+            # Send confirmation message (normally an email)
+            self.send_confirmation_message(order, self.communication_type_code)
         
         # Flush all session data
         self.checkout_session.flush()

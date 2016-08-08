@@ -271,6 +271,10 @@ LOGGING = {
         },
     }
 }
+# Ledger settings
+CMS_URL=env('CMS_URL',None)
+LEDGER_USER=env('LEDGER_USER',None)
+LEDGER_PASS=env('LEDGER_PASS')
 #BPAY settings
 BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
 # BPOINT settings
