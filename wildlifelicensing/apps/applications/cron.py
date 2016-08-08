@@ -32,7 +32,7 @@ class AssessmentRemindersCronJob(CronJobBase):
     def do(self):
         expiry_notification_date = date.today() - timedelta(days=self.ASSESSMENT_REMINDER_NOTIFICATION_DAYS)
 
-        for assessment in Assessment.objects.filter(date_last_reminded=expiry_notification_date, status='awaiting_assessment'):
+        for assessment in Assessment.objects.filter(date_last_reminded__lte=expiry_notification_date, status='awaiting_assessment'):
             send_assessment_reminder_email(assessment)
             assessment.date_last_reminded = date.today()
             assessment.save()
