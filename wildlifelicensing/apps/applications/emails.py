@@ -72,14 +72,19 @@ class ApplicationAssessmentReminderEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_assessment_reminder.txt'
 
 
-def send_assessment_reminder_email(assessment, request):
+def send_assessment_reminder_email(assessment, request=None):
     application = assessment.application
 
     email = ApplicationAssessmentReminderEmail()
-    url = request.build_absolute_uri(
-        reverse('wl_applications:enter_conditions_assessor',
-                args=[application.pk, assessment.pk])
-    )
+
+    if request is not None:
+        url = request.build_absolute_uri(
+            reverse('wl_applications:enter_conditions_assessor',
+                    args=(application.pk, assessment.pk))
+        )
+    else:
+        url = hosts_reverse('wl_applications:enter_conditions_assessor', args=(application.pk, assessment.pk))
+
     context = {
         'assessor': assessment.assessor_group,
         'url': url

@@ -150,6 +150,7 @@ class Assessment(ApplicationRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
     assessor_group = models.ForeignKey(AssessorGroup)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
+    date_last_reminded = models.DateField()
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)

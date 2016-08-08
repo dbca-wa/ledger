@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.context_processors import csrf
 from django.contrib import messages
 from django.http import JsonResponse
@@ -277,6 +279,9 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         assessment, created = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)
 
         assessment.status = 'awaiting_assessment'
+
+        assessment.date_last_reminded = date.today()
+
         assessment.save()
 
         application.processing_status = determine_processing_status(application)
@@ -292,6 +297,10 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 class RemindAssessmentView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=request.POST['assessmentID'])
+
+        assessment.date_last_reminded = date.today()
+
+        assessment.save()
 
         send_assessment_reminder_email(assessment, request)
 
