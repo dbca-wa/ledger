@@ -497,7 +497,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
 #                    CHECKOUT                         #
 #                                                     #
 #######################################################
-class checkoutProductSerializer(serializers.Serializer):
+class CheckoutProductSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1,default=1)
 
@@ -508,7 +508,7 @@ class checkoutProductSerializer(serializers.Serializer):
             raise serializers.ValidationError('{} (id={})'.format(str(e),value))
         return value
 
-class checkoutSerializer(serializers.Serializer):
+class CheckoutSerializer(serializers.Serializer):
     card_method = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES, default='payment')
     system = serializers.CharField(max_length=4, min_length=4)
     basket_owner = serializers.IntegerField(required=False)
@@ -521,7 +521,7 @@ class checkoutSerializer(serializers.Serializer):
     checkoutWithToken = serializers.BooleanField(default=False)
     bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
-    products = checkoutProductSerializer(many=True)
+    products = CheckoutProductSerializer(many=True)
 
     def validate_template(self, value):
         try:
@@ -580,7 +580,7 @@ class CheckoutCreateView(generics.CreateAPIView):
         ]
     }
     '''
-    serializer_class = checkoutSerializer
+    serializer_class = CheckoutSerializer
     renderer_classes = (JSONRenderer,)
     authentication_classes = [CsrfExemptSessionAuthentication]
 
