@@ -28,6 +28,9 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
                 'title': 'User'
             },
             {
+                'title': 'Status'
+            },
+            {
                 'title': 'Lodged on'
             },
             {
@@ -39,19 +42,24 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
                 'orderable': False
             }
         ]
+        # override the status to have have the Assessment status instead of the application status
+        data['applications']['filters']['status']['values'] = \
+            [('all', 'All')] + [(v, l) for v, l in Assessment.STATUS_CHOICES]
+        # override the data url
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_assessor')
         return data
 
 
 class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.DataTableBaseView):
     """
-    Model of this table is not Application but Assessment
+    The model of this table is not Application but Assessment, it cannot extends the base.DataTableApplicationBaseView
      see: get_initial_queryset method
     """
     columns = [
         'application.lodgement_number',
         'application.licence_type.display_name',
         'application.applicant_profile.user',
+        'status',
         'application.lodgement_date',
         'application.assigned_officer',
         'action'
@@ -61,6 +69,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
         'application.licence_type.display_name',
         ['application.applicant_profile.user.last_name', 'application.applicant_profile.user.first_name',
          'application.applicant_profile.user.email'],
+        'status',
         'application.lodgement_date',
         ['application.assigned_officer.first_name', 'application.assigned_officer.last_name',
          'application.assigned_officer.email'], ''
@@ -116,6 +125,14 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
                 Q(application__lodgement_sequence__icontains=lodgement_sequence)
         else:
             return Q(application__lodgement_number__icontains=search)
+
+    @staticmethod
+    def filter_licence_type(value):
+        return Q(application__licence_type__pk=value) if value.lower() != 'all' else None
+
+    @staticmethod
+    def filter_status(value):
+        return Q(status=value) if value.lower() != 'all' else None
 
     def get_initial_queryset(self):
         groups = self.request.user.assessorgroup_set.all()

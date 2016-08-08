@@ -225,7 +225,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
     def _build_global_search_query(self, search):
         # a bit of a hack for searching for date with a '/', ex 27/05/2016
-        # The rigth way to search for a date is to use the format YYYY-MM-DD.
+        # The right way to search for a date is to use the format YYYY-MM-DD.
         # To search with dd/mm/yyyy we use the dateutil parser to infer a date
         if search and search.find('/') >= 0:
             try:
