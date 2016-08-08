@@ -298,11 +298,11 @@ class RemindAssessmentView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=request.POST['assessmentID'])
 
+        send_assessment_reminder_email(assessment, request)
+
         assessment.date_last_reminded = date.today()
 
         assessment.save()
-
-        send_assessment_reminder_email(assessment, request)
 
         return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
 
