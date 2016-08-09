@@ -36,17 +36,17 @@ def licence_requires_payment(licence_type):
 class CheckoutApplicationView(RedirectView):
     def get(self, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
-        product = get_product_title(application)
+        product = get_product_or_404(application)
         user = application.applicant_profile.user.id
         success_url = self.request.GET.get('return_url', reverse('wl_home'))
         error_url = self.request.GET.get('fallback_url', reverse('wl_home'))
 
-        products_json = [{
+        products = [{
             "id": product.id,
             "quantity": 1
         }]
 
-        createBasket(json.dumps(products_json), self.request.user, PAYMENT_SYSTEM_ID)
+        createBasket(products, self.request.user, PAYMENT_SYSTEM_ID)
 
         url_query_parameters = {
             'system_id': PAYMENT_SYSTEM_ID,
@@ -69,8 +69,25 @@ def get_product_or_404(application):
     return get_object_or_404(Product, title=get_product_title(application))
 
 
+def is_reserved_payment_approved(application):
+    raise NotImplementedError
+
+
 def is_application_paid(application):
     # TODO: implementation
+    raise NotImplementedError
+
+
+def is_manual_payement(application):
+    raise NotImplementedError
+
+
+def get_application_payment_status(application):
+    """
+
+    :param application:
+    :return: something like paid, reserved, awaiting, not required
+    """
     raise NotImplementedError
 
 
@@ -78,3 +95,15 @@ class InitiatePayment(RedirectView):
     # TODO: implementation
     def get(self, *args, **kwargs):
         raise NotImplementedError
+
+
+class ManualPaymentView(RedirectView):
+    def get(self, *args, **kwargs):
+        raise NotImplementedError
+
+# if is_application_paid -> issue licence
+# else:
+#   if is_reserved_payment_approved(app):
+#       redirect to InitiatePayment (application)
+#   if is_manual:
+#       redirect to manual page.
