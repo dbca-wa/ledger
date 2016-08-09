@@ -509,19 +509,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         application.save(version_user=application.applicant_profile.user, version_comment='Details Modified')
 
-        # payment stuff
-        if payments.application_requires_payment(application):
+        return redirect(reverse('wl_main:checkout_application', args=[application.pk]))
 
-            url_query_parameters = {
-                'fallback_url': reverse('wl_applications:preview', args=(application.licence_type.code_slug, application.id,)),
-                'return_url': reverse('wl_applications:complete', args=(application.licence_type.code_slug, application.id,))
-            }
-
-            url = '{}?{}'.format(reverse('wl_main: checkout_application', args=[application.pk]), urlencode(url_query_parameters))
-
-            return redirect(url)
-        else:
-            return redirect('wl_applications:complete', application.licence_type.code_slug, application.pk, **kwargs)
 
 class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/complete.html'
@@ -540,6 +529,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
         application.save()
 
         return render(request, self.template_name, {'application': application})
+
 
 class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
     def get(self, request, *args, **kwargs):

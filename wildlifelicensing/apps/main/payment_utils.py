@@ -1,18 +1,34 @@
+import requests
 import json
 
 from django.views.generic.base import RedirectView
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.utils.http import urlencode
 
 from oscar.apps.partner.strategy import Selector
 
 from ledger.payments.utils import createBasket
 from ledger.catalogue.models import Product
+from ledger.payments.invoice.models import Invoice
 
 from wildlifelicensing.apps.applications.models import Application
+from ledger.settings import LEDGER_PASS
 
-PAYMENT_SYSTEM_ID = '0369'
+PAYMENT_SYSTEM_ID = 'S369'
+
+PAYMENT_STATUS_PAID = 'paid'
+PAYMENT_STATUS_CC_READY = 'cc_ready'
+PAYMENT_STATUS_AWAITING = 'awaiting'
+PAYMENT_STATUS_NOT_REQUIRED = 'not_required'
+
+PAYMENT_STATUSES = {
+    PAYMENT_STATUS_PAID: 'Paid',
+    PAYMENT_STATUS_CC_READY: 'Credit Card Ready',
+    PAYMENT_STATUS_AWAITING: 'Awaiting Manual Payment',
+    PAYMENT_STATUS_NOT_REQUIRED: 'Not Required',
+}
 
 
 def application_requires_payment(application):
@@ -34,61 +50,64 @@ def licence_requires_payment(licence_type):
 
 
 class CheckoutApplicationView(RedirectView):
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
-        product = get_product_or_404(application)
+        product = get_product(application)
         user = application.applicant_profile.user.id
-        success_url = self.request.GET.get('return_url', reverse('wl_home'))
-        error_url = self.request.GET.get('fallback_url', reverse('wl_home'))
 
-        products = [{
-            "id": product.id,
-            "quantity": 1
-        }]
+        error_url = request.build_absolute_uri(reverse('wl_applications:preview', args=(application.licence_type.code_slug, application.id,)))
+        success_url = request.build_absolute_uri(reverse('wl_applications:complete', args=(application.licence_type.code_slug, application.id,)))
 
-        createBasket(products, self.request.user, PAYMENT_SYSTEM_ID)
-
-        url_query_parameters = {
-            'system_id': PAYMENT_SYSTEM_ID,
+        parameters = {
+            'system': PAYMENT_SYSTEM_ID,
             'basket_owner': user,
+            'associateInvoiceWithToken': True,
             'checkoutWithToken': True,
             'fallback_url': error_url,
-            'return_url': success_url
+            'return_url': success_url,
+            'forceRedirect': True,
+            'products': [
+                {"id": product.id}
+            ]
         }
 
-        url = '{}?{}'.format(reverse('checkout:index'), urlencode(url_query_parameters))
+        url = request.build_absolute_uri(
+            reverse('payments:ledger-initial-checkout')
+        )
 
-        return redirect(url)
+        response = requests.post(url, cookies=request.COOKIES, data=parameters)
 
+        print response.content
 
-def get_product_title(application):
-    return application.licence_type.code_slug
-
-
-def get_product_or_404(application):
-    return get_object_or_404(Product, title=get_product_title(application))
+        return HttpResponse(response.content)
 
 
-def is_reserved_payment_approved(application):
-    raise NotImplementedError
-
-
-def is_application_paid(application):
-    # TODO: implementation
-    raise NotImplementedError
-
-
-def is_manual_payment(application):
-    raise NotImplementedError
+def get_product(application):
+    try:
+        return Product.objects.get(title=application.licence_type.code_slug)
+    except Product.DoesNotExist:
+        return None
 
 
 def get_application_payment_status(application):
     """
 
     :param application:
-    :return: something like paid, reserved, awaiting, not required
+    :return: One of PAYMENT_STATUS_PAID, PAYMENT_STATUS_CC_READY, PAYMENT_STATUS_AWAITING or PAYMENT_STATUS_NOT_REQUIRED
     """
-    raise NotImplementedError
+    invoice = get_object_or_404(Invoice, reference=application.invoice_number)
+
+    if invoice.amount > 0:
+        payment_status = invoice.payment_status
+
+        if payment_status == 'paid' or payment_status == 'over_paid':
+            return PAYMENT_STATUS_PAID
+        elif invoice.token:
+            return PAYMENT_STATUS_CC_READY
+        else:
+            return PAYMENT_STATUS_AWAITING
+    else:
+        return PAYMENT_STATUS_NOT_REQUIRED
 
 
 class InitiatePayment(RedirectView):
