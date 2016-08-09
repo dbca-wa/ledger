@@ -134,10 +134,21 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.display_name', 'applicant_profile', 'customer_status', 'lodgement_date',
-               'action']
-    order_columns = ['lodgement_number', 'licence_type.display_name', 'applicant_profile', 'customer_status', 'lodgement_date',
-                     '']
+    columns = [
+        'lodgement_number',
+        'licence_type',
+        'applicant_profile',
+        'customer_status',
+        'lodgement_date',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        'applicant_profile',
+        'customer_status',
+        'lodgement_date',
+        '']
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
@@ -192,10 +203,24 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
 
 class DataTableLicencesCustomerView(base.DataTableBaseView):
     model = WildlifeLicence
-    columns = ['licence_number', 'licence_type.display_name', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
-    order_columns = ['licence_number', 'licence_type.display_name', 'issue_date', 'start_date', 'end_date', '', '']
+    columns = [
+        'licence_number',
+        'licence_type',
+        'issue_date',
+        'start_date',
+        'end_date',
+        'licence',
+        'action']
+    order_columns = [
+        'licence_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        'issue_date',
+        'start_date',
+        'end_date',
+        '',
+        '']
 
-    columns_helpers = {
+    columns_helpers = dict(base.DataTableBaseView.columns_helpers.items(), **{
         'licence_number': {
             'search': lambda self, search: DataTableLicencesCustomerView._search_licence_number(search),
             'render': lambda self, instance: base.render_licence_number(instance)
@@ -215,7 +240,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
-    }
+    })
 
     @staticmethod
     def _render_action(instance):
@@ -252,13 +277,33 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
 class DataTableReturnsCustomerView(base.DataTableBaseView):
     model = Return
-    columns = ['lodgement_number', 'licence.licence_type.display_name', 'lodgement_date', 'due_date', 'status',
-               'licence', 'action']
-    order_columns = ['lodgement_number', 'licence.licence_type.display_name', 'lodgement_date', 'due_date', 'status',
-                     '', '']
+    columns = [
+        'lodgement_number',
+        'licence.licence_type',
+        'lodgement_date',
+        'due_date',
+        'status',
+        'licence',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence.licence_type.short_name', 'licence.licence_type.name'],
+        'lodgement_date',
+        'due_date',
+        'status',
+        '',
+        ''
+    ]
     columns_helpers = {
         'lodgement_number': {
             'render': lambda self, instance: instance.lodgement_number
+        },
+        'licence.licence_type': {
+            'render': lambda self, instance: instance.licence.licence_type.display_name,
+            'search': lambda self, search: base.build_field_query(
+                ['licence__licence_type__short_name', 'licence__licence_type__name', 'licence__licence_type__version'],
+                search)
         },
         'lodgement_date': {
             'render': lambda self, instance: base.render_date(instance.lodgement_date)

@@ -133,6 +133,10 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                 filter(category=category, replaced_by__isnull=True).values('code_slug',
                                                                            'name', 'code')
 
+        if WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True).exists():
+            categories['Other'] = WildlifeLicenceType.objects.\
+                filter(category__isnull=True, replaced_by__isnull=True).values('code_slug', 'name', 'code')
+
         kwargs['licence_categories'] = categories
 
         return super(SelectLicenceTypeView, self).get_context_data(**kwargs)

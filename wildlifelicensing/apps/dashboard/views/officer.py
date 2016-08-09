@@ -168,15 +168,26 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.display_name', 'applicant_profile.user', 'processing_status', 'lodgement_date',
-               'assigned_officer', 'proxy_applicant', 'action']
-    order_columns = ['lodgement_number', 'licence_type.display_name',
-                     ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
-                      'applicant_profile.user.email'],
-                     'processing_status', 'lodgement_date',
-                     ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
-                     ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
-                     '']
+    columns = [
+        'lodgement_number',
+        'licence_type',
+        'applicant_profile.user',
+        'processing_status',
+        'lodgement_date',
+        'assigned_officer',
+        'proxy_applicant',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        'processing_status',
+        'lodgement_date',
+        ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
+        ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
+        ''
+    ]
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
@@ -297,7 +308,7 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
                 'values': [
                               (TableReturnsOfficerView.OVERDUE_FILTER,
                                TableReturnsOfficerView.OVERDUE_FILTER.capitalize())
-                          ] + list(Return.STATUS_CHOICES)
+                          ] + [('all', 'All')] + list(Return.STATUS_CHOICES)
             }
         }
         data['returns']['filters'].update(filters)
@@ -306,13 +317,21 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.display_name', 'applicant_profile.user', 'processing_status', 'lodgement_date',
-               'action']
-    order_columns = ['lodgement_number', 'licence_type.display_name',
-                     ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
-                      'applicant_profile.user.email'],
-                     'processing_status', 'lodgement_date',
-                     '']
+    columns = [
+        'lodgement_number',
+        'licence_type',
+        'applicant_profile.user',
+        'processing_status',
+        'lodgement_date',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        'processing_status',
+        'lodgement_date',
+        '']
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
@@ -445,7 +464,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
     model = WildlifeLicence
     columns = [
         'licence_number',
-        'licence_type.display_name',
+        'licence_type',
         'profile.user',
         'start_date',
         'end_date',
@@ -455,14 +474,14 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'action']
     order_columns = [
         'licence_number',
-        'licence_type.display_name',
+        ['licence_type.short_name', 'licence_type.name'],
         ['profile.user.last_name', 'profile.user.first_name'],
         'start_date',
         'end_date',
         '',
         '']
 
-    columns_helpers = {
+    columns_helpers = dict(base.DataTableBaseView.columns_helpers.items(), **{
         'licence_number': {
             'search': lambda self, search: DataTableLicencesOfficerView._search_licence_number(search),
             'render': lambda self, instance: base.render_licence_number(instance)
@@ -494,7 +513,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
-    }
+    })
 
     @staticmethod
     def filter_status(value):
@@ -630,7 +649,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
     model = Return
     columns = [
         'lodgement_number',
-        'licence.licence_type.display_name',
+        'licence.licence_type',
         'licence.profile.user',
         'lodgement_date',
         'due_date',
@@ -640,14 +659,20 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
     ]
     order_columns = [
         'lodgement_number',
-        'licence.licence_type.display_name',
+        'licence.licence_type',
         ['licence.profile.user.last_name', 'licence.profile.user.first_name'],
         'lodgement_date',
         'due_date',
         'status',
         '',
         '']
-    columns_helpers = {
+    columns_helpers = dict(base.DataTableBaseView.columns_helpers.items(), **{
+        'licence.licence_type': {
+            'render': lambda self, instance: instance.licence.licence_type.display_name,
+            'search': lambda self, search: base.build_field_query(
+                ['licence__licence_type__short_name', 'licence__licence_type__name', 'licence__licence_type__version'],
+                search)
+        },
         'lodgement_number': {
             'render': lambda self, instance: instance.lodgement_number
         },
@@ -675,7 +700,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
-    }
+    })
 
     @staticmethod
     def _render_status(instance):
@@ -719,10 +744,10 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         elif value == TableReturnsOfficerView.OVERDUE_FILTER:
             return Q(due_date__lt=datetime.date.today()) & ~Q(
                 status__in=['future', 'submitted', 'accepted', 'declined'])
-        elif value:
-            return Q(status=value)
-        else:
+        elif value == 'all':
             return None
+        else:
+            return Q(status=value)
 
     @staticmethod
     def _search_licence_number(search):
