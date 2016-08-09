@@ -43,11 +43,12 @@ $(function(){
     // Check if invoice is paid
     function checkInvoiceStatus(){
         var status = '';
+        var redirect_url = $('#payment_div').data('redirect');
         $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
             status = resp.payment_status;
-            /*if (status === 'paid') {
-                disablePayButtons();
-            }*/
+            if (status === 'paid' && redirect_url) {
+                window.location.replace(redirect_url);
+            }
             updateBanner(status);
         });
     }
