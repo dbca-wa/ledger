@@ -26,7 +26,7 @@ from wildlifelicensing.apps.main.forms import IdentificationForm
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
-from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin
+from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_customer
 from wildlifelicensing.apps.main import payment_utils as payments
@@ -441,8 +441,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 application_document = os.path.join(temp_files_url, application_document)
 
             kwargs['structure'], kwargs['data'] = utils.append_app_document_to_schema_data(kwargs['structure'],
-        kwargs['requires_payment'] = payments.licence_requires_payment(licence_type)
-                                                                                          kwargs['data'],
+                                                                                           kwargs['data'],
                                                                                            application_document)
 
         return super(PreviewView, self).get_context_data(**kwargs)

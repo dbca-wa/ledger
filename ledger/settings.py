@@ -278,3 +278,40 @@ LOGGING = {
         },
     }
 }
+# Ledger settings
+CMS_URL=env('CMS_URL',None)
+LEDGER_USER=env('LEDGER_USER',None)
+LEDGER_PASS=env('LEDGER_PASS')
+# BPAY settings
+BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
+# BPOINT settings
+BPOINT_CURRENCY='AUD'
+BPOINT_BILLER_CODE=env('BPOINT_BILLER_CODE')
+BPOINT_USERNAME=env('BPOINT_USERNAME')
+BPOINT_PASSWORD=env('BPOINT_PASSWORD')
+BPOINT_MERCHANT_NUM=env('BPOINT_MERCHANT_NUM')
+BPOINT_TEST=True
+# Oscar settings
+from oscar.defaults import *
+OSCAR_ALLOW_ANON_CHECKOUT = True
+OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
+OSCAR_DASHBOARD_NAVIGATION.append(
+    {
+        'label': 'Payments',
+        'icon': 'icon-globe',
+        'children': [
+            {
+                'label': 'Invoices',
+                'url_name': 'payments:invoices-list',
+            },
+            {
+                'label': 'BPAY collections',
+                'url_name': 'payments:bpay-collection-list',
+            },
+            {
+                'label': 'BPOINT transactions',
+                'url_name': 'payments:bpoint-dash-list',
+            },
+        ]
+    }
+)
