@@ -218,6 +218,7 @@ MEDIA_URL = '/media/'
 
 CRON_CLASSES = [
     'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
+    'wildlifelicensing.apps.applications.cron.AssessmentRemindersCronJob',
     'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
 

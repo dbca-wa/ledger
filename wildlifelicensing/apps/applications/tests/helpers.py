@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.test import TestCase
 from mixer.backend.django import mixer
 
