@@ -73,7 +73,7 @@
                             </div>
                         </div>
                         <!-- /Show Success -->
-                        <div class="tabs-content vertical" data-tabs-content="payment-tabs" id="payment_div" data-reference={{invoice.reference}}>
+                        <div class="tabs-content vertical" data-tabs-content="payment-tabs" id="payment_div" {% if redirect_url %} data-redirect={{redirect_url}} {%endif%} data-reference={{invoice.reference}}>
                             <div class="tabs-panel is-active" id="details">
                                 <table class="table table-striped table-bordered">
                                     <thead>
