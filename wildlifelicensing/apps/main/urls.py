@@ -6,6 +6,7 @@ from wildlifelicensing.apps.main.views import ListProfilesView, CreateProfilesVi
     DeleteProfileView, IdentificationView, EditAccountView, SearchCustomersView, ListDocumentView, \
     EditDocumentView, CreateDocumentView ,DeleteDocumentView, CommunicationsLogListView, \
     AddCommunicationsLogEntryView
+from wildlifelicensing.apps.main.payment_utils import CheckoutApplicationView
 
 
 urlpatterns = [
@@ -36,5 +37,5 @@ urlpatterns = [
     url('^add-log-entry/([0-9]+)/$', AddCommunicationsLogEntryView.as_view(), name='add_log_entry'),
     url('^log-list/([0-9]+)/$', CommunicationsLogListView.as_view(), name='log_list'),
 
-    url('^checkout_product/$', CommunicationsLogListView.as_view(), name='checkout_product'),
+    url('^checkout_application/([0-9]+)/$', CheckoutApplicationView.as_view(), name='checkout_application'),
 ]

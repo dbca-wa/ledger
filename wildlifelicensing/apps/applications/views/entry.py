@@ -476,15 +476,14 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         except Exception as e:
             messages.error(request, 'There was a problem creating the application: %s' % e)
 
-        if payments.licence_requires_payment(application.licence_type):
+        if payments.application_requires_payment(application):
 
             url_query_parameters = {
-                'user': application.applicant_profile.user.id,
                 'fallback_url': reverse('wl_applications:preview', args=(application.licence_type.code_slug, application.id,)),
                 'return_url': reverse('wl_applications:complete', args=(application.licence_type.code_slug, application.id,))
             }
 
-            url = '{}?{}'.format(reverse('wl_main: checkout_product'), urlencode(url_query_parameters))
+            url = '{}?{}'.format(reverse('wl_main: checkout_application', args=[application.pk]), urlencode(url_query_parameters))
 
             return redirect(url)
         else:

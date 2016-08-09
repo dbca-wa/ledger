@@ -10,7 +10,13 @@ from oscar.apps.partner.strategy import Selector
 from ledger.payments.utils import createBasket
 from ledger.catalogue.models import Product
 
-SYSTEM_ID = '0369'
+from wildlifelicensing.apps.applications.models import Application
+
+PAYMENT_SYSTEM_ID = '0369'
+
+
+def application_requires_payment(application):
+    return licence_requires_payment(application.licence_type)
 
 
 def licence_requires_payment(licence_type):
@@ -27,23 +33,27 @@ def licence_requires_payment(licence_type):
         return False
 
 
-class CheckoutView(RedirectView):
+class CheckoutApplicationView(RedirectView):
     def get(self, *args, **kwargs):
-        product = get_object_or_404(Product, title=self.request.GET.get('product_name'))
+        application = get_object_or_404(Application, pk=args[0])
+        product = get_product_title(application)
+        user = application.applicant_profile.user.id
+        success_url = self.request.GET.get('return_url', reverse('wl_home'))
+        error_url = self.request.GET.get('fallback_url', reverse('wl_home'))
 
         products_json = [{
             "id": product.id,
             "quantity": 1
         }]
 
-        createBasket(json.dumps(products_json), self.request.user, SYSTEM_ID)
+        createBasket(json.dumps(products_json), self.request.user, PAYMENT_SYSTEM_ID)
 
         url_query_parameters = {
-            'system_id': SYSTEM_ID,
-            'basket_owner': self.request.GET.get('user', self.request.user),
+            'system_id': PAYMENT_SYSTEM_ID,
+            'basket_owner': user,
             'checkoutWithToken': True,
-            'fallback_url': self.request.GET.get('fallback_url'),
-            'return_url': self.request.GET.get('return_url')
+            'fallback_url': error_url,
+            'return_url': success_url
         }
 
         url = '{}?{}'.format(reverse('checkout:index'), urlencode(url_query_parameters))
@@ -51,9 +61,20 @@ class CheckoutView(RedirectView):
         return redirect(url)
 
 
+def get_product_title(application):
+    return application.licence_type.code_slug
+
+
+def get_product_or_404(application):
+    return get_object_or_404(Product, title=get_product_title(application))
+
+
 def is_application_paid(application):
+    # TODO: implementation
     raise NotImplementedError
 
 
 class InitiatePayment(RedirectView):
-    raise NotImplementedError
+    # TODO: implementation
+    def get(self, *args, **kwargs):
+        raise NotImplementedError
