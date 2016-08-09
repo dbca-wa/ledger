@@ -287,6 +287,11 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 
         send_assessment_requested_email(assessment, request)
 
+        # need to only set and save this after the email was sent in case the email fails whereby it should remain null
+        assessment.date_last_reminded = date.today()
+
+        assessment.save()
+
         return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment),
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
