@@ -1,20 +1,20 @@
 import datetime
 
+from dateutil.parser import parse as date_parse
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.http.response import HttpResponse
 
 from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.dashboard.views import base
+from wildlifelicensing.apps.dashboard.views.customer import DataTableReturnsCustomerView
+from wildlifelicensing.apps.main.helpers import get_all_officers
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.models import WildlifeLicence
+from wildlifelicensing.apps.main.pdf import bulk_licence_renewal_pdf_bytes
 from wildlifelicensing.apps.returns.models import Return
-from wildlifelicensing.apps.dashboard.views import base
-from wildlifelicensing.apps.main.helpers import get_all_officers
 from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
-
-
-def _get_current_onbehalf_applications(officer):
-    return Application.objects.filter(proxy_applicant=officer)
 
 
 def _render_cover_letter_document(licence):
@@ -28,20 +28,15 @@ def _render_cover_letter_document(licence):
 class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase):
     template_name = 'wl/dash_tree.html'
     title = 'Officer Dashboard'
-    url = reverse_lazy('wl_dashboard:tables_applications_officer')
 
     def _build_tree_nodes(self):
-        """
-            +Applications assigned to me
-              - status
-            +All applications
-              - status
-        """
+        # Applications
         # The draft status is excluded from the officer status list
+        url = reverse_lazy('wl_dashboard:tables_applications_officer')
         result = []
         statuses = base.get_processing_statuses_but_draft()
         all_applications = Application.objects.filter(processing_status__in=[s[0] for s in statuses])
-        all_applications_node = self._create_node('All applications', href=self.url,
+        all_applications_node = self._create_node('All applications', href=url,
                                                   count=all_applications.count())
         all_applications_node['state']['expanded'] = False
         for s_value, s_title in statuses:
@@ -50,7 +45,7 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
                 query = {
                     'application_status': s_value,
                 }
-                href = base.build_url(self.url, query)
+                href = base.build_url(url, query)
                 node = self._create_node(s_title, href=href, count=applications.count())
                 self._add_node(all_applications_node, node)
 
@@ -58,7 +53,8 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
         query = {
             'application_assignee': self.request.user.pk
         }
-        assigned_applications_node = self._create_node('My assigned applications', href=base.build_url(self.url, query),
+        assigned_applications_node = self._create_node('My assigned applications',
+                                                       href=base.build_url(url, query),
                                                        count=assigned_applications.count())
         assigned_applications_node['state']['expanded'] = True
         for s_value, s_title in statuses:
@@ -67,17 +63,44 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
                 query.update({
                     'application_status': s_value
                 })
-                href = base.build_url(self.url, query)
+                href = base.build_url(url, query)
                 node = self._create_node(s_title, href=href, count=applications.count())
                 self._add_node(assigned_applications_node, node)
         result.append(assigned_applications_node)
 
-        on_behalf_applications = _get_current_onbehalf_applications(self.request.user)
-        if on_behalf_applications.count() > 0:
-            url = reverse_lazy('wl_dashboard:tables_applications_officer_onbehalf')
-            on_behalf_applications_node = self._create_node('My current proxied applications', href=url,
-                                                            count=on_behalf_applications.count())
-            result.append(on_behalf_applications_node)
+        on_behalf_pending_applications_count = \
+            DataTableApplicationsOfficerOnBehalfView._get_proxy_applications(self.request.user).filter(
+                DataTableApplicationsOfficerOnBehalfView.filter_status(
+                    TableApplicationsOfficerView.STATUS_PENDING)).count()
+
+        on_behalf_overdue_returns_count = DataTableReturnsOfficerOnBehalfView._get_proxy_returns(
+            self.request.user).filter(
+            DataTableReturnsOfficerOnBehalfView.filter_status(TableReturnsOfficerView.OVERDUE_FILTER)).count()
+
+        total_on_behalf = on_behalf_pending_applications_count + on_behalf_overdue_returns_count
+        if total_on_behalf > 0:
+            url = reverse_lazy('wl_dashboard:tables_officer_onbehalf')
+            on_behalf_node = self._create_node('My proxy page', href=url, count=total_on_behalf)
+            query = {
+                'show': 'applications',
+                'application_status': 'pending'
+            }
+            href = base.build_url(url, query)
+            on_behalf_applications_node = self._create_node('Pending Applications',
+                                                            href=href,
+                                                            count=on_behalf_pending_applications_count)
+
+            query = {
+                'show': 'returns',
+            }
+            href = base.build_url(url, query)
+            on_behalf_returns_node = self._create_node('Overdue Returns',
+                                                       href=href,
+                                                       count=on_behalf_overdue_returns_count)
+            self._add_node(on_behalf_node, on_behalf_applications_node)
+            self._add_node(on_behalf_node, on_behalf_returns_node)
+            on_behalf_node['state']['expanded'] = False
+            result.append(on_behalf_node)
 
         result.append(all_applications_node)
 
@@ -145,19 +168,31 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
-               'assigned_officer', 'proxy_applicant', 'action']
-    order_columns = ['lodgement_number', 'licence_type.code',
-                     ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
-                      'applicant_profile.user.email'],
-                     'processing_status', 'lodgement_date',
-                     ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
-                     ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
-                     '']
+    columns = [
+        'lodgement_number',
+        'licence_type',
+        'applicant_profile.user',
+        'processing_status',
+        'lodgement_date',
+        'assigned_officer',
+        'proxy_applicant',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        'processing_status',
+        'lodgement_date',
+        ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
+        ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
+        ''
+    ]
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
-            'render': lambda self, instance: base.render_lodgement_number(instance)
+            'search': lambda self, search: DataTableApplicationsOfficerView._search_lodgement_number(search),
+            'render': lambda self, instance: base.render_lodgement_number(instance),
         },
         'assigned_officer': {
             'search': lambda self, search: base.build_field_query(
@@ -193,6 +228,17 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         return Q(processing_status=value) if value != 'all' else ~Q(customer_status='draft')
 
     @staticmethod
+    def _search_lodgement_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            lodgement_number, lodgement_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(lodgement_number__icontains=lodgement_number) & Q(lodgement_sequence__icontains=lodgement_sequence)
+        else:
+            return Q(lodgement_number__icontains=search)
+
+    @staticmethod
     def _render_action_column(obj):
         if obj.processing_status == 'ready_for_conditions':
             return '<a href="{0}">Enter Conditions</a>'.format(
@@ -212,12 +258,17 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
                 reverse('wl_applications:process', args=[obj.pk]),
             )
 
+    def get_initial_queryset(self):
+        return Application.objects.exclude(processing_status='draft')
 
-class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
-    template_name = 'wl/dash_tables_applications_officer_onbehalf.html'
+
+class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
+    template_name = 'wl/dash_tables_officer_onbehalf.html'
 
     def _build_data(self):
-        data = super(TableApplicationsOfficerOnBehalfView, self)._build_data()
+        data = super(TablesOfficerOnBehalfView, self)._build_data()
+        officer_data = TableApplicationsOfficerView()._build_data()
+        data['applications'] = officer_data['applications']
         data['applications']['columnDefinitions'] = [
             {
                 'title': 'Lodge Number'
@@ -241,18 +292,46 @@ class TableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseV
             }
         ]
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer_onbehalf')
+        data['applications']['filters']['status']['values'] = \
+            [(TableApplicationsOfficerView.STATUS_PENDING, TableApplicationsOfficerView.STATUS_PENDING.capitalize())] + \
+            [('all', 'All')] + \
+            [s for s in Application.PROCESSING_STATUS_CHOICES]
+
+        # returns
+        officer_data = TableReturnsOfficerView()._build_data()
+        data['returns'] = officer_data['returns']
+        # override the url
+        data['returns']['ajax']['url'] = reverse('wl_dashboard:data_returns_officer_onbehalf')
+        # and the filters (proxy officer should see the drafts)
+        filters = {
+            'status': {
+                'values': [
+                              (TableReturnsOfficerView.OVERDUE_FILTER,
+                               TableReturnsOfficerView.OVERDUE_FILTER.capitalize())
+                          ] + [('all', 'All')] + list(Return.STATUS_CHOICES)
+            }
+        }
+        data['returns']['filters'].update(filters)
 
         return data
 
 
 class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile.user', 'processing_status', 'lodgement_date',
-               'action']
-    order_columns = ['lodgement_number', 'licence_type.code',
-                     ['applicant_profile.user.last_name', 'applicant_profile.user.first_name',
-                      'applicant_profile.user.email'],
-                     'processing_status', 'lodgement_date',
-                     '']
+    columns = [
+        'lodgement_number',
+        'licence_type',
+        'applicant_profile.user',
+        'processing_status',
+        'lodgement_date',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        'processing_status',
+        'lodgement_date',
+        '']
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
@@ -265,6 +344,11 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
             'render': lambda self, instance: self._render_action_column(instance),
         },
     })
+
+    @staticmethod
+    def _get_pending_processing_statuses():
+        return [s[0] for s in Application.PROCESSING_STATUS_CHOICES
+                if s[0] != 'issued' and s[0] != 'declined']
 
     @staticmethod
     def _render_action_column(obj):
@@ -289,8 +373,19 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
                 'View application (read-only)'
             )
 
+    @staticmethod
+    def _get_proxy_applications(user):
+        return Application.objects.filter(proxy_applicant=user)
+
+    @staticmethod
+    def filter_status(value):
+        if value.lower() == TableApplicationsOfficerView.STATUS_PENDING:
+            return Q(processing_status__in=DataTableApplicationsOfficerOnBehalfView._get_pending_processing_statuses())
+        else:
+            return base.DataTableApplicationBaseView.filter_status(value)
+
     def get_initial_queryset(self):
-        return _get_current_onbehalf_applications(self.request.user)
+        return self._get_proxy_applications(self.request.user)
 
 
 class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
@@ -322,12 +417,17 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'title': 'Expiry Date'
             },
             {
-                'title': 'Licence',
+                'title': 'Licence PDF',
                 'searchable': False,
                 'orderable': False
             },
             {
                 'title': 'Cover Letter',
+                'searchable': False,
+                'orderable': False
+            },
+            {
+                'title': 'Renewal Letter',
                 'searchable': False,
                 'orderable': False
             },
@@ -342,10 +442,11 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
         filters = {
             'status': {
                 'values': [
-                    (self.STATUS_FILTER_ACTIVE, self.STATUS_FILTER_ACTIVE.capitalize()),
-                    (self.STATUS_FILTER_RENEWABLE, self.STATUS_FILTER_RENEWABLE.capitalize()),
-                    (self.STATUS_FILTER_EXPIRED, self.STATUS_FILTER_EXPIRED.capitalize()),
                     (self.STATUS_FILTER_ALL, self.STATUS_FILTER_ALL.capitalize()),
+                    (self.STATUS_FILTER_ACTIVE, self.STATUS_FILTER_ACTIVE.capitalize()),
+                    (self.STATUS_FILTER_RENEWABLE,
+                     self.STATUS_FILTER_RENEWABLE.capitalize() + ' (expires within 30 days)'),
+                    (self.STATUS_FILTER_EXPIRED, self.STATUS_FILTER_EXPIRED.capitalize()),
                 ]
             }
         }
@@ -354,6 +455,8 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
         data['licences']['tableOptions'] = {
             'pageLength': 25
         }
+        # other stuff
+        data['licences']['bulkRenewalURL'] = reverse('wl_dashboard:bulk_licence_renewal_pdf')
         return data
 
 
@@ -361,24 +464,26 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
     model = WildlifeLicence
     columns = [
         'licence_number',
-        'licence_type.code',
+        'licence_type',
         'profile.user',
         'start_date',
         'end_date',
         'licence',
         'cover_letter',
+        'renewal_letter',
         'action']
     order_columns = [
         'licence_number',
-        'licence_type.code',
+        ['licence_type.short_name', 'licence_type.name'],
         ['profile.user.last_name', 'profile.user.first_name'],
         'start_date',
         'end_date',
         '',
         '']
 
-    columns_helpers = {
+    columns_helpers = dict(base.DataTableBaseView.columns_helpers.items(), **{
         'licence_number': {
+            'search': lambda self, search: DataTableLicencesOfficerView._search_licence_number(search),
             'render': lambda self, instance: base.render_licence_number(instance)
         },
         'profile.user': {
@@ -402,10 +507,13 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'cover_letter': {
             'render': lambda self, instance: _render_cover_letter_document(instance)
         },
+        'renewal_letter': {
+            'render': lambda self, instance: self._render_renewal_letter(instance)
+        },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
-    }
+    })
 
     @staticmethod
     def filter_status(value):
@@ -425,6 +533,45 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             return Q(licence_type__pk=value)
         else:
             return None
+
+    @staticmethod
+    def filter_expiry_after(value):
+        if value:
+            try:
+                date = date_parse(value, dayfirst=True).date()
+                return Q(end_date__gte=date)
+            except:
+                pass
+        return None
+
+    @staticmethod
+    def filter_expiry_before(value):
+        if value:
+            try:
+                date = date_parse(value, dayfirst=True).date()
+                return Q(end_date__lte=date)
+            except:
+                pass
+        return None
+
+    @staticmethod
+    def _search_licence_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(licence_number__icontains=licence_number) & Q(licence_sequence__icontains=licence_sequence)
+        else:
+            return Q(licence_number__icontains=search)
+
+    @staticmethod
+    def _render_renewal_letter(instance):
+        if instance.is_renewable:
+            return '<a href="{0}" target="_blank">Create PDF</a><img height="20" src="{1}"></img>'. \
+                format(reverse('wl_main:licence_renewal_pdf', args=(instance.pk,)), static('wl/img/pdf.png'))
+        else:
+            return 'Not renewable'
 
     @staticmethod
     def _render_action(instance):
@@ -488,9 +635,9 @@ class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         filters = {
             'status': {
                 'values': [
-                    (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
-                    (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
-                ] + list(Return.STATUS_CHOICES)
+                              (self.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
+                              (self.OVERDUE_FILTER, self.OVERDUE_FILTER.capitalize())
+                          ] + list(Return.STATUS_CHOICES)
             }
         }
         data['returns']['filters'].update(filters)
@@ -502,7 +649,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
     model = Return
     columns = [
         'lodgement_number',
-        'licence.licence_type.code',
+        'licence.licence_type',
         'licence.profile.user',
         'lodgement_date',
         'due_date',
@@ -512,14 +659,20 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
     ]
     order_columns = [
         'lodgement_number',
-        'licence.licence_type.code',
+        'licence.licence_type',
         ['licence.profile.user.last_name', 'licence.profile.user.first_name'],
         'lodgement_date',
         'due_date',
         'status',
         '',
         '']
-    columns_helpers = {
+    columns_helpers = dict(base.DataTableBaseView.columns_helpers.items(), **{
+        'licence.licence_type': {
+            'render': lambda self, instance: instance.licence.licence_type.display_name,
+            'search': lambda self, search: base.build_field_query(
+                ['licence__licence_type__short_name', 'licence__licence_type__name', 'licence__licence_type__version'],
+                search)
+        },
         'lodgement_number': {
             'render': lambda self, instance: instance.lodgement_number
         },
@@ -541,14 +694,13 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         },
         'licence_number': {
             'render': lambda self, instance: base.render_licence_number(instance.licence),
-            'search': lambda self, search: base.build_field_query([
-                'licence__licence_number', 'licence__licence_sequence'],
-                search),
+            'search': lambda self, search: DataTableReturnsOfficerView._search_licence_number(search),
+
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
-    }
+    })
 
     @staticmethod
     def _render_status(instance):
@@ -592,10 +744,53 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         elif value == TableReturnsOfficerView.OVERDUE_FILTER:
             return Q(due_date__lt=datetime.date.today()) & ~Q(
                 status__in=['future', 'submitted', 'accepted', 'declined'])
-        elif value:
-            return Q(status=value)
-        else:
+        elif value == 'all':
             return None
+        else:
+            return Q(status=value)
+
+    @staticmethod
+    def _search_licence_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(licence__licence_number__icontains=licence_number) & Q(
+                licence__licence_sequence__icontains=licence_sequence)
+        else:
+            return Q(licence__licence_number__icontains=search)
 
     def get_initial_queryset(self):
         return Return.objects.all()
+
+
+class DataTableReturnsOfficerOnBehalfView(DataTableReturnsOfficerView):
+    @staticmethod
+    def _render_action(instance):
+        # same actions as a customer
+        return DataTableReturnsCustomerView._render_action(instance)
+
+    @staticmethod
+    def _get_proxy_returns(user):
+        return Return.objects.filter(
+            licence__in=WildlifeLicence.objects.filter(application__proxy_applicant=user))
+
+    def get_initial_queryset(self):
+        return self._get_proxy_returns(self.request.user)
+
+
+class BulkLicenceRenewalPDFView(DataTableLicencesOfficerView):
+    def filter_queryset(self, qs):
+        qs = super(BulkLicenceRenewalPDFView, self).filter_queryset(qs)
+        self.qs = qs
+        return qs
+
+    def get(self, request, *args, **kwargs):
+        super(BulkLicenceRenewalPDFView, self).get(request, *args, **kwargs)
+        licences = []
+        if self.qs:
+            licences = self.qs
+        response = HttpResponse(content_type='application/pdf')
+        response.write(bulk_licence_renewal_pdf_bytes(licences, request.build_absolute_uri(reverse('home'))))
+        return response

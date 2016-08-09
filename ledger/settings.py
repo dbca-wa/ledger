@@ -3,6 +3,7 @@ from oscar.defaults import *
 from oscar import get_core_apps, OSCAR_MAIN_TEMPLATE_DIR
 
 import os
+
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -14,12 +15,13 @@ DEBUG = env('DEBUG', False)
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
-    ALLOWED_HOSTS = []  # FIXME in production
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS', [])
 ROOT_URLCONF = 'ledger.urls'
 ROOT_HOSTCONF = 'ledger.hosts'
 DEFAULT_HOST = env('DEFAULT_HOST', 'ledger')
 PARENT_HOST = env('PARENT_HOST', 'localhost')
 HOST_PORT = env('HOST_PORT', '8000')
+HOST_SCHEME = env('HOST_SCHEME', 'https')
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,6 +55,7 @@ INSTALLED_APPS = [
     'ledger.payments.bpoint',
     'ledger.payments.cash',
     'ledger.payments.invoice',
+	'ledger.taxonomy',
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
     'wildlifelicensing.apps.applications',
@@ -106,7 +109,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.auth_allowed',
     'social.pipeline.social_auth.social_user',
     'social.pipeline.user.get_username',
-    #'social.pipeline.mail.mail_validation',
+    # 'social.pipeline.mail.mail_validation',
     'ledger.accounts.pipeline.mail_validation',
     'ledger.accounts.pipeline.user_by_email',
     'social.pipeline.user.create_user',
@@ -128,6 +131,9 @@ EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
 WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wildlifelicensing@dpaw.wa.gov.au')
 
+HERBIE_SPECIES_WFS_URL = env('HERBIE_SPECIES_WFS_URL',
+                             'https://kmi.dpaw.wa.gov.au/geoserver/ows?service=wfs&version=1.1.0&'
+                             'request=GetFeature&typeNames=public:herbie_hbvspecies_public&outputFormat=application/json')
 
 TEMPLATES = [
     {
@@ -226,6 +232,7 @@ MEDIA_URL = '/media/'
 
 CRON_CLASSES = [
     'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
+    'wildlifelicensing.apps.applications.cron.AssessmentRemindersCronJob',
     'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
 
@@ -271,40 +278,3 @@ LOGGING = {
         },
     }
 }
-# Ledger settings
-CMS_URL=env('CMS_URL',None)
-LEDGER_USER=env('LEDGER_USER',None)
-LEDGER_PASS=env('LEDGER_PASS')
-#BPAY settings
-BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
-# BPOINT settings
-BPOINT_CURRENCY='AUD'
-BPOINT_BILLER_CODE=env('BPOINT_BILLER_CODE')
-BPOINT_USERNAME=env('BPOINT_USERNAME')
-BPOINT_PASSWORD=env('BPOINT_PASSWORD')
-BPOINT_MERCHANT_NUM=env('BPOINT_MERCHANT_NUM')
-BPOINT_TEST=True
-# Oscar settings
-from oscar.defaults import *
-OSCAR_ALLOW_ANON_CHECKOUT = True
-OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
-OSCAR_DASHBOARD_NAVIGATION.append(
-    {
-        'label': 'Payments',
-        'icon': 'icon-globe',
-        'children': [
-            {
-                'label': 'Invoices',
-                'url_name': 'payments:invoices-list',
-            },
-            {
-                'label': 'BPAY collections',
-                'url_name': 'payments:bpay-collection-list',
-            },
-            {
-                'label': 'BPOINT transactions',
-                'url_name': 'payments:bpoint-dash-list',
-            },
-        ]
-    }
-)

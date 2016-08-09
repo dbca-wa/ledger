@@ -12,16 +12,14 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.http.response import JsonResponse
 
-
-from jsontableschema.model import SchemaModel
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry
+from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType
 from wildlifelicensing.apps.main import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
-from wildlifelicensing.apps.returns.utils_schema import Schema
+from wildlifelicensing.apps.returns.utils_schema import Schema, create_return_template_workbook
 from wildlifelicensing.apps.returns.utils import format_return
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
@@ -101,8 +99,9 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         for resource in ret.return_type.resources:
             resource_name = resource.get('name')
             schema = Schema(resource.get('schema'))
+            headers = [{"title": f.name, "required": f.required} for f in schema.fields]
             table = {'name': resource_name, 'title': resource.get('title', resource.get('name')),
-                     'headers': schema.headers}
+                     'headers': headers}
 
             try:
                 return_table = ret.returntable_set.get(name=resource_name)
@@ -134,7 +133,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                     workbook = excel.load_workbook_content(path)
 
                     for table in context['tables']:
-                        worksheet = excel.get_sheet(workbook, table.get('name'))
+                        worksheet = excel.get_sheet(workbook, table.get('title')) \
+                                    or excel.get_sheet(workbook, table.get('name'))
                         if worksheet is not None:
                             table_data = excel.TableData(worksheet)
                             schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
@@ -232,7 +232,12 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
 
         kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=ret.licence.holder.email, fromm=self.request.user.email)
+        if ret.proxy_customer is None:
+            to = ret.licence.holder
+        else:
+            to = ret.proxy_customer
+
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
 
         return super(CurateReturnView, self).get_context_data(**kwargs)
 
@@ -307,10 +312,7 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
         if form.is_valid():
             ret = get_object_or_404(Return, pk=args[0])
 
-            if ret.proxy_customer is None:
-                customer = ret.licence.holder
-            else:
-                customer = ret.proxy_customer
+            customer = ret.licence.holder
 
             officer = request.user
 
@@ -324,6 +326,7 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                 'officer': officer,
                 'customer': customer,
                 'ret': ret,
+                'type': form.cleaned_data['type'],
                 'text': form.cleaned_data['text'],
                 'subject': form.cleaned_data['subject'],
                 'to': form.cleaned_data['to'],
@@ -345,3 +348,17 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                     ]
                 },
                 safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)
+
+
+class DownloadReturnTemplate(OfficerOrCustomerRequiredMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        return_type = get_object_or_404(ReturnType, pk=args[0])
+        filename = 'Return_{}_template.xlsx'.format(return_type.licence_type.code)
+        template = return_type.template
+        # if no template in db generates one from the data_descriptor
+        if bool(template):
+            return excel.ExcelFileResponse(template.file, filename)
+        else:
+            wb = create_return_template_workbook(return_type)
+            return excel.WorkbookResponse(wb, filename)

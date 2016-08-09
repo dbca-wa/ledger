@@ -288,10 +288,12 @@
                                         <div class="hidden">
                                             Current Assessments
                                             <table id="currentAssessments" class="table small-table no-margin">
+                                                <col width="50%">
+                                                <col width="50%">
                                                 <thead>
                                                     <tr>
                                                         <th>Assessor</th>
-                                                        <th style="text-align: center">Status</th>
+                                                        <th style="text-align: center">Status / Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -301,7 +303,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <form method="post" action="{% url 'wl_applications:process' data.application.id %}">
+                            <form id="submissionForm" method="post" action="{% url 'wl_applications:process' data.application.id %}">
                                 {% csrf_token %}
                                 <button id="approve" type="submit" name="enterConditions" type="button"
                                         class="btn btn-sm btn-success pull-right disabled"

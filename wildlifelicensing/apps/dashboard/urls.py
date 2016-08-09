@@ -13,8 +13,8 @@ urlpatterns = [
         name='tables_applications_officer'),
     url(r'^dashboard/data/applications/officer/?$', officer.DataTableApplicationsOfficerView.as_view(),
         name='data_application_officer'),
-    url(r'^dashboard/tables/applications/officer/onbehalf/?$', officer.TableApplicationsOfficerOnBehalfView.as_view(),
-        name='tables_applications_officer_onbehalf'),
+    url(r'^dashboard/tables/officer/onbehalf/?$', officer.TablesOfficerOnBehalfView.as_view(),
+        name='tables_officer_onbehalf'),
     url(r'^dashboard/data/applications/officer/onbehalf/?$', officer.DataTableApplicationsOfficerOnBehalfView.as_view(),
         name='data_application_officer_onbehalf'),
     url(r'^dashboard/data/applications/customer/?$', customer.DataTableApplicationCustomerView.as_view(),
@@ -29,12 +29,16 @@ urlpatterns = [
         name='data_licences_officer'),
     url(r'^dashboard/data/licences/customer/?$', customer.DataTableLicencesCustomerView.as_view(),
         name='data_licences_customer'),
+    url(r'^dashboard/bulk-licence-renewal-pdf/?$', officer.BulkLicenceRenewalPDFView.as_view(),
+        name='bulk_licence_renewal_pdf'),
 
     # Returns
     url(r'^dashboard/tables/returns/officer/?$', officer.TableReturnsOfficerView.as_view(),
         name='tables_returns_officer'),
     url(r'^dashboard/data/returns/officer/?$', officer.DataTableReturnsOfficerView.as_view(),
         name='data_returns_officer'),
+    url(r'^dashboard/data/returns/officer/onbehalf/?$', officer.DataTableReturnsOfficerOnBehalfView.as_view(),
+        name='data_returns_officer_onbehalf'),
     url(r'^dashboard/data/returns/customer/?$', customer.DataTableReturnsCustomerView.as_view(),
         name='data_returns_customer'),
 ]

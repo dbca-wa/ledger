@@ -24,7 +24,8 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
 
                 var $contentContainer = $('<div>'),
                     $assessorRow = $('<tr>'),
-                    $viewFeedback = $('<a>').text('View Feedback').attr('data-toggle', 'popover');
+                    $viewFeedback = $('<p>').addClass('center').addClass('no-margin').append(
+                            $('<a>').text('View Feedback').attr('data-toggle', 'popover'));
 
                 $contentContainer.append($('<label>').text("Assessor's Suggested Conditions"));
 

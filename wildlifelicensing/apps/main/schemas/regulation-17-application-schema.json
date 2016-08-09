@@ -123,12 +123,28 @@
                 ],
                 "conditions": 
                 {
+                    "grant": 
+                    [
+                        {
+                            "type": "text_area",
+                            "label": "Provide details of the grant or sponsorship, including name, address and contact details of the organisation funding the project",
+                            "name": "grant_details"
+                        }
+                    ],
+                    "contract": 
+                    [
+                        {
+                            "type": "text_area",
+                            "label": "Provide details of the Client, including name, address and contact details",
+                            "name": "contract_details"
+                        }
+                    ],
                     "other": 
                     [
                         {
                             "type": "text_area",
-                            "label": "Affiliated Organisation / Client / Sponsor",
-                            "name": "financial_details"
+                            "label": "Provide details of who is funding the project or how the project is being funded",
+                            "name": "financial_details_other"
                         }
                     ]
                 }
@@ -143,7 +159,7 @@
         [
             {
                 "type": "text",
-                "label": "Provide relevant qualifications and/or experience details specific to this project (if not already provided in your profile)",
+                "label": "Provide relevant qualifications and/or experience details specific to this project",
                 "name": "qualifications"
             },
             {
@@ -490,12 +506,13 @@
                                                 [
                                                     {
                                                         "type": "text",
-                                                        "label": "Common name / Group name",
-                                                        "name": "survey_tf_common_name"
+                                                        "label": "Group name",
+                                                        "name": "survey_tf_group_name"
                                                     },
                                                     {
-                                                        "type": "text",
-                                                        "label": "Scientific name",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
+                                                        "label": "Scientific or common name",
                                                         "name": "survey_tf_scientific_name"
                                                     }
                                                 ]
@@ -7678,12 +7695,13 @@
                                                 [
                                                     {
                                                         "type": "text",
-                                                        "label": "Common name / Group name",
-                                                        "name": "survey_tft_common_name"
+                                                        "label": "Group name",
+                                                        "name": "survey_tft_group_name"
                                                     },
                                                     {
-                                                        "type": "text",
-                                                        "label": "Scientific name",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
+                                                        "label": "Scientific or common name",
                                                         "name": "survey_tft_scientific_name"
                                                     },
                                                     {
@@ -9415,12 +9433,23 @@
                                     }
                                 },
                                 {
-                                    "type": "checkbox",
-                                    "label": "Is the monitoring targeting species or fauna group?",
+                                    "type": "radiobuttons",
+                                    "label": "Is the monitoring targeting a species or fauna group?",
                                     "name": "monitoring_targeting_species_or_fauna",
+                                    "options": 
+                                    [
+                                        {
+                                            "value": "yes",
+                                            "label": "Yes"
+                                        },
+                                        {
+                                            "value": "no",
+                                            "label": "No"
+                                        }
+                                    ],
                                     "conditions": 
                                     {
-                                        "on": 
+                                        "yes": 
                                         [
                                             {
                                                 "type": "group",
@@ -9431,12 +9460,13 @@
                                                 [
                                                     {
                                                         "type": "text",
-                                                        "label": "Common name / Group name",
-                                                        "name": "monitoring_tft_common_name"
+                                                        "label": "Group name",
+                                                        "name": "monitoring_tft_group_name"
                                                     },
                                                     {
-                                                        "type": "text",
-                                                        "label": "Scientific name",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
+                                                        "label": "Scientific or common name",
                                                         "name": "monitoring_tft_scientific_name"
                                                     }
                                                 ]
@@ -9476,13 +9506,14 @@
                                                 [
                                                     {
                                                         "type": "text",
-                                                        "label": "Common name / Group name",
-                                                        "name": "monitoring_threatened_tft_common_name"
+                                                        "label": "Group name",
+                                                        "name": "monitoring_threatened_group_name"
                                                     },
                                                     {
-                                                        "type": "text",
-                                                        "label": "Scientific name",
-                                                        "name": "monitoring_threatened_tft_scientific_name"
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
+                                                        "label": "Scientific or common name",
+                                                        "name": "monitoring_threatened_scientific_name"
                                                     }
                                                 ]
                                             }
@@ -11655,12 +11686,13 @@
                                                 [
                                                     {
                                                         "type": "text",
-                                                        "label": "Common name / Group name",
-                                                        "name": "research_tft_common_name"
+                                                        "label": "Group name",
+                                                        "name": "research_tft_group_name"
                                                     },
                                                     {
-                                                        "type": "text",
-                                                        "label": "Scientific name",
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
+                                                        "label": "Scientific or common name",
                                                         "name": "research_tft_scientific_name"
                                                     }
                                                 ]
@@ -11700,13 +11732,14 @@
                                                 [
                                                     {
                                                         "type": "text",
-                                                        "label": "Common name / Group name",
-                                                        "name": "research_threatened_tft_common_name"
+                                                        "label": "Group name",
+                                                        "name": "research_threatened_group_name"
                                                     },
                                                     {
-                                                        "type": "text",
-                                                        "label": "Scientific name",
-                                                        "name": "research_threatened_tft_scientific_name"
+                                                        "type": "species",
+                                                        "speciesType": "fauna",
+                                                        "label": "Scientific or common name",
+                                                        "name": "research_threatened_scientific_name"
                                                     }
                                                 ]
                                             }
