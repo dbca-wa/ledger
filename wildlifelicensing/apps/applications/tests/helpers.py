@@ -62,7 +62,7 @@ def get_or_create_assessment(application):
     assessment = Assessment.objects.filter(application=application).first()
     if assessment is None:
         assessment = Assessment.objects.create(application=application, assessor_group=group,
-                                               officer=get_or_create_default_officer(), date_last_reminded=date.today())
+                                               officer=get_or_create_default_officer())
     return assessment
 
 

@@ -280,8 +280,6 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 
         assessment.status = 'awaiting_assessment'
 
-        assessment.date_last_reminded = date.today()
-
         assessment.save()
 
         application.processing_status = determine_processing_status(application)
