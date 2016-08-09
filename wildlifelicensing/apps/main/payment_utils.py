@@ -78,7 +78,7 @@ def is_application_paid(application):
     raise NotImplementedError
 
 
-def is_manual_payement(application):
+def is_manual_payment(application):
     raise NotImplementedError
 
 
