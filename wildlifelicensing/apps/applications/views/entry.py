@@ -55,15 +55,19 @@ class ApplicationEntryBaseView(TemplateView):
 
 class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        try:
-            utils.delete_app_session_data(request.session)
-        except Exception as e:
-            messages.warning(request, 'There was a problem deleting session data: %s' % e)
+#         try:
+#             utils.delete_app_session_data(request.session)
+#         except Exception as e:
+#             messages.warning(request, 'There was a problem deleting session data: %s' % e)
+# 
+#         utils.set_app_session_data(request.session, 'temp_files_dir', tempfile.mkdtemp(dir=settings.MEDIA_ROOT))
+        application = Application.objects.create()
 
-        utils.set_app_session_data(request.session, 'temp_files_dir', tempfile.mkdtemp(dir=settings.MEDIA_ROOT))
+        utils.set_app_session_data(request.session, 'application_id', application.id)
 
         if is_customer(request.user):
-            utils.set_app_session_data(request.session, 'customer_pk', request.user.pk)
+            application.applicant = request.user.pk
+            application.save()
 
             return redirect('wl_applications:select_licence_type', *args, **kwargs)
         else:
@@ -72,27 +76,28 @@ class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
 
 class EditApplicationView(UserCanEditApplicationMixin, View):
     def get(self, request, *args, **kwargs):
-        try:
-            utils.delete_app_session_data(request.session)
-        except Exception as e:
-            messages.warning(request, 'There was a problem deleting session data: %s' % e)
+#         try:
+#             utils.delete_app_session_data(request.session)
+#         except Exception as e:
+#             messages.warning(request, 'There was a problem deleting session data: %s' % e)
+# 
+#         temp_files_dir = tempfile.mkdtemp(dir=settings.MEDIA_ROOT)
+#         utils.set_app_session_data(request.session, 'temp_files_dir', temp_files_dir)
 
-        temp_files_dir = tempfile.mkdtemp(dir=settings.MEDIA_ROOT)
-        utils.set_app_session_data(request.session, 'temp_files_dir', temp_files_dir)
-
-        application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
-        if application is not None:
-            utils.set_app_session_data(request.session, 'customer_pk', application.applicant_profile.user.pk)
-            utils.set_app_session_data(request.session, 'profile_pk', application.applicant_profile.pk)
-            utils.set_app_session_data(request.session, 'data', application.data)
-
-            # copy document files into temp_files_dir
-            for document in application.documents.all():
-                shutil.copyfile(document.file.path, os.path.join(temp_files_dir, document.name))
-
-            if application.hard_copy is not None:
-                shutil.copyfile(application.hard_copy.file.path, os.path.join(temp_files_dir, application.hard_copy.name))
-                utils.set_app_session_data(request.session, 'application_document', application.hard_copy.name)
+#         application = get_object_or_404(Application, pk=args[1]) if len(args) > 1 else None
+#         if application is not None:
+#             utils.set_app_session_data(request.session, 'customer_pk', application.applicant_profile.user.pk)
+#             utils.set_app_session_data(request.session, 'profile_pk', application.applicant_profile.pk)
+#             utils.set_app_session_data(request.session, 'data', application.data)
+# 
+#             # copy document files into temp_files_dir
+#             for document in application.documents.all():
+#                 shutil.copyfile(document.file.path, os.path.join(temp_files_dir, document.name))
+# 
+#             if application.hard_copy is not None:
+#                 shutil.copyfile(application.hard_copy.file.path, os.path.join(temp_files_dir, application.hard_copy.name))
+#                 utils.set_app_session_data(request.session, 'application_document', application.hard_copy.name)
+        utils.set_app_session_data(request.session, 'application_id', args[1])
 
         return redirect('wl_applications:enter_details', *args, **kwargs)
 
@@ -108,7 +113,8 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         if 'select' in request.POST:
-            utils.set_app_session_data(request.session, 'customer_pk', request.POST.get('customer'))
+#             utils.set_app_session_data(request.session, 'customer_pk', request.POST.get('customer'))
+            application
         elif 'create' in request.POST:
             create_customer_form = EmailUserForm(request.POST, email_required=False)
             if create_customer_form.is_valid():
