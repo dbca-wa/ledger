@@ -3,8 +3,23 @@ from datetime import date
 from django.views import generic
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
+from django.template.loader import get_template
+from django.template import Template, Context
+from django.http import HttpResponse
+from pdf import create_invoice_pdf_bytes
+from utils import checkURL
+
 #
 from models import Invoice
+#
+
+class InvoicePDFView(generic.View):
+    def get(self, request, *args, **kwargs):
+        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        response = HttpResponse(content_type='application/pdf')
+        response.write(create_invoice_pdf_bytes('invoice.pdf',invoice))
+
+        return response
 
 class InvoiceDetailView(generic.DetailView):
     model = Invoice
@@ -46,5 +61,15 @@ class InvoicePaymentView(generic.DetailView):
         ctx['years'] = self.year_choices
         if self.request.GET.get('amountProvided') == 'true':
             ctx['amountProvided'] = True
-
+        if self.request.GET.get('redirect_url'):
+            try:
+                checkURL(self.request.GET.get('redirect_url'))
+                ctx['redirect_url'] = self.request.GET.get('redirect_url')
+            except:
+                pass
+        if self.request.GET.get('custom_template'):
+            try:
+                ctx['custom_block'] = get_template(self.request.GET.get('custom_template'))
+            except TemplateDoesNotExist as e:
+                pass
         return ctx

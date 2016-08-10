@@ -1,4 +1,6 @@
 from django.http import HttpResponse, HttpResponseRedirect
+from django.template.loader import get_template
+from django.template import TemplateDoesNotExist
 from wsgiref.util import FileWrapper
 from rest_framework import viewsets, serializers, status, generics
 from rest_framework.renderers import JSONRenderer
@@ -495,7 +497,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
 #                    CHECKOUT                         #
 #                                                     #
 #######################################################
-class checkoutProductSerializer(serializers.Serializer):
+class CheckoutProductSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1,default=1)
 
@@ -506,7 +508,7 @@ class checkoutProductSerializer(serializers.Serializer):
             raise serializers.ValidationError('{} (id={})'.format(str(e),value))
         return value
 
-class checkoutSerializer(serializers.Serializer):
+class CheckoutSerializer(serializers.Serializer):
     card_method = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES, default='payment')
     system = serializers.CharField(max_length=4, min_length=4)
     basket_owner = serializers.IntegerField(required=False)
@@ -519,7 +521,14 @@ class checkoutSerializer(serializers.Serializer):
     checkoutWithToken = serializers.BooleanField(default=False)
     bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
-    products = checkoutProductSerializer(many=True)
+    products = CheckoutProductSerializer(many=True)
+
+    def validate_template(self, value):
+        try:
+            get_template(value)
+        except TemplateDoesNotExist as e:
+            raise serializers.ValidationError(str(e))
+        return value
 
     def validate_system(self, value):
         try:
@@ -571,7 +580,7 @@ class CheckoutCreateView(generics.CreateAPIView):
         ]
     }
     '''
-    serializer_class = checkoutSerializer
+    serializer_class = CheckoutSerializer
     renderer_classes = (JSONRenderer,)
     authentication_classes = [CsrfExemptSessionAuthentication]
 
@@ -588,17 +597,18 @@ class CheckoutCreateView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             #create basket
             createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
-            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(self.get_redirect_value(serializer,'card_method'),
-                                                                                                   self.get_redirect_value(serializer,'basket_owner'),
-                                                                                                   self.get_redirect_value(serializer,'template'),
-                                                                                                   self.get_redirect_value(serializer,'fallback_url'),
-                                                                                                   self.get_redirect_value(serializer,'return_url'),
-                                                                                                   self.get_redirect_value(serializer,'associateInvoiceWithToken'),
-                                                                                                   self.get_redirect_value(serializer,'forceRedirect'),
-                                                                                                   self.get_redirect_value(serializer,'sendEmail'),
-                                                                                                   self.get_redirect_value(serializer,'checkoutWithToken'),
-                                                                                                   self.get_redirect_value(serializer,'bpay_format'),
-                                                                                                   self.get_redirect_value(serializer,'icrn_format')))
+            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
+                                                                                                self.get_redirect_value(serializer,'card_method'),
+                                                                                                self.get_redirect_value(serializer,'basket_owner'),
+                                                                                                self.get_redirect_value(serializer,'template'),
+                                                                                                self.get_redirect_value(serializer,'fallback_url'),
+                                                                                                self.get_redirect_value(serializer,'return_url'),
+                                                                                                self.get_redirect_value(serializer,'associateInvoiceWithToken'),
+                                                                                                self.get_redirect_value(serializer,'forceRedirect'),
+                                                                                                self.get_redirect_value(serializer,'sendEmail'),
+                                                                                                self.get_redirect_value(serializer,'checkoutWithToken'),
+                                                                                                self.get_redirect_value(serializer,'bpay_format'),
+                                                                                                self.get_redirect_value(serializer,'icrn_format')))
 
             return redirect
         except serializers.ValidationError:

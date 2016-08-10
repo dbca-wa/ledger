@@ -34,6 +34,14 @@ def checkURL(url):
     except:
         raise
 
+def systemid_check(system):
+    system = system[1:]
+    if len(system) == 3:
+        system = '0{}'.format(system)
+    elif len(system) > 4:
+        system = system[:4]
+    return system
+
 def validSystem(system_id):
     ''' Check if the system is in the itsystems register.
     :return: Boolean
@@ -77,7 +85,7 @@ def createBasket(product_list,owner,system,force_flush=True):
                 if force_flush:
                     basket.flush()
             else:
-                raise ValidationError('You have a basket that is not completed in this application {}'.format(old_basket.system))
+                raise ValidationError('You have a basket that is not completed in system {}'.format(old_basket.system))
         else:
             basket = Basket()
         # Set the owner and strategy being used to create the basket    

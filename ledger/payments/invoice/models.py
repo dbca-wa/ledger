@@ -40,7 +40,9 @@ class Invoice(models.Model):
 
     @property
     def owner(self):
-        return self.order.user
+        if self.order:
+            return self.order.user
+        return None
 
     @property
     def num_items(self):
