@@ -140,7 +140,7 @@ def _get_authorised_person_names(application):
     authorised_person_names = []
 
     for ap in __find_authorised_persons_dict(application.data):
-        if ap.get('ap_given_names') and ap.get('ap_given_names'):
+        if ap.get('ap_given_names') and ap.get('ap_surname'):
             authorised_person_names.append('%s %s' % (ap['ap_given_names'], ap['ap_surname']))
 
     return authorised_person_names

@@ -83,10 +83,8 @@ class Application(RevisionedMixin):
     licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
-    order_number = models.CharField(max_length=50, blank=True, default='')
 
-    invoice_number = models.CharField(max_length=50, blank=True, default='')
-
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
     def __str__(self):
         return self.reference

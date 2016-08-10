@@ -50,14 +50,19 @@
                         <p><label>Licence Type:</label> {{ application.licence_type.name }}</p>
                         <p><label>Lodgement Number:</label> {{ application.lodgement_number }}-{{ application.lodgement_sequence }}</p>
                         <p><label>Lodgement Date:</label> {{ application.lodgement_date|date:'d/m/Y' }}</p>
-                        {% if application.invoice_number %}
-                            <p><a href="{% url 'payments:invoice-detail' application.invoice_number %}" target="_blank">View Invoice</a></p>
+                        {% if application.invoice_reference %}
+                            <p>
+                                <label>Invoice:</label>
+                                <a href="{% url 'payments:invoice-detail' application.invoice_reference %}" target="_blank">View as HTML</a>
+                                <a class="left-buffer" href="{% url 'payments:invoice-pdf' application.invoice_reference %}" target="_blank">
+                                    Download as PDF
+                                    <img height="20px" src="{% static 'wl/img/pdf.png' %}"/>
+                                 </a>
+                            </p>
                         {% endif %}
                     </div>
                 </div>
-                    <div>
-                        <a type="submit" class="btn btn-primary pull-right" href="{% url 'home' %}">Lodge Application</a>
-                    </div>
+                <a href="{% url 'home' %}">Return to home</a>
             </div>
         </div>
     </div>

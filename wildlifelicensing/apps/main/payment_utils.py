@@ -26,27 +26,51 @@ PAYMENT_STATUS_NOT_REQUIRED = 'not_required'
 PAYMENT_STATUSES = {
     PAYMENT_STATUS_PAID: 'Paid',
     PAYMENT_STATUS_CC_READY: 'Credit Card Ready',
-    PAYMENT_STATUS_AWAITING: 'Awaiting Manual Payment',
-    PAYMENT_STATUS_NOT_REQUIRED: 'Not Required',
+    PAYMENT_STATUS_AWAITING: 'Awaiting Payment',
+    PAYMENT_STATUS_NOT_REQUIRED: 'Payment Not Required',
+}
+
+JSON_REQUEST_HEADER_PARAMS = {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
 }
 
 
-def application_requires_payment(application):
-    return licence_requires_payment(application.licence_type)
-
-
-def licence_requires_payment(licence_type):
+def get_product(application):
     try:
-        product = Product.objects.get(title=licence_type.code_slug)
-
-        selector = Selector()
-        strategy = selector.strategy()
-        purchase_info = strategy.fetch_for_product(product=product)
-
-        return purchase_info.price.excl_tax > 0
-
+        return Product.objects.get(title=application.licence_type.code_slug)
     except Product.DoesNotExist:
-        return False
+        return None
+
+
+def get_application_payment_status(application):
+    """
+
+    :param application:
+    :return: One of PAYMENT_STATUS_PAID, PAYMENT_STATUS_CC_READY, PAYMENT_STATUS_AWAITING or PAYMENT_STATUS_NOT_REQUIRED
+    """
+    invoice = get_object_or_404(Invoice, reference=application.invoice_reference)
+
+    if invoice.amount > 0:
+        payment_status = invoice.payment_status
+
+        if payment_status == 'paid' or payment_status == 'over_paid':
+            return PAYMENT_STATUS_PAID
+        elif invoice.token:
+            return PAYMENT_STATUS_CC_READY
+        else:
+            return PAYMENT_STATUS_AWAITING
+    else:
+        return PAYMENT_STATUS_NOT_REQUIRED
+
+
+def invoke_credit_card_payment(application):
+    invoice = get_object_or_404(Invoice, reference=application.invoice_reference)
+
+    if not invoice.token:
+        raise Exception('Application invoice does have a credit payment token')
+
+    invoice.make_payment()
 
 
 class CheckoutApplicationView(RedirectView):
@@ -66,7 +90,7 @@ class CheckoutApplicationView(RedirectView):
             'fallback_url': error_url,
             'return_url': success_url,
             'forceRedirect': True,
-            'products': [
+            "products": [
                 {"id": product.id}
             ]
         }
@@ -75,54 +99,20 @@ class CheckoutApplicationView(RedirectView):
             reverse('payments:ledger-initial-checkout')
         )
 
-        response = requests.post(url, cookies=request.COOKIES, data=parameters)
-
-        print response.content
+        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
+                                 data=json.dumps(parameters))
 
         return HttpResponse(response.content)
 
 
-def get_product(application):
-    try:
-        return Product.objects.get(title=application.licence_type.code_slug)
-    except Product.DoesNotExist:
-        return None
-
-
-def get_application_payment_status(application):
-    """
-
-    :param application:
-    :return: One of PAYMENT_STATUS_PAID, PAYMENT_STATUS_CC_READY, PAYMENT_STATUS_AWAITING or PAYMENT_STATUS_NOT_REQUIRED
-    """
-    invoice = get_object_or_404(Invoice, reference=application.invoice_number)
-
-    if invoice.amount > 0:
-        payment_status = invoice.payment_status
-
-        if payment_status == 'paid' or payment_status == 'over_paid':
-            return PAYMENT_STATUS_PAID
-        elif invoice.token:
-            return PAYMENT_STATUS_CC_READY
-        else:
-            return PAYMENT_STATUS_AWAITING
-    else:
-        return PAYMENT_STATUS_NOT_REQUIRED
-
-
-class InitiatePayment(RedirectView):
-    # TODO: implementation
-    def get(self, *args, **kwargs):
-        raise NotImplementedError
-
-
 class ManualPaymentView(RedirectView):
-    def get(self, *args, **kwargs):
-        raise NotImplementedError
+    def get(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=args[0])
 
-# if is_application_paid -> issue licence
-# else:
-#   if is_reserved_payment_approved(app):
-#       redirect to InitiatePayment (application)
-#   if is_manual:
-#       redirect to manual page.
+        url = reverse('payments:invoice-payment', args=(application.invoice_reference,))
+
+        params = {
+            'redirect_url': request.GET.get('redirect_url', reverse('wl_home'))
+        }
+
+        return redirect('{}?{}'.format(url, urlencode(params)))
