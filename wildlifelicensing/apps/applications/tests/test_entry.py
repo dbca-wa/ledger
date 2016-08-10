@@ -15,7 +15,7 @@ TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 't
 
 
 class ApplicationEntryTestCase(TestCase):
-    fixtures = ['licences.json']
+    fixtures = ['licences.json', 'countries.json']
 
     def setUp(self):
         self.customer = get_or_create_default_customer()
