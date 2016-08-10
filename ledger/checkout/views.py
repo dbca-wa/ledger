@@ -18,7 +18,7 @@ from oscar.apps.shipping.methods import NoShippingRequired
 from ledger.payments.models import Invoice
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
-from ledger.payments.utils import validSystem, checkURL, isLedgerURL
+from ledger.payments.utils import validSystem, checkURL, isLedgerURL, systemid_check
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -328,7 +328,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         system = self.checkout_session.system()
         icrn_format = self.checkout_session.icrn_format()
         # Generate the string to be used to generate the icrn
-        crn_string = '{0}{1}'.format(system,order_number)
+        crn_string = '{0}{1}'.format(systemid_check(system),order_number)
         if method == 'crn':
             return invoice_facade.create_invoice_crn(
                 order_number,
