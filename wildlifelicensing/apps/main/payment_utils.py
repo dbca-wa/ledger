@@ -1,20 +1,15 @@
-import requests
 import json
 
-from django.views.generic.base import RedirectView
-from django.shortcuts import redirect, get_object_or_404
+import requests
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.shortcuts import redirect, get_object_or_404
 from django.utils.http import urlencode
+from django.views.generic.base import RedirectView
 
-from oscar.apps.partner.strategy import Selector
-
-from ledger.payments.utils import createBasket
 from ledger.catalogue.models import Product
 from ledger.payments.invoice.models import Invoice
-
 from wildlifelicensing.apps.applications.models import Application
-from ledger.settings import LEDGER_PASS
 
 PAYMENT_SYSTEM_ID = 'S369'
 
@@ -49,6 +44,9 @@ def get_application_payment_status(application):
     :param application:
     :return: One of PAYMENT_STATUS_PAID, PAYMENT_STATUS_CC_READY, PAYMENT_STATUS_AWAITING or PAYMENT_STATUS_NOT_REQUIRED
     """
+    if not application.invoice_reference:
+        return PAYMENT_STATUS_NOT_REQUIRED
+
     invoice = get_object_or_404(Invoice, reference=application.invoice_reference)
 
     if invoice.amount > 0:
@@ -79,8 +77,10 @@ class CheckoutApplicationView(RedirectView):
         product = get_product(application)
         user = application.applicant_profile.user.id
 
-        error_url = request.build_absolute_uri(reverse('wl_applications:preview', args=(application.licence_type.code_slug, application.id,)))
-        success_url = request.build_absolute_uri(reverse('wl_applications:complete', args=(application.licence_type.code_slug, application.id,)))
+        error_url = request.build_absolute_uri(
+            reverse('wl_applications:preview', args=(application.licence_type.code_slug, application.id,)))
+        success_url = request.build_absolute_uri(
+            reverse('wl_applications:complete', args=(application.licence_type.code_slug, application.id,)))
 
         parameters = {
             'system': PAYMENT_SYSTEM_ID,

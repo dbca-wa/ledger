@@ -19,6 +19,8 @@ from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.dashboard.forms import LoginForm
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, render_user_name
+from wildlifelicensing.apps.main.payment_utils import get_application_payment_status, PAYMENT_STATUS_AWAITING, \
+    PAYMENT_STATUSES
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +67,18 @@ def render_licence_document(licence):
 def render_download_return_template(ret):
     url = reverse('wl_returns:download_return_template', args=[ret.return_type.pk])
     return '<a href="{}">Download (XLSX)</a>'.format(url)
+
+
+def render_payment(application, redirect_url):
+    status = get_application_payment_status(application)
+    result = '{}'.format(PAYMENT_STATUSES[status])
+    if status == PAYMENT_STATUS_AWAITING:
+        url = '{}?redirect_url={}'.format(
+            reverse('wl_main:manual_payment', args=[application.id]),
+            redirect_url
+        )
+        result += ' <a href="{}">Enter payment</a>'.format(url)
+    return result
 
 
 class DashBoardRoutingView(TemplateView):
