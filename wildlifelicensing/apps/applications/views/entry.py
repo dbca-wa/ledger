@@ -503,7 +503,6 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
                     application.hard_copy = document
 
-            messages.success(request, 'The application was successfully lodged.')
         except Exception as e:
             messages.error(request, 'There was a problem creating the application: %s' % e)
 
@@ -523,8 +522,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
 
         application = get_object_or_404(Application, pk=self.args[1])
 
-        application.order_number = request.GET.get('order_id')
-        application.invoice_number = request.GET.get('invoice_ref')
+        application.invoice_reference = request.GET.get('invoice')
 
         application.save()
 
