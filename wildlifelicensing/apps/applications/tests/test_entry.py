@@ -1,8 +1,9 @@
 import os
 
-from django.core.urlresolvers import reverse
+# from django.core.urlresolvers import reverse
+from django_hosts.resolvers import reverse
 from django.core.files import File
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
@@ -377,7 +378,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertEqual(profile.application_set.first().processing_status, 'new')
 
 
-class ApplicationEntrySecurity(TransactionTestCase):
+class ApplicationEntrySecurity(TestCase):
     def setUp(self):
         self.client = SocialClient()
 
@@ -473,22 +474,11 @@ class ApplicationEntrySecurity(TransactionTestCase):
                              msg="Wrong status code {1} for {0}".format(url, response.status_code))
             self.assertTrue(is_login_page(response))
 
-        # lodge the application
-        self.client.login(customer1.email)
+        # test that logged client can preview now
+        self.assertTrue(self.client.login(customer1.email))
         url = reverse('wl_applications:preview', args=[application.licence_type.code_slug, application.pk])
-        session = self.client.session
-        session['application'] = {
-            'customer_pk': customer1.pk,
-            'profile_pk': application.applicant_profile.pk,
-            'data': {
-                'project_title': 'Test'
-            }
-        }
-        session.save()
-        self.client.post(url)
-        application.refresh_from_db()
-        self.assertEqual('under_review', application.customer_status)
-        # logout
+        response = self.client.get(url, follow=False)
+        self.assertEqual(200, response.status_code)
         self.client.logout()
         for url in my_urls:
             response = self.client.get(url, follow=True)
