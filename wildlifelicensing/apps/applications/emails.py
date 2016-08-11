@@ -5,9 +5,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils.encoding import smart_text
 
-from django_hosts import reverse as hosts_reverse
-
-from wildlifelicensing.apps.emails.emails import TemplateEmailBase
+from wildlifelicensing.apps.emails.emails import TemplateEmailBase, hosts_reverse
 from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
@@ -69,25 +67,32 @@ def send_assessment_requested_email(assessment, request):
 
 
 class ApplicationAssessmentReminderEmail(TemplateEmailBase):
-    subject = 'Reminder: An amendment to you wildlife licensing application is required.'
+    subject = 'Reminder: An assessment to a wildlife licensing application is required.'
     html_template = 'wl/emails/application_assessment_reminder.html'
     txt_template = 'wl/emails/application_assessment_reminder.txt'
 
 
-def send_assessment_reminder_email(assessment, request):
+def send_assessment_reminder_email(assessment, request=None):
     application = assessment.application
 
     email = ApplicationAssessmentReminderEmail()
-    url = request.build_absolute_uri(
-        reverse('wl_applications:enter_conditions_assessor',
-                args=[application.pk, assessment.pk])
-    )
+
+    if request is not None:
+        url = request.build_absolute_uri(
+            reverse('wl_applications:enter_conditions_assessor',
+                    args=(application.pk, assessment.pk))
+        )
+    else:
+        url = hosts_reverse('wl_applications:enter_conditions_assessor', args=(application.pk, assessment.pk))
+
     context = {
         'assessor': assessment.assessor_group,
         'url': url
     }
+
     msg = email.send(assessment.assessor_group.email, context=context)
-    _log_email(msg, application=application, sender=request.user)
+    sender = request.user if request is not None else None
+    _log_email(msg, application=application, sender=sender)
 
 
 class ApplicationAssessmentDoneEmail(TemplateEmailBase):
@@ -220,7 +225,7 @@ class LicenceRenewalNotificationEmail(TemplateEmailBase):
 
 def send_licence_renewal_email_notification(licence):
     email = LicenceRenewalNotificationEmail()
-    url = 'http:' + hosts_reverse('wl_home')
+    url = hosts_reverse('wl_home')
 
     context = {
         'url': url,
@@ -239,7 +244,7 @@ class UserNameChangeNotificationEmail(TemplateEmailBase):
 def send_user_name_change_notification_email(licence):
     email = UserNameChangeNotificationEmail()
 
-    url = 'http:' + hosts_reverse('wl_applications:reissue_licence', args=(licence.pk,))
+    url = hosts_reverse('wl_applications:reissue_licence', args=(licence.pk,))
 
     context = {
         'licence': licence,
@@ -265,10 +270,7 @@ def _log_email(email_message, application, sender=None):
         to = application.applicant_profile.user.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
 
-    if application.proxy_applicant is None:
-        customer = application.applicant_profile.user
-    else:
-        customer = application.proxy_applicant
+    customer = application.applicant_profile.user
 
     officer = sender
 
@@ -281,5 +283,7 @@ def _log_email(email_message, application, sender=None):
         'to': to,
         'fromm': fromm
     }
+
     email_entry = ApplicationLogEntry.objects.create(**kwargs)
+
     return email_entry

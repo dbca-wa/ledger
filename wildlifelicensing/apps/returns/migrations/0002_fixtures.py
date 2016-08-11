@@ -11,7 +11,8 @@ fixture_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../fixtur
 
 
 def load_fixture(apps, schema_editor):
-    call_command('loaddata', os.path.join(fixture_dir, 'returns.json'))
+    # call_command('loaddata', os.path.join(fixture_dir, 'returns.json'))
+    pass
 
 
 class Migration(migrations.Migration):

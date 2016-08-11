@@ -2,6 +2,7 @@ import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.dashboard.views import base
@@ -133,13 +134,25 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
-               'action']
-    order_columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
-                     '']
+    columns = [
+        'lodgement_number',
+        'licence_type',
+        'applicant_profile',
+        'customer_status',
+        'lodgement_date',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        'applicant_profile',
+        'customer_status',
+        'lodgement_date',
+        '']
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
+            'search': lambda self, search: DataTableApplicationCustomerView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance)
         },
         'action': {
@@ -149,6 +162,17 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
             'render': lambda self, instance: base.render_date(instance.lodgement_date)
         },
     })
+
+    @staticmethod
+    def _search_lodgement_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            lodgement_number, lodgement_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(lodgement_number__icontains=lodgement_number) & Q(lodgement_sequence__icontains=lodgement_sequence)
+        else:
+            return Q(lodgement_number__icontains=search)
 
     @staticmethod
     def render_action_column(obj):
@@ -179,11 +203,26 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
 
 class DataTableLicencesCustomerView(base.DataTableBaseView):
     model = WildlifeLicence
-    columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
-    order_columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
+    columns = [
+        'licence_number',
+        'licence_type',
+        'issue_date',
+        'start_date',
+        'end_date',
+        'licence',
+        'action']
+    order_columns = [
+        'licence_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        'issue_date',
+        'start_date',
+        'end_date',
+        '',
+        '']
 
-    columns_helpers = {
+    columns_helpers = dict(base.DataTableBaseView.columns_helpers.items(), **{
         'licence_number': {
+            'search': lambda self, search: DataTableLicencesCustomerView._search_licence_number(search),
             'render': lambda self, instance: base.render_licence_number(instance)
         },
         'issue_date': {
@@ -201,7 +240,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
-    }
+    })
 
     @staticmethod
     def _render_action(instance):
@@ -221,18 +260,50 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             else:
                 return 'Renewable in ' + str(expiry_days - 30) + ' days'
 
+    @staticmethod
+    def _search_licence_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(licence_number__icontains=licence_number) & Q(licence_sequence__icontains=licence_sequence)
+        else:
+            return Q(licence_number__icontains=search)
+
     def get_initial_queryset(self):
         return WildlifeLicence.objects.filter(holder=self.request.user)
 
 
 class DataTableReturnsCustomerView(base.DataTableBaseView):
     model = Return
-    columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', 'licence',
-               'action']
-    order_columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status', '', '']
+    columns = [
+        'lodgement_number',
+        'licence.licence_type',
+        'lodgement_date',
+        'due_date',
+        'status',
+        'licence',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence.licence_type.short_name', 'licence.licence_type.name'],
+        'lodgement_date',
+        'due_date',
+        'status',
+        '',
+        ''
+    ]
     columns_helpers = {
         'lodgement_number': {
             'render': lambda self, instance: instance.lodgement_number
+        },
+        'licence.licence_type': {
+            'render': lambda self, instance: instance.licence.licence_type.display_name,
+            'search': lambda self, search: base.build_field_query(
+                ['licence__licence_type__short_name', 'licence__licence_type__name', 'licence__licence_type__version'],
+                search)
         },
         'lodgement_date': {
             'render': lambda self, instance: base.render_date(instance.lodgement_date)
@@ -242,9 +313,7 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
         },
         'licence': {
             'render': lambda self, instance: base.render_licence_number(instance.licence),
-            'search': lambda self, search: base.build_field_query([
-                'licence__licence_number', 'licence__licence_sequence'],
-                search),
+            'search': lambda self, search: DataTableReturnsCustomerView._search_licence_number(search)
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
@@ -278,6 +347,17 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
                 return 'Current'
         else:
             return dict(Return.STATUS_CHOICES)[status]
+
+    @staticmethod
+    def _search_licence_number(search):
+        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        if search and search.count(' ') == 0 and search.count('-') == 2:
+            components = search.split('-')
+            licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
+
+            return Q(licence__licence_number__icontains=licence_number) & Q(licence__licence_sequence__icontains=licence_sequence)
+        else:
+            return Q(licence__licence_number__icontains=search)
 
     def get_initial_queryset(self):
         return Return.objects.filter(licence__holder=self.request.user).exclude(status='future')

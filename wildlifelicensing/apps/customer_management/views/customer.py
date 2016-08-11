@@ -44,6 +44,11 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
                 'title': 'Proxy'
             },
             {
+                'title': 'Payment',
+                'searchable': False,
+                'orderable': False
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -80,6 +85,11 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
             },
             {
                 'title': 'Cover Letter',
+                'searchable': False,
+                'orderable': False
+            },
+            {
+                'title': 'Renewal Letter',
                 'searchable': False,
                 'orderable': False
             },
@@ -147,7 +157,8 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
 
             kwargs['customer'] = customer
 
-            kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.email, fromm=self.request.user.email)
+            kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.get_full_name(),
+                                                                  fromm=self.request.user.get_full_name())
 
             context = super(CustomerLookupView, self).get_context_data(**kwargs)
 
@@ -185,7 +196,8 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
             return render(request, self.template_name, {'customer': customer,
                                                         'form': emailuser_form})
 
-        messages.success(request, 'The details were updated. Please note that this may require any licences held by the user to be reissued.')
+        messages.success(request,
+                         'The details were updated. Please note that this may require any licences held by the user to be reissued.')
 
         return redirect('wl_customer_management:customer_lookup', customer.pk)
 

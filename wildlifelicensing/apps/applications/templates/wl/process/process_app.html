@@ -99,6 +99,14 @@
                                         <input type="hidden" id="assignee" class="form-control">
                                         <a id="assignToMe" class="pull-right">Assign to me</a>
                                     </div>
+                                    <label>Payment Status</label>
+                                    <p class="no-margin">
+                                        {{ data.payment_status }}
+                                        {% if data.payment_status == 'Awaiting Payment' %}
+                                            <a href="{% url 'wl_main:manual_payment' data.application.id %}?redirect_url={{ request.build_absolute_uri }}"
+                                                class="pull-right">Enter Payment</a>
+                                        {% endif %}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -274,10 +282,12 @@
                                         <div class="hidden">
                                             Current Assessments
                                             <table id="currentAssessments" class="table small-table no-margin">
+                                                <col width="50%">
+                                                <col width="50%">
                                                 <thead>
                                                     <tr>
                                                         <th>Assessor</th>
-                                                        <th style="text-align: center">Status</th>
+                                                        <th style="text-align: center">Status / Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -287,7 +297,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <form method="post" action="{% url 'wl_applications:process' data.application.id %}">
+                            <form id="submissionForm" method="post" action="{% url 'wl_applications:process' data.application.id %}">
                                 {% csrf_token %}
                                 <button id="approve" type="submit" name="enterConditions" type="button"
                                         class="btn btn-sm btn-success pull-right disabled"

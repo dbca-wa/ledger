@@ -1,19 +1,21 @@
+from django.contrib import messages
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import View, TemplateView
 from django.core.urlresolvers import reverse, reverse_lazy
 
 from preserialize.serialize import serialize
 
+from wildlifelicensing.apps.main import payment_utils
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
-from wildlifelicensing.apps.applications.utils import convert_documents_to_url, format_application, \
-    format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
+from wildlifelicensing.apps.applications.utils import append_app_document_to_schema_data, convert_documents_to_url, \
+    format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from wildlifelicensing.apps.applications.mixins import CanPerformAssessmentMixin
@@ -25,8 +27,13 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
+        if application.hard_copy is not None:
+            application.licence_type.application_schema, application.data = \
+                append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
+                                                   application.hard_copy.file.url)
+
         convert_documents_to_url(application.licence_type.application_schema,
-                                              application.data, application.documents.all())
+                                 application.data, application.documents.all())
 
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = application.licence_type.application_schema
@@ -34,11 +41,14 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user.email
+            to = application.applicant_profile.user.get_full_name()
         else:
-            to = application.proxy_applicant.email
+            to = application.proxy_applicant.get_full_name()
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+
+        kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                      get_application_payment_status(application))
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
@@ -46,20 +56,30 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
 
-    def get_context_data(self, **kwargs):
-        application = get_object_or_404(Application, pk=self.args[0])
+    def get(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=args[0])
+        assessment = get_object_or_404(Assessment, pk=args[1])
+
+        if assessment.status == 'assessed':
+            messages.warning(request, 'This assessment has already been concluded and may only be viewed in read-only mode.')
+            return redirect('wl_applications:view_assessment', *args)
+
+        if application.hard_copy is not None:
+            application.licence_type.application_schema, application.data = \
+                append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
+                                                   application.hard_copy.file.url)
 
         convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
 
-        kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['form_structure'] = application.licence_type.application_schema
+        context = {}
 
-        assessment = get_object_or_404(Assessment, pk=self.args[1])
+        context['application'] = serialize(application, posthook=format_application)
+        context['form_structure'] = application.licence_type.application_schema
 
-        kwargs['assessment'] = assessment
-        kwargs['action_url'] = reverse('wl_applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
+        context['assessment'] = serialize(assessment, post_hook=format_assessment)
+        context['action_url'] = reverse('wl_applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
 
-        return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
+        return render(request, self.template_name, context)
 
 
 class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
@@ -67,7 +87,7 @@ class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
         query = request.GET.get('q')
 
         if query is not None:
-            q = Q(code__icontains=query) | Q(text__icontains=query) & Q(one_off=False)
+            q = (Q(code__icontains=query) | Q(text__icontains=query)) & Q(one_off=False)
             qs = Condition.objects.filter(q)
         else:
             qs = Condition.objects.none()
@@ -127,6 +147,7 @@ class SubmitConditionsAssessorView(CanPerformAssessmentMixin, View):
         application = get_object_or_404(Application, pk=self.args[0])
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
+        assessment.assessmentcondition_set.all().delete()
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
             AssessmentCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
                                                assessment=assessment, order=order)
@@ -148,5 +169,7 @@ class SubmitConditionsAssessorView(CanPerformAssessmentMixin, View):
         application.save()
 
         send_assessment_done_email(assessment, request)
+
+        messages.success(request, 'The application assessment has been forwarded back to the Wildlife Licensing office for review.')
 
         return redirect(self.success_url)

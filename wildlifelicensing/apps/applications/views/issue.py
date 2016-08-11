@@ -1,5 +1,3 @@
-import os
-
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
@@ -18,6 +16,7 @@ from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
+from wildlifelicensing.apps.main import payment_utils
 
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -38,20 +37,44 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         else:
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
+            if hasattr(application.licence_type, 'returntype'):
+                return_frequency = application.licence_type.returntype.month_frequency
+            else:
+                return_frequency = -1
+
             kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable,
-                                                            return_frequency=application.licence_type.returntype.month_frequency)
+                                                            return_frequency=return_frequency)
 
         if application.proxy_applicant is None:
-            customer = application.applicant_profile.user
+            to = application.applicant_profile.user
         else:
-            customer = application.proxy_applicant
+            to = application.proxy_applicant
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.email, fromm=self.request.user.email)
+        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
+
+        kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                      get_application_payment_status(application))
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
+
+        payment_status = payment_utils.get_application_payment_status(application)
+
+        if payment_status == payment_utils.PAYMENT_STATUS_AWAITING:
+            messages.error(request, 'Payment is required before licence can be issued')
+
+            return redirect(request.get_full_path())
+
+        # do credit card payment if required
+        if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+            #try:
+                payment_utils.invoke_credit_card_payment(application)
+            #except Exception as e:
+           #     messages.error(request, e)
+
+            #    return redirect(request.get_full_path())
 
         original_issue_date = None
         if application.licence is not None:
@@ -125,11 +148,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
             if application.proxy_applicant is None:
-                to = application.applicant_profile.user.email
+                to = application.applicant_profile.user.get_full_name()
             else:
-                to = application.proxy_applicant.email
+                to = application.proxy_applicant.get_full_name()
 
-            log_entry_form = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
+            log_entry_form = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
 
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
                                                         'issue_licence_form': IssueLicenceForm(purpose=purposes),

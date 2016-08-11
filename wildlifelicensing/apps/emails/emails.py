@@ -1,8 +1,12 @@
 import logging
+import six
+from urlparse import urlparse, urlunparse
+
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader, Template, Context
 from django.utils.html import strip_tags
-import six
+from django.conf import settings
+from django_hosts import reverse
 
 logger = logging.getLogger('log')
 
@@ -13,6 +17,13 @@ def _render(template, context):
     if isinstance(template, six.string_types):
         template = Template(template)
     return template.render(context)
+
+
+def hosts_reverse(name, args=None, kwargs=None):
+    scheme, netloc, path, params, query, fragment = urlparse(reverse(name, args=args, kwargs=kwargs))
+    if netloc.startswith(settings.DEFAULT_HOST + '.' + settings.PARENT_HOST):
+        netloc = netloc.replace(settings.DEFAULT_HOST + '.', '', 1)
+    return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
 class TemplateEmailBase(object):

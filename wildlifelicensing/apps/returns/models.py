@@ -23,6 +23,7 @@ class ReturnType(models.Model):
 
     month_frequency = models.IntegerField(choices=WildlifeLicence.MONTH_FREQUENCY_CHOICES,
                                           default=WildlifeLicence.DEFAULT_FREQUENCY)
+    template = models.FileField(upload_to='return_templates', null=True, blank=True)
 
     def clean(self):
         """

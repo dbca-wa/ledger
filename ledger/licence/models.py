@@ -12,6 +12,9 @@ from ledger.accounts.models import RevisionedMixin
 @python_2_unicode_compatible
 class LicenceType(RevisionedMixin, ActiveMixin):
     name = models.CharField(max_length=256)
+    short_name = models.CharField(max_length=30, blank=True, null=True,
+                                  help_text="The display name that will show in the dashboard")
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
     code = models.CharField(max_length=64)
     act = models.CharField(max_length=256, blank=True)
     statement = models.TextField(blank=True)
@@ -22,7 +25,22 @@ class LicenceType(RevisionedMixin, ActiveMixin):
     keywords = ArrayField(models.CharField(max_length=50), blank=True, default=[])
 
     def __str__(self):
-        return self.name
+        return self.display_name
+
+    @property
+    def display_name(self):
+        result = self.short_name or self.name
+        if self.replaced_by is None:
+            return result
+        else:
+            return '{} (V{})'.format(result, self.version)
+
+    @property
+    def is_obsolete(self):
+        return self.replaced_by is not None
+
+    class Meta:
+        unique_together = ('short_name', 'version')
 
 
 @python_2_unicode_compatible

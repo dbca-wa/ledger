@@ -71,7 +71,7 @@ define([
         });
     }
 
-    function initAdditionalConditions() {
+    function initAdditionalConditions(assessment) {
         var conditions = {},
             $searchConditions = $('#searchConditions'),
             $addCondition = $('#addCondition'),
@@ -126,10 +126,14 @@ define([
             if(!_.includes(_.map(existingConditions, function(condition) {return $(condition).val()}), String(condition.id), 1)) {
                     createConditionTableRow(condition, 'additional');
             } else {
-                window.alert('The specified ondition has already been entered.')
+                window.alert('The specified condition has already been entered.')
             }
 
             $searchConditions.select2('val', '');
+        });
+
+        $.each(assessment.conditions, function(index, condition) {
+            createConditionTableRow(condition, 'additional', false);
         });
     }
 
@@ -141,10 +145,10 @@ define([
     }
 
     return {
-        init: function (application, formStructure) {
+        init: function (assessment, application, formStructure) {
             initApplicationDetailsPopover(application, formStructure);
             initDefaultConditions(application.licence_type.default_conditions);
-            initAdditionalConditions();
+            initAdditionalConditions(assessment);
             initForm();
         }
     }

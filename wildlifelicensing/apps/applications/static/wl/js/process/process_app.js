@@ -501,34 +501,56 @@ define([
 
     function createAssessmentRow(assessment) {
         var $row = $('<tr>'),
-            $actions = $('<p>').addClass('center').addClass('no-margin');
+            $statusColumn = $('<td>').addClass('center'),
+            $remind = $('<p>').addClass('center').addClass('no-margin').append($('<a>').text('Remind')),
+            $reassess = $('<p>').addClass('center').addClass('no-margin').append($('<a>').text('Reassess'));
+
         $row.append('<td>' + assessment.assessor_group.name + '</td>');
-        var statusColumn = $('<td>').addClass('center');
-        if (assessment.status === 'Awaiting Assessment') {
-            var $remind = $('<a>').text('Remind');
 
-            $remind.click(function () {
-                $.post('/applications/remind-assessment/', {
-                    assessmentID: assessment.id,
-                    csrfmiddlewaretoken: csrfToken
-                }, function (data) {
-                    if (data === 'ok') {
-                        window.alert('Reminder sent');
-                    }
-                });
+        $remind.click(function () {
+            $.post('/applications/remind-assessment/', {
+                assessmentID: assessment.id,
+                csrfmiddlewaretoken: csrfToken
+            }, function (data) {
+                if (data === 'ok') {
+                    window.alert('Reminder sent');
+                }
             });
+        });
 
-            $actions.append($remind);
-        } else if (assessment.comment) {
-            var $viewComment = $('<a>').text('View Comment').attr('data-toggle', 'popover');
-            $viewComment.popover({container: 'body', content: assessment.comment, html: true});
-            $actions.append($viewComment);
+        $reassess.click(function () {
+            $.post('/applications/send-for-assessment/', {
+                    applicationID: application.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    assGroupID: assessment.assessor_group.id
+                },
+                function (data) {
+                    $processingStatus.text(data.processing_status);
+
+                    $statusColumn.empty();
+                    $statusColumn.append(data.assessment.status);
+                    $statusColumn.append($remind);
+
+                    determineApplicationApprovable();
+                }
+            );
+        });
+
+        $statusColumn.append(assessment.status);
+
+        if (assessment.status === 'Awaiting Assessment') {
+            $statusColumn.append($remind);
+        } else {
+            if (assessment.comment) {
+                var $viewComment = $('<p>').addClass('center').addClass('no-margin').append(
+                        $('<a>').text('View Comment').attr('data-toggle', 'popover'));
+                $viewComment.popover({container: 'body', content: assessment.comment, html: true});
+                $statusColumn.append($viewComment);
+            }
+            $statusColumn.append($reassess);
         }
 
-        statusColumn.append(assessment.status);
-        statusColumn.append($actions);
-
-        $row.append(statusColumn);
+        $row.append($statusColumn);
         return $row;
     }
 
@@ -556,7 +578,6 @@ define([
             $.post('/applications/send-for-assessment/', {
                     applicationID: application.id,
                     csrfmiddlewaretoken: csrfToken,
-                    status: 'awaiting_assessment',
                     assGroupID: $assessor.val()
                 },
                 function (data) {
@@ -584,7 +605,10 @@ define([
 
     function determineApplicationApprovable() {
         var approvable = false,
-            $approve = $('#approve');
+            $submissionForm = $('#submissionForm'),
+            $approve = $submissionForm.find('#approve'),
+            $decline = $submissionForm.find('#decline'),
+            $buttonClicked;
 
         if ((application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required) {
             if ((application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application) {
@@ -595,6 +619,21 @@ define([
                 }
             }
         }
+
+        // ensure form only submits when either approve (enterConditions) is enabled or decline is clicked
+        $($approve).click(function() {
+            $buttonClicked = $(this);
+        });
+
+        $($decline).click(function() {
+            $buttonClicked = $(this);
+        });
+
+        $submissionForm.submit(function(e) {
+            if($buttonClicked.is($approve) && $approve.hasClass('disabled')) {
+                e.preventDefault();
+            }
+        });
 
         if(approvable) {
             $approve.removeClass('disabled');

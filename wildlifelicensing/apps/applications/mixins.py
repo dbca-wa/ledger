@@ -83,8 +83,10 @@ class UserCanViewApplicationMixin(UserPassesTestMixin):
     raise_exception = True
 
     def get_application(self):
-        if len(self.args) > 1:
+        if len(self.args) == 1:
             return Application.objects.filter(pk=self.args[0]).first()
+        elif len(self.args) == 2:
+            return Application.objects.filter(pk=self.args[1]).first()
         else:
             return None
 
