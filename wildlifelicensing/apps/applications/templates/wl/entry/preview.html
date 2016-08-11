@@ -89,13 +89,6 @@
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
-                    {% if is_proxy_applicant %}
-                        <h3 id="original-application-document" class="section">Original Application Document</h3>
-                        <hr>
-                            <label>Application Document</label>
-                            <p></p>
-                    {% endif %}
-                    <hr>
                     <h3>Disclaimer</h3>
                     <div id="disclaimers" class="children-anchor-point">
                         <div class="form-group">
@@ -109,17 +102,21 @@
                                 <input name="furtherInfoDisclaimer" type="checkbox" />
                                 I acknowledge that if further information or details are requested of me, the application assessment period may exceed
                                 20 working days.
-                           </label> 
+                           </label>
                         </div>
                     </div>
-                    <div>
-                        {% if application_pk %}
-                            <a class="btn btn-default" href="{% url 'wl_applications:enter_details_existing_application' licence_type.code_slug application_pk %}">Edit Application Details</a>
+                    {% if application_pk %}
+                        <a class="btn btn-default" href="{% url 'wl_applications:enter_details_existing_application' licence_type.code_slug application_pk %}">Edit Application Details</a>
+                    {% else %}
+                        <a class="btn btn-default" href="{% url 'wl_applications:enter_details' licence_type.code_slug %}">Edit Application Details</a>
+                    {% endif %}
+                    <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>
+                        {% if requires_payment %}
+                            Proceed to Payment
                         {% else %}
-                            <a class="btn btn-default" href="{% url 'wl_applications:enter_details' licence_type.code_slug %}">Edit Application Details</a>
+                            Lodge Application
                         {% endif %}
-                        <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>Lodge Application</button>
-                    </div>
+                    </button>
                 </form>
             </div>
         </div>

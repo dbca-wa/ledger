@@ -520,12 +520,13 @@ class AddressListener(object):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         if original_instance:
             oscar_address = original_instance.oscar_address.first()
-            oscar_address.line1 = instance.line1
-            oscar_address.line2 = instance.line2
-            oscar_address.line3 = instance.line3
-            oscar_address.line4 = instance.locality
-            oscar_address.state = instance.state
-            oscar_address.postcode = instance.postcode
-            oscar_address.country = Country.objects.get(iso_3166_1_a2=instance.country)
-            oscar_address.profile_address = instance
-            oscar_address.save()
+            if oscar_address is not None:
+                oscar_address.line1 = instance.line1
+                oscar_address.line2 = instance.line2
+                oscar_address.line3 = instance.line3
+                oscar_address.line4 = instance.locality
+                oscar_address.state = instance.state
+                oscar_address.postcode = instance.postcode
+                oscar_address.country = Country.objects.get(iso_3166_1_a2=instance.country)
+                oscar_address.profile_address = instance
+                oscar_address.save()

@@ -2,6 +2,7 @@
 .env
 venv/
 venv2/
+cronjobs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

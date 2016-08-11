@@ -1,6 +1,7 @@
 import os
 
-from django.core.urlresolvers import reverse
+# from django.core.urlresolvers import reverse
+from django_hosts.resolvers import reverse
 from django.core.files import File
 from django.test import TestCase
 
@@ -15,7 +16,7 @@ TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 't
 
 
 class ApplicationEntryTestCase(TestCase):
-    fixtures = ['licences.json']
+    fixtures = ['licences.json', 'countries.json']
 
     def setUp(self):
         self.customer = get_or_create_default_customer()
@@ -323,7 +324,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         post_params = {
-            'project_title': 'Test Title',
+            'project_title-0-0': 'Test Title',
             'lodge': True
         }
 
@@ -333,7 +334,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertTrue('data' in self.client.session['application'])
 
         # check that the profile in the session is the selected profile
-        self.assertEqual(self.client.session['application']['data'].get('project_title', ''), 'Test Title')
+        self.assertEqual(self.client.session['application']['data'][0].get('project_details')[0].get('project_title'), 'Test Title')
 
     def test_enter_details_lodge(self):
         """Testing that a user can preview the details of an application form then lodge the application
@@ -381,6 +382,9 @@ class ApplicationEntrySecurity(TestCase):
     def setUp(self):
         self.client = SocialClient()
 
+    def tearDown(self):
+        self.client.logout()
+
     def test_user_access_other_user(self):
         """
         Test that a user cannot edit/view another user application
@@ -415,6 +419,7 @@ class ApplicationEntrySecurity(TestCase):
         Once the application if lodged the user should not be able to edit it
         """
         customer1 = create_random_customer()
+
         # login as user1
         self.client.login(customer1.email)
 
@@ -469,22 +474,11 @@ class ApplicationEntrySecurity(TestCase):
                              msg="Wrong status code {1} for {0}".format(url, response.status_code))
             self.assertTrue(is_login_page(response))
 
-        # lodge the application
-        self.client.login(customer1.email)
+        # test that logged client can preview now
+        self.assertTrue(self.client.login(customer1.email))
         url = reverse('wl_applications:preview', args=[application.licence_type.code_slug, application.pk])
-        session = self.client.session
-        session['application'] = {
-            'customer_pk': customer1.pk,
-            'profile_pk': application.applicant_profile.pk,
-            'data': {
-                'project_title': 'Test'
-            }
-        }
-        session.save()
-        self.client.post(url)
-        application.refresh_from_db()
-        self.assertEqual('under_review', application.customer_status)
-        # logout
+        response = self.client.get(url, follow=False)
+        self.assertEqual(200, response.status_code)
         self.client.logout()
         for url in my_urls:
             response = self.client.get(url, follow=True)

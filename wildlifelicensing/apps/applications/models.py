@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.db.models.signals import pre_delete
@@ -10,6 +11,7 @@ from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceT
     CommunicationsLogEntry, AssessorGroup
 
 
+@python_2_unicode_compatible
 class Application(RevisionedMixin):
     CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('under_review', 'Under Review'),
                                ('id_required', 'Identification Required'), ('returns_required', 'Returns Completion Required'),
@@ -82,6 +84,15 @@ class Application(RevisionedMixin):
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
 
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    def __str__(self):
+        return self.reference
+
+    @property
+    def reference(self):
+        return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
+
     @property
     def is_assigned(self):
         return self.assigned_officer is not None
@@ -141,6 +152,7 @@ class Assessment(ApplicationRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
     assessor_group = models.ForeignKey(AssessorGroup)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
+    date_last_reminded = models.DateField(null=True, blank=True)
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)

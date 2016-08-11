@@ -2,7 +2,7 @@ from django.conf.urls import url
 
 from wildlifelicensing.apps.applications.views.entry import NewApplicationView, SelectLicenceTypeView, \
     CreateSelectCustomer, EditApplicationView, CheckIdentificationRequiredView, CreateSelectProfileView, \
-    EnterDetailsView, PreviewView, RenewLicenceView
+    EnterDetailsView, PreviewView, ApplicationCompleteView, RenewLicenceView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
@@ -14,7 +14,8 @@ from wildlifelicensing.apps.applications.views.conditions import EnterConditions
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
-from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, AddApplicationLogEntryView, ApplicationLogListView
+from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, AssessorConditionsView, \
+    AddApplicationLogEntryView, ApplicationLogListView
 
 
 urlpatterns = [
@@ -32,6 +33,7 @@ urlpatterns = [
     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details_existing_application'),
     url('^([\w-]+)/preview/$', PreviewView.as_view(), name='preview'),
     url('^([\w-]+)/preview/([0-9]+)/$', PreviewView.as_view(), name='preview'),
+    url('^([\w-]+)/complete/([0-9]+)/$', ApplicationCompleteView.as_view(), name='complete'),
     url('^renew-licence/([0-9]+)/$', RenewLicenceView.as_view(), name='renew_licence'),
 
     # process
@@ -68,5 +70,6 @@ urlpatterns = [
     url('^preview-licence/([0-9]+)/$', PreviewLicenceView.as_view(), name='preview_licence'),
 
     # view
-    url('^view-application/([0-9]+)/$', ViewReadonlyView.as_view(), name='view_application')
+    url('^view-application/([0-9]+)/$', ViewReadonlyView.as_view(), name='view_application'),
+    url('^view-assessment/([0-9]+)/assessment/([0-9]+)/$', AssessorConditionsView.as_view(), name='view_assessment')
 ]

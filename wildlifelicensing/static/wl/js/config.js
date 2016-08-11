@@ -3,7 +3,7 @@ require.config({
     paths: {
         'jQuery': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min',
         'bootstrap': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/js/bootstrap.min',
-        'bootstrap-datetimepicker': '//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.7.14/js/bootstrap-datetimepicker.min',
+        'bootstrap-datetimepicker': '//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min',
         'select2': '//static.dpaw.wa.gov.au/static/libs/select2/3.5.4/select2.min',
         'handlebars': '//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.amd.min',
         'handlebars.runtime': '//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.runtime.amd.min',

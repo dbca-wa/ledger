@@ -1,7 +1,8 @@
 define(['jQuery', 'bootstrap-datetimepicker'], function($) {
     return {
         initialise: function() {
-            var $issueLicenceForm = $('#issueLicenceForm');
+            var $issueLicenceForm = $('#issueLicenceForm'),
+                $issueButton = $('#issue');
 
             // initialise all datapickers
             $("input[id$='date']").each(function() {
@@ -10,9 +11,15 @@ define(['jQuery', 'bootstrap-datetimepicker'], function($) {
                 });
             });
 
-            $('#issue').click(function(e) {
-                $issueLicenceForm.submit();
+            $issueButton.click(function(e) {
+                if(!$(this).hasClass('disabled')) {
+                    $issueLicenceForm.submit();
+                }
             });
+
+            if($issueButton.hasClass('disabled')) {
+                $issueButton.tooltip({});
+            }
 
             $('#previewLicence').click(function(e) {
                 $(this).attr("href", this.href + '?' + $issueLicenceForm.serialize());

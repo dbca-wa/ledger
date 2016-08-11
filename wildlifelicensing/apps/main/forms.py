@@ -1,8 +1,11 @@
 import os
 import json
 from datetime import datetime
+
 from django import forms
 from django.contrib.postgres.forms import JSONField
+
+from dateutil.relativedelta import relativedelta
 
 from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
 
@@ -12,7 +15,7 @@ DATE_FORMAT = '%d/%m/%Y'
 class BetterJSONField(JSONField):
     """
     A form field for the JSONField.
-    It fixes the double 'stringification' (see prepare_value)
+    It fixes the double 'stringification', avoid the null text and indents the json (see prepare_value).
     """
 
     def __init__(self, **kwargs):
@@ -20,11 +23,13 @@ class BetterJSONField(JSONField):
         super(JSONField, self).__init__(**kwargs)
 
     def prepare_value(self, value):
+        if value is None:
+            return ""
         if isinstance(value, basestring):
             # already a string
             return value
         else:
-            return json.dumps(value)
+            return json.dumps(value, indent=4)
 
 
 class IdentificationForm(forms.Form):
@@ -47,7 +52,7 @@ class IdentificationForm(forms.Form):
 class IssueLicenceForm(forms.ModelForm):
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'purpose',
+        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'purpose', 'locations',
                   'cover_letter_message']
 
     def __init__(self, *args, **kwargs):
@@ -71,11 +76,7 @@ class IssueLicenceForm(forms.ModelForm):
 
             self.fields['issue_date'].localize = False
 
-            try:
-                one_year_today = today_date.replace(year=today_date.year + 1)
-            except ValueError:
-                one_year_today = today_date + \
-                    (datetime.date(today_date.year + 1, 1, 1) - datetime.date(today_date.year, 1, 1))
+            one_year_today = today_date + relativedelta(years=1, days=-1)
 
             self.fields['end_date'].initial = one_year_today.strftime(DATE_FORMAT)
 
