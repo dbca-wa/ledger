@@ -10,18 +10,14 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.lib.units import inch
 from reportlab.lib import colors
-from svglib.svglib import svg2rlg
 
 from django.core.files import File
 from django.conf import settings
 
-from wildlifelicensing.apps.main.helpers import render_user_name
-
 from ledger.accounts.models import Document
 
-DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img',
-                                'dpaw_logo.png')
-
+DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dpaw_logo.png')
+DPAW_HEADER_LOGO_SVG = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','logo-monochrome.svg')
 BPAY_LOGO = os.path.join(settings.BASE_DIR, 'media', 'BPAY_2012_PORT_BLUE.png')
 
 HEADER_MARGIN = 10
@@ -108,16 +104,16 @@ class Remittance(Flowable):
         current_y -= 20
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(current_x, current_y, 'ABN: 38 052 249 024')
-        
+        self.current_y = current_y
     
     def __payment_line(self):
         canvas = self.canv
         current_y, current_x = self.current_y, self.current_x
         bpay_logo = ImageReader(BPAY_LOGO)
-        current_y -= 40
+        #current_y -= 40
         # Pay By Cheque
         cheque_x = current_x + 4 * inch
-        cheque_y = current_y -50
+        cheque_y = current_y -30
         canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(cheque_x, cheque_y, 'Pay By Cheque:')
         canvas.setFont(DEFAULT_FONTNAME, 9)
@@ -125,13 +121,15 @@ class Remittance(Flowable):
         canvas.drawString(cheque_x, cheque_y, 'Make cheque payable to: Department of Parks and Wildlife')
         cheque_y -= 15
         canvas.drawString(cheque_x, cheque_y, 'Mail to: Department of Parks and Wildlife')
-        
-        
+        cheque_y -= 15
+        canvas.drawString(cheque_x + 32, cheque_y, 'Locked Bag 30')
+        cheque_y -= 15
+        canvas.drawString(cheque_x + 32, cheque_y, 'Bentley Delivery Centre WA 6983')
         # Outer BPAY Box
-        canvas.rect(current_x,current_y - 40,2.3*inch,-1.2*inch)
+        canvas.rect(current_x,current_y - 25,2.3*inch,-1.2*inch)
         canvas.setFillColorCMYK(0.8829,0.6126,0.0000,0.5647)
         # Move into bpay box
-        current_y -= 10
+        current_y += 5
         box_pos = current_x + 0.1 * inch
         bpay_logo_size = bpay_logo.getSize()
         canvas.drawImage(bpay_logo, box_pos, current_y - (bpay_logo_size[1]/12 * 1.7), height= bpay_logo_size[1]/12,width=bpay_logo_size[0]/12, mask='auto')
@@ -150,13 +148,28 @@ class Remittance(Flowable):
         canvas.drawString(box_pos, info_y - 0.65 * inch, 'Contact your bank or financial institution to make')
         canvas.drawString(box_pos, info_y - 0.75 * inch, 'this payment from your cheque, savings, debit or')
         canvas.drawString(box_pos, info_y - 0.85 * inch, 'transaction account. More info: www.bpay.com.au')
+        
+        self.current_y = current_y
     
     def __footer_line(self):
-        pass
+        canvas = self.canv
+        current_y, current_x = self.current_y, self.current_x
+        current_y -= 2 * inch
+        canvas.setFont(DEFAULT_FONTNAME, LARGE_FONTSIZE)
+        canvas.setFillColor(colors.black)
+        canvas.drawString(current_x, current_y, 'Invoice Number')
+        canvas.drawString(PAGE_WIDTH/3, current_y, 'Invoice Date')
+        canvas.drawString((PAGE_WIDTH/3) * 2, current_y, 'Invoice Total')
+        current_y -= 20
+        canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
+        canvas.drawString(current_x, current_y, self.invoice.number)
+        canvas.drawString(PAGE_WIDTH/3, current_y, self.invoice.created.strftime(DATE_FORMAT))
+        canvas.drawString((PAGE_WIDTH/3) * 2, current_y, '${}'.format(self.invoice.amount))
     
     def draw(self):
         self.__logo_line()
         self.__payment_line()
+        self.__footer_line()
 
 
 def _create_header(canvas, doc, draw_page_number=True):
@@ -166,8 +179,6 @@ def _create_header(canvas, doc, draw_page_number=True):
     current_y = PAGE_HEIGHT - HEADER_MARGIN
 
     dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO)
-
-    #dpaw_header_logo = svg2rlg(str(DPAW_HEADER_LOGO))
     dpaw_header_logo_size = dpaw_header_logo.getSize()
 
     canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - dpaw_header_logo_size[1],height=dpaw_header_logo_size[1], mask='auto')
@@ -181,25 +192,28 @@ def _create_header(canvas, doc, draw_page_number=True):
     # Invoice address details
     invoice_details_offset = 30
     current_y -= 20
-    current_x = HEADER_MARGIN + 471
     invoice = doc.invoice
-    #write Invoice details
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
+    current_x = PAGE_MARGIN + 5
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.owner.get_full_name())
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,invoice.owner.username)
+    current_x += 454
+    #write Invoice details
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),'Date')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Page')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,str(canvas.getPageNumber()))
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Invoice Number')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, invoice.reference)
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, invoice.number)
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Total(AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, str(invoice.amount))
     canvas.restoreState()
     
 def _create_invoice(invoice_buffer, invoice):
-    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN + 300, PAGE_WIDTH - 2 * PAGE_MARGIN,
-                             PAGE_HEIGHT -485 , id='EveryPagesFrame',showBoundary=0)
+    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN + 250, PAGE_WIDTH - 2 * PAGE_MARGIN,
+                             PAGE_HEIGHT -430 , id='EveryPagesFrame',showBoundary=0)
     remit_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
-                             PAGE_HEIGHT - 550, id='RemitFrame',showBoundary=0)
+                             PAGE_HEIGHT - 600, id='RemitFrame',showBoundary=0)
     every_page_template = PageTemplate(id='EveryPages', frames=[every_page_frame,remit_frame], onPage=_create_header)
     
 
@@ -230,9 +244,9 @@ def _create_invoice(invoice_buffer, invoice):
                 val,
                 item.description,
                 item.quantity,
-                item.line_price_before_discounts_excl_tax,
-                (item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
-                item.line_price_before_discounts_incl_tax
+                '${}'.format(item.line_price_before_discounts_excl_tax),
+                '${}'.format(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
+                '${}'.format(item.line_price_before_discounts_incl_tax)
             ]
         )
         val += 1
