@@ -112,14 +112,22 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
         return super(CreateSelectCustomer, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
+        try:
+            application = utils.get_session_application(request.session)
+        except Exception as e:
+            messages.error(request, e.message)
+            return redirect('new_application')
+
         if 'select' in request.POST:
 #             utils.set_app_session_data(request.session, 'customer_pk', request.POST.get('customer'))
-            application
+            application.applicant = request.POST.get('customer')
+            application.save()
         elif 'create' in request.POST:
             create_customer_form = EmailUserForm(request.POST, email_required=False)
             if create_customer_form.is_valid():
                 customer = create_customer_form.save()
-                utils.set_app_session_data(request.session, 'customer_pk', customer.id)
+                application.application = customer.id
+                application.save()
             else:
                 context = {'create_customer_form': create_customer_form}
                 return render(request, self.template_name, context)
@@ -153,15 +161,21 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
     form_class = IdentificationForm
 
     def get(self, *args, **kwargs):
-        licence_type = get_object_or_404(WildlifeLicenceType, code_slug=args[1])
-
         try:
-            applicant = utils.determine_applicant(self.request)
-        except utils.SessionDataMissingException as e:
-            messages.error(self.request, six.text_type(e))
-            return redirect('wl_applications:create_select_customer')
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('new_application')
 
-        if licence_type.identification_required and applicant.identification is None:
+#         licence_type = application.licence_type
+# 
+#         try:
+#             applicant = utils.determine_applicant(self.request)
+#         except utils.SessionDataMissingException as e:
+#             messages.error(self.request, six.text_type(e))
+#             return redirect('wl_applications:create_select_customer')
+
+        if application.licence_type.identification_required and application.applicant.identification is None:
             return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
         else:
             return redirect('wl_applications:create_select_profile', args[1], **kwargs)
@@ -173,16 +187,22 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
 
     def form_valid(self, form):
         try:
-            applicant = utils.determine_applicant(self.request)
-        except utils.SessionDataMissingException as e:
-            messages.error(self.request, six.text_type(e))
-            return redirect('wl_applications:create_select_customer')
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('new_application')
+        
+#         try:
+#             applicant = utils.determine_applicant(self.request)
+#         except utils.SessionDataMissingException as e:
+#             messages.error(self.request, six.text_type(e))
+#             return redirect('wl_applications:create_select_customer')
 
-        if applicant.identification is not None:
-            applicant.identification.delete()
+        if application.applicant.identification is not None:
+            application.applicant.identification.delete()
 
-        applicant.identification = Document.objects.create(file=self.request.FILES['identification_file'])
-        applicant.save()
+        application.applicant.identification = Document.objects.create(file=self.request.FILES['identification_file'])
+        application.applicant.save()
 
         # update any other applications for this user that are awaiting ID upload
         for application in Application.objects.filter(applicant_profile__user=applicant):
@@ -197,16 +217,24 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/create_select_profile.html'
 
     def get_context_data(self, **kwargs):
-        if len(self.args) > 1:
-            kwargs['application_pk'] = self.args[1]
-
         try:
-            applicant = utils.determine_applicant(self.request)
-        except utils.SessionDataMissingException as e:
-            messages.error(self.request, six.text_type(e))
-            return redirect('wl_applications:create_select_customer')
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('new_application')
+        
+#         if len(self.args) > 1:
+#             kwargs['application_pk'] = self.args[1]
 
-        profile_exists = applicant.profile_set.count() > 0
+        kwargs['application_pk'] = application.id
+
+#         try:
+#             applicant = utils.determine_applicant(self.request)
+#         except utils.SessionDataMissingException as e:
+#             messages.error(self.request, six.text_type(e))
+#             return redirect('wl_applications:create_select_customer')
+
+        profile_exists = application.applicant.profile_set.count() > 0
 
         if utils.is_app_session_data_set(self.request.session, 'profile_pk'):
             selected_profile = Profile.objects.get(id=utils.get_app_session_data(self.request.session, 'profile_pk'))

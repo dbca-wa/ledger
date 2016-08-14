@@ -207,6 +207,18 @@ def delete_app_session_data(session):
         del session['application']
 
 
+def get_session_application(session):
+    application_id = get_app_session_data(session, 'application_id'):
+
+    if application_id is None:
+        raise Exception('Application not in Session')
+
+    try:
+        return Application.objects.get(id=get_app_session_data(session, application_id))
+    except Application.DoesNotExist:
+        raise Exception('Application not found for application_id {}'.format(application_id)
+
+
 def clone_application_for_renewal(application, save=False):
     application.customer_status = 'draft'
     application.processing_status = 'renewal'
