@@ -155,8 +155,8 @@ def _get_species(application):
                 if len(species) > 0:
                     return species
             if isinstance(item, dict):
-                if 'species_and_count' in item:
-                    return item['species_and_count']
+                if 'species_summary' in item:
+                    return item['species_summary']
                 else:
                     for value in item.values():
                         if isinstance(value, list):
@@ -168,9 +168,9 @@ def _get_species(application):
 
     species_names_and_count = []
 
-    for ap in __find_species_dict(application.data):
-        if ap.get('species_name') and ap.get('species_count'):
-            species_names_and_count.append('%s %s' % (ap['species_name'], ap['species_count']))
+    for s in __find_species_dict(application.data):
+        if s.get('species_name') and s.get('species_count'):
+            species_names_and_count.append((s['species_name'], s['species_count']))
 
     return species_names_and_count
 
@@ -246,10 +246,14 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     species = _get_species(application)
     if len(species) > 0:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        species_paragraph = [Paragraph(s, styles['Left']) for s in species]
-        elements.append(Table([[Paragraph('Species', styles['BoldLeft']), species_paragraph]],
-                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
-                              style=licence_table_style))
+        species_names = [Paragraph(s[0], styles['Left']) for s in species]
+        species_count = [Paragraph(s[1], styles['Left']) for s in species]
+        section_width = (PAGE_WIDTH - (2 * PAGE_MARGIN) - 100) / 2
+
+        elements.append(Table([[Paragraph('Species', styles['BoldLeft']), Paragraph('Name', styles['BoldLeft']),
+                                Paragraph('Count', styles['BoldLeft'])],
+                               ['', species_names, species_count]],
+                              colWidths=(100, section_width, section_width), style=licence_table_style))
 
     # additional information
     if licence.additional_information:
