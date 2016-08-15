@@ -248,11 +248,12 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         species_names = [Paragraph(s[0], styles['Left']) for s in species]
         species_count = [Paragraph(s[1], styles['Left']) for s in species]
+        section_width = (PAGE_WIDTH - (2 * PAGE_MARGIN) - 100) / 2
 
         elements.append(Table([[Paragraph('Species', styles['BoldLeft']), Paragraph('Name', styles['BoldLeft']),
                                 Paragraph('Count', styles['BoldLeft'])],
                                ['', species_names, species_count]],
-                              colWidths=(100, 200, 200), style=licence_table_style))
+                              colWidths=(100, section_width, section_width), style=licence_table_style))
 
     # additional information
     if licence.additional_information:
