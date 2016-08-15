@@ -1,10 +1,13 @@
 from django import forms
 from datetime import datetime, date
 
+from wildlifelicensing.apps.main.models import Region
+
 
 class ReportForm(forms.Form):
     from_date = forms.DateField(required=True)
     to_date = forms.DateField(required=True)
+    regions = forms.ModelMultipleChoiceField(queryset=Region.objects.all(), required=False)
 
     def __init__(self, *args, **kwargs):
         super(ReportForm, self).__init__(*args, **kwargs)

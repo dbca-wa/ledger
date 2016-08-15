@@ -8,10 +8,11 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery', 'bootstrap-datetimepicker'], function ($) {
+    require(['jQuery', 'bootstrap-datetimepicker', 'select2'], function ($) {
         $("[name$='date']").datetimepicker({
             format: 'DD/MM/YYYY'
         });
+{#        $("select").select2({});#}
     });
 {% endblock %}
 
@@ -67,6 +68,9 @@
                         </div>
                         <div class="col-md-4">
                             {% bootstrap_field form.to_date %}
+                        </div>
+                        <div class="col-md-4">
+                            {% bootstrap_field form.regions %}
                         </div>
                     </div>
                     <div class="row">
