@@ -135,7 +135,7 @@ def prepend_url_to_files(item, data, root_url):
                     data[item['name']] = root_url + data[item['name']]
 
 
-def convert_documents_to_url(data, document_queryset):
+def convert_documents_to_url(data, document_queryset, suffix):
 #     if item is not None:
 #         if isinstance(item, list) and isinstance(data, list):
 #             for i, child in enumerate(item):
@@ -157,17 +157,19 @@ def convert_documents_to_url(data, document_queryset):
 #                             pass
     if isinstance(data, list):
         for item in data:
-            convert_documents_to_url(item, document_queryset)
+            convert_documents_to_url(item, document_queryset, '')
     else:
         for item, value in data.iteritems():
             if isinstance(value, list):
-                convert_documents_to_url(value, document_queryset)
+                for rep in xrange(0, len(value)):
+                    convert_documents_to_url(value[rep], document_queryset, '{}-{}'.format(suffix, rep))
             else:
                 try:
                     data[item] = document_queryset.get(name=value).file.url
                 except Document.DoesNotExist:
                     try:
-                        data[item] = document_queryset.get(name=item).file.url
+                        print '{}{}-0'.format(item, suffix)
+                        data[item] = document_queryset.get(name='{}{}-0'.format(item, suffix)).file.url
                     except Document.DoesNotExist:
                         pass
 

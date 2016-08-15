@@ -358,9 +358,13 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             amendments = AmendmentRequest.objects.filter(application=application).filter(status='requested')
             kwargs['amendments'] = amendments
 
-        kwargs['application_document'] = application.hard_copy.file.url
+        if application.hard_copy is not None:
+            kwargs['application_document'] = application.hard_copy.file.url
 
-        utils.convert_documents_to_url(application.data, application.documents.all())
+        if application.data:
+            utils.convert_documents_to_url(application.data, application.documents.all(), '')
+
+            print application.data
 
         kwargs['data'] = application.data
 
