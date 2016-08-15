@@ -146,6 +146,35 @@ def _get_authorised_person_names(application):
     return authorised_person_names
 
 
+def _get_species(application):
+    def __find_species_dict(data):
+        species = []
+        for item in data:
+            if isinstance(item, list):
+                species = __find_species_dict(item)
+                if len(species) > 0:
+                    return species
+            if isinstance(item, dict):
+                if 'species_summary' in item:
+                    return item['species_summary']
+                else:
+                    for value in item.values():
+                        if isinstance(value, list):
+                            species = __find_species_dict(value)
+                            if len(species) > 0:
+                                return species
+
+        return species
+
+    species_names_and_count = []
+
+    for s in __find_species_dict(application.data):
+        if s.get('species_name') and s.get('species_count'):
+            species_names_and_count.append((s['species_name'], s['species_count']))
+
+    return species_names_and_count
+
+
 def _create_licence(licence_buffer, licence, application, site_url, original_issue_date):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
@@ -208,8 +237,35 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     authorised_persons = _get_authorised_person_names(application)
     if len(authorised_persons) > 0:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        authorized_persons = [Paragraph(ap, styles['Left']) for ap in authorised_persons]
-        elements.append(Table([[Paragraph('Authorised Persons', styles['BoldLeft']), authorized_persons]],
+        authorised_persons_paragraph = [Paragraph(ap, styles['Left']) for ap in authorised_persons]
+        elements.append(Table([[Paragraph('Authorised Persons', styles['BoldLeft']), authorised_persons_paragraph]],
+                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
+                              style=licence_table_style))
+
+    # species
+    species = _get_species(application)
+    if len(species) > 0:
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        species_names = [Paragraph(s[0], styles['Left']) for s in species]
+        species_count = [Paragraph(s[1], styles['Left']) for s in species]
+        section_width = (PAGE_WIDTH - (2 * PAGE_MARGIN) - 100) / 2
+
+        elements.append(Table([[Paragraph('Species', styles['BoldLeft']), Paragraph('Name', styles['BoldLeft']),
+                                Paragraph('Count', styles['BoldLeft'])],
+                               ['', species_names, species_count]],
+                              colWidths=(100, section_width, section_width), style=licence_table_style))
+
+    # additional information
+    if licence.additional_information:
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        additional_information_paragraphs = []
+        for paragraph in licence.additional_information.split('\r\n'):
+            if paragraph:
+                additional_information_paragraphs.append(Paragraph(paragraph, styles['Left']))
+
+        elements.append(Table([[Paragraph('Additional Information', styles['BoldLeft']),
+                                additional_information_paragraphs]],
                               colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
                               style=licence_table_style))
 
