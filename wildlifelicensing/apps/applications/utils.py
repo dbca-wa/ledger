@@ -135,20 +135,39 @@ def prepend_url_to_files(item, data, root_url):
                     data[item['name']] = root_url + data[item['name']]
 
 
-def convert_documents_to_url(item, data, document_queryset):
-    if item is not None:
-        if isinstance(item, list) and isinstance(data, list):
-            for i, child in enumerate(item):
-                convert_documents_to_url(child, data[i], document_queryset)
-        elif 'children' in item:
-            for child in item['children']:
-                for child_data in data[item['name']]:
-                    convert_documents_to_url(child, child_data, document_queryset)
-        else:
-            if isinstance(item, dict) and item.get('type', '') == 'file':
-                if item['name'] in data and len(data[item['name']]) > 0:
+def convert_documents_to_url(data, document_queryset):
+#     if item is not None:
+#         if isinstance(item, list) and isinstance(data, list):
+#             for i, child in enumerate(item):
+#                 convert_documents_to_url(child, data[i], document_queryset)
+#         elif 'children' in item:
+#             for child in item['children']:
+#                 for child_data in data[item['name']]:
+#                     convert_documents_to_url(child, child_data, document_queryset)
+#         else:
+#             if isinstance(item, dict) and item.get('type', '') == 'file':
+#                 if item['name'] in data and len(data[item['name']]) > 0:
+#                     try:
+#                         data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
+#                     except Document.DoesNotExist:
+#                         try:
+#                             print item['name']
+#                             data[item['name']] = document_queryset.get(name=item['name']).file.url
+#                         except Document.DoesNotExist:
+#                             pass
+    if isinstance(data, list):
+        for item in data:
+            convert_documents_to_url(item, document_queryset)
+    else:
+        for item, value in data.iteritems():
+            if isinstance(value, list):
+                convert_documents_to_url(value, document_queryset)
+            else:
+                try:
+                    data[item] = document_queryset.get(name=value).file.url
+                except Document.DoesNotExist:
                     try:
-                        data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
+                        data[item] = document_queryset.get(name=item).file.url
                     except Document.DoesNotExist:
                         pass
 
@@ -208,15 +227,15 @@ def delete_app_session_data(session):
 
 
 def get_session_application(session):
-    application_id = get_app_session_data(session, 'application_id'):
+    application_id = get_app_session_data(session, 'application_id')
 
     if application_id is None:
         raise Exception('Application not in Session')
 
     try:
-        return Application.objects.get(id=get_app_session_data(session, application_id))
+        return Application.objects.get(id=application_id)
     except Application.DoesNotExist:
-        raise Exception('Application not found for application_id {}'.format(application_id)
+        raise Exception('Application not found for application_id {}'.format(application_id))
 
 
 def clone_application_for_renewal(application, save=False):

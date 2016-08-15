@@ -51,17 +51,17 @@ class Application(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
-    licence_type = models.ForeignKey(WildlifeLicenceType)
+    licence_type = models.ForeignKey(WildlifeLicenceType, blank=True, null=True)
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
-    data = JSONField()
+    data = JSONField(blank=True, null=True)
     documents = models.ManyToManyField(Document)
     hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
     correctness_disclaimer = models.BooleanField(default=False)
     further_information_disclaimer = models.BooleanField(default=False)
 
     applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='applicant')
-    applicant_profile = models.ForeignKey(Profile)
+    applicant_profile = models.ForeignKey(Profile, blank=True, null=True)
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
