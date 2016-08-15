@@ -65,6 +65,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
+            print('form', issue_licence_form.fields['regions'])
             licence.licence_type = application.licence_type
             licence.profile = application.applicant_profile
             licence.holder = application.applicant_profile.user
@@ -96,6 +97,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                                              request.build_absolute_uri(reverse('home')))
 
             licence.save()
+
+            issue_licence_form.save_m2m()
 
             licence_issued.send(sender=self.__class__, wildlife_licence=licence)
 

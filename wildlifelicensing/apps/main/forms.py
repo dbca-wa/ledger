@@ -52,7 +52,7 @@ class IdentificationForm(forms.Form):
 class IssueLicenceForm(forms.ModelForm):
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'purpose', 'locations',
+        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose', 'locations',
                   'additional_information', 'cover_letter_message']
 
     def __init__(self, *args, **kwargs):
