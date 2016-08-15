@@ -168,9 +168,9 @@ def _get_species(application):
 
     species_names_and_count = []
 
-    for ap in __find_species_dict(application.data):
-        if ap.get('species_name') and ap.get('species_count'):
-            species_names_and_count.append((ap['species_name'], ap['species_count']))
+    for s in __find_species_dict(application.data):
+        if s.get('species_name') and s.get('species_count'):
+            species_names_and_count.append((s['species_name'], s['species_count']))
 
     return species_names_and_count
 
