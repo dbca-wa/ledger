@@ -39,6 +39,12 @@ class Invoice(models.Model):
             return None
 
     @property
+    def number(self):
+        length = len(str(self.id))
+        val = '0'
+        return '{}{}'.format((val*(6-length)),self.id)
+
+    @property
     def owner(self):
         if self.order:
             return self.order.user
