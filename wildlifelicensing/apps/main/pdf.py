@@ -299,7 +299,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
                           Paragraph(address.country.name, styles['Left'])]
     delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
-                              [Paragraph(render_user_name(application.applicant_profile.user),
+                              [Paragraph(render_user_name(application.applicant),
                                          styles['Left'])] + address_paragraphs]],
                             colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=licence_table_style))

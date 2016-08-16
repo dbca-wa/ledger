@@ -45,7 +45,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                             return_frequency=return_frequency)
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user
+            to = application.applicant
         else:
             to = application.proxy_applicant
 
@@ -67,7 +67,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence = issue_licence_form.save(commit=False)
             licence.licence_type = application.licence_type
             licence.profile = application.applicant_profile
-            licence.holder = application.applicant_profile.user
+            licence.holder = application.applicant
             licence.issuer = request.user
 
             if application.previous_application is not None:
@@ -128,7 +128,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
             if application.proxy_applicant is None:
-                to = application.applicant_profile.user.get_full_name()
+                to = application.applicant.get_full_name()
             else:
                 to = application.proxy_applicant.get_full_name()
 
@@ -162,7 +162,7 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
         licence = issue_licence_form.save(commit=False)
         licence.licence_type = application.licence_type
         licence.profile = application.applicant_profile
-        licence.holder = application.applicant_profile.user
+        licence.holder = application.applicant
 
         filename = '%s.pdf' % application.lodgement_number
 

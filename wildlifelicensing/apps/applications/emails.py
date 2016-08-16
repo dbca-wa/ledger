@@ -266,10 +266,10 @@ def _log_email(email_message, application, sender=None):
     else:
         text = smart_text(email_message)
         subject = ''
-        to = application.applicant_profile.user.email
+        to = application.applicant.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
 
-    customer = application.applicant_profile.user
+    customer = application.applicant
 
     officer = sender
 

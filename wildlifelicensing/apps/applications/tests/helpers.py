@@ -17,9 +17,11 @@ def create_profile(user):
 
 
 def create_application(user=None, **kwargs):
+    if user is None:
+        user = create_random_customer()
+    if 'applicant' not in kwargs:
+        kwargs['applicant'] = user
     if 'applicant_profile' not in kwargs:
-        if user is None:
-            user = create_random_customer()
         kwargs['applicant_profile'] = create_profile(user)
     if 'licence_type' not in kwargs:
         kwargs['licence_type'] = create_licence_type()
@@ -34,7 +36,7 @@ def lodge_application(application):
     :param application:
     """
     client = SocialClient()
-    client.login(application.applicant_profile.user.email)
+    client.login(application.applicant.email)
     url = reverse_lazy('wl_applications:preview', args=[application.licence_type.code_slug, application.pk])
     session = client.session
     session['application'] = {

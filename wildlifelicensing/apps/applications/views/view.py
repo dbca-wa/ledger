@@ -27,16 +27,15 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
 
-        convert_documents_to_url(application.licence_type.application_schema,
-                                 application.data, application.documents.all())
+        convert_documents_to_url(application.data, application.documents.all(), '')
 
         kwargs['application'] = application
 
         if is_officer(self.request.user):
-            kwargs['customer'] = application.applicant_profile.user
+            kwargs['customer'] = application.applicant
 
             if application.proxy_applicant is None:
-                to = application.applicant_profile.user.email
+                to = application.applicant.email
             else:
                 to = application.proxy_applicant.email
 
@@ -56,7 +55,7 @@ class AssessorConditionsView(CanPerformAssessmentMixin, TemplateView):
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
 
-        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        convert_documents_to_url(application.data, application.documents.all(), '')
 
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = application.licence_type.application_schema
@@ -84,7 +83,7 @@ class AddApplicationLogEntryView(OfficerRequiredMixin, View):
         if form.is_valid():
             application = get_object_or_404(Application, pk=args[0])
 
-            customer = application.applicant_profile.user
+            customer = application.applicant
 
             officer = request.user
 

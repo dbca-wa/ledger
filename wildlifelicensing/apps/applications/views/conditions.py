@@ -31,8 +31,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
 
-        convert_documents_to_url(application.licence_type.application_schema,
-                                 application.data, application.documents.all())
+        convert_documents_to_url(application.data, application.documents.all(), '')
 
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = application.licence_type.application_schema
@@ -40,7 +39,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user.get_full_name()
+            to = application.applicant.get_full_name()
         else:
             to = application.proxy_applicant.get_full_name()
 
@@ -65,7 +64,7 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
 
-        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        convert_documents_to_url(application.data, application.documents.all(), '')
 
         context = {}
 

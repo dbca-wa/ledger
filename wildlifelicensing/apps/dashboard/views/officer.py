@@ -171,7 +171,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
     columns = [
         'lodgement_number',
         'licence_type',
-        'applicant_profile.user',
+        'applicant',
         'processing_status',
         'lodgement_date',
         'assigned_officer',
@@ -181,7 +181,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
     order_columns = [
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
-        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        ['applicant.last_name', 'applicant.first_name', 'applicant.email'],
         'processing_status',
         'lodgement_date',
         ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
@@ -320,7 +320,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
     columns = [
         'lodgement_number',
         'licence_type',
-        'applicant_profile.user',
+        'applicant',
         'processing_status',
         'lodgement_date',
         'action'
@@ -328,7 +328,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
     order_columns = [
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
-        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        ['applicant.last_name', 'applicant.first_name', 'applicant.email'],
         'processing_status',
         'lodgement_date',
         '']

@@ -331,20 +331,20 @@ class DataTableApplicationBaseView(DataTableBaseView):
     model = Application
     columns = [
         'licence_type',
-        'applicant_profile.user',
+        'applicant',
         'applicant_profile',
         'processing_status'
     ]
     order_columns = [
         ['licence_type.short_name', 'licence_type.name'],
-        'applicant_profile.user',
+        'applicant',
         'applicant_profile',
         'processing_status'
     ]
 
     columns_helpers = dict(DataTableBaseView.columns_helpers.items(), **{
-        'applicant_profile.user': {
-            'render': lambda self, instance: render_user_name(instance.applicant_profile.user, first_name_first=False),
+        'applicant': {
+            'render': lambda self, instance: render_user_name(instance.applicant, first_name_first=False),
             'search': lambda self, search: build_field_query(
                 ['applicant_profile__user__last_name', 'applicant_profile__user__first_name'], search)
         },

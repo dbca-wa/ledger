@@ -99,63 +99,7 @@ def rename_filename_doubleups(post_data, file_data):
         counter += 1
 
 
-def get_all_filenames_from_application_data(item, data):
-    filenames = []
-
-    if isinstance(item, list):
-        for i, child in enumerate(item):
-            filenames += get_all_filenames_from_application_data(child, data[i])
-    elif 'children' in item:
-        for child in item['children']:
-            for child_data in data[item['name']]:
-                filenames += get_all_filenames_from_application_data(child, child_data)
-    else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                filenames.append(data[item['name']])
-
-    return filenames
-
-
-def prepend_url_to_files(item, data, root_url):
-    # ensure root url ends with a /
-    if root_url[-1] != '/':
-        root_url += '/'
-
-    if item is not None:
-        if isinstance(item, list) and isinstance(data, list):
-            for i, child in enumerate(item):
-                prepend_url_to_files(child, data[i], root_url)
-        elif 'children' in item:
-            for child in item['children']:
-                for child_data in data[item['name']]:
-                    prepend_url_to_files(child, child_data, root_url)
-        else:
-            if isinstance(item, dict) and item.get('type', '') == 'file':
-                if item['name'] in data and len(data[item['name']]) > 0:
-                    data[item['name']] = root_url + data[item['name']]
-
-
 def convert_documents_to_url(data, document_queryset, suffix):
-#     if item is not None:
-#         if isinstance(item, list) and isinstance(data, list):
-#             for i, child in enumerate(item):
-#                 convert_documents_to_url(child, data[i], document_queryset)
-#         elif 'children' in item:
-#             for child in item['children']:
-#                 for child_data in data[item['name']]:
-#                     convert_documents_to_url(child, child_data, document_queryset)
-#         else:
-#             if isinstance(item, dict) and item.get('type', '') == 'file':
-#                 if item['name'] in data and len(data[item['name']]) > 0:
-#                     try:
-#                         data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
-#                     except Document.DoesNotExist:
-#                         try:
-#                             print item['name']
-#                             data[item['name']] = document_queryset.get(name=item['name']).file.url
-#                         except Document.DoesNotExist:
-#                             pass
     if isinstance(data, list):
         for item in data:
             convert_documents_to_url(item, document_queryset, '')
@@ -246,6 +190,12 @@ def get_session_application(session):
         return Application.objects.get(id=application_id)
     except Application.DoesNotExist:
         raise Exception('Application not found for application_id {}'.format(application_id))
+
+
+def delete_session_application(session):
+    if 'application_id' in session:
+        del session['application_id']
+        session.modified = True
 
 
 def remove_temp_applications_for_user(user):
