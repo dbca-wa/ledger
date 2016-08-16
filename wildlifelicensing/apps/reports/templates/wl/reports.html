@@ -40,6 +40,7 @@
             <div class="col-md-12">
                 <h3>Applications</h3>
                 <form method="get" id="application-form" action="{% url 'wl_reports:applications_report' %}">
+                    {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}
@@ -61,6 +62,7 @@
             <div class="col-md-12">
                 <h3>Licences</h3>
                 <form method="get" id="licence-form" action="{% url 'wl_reports:licences_report' %}">
+                    {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}
@@ -85,6 +87,7 @@
             <div class="col-md-12">
                 <h3>Returns</h3>
                 <form method="get" id="return-form" action="{% url 'wl_reports:returns_report' %}">
+                    {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}
@@ -96,6 +99,28 @@
                     <div class="row">
                         <div class="col-md-8">
                             <button type=submit class="btn btn-primary">Generate Returns Report</button>
+                            <hr>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Payments</h3>
+                <form method="get" id="payments-form" action="{% url 'wl_main:payments_report' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% bootstrap_field payments_form.start %}
+                        </div>
+                        <div class="col-md-4">
+                            {% bootstrap_field payments_form.end %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <button type=submit class="btn btn-primary">Generate Payments Report</button>
                             <hr>
                         </div>
                     </div>

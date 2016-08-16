@@ -5,7 +5,9 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.http import urlencode
-from django.views.generic.base import RedirectView
+from django.views.generic.base import RedirectView, View
+from django import forms
+from django.contrib import messages
 
 from ledger.catalogue.models import Product
 from ledger.payments.invoice.models import Invoice
@@ -116,3 +118,38 @@ class ManualPaymentView(RedirectView):
         }
 
         return redirect('{}?{}'.format(url, urlencode(params)))
+
+
+class PaymentsReportForm(forms.Form):
+    start = forms.DateTimeField(required=True)
+    end = forms.DateTimeField(required=True)
+
+    def __init__(self, *args, **kwargs):
+        super(PaymentsReportForm, self).__init__(*args, **kwargs)
+
+
+class PaymentsReportView(View):
+    def get(self, request):
+        form = PaymentsReportForm(request.GET)
+        if form.is_valid():
+            start = form.cleaned_data.get('start')
+            end = form.cleaned_data.get('end')
+            url = request.build_absolute_uri(
+                reverse('payments:ledger-report')
+            )
+
+            parameters = {
+                "system": PAYMENT_SYSTEM_ID,
+                "start": start,
+                "end": end
+            }
+
+            response = requests.post(url,
+                                     headers=JSON_REQUEST_HEADER_PARAMS,
+                                     cookies=request.COOKIES,
+                                     data=json.dumps(parameters))
+            print('response', response.content)
+            return HttpResponse(response.content)
+        else:
+            messages.error(request, form.errors)
+            redirect('wl_reports:reports')
