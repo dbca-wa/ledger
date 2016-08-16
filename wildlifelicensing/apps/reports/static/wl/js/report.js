@@ -14,7 +14,7 @@ define([
     function initRegionSelector(){
         var $select = $('#licence-form').find('select');
         $select.select2({
-            placeholder: "Select one or more regions to filter."
+            placeholder: "Select region(s) or blank for all."
         });
         $select.removeClass('hidden');
     }
