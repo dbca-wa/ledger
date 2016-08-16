@@ -117,6 +117,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             licence.save()
 
+            issue_licence_form.save_m2m()
+
             licence_issued.send(sender=self.__class__, wildlife_licence=licence)
 
             application.customer_status = 'approved'

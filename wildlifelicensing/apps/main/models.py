@@ -20,6 +20,17 @@ class Condition(RevisionedMixin):
 
 
 @python_2_unicode_compatible
+class Region(models.Model):
+    name = models.CharField(max_length=200, blank=False, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+
+
+@python_2_unicode_compatible
 class WildlifeLicenceCategory(models.Model):
     name = models.CharField(max_length=100, blank=False, unique=True)
 
@@ -50,6 +61,7 @@ class WildlifeLicence(Licence):
     cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
+    regions = models.ManyToManyField(Region, blank=True)
 
     def __str__(self):
         return self.reference

@@ -136,8 +136,10 @@ class LicencesReportView(View):
         'Issuer',
         'Start Date',
         'End Date',
+        'Regions',
         'Purpose',
         'Locations',
+        'Additional Info'
         'Previous Licence',
         'Lodgement Number',
     )
@@ -151,8 +153,10 @@ class LicencesReportView(View):
             render_user_name(licence.issuer),
             licence.start_date,
             licence.end_date,
+            ','.join([str(r) for r in licence.regions.all()]),
             to_string(licence.purpose),
             to_string(licence.locations),
+            to_string(licence.additional_information),
             licence.previous_licence.reference if licence.previous_licence else '',
             application.reference if application else '',
         )
@@ -177,6 +181,9 @@ class LicencesReportView(View):
             from_date = form.cleaned_data.get('from_date')
             to_date = form.cleaned_data.get('to_date')
             qs = WildlifeLicence.objects.filter(issue_date__range=(from_date, to_date))
+            regions = form.cleaned_data.get('regions')
+            if regions:
+                qs = qs.filter(regions__in=regions)
             wb = ReportHelper.to_workbook('Licences', self.ALL_HEADERS, self.row_generator(qs))
             filename = 'licences_{}-{}.xlsx'.format(from_date, to_date)
             return excel.WorkbookResponse(wb, filename)
