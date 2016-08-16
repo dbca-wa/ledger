@@ -9,6 +9,7 @@ from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 from collections import OrderedDict
+from wildlifelicensing.apps.main.helpers import is_customer, is_officer
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
@@ -165,10 +166,11 @@ def convert_documents_to_url(data, document_queryset, suffix):
                     convert_documents_to_url(value[rep], document_queryset, '{}-{}'.format(suffix, rep))
             else:
                 try:
+                    # for legacy applications, need to check if there's a document where file is
+                    # named by the file name rather than the form field name
                     data[item] = document_queryset.get(name=value).file.url
                 except Document.DoesNotExist:
                     try:
-                        print '{}{}-0'.format(item, suffix)
                         data[item] = document_queryset.get(name='{}{}-0'.format(item, suffix)).file.url
                     except Document.DoesNotExist:
                         pass
@@ -228,16 +230,29 @@ def delete_app_session_data(session):
         del session['application']
 
 
-def get_session_application(session):
-    application_id = get_app_session_data(session, 'application_id')
+def set_session_application(session, application):
+    session['application_id'] = application.id
 
-    if application_id is None:
+    session.modified = True
+
+
+def get_session_application(session):
+    if 'application_id' in session:
+        application_id = session['application_id']
+    else:
         raise Exception('Application not in Session')
 
     try:
         return Application.objects.get(id=application_id)
     except Application.DoesNotExist:
         raise Exception('Application not found for application_id {}'.format(application_id))
+
+
+def remove_temp_applications_for_user(user):
+    if is_customer(user):
+        Application.objects.filter(applicant=user, customer_status='temp').delete()
+    elif is_officer(user):
+        Application.objects.filter(proxy_applicant=user, customer_status='temp').delete()
 
 
 def clone_application_for_renewal(application, save=False):

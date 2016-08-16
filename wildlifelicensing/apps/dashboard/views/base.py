@@ -28,7 +28,7 @@ def build_url(base, query):
 
 
 def get_processing_statuses_but_draft():
-    return [s for s in Application.PROCESSING_STATUS_CHOICES if s[0] != 'draft']
+    return [s for s in Application.PROCESSING_STATUS_CHOICES if s[0] != 'draft' and s[0] != 'temp']
 
 
 # render date in dd/mm/yyyy format
@@ -322,7 +322,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
     def get_initial_queryset(self):
         if self.model:
-            return self.model.objects.all()
+            return self.model.objects.all().exclude(processing_status='temp')
         else:
             return EmptyQuerySet()
 

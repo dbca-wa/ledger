@@ -1,8 +1,4 @@
-import os
 import tempfile
-import shutil
-
-import six
 
 from datetime import datetime
 
@@ -44,11 +40,6 @@ class ApplicationEntryBaseView(TemplateView):
 
         kwargs['licence_type'] = application.licence_type
 
-#         kwargs['licence_type'] = get_object_or_404(WildlifeLicenceType, code_slug=self.args[0])
-# 
-#         if is_officer(self.request.user) and utils.is_app_session_data_set(self.request.session, 'customer_pk'):
-#             kwargs['customer'] = EmailUser.objects.get(pk=utils.get_app_session_data(self.request.session, 'customer_pk'))
-
         kwargs['customer'] = application.applicant
 
         kwargs['is_renewal'] = application.processing_status == 'renewal'
@@ -58,22 +49,20 @@ class ApplicationEntryBaseView(TemplateView):
 
 class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-#         try:
-#             utils.delete_app_session_data(request.session)
-#         except Exception as e:
-#             messages.warning(request, 'There was a problem deleting session data: %s' % e)
-# 
-#         utils.set_app_session_data(request.session, 'temp_files_dir', tempfile.mkdtemp(dir=settings.MEDIA_ROOT))
+        utils.remove_temp_applications_for_user(request.user)
+
         application = Application.objects.create()
 
-        utils.set_app_session_data(request.session, 'application_id', application.id)
+        utils.set_session_application(request.session, application)
 
         if is_customer(request.user):
-            application.applicant = request.user.pk
+            application.applicant = request.user
             application.save()
 
             return redirect('wl_applications:select_licence_type', *args, **kwargs)
         else:
+            application.proxy_applicant = request.user
+            application.save()
             return redirect('wl_applications:create_select_customer')
 
 
@@ -100,9 +89,13 @@ class EditApplicationView(UserCanEditApplicationMixin, View):
 #             if application.hard_copy is not None:
 #                 shutil.copyfile(application.hard_copy.file.path, os.path.join(temp_files_dir, application.hard_copy.name))
 #                 utils.set_app_session_data(request.session, 'application_document', application.hard_copy.name)
-        utils.set_app_session_data(request.session, 'application_id', args[1])
+        try:
+            utils.set_session_application(request.session, Application.objects.get(id=args[0]))
+        except:
+            messages.error(self.request, 'Unable to find application')
+            return redirect('home')
 
-        return redirect('wl_applications:enter_details', *args, **kwargs)
+        return redirect('wl_applications:enter_details')
 
 
 class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
@@ -122,16 +115,13 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
             return redirect('wl_applications:new_application')
 
         if 'select' in request.POST:
-#             utils.set_app_session_data(request.session, 'customer_pk', request.POST.get('customer'))
             application.applicant = EmailUser.objects.get(id=request.POST.get('customer'))
-            application.proxy_applicant = request.user
             application.save()
         elif 'create' in request.POST:
             create_customer_form = EmailUserForm(request.POST, email_required=False)
             if create_customer_form.is_valid():
                 customer = create_customer_form.save()
-                application.applicant = customer.id
-                application.proxy_applicant = request.user
+                application.applicant = customer
                 application.save()
             else:
                 context = {'create_customer_form': create_customer_form}
@@ -364,8 +354,6 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')
 
-            print application.data
-
         kwargs['data'] = application.data
 
 #         temp_files_dir = utils.get_app_session_data(self.request.session, 'temp_files_dir')
@@ -397,7 +385,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.error(self.request, e.message)
             return redirect('wl_applications:new_application')
 
-        utils.rename_filename_doubleups(request.POST, request.FILES)
+#         utils.rename_filename_doubleups(request.POST, request.FILES)
 
         application.data = utils.create_data_from_form(application.licence_type.application_schema,
                                                        request.POST, request.FILES)
@@ -406,6 +394,27 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 #                                                                                        request.POST, request.FILES))
 
 #        temp_files_dir = utils.get_app_session_data(request.session, 'temp_files_dir')
+
+        for f in request.FILES:
+            if f == 'application_document':
+                if application.hard_copy is None:
+                    application.hard_copy = Document.objects.create(name='hard_copy')
+                application.hard_copy.file = request.FILES[f]
+                application.hard_copy.save()
+            else:
+                # for legacy applications, need to check if there's a document where file is
+                # named by the file name rather than the form field name
+                try:
+                    document = application.documents.get(name=str(request.FILES[f]))
+                except Document.DoesNotExist:
+                    document, created = application.documents.get_or_create(name=f)
+
+                document.name = f
+                document.file = request.FILES[f]
+
+                document.save()
+
+        application.save()
 
         if 'draft' in request.POST or 'draft_continue' in request.POST:
 #             if len(args) > 1:
@@ -425,6 +434,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             if application.processing_status != 'renewal':
                 application.processing_status = 'draft'
 
+            application.save()
 #             application.save(version_user=application.applicant_profile.user)
 #
 #             application.documents.clear()
@@ -451,27 +461,6 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 #                     application.documents.add(Document.objects.create(name=str(request.FILES[f]), file=request.FILES[f]))
 # 
 #             application.save(no_revision=True)
-
-            for f in request.FILES:
-                if f == 'application_document':
-                    if application.hard_copy is None:
-                        application.hard_copy = Document.objects.create(name='hard_copy')
-                    application.hard_copy.file = request.FILES[f]
-                    application.hard_copy.save()
-                else:
-                    # for legacy applications, need to check if there's a document he file is named by the file name
-                    # rather than the form field name
-                    try:
-                        document = application.documents.get(name=str(request.FILES[f]))
-                    except Document.DoesNotExist:
-                        document, created = application.documents.get_or_create(name=f)
-
-                    document.name = f
-                    document.file = request.FILES[f]
-
-                    document.save()
-
-            application.save(version_user=application.applicant_profile.user)
 
             messages.warning(request, 'The application was saved to draft.')
 
@@ -515,62 +504,66 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/preview.html'
 
     def get_context_data(self, **kwargs):
-        licence_type = WildlifeLicenceType.objects.get(code_slug=self.args[0])
+        try:
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('wl_applications:new_application')
 
-        application = get_object_or_404(Application, pk=self.args[1]) if len(self.args) > 1 else None
-
-        if utils.is_app_session_data_set(self.request.session, 'profile_pk'):
-            profile = get_object_or_404(Profile, pk=utils.get_app_session_data(self.request.session, 'profile_pk'))
-        else:
-            profile = application.applicant_profile
-
-        kwargs['profile'] = profile
-        kwargs['structure'] = licence_type.application_schema
+        kwargs['profile'] = application.applicant_profile
+        kwargs['structure'] = application.licence_type.application_schema
 
         kwargs['is_proxy_applicant'] = is_officer(self.request.user)
 
 #         if len(self.args) > 1:
 #             kwargs['application_pk'] = self.args[1]
 
-        temp_files_dir = utils.get_app_session_data(self.request.session, 'temp_files_dir')
-        if temp_files_dir is not None:
-            temp_files_url = settings.MEDIA_URL + os.path.basename(os.path.normpath(temp_files_dir))
+#         temp_files_dir = utils.get_app_session_data(self.request.session, 'temp_files_dir')
+#         if temp_files_dir is not None:
+#             temp_files_url = settings.MEDIA_URL + os.path.basename(os.path.normpath(temp_files_dir))
+# 
+#         if utils.is_app_session_data_set(self.request.session, 'data'):
+#             data = utils.get_app_session_data(self.request.session, 'data')
+# 
+#             if temp_files_dir is not None:
+#                 utils.prepend_url_to_files(licence_type.application_schema, data, temp_files_url)
+# 
+#             kwargs['data'] = data
+# 
+#         if utils.is_app_session_data_set(self.request.session, 'application_document'):
+#             application_document = utils.get_app_session_data(self.request.session, 'application_document')
+# 
+#             if temp_files_dir is not None:
+#                 application_document = os.path.join(temp_files_url, application_document)
+# 
+        if application.data:
+            utils.convert_documents_to_url(application.data, application.documents.all(), '')
 
-        if utils.is_app_session_data_set(self.request.session, 'data'):
-            data = utils.get_app_session_data(self.request.session, 'data')
-
-            if temp_files_dir is not None:
-                utils.prepend_url_to_files(licence_type.application_schema, data, temp_files_url)
-
-            kwargs['data'] = data
-
-        if utils.is_app_session_data_set(self.request.session, 'application_document'):
-            application_document = utils.get_app_session_data(self.request.session, 'application_document')
-
-            if temp_files_dir is not None:
-                application_document = os.path.join(temp_files_url, application_document)
-
+        if application.hard_copy is not None:
             kwargs['structure'], kwargs['data'] = utils.append_app_document_to_schema_data(kwargs['structure'],
-                                                                                           kwargs['data'],
-                                                                                           application_document)
+                                                                                           application.data,
+                                                                                           application.hard_copy.file.url)
+        else:
+            kwargs['data'] = application.data
 
         return super(PreviewView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        if len(args) > 1:
-            application = get_object_or_404(Application, pk=args[1])
-        else:
-            application = Application()
+        try:
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('wl_applications:new_application')
 
-        if is_officer(request.user):
-            application.proxy_applicant = request.user
-
-        application.data = utils.get_app_session_data(self.request.session, 'data')
-        application.licence_type = get_object_or_404(WildlifeLicenceType, code_slug=args[0])
+#         if is_officer(request.user):
+#             application.proxy_applicant = request.user
+# 
+#         application.data = utils.get_app_session_data(self.request.session, 'data')
+#         application.licence_type = get_object_or_404(WildlifeLicenceType, code_slug=args[0])
         application.correctness_disclaimer = request.POST.get('correctnessDisclaimer', '') == 'on'
         application.further_information_disclaimer = request.POST.get('furtherInfoDisclaimer', '') == 'on'
-        application.applicant_profile = get_object_or_404(Profile, pk=utils.get_app_session_data(request.session,
-                                                                                                 'profile_pk'))
+#         application.applicant_profile = get_object_or_404(Profile, pk=utils.get_app_session_data(request.session,
+#                                                                                                  'profile_pk'))
         application.lodgement_sequence += 1
         application.lodgement_date = datetime.now().date()
 
@@ -588,41 +581,41 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         # need to save application in order to get its pk
         if not application.lodgement_number:
-            application.save(no_revision=True)
+#            application.save(no_revision=True)
             application.lodgement_number = '%s-%s' % (str(application.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
                                                       str(application.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
-        application.documents.clear()
+#         application.documents.clear()
+# 
+#         # if attached files were saved temporarily, add each to application as part of a Document
+#         temp_files_dir = utils.get_app_session_data(request.session, 'temp_files_dir')
+#         try:
+#             for filename in utils.get_all_filenames_from_application_data(application.licence_type.application_schema,
+#                                                                           utils.get_app_session_data(request.session, 'data')):
+#                 document = Document.objects.create(name=filename)
+#                 with open(os.path.join(temp_files_dir, filename), 'rb') as doc_file:
+#                     document.file.save(filename, File(doc_file), save=True)
+# 
+#                     application.documents.add(document)
+# 
+#             if utils.is_app_session_data_set(request.session, 'application_document'):
+#                 filename = utils.get_app_session_data(request.session, 'application_document')
+#                 document = Document.objects.create(name=filename)
+#                 with open(os.path.join(utils.get_app_session_data(request.session, 'temp_files_dir'), filename), 'rb') as doc_file:
+#                     document.file.save(filename, File(doc_file), save=True)
+# 
+#                     application.hard_copy = document
 
-        # if attached files were saved temporarily, add each to application as part of a Document
-        temp_files_dir = utils.get_app_session_data(request.session, 'temp_files_dir')
-        try:
-            for filename in utils.get_all_filenames_from_application_data(application.licence_type.application_schema,
-                                                                          utils.get_app_session_data(request.session, 'data')):
-                document = Document.objects.create(name=filename)
-                with open(os.path.join(temp_files_dir, filename), 'rb') as doc_file:
-                    document.file.save(filename, File(doc_file), save=True)
-
-                    application.documents.add(document)
-
-            if utils.is_app_session_data_set(request.session, 'application_document'):
-                filename = utils.get_app_session_data(request.session, 'application_document')
-                document = Document.objects.create(name=filename)
-                with open(os.path.join(utils.get_app_session_data(request.session, 'temp_files_dir'), filename), 'rb') as doc_file:
-                    document.file.save(filename, File(doc_file), save=True)
-
-                    application.hard_copy = document
-
-            messages.success(request, 'The application was successfully lodged.')
-        except Exception as e:
-            messages.error(request, 'There was a problem creating the application: %s' % e)
+        messages.success(request, 'The application was successfully lodged.')
+#         except Exception as e:
+#             messages.error(request, 'There was a problem creating the application: %s' % e)
 
         application.save(version_user=application.applicant_profile.user, version_comment='Details Modified')
 
-        try:
-            utils.delete_app_session_data(request.session)
-        except Exception as e:
-            messages.warning(request, 'There was a problem deleting session data: %s' % e)
+#         try:
+#             utils.delete_app_session_data(request.session)
+#         except Exception as e:
+#             messages.warning(request, 'There was a problem deleting session data: %s' % e)
 
         return redirect('wl_dashboard:home')
 

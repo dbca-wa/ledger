@@ -22,7 +22,7 @@ urlpatterns = [
     # application entry / licence renewal
     url('^new-application/$', NewApplicationView.as_view(), name='new_application'),
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
-    url('^select-licence-type/([\w-]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type_selected'),
+    url('^select-licence-type/([\w-]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^create-select-customer/$', CreateSelectCustomer.as_view(), name='create_select_customer'),
 #     url('^([\w-]+)/edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
     url('^edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
@@ -35,10 +35,11 @@ urlpatterns = [
 #    url('^([\w-]+)/enter-details/$', EnterDetailsView.as_view(), name='enter_details'),
     url('^enter-details/$', EnterDetailsView.as_view(), name='enter_details'),
 
-    url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details'),
-    url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details_existing_application'),
-    url('^([\w-]+)/preview/$', PreviewView.as_view(), name='preview'),
-    url('^([\w-]+)/preview/([0-9]+)/$', PreviewView.as_view(), name='preview'),
+#     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details'),
+#     url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details_existing_application'),
+#    url('^([\w-]+)/preview/$', PreviewView.as_view(), name='preview'),
+    url('^preview/$', PreviewView.as_view(), name='preview'),
+#    url('^([\w-]+)/preview/([0-9]+)/$', PreviewView.as_view(), name='preview'),
     url('^renew-licence/([0-9]+)/$', RenewLicenceView.as_view(), name='renew_licence'),
 
     # process

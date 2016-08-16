@@ -12,7 +12,7 @@ from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_du
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_profile__user=user)
+    return Application.objects.filter(applicant_profile__user=user).exclude(customer_status='temp')
 
 
 class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
@@ -179,12 +179,12 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         status = obj.customer_status
         if status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.pk]),
                 'Continue application'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.pk]),
                 'Amend application'
             )
         elif status == 'id_required' and obj.id_check_status == 'awaiting_update':

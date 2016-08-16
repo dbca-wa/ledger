@@ -23,8 +23,7 @@ def send_amendment_requested_email(amendment_request, request):
     application = amendment_request.application
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('wl_applications:edit_application',
-                args=[application.licence_type.code_slug, application.pk])
+        reverse('wl_applications:edit_application', args=[application.pk])
     )
 
     context = {
