@@ -17,15 +17,17 @@
 
 {% block requirements %}
     require(['js/issue/issue_licence', 'js/communications_log'], function(issueLicence, commsLog) {
-        issueLicence.initialise();
+        $(function () {
+            issueLicence.initialise();
 
-        commsLog.initCommunicationLog({
-            showLogPopoverSelector: '#showLog',
-            showLogEntryModalSelector: '#addLogEntry',
-            logEntryModalSelector: '#logEntryModal',
-            logEntryFormSelector: '#addLogEntryForm',
-            logListURL: "{% url 'wl_applications:log_list' application.id %}",
-            addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+            commsLog.initCommunicationLog({
+                showLogPopoverSelector: '#showLog',
+                showLogEntryModalSelector: '#addLogEntry',
+                logEntryModalSelector: '#logEntryModal',
+                logEntryFormSelector: '#addLogEntryForm',
+                logListURL: "{% url 'wl_applications:log_list' application.id %}",
+                addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+            });
         });
     });
 {% endblock %}
@@ -118,7 +120,7 @@
                 </button>
                 <a class="btn btn-sm btn-default" href="{% url 'wl_applications:enter_conditions' application.id %}" role="button">Back to Enter Conditions</a>
                 <a href="{% url 'wl_applications:preview_licence' application.id %}" id="previewLicence" class="top-buffer pull-right" target="_blank">
-                    Preview Licence PDF <img height="20px" src="{% static 'wl/img/pdf.png' %}"></img>
+                    Preview Licence PDF <img height="20px" src="{% static 'wl/img/pdf.png' %}">
                 </a>
             </div>
             <div class="col-md-9">

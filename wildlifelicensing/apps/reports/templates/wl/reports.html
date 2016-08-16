@@ -5,14 +5,13 @@
 {% load bootstrap3 %}
 
 {% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery', 'bootstrap-datetimepicker', 'select2'], function ($) {
-        $("[name$='date']").datetimepicker({
-            format: 'DD/MM/YYYY'
-        });
-{#        $("select").select2({});#}
+    require(['js/report'], function (reports) {
+        $(function () { reports.initialise(); });
     });
 {% endblock %}
 
@@ -40,7 +39,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Applications</h3>
-                <form method="get" action="{% url 'wl_reports:applications_report' %}">
+                <form method="get" id="application-form" action="{% url 'wl_reports:applications_report' %}">
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}
@@ -61,7 +60,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Licences</h3>
-                <form method="get" action="{% url 'wl_reports:licences_report' %}">
+                <form method="get" id="licence-form" action="{% url 'wl_reports:licences_report' %}">
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}
@@ -85,7 +84,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Returns</h3>
-                <form method="get" action="{% url 'wl_reports:returns_report' %}">
+                <form method="get" id="return-form" action="{% url 'wl_reports:returns_report' %}">
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}

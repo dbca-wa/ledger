@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django import forms
 from django.contrib.postgres.forms import JSONField
+from django.forms.widgets import MultipleHiddenInput, SelectMultiple
 
 from dateutil.relativedelta import relativedelta
 
@@ -54,6 +55,12 @@ class IssueLicenceForm(forms.ModelForm):
         model = WildlifeLicence
         fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose', 'locations',
                   'additional_information', 'cover_letter_message']
+
+        widgets = {
+            'regions': SelectMultiple(
+                attrs={"class": "hidden"}
+            )
+        }
 
     def __init__(self, *args, **kwargs):
         purpose = kwargs.pop('purpose', None)

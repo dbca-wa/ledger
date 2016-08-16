@@ -6,8 +6,9 @@ define([
     "use strict";
 
     return {
-        initialise: function() {
-            var $issueLicenceForm = $('#issueLicenceForm');
+        initialise: function(options) {
+            var $issueLicenceForm = $('#issueLicenceForm'),
+                $regionSelect = $issueLicenceForm.find('select');
 
             // initialise all datapickers
             $("input[id$='date']").each(function() {
@@ -24,8 +25,10 @@ define([
                 $(this).attr("href", this.href + '?' + $issueLicenceForm.serialize());
             });
 
-            $issueLicenceForm.find('select').select2({
+            $regionSelect.select2({
+                placeholder: "Select applicable regions."
             });
+            $regionSelect.removeClass('hidden');
         }
     };
 });
