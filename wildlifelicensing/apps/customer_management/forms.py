@@ -9,6 +9,7 @@ class CustomerSearchForm(forms.Form):
 
 class CustomerDetailsForm(forms.ModelForm):
     identification = forms.FileField(label='Photo Identification', required=False)
+    senior_card = forms.FileField(label='Senior Card', required=False)
 
     class Meta:
         model = EmailUser

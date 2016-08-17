@@ -152,7 +152,8 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
 
             kwargs['customer'] = customer
 
-            kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.get_full_name(), fromm=self.request.user.get_full_name())
+            kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.get_full_name(),
+                                                                  fromm=self.request.user.get_full_name())
 
             context = super(CustomerLookupView, self).get_context_data(**kwargs)
 
@@ -186,11 +187,20 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
                 customer.save()
 
                 identification_uploaded.send(sender=self.__class__, user=self.request.user)
+
+            if 'senior_card' in self.request.FILES:
+                if customer.senior_card is not None:
+                    customer.senior_card.delete()
+
+                customer.senior_card = Document.objects.create(file=self.request.FILES['senior_card'])
+                customer.save()
+
         else:
             return render(request, self.template_name, {'customer': customer,
                                                         'form': emailuser_form})
 
-        messages.success(request, 'The details were updated. Please note that this may require any licences held by the user to be reissued.')
+        messages.success(request,
+                         'The details were updated. Please note that this may require any licences held by the user to be reissued.')
 
         return redirect('wl_customer_management:customer_lookup', customer.pk)
 

@@ -239,6 +239,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
 
+    senior_card = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='senior_card')
+
     character_flagged = models.BooleanField(default=False)
 
     character_comments = models.TextField(blank=True)
