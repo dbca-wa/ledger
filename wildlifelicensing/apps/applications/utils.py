@@ -205,13 +205,17 @@ def remove_temp_applications_for_user(user):
         Application.objects.filter(proxy_applicant=user, customer_status='temp').delete()
 
 
-def clone_application_for_renewal(application, save=False):
-    application.customer_status = 'draft'
-    application.processing_status = 'renewal'
+def clone_application_with_status_reset(application, keep_invoice=False):
+    application.customer_status = 'temp'
+    application.processing_status = 'temp'
 
     application.id_check_status = 'not_checked'
     application.character_check_status = 'not_checked'
+    application.returns_check_status = 'not_checked'
     application.review_status = 'not_reviewed'
+
+    application.correctness_disclaimer = False
+    application.further_information_disclaimer = False
 
     application.lodgement_number = ''
     application.lodgement_sequence = 0
@@ -220,6 +224,9 @@ def clone_application_for_renewal(application, save=False):
     application.assigned_officer = None
 
     application.licence = None
+
+    if not keep_invoice:
+        application.invoice_number = ''
 
     original_application_pk = application.pk
 

@@ -1,13 +1,14 @@
-from datetime import date
+from datetime import date, datetime
 
 from django.test import TestCase
 from mixer.backend.django import mixer
 
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse, reverse_lazy
 
 from ledger.accounts.models import Profile
 
-from wildlifelicensing.apps.applications.models import Application, Assessment, Condition, AssessmentCondition
+from wildlifelicensing.apps.applications.views.entry import LICENCE_TYPE_NUM_CHARS, LODGEMENT_NUMBER_NUM_CHARS
+from wildlifelicensing.apps.applications.models import Application, Assessment, Condition
 from wildlifelicensing.apps.main.tests.helpers import create_random_customer, create_licence_type, \
     SocialClient, get_or_create_default_assessor_group, get_or_create_default_officer
 
@@ -37,13 +38,8 @@ def lodge_application(application):
     """
     client = SocialClient()
     client.login(application.applicant.email)
-    url = reverse_lazy('wl_applications:preview', args=[application.licence_type.code_slug, application.pk])
-    session = client.session
-    session['application'] = {
-        'profile': application.applicant_profile.pk,
-        'data': application.data
-    }
-    session.save()
+    client.get(reverse('wl_applications:edit_application', args=[application.pk]))
+    url = reverse_lazy('wl_applications:preview')
     client.post(url)
     application.refresh_from_db()
     client.logout()
@@ -51,7 +47,16 @@ def lodge_application(application):
 
 
 def create_and_lodge_application(user=None, **kwargs):
-    return lodge_application(create_application(user, **kwargs))
+    application = create_application(user, **kwargs)
+    application.processing_status = 'new'
+    application.customer_status = 'under_review'
+    application.lodgement_sequence += 1
+    application.lodgement_date = datetime.now().date()
+    application.lodgement_number = '%s-%s' % (str(application.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
+                                              str(application.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
+    application.save()
+
+    return application
 
 
 def get_or_create_assessment(application):

@@ -1,5 +1,3 @@
-import tempfile
-
 from datetime import datetime
 
 from django.views.generic.base import View, TemplateView
@@ -42,6 +40,7 @@ class ApplicationEntryBaseView(TemplateView):
         kwargs['customer'] = application.applicant
 
         kwargs['is_renewal'] = application.processing_status == 'renewal'
+        kwargs['is_amendment'] = application.processing_status == 'licence_amendment'
 
         return super(ApplicationEntryBaseView, self).get_context_data(**kwargs)
 
@@ -91,9 +90,33 @@ class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
                 messages.warning(request, 'A renewal for this licence has already been lodged and is awaiting review.')
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
-            application = utils.clone_application_for_renewal(previous_application)
+            application = utils.clone_application_with_status_reset(previous_application)
+            application.processing_status = 'renewal'
+            application.save()
 
-        utils.set_session_application(request.session, Application.objects.get(id=args[0]))
+        utils.set_session_application(request.session, application)
+
+        return redirect('wl_applications:enter_details')
+
+
+class AmendLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
+    def get(self, request, *args, **kwargs):
+        utils.remove_temp_applications_for_user(request.user)
+
+        previous_application = get_object_or_404(Application, licence=args[0])
+
+        # check if there is already a renewal or amendment, otherwise create one
+        try:
+            application = Application.objects.get(previous_application=previous_application)
+            if application.customer_status == 'under_review':
+                messages.warning(request, 'An amendment for this licence has already been lodged and is awaiting review.')
+                return redirect('wl_dashboard:home')
+        except Application.DoesNotExist:
+            application = utils.clone_application_with_status_reset(previous_application, keep_invoice=True)
+            application.processing_status = 'licence_amendment'
+            application.save()
+
+        utils.set_session_application(request.session, application)
 
         return redirect('wl_applications:enter_details')
 
@@ -403,9 +426,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
             application.review_status = 'amended'
             application.processing_status = 'ready_for_action'
-        else:
-            if application.processing_status != 'renewal':
-                application.processing_status = 'new'
+        elif application.processing_status != 'renewal' and application.processing_status != 'licence_amendment':
+            application.processing_status = 'new'
 
         application.customer_status = 'under_review'
 

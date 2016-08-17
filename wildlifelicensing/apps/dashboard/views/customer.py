@@ -244,21 +244,23 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        if not instance.is_renewable:
-            return 'Not renewable'
+#         if not instance.is_renewable:
+#             return 'Not renewable'
+#         else:
+        try:
+            application = Application.objects.get(licence=instance)
+            if Application.objects.filter(previous_application=application).exists():
+                return 'N/A'
+        except Application.DoesNotExist:
+            pass
+
+        expiry_days = (instance.end_date - datetime.date.today()).days
+        if expiry_days <= 30 and instance.is_renewable:
+            url = reverse('wl_applications:renew_licence', args=(instance.pk,))
+            return '<a href="{0}">Renew</a>'.format(url)
         else:
-            try:
-                application = Application.objects.get(licence=instance)
-                if Application.objects.filter(previous_application=application).exists():
-                    return 'Renewed'
-            except Application.DoesNotExist:
-                pass
-            expiry_days = (instance.end_date - datetime.date.today()).days
-            if expiry_days <= 30:
-                url = reverse('wl_applications:renew_licence', args=(instance.pk,))
-                return '<a href="{0}">Renew</a>'.format(url)
-            else:
-                return 'Renewable in ' + str(expiry_days - 30) + ' days'
+            url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+            return '<a href="{0}">Amend</a>'.format(url)
 
     @staticmethod
     def _search_licence_number(search):

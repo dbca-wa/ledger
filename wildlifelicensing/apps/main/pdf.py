@@ -1,6 +1,7 @@
 import os
-
 from io import BytesIO
+from datetime import date
+
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
@@ -15,8 +16,11 @@ from wildlifelicensing.apps.main.helpers import render_user_name
 
 from ledger.accounts.models import Document
 
-DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
+BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
                                 'bw_dpaw_header_logo.png')
+
+COLOUR_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
+                                       'colour_dpaw_header_logo.png')
 
 HEADER_MARGIN = 10
 HEADER_SMALL_BUFFER = 3
@@ -58,7 +62,7 @@ styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
 
 
-def _create_header(canvas, doc, draw_page_number=True):
+def _create_licence_header(canvas, doc, draw_page_number=True):
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
@@ -67,7 +71,7 @@ def _create_header(canvas, doc, draw_page_number=True):
 
     current_y -= 30
 
-    dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO)
+    dpaw_header_logo = ImageReader(BW_DPAW_HEADER_LOGO)
     dpaw_header_logo_size = dpaw_header_logo.getSize()
     canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - dpaw_header_logo_size[1])
 
@@ -178,7 +182,7 @@ def _get_species(application):
 def _create_licence(licence_buffer, licence, application, site_url, original_issue_date):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
-    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_header)
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_licence_header)
 
     doc = BaseDocTemplate(licence_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
@@ -316,10 +320,29 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     return licence_buffer
 
 
+def _create_letter_header(canvas, doc):
+    canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
+
+    current_y = PAGE_HEIGHT - PAGE_MARGIN
+
+    dpaw_header_logo = ImageReader(COLOUR_DPAW_HEADER_LOGO)
+    dpaw_header_logo_size = dpaw_header_logo.getSize()
+    canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - dpaw_header_logo_size[1])
+
+    current_x = HEADER_MARGIN + dpaw_header_logo_size[0] + 5
+
+    canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
+
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER), 'Enquiries:')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Telephone:')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Facsimile:')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Web Site:')
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Correspondance:')
+
 def _create_cover_letter(cover_letter_buffer, licence, site_url):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
-    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_header)
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_letter_header)
 
     doc = BaseDocTemplate(cover_letter_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
@@ -328,14 +351,18 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
     elements = []
 
-    elements.append(Paragraph('Dear Sir/Madam', styles['Left']))
+    elements.append(Paragraph('Dear {}'.format(licence.holder.get_full_name), styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Congratulations, your Wildlife Licensing application has been approved and the '
-                              'corresponding licence has been issued.', styles['Left']))
+    elements.append(Paragraph('Please find attached licence', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(
-        Paragraph("You'll find your licence document in this envelope. Please read it carefully.", styles['Left']))
+    elements.append(Paragraph('Please ensure that all the licence conditions are complied with, including the '
+                              'forwarding of a return at the end of the licence period.', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    
+
+
+
 
     # Removed link to online system for beta
     #     elements.append(Paragraph('You also can access it from your Wildlife Licensing dashboard by copying and pasting '
@@ -356,9 +383,17 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    elements.append(Paragraph('Best regards,', styles['Left']))
+    elements.append(Paragraph('If you have any queries, please contact Mr Danny Stefoni on 9219 9833.'),
+                    styles['Left'])
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Parks and Wildlife Customer Portal', styles['Left']))
+
+    elements.append(Paragraph('Yours sincerely,', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 3))
+    elements.append(Paragraph('from Jim Sharp', styles['Left']))
+    elements.append(Paragraph('DIRECTOR GENERAL', styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    elements.append(Paragraph(date.today.strftime(DATE_FORMAT), styles['Left']),)
 
     doc.build(elements)
 
@@ -367,7 +402,7 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
 def _create_licence_renewal_elements(licence):
     return [
-        Paragraph('Dear Sir/Madam', styles['Left']), Spacer(1, SECTION_BUFFER_HEIGHT),
+        Paragraph('Dear {}'.format(licence.holder.get_full_name), styles['Left']),
         Paragraph('This is a reminder that your licence:', styles['Left']), Spacer(1, SECTION_BUFFER_HEIGHT),
         Paragraph('{}-{}'.format(licence.licence_number, licence.licence_sequence), styles['BoldLeft']),
         Spacer(1, SECTION_BUFFER_HEIGHT),
@@ -387,7 +422,7 @@ def _create_licence_renewal_elements(licence):
 def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
-    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_header)
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_letter_header)
 
     doc = BaseDocTemplate(licence_renewal_buffer, pageTemplates=[every_page_template], pagesize=A4)
 

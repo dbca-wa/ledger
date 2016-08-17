@@ -582,7 +582,8 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
             return '<a href="{0}">Renew</a> / <a href="{1}">Reissue</a>'.format(renew_url, reissue_url)
         else:
-            return '<a href="{0}">Reissue</a>'.format(reissue_url)
+            amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+            return '<a href="{0}">Amend</a> / <a href="{1}">Reissue</a>'.format(amend_url, reissue_url)
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()

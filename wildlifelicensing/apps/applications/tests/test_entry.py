@@ -323,6 +323,8 @@ class ApplicationEntryTestCase(TestCase):
 
 
 class ApplicationEntrySecurity(TransactionTestCase):
+    fixtures = ['licences.json']
+
     def setUp(self):
         self.client = SocialClient()
 
@@ -359,33 +361,29 @@ class ApplicationEntrySecurity(TransactionTestCase):
         Once the application if lodged the user should not be able to edit it
         """
         customer1 = create_random_customer()
+        self.client.login(customer1)
 
-        # login as user1
-        self.client.login(customer1.email)
+        self.client.get(reverse('wl_applications:new_application'))
+        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
 
-        application = helpers.create_application(user=customer1)
+        application = Application.objects.first()
 
-        self.assertEqual('temp', application.customer_status)
-#         my_urls = [
-#             reverse('wl_applications:edit_application', args=[application.pk]),
-#             reverse('wl_applications:enter_details'),
-#             reverse('wl_applications:preview')
-#         ]
-#         for url in my_urls:
-#             response = self.client.get(url, follow=True)
-#             self.assertEqual(200, response.status_code,
-#                              msg="Wrong status code {1} for {0}".format(url, response.status_code))
+        # check that the state of the application is temp
+        self.assertEqual(application.processing_status, 'temp')
 
-        self.client.get(reverse('wl_applications:edit_application', args=[application.pk]))
+        response = self.client.post(reverse('wl_applications:preview'))
 
-        # lodge the application
-        url = reverse('wl_applications:preview')
-        self.client.post(url)
+        # check that client is redirected to home
+        self.assertRedirects(response, reverse('wl_dashboard:home'),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         application.refresh_from_db()
+
+        # check that the state of the application is new/underreview
+        self.assertEqual(application.processing_status, 'new')
         self.assertEqual('under_review', application.customer_status)
-#         for url in my_urls:
-        response = self.client.get(reverse('wl_applications:edit_application', args=[application.pk], follow=True))
+
+        response = self.client.get(reverse('wl_applications:edit_application', args=[application.pk]), follow=True)
         self.assertEqual(403, response.status_code)
 
     def test_user_not_logged_is_redirected_to_login(self):
@@ -393,38 +391,31 @@ class ApplicationEntrySecurity(TransactionTestCase):
         A user not logged in should be redirected to the login page and not see a 403
         """
         customer1 = create_random_customer()
-        application = helpers.create_application(user=customer1)
-        self.assertEqual('temp', application.customer_status)
-        my_urls = [
-            reverse('wl_applications:edit_application', args=[application.licence_type.code_slug, application.pk]),
-            reverse('wl_applications:enter_details_existing_application',
-                    args=[application.licence_type.code_slug, application.pk]),
-            reverse('wl_applications:preview', args=[application.licence_type.code_slug, application.pk])
-        ]
-        for url in my_urls:
-            response = self.client.get(url, follow=True)
-            self.assertEqual(200, response.status_code,
-                             msg="Wrong status code {1} for {0}".format(url, response.status_code))
-            self.assertTrue(is_login_page(response))
+        self.client.login(customer1)
 
-        # lodge the application
-        self.client.login(customer1.email)
-        url = reverse('wl_applications:preview', args=[application.licence_type.code_slug, application.pk])
-        session = self.client.session
-        session['application'] = {
-            'customer_pk': customer1.pk,
-            'profile_pk': application.applicant_profile.pk,
-            'data': {
-                'project_title': 'Test'
-            }
-        }
-        session.save()
-        self.client.post(url)
+        self.client.get(reverse('wl_applications:new_application'))
+        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+
+        application = Application.objects.first()
+
+        # check that the state of the application is temp
+        self.assertEqual(application.processing_status, 'temp')
+
+        response = self.client.post(reverse('wl_applications:preview'))
+
+        # check that client is redirected to home
+        self.assertRedirects(response, reverse('wl_dashboard:home'),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+
         application.refresh_from_db()
+
+        # check that the state of the application is new/underreview
+        self.assertEqual(application.processing_status, 'new')
         self.assertEqual('under_review', application.customer_status)
+
         # logout
         self.client.logout()
-        for url in my_urls:
-            response = self.client.get(url, follow=True)
-            self.assertEqual(200, response.status_code)
-            self.assertTrue(is_login_page(response))
+
+        response = self.client.get(reverse('wl_applications:edit_application', args=[application.pk]), follow=True)
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(is_login_page(response))
