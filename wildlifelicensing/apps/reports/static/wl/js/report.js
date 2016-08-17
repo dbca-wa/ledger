@@ -19,10 +19,10 @@ define([
         $select.removeClass('hidden');
     }
 
-    function initPayments() {
+    function initPaymentsDatePicker() {
         var $form = $('#payments-form');
         $form.find('input').datetimepicker({
-            format: 'DD/MM/YYYY HH:mm'
+            format: 'DD/MM/YYYY HH:mm:SS'
         });
     }
 
@@ -30,7 +30,7 @@ define([
         initialise: function() {
             initDatePicker();
             initRegionSelector();
-            initPayments();
+            initPaymentsDatePicker();
         }
     };
 });

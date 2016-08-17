@@ -1,17 +1,22 @@
 import json
-
 import requests
-from django.core.urlresolvers import reverse
+import datetime
+from dateutil.relativedelta import relativedelta, FR
+import pytz
+
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.http import urlencode
 from django.views.generic.base import RedirectView, View
 from django import forms
 from django.contrib import messages
+from django.utils import timezone
 
 from ledger.catalogue.models import Product
 from ledger.payments.invoice.models import Invoice
 from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 
 PAYMENT_SYSTEM_ID = 'S369'
 
@@ -31,6 +36,10 @@ JSON_REQUEST_HEADER_PARAMS = {
     "Content-Type": "application/json",
     "Accept": "application/json"
 }
+
+
+def to_json(data):
+    return json.dumps(data, cls=WildlifeLicensingJSONEncoder)
 
 
 def get_product(application):
@@ -121,35 +130,73 @@ class ManualPaymentView(RedirectView):
 
 
 class PaymentsReportForm(forms.Form):
-    start = forms.DateTimeField(required=True)
-    end = forms.DateTimeField(required=True)
+    date_format = '%d/%m/%Y %H:%M:%S'
+    start = forms.DateTimeField(required=True, widget=forms.DateTimeInput(
+        format=date_format
+    ))
+    end = forms.DateTimeField(required=True, widget=forms.DateTimeInput(
+        format=date_format
+    ))
 
     def __init__(self, *args, **kwargs):
         super(PaymentsReportForm, self).__init__(*args, **kwargs)
+        # initial datetime spec:
+        # end set to be the last Friday at 10:00 pm AEST even if it is a Friday
+        # start exactly one week before end
+
+        now = timezone.localtime(timezone.now())
+        # create a timezone aware datetime at 10:00 pm AEST
+        today_ten_pm_aest = timezone.make_aware(
+            datetime.datetime(now.year, now.month, now.day, 22, 0),
+            timezone=pytz.timezone('Australia/Sydney'))
+        # convert to local
+        today_ten_pm_aest_local = timezone.localtime(today_ten_pm_aest)
+        # back to previous friday (even if we are friday)
+        delta = relativedelta(weekday=FR(-1)) \
+            if today_ten_pm_aest_local.weekday() != FR.weekday else relativedelta(weekday=FR(-2))
+        end = today_ten_pm_aest_local + delta
+        start = end + relativedelta(weeks=-1)
+
+        self.fields['start'].initial = start
+        self.fields['end'].initial = end
 
 
 class PaymentsReportView(View):
+    success_url = reverse_lazy('wl_reports:reports')
+    error_url = success_url
+
     def get(self, request):
         form = PaymentsReportForm(request.GET)
         if form.is_valid():
             start = form.cleaned_data.get('start')
             end = form.cleaned_data.get('end')
+            # here start and end should be timezone aware (with the settings.TIME_ZONE
+            start = timezone.make_aware(start) if not timezone.is_aware(start) else start
+            end = timezone.make_aware(end) if not timezone.is_aware(end) else end
             url = request.build_absolute_uri(
                 reverse('payments:ledger-report')
             )
-
-            parameters = {
-                "system": PAYMENT_SYSTEM_ID,
-                "start": start,
-                "end": end
+            data = {
+                'system': PAYMENT_SYSTEM_ID,
+                'start': start,
+                'end': end
             }
-
             response = requests.post(url,
                                      headers=JSON_REQUEST_HEADER_PARAMS,
                                      cookies=request.COOKIES,
-                                     data=json.dumps(parameters))
-            print('response', response.content)
-            return HttpResponse(response.content)
+                                     data=to_json(data))
+            if response.status_code == 200:
+                filename = 'wl_payments-{}_{}'.format(
+                    str(start.date()),
+                    str(end.date())
+                )
+                response = HttpResponse(response, content_type='text/csv; charset=utf-8')
+                response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
+                return response
+            else:
+                messages.error(request,
+                               "There was an error while generating the payment report:<br>{}".format(response.content))
+                return redirect(self.error_url)
         else:
             messages.error(request, form.errors)
-            redirect('wl_reports:reports')
+            return redirect(self.error_url)

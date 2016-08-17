@@ -242,16 +242,3 @@ class ReturnsReportView(OfficerRequiredMixin, View):
         else:
             messages.error(request, form.errors)
             redirect('wl_reports:reports')
-
-
-class PaymentsReportView(OfficerRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        form = PaymentForm(request.GET)
-        if form.is_valid():
-            start = form.cleaned_data.get('start')
-            end = form.cleaned_data.get('end')
-            print("start, end", start, end)
-            return redirect('wl_main:payments_report')
-        else:
-            messages.error(request, form.errors)
-            redirect('wl_reports:reports')
