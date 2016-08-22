@@ -18,7 +18,7 @@ from ledger.accounts.models import Document
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dpaw_logo.png')
 DPAW_HEADER_LOGO_SM = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dpaw_logo_small.png')
-BPAY_LOGO = os.path.join(settings.BASE_DIR, 'media', 'BPAY_2012_PORT_BLUE.png')
+BPAY_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img', 'BPAY_2012_PORT_BLUE.png')
 
 HEADER_MARGIN = 10
 HEADER_SMALL_BUFFER = 3
