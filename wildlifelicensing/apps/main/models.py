@@ -3,9 +3,12 @@ from __future__ import unicode_literals
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.core.exceptions import ValidationError
 
 from ledger.accounts.models import RevisionedMixin, EmailUser, Document, Profile
 from ledger.licence.models import LicenceType, Licence
+
+from wildlifelicensing.apps.payments import utils as payment_utils
 
 
 @python_2_unicode_compatible
@@ -44,6 +47,18 @@ class WildlifeLicenceType(LicenceType):
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
     application_schema = JSONField(blank=True, null=True)
     category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)
+
+    def clean(self):
+        """
+        Pre save validation:
+        - A payment product must exist before creating a LicenceType. Even if the licence is free, a product with price=0
+        must be created.
+        :return: raise an exception if error
+        """
+        if payment_utils.get_product(self) is None:
+            msg = "Payment product not found." \
+                  "You must create a payment product before creating a new Licence Type, even if the licence is free."
+            raise ValidationError(msg)
 
 
 @python_2_unicode_compatible
