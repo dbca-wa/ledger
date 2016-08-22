@@ -17,7 +17,7 @@ from django.conf import settings
 from ledger.accounts.models import Document
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dpaw_logo.png')
-DPAW_HEADER_LOGO_SVG = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','logo-monochrome.svg')
+DPAW_HEADER_LOGO_SM = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dpaw_logo_small.png')
 BPAY_LOGO = os.path.join(settings.BASE_DIR, 'media', 'BPAY_2012_PORT_BLUE.png')
 
 HEADER_MARGIN = 10
@@ -87,11 +87,10 @@ class Remittance(Flowable):
         canvas = self.canv
         current_y, current_x = self.current_y, self.current_x
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
-        dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO)
+        dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO_SM)
 
-        #dpaw_header_logo = svg2rlg(str(DPAW_HEADER_LOGO))
         dpaw_header_logo_size = dpaw_header_logo.getSize()
-        canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - (dpaw_header_logo_size[1]/1.5),height=dpaw_header_logo_size[1]/1.5, mask='auto', width=dpaw_header_logo_size[0]/1.5)
+        canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - (dpaw_header_logo_size[1]/1.8),height=dpaw_header_logo_size[1]/1.8, mask='auto', width=dpaw_header_logo_size[0]/1.9)
         
         current_y = -20
         canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
@@ -180,8 +179,7 @@ def _create_header(canvas, doc, draw_page_number=True):
 
     dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO)
     dpaw_header_logo_size = dpaw_header_logo.getSize()
-
-    canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - dpaw_header_logo_size[1],height=dpaw_header_logo_size[1], mask='auto')
+    canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]-250, height=dpaw_header_logo_size[1]/2, mask='auto')
 
     current_y -= 60
     canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'TAX INVOICE')
