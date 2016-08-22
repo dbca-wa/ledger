@@ -47,7 +47,7 @@
                         <ul class="tabs vertical" id="payment-tabs" data-tabs>
                             <li class="tabs-title is-active"><a href="#details" aria-selected="true">Invoice Details</a></li>
                             <li class="tabs-title"><a href="#other">Pay by Cash/Cheque/Money Order</a></li>
-                            <li class="tabs-title"><a href="#card">Pay by Card</a></li>
+                            <li class="hide tabs-title"><a href="#card">Pay by Card</a></li>
                         </ul>
                     </div>
                     <div class="medium-8 columns">
@@ -178,7 +178,7 @@
                                         <input id="other_amount" name="other_amount" type="number" value=""/>
                                     </label>
                                     {% endif %}
-                                    <label>Source
+                                    <label>Payment Type
                                         <select id="other_source" name="other_source">
                                             <option value="cash">Cash</option>
                                             <option value="eft">EFT</option>
@@ -186,11 +186,11 @@
                                             <option value="money_order">Money Order</option>
                                         </select>
                                     </label>
-                                    <label>Select Payment Type
+                                    <label>Action
                                         <select id="other_type" name="other_type">
-                                            <option value="payment">Payment</option>
+                                            <option value="payment">Record Payment</option>
                                             <option value="refund">Refund</option>
-                                            <option value="reversal">Reversal</option>
+                                            <option value="reversal">Reverse Payment</option>
                                         </select>
                                     </label>
                                     <input id="other_external" type="checkbox" aria-describeby="externalHelp"/><label for="other_external">External</label>
@@ -221,7 +221,7 @@
                                     <!-- Pay Button -->
                                 </form>
                             </div>
-                            <div class="tabs-panel" id="card">
+                            <div class="hide tabs-panel" id="card">
                                 <form id="card_form">
                                     {% if amountProvided %}
                                     <label>

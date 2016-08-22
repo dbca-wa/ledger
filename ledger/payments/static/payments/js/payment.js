@@ -203,8 +203,8 @@ $(function(){
         otherPayment();
     });
     
-    $card_form.submit(function(e){
+    /*$card_form.submit(function(e){
         e.preventDefault();
         cardPayment();
-    });
+    });*/
 });
