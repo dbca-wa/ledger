@@ -14,7 +14,6 @@ from django.conf import settings
 from django.core.files import File
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.http import urlencode
 
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
@@ -29,7 +28,6 @@ from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_customer
-from wildlifelicensing.apps.main import payment_utils as payments
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -313,7 +311,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         utils.rename_filename_doubleups(request.POST, request.FILES)
 
         utils.set_app_session_data(request.session, 'data', utils.create_data_from_form(licence_type.application_schema,
-                                                                            request.POST, request.FILES))
+                                                                                        request.POST, request.FILES))
 
         temp_files_dir = utils.get_app_session_data(request.session, 'temp_files_dir')
 
@@ -508,7 +506,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         application.save(version_user=application.applicant_profile.user, version_comment='Details Modified')
 
-        return redirect(reverse('wl_main:checkout_application', args=[application.pk]))
+        return redirect(reverse('wl_payments:checkout_application', args=[application.pk]))
 
 
 class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseView):

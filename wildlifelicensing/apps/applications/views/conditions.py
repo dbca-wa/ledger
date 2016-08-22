@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse, reverse_lazy
 
 from preserialize.serialize import serialize
 
-from wildlifelicensing.apps.main import payment_utils
+from wildlifelicensing.apps.payments import utils as payment_utils
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
