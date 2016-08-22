@@ -629,8 +629,8 @@ class CheckoutCreateView(generics.CreateAPIView):
 
 class ReportSerializer(serializers.Serializer):
     system = serializers.CharField(max_length=4)
-    start = serializers.DateField()
-    end = serializers.DateField()
+    start = serializers.DateTimeField()
+    end = serializers.DateTimeField()
 
 class ReportCreateView(generics.CreateAPIView):
     serializer_class = BpointPaymentSerializer
