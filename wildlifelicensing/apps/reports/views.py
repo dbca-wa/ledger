@@ -12,7 +12,8 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.reports.forms import ReportForm
 from wildlifelicensing.apps.returns.models import Return
-from wildlifelicensing.apps.main.payment_utils import PaymentsReportForm
+
+from wildlifelicensing.apps.payments.forms import PaymentsReportForm
 
 
 def to_string(obj):

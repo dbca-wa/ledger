@@ -16,7 +16,7 @@ from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
-from wildlifelicensing.apps.main import payment_utils
+from wildlifelicensing.apps.payments import utils as payment_utils
 
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -69,12 +69,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         # do credit card payment if required
         if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
-            #try:
                 payment_utils.invoke_credit_card_payment(application)
-            #except Exception as e:
-           #     messages.error(request, e)
-
-            #    return redirect(request.get_full_path())
 
         original_issue_date = None
         if application.licence is not None:

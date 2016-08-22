@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django_countries',
     'django_cron',
     ] + get_core_apps([  # django-oscar overrides
-        'ledger.basket', 
+        'ledger.basket',
         'ledger.order',
         'ledger.checkout',
         'ledger.address',
@@ -55,14 +55,15 @@ INSTALLED_APPS = [
     'ledger.payments.bpoint',
     'ledger.payments.cash',
     'ledger.payments.invoice',
-	'ledger.taxonomy',
+    'ledger.taxonomy',
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
     'wildlifelicensing.apps.applications',
     'wildlifelicensing.apps.emails',
     'wildlifelicensing.apps.returns',
     'wildlifelicensing.apps.customer_management',
-    'wildlifelicensing.apps.reports'
+    'wildlifelicensing.apps.reports',
+    'wildlifelicensing.apps.payments'
 ]
 
 SITE_ID = 1

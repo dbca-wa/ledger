@@ -1,85 +1,27 @@
 import json
 import requests
-import datetime
-from dateutil.relativedelta import relativedelta, FR
-import pytz
 
+from django.contrib import messages
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
-from django.utils.http import urlencode
 from django.views.generic.base import RedirectView, View
-from django import forms
-from django.contrib import messages
+from django.utils.http import urlencode
+
 from django.utils import timezone
 
-from ledger.catalogue.models import Product
-from ledger.payments.invoice.models import Invoice
 from wildlifelicensing.apps.applications.models import Application
-from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 
-PAYMENT_SYSTEM_ID = 'S369'
+from wildlifelicensing.apps.payments.utils import get_product, to_json
+from wildlifelicensing.apps.payments.forms import PaymentsReportForm
 
-PAYMENT_STATUS_PAID = 'paid'
-PAYMENT_STATUS_CC_READY = 'cc_ready'
-PAYMENT_STATUS_AWAITING = 'awaiting'
-PAYMENT_STATUS_NOT_REQUIRED = 'not_required'
-
-PAYMENT_STATUSES = {
-    PAYMENT_STATUS_PAID: 'Paid',
-    PAYMENT_STATUS_CC_READY: 'Credit Card Ready',
-    PAYMENT_STATUS_AWAITING: 'Awaiting Payment',
-    PAYMENT_STATUS_NOT_REQUIRED: 'Payment Not Required',
-}
 
 JSON_REQUEST_HEADER_PARAMS = {
     "Content-Type": "application/json",
     "Accept": "application/json"
 }
 
-
-def to_json(data):
-    return json.dumps(data, cls=WildlifeLicensingJSONEncoder)
-
-
-def get_product(application):
-    try:
-        return Product.objects.get(title=application.licence_type.code_slug)
-    except Product.DoesNotExist:
-        return None
-
-
-def get_application_payment_status(application):
-    """
-
-    :param application:
-    :return: One of PAYMENT_STATUS_PAID, PAYMENT_STATUS_CC_READY, PAYMENT_STATUS_AWAITING or PAYMENT_STATUS_NOT_REQUIRED
-    """
-    if not application.invoice_reference:
-        return PAYMENT_STATUS_NOT_REQUIRED
-
-    invoice = get_object_or_404(Invoice, reference=application.invoice_reference)
-
-    if invoice.amount > 0:
-        payment_status = invoice.payment_status
-
-        if payment_status == 'paid' or payment_status == 'over_paid':
-            return PAYMENT_STATUS_PAID
-        elif invoice.token:
-            return PAYMENT_STATUS_CC_READY
-        else:
-            return PAYMENT_STATUS_AWAITING
-    else:
-        return PAYMENT_STATUS_NOT_REQUIRED
-
-
-def invoke_credit_card_payment(application):
-    invoice = get_object_or_404(Invoice, reference=application.invoice_reference)
-
-    if not invoice.token:
-        raise Exception('Application invoice does have a credit payment token')
-
-    invoice.make_payment()
+PAYMENT_SYSTEM_ID = 'S369'
 
 
 class CheckoutApplicationView(RedirectView):
@@ -127,38 +69,6 @@ class ManualPaymentView(RedirectView):
         }
 
         return redirect('{}?{}'.format(url, urlencode(params)))
-
-
-class PaymentsReportForm(forms.Form):
-    date_format = '%d/%m/%Y %H:%M:%S'
-    start = forms.DateTimeField(required=True, widget=forms.DateTimeInput(
-        format=date_format
-    ))
-    end = forms.DateTimeField(required=True, widget=forms.DateTimeInput(
-        format=date_format
-    ))
-
-    def __init__(self, *args, **kwargs):
-        super(PaymentsReportForm, self).__init__(*args, **kwargs)
-        # initial datetime spec:
-        # end set to be the last Friday at 10:00 pm AEST even if it is a Friday
-        # start exactly one week before end
-
-        now = timezone.localtime(timezone.now())
-        # create a timezone aware datetime at 10:00 pm AEST
-        today_ten_pm_aest = timezone.make_aware(
-            datetime.datetime(now.year, now.month, now.day, 22, 0),
-            timezone=pytz.timezone('Australia/Sydney'))
-        # convert to local
-        today_ten_pm_aest_local = timezone.localtime(today_ten_pm_aest)
-        # back to previous friday (even if we are friday)
-        delta = relativedelta(weekday=FR(-1)) \
-            if today_ten_pm_aest_local.weekday() != FR.weekday else relativedelta(weekday=FR(-2))
-        end = today_ten_pm_aest_local + delta
-        start = end + relativedelta(weeks=-1)
-
-        self.fields['start'].initial = start
-        self.fields['end'].initial = end
 
 
 class PaymentsReportView(View):

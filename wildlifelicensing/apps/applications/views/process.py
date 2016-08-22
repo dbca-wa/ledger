@@ -23,7 +23,7 @@ from wildlifelicensing.apps.applications.emails import send_amendment_requested_
 from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
 
-from wildlifelicensing.apps.main import payment_utils
+from wildlifelicensing.apps.payments import utils as payment_utils
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
     CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
@@ -280,7 +280,7 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         ass_group = get_object_or_404(AssessorGroup, pk=request.POST['assGroupID'])
-        assessment, created = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)
+        assessment = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)[0]
 
         assessment.status = 'awaiting_assessment'
 

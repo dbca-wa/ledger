@@ -108,7 +108,7 @@
                                 <p class="no-margin">
                                     {{ payment_status }}
                                     {% if payment_status == 'Awaiting Payment' %}
-                                        <a href="{% url 'wl_main:manual_payment' application.id %}?redirect_url={{ request.build_absolute_uri }}"
+                                        <a href="{% url 'wl_payments:manual_payment' application.id %}?redirect_url={{ request.build_absolute_uri }}"
                                             class="pull-right">Enter Payment</a>
                                     {% endif %}
                                 </p>
