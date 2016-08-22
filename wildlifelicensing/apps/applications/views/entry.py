@@ -22,6 +22,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCu
 from wildlifelicensing.apps.main.helpers import is_officer, is_customer
 from django.core.urlresolvers import reverse
 from wildlifelicensing.apps.applications.utils import delete_session_application
+from wildlifelicensing.apps.payments.utils import is_licence_free
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -394,6 +395,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         kwargs['structure'] = application.licence_type.application_schema
 
         kwargs['is_proxy_applicant'] = is_officer(self.request.user)
+
+        kwargs['is_application_free'] = is_licence_free(application.licence_type)
 
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')

@@ -27,13 +27,11 @@ PAYMENT_SYSTEM_ID = 'S369'
 class CheckoutApplicationView(RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
-        product = get_product(application)
+        product = get_product(application.licence_type)
         user = application.applicant_profile.user.id
 
-        error_url = request.build_absolute_uri(
-            reverse('wl_applications:preview', args=(application.licence_type.code_slug, application.id,)))
-        success_url = request.build_absolute_uri(
-            reverse('wl_applications:complete', args=(application.licence_type.code_slug, application.id,)))
+        error_url = request.build_absolute_uri(reverse('wl_applications:preview'))
+        success_url = request.build_absolute_uri(reverse('wl_applications:complete'))
 
         parameters = {
             'system': PAYMENT_SYSTEM_ID,
@@ -44,7 +42,7 @@ class CheckoutApplicationView(RedirectView):
             'return_url': success_url,
             'forceRedirect': True,
             "products": [
-                {"id": product.id}
+                {"id": product.id if product is not None else None}
             ]
         }
 

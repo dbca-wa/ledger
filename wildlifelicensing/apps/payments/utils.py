@@ -2,6 +2,8 @@ import json
 
 from django.shortcuts import get_object_or_404
 
+from oscar.apps.partner.strategy import Selector
+
 from ledger.catalogue.models import Product
 from ledger.payments.invoice.models import Invoice
 
@@ -25,11 +27,24 @@ def to_json(data):
     return json.dumps(data, cls=WildlifeLicensingJSONEncoder)
 
 
-def get_product(application):
+def get_product(licence_type):
     try:
-        return Product.objects.get(title=application.licence_type.code_slug)
+        return Product.objects.get(title=licence_type.code_slug)
     except Product.DoesNotExist:
         return None
+
+
+def is_licence_free(licence_type):
+    product = get_product(licence_type)
+
+    if product is None:
+        return True
+
+    selector = Selector()
+    strategy = selector.strategy()
+    purchase_info = strategy.fetch_for_product(product=product)
+
+    return purchase_info.price == 0
 
 
 def get_application_payment_status(application):
