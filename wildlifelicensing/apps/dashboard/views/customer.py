@@ -244,9 +244,6 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-#         if not instance.is_renewable:
-#             return 'Not renewable'
-#         else:
         try:
             application = Application.objects.get(licence=instance)
             if Application.objects.filter(previous_application=application).exists():
