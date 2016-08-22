@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
 #
-from oscar.apps.payment import forms, models
+from ledger.payment import forms, models
 from oscar.core.loading import get_class, get_model, get_classes
 from oscar.apps.checkout import signals
 from oscar.apps.shipping.methods import NoShippingRequired
