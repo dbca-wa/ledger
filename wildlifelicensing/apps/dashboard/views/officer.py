@@ -171,7 +171,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
     columns = [
         'lodgement_number',
         'licence_type',
-        'applicant_profile.user',
+        'applicant',
         'processing_status',
         'lodgement_date',
         'assigned_officer',
@@ -181,7 +181,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
     order_columns = [
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
-        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        ['applicant.last_name', 'applicant.first_name', 'applicant.email'],
         'processing_status',
         'lodgement_date',
         ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
@@ -259,7 +259,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             )
 
     def get_initial_queryset(self):
-        return Application.objects.exclude(processing_status='draft')
+        return Application.objects.exclude(processing_status__in=['draft', 'temp'])
 
 
 class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
@@ -320,7 +320,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
     columns = [
         'lodgement_number',
         'licence_type',
-        'applicant_profile.user',
+        'applicant',
         'processing_status',
         'lodgement_date',
         'action'
@@ -328,7 +328,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
     order_columns = [
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
-        ['applicant_profile.user.last_name', 'applicant_profile.user.first_name', 'applicant_profile.user.email'],
+        ['applicant.last_name', 'applicant.first_name', 'applicant.email'],
         'processing_status',
         'lodgement_date',
         '']
@@ -348,19 +348,19 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
     @staticmethod
     def _get_pending_processing_statuses():
         return [s[0] for s in Application.PROCESSING_STATUS_CHOICES
-                if s[0] != 'issued' and s[0] != 'declined']
+                if s[0] != 'issued' and s[0] != 'declined' and s[0] != 'temp']
 
     @staticmethod
     def _render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.pk]),
                 'Continue application'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.pk]),
                 'Amend application'
             )
         elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
@@ -582,7 +582,8 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
             return '<a href="{0}">Renew</a> / <a href="{1}">Reissue</a>'.format(renew_url, reissue_url)
         else:
-            return '<a href="{0}">Reissue</a>'.format(reissue_url)
+            amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+            return '<a href="{0}">Amend</a> / <a href="{1}">Reissue</a>'.format(amend_url, reissue_url)
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()
