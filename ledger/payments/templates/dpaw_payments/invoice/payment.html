@@ -178,19 +178,19 @@
                                         <input id="other_amount" name="other_amount" type="number" value=""/>
                                     </label>
                                     {% endif %}
+                                    <label>Action
+                                        <select id="other_type" name="other_type">
+                                            <option value="payment">Record Payment</option>
+                                            <option value="refund">Refund</option>
+                                            <option value="reversal">Reverse Payment</option>
+                                        </select>
+                                    </label>
                                     <label>Payment Type
                                         <select id="other_source" name="other_source">
                                             <option value="cash">Cash</option>
                                             <option value="eft">EFT</option>
                                             <option value="cheque">Cheque</option>
                                             <option value="money_order">Money Order</option>
-                                        </select>
-                                    </label>
-                                    <label>Action
-                                        <select id="other_type" name="other_type">
-                                            <option value="payment">Record Payment</option>
-                                            <option value="refund">Refund</option>
-                                            <option value="reversal">Reverse Payment</option>
                                         </select>
                                     </label>
                                     <input id="other_external" type="checkbox" aria-describeby="externalHelp"/><label for="other_external">External</label>
