@@ -9,7 +9,7 @@ define([
         initialise: function() {
             var $issueLicenceForm = $('#issueLicenceForm'),
                 $issueButton = $('#issue'),
-				$regionSelect = $issueLicenceForm.find('select');
+                $regionSelect = $issueLicenceForm.find('select');
 
             // initialise all datapickers
             $("input[id$='date']").each(function() {
