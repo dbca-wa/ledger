@@ -9,6 +9,7 @@ from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 from collections import OrderedDict
+from wildlifelicensing.apps.main.helpers import is_customer, is_officer
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
@@ -74,81 +75,23 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     return item_data
 
 
-def _append_random_to_filename(file_name, random_string_size=5):
-    name, extention = os.path.splitext(file_name)
-
-    chars = string.ascii_uppercase + string.digits
-
-    random_string = ''.join(random.choice(chars) for _ in range(random_string_size))
-
-    return '{}-{}{}'.format(name, random_string, extention)
-
-
-def rename_filename_doubleups(post_data, file_data):
-    counter = 0
-
-    ordered_file_data = OrderedDict(file_data)
-    post_data_values = post_data.values()
-    file_data_values = [str(file_value) for file_value in ordered_file_data.values()]
-
-    for file_key, file_value in ordered_file_data.iteritems():
-        if str(file_value) in file_data_values[:counter] or str(file_value) in post_data_values:
-            file_data[file_key].name = _append_random_to_filename(file_value.name)
-
-        counter += 1
-
-
-def get_all_filenames_from_application_data(item, data):
-    filenames = []
-
-    if isinstance(item, list):
-        for i, child in enumerate(item):
-            filenames += get_all_filenames_from_application_data(child, data[i])
-    elif 'children' in item:
-        for child in item['children']:
-            for child_data in data[item['name']]:
-                filenames += get_all_filenames_from_application_data(child, child_data)
+def convert_documents_to_url(data, document_queryset, suffix):
+    if isinstance(data, list):
+        for item in data:
+            convert_documents_to_url(item, document_queryset, '')
     else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                filenames.append(data[item['name']])
-
-    return filenames
-
-
-def prepend_url_to_files(item, data, root_url):
-    # ensure root url ends with a /
-    if root_url[-1] != '/':
-        root_url += '/'
-
-    if item is not None:
-        if isinstance(item, list) and isinstance(data, list):
-            for i, child in enumerate(item):
-                prepend_url_to_files(child, data[i], root_url)
-        elif 'children' in item:
-            for child in item['children']:
-                for child_data in data[item['name']]:
-                    prepend_url_to_files(child, child_data, root_url)
-        else:
-            if isinstance(item, dict) and item.get('type', '') == 'file':
-                if item['name'] in data and len(data[item['name']]) > 0:
-                    data[item['name']] = root_url + data[item['name']]
-
-
-def convert_documents_to_url(item, data, document_queryset):
-    if item is not None:
-        if isinstance(item, list) and isinstance(data, list):
-            for i, child in enumerate(item):
-                convert_documents_to_url(child, data[i], document_queryset)
-        elif 'children' in item:
-            for child in item['children']:
-                for child_data in data[item['name']]:
-                    convert_documents_to_url(child, child_data, document_queryset)
-        else:
-            if isinstance(item, dict) and item.get('type', '') == 'file':
-                if item['name'] in data and len(data[item['name']]) > 0:
+        for item, value in data.iteritems():
+            if isinstance(value, list):
+                for rep in xrange(0, len(value)):
+                    convert_documents_to_url(value[rep], document_queryset, '{}-{}'.format(suffix, rep))
+            else:
+                try:
+                    # for legacy applications, need to check if there's a document where file is
+                    # named by the file name rather than the form field name
+                    data[item] = document_queryset.get(name=value).file.url
+                except Document.DoesNotExist:
                     try:
-                        data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
+                        data[item] = document_queryset.get(name='{}{}-0'.format(item, suffix)).file.url
                     except Document.DoesNotExist:
                         pass
 
@@ -174,46 +117,48 @@ def determine_applicant(request):
     return applicant
 
 
-def set_app_session_data(session, key, value):
-    if 'application' not in session:
-        session['application'] = {}
-
-    session['application'][key] = value
+def set_session_application(session, application):
+    session['application_id'] = application.id
 
     session.modified = True
 
 
-def is_app_session_data_set(session, key):
-    return 'application' in session and key in session['application']
-
-
-def get_app_session_data(session, key):
-    if is_app_session_data_set(session, key):
-        return session['application'][key]
+def get_session_application(session):
+    if 'application_id' in session:
+        application_id = session['application_id']
     else:
-        return None
+        raise Exception('Application not in Session')
+
+    try:
+        return Application.objects.get(id=application_id)
+    except Application.DoesNotExist:
+        raise Exception('Application not found for application_id {}'.format(application_id))
 
 
-def delete_app_session_data(session):
-    temp_files_dir = get_app_session_data(session, 'temp_files_dir')
-
-    if temp_files_dir is not None:
-        try:
-            shutil.rmtree(temp_files_dir)
-        except (shutil.Error, OSError) as e:
-            raise e
-
-    if 'application' in session:
-        del session['application']
+def delete_session_application(session):
+    if 'application_id' in session:
+        del session['application_id']
+        session.modified = True
 
 
-def clone_application_for_renewal(application, save=False):
-    application.customer_status = 'draft'
-    application.processing_status = 'renewal'
+def remove_temp_applications_for_user(user):
+    if is_customer(user):
+        Application.objects.filter(applicant=user, customer_status='temp').delete()
+    elif is_officer(user):
+        Application.objects.filter(proxy_applicant=user, customer_status='temp').delete()
+
+
+def clone_application_with_status_reset(application, keep_invoice=False):
+    application.customer_status = 'temp'
+    application.processing_status = 'temp'
 
     application.id_check_status = 'not_checked'
     application.character_check_status = 'not_checked'
+    application.returns_check_status = 'not_checked'
     application.review_status = 'not_reviewed'
+
+    application.correctness_disclaimer = False
+    application.further_information_disclaimer = False
 
     application.lodgement_number = ''
     application.lodgement_sequence = 0
@@ -222,6 +167,9 @@ def clone_application_for_renewal(application, save=False):
     application.assigned_officer = None
 
     application.licence = None
+
+    if not keep_invoice:
+        application.invoice_number = ''
 
     original_application_pk = application.pk
 

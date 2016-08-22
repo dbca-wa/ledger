@@ -58,7 +58,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     columns = [
         'application.lodgement_number',
         'licence_type',
-        'application.applicant_profile.user',
+        'application.applicant',
         'status',
         'application.lodgement_date',
         'application.assigned_officer',
@@ -67,8 +67,8 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     order_columns = [
         'application.lodgement_number',
         ['application.licence_type.short_name', 'application.licence_type.name'],
-        ['application.applicant_profile.user.last_name', 'application.applicant_profile.user.first_name',
-         'application.applicant_profile.user.email'],
+        ['application.applicant.last_name', 'application.applicant.first_name',
+         'application.applicant.email'],
         'status',
         'application.lodgement_date',
         ['application.assigned_officer.first_name', 'application.assigned_officer.last_name',
@@ -87,8 +87,8 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
             'search': lambda self, search: DataTableApplicationAssessorView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance.application)
         },
-        'application.applicant_profile.user': {
-            'render': lambda self, instance: render_user_name(instance.application.applicant_profile.user),
+        'application.applicant': {
+            'render': lambda self, instance: render_user_name(instance.application.applicant),
             'search': lambda self, search: base.build_field_query(
                 ['application__applicant_profile__user__last_name', 'application__applicant_profile__user__first_name'],
                 search
