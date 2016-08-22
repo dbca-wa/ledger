@@ -75,30 +75,6 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     return item_data
 
 
-def _append_random_to_filename(file_name, random_string_size=5):
-    name, extention = os.path.splitext(file_name)
-
-    chars = string.ascii_uppercase + string.digits
-
-    random_string = ''.join(random.choice(chars) for _ in range(random_string_size))
-
-    return '{}-{}{}'.format(name, random_string, extention)
-
-
-def rename_filename_doubleups(post_data, file_data):
-    counter = 0
-
-    ordered_file_data = OrderedDict(file_data)
-    post_data_values = post_data.values()
-    file_data_values = [str(file_value) for file_value in ordered_file_data.values()]
-
-    for file_key, file_value in ordered_file_data.iteritems():
-        if str(file_value) in file_data_values[:counter] or str(file_value) in post_data_values:
-            file_data[file_key].name = _append_random_to_filename(file_value.name)
-
-        counter += 1
-
-
 def convert_documents_to_url(data, document_queryset, suffix):
     if isinstance(data, list):
         for item in data:
@@ -139,39 +115,6 @@ def determine_applicant(request):
         raise SessionDataMissingException('application not set in session')
 
     return applicant
-
-
-def set_app_session_data(session, key, value):
-    if 'application' not in session:
-        session['application'] = {}
-
-    session['application'][key] = value
-
-    session.modified = True
-
-
-def is_app_session_data_set(session, key):
-    return 'application' in session and key in session['application']
-
-
-def get_app_session_data(session, key):
-    if is_app_session_data_set(session, key):
-        return session['application'][key]
-    else:
-        return None
-
-
-def delete_app_session_data(session):
-    temp_files_dir = get_app_session_data(session, 'temp_files_dir')
-
-    if temp_files_dir is not None:
-        try:
-            shutil.rmtree(temp_files_dir)
-        except (shutil.Error, OSError) as e:
-            raise e
-
-    if 'application' in session:
-        del session['application']
 
 
 def set_session_application(session, application):

@@ -335,8 +335,6 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.error(self.request, e.message)
             return redirect('wl_applications:new_application')
 
-#         utils.rename_filename_doubleups(request.POST, request.FILES)
-
         application.data = utils.create_data_from_form(application.licence_type.application_schema,
                                                        request.POST, request.FILES)
 
