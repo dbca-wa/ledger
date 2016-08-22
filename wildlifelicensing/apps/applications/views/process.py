@@ -57,8 +57,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             # reversion won't reference the previous many-to-many sets, only the latest one, so need to get documents as per below
             previous_lodgement_documents = Document.objects.filter(pk__in=revision.field_dict['documents'])
 
-            convert_documents_to_url(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
-                                     previous_lodgement_documents)
+            convert_documents_to_url(previous_lodgement.data, previous_lodgement_documents, '')
             previous_lodgements.append({'lodgement_number': '{}-{}'.format(previous_lodgement.lodgement_number,
                                                                            previous_lodgement.lodgement_sequence),
                                         'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
@@ -74,7 +73,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
 
-        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        convert_documents_to_url(application.data, application.documents.all(), '')
 
         data = {
             'user': serialize(request.user),
@@ -104,7 +103,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, officer=self.request.user)
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user.get_full_name()
+            to = application.applicant.get_full_name()
         else:
             to = application.proxy_applicant.get_full_name()
 

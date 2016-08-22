@@ -32,7 +32,7 @@ def build_url(base, query):
 
 
 def get_processing_statuses_but_draft():
-    return [s for s in Application.PROCESSING_STATUS_CHOICES if s[0] != 'draft']
+    return [s for s in Application.PROCESSING_STATUS_CHOICES if s[0] != 'draft' and s[0] != 'temp']
 
 
 # render date in dd/mm/yyyy format
@@ -338,7 +338,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
     def get_initial_queryset(self):
         if self.model:
-            return self.model.objects.all()
+            return self.model.objects.all().exclude(processing_status='temp')
         else:
             return EmptyQuerySet()
 
@@ -347,20 +347,20 @@ class DataTableApplicationBaseView(DataTableBaseView):
     model = Application
     columns = [
         'licence_type',
-        'applicant_profile.user',
+        'applicant',
         'applicant_profile',
         'processing_status'
     ]
     order_columns = [
         ['licence_type.short_name', 'licence_type.name'],
-        'applicant_profile.user',
+        'applicant',
         'applicant_profile',
         'processing_status'
     ]
 
     columns_helpers = dict(DataTableBaseView.columns_helpers.items(), **{
-        'applicant_profile.user': {
-            'render': lambda self, instance: render_user_name(instance.applicant_profile.user, first_name_first=False),
+        'applicant': {
+            'render': lambda self, instance: render_user_name(instance.applicant, first_name_first=False),
             'search': lambda self, search: build_field_query(
                 ['applicant_profile__user__last_name', 'applicant_profile__user__first_name'], search)
         },
