@@ -90,6 +90,10 @@ class Return(RevisionedMixin):
 
     proxy_customer = models.ForeignKey(EmailUser, blank=True, null=True)
 
+    nil_return = models.BooleanField(default=False)
+
+    comments = models.TextField(blank=True)
+
     @property
     def can_user_edit(self):
         """
