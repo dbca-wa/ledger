@@ -9,7 +9,8 @@ from api import (
                 CashViewSet,
                 BpayFileList,
                 ReportCreateView,
-                CheckoutCreateView
+                CheckoutCreateView,
+                RegionViewSet
                 )
 
 from bpay.dashboard.app import application as bpay
@@ -25,6 +26,7 @@ router.register(r'^bpay/collections',BpayCollectionViewSet,base_name='BpayCollec
 router.register(r'^invoices', InvoiceTransactionViewSet)
 router.register(r'^bpoint', BpointTransactionViewSet)
 router.register(r'^cash', CashViewSet)
+router.register(r'^regions', RegionViewSet)
 
 api_patterns = [
     url(r'api/bpoint/payment$', BpointPaymentCreateView.as_view(), name='bpoint-payment'),
