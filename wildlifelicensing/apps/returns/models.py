@@ -92,7 +92,7 @@ class Return(RevisionedMixin):
 
     nil_return = models.BooleanField(default=False)
 
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, null=True)
 
     @property
     def can_user_edit(self):
