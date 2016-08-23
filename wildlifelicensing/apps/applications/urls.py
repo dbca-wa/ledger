@@ -9,8 +9,7 @@ from wildlifelicensing.apps.applications.views.process import ProcessView, Assig
     SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, RemindAssessmentView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
-    CreateConditionView, SetAssessmentConditionState, SubmitConditionsView, EnterConditionsAssessorView, \
-    SubmitConditionsAssessorView
+    CreateConditionView, SetAssessmentConditionState, EnterConditionsAssessorView
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
@@ -56,9 +55,6 @@ urlpatterns = [
     url('^search-conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
     url('^create-condition/$', CreateConditionView.as_view(), name='create_condition'),
     url('^set-assessment-condition-state/$', SetAssessmentConditionState.as_view(), name='set_assessment_condition_state'),
-    url('^submit-conditions/([0-9]+)/$', SubmitConditionsView.as_view(), name='submit_conditions'),
-    url('^submit-conditions/([0-9]+)/assessment/([0-9]+)/?$', SubmitConditionsAssessorView.as_view(),
-        name='submit_conditions_assessor'),
 
     # issue
     url('^issue-licence/([0-9]+)/$', IssueLicenceView.as_view(), name='issue_licence'),

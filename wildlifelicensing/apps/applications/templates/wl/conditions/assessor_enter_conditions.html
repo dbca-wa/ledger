@@ -111,7 +111,8 @@
                         </div>
                     </div>
                 </div>
-                <button id="assessmentDone" type="button" class="btn btn-sm btn-success pull-right">Conclude Assessment</button>
+                <button id="save" type="button" class="btn btn-sm btn-info">Save</button>
+                <button id="conclude" type="button" class="btn btn-sm btn-success pull-right">Conclude Assessment</button>
             </div>
             <div class="col-md-9">
                 <h3>Current Conditions</h3>
@@ -123,7 +124,7 @@
                     </div>
                     <strong>Additional Condition</strong>
                 </div>
-                <form method="post" action="{{ action_url }}" id="conditionsForm">
+                <form method="post" id="conditionsForm">
                     {% csrf_token %}
                     <table class="table table-bordered">
                         <thead class="conditions-table-head">

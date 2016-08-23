@@ -36,7 +36,6 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = application.licence_type.application_schema
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
-        kwargs['action_url'] = reverse('wl_applications:submit_conditions', args=[application.pk])
 
         if application.proxy_applicant is None:
             to = application.applicant.get_full_name()
@@ -47,17 +46,33 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 
+    def post(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=self.args[0])
+
+        application.processing_status = 'ready_to_issue'
+
+        # remove existing conditions as there may be new conditions and/or changes of order
+        application.conditions.clear()
+
+        application.save()
+
+        for order, condition_id in enumerate(request.POST.getlist('conditionID')):
+            ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
+                                                application=application, order=order)
+
+        if request.POST.get('submissionType') == 'backToProcessing':
+            return redirect('wl_applications:process', *args)
+        else:
+            return redirect('wl_applications:issue_licence', *self.args, **self.kwargs)
+
 
 class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
+    success_url = reverse_lazy('wl_dashboard:home')
 
-    def get(self, request, *args, **kwargs):
-        application = get_object_or_404(Application, pk=args[0])
-        assessment = get_object_or_404(Assessment, pk=args[1])
-
-        if assessment.status == 'assessed':
-            messages.warning(request, 'This assessment has already been concluded and may only be viewed in read-only mode.')
-            return redirect('wl_applications:view_assessment', *args)
+    def get_context_data(self, **kwargs):
+        application = get_object_or_404(Application, pk=self.args[0])
+        assessment = get_object_or_404(Assessment, pk=self.args[1])
 
         if application.hard_copy is not None:
             application.licence_type.application_schema, application.data = \
@@ -66,15 +81,61 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         convert_documents_to_url(application.data, application.documents.all(), '')
 
-        context = {}
+        kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['form_structure'] = application.licence_type.application_schema
 
-        context['application'] = serialize(application, posthook=format_application)
-        context['form_structure'] = application.licence_type.application_schema
+        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
 
-        context['assessment'] = serialize(assessment, post_hook=format_assessment)
-        context['action_url'] = reverse('wl_applications:submit_conditions_assessor', args=[application.pk, assessment.pk])
+        return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
-        return render(request, self.template_name, context)
+
+    def get(self, request, *args, **kwargs):
+        assessment = get_object_or_404(Assessment, pk=args[1])
+
+        if assessment.status == 'assessed':
+            messages.warning(request, 'This assessment has already been concluded and may only be viewed in read-only mode.')
+            return redirect('wl_applications:view_assessment', *args)
+
+        return super(EnterConditionsAssessorView, self).get(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=self.args[0])
+        assessment = get_object_or_404(Assessment, pk=self.args[1])
+
+        assessment.assessmentcondition_set.all().delete()
+        for order, condition_id in enumerate(request.POST.getlist('conditionID')):
+            AssessmentCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
+                                               assessment=assessment, order=order)
+
+        # set the assessment request status to be 'assessed' if concluding
+        if 'conclude' in request.POST:
+            assessment.status = 'assessed'
+
+        comment = request.POST.get('comment', '')
+        if len(comment.strip()) > 0:
+            assessment.comment = comment
+
+        purpose = request.POST.get('purpose', '')
+        if len(purpose.strip()) > 0:
+            assessment.purpose = purpose
+
+        assessment.save()
+
+        # set application status process
+        application.processing_status = determine_processing_status(application)
+        application.save()
+
+        send_assessment_done_email(assessment, request)
+
+        if 'conclude' in request.POST:
+            messages.success(request, 'The application assessment has been forwarded back to the Wildlife Licensing '
+                             'office for review.')
+
+            return redirect(self.success_url)
+        else:
+            messages.warning(request, 'The application assessment was saved.')
+
+            return render(request, self.template_name, self.get_context_data())
 
 
 class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
@@ -112,59 +173,3 @@ class SetAssessmentConditionState(OfficerRequiredMixin, View):
         response = ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES[assessment_condition.acceptance_status]
 
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
-
-
-class SubmitConditionsView(OfficerRequiredMixin, View):
-    def post(self, request, *args, **kwargs):
-        application = get_object_or_404(Application, pk=self.args[0])
-
-        application.processing_status = 'ready_to_issue'
-
-        # remove existing conditions as there may be new conditions and/or changes of order
-        application.conditions.clear()
-
-        application.save()
-
-        for order, condition_id in enumerate(request.POST.getlist('conditionID')):
-            ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
-                                                application=application, order=order)
-
-        if request.POST.get('submissionType') == 'backToProcessing':
-            return redirect('wl_applications:process', *args)
-        else:
-            return redirect('wl_applications:issue_licence', *self.args, **self.kwargs)
-
-
-class SubmitConditionsAssessorView(CanPerformAssessmentMixin, View):
-    success_url = reverse_lazy('wl_dashboard:home')
-
-    def post(self, request, *args, **kwargs):
-        application = get_object_or_404(Application, pk=self.args[0])
-        assessment = get_object_or_404(Assessment, pk=self.args[1])
-
-        assessment.assessmentcondition_set.all().delete()
-        for order, condition_id in enumerate(request.POST.getlist('conditionID')):
-            AssessmentCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
-                                               assessment=assessment, order=order)
-
-        # set the assessment request status to be 'assessed'
-        assessment.status = 'assessed'
-        comment = request.POST.get('comment', '')
-        if len(comment.strip()) > 0:
-            assessment.comment = comment
-
-        purpose = request.POST.get('purpose', '')
-        if len(purpose.strip()) > 0:
-            assessment.purpose = purpose
-
-        assessment.save()
-
-        # set application status process
-        application.processing_status = determine_processing_status(application)
-        application.save()
-
-        send_assessment_done_email(assessment, request)
-
-        messages.success(request, 'The application assessment has been forwarded back to the Wildlife Licensing office for review.')
-
-        return redirect(self.success_url)
