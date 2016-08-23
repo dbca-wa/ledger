@@ -1,5 +1,5 @@
 define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function($, _, applicationPreview) {
-    function initOtherAssessorsCommentsPopover(assessments) {
+    function initAssessorsCommentsPopover(assessments) {
         var $contentContainer = $('<div>'),
             $viewAssessorsComments = $('#viewAssessorsComments');
 
@@ -25,7 +25,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
         init: function(application, assessments) {
             applicationPreview.layoutPreviewItems('#applicationContainer', application.licence_type.application_schema,
                     application.data);
-            initOtherAssessorsCommentsPopover(assessments);
+            initAssessorsCommentsPopover(assessments);
         }
     }
 });
