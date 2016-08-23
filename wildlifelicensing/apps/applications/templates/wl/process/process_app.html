@@ -99,6 +99,14 @@
                                         <input type="hidden" id="assignee" class="form-control">
                                         <a id="assignToMe" class="pull-right">Assign to me</a>
                                     </div>
+                                    <label>Payment Status</label>
+                                    <p class="no-margin">
+                                        {{ data.payment_status }}
+                                        {% if data.payment_status == 'Awaiting Payment' %}
+                                            <a href="{% url 'wl_payments:manual_payment' data.application.id %}?redirect_url={{ request.build_absolute_uri }}"
+                                                class="pull-right">Enter Payment</a>
+                                        {% endif %}
+                                    </p>
                                 </div>
                             </div>
                         </div>

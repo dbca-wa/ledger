@@ -16,6 +16,7 @@ from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
+from wildlifelicensing.apps.payments import utils as payment_utils
 
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -45,16 +46,30 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                             return_frequency=return_frequency)
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user
+            to = application.applicant
         else:
             to = application.proxy_applicant
 
         kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
 
+        kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                      get_application_payment_status(application))
+
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
+
+        payment_status = payment_utils.get_application_payment_status(application)
+
+        if payment_status == payment_utils.PAYMENT_STATUS_AWAITING:
+            messages.error(request, 'Payment is required before licence can be issued')
+
+            return redirect(request.get_full_path())
+
+        # do credit card payment if required
+        if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+                payment_utils.invoke_credit_card_payment(application)
 
         original_issue_date = None
         if application.licence is not None:
@@ -67,7 +82,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence = issue_licence_form.save(commit=False)
             licence.licence_type = application.licence_type
             licence.profile = application.applicant_profile
-            licence.holder = application.applicant_profile.user
+            licence.holder = application.applicant
             licence.issuer = request.user
 
             if application.previous_application is not None:
@@ -96,6 +111,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                                              request.build_absolute_uri(reverse('home')))
 
             licence.save()
+
+            issue_licence_form.save_m2m()
 
             licence_issued.send(sender=self.__class__, wildlife_licence=licence)
 
@@ -128,7 +145,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
             if application.proxy_applicant is None:
-                to = application.applicant_profile.user.get_full_name()
+                to = application.applicant.get_full_name()
             else:
                 to = application.proxy_applicant.get_full_name()
 
@@ -162,7 +179,7 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
         licence = issue_licence_form.save(commit=False)
         licence.licence_type = application.licence_type
         licence.profile = application.applicant_profile
-        licence.holder = application.applicant_profile.user
+        licence.holder = application.applicant
 
         filename = '%s.pdf' % application.lodgement_number
 

@@ -36,5 +36,5 @@ urlpatterns = [
 
     # general communications log
     url('^add-log-entry/([0-9]+)/$', AddCommunicationsLogEntryView.as_view(), name='add_log_entry'),
-    url('^log-list/([0-9]+)/$', CommunicationsLogListView.as_view(), name='log_list'),
+    url('^log-list/([0-9]+)/$', CommunicationsLogListView.as_view(), name='log_list')
 ]

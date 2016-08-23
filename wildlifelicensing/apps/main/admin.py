@@ -4,7 +4,7 @@ from django import forms
 from reversion.admin import VersionAdmin
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceCategory, WildlifeLicenceType, Condition, \
-    DefaultCondition
+    DefaultCondition, Region
 from wildlifelicensing.apps.main.forms import BetterJSONField
 
 
@@ -16,6 +16,12 @@ class DefaultConditionInline(admin.TabularInline):
 class PreviousLicenceTypeChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         return '{} (V{})'.format(obj.short_name or obj.name, obj.version)
+
+
+@admin.register(Region)
+class RegionAdmin(VersionAdmin):
+    list_display = ['name']
+    ordering = ['name']
 
 
 @admin.register(WildlifeLicenceCategory)
