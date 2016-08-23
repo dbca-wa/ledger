@@ -6,6 +6,77 @@ from ledger.payments.bpoint import settings as bpoint_settings
 from django.utils.encoding import python_2_unicode_compatible
 from ledger.payments.invoice.models import Invoice
 
+DISTRICT_PERTH_HILLS = 'PHS'
+DISTRICT_SWAN_COASTAL = 'SWC'
+DISTRICT_BLACKWOOD = 'BWD'
+DISTRICT_WELLINGTON = 'WTN'
+DISTRICT_DONNELLY = 'DON'
+DISTRICT_FRANKLAND = 'FRK'
+DISTRICT_ALBANY = 'ALB'
+DISTRICT_ESPERANCE = 'ESP'
+DISTRICT_EAST_KIMBERLEY = 'EKM'
+DISTRICT_WEST_KIMBERLEY = 'WKM'
+DISTRICT_EXMOUTH = 'EXM'
+DISTRICT_PILBARA = 'PIL'
+DISTRICT_KALGOORLIE = 'KAL'
+DISTRICT_GERALDTON = 'GER'
+DISTRICT_MOORA = 'MOR'
+DISTRICT_SHARK_BAY = 'SHB'
+DISTRICT_GREAT_SOUTHERN = 'GSN'
+DISTRICT_CENTRAL_WHEATBELT = 'CWB'
+DISTRICT_SOUTHERN_WHEATBELT = 'SWB'
+
+DISTRICT_CHOICES = (
+    (DISTRICT_PERTH_HILLS, "Perth Hills"),
+    (DISTRICT_SWAN_COASTAL, "Swan Coastal"),
+    (DISTRICT_BLACKWOOD, "Blackwood"),
+    (DISTRICT_WELLINGTON, "Wellington"),
+    (DISTRICT_DONNELLY, "Donnelly"),
+    (DISTRICT_FRANKLAND, "Frankland"),
+    (DISTRICT_ALBANY, "Albany"),
+    (DISTRICT_ESPERANCE, "Esperance"),
+    (DISTRICT_EAST_KIMBERLEY, "East Kimberley"),
+    (DISTRICT_WEST_KIMBERLEY, "West Kimberley"),
+    (DISTRICT_EXMOUTH, "Exmouth"),
+    (DISTRICT_PILBARA, "Pilbara"),
+    (DISTRICT_KALGOORLIE, "Kalgoorlie"),
+    (DISTRICT_GERALDTON, "Geraldton"),
+    (DISTRICT_MOORA, "Moora"),
+    (DISTRICT_SHARK_BAY, "Shark Bay"),
+    (DISTRICT_GREAT_SOUTHERN, "Great Southern"),
+    (DISTRICT_CENTRAL_WHEATBELT, "Central Wheatbelt"),
+    (DISTRICT_SOUTHERN_WHEATBELT, "Southern Wheatbelt")
+)
+
+REGION_KIMBERLEY = 'kimberley'
+REGION_PILBARA = 'pilbara'
+REGION_MIDWEST = 'midwest'
+REGION_GOLDFIELDS = 'goldfields'
+REGION_SWAN = 'swan'
+REGION_WHEATBELT = 'wheatbelt'
+REGION_SOUTH_WEST = 'southwest'
+REGION_WARREN = 'warren'
+REGION_SOUTH_COAST = 'southcoast'
+
+REGION_CHOICES = (
+    (REGION_KIMBERLEY,'Kimberley'),
+    (REGION_PILBARA,'Pilbara'),
+    (REGION_MIDWEST,'Midwest'),
+    (REGION_GOLDFIELDS,'Goldfields'),
+    (REGION_SWAN,'Swan'),
+    (REGION_WHEATBELT,'Wheatbelt'),
+    (REGION_SOUTH_WEST,'South West'),
+    (REGION_WARREN,'Warren'),
+    (REGION_SOUTH_COAST,'South Coast')
+)
+
+class Region(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+class District(models.Model):
+    name = models.CharField(choices=DISTRICT_CHOICES,max_length=3,unique=True)
+    region = models.ForeignKey(Region,related_name='districts')
+
 class CashTransaction(models.Model):
     TRANSACTION_TYPES = (
         ('payment','payment'),
