@@ -139,7 +139,9 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <a class="add-return-row">Add Row</a>
+                                {% if not return.nil_return %}
+                                    <a class="add-return-row">Add Row</a>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
