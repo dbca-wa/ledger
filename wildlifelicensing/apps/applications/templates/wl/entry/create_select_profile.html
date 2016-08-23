@@ -10,6 +10,13 @@
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
 
+{% block requirements %}
+    require(['js/entry/navigation'], function(navigation) {
+        navigation.setupNavigateAway('Warning: any information entered into the form '+
+                                     'will be lost if not saved as draft.');
+    });
+{% endblock %}
+
 {% block breadcrumbs %}
     <div class="container">
         <div class="row">

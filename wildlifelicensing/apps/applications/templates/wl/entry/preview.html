@@ -13,7 +13,9 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery', 'js/entry/application_preview'], function($, applicationPreview) {
+    require(['jQuery',
+             'js/entry/application_preview',
+             'js/entry/navigation'], function($, applicationPreview, navigation) {
         applicationPreview.layoutPreviewItems('#formContainer', {{ structure|jsonify }}, {{ data|jsonify }});
 
         $('#mainContainer').removeClass('hidden');
@@ -22,6 +24,9 @@
         applicationPreview.initialiseSidebarMenu('#sectionList');
 
         applicationPreview.setupDisclaimer($('#disclaimers').find('input[type=checkbox]'), '#lodge');
+
+        navigation.setupNavigateAway('Warning: any information entered into the form '+
+                                     'will be lost if not saved as draft.');
     });
 {% endblock %}
 
@@ -35,8 +40,8 @@
                         <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
                     {% endif %}
                     <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
-                    <li><a href="{% url 'wl_applications:create_select_profile' %}">Select Profile</a></li>
-                    <li><a href="{% url 'wl_applications:enter_details' %}">Enter Application Details</a></li>
+                    <li><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Select Profile</a></li>
+                    <li><a data-entry-link="True" href="{% url 'wl_applications:enter_details' %}">Enter Application Details</a></li>
                     <li class="active">Preview and Lodge Application</li>
                 </ol>
             </div>
@@ -67,7 +72,7 @@
             <div class="col-md-2 col-sm-3">
                 <label class="top-buffer">Selected Profile:</label>
                 <p>{{ profile.name }}</p>
-                <p><em><a href="{% url 'wl_applications:create_select_profile' %}">Change Profile</a></em></p>
+                <p><em><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Change Profile</a></em></p>
                 <nav class="hidden-xs top-buffer">
                     <div id="sectionList">
                         <ul class="nav nav-stacked">
@@ -97,7 +102,7 @@
                         </div>
                     </div>
                     <div>
-                        <a class="btn btn-default" href="{% url 'wl_applications:enter_details' %}">Edit Application Details</a>
+                        <a data-entry-link="True" class="btn btn-default" href="{% url 'wl_applications:enter_details' %}">Edit Application Details</a>
                         <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>Lodge Application</button>
                     </div>
                 </form>
