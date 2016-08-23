@@ -17,6 +17,28 @@ define([
         $viewApplicationDetails.popover({container: 'body', content: $contentContainer, html: true});
     }
 
+    function initOtherAssessorsCommentsPopover(assessments) {
+        var $contentContainer = $('<div>'),
+            $viewOtherAssessorsComments = $('#viewOtherAssessorsComments');
+
+        if(assessments.length) {
+            $.each(assessments, function(index, assessment) {
+                if(assessment.status === 'Assessed') {
+                    var assessorGroupName = '<strong>' + assessment.assessor_group.name + ': </strong>';
+                    $contentContainer.append($('<p>').html(assessorGroupName + assessment.comment));
+                }
+            })
+        }
+
+        if ($contentContainer.children().length) {
+            $contentContainer.find(':last-child').addClass('no-margin');
+        } else {
+            $contentContainer.append($('<p>').addClass('no-margin').text("No other assessors' comments available"));
+        }
+
+        $viewOtherAssessorsComments.popover({container: 'body', content: $contentContainer, html: true});
+    }
+
     function createConditionTableRow(condition, rowClass) {
         var $row = $('<tr>').addClass(rowClass);
 
@@ -57,8 +79,9 @@ define([
     }
 
     return {
-        init: function (assessment, application, formStructure) {
+        init: function (assessment, application, formStructure, otherAssessments) {
             initApplicationDetailsPopover(application, formStructure);
+            initOtherAssessorsCommentsPopover(otherAssessments);
             initDefaultConditions(application.licence_type.default_conditions);
             initAdditionalConditions(assessment);
             initForm();

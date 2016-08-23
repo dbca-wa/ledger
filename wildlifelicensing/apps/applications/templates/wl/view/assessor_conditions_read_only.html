@@ -16,7 +16,8 @@
 {% block requirements %}
     require(['js/conditions/assessor_conditions_read_only'], function (conditions) {
         $(function () {
-            conditions.init({{ assessment|jsonify }}, {{ application|jsonify }}, {{ form_structure|jsonify }});
+            conditions.init({{ assessment|jsonify }}, {{ application|jsonify }},
+                            {{ form_structure|jsonify }}, {{ other_assessments|jsonify }});
         });
     });
 {% endblock %}
@@ -82,6 +83,11 @@
                                 <p>
                                     <a id="viewApplicationDetails" data-toggle="popover" data-placement="right">
                                         View Application Details
+                                    </a>
+                                </p>
+                                <p>
+                                    <a id="viewOtherAssessorsComments" data-toggle="popover" data-placement="right">
+                                        View Other Assessors' Comments
                                     </a>
                                 </p>
                              </div>

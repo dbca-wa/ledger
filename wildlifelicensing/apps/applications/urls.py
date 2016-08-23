@@ -13,8 +13,8 @@ from wildlifelicensing.apps.applications.views.conditions import EnterConditions
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
-from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, AssessorConditionsView, \
-    AddApplicationLogEntryView, ApplicationLogListView
+from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, ViewReadonlyOfficerView, \
+    AssessorConditionsView, AddApplicationLogEntryView, ApplicationLogListView
 
 
 urlpatterns = [
@@ -64,5 +64,6 @@ urlpatterns = [
 
     # view
     url('^view-application/([0-9]+)/$', ViewReadonlyView.as_view(), name='view_application'),
+    url('^view-application-officer/([0-9]+)/$', ViewReadonlyOfficerView.as_view(), name='view_application_officer'),
     url('^view-assessment/([0-9]+)/assessment/([0-9]+)/$', AssessorConditionsView.as_view(), name='view_assessment')
 ]
