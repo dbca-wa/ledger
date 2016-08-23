@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from wildlifelicensing.apps.main.tests.helpers import *
 from wildlifelicensing.apps.applications.tests.helpers import *
+from wildlifelicensing.apps.applications.models import AssessmentCondition
 from wildlifelicensing.apps.main.helpers import is_assessor, get_user_assessor_groups
 
 

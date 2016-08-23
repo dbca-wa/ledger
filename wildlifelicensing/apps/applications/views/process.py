@@ -23,7 +23,7 @@ from wildlifelicensing.apps.applications.emails import send_amendment_requested_
 from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
 
-from wildlifelicensing.apps.main import payment_utils
+from wildlifelicensing.apps.payments import utils as payment_utils
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
     CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
@@ -57,8 +57,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             # reversion won't reference the previous many-to-many sets, only the latest one, so need to get documents as per below
             previous_lodgement_documents = Document.objects.filter(pk__in=revision.field_dict['documents'])
 
-            convert_documents_to_url(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
-                                     previous_lodgement_documents)
+            convert_documents_to_url(previous_lodgement.data, previous_lodgement_documents, '')
             previous_lodgements.append({'lodgement_number': '{}-{}'.format(previous_lodgement.lodgement_number,
                                                                            previous_lodgement.lodgement_sequence),
                                         'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
@@ -74,7 +73,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
 
-        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        convert_documents_to_url(application.data, application.documents.all(), '')
 
         data = {
             'user': serialize(request.user),
@@ -104,7 +103,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, officer=self.request.user)
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user.get_full_name()
+            to = application.applicant.get_full_name()
         else:
             to = application.proxy_applicant.get_full_name()
 
@@ -280,7 +279,7 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         ass_group = get_object_or_404(AssessorGroup, pk=request.POST['assGroupID'])
-        assessment, created = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)
+        assessment = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)[0]
 
         assessment.status = 'awaiting_assessment'
 
@@ -290,6 +289,11 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         application.save()
 
         send_assessment_requested_email(assessment, request)
+
+        # need to only set and save this after the email was sent in case the email fails whereby it should remain null
+        assessment.date_last_reminded = date.today()
+
+        assessment.save()
 
         return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment),
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},

@@ -5,13 +5,16 @@
 {% load bootstrap3 %}
 
 {% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css"
+        rel="stylesheet"/>
+
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery', 'bootstrap-datetimepicker'], function ($) {
-        $("[name$='date']").datetimepicker({
-            format: 'DD/MM/YYYY'
-        });
+    require(['js/report'], function (reports) {
+        $(function () { reports.initialise(); });
     });
 {% endblock %}
 
@@ -39,7 +42,8 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Applications</h3>
-                <form method="get" action="{% url 'wl_reports:applications_report' %}">
+                <form method="get" id="application-form" action="{% url 'wl_reports:applications_report' %}">
+                    {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}
@@ -60,13 +64,17 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Licences</h3>
-                <form method="get" action="{% url 'wl_reports:licences_report' %}">
+                <form method="get" id="licence-form" action="{% url 'wl_reports:licences_report' %}">
+                    {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}
                         </div>
                         <div class="col-md-4">
                             {% bootstrap_field form.to_date %}
+                        </div>
+                        <div class="col-md-4">
+                            {% bootstrap_field form.regions %}
                         </div>
                     </div>
                     <div class="row">
@@ -81,7 +89,8 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Returns</h3>
-                <form method="get" action="{% url 'wl_reports:returns_report' %}">
+                <form method="get" id="return-form" action="{% url 'wl_reports:returns_report' %}">
+                    {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
                             {% bootstrap_field form.from_date %}
@@ -93,6 +102,28 @@
                     <div class="row">
                         <div class="col-md-8">
                             <button type=submit class="btn btn-primary">Generate Returns Report</button>
+                            <hr>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Payments</h3>
+                <form method="get" id="payments-form" action="{% url 'wl_payments:payments_report' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% bootstrap_field payments_form.start %}
+                        </div>
+                        <div class="col-md-4">
+                            {% bootstrap_field payments_form.end %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <button type=submit class="btn btn-primary">Generate Payments Report</button>
                             <hr>
                         </div>
                     </div>

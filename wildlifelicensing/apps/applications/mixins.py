@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse_lazy
-from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 from wildlifelicensing.apps.main.helpers import is_customer, is_officer, get_user_assessor_groups
 from wildlifelicensing.apps.applications.models import Application, Assessment
@@ -18,8 +18,8 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
     raise_exception = True
 
     def get_application(self):
-        if len(self.args) > 1:
-            return Application.objects.filter(pk=self.args[1]).first()
+        if self.args:
+            return Application.objects.filter(pk=self.args[0]).first()
         else:
             return None
 
@@ -36,7 +36,7 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
         self.raise_exception = True
         application = self.get_application()
         if application is not None:
-            return application.applicant_profile.user == user and application.can_user_edit
+            return application.applicant == user and application.can_user_edit
         else:
             return True
 
@@ -83,10 +83,8 @@ class UserCanViewApplicationMixin(UserPassesTestMixin):
     raise_exception = True
 
     def get_application(self):
-        if len(self.args) == 1:
+        if self.args:
             return Application.objects.filter(pk=self.args[0]).first()
-        elif len(self.args) == 2:
-            return Application.objects.filter(pk=self.args[1]).first()
         else:
             return None
 
@@ -103,6 +101,6 @@ class UserCanViewApplicationMixin(UserPassesTestMixin):
         self.raise_exception = True
         application = self.get_application()
         if application is not None:
-            return application.applicant_profile.user == user and application.can_user_view
+            return application.applicant == user and application.can_user_view
         else:
             return True

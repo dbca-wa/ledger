@@ -1,8 +1,15 @@
-define(['jQuery', 'bootstrap-datetimepicker'], function($) {
+define([
+    'jQuery',
+    'bootstrap-datetimepicker',
+    'select2'
+], function($) {
+    "use strict";
+
     return {
         initialise: function() {
             var $issueLicenceForm = $('#issueLicenceForm'),
-                $issueButton = $('#issue');
+                $issueButton = $('#issue'),
+                $regionSelect = $issueLicenceForm.find('select');
 
             // initialise all datapickers
             $("input[id$='date']").each(function() {
@@ -24,6 +31,11 @@ define(['jQuery', 'bootstrap-datetimepicker'], function($) {
             $('#previewLicence').click(function(e) {
                 $(this).attr("href", this.href + '?' + $issueLicenceForm.serialize());
             });
+
+            $regionSelect.select2({
+                placeholder: "Select applicable regions."
+            });
+            $regionSelect.removeClass('hidden');
         }
-    }
+    };
 });

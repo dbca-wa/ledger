@@ -40,7 +40,7 @@
                     <ul>
                         {% for licence_type in licence_types %}
                             <li>
-                                <a href="{% url 'wl_applications:check_identification' licence_type.code_slug %}">
+                                <a href="{% url 'wl_applications:select_licence_type' licence_type.code_slug %}">
                                     {{ licence_type.name }} ({{ licence_type.code }})
                                 </a>
                             </li>

@@ -23,7 +23,7 @@ class ApplicationAdmin(VersionAdmin):
     form = ApplicationAdminForm
 
     def get_user(self, obj):
-        return obj.applicant_profile.user
+        return obj.applicant
 
     get_user.short_description = 'User'
     get_user.admin_order_field = 'applicant_profile__user'
