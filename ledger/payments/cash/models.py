@@ -95,7 +95,8 @@ class CashTransaction(models.Model):
     original_txn = models.ForeignKey('self', null=True, blank=True)
     type = models.CharField(choices=TRANSACTION_TYPES, max_length=8)
     source = models.CharField(choices=SOURCE_TYPES, max_length=11)
-    collection_point = models.TextField()
+    region = models.CharField(choices=REGION_CHOICES, max_length=50, blank=True,null=True)
+    district = models.CharField(choices=DISTRICT_CHOICES,max_length=3, null=True, blank=True)
     external = models.BooleanField(default=False)
     receipt = models.CharField(max_length=128,null=True,blank=True)
 
@@ -108,8 +109,8 @@ class CashTransaction(models.Model):
     def ledger_validations(self):
         if not self.receipt and self.external:
             raise ValidationError("A receipt number is required for an external payment.ie receipt")
-        if not self.collection_point and self.external:
-            raise ValidationError("A collection point is required for an external payment.ie collection_point")
+        if not (self.region or self.district) and self.external:
+            raise ValidationError("A region or district is required for an external payment.ie region/district")
         if self.type in ['reversal','refund'] and self.invoice.payment_status == 'unpaid':
             raise ValidationError("A {} cannot be made for an unpaid invoice.".format(self.type))
         if self.type == 'refund' and (self.invoice.payment_amount < decimal.Decimal(self.amount)):
@@ -118,5 +119,3 @@ class CashTransaction(models.Model):
             raise ValidationError('This invoice has already been paid for.')
         if (decimal.Decimal(self.amount) > self.invoice.balance) and self.type == 'payment':
             raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
-        if not self.external and not self.collection_point:
-            self.collection_point = 'Kensington'
