@@ -725,8 +725,11 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
         elif instance.status == 'submitted':
+            text = 'Curate Return'
+            if instance.nil_return:
+                text = 'Nil Return'
             url = reverse('wl_returns:curate_return', args=(instance.pk,))
-            return '<a href="{0}">Curate Return</a>'.format(url)
+            return '<a href="{0}">{1}</a>'.format(url, text)
         else:
             url = reverse('wl_returns:view_return', args=(instance.pk,))
             return '<a href="{0}">View Return (read-only)</a>'.format(url)

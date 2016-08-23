@@ -3,7 +3,7 @@ from django import forms
 
 class NilReturnForm(forms.Form):
     comments = forms.CharField(label='Comments',
-                               help_text="Please provide the reasons why you're not providing any return. ",
+                               help_text="Please provide the reasons why you're not providing return data. ",
                                widget=forms.Textarea(attrs={'cols': 40, 'rows': 4})
                                )
 

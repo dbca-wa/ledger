@@ -82,5 +82,11 @@
                 </div>
             </div>
         {% endfor %}
+        {% if return.comments %}
+            <div id="comments" class="top-buffer">
+                <label>Comments</label>
+                <p>{{ return.comments }}</p>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}

@@ -74,11 +74,12 @@
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        You can also choose to submit a Nil Return (empty return) by clicking on the 'Submit Nil Return'.
-                        In this case, please provide the reasons in the comment box.
+                        You can also choose to submit a Nil Return by clicking on the 'Submit Nil Return' button below.
+                        In this case, you will be asked to provide the reasons why you're not providing return data.
                     </p>
                     <form method="post">
                         {% csrf_token %}
+
                         {% bootstrap_form nil_return_form %}
                         <button type="submit" class="btn btn-primary pull-right" name="nil">Submit Nil Return</button>
                     </form>
