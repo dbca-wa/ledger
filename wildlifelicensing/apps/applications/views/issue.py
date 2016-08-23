@@ -16,6 +16,7 @@ from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
+from wildlifelicensing.apps.payments import utils as payment_utils
 
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -51,10 +52,24 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
 
+        kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                      get_application_payment_status(application))
+
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
+
+        payment_status = payment_utils.get_application_payment_status(application)
+
+        if payment_status == payment_utils.PAYMENT_STATUS_AWAITING:
+            messages.error(request, 'Payment is required before licence can be issued')
+
+            return redirect(request.get_full_path())
+
+        # do credit card payment if required
+        if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+                payment_utils.invoke_credit_card_payment(application)
 
         original_issue_date = None
         if application.licence is not None:

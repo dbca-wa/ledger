@@ -19,7 +19,7 @@ from social.apps.django_app.default.models import UserSocialAuth
 from datetime import datetime
 
 from ledger.accounts.signals import name_changed, post_clean
-
+from ledger.address.models import UserAddress, Country
 
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
@@ -181,7 +181,6 @@ class Address(models.Model):
             value = getattr(self, field)
             field_values.append(value)
         return separator.join(filter(bool, field_values))
-
 
 @python_2_unicode_compatible
 class EmailIdentity(models.Model):
@@ -465,6 +464,22 @@ class ProfileListener(object):
             EmailIdentity.objects.filter(email=original_instance.email, user=original_instance.user).delete()
             UserSocialAuth.objects.filter(provider="email", uid=original_instance.email, user=original_instance.user).delete()
 
+        if not original_instance:
+            address = instance.postal_address
+            UserAddress.objects.create(
+                #first_name = profile.user.first_name,
+                #last_name = profile.user.last_name,
+                line1 = address.line1,
+                line2 = address.line2,
+                line3 = address.line3,
+                line4 = address.locality,
+                state = address.state,
+                postcode = address.postcode,
+                country = Country.objects.get(iso_3166_1_a2=address.country),
+                profile_address = address,
+                user = instance.user
+            )
+
 
 class EmailIdentityListener(object):
     """
@@ -486,3 +501,32 @@ class EmailIdentityListener(object):
                 # Email already used by other user in email identity.
                 raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
 
+class AddressListener(object):
+    """
+        Event listener for Address
+    """
+    @staticmethod
+    @receiver(pre_save, sender=Address)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = Address.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+
+    @staticmethod
+    @receiver(post_save, sender=Address)
+    def _post_save(sender, instance, **kwargs):
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        if original_instance:
+            oscar_address = original_instance.oscar_address.first()
+            if oscar_address is not None:
+                oscar_address.line1 = instance.line1
+                oscar_address.line2 = instance.line2
+                oscar_address.line3 = instance.line3
+                oscar_address.line4 = instance.locality
+                oscar_address.state = instance.state
+                oscar_address.postcode = instance.postcode
+                oscar_address.country = Country.objects.get(iso_3166_1_a2=instance.country)
+                oscar_address.profile_address = instance
+                oscar_address.save()

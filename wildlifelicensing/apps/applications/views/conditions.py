@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse, reverse_lazy
 
 from preserialize.serialize import serialize
 
+from wildlifelicensing.apps.payments import utils as payment_utils
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
@@ -43,6 +44,9 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
             to = application.proxy_applicant.get_full_name()
 
         kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+
+        kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                      get_application_payment_status(application))
 
         return super(EnterConditionsView, self).get_context_data(**kwargs)
 

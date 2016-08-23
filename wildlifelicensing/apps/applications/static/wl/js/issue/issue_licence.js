@@ -6,8 +6,9 @@ define([
     "use strict";
 
     return {
-        initialise: function(options) {
+        initialise: function() {
             var $issueLicenceForm = $('#issueLicenceForm'),
+                $issueButton = $('#issue'),
                 $regionSelect = $issueLicenceForm.find('select');
 
             // initialise all datapickers
@@ -17,9 +18,15 @@ define([
                 });
             });
 
-            $('#issue').click(function(e) {
-                $issueLicenceForm.submit();
+            $issueButton.click(function(e) {
+                if(!$(this).hasClass('disabled')) {
+                    $issueLicenceForm.submit();
+                }
             });
+
+            if($issueButton.hasClass('disabled')) {
+                $issueButton.tooltip({});
+            }
 
             $('#previewLicence').click(function(e) {
                 $(this).attr("href", this.href + '?' + $issueLicenceForm.serialize());
