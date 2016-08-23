@@ -44,7 +44,7 @@ def is_licence_free(licence_type):
     strategy = selector.strategy()
     purchase_info = strategy.fetch_for_product(product=product)
 
-    return purchase_info.price == 0
+    return purchase_info.price.effective_price == 0
 
 
 def get_application_payment_status(application):
