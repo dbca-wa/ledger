@@ -83,3 +83,9 @@
 .popover {
     max-width: 100%;
 }
+
+.vertical-center {
+    float: none;
+    display: inline-block;
+    vertical-align: middle;
+}

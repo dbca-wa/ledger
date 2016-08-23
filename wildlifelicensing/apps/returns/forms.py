@@ -2,9 +2,9 @@ from django import forms
 
 
 class NilReturnForm(forms.Form):
-    comments = forms.CharField(label='Comments',
+    comments = forms.CharField(label='Nil Return Comments',
                                help_text="Please provide the reasons why you're not providing return data. ",
-                               widget=forms.Textarea(attrs={'cols': 40, 'rows': 4})
+                               widget=forms.Textarea(attrs={'cols': 40, 'rows': 2})
                                )
 
 
