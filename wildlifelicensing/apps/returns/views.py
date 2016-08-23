@@ -249,7 +249,8 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
             to = ret.proxy_customer
 
         kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(),
-                                                              fromm=self.request.user.get_full_name())
+                                                              fromm=self.request.user.get_full_name(),
+                                                              reference=ret.reference)
 
         return super(CurateReturnView, self).get_context_data(**kwargs)
 
@@ -342,7 +343,8 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                 'text': form.cleaned_data['text'],
                 'subject': form.cleaned_data['subject'],
                 'to': form.cleaned_data['to'],
-                'fromm': form.cleaned_data['fromm']
+                'fromm': form.cleaned_data['fromm'],
+                'reference': form.cleaned_data['reference']
             }
 
             ReturnLogEntry.objects.create(**kwargs)

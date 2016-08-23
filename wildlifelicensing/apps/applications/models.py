@@ -14,7 +14,8 @@ from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceT
 @python_2_unicode_compatible
 class Application(RevisionedMixin):
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('under_review', 'Under Review'),
-                               ('id_required', 'Identification Required'), ('returns_required', 'Returns Completion Required'),
+                               ('id_required', 'Identification Required'),
+                               ('returns_required', 'Returns Completion Required'),
                                ('amendment_required', 'Amendment Required'),
                                ('id_and_amendment_required', 'Identification/Amendments Required'),
                                ('id_and_returns_required', 'Identification/Returns Required'),
@@ -23,7 +24,8 @@ class Application(RevisionedMixin):
                                ('approved', 'Approved'), ('declined', 'Declined'))
 
     # List of statuses from above that allow a customer to edit an application.
-    CUSTOMER_EDITABLE_STATE = ['temp', 'draft', 'amendment_required', 'id_and_amendment_required', 'returns_and_amendment_required',
+    CUSTOMER_EDITABLE_STATE = ['temp', 'draft', 'amendment_required', 'id_and_amendment_required',
+                               'returns_and_amendment_required',
                                'id_and_returns_and_amendment_required']
 
     # List of statuses from above that allow a customer to view an application (read-only)
@@ -118,6 +120,12 @@ class Application(RevisionedMixin):
 
 class ApplicationLogEntry(CommunicationsLogEntry):
     application = models.ForeignKey(Application)
+
+    def save(self, **kwargs):
+        # save the application reference if the reference not provided
+        if not self.reference:
+            self.reference = self.application.reference
+        super(ApplicationLogEntry, self).save(**kwargs)
 
 
 class ApplicationRequest(models.Model):

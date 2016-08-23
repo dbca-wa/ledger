@@ -95,6 +95,10 @@ class Return(RevisionedMixin):
     comments = models.TextField(blank=True, null=True)
 
     @property
+    def reference(self):
+        return '{}'.format(self.lodgement_number)
+
+    @property
     def can_user_edit(self):
         """
         :return: True if the return is in one of the editable status.

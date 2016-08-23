@@ -103,6 +103,7 @@ class CommunicationsLogEntry(models.Model):
     fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
 
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    reference = models.CharField(max_length=100, blank=True)
     subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
     document = models.ForeignKey(Document, null=True, blank=False)

@@ -8,8 +8,8 @@ from wildlifelicensing.apps.applications.models import Application, Assessment, 
 from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMixin, CanPerformAssessmentMixin
 from wildlifelicensing.apps.applications.utils import convert_documents_to_url, append_app_document_to_schema_data, \
     format_application, format_assessment
+from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.main.models import Document
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.helpers import is_officer
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
@@ -39,7 +39,7 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
             else:
                 to = application.proxy_applicant.email
 
-            kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.email)
+            kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.email)
 
         return super(ViewReadonlyView, self).get_context_data(**kwargs)
 
@@ -79,7 +79,7 @@ class ApplicationLogListView(OfficerRequiredMixin, View):
 
 class AddApplicationLogEntryView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        form = CommunicationsLogEntryForm(data=request.POST, files=request.FILES)
+        form = ApplicationLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
             application = get_object_or_404(Application, pk=args[0])
 
