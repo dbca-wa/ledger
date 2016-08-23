@@ -103,7 +103,13 @@
                     </div>
                     <div>
                         <a data-entry-link="True" class="btn btn-default" href="{% url 'wl_applications:enter_details' %}">Edit Application Details</a>
-                        <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>Lodge Application</button>
+                        <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>
+                            {% if is_application_free %}
+                                Lodge Application
+                            {% else %}
+                                Proceed to Payment
+                            {% endif %}
+                        </button>
                     </div>
                 </form>
             </div>

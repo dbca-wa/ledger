@@ -16,7 +16,7 @@ TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 't
 
 
 class ApplicationEntryTestCase(TestCase):
-    fixtures = ['licences.json']
+    fixtures = ['licences.json', 'countries.json']
 
     def setUp(self):
         self.customer = get_or_create_default_customer()
@@ -312,8 +312,8 @@ class ApplicationEntryTestCase(TestCase):
 
         response = self.client.post(reverse('wl_applications:preview'))
 
-        # check that client is redirected to home
-        self.assertRedirects(response, reverse('wl_dashboard:home'),
+        # check that client is redirected to complete
+        self.assertRedirects(response, reverse('wl_applications:complete'),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         application.refresh_from_db()

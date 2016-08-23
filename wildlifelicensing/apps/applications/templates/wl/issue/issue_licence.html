@@ -104,21 +104,40 @@
                                         {% endif %}
                                     </p>
                                 </div>
+                                <label>Payment Status</label>
+                                <p class="no-margin">
+                                    {{ payment_status }}
+                                    {% if payment_status == 'Awaiting Payment' %}
+                                        <a href="{% url 'wl_payments:manual_payment' application.id %}?redirect_url={{ request.build_absolute_uri }}"
+                                            class="pull-right">Enter Payment</a>
+                                    {% endif %}
+                                </p>
                              </div>
                         </div>
-                        {% with add_text='Add application log entry' %}
-                            {% include 'wl/communications_panel.html' %}
-                        {% endwith %}
                     </div>
                 </div>
-                <button id="issue" type="button" class="btn btn-sm btn-success pull-right">
-                    {% if application.licence %}
-                        Reissue
-                    {% else %}
+                {% with add_text='Add application log entry' %}
+                    {% include 'wl/communications_panel.html' %}
+                {% endwith %}
+                {% if payment_status == 'Awaiting Payment' %}
+                    <button id="issue" type="button" class="btn btn-sm btn-success pull-right disabled"
+                            data-title="Payment must be received before licence can be issued">
                         Issue
-                    {% endif %}
-                </button>
-                <a class="btn btn-sm btn-default" href="{% url 'wl_applications:enter_conditions' application.id %}" role="button">Back to Enter Conditions</a>
+                    </button>
+                {% else %}
+                    <button id="issue" type="button" class="btn btn-sm btn-success pull-right">
+                        {% if application.licence %}
+                            Reissue
+                        {% else %}
+                            {% if payment_status == 'Credit Card Ready' %}
+                                Charge & Issue
+                            {% else %}
+                                Issue
+                            {% endif %}
+                        {% endif %}
+                    </button>
+                {% endif %}
+                <a class="btn btn-sm btn-default" href="{% url 'wl_applications:enter_conditions' application.id %}" role="button">Back to Conditions</a>
                 <a href="{% url 'wl_applications:preview_licence' application.id %}" id="previewLicence" class="top-buffer pull-right" target="_blank">
                     Preview Licence PDF <img height="20px" src="{% static 'wl/img/pdf.png' %}">
                 </a>
