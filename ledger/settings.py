@@ -40,12 +40,22 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'django_countries',
     'django_cron',
-] + get_core_apps([  # django-oscar overrides
-    'ledger.basket',
-    'ledger.order'
-]) + [
-    'ledger.accounts',  # Defines custom user model, passwordless auth pipeline.
+    ] + get_core_apps([  # django-oscar overrides
+        'ledger.basket',
+        'ledger.order',
+        'ledger.checkout',
+        'ledger.address',
+        'ledger.catalogue',
+        'ledger.dashboard.catalogue',
+        'ledger.payment'
+    ]) + [
+    'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
+    'ledger.payments',
+    'ledger.payments.bpay',
+    'ledger.payments.bpoint',
+    'ledger.payments.cash',
+    'ledger.payments.invoice',
     'ledger.taxonomy',
     'wildlifelicensing.apps.dashboard',
     'wildlifelicensing.apps.main',
@@ -53,7 +63,8 @@ INSTALLED_APPS = [
     'wildlifelicensing.apps.emails',
     'wildlifelicensing.apps.returns',
     'wildlifelicensing.apps.customer_management',
-    'wildlifelicensing.apps.reports'
+    'wildlifelicensing.apps.reports',
+    'wildlifelicensing.apps.payments'
 ]
 
 SITE_ID = 1
@@ -113,6 +124,7 @@ SESSION_COOKIE_DOMAIN = env('SESSION_COOKIE_DOMAIN', None)
 if SESSION_COOKIE_DOMAIN:
     SESSION_COOKIE_NAME = (SESSION_COOKIE_DOMAIN + ".ledger_sessionid").replace(".", "_")
 
+
 # Email settings
 ADMINS = ('asi@dpaw.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
@@ -152,6 +164,7 @@ TEMPLATES = [
     },
 ]
 
+
 BOOTSTRAP3 = {
     'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
     'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
@@ -172,11 +185,13 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 
+
 # Database
 DATABASES = {
     # Defined in the DATABASE_URL env variable.
     'default': database.config(),
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
@@ -194,6 +209,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
@@ -264,3 +280,40 @@ LOGGING = {
         },
     }
 }
+# Ledger settings
+CMS_URL=env('CMS_URL',None)
+LEDGER_USER=env('LEDGER_USER',None)
+LEDGER_PASS=env('LEDGER_PASS')
+# BPAY settings
+BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
+# BPOINT settings
+BPOINT_CURRENCY='AUD'
+BPOINT_BILLER_CODE=env('BPOINT_BILLER_CODE')
+BPOINT_USERNAME=env('BPOINT_USERNAME')
+BPOINT_PASSWORD=env('BPOINT_PASSWORD')
+BPOINT_MERCHANT_NUM=env('BPOINT_MERCHANT_NUM')
+BPOINT_TEST=True
+# Oscar settings
+from oscar.defaults import *
+OSCAR_ALLOW_ANON_CHECKOUT = True
+OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
+OSCAR_DASHBOARD_NAVIGATION.append(
+    {
+        'label': 'Payments',
+        'icon': 'icon-globe',
+        'children': [
+            {
+                'label': 'Invoices',
+                'url_name': 'payments:invoices-list',
+            },
+            {
+                'label': 'BPAY collections',
+                'url_name': 'payments:bpay-collection-list',
+            },
+            {
+                'label': 'BPOINT transactions',
+                'url_name': 'payments:bpoint-dash-list',
+            },
+        ]
+    }
+)

@@ -148,6 +148,11 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'title': 'Proxy'
             },
             {
+                'title': 'Payment',
+                'searchable': False,
+                'orderable': False
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -176,6 +181,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         'lodgement_date',
         'assigned_officer',
         'proxy_applicant',
+        'payment',
         'action'
     ]
     order_columns = [
@@ -186,6 +192,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         'lodgement_date',
         ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
         ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
+        ''
         ''
     ]
 
@@ -212,6 +219,10 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         },
         'lodgement_date': {
             'render': lambda self, instance: base.render_date(instance.lodgement_date)
+        },
+        'payment': {
+            'render': lambda self, instance: base.render_payment(instance, self.request.build_absolute_uri(
+                reverse('wl_dashboard:tables_applications_officer')))
         },
     })
 

@@ -1,0 +1,69 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% load users %}
+
+{% block extra_css %}
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li class="active">Application Complete</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                {% with heading='Application Complete' %}
+                    {% include 'wl/entry/header.html' %}
+                {% endwith %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <p>
+                    The application process is now complete and your application is now under review. Please allow up to 20 working days for processing. You can see the status of the application
+                    on the dashboard and view a read-only version of the application details. You may receive requests for amendments to the application, at which
+                    point you will be able to modify its contents and resubmit. Once processing is complete, you will be notified via email and a PDF copy of the
+                    licence will be attached.
+                </p>
+                <p>
+                    Should you need to contact the Department of Parks and Wildlife with regard to your application, please cite the lodgement number shown below.
+                </p>
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <p><label>Licence Type:</label> {{ application.licence_type.name }}</p>
+                        <p><label>Lodgement Number:</label> {{ application.lodgement_number }}-{{ application.lodgement_sequence }}</p>
+                        <p><label>Lodgement Date:</label> {{ application.lodgement_date|date:'d/m/Y' }}</p>
+                        {% if application.invoice_reference %}
+                            <p>
+                                <label>Invoice:</label>
+                                <a href="{% url 'payments:invoice-detail' application.invoice_reference %}" target="_blank">View as HTML</a>
+                                <a class="left-buffer" href="{% url 'payments:invoice-pdf' application.invoice_reference %}" target="_blank">
+                                    Download as PDF
+                                    <img height="20px" src="{% static 'wl/img/pdf.png' %}"/>
+                                 </a>
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'home' %}">Return to home</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

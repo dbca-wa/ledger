@@ -169,7 +169,7 @@ def clone_application_with_status_reset(application, keep_invoice=False):
     application.licence = None
 
     if not keep_invoice:
-        application.invoice_number = ''
+        application.invoice_reference = ''
 
     original_application_pk = application.pk
 

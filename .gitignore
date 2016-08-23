@@ -77,3 +77,9 @@ target/
 
 # media
 media/
+
+# Database/fixture dumps
+*.pgdump
+*.dump
+*.db
+*.sqlite3

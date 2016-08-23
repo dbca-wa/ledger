@@ -3,7 +3,6 @@ from datetime import datetime
 from django.views.generic.base import View, TemplateView
 from django.views.generic.edit import FormView
 from django.shortcuts import render, redirect, get_object_or_404
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -17,9 +16,13 @@ from wildlifelicensing.apps.main.forms import IdentificationForm
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
-from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin
+from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin,\
+    UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_officer, is_customer
+from django.core.urlresolvers import reverse
+from wildlifelicensing.apps.applications.utils import delete_session_application
+from wildlifelicensing.apps.payments.utils import is_licence_free
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -393,6 +396,8 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         kwargs['is_proxy_applicant'] = is_officer(self.request.user)
 
+        kwargs['is_application_free'] = is_licence_free(application.licence_type)
+
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')
 
@@ -435,8 +440,23 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         application.save(version_user=application.applicant, version_comment='Details Modified')
 
-        messages.success(request, 'The application was successfully lodged.')
+        return redirect(reverse('wl_payments:checkout_application', args=[application.pk]))
 
-        utils.delete_session_application(request.session)
 
-        return redirect('wl_dashboard:home')
+class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseView):
+    template_name = 'wl/entry/complete.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('wl_applications:new_application')
+
+        application.invoice_reference = request.GET.get('invoice')
+
+        application.save()
+
+        delete_session_application(request.session)
+
+        return render(request, self.template_name, {'application': application})
