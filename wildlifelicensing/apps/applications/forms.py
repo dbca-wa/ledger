@@ -2,7 +2,8 @@ from django import forms
 
 from ledger.accounts.models import Profile
 
-from wildlifelicensing.apps.applications.models import IDRequest, ReturnsRequest, AmendmentRequest
+from wildlifelicensing.apps.applications.models import IDRequest, ReturnsRequest, AmendmentRequest, ApplicationLogEntry
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 
 
 class ProfileSelectionForm(forms.Form):
@@ -80,3 +81,9 @@ class AmendmentRequestForm(forms.ModelForm):
 
         if officer is not None:
             self.fields['officer'].initial = officer
+
+
+class ApplicationLogEntryForm(CommunicationsLogEntryForm):
+    class Meta:
+        model = ApplicationLogEntry
+        fields = ['to', 'fromm', 'type', 'subject', 'text', 'attachment']

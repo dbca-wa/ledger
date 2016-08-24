@@ -13,11 +13,11 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
-from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm
+from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm, \
+    ApplicationLogEntryForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
     send_id_update_request_email, send_returns_request_email, send_assessment_reminder_email
 from wildlifelicensing.apps.main.models import AssessorGroup
@@ -51,7 +51,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
             if previous_lodgement.hard_copy is not None:
                 previous_lodgement.licence_type.application_schema, previous_lodgement.data = \
-                    append_app_document_to_schema_data(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
+                    append_app_document_to_schema_data(previous_lodgement.licence_type.application_schema,
+                                                       previous_lodgement.data,
                                                        previous_lodgement.hard_copy.file.url)
 
             # reversion won't reference the previous many-to-many sets, only the latest one, so need to get documents as per below
@@ -65,7 +66,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         previous_application_returns_outstanding = False
         if application.previous_application is not None:
-            previous_application_returns_outstanding = Return.objects.filter(licence=application.previous_application.licence).\
+            previous_application_returns_outstanding = Return.objects.filter(
+                licence=application.previous_application.licence). \
                 exclude(status='accepted').exclude(status='submitted').exists()
 
         if application.hard_copy is not None:
@@ -107,7 +109,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         else:
             to = application.proxy_applicant.get_full_name()
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
 
         return super(ProcessView, self).get_context_data(**kwargs)
 
@@ -144,12 +146,13 @@ class AssignOfficerView(OfficerRequiredMixin, View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
+                                                                               (application.assigned_officer.first_name,
+                                                                                application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
         return JsonResponse({'assigned_officer': assigned_officer,
-                            'processing_status': PROCESSING_STATUSES[application.processing_status]},
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 

@@ -158,7 +158,8 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
             kwargs['customer'] = customer
 
             kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.get_full_name(),
-                                                                  fromm=self.request.user.get_full_name())
+                                                                  fromm=self.request.user.get_full_name(),
+                                                                  reference=customer.get_full_name())
 
             context = super(CustomerLookupView, self).get_context_data(**kwargs)
 

@@ -261,7 +261,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             )
         elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.licence_document is not None:
             return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:view_application', args=[obj.pk]),
+                reverse('wl_applications:view_application_officer', args=[obj.pk]),
                 'View application (read-only)'
             )
         else:
@@ -365,9 +365,11 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
     def _render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
-            return '<a href="{0}">{1}</a>'.format(
+            return '<a href="{0}">{1}</a> / <a href="{2}">{3}</a>'.format(
                 reverse('wl_applications:edit_application', args=[obj.pk]),
-                'Continue application'
+                'Continue',
+                reverse('wl_applications:delete_application', args=[obj.pk]),
+                'Discard'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
@@ -736,8 +738,11 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
         elif instance.status == 'submitted':
+            text = 'Curate Return'
+            if instance.nil_return:
+                text = 'Nil Return'
             url = reverse('wl_returns:curate_return', args=(instance.pk,))
-            return '<a href="{0}">Curate Return</a>'.format(url)
+            return '<a href="{0}">{1}</a>'.format(url, text)
         else:
             url = reverse('wl_returns:view_return', args=(instance.pk,))
             return '<a href="{0}">View Return (read-only)</a>'.format(url)
