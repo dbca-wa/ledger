@@ -76,6 +76,9 @@ $(function(){
                     $(districts).each(function(i){
                         $('#districts').append('<option value="'+districts[i].code+'">'+districts[i].name+'</option>');
                     });
+                    if (districts.length === 1) {
+                        $('#districts').val(districts[0].code);
+                    }
                 }
             });
             if ($('#dist_wrapper').hasClass('hide')) {
