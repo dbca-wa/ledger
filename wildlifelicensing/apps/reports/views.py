@@ -13,6 +13,8 @@ from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.reports.forms import ReportForm
 from wildlifelicensing.apps.returns.models import Return
 
+from wildlifelicensing.apps.payments.forms import PaymentsReportForm
+
 
 def to_string(obj):
     return str(obj) if obj else ''
@@ -77,11 +79,12 @@ class ReportsView(OfficerRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs['form'] = ReportForm()
+        kwargs['payments_form'] = PaymentsReportForm()
 
         return TemplateView.get_context_data(self, **kwargs)
 
 
-class ApplicationsReportView(View):
+class ApplicationsReportView(OfficerRequiredMixin, View):
     APPLICATIONS_HEADERS = (
         'Lodgement Number',
         'Lodgement Date',
@@ -129,15 +132,17 @@ class ApplicationsReportView(View):
             redirect('wl_reports:reports')
 
 
-class LicencesReportView(View):
+class LicencesReportView(OfficerRequiredMixin, View):
     LICENCES_HEADERS = (
         'Licence Number',
         'Issue Date',
         'Issuer',
         'Start Date',
         'End Date',
+        'Regions',
         'Purpose',
         'Locations',
+        'Additional Info'
         'Previous Licence',
         'Lodgement Number',
     )
@@ -151,8 +156,10 @@ class LicencesReportView(View):
             render_user_name(licence.issuer),
             licence.start_date,
             licence.end_date,
+            ','.join([str(r) for r in licence.regions.all()]),
             to_string(licence.purpose),
             to_string(licence.locations),
+            to_string(licence.additional_information),
             licence.previous_licence.reference if licence.previous_licence else '',
             application.reference if application else '',
         )
@@ -177,6 +184,9 @@ class LicencesReportView(View):
             from_date = form.cleaned_data.get('from_date')
             to_date = form.cleaned_data.get('to_date')
             qs = WildlifeLicence.objects.filter(issue_date__range=(from_date, to_date))
+            regions = form.cleaned_data.get('regions')
+            if regions:
+                qs = qs.filter(regions__in=regions)
             wb = ReportHelper.to_workbook('Licences', self.ALL_HEADERS, self.row_generator(qs))
             filename = 'licences_{}-{}.xlsx'.format(from_date, to_date)
             return excel.WorkbookResponse(wb, filename)
@@ -185,7 +195,7 @@ class LicencesReportView(View):
             redirect('wl_reports:reports')
 
 
-class ReturnsReportView(View):
+class ReturnsReportView(OfficerRequiredMixin, View):
     RETURNS_HEADERS = (
         'Lodgement Number',
         'Lodgement Date',

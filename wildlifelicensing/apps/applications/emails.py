@@ -23,8 +23,7 @@ def send_amendment_requested_email(amendment_request, request):
     application = amendment_request.application
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('wl_applications:edit_application',
-                args=[application.licence_type.code_slug, application.pk])
+        reverse('wl_applications:edit_application', args=[application.pk])
     )
 
     context = {
@@ -267,10 +266,10 @@ def _log_email(email_message, application, sender=None):
     else:
         text = smart_text(email_message)
         subject = ''
-        to = application.applicant_profile.user.email
+        to = application.applicant.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
 
-    customer = application.applicant_profile.user
+    customer = application.applicant
 
     officer = sender
 
