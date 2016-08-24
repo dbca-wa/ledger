@@ -197,3 +197,7 @@ th.action-status {
     border: 1px solid #ddd;
     display: inline-block;
 }
+
+.application-sections-heading {
+    padding-left: 15px;
+}

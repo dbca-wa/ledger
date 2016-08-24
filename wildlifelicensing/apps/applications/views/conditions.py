@@ -90,6 +90,9 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
 
+        kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
+                                                exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
+
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
 
