@@ -120,3 +120,9 @@ class ReturnRow(RevisionedMixin):
 
 class ReturnLogEntry(CommunicationsLogEntry):
     ret = models.ForeignKey(Return)
+
+    def save(self, **kwargs):
+        # save the application reference if the reference not provided
+        if not self.reference:
+            self.reference = self.ret.reference
+        super(ReturnLogEntry, self).save(**kwargs)
