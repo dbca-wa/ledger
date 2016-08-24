@@ -444,9 +444,10 @@ class CashViewSet(viewsets.ModelViewSet):
 
 class DistrictSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
+    code = serializers.CharField(source='name')
     class Meta:
         model = District
-        fields = ('name',)
+        fields = ('name','code')
         
     def get_name(self, obj):
         return dict(DISTRICT_CHOICES).get(obj.name)
@@ -454,10 +455,12 @@ class DistrictSerializer(serializers.ModelSerializer):
 class RegionSerializer(serializers.ModelSerializer):
     districts = DistrictSerializer(many=True)
     name = serializers.SerializerMethodField()
+    code = serializers.CharField(source='name')
     class Meta:
         model = Region
         fields = (
             'name',
+            'code',
             'districts'
         )
    
