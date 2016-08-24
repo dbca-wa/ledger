@@ -12,13 +12,13 @@ from wildlifelicensing.apps.payments import utils as payment_utils
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
 from wildlifelicensing.apps.applications.utils import append_app_document_to_schema_data, convert_documents_to_url, \
     format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from wildlifelicensing.apps.applications.mixins import CanPerformAssessmentMixin
+from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 
 
 class EnterConditionsView(OfficerRequiredMixin, TemplateView):
@@ -43,7 +43,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         else:
             to = application.proxy_applicant.get_full_name()
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
 
         kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                       get_application_payment_status(application))

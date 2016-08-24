@@ -18,13 +18,12 @@ from ledger.accounts.models import Document
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType
 from wildlifelicensing.apps.main import excel
-from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm, NilReturnForm
+from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm, NilReturnForm, ReturnsLogEntryForm
 from wildlifelicensing.apps.returns.utils_schema import Schema, create_return_template_workbook
 from wildlifelicensing.apps.returns.utils import format_return
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -248,8 +247,9 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         else:
             to = ret.proxy_customer
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(),
-                                                              fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ReturnsLogEntryForm(to=to.get_full_name(),
+                                                       fromm=self.request.user.get_full_name(),
+                                                       )
 
         return super(CurateReturnView, self).get_context_data(**kwargs)
 
@@ -320,7 +320,7 @@ class ReturnLogListView(OfficerRequiredMixin, View):
 
 class AddReturnLogEntryView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        form = CommunicationsLogEntryForm(data=request.POST, files=request.FILES)
+        form = ReturnsLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
             ret = get_object_or_404(Return, pk=args[0])
 

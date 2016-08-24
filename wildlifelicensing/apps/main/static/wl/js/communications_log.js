@@ -126,6 +126,10 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                     data: 'type'
                 },
                 {
+                    title: 'Reference',
+                    data: 'reference'
+                },
+                {
                     title: 'To',
                     data: 'to'
                 },

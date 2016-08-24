@@ -94,6 +94,10 @@ class Return(RevisionedMixin):
     comments = models.TextField(blank=True, null=True)
 
     @property
+    def reference(self):
+        return '{}'.format(self.lodgement_number)
+
+    @property
     def can_user_edit(self):
         """
         :return: True if the return is in one of the editable status.
@@ -115,3 +119,9 @@ class ReturnRow(RevisionedMixin):
 
 class ReturnLogEntry(CommunicationsLogEntry):
     ret = models.ForeignKey(Return)
+
+    def save(self, **kwargs):
+        # save the application reference if the reference not provided
+        if not self.reference:
+            self.reference = self.ret.reference
+        super(ReturnLogEntry, self).save(**kwargs)

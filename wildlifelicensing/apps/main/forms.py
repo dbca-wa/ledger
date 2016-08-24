@@ -97,11 +97,12 @@ class CommunicationsLogEntryForm(forms.ModelForm):
 
     class Meta:
         model = CommunicationsLogEntry
-        fields = ['to', 'fromm', 'type', 'subject', 'text', 'attachment']
+        fields = ['reference', 'to', 'fromm', 'type', 'subject', 'text', 'attachment']
 
     def __init__(self, *args, **kwargs):
         to = kwargs.pop('to', None)
         fromm = kwargs.pop('fromm', None)
+        reference = kwargs.pop('reference', None)
 
         super(CommunicationsLogEntryForm, self).__init__(*args, **kwargs)
 
@@ -110,3 +111,6 @@ class CommunicationsLogEntryForm(forms.ModelForm):
 
         if fromm is not None:
             self.fields['fromm'].initial = fromm
+
+        if reference is not None:
+            self.fields['reference'].initial = reference
