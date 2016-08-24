@@ -1,7 +1,9 @@
 from django.dispatch import Signal, receiver
+from django.db.models.signals import post_save
+
 
 from wildlifelicensing.apps.main.signals import licence_issued
-from wildlifelicensing.apps.main.models import WildlifeLicence
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence
 from wildlifelicensing.apps.returns.utils import create_returns_due_dates
 from wildlifelicensing.apps.returns.models import ReturnType, Return
 
@@ -41,3 +43,33 @@ def licence_issued_callback(sender, **kwargs):
             returns[0].status = 'current'
 
         Return.objects.bulk_create(returns)
+
+
+@receiver(post_save, sender=WildlifeLicenceType)
+def create_return_type_for_superceding_licence_type(sender, **kwargs):
+    old_licence_type = kwargs.get('instance')
+
+    # if there was no old licence type or it wasn't replaced, do nothing
+    if old_licence_type is None or old_licence_type.replaced_by is None:
+        return
+
+    new_licence_type = old_licence_type.replaced_by
+
+    # if there is already a return type for the new licence type, do nothing
+    if ReturnType.objects.filter(licence_type=new_licence_type).exists():
+        return
+
+    # clone old return type and set it's licence type to the new licence type
+    try:
+        new_return_type = ReturnType.objects.get(licence_type=old_licence_type)
+
+        new_return_type.pk = None
+
+        new_return_type.licence_type = new_licence_type
+
+        # this will be generated from the schema
+        new_return_type.template = None
+
+        new_return_type.save()
+    except ReturnType.DoesNotExist:
+        pass
