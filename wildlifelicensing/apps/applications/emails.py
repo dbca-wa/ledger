@@ -184,7 +184,7 @@ class LicenceIssuedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/licence_issued.txt'
 
 
-def send_licence_issued_email(licence, application, request):
+def send_licence_issued_email(licence, application, request, ccs=None):
     email = LicenceIssuedEmail()
     url = request.build_absolute_uri(
         reverse('wl_dashboard:home')
@@ -207,8 +207,10 @@ def send_licence_issued_email(licence, application, request):
     else:
         logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
         attachments = None
-
-    msg = email.send(licence.profile.email, context=context, attachments=attachments)
+    to = [licence.profile.email]
+    if ccs:
+        to += ccs
+    msg = email.send(to, context=context, attachments=attachments)
     log_entry = _log_email(msg, application=application, sender=request.user)
     if licence.licence_document is not None:
         log_entry.document = licence.licence_document

@@ -51,11 +51,13 @@ class IdentificationForm(forms.Form):
 
 
 class IssueLicenceForm(forms.ModelForm):
+    ccs = forms.CharField(required=False, label='CCs',
+                                help_text="A comma separated list of email addresses you want the licence email to be CC'ed")
+
     class Meta:
         model = WildlifeLicence
         fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose', 'locations',
                   'additional_information', 'cover_letter_message']
-
         widgets = {
             'regions': SelectMultiple(
                 attrs={"class": "hidden"}
