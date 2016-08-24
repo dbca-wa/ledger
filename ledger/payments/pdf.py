@@ -259,7 +259,7 @@ def _create_invoice(invoice_buffer, invoice):
     elements.append(t)
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     # /Products Table
-    elements.append(Paragraph('Your aplication cannot be processed until payment is received.', styles['Left']))
+    elements.append(Paragraph('Your application cannot be processed until payment is received.', styles['Left']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 6))
     
