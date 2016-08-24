@@ -204,6 +204,8 @@ class ReturnsReportView(OfficerRequiredMixin, View):
         'Status',
         'Due Date',
         'Proxy',
+        'Nil Return',
+        'Comments'
     )
 
     @staticmethod
@@ -216,6 +218,8 @@ class ReturnsReportView(OfficerRequiredMixin, View):
             ret.status,
             ret.due_date,
             render_user_name(ret.proxy_customer),
+            'Yes' if ret.nil_return else 'No',
+            ret.comments
         )
 
     ALL_HEADERS = \

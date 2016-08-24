@@ -1,0 +1,138 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% load bootstrap3 %}
+
+{% load jsonify %}
+
+{% load users %}
+
+{% block extra_css %}
+    <link href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css" rel="stylesheet" />
+    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block requirements %}
+    require(['jQuery',
+             'js/view/view_readonly_officer', 
+             'js/entry/application_preview',
+             'js/communications_log'], 
+             function($, viewReadonlyOfficer, applicationPreview, commsLog) {
+        viewReadonlyOfficer.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}});
+
+        $('#mainContainer').removeClass('hidden');
+
+        commsLog.initCommunicationLog({
+            showLogPopoverSelector: '#showLog',
+            showLogEntryModalSelector: '#addLogEntry',
+            logEntryModalSelector: '#logEntryModal',
+            logEntryFormSelector: '#addLogEntryForm',
+            logListURL: "{% url 'wl_applications:log_list' application.id %}",
+            addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+        });
+
+        // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
+        applicationPreview.initialiseSidebarMenu('#sectionList');
+    });
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="breadcrumb wl-breadcrumbs">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li class="active">View Application (read-only)</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div id="mainContainer" class="container hidden">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="top-buffer">
+                    <h2 class="inline">{{ application.licence_type.name }}</h2>
+                    <h3>Application (read-only)</h3>
+                    <hr>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+               <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Application Overview
+                                <a data-toggle="collapse" href="#applicationOverviewBody" class="pull-right">
+                                    <span class="glyphicon"></span>
+                                </a>
+                            </div>
+                            <div id="applicationOverviewBody" class="panel-body panel-collapse in">
+                                <label>Applicant</label>
+                                {% with applicant=application.applicant_profile %}
+                                    <p>
+                                        {{ applicant.user.first_name }} {{ applicant.user.last_name }}
+                                    </p>
+                                    <p>{{ applicant.postal_address.search_text }}</p>
+                                {% endwith %}
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <label>Lodged on</label>
+                                        <p>{{ application.lodgement_date|date:'d/m/Y' }}</p>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <label>Status</label>
+                                        <p>{{ application.processing_status }}</p>
+                                    </div>
+                                </div>
+                                <label>Currently assigned to</label>
+                                <p>
+                                    {% if application.assigned_officer %} 
+                                        {{ application.assigned_officer.first_name }} {{ application.assigned_officer.last_name }}
+                                    {% else %}
+                                        Unassigned
+                                    {% endif %}
+                                </p>
+                                <label>Payment Status</label>
+                                <p class="no-margin">
+                                    {{ payment_status }}
+                                    {% if payment_status == 'Awaiting Payment' %}
+                                        <a href="{% url 'wl_payments:manual_payment' application.id %}?redirect_url={{ request.build_absolute_uri }}"
+                                            class="pull-right">Enter Payment</a>
+                                    {% endif %}
+                                </p>
+                                <hr>
+                                <p>
+                                    <a id="viewAssessorsComments" data-toggle="popover" data-placement="right">
+                                        View Assessors' Comments
+                                    </a>
+                                </p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                {% with disable_collapse=True add_text='Add application log entry' %}
+                    {% include 'wl/communications_panel.html' %}
+                {% endwith %}
+                <div id="sectionList">
+                    <div class="application-sections-heading">
+                        <h4>Application Sections</h4>
+                    </div>
+                    <ul class="nav nav-stacked">
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div id="applicationContainer"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block modals %}
+    {% include 'wl/communications_modal.html' %}
+{% endblock %}

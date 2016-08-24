@@ -76,7 +76,7 @@ class WildlifeLicence(Licence):
     cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
-    regions = models.ManyToManyField(Region, blank=True)
+    regions = models.ManyToManyField(Region, blank=False)
 
     def __str__(self):
         return self.reference
@@ -103,6 +103,7 @@ class CommunicationsLogEntry(models.Model):
     fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
 
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    reference = models.CharField(max_length=100, blank=True)
     subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
     document = models.ForeignKey(Document, null=True, blank=False)

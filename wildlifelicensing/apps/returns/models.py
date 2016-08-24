@@ -23,7 +23,6 @@ class ReturnType(models.Model):
 
     month_frequency = models.IntegerField(choices=WildlifeLicence.MONTH_FREQUENCY_CHOICES,
                                           default=WildlifeLicence.DEFAULT_FREQUENCY)
-    template = models.FileField(upload_to='return_templates', null=True, blank=True)
 
     def clean(self):
         """
@@ -90,6 +89,14 @@ class Return(RevisionedMixin):
 
     proxy_customer = models.ForeignKey(EmailUser, blank=True, null=True)
 
+    nil_return = models.BooleanField(default=False)
+
+    comments = models.TextField(blank=True, null=True)
+
+    @property
+    def reference(self):
+        return '{}'.format(self.lodgement_number)
+
     @property
     def can_user_edit(self):
         """
@@ -112,3 +119,9 @@ class ReturnRow(RevisionedMixin):
 
 class ReturnLogEntry(CommunicationsLogEntry):
     ret = models.ForeignKey(Return)
+
+    def save(self, **kwargs):
+        # save the application reference if the reference not provided
+        if not self.reference:
+            self.reference = self.ret.reference
+        super(ReturnLogEntry, self).save(**kwargs)

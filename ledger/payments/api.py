@@ -9,7 +9,7 @@ from rest_framework.authentication import SessionAuthentication
 from bpay.models import BpayTransaction, BpayFile, BpayCollection
 from invoice.models import Invoice
 from bpoint.models import BpointTransaction, BpointToken
-from cash.models import CashTransaction
+from cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
 from ledger.accounts.models import EmailUser
 from ledger.catalogue.models import Product
 from utils import checkURL, createBasket, validSystem
@@ -380,7 +380,8 @@ class CashSerializer(serializers.ModelSerializer):
     amount = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
     invoice = serializers.CharField(source='invoice.reference')
     external = serializers.BooleanField(default=False)
-    location = serializers.CharField(source='collection_point',required=False)
+    region = serializers.CharField(required=False)
+    district = serializers.CharField(required=False)
     class Meta:
         model = CashTransaction
         fields = (
@@ -390,14 +391,15 @@ class CashSerializer(serializers.ModelSerializer):
             'created',
             'type',
             'external',
-            'location',
+            'region',
+            'district',
             'receipt',
             'original_txn'
         )
         
     def validate(self,data):
-        if data['external'] and not data.get('collection_point'):
-            raise serializers.ValidationError('A location must be specified for an external payment')
+        if data['external'] and not (data.get('region') or data.get('district')):
+            raise serializers.ValidationError('A region/district must be specified for an external payment.')
         return data
 
 class CashViewSet(viewsets.ModelViewSet):
@@ -440,6 +442,35 @@ class CashViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e[0]))
 
+class DistrictSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    code = serializers.CharField(source='name')
+    class Meta:
+        model = District
+        fields = ('name','code')
+        
+    def get_name(self, obj):
+        return dict(DISTRICT_CHOICES).get(obj.name)
+
+class RegionSerializer(serializers.ModelSerializer):
+    districts = DistrictSerializer(many=True)
+    name = serializers.SerializerMethodField()
+    code = serializers.CharField(source='name')
+    class Meta:
+        model = Region
+        fields = (
+            'name',
+            'code',
+            'districts'
+        )
+   
+    def get_name(self, obj):
+        return dict(REGION_CHOICES).get(obj.name)
+
+class RegionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Region.objects.all()
+    serializer_class = RegionSerializer
+    lookup_field = 'name'
 
 #######################################################
 #                                                     #

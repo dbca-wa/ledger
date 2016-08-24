@@ -9,13 +9,14 @@ from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.forms import IssueLicenceForm, CommunicationsLogEntryForm
+from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
+from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.payments import utils as payment_utils
 
 
@@ -50,7 +51,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         else:
             to = application.proxy_applicant
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
 
         kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                       get_application_payment_status(application))
@@ -149,7 +150,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             else:
                 to = application.proxy_applicant.get_full_name()
 
-            log_entry_form = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+            log_entry_form = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
 
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
                                                         'issue_licence_form': IssueLicenceForm(purpose=purposes),

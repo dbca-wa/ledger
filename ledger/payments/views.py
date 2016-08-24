@@ -8,7 +8,7 @@ from django.template import Template, Context
 from django.http import HttpResponse
 from pdf import create_invoice_pdf_bytes
 from utils import checkURL
-
+from cash.models import REGION_CHOICES
 #
 from models import Invoice
 #
@@ -59,6 +59,7 @@ class InvoicePaymentView(generic.DetailView):
         ctx = super(InvoicePaymentView, self).get_context_data(**kwargs)
         ctx['months'] = self.month_choices
         ctx['years'] = self.year_choices
+        ctx['regions'] = list(REGION_CHOICES)
         if self.request.GET.get('amountProvided') == 'true':
             ctx['amountProvided'] = True
         if self.request.GET.get('redirect_url'):
