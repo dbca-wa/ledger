@@ -200,8 +200,19 @@
                                         <div class="row">
                                             <div class="columns small-6">
                                                 <label>
-                                                    Location
-                                                    <textarea id="other_location" placeholder="eg. District or Region"></textarea>
+                                                    Region
+                                                    <select id="regions">
+                                                        <option selected="selected" value="">---- Select Region ----</option>
+                                                        {% for region in regions %}
+                                                        <option value="{{region.0}}">{{region.1}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </label>
+                                                <label class="hide" id="dist_wrapper">
+                                                    District
+                                                    <select class="disable" id="districts">
+                                                        <option value="">---- Select District ----</option>
+                                                    </select>
                                                 </label>
                                             </div>
                                             <div class="columns small-6">
