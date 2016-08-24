@@ -80,6 +80,21 @@ class EditApplicationView(UserCanEditApplicationMixin, View):
         return redirect('wl_applications:enter_details')
 
 
+class DeleteApplicationView(View, UserCanViewApplicationMixin):
+    def get(self, request, *args, **kwargs):
+        try:
+            application = Application.objects.get(id=args[0])
+            if application.customer_status == 'draft':
+                application.delete()
+                messages.success(self.request, 'Draft application was deleted')
+            else:
+                messages.warning(self.request, 'Application can only be deleted if it is a draft')
+        except Application.DoesNotExist:
+            messages.error(self.request, 'Unable to find application')
+
+        return redirect('wl_dashboard:home')
+
+
 class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)

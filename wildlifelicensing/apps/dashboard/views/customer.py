@@ -178,9 +178,11 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
     def render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
-            return '<a href="{0}">{1}</a>'.format(
+            return '<a href="{0}">{1}</a> / <a href="{2}">{3}</a>'.format(
                 reverse('wl_applications:edit_application', args=[obj.pk]),
-                'Continue application'
+                'Continue',
+                reverse('wl_applications:delete_application', args=[obj.pk]),
+                'Discard'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
