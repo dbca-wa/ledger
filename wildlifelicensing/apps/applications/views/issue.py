@@ -134,7 +134,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 ccs = None
                 if 'ccs' in issue_licence_form.cleaned_data and issue_licence_form.cleaned_data['ccs']:
                     ccs = re.split('[,;]', issue_licence_form.cleaned_data['ccs'])
-                    print('ccs', ccs)
                 send_licence_issued_email(licence, application, request, ccs)
             else:
                 # customer applied offline
