@@ -261,7 +261,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             )
         elif obj.processing_status == 'issued' and obj.licence is not None and obj.licence.licence_document is not None:
             return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:view_application', args=[obj.pk]),
+                reverse('wl_applications:view_application_officer', args=[obj.pk]),
                 'View application (read-only)'
             )
         else:
