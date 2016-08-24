@@ -95,7 +95,6 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
-
     def get(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=args[1])
 
@@ -132,9 +131,9 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         application.processing_status = determine_processing_status(application)
         application.save()
 
-        send_assessment_done_email(assessment, request)
-
         if 'conclude' in request.POST:
+            send_assessment_done_email(assessment, request)
+
             messages.success(request, 'The application assessment has been forwarded back to the Wildlife Licensing '
                              'office for review.')
 
