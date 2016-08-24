@@ -132,6 +132,7 @@ class AmendLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application, keep_invoice=True)
             application.processing_status = 'licence_amendment'
+            application.is_licence_amendment = True
             application.save()
 
         utils.set_session_application(request.session, application)
@@ -326,23 +327,14 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.error(self.request, e.message)
             return redirect('wl_applications:new_application')
 
-        kwargs['licence_type'] = application.licence_type
-        kwargs['profile'] = application.applicant_profile
-        kwargs['structure'] = application.licence_type.application_schema
-
-        kwargs['is_proxy_applicant'] = is_officer(self.request.user)
-
         if application.review_status == 'awaiting_amendments':
             amendments = AmendmentRequest.objects.filter(application=application).filter(status='requested')
             kwargs['amendments'] = amendments
 
-        if application.hard_copy is not None:
-            kwargs['application_document'] = application.hard_copy.file.url
-
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')
 
-        kwargs['data'] = application.data
+        kwargs['application'] = application
 
         return super(EnterDetailsView, self).get_context_data(**kwargs)
 
@@ -406,22 +398,20 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.error(self.request, e.message)
             return redirect('wl_applications:new_application')
 
-        kwargs['profile'] = application.applicant_profile
-        kwargs['structure'] = application.licence_type.application_schema
-
-        kwargs['is_proxy_applicant'] = is_officer(self.request.user)
-
-        kwargs['is_application_free'] = is_licence_free(application.licence_type)
+        kwargs['is_payment_required'] = not is_licence_free(application.licence_type) and \
+            not application.invoice_reference
 
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')
 
         if application.hard_copy is not None:
-            kwargs['structure'], kwargs['data'] = utils.append_app_document_to_schema_data(kwargs['structure'],
-                                                                                           application.data,
-                                                                                           application.hard_copy.file.url)
+            application.licence_type.application_schema, application.data = utils.\
+                append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
+                                                   application.hard_copy.file.url)
         else:
             kwargs['data'] = application.data
+
+        kwargs['application'] = application
 
         return super(PreviewView, self).get_context_data(**kwargs)
 
@@ -455,7 +445,10 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
 
         application.save(version_user=application.applicant, version_comment='Details Modified')
 
-        return redirect(reverse('wl_payments:checkout_application', args=[application.pk]))
+        if application.invoice_reference:
+            return redirect('wl_applications:complete')
+        else:
+            return redirect(reverse('wl_payments:checkout_application', args=[application.pk]))
 
 
 class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseView):
@@ -468,10 +461,18 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
             messages.error(self.request, e.message)
             return redirect('wl_applications:new_application')
 
-        application.invoice_reference = request.GET.get('invoice')
+        # update invoice reference if received, else keep the same
+        application.invoice_reference = request.GET.get('invoice', application.invoice_reference)
 
         application.save()
 
+        context = {}
+
+        context['application'] = application
+
+        context['show_invoice'] = not is_licence_free(application.licence_type) and \
+            not application.is_licence_amendment
+
         delete_session_application(request.session)
 
-        return render(request, self.template_name, {'application': application})
+        return render(request, self.template_name, context)

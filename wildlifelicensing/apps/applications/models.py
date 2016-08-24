@@ -89,6 +89,7 @@ class Application(RevisionedMixin):
     licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    is_licence_amendment = models.BooleanField(default=False)
 
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
