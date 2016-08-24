@@ -175,10 +175,14 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                     }
                 },
                 {
-                    title: 'Document',
-                    data: 'document',
-                    'render': function (value) {
-                        return value ? '<a href="' + value + '" target="_blank"><p>View Document</p></a>': '';
+                    title: 'Documents',
+                    data: 'documents',
+                    'render': function (values) {
+                        var result = '';
+                        _.forEach(values, function (value) {
+                           result += '<a href="' + value + '" target="_blank"><p>View Document</p></a><br>';
+                        });
+                        return result;
                     }
                 }
             ];

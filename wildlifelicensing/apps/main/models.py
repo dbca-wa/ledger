@@ -106,7 +106,7 @@ class CommunicationsLogEntry(models.Model):
     reference = models.CharField(max_length=100, blank=True)
     subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
-    document = models.ForeignKey(Document, null=True, blank=False)
+    documents = models.ManyToManyField(Document, blank=True)
 
     customer = models.ForeignKey(EmailUser, null=True, related_name='customer')
     officer = models.ForeignKey(EmailUser, null=True, related_name='officer')

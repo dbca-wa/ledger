@@ -121,13 +121,7 @@ class AddApplicationLogEntryView(OfficerRequiredMixin, View):
 
             officer = request.user
 
-            document = None
-
-            if request.FILES and 'attachment' in request.FILES:
-                document = Document.objects.create(file=request.FILES['attachment'])
-
             kwargs = {
-                'document': document,
                 'officer': officer,
                 'customer': customer,
                 'application': application,
@@ -138,7 +132,10 @@ class AddApplicationLogEntryView(OfficerRequiredMixin, View):
                 'fromm': form.cleaned_data['fromm']
             }
 
-            ApplicationLogEntry.objects.create(**kwargs)
+            entry = ApplicationLogEntry.objects.create(**kwargs)
+            if request.FILES and 'attachment' in request.FILES:
+                document = Document.objects.create(file=request.FILES['attachment'])
+                entry.documents.add(document)
 
             return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
         else:

@@ -213,7 +213,7 @@ def send_licence_issued_email(licence, application, request, ccs=None):
     msg = email.send(to, context=context, attachments=attachments)
     log_entry = _log_email(msg, application=application, sender=request.user)
     if licence.licence_document is not None:
-        log_entry.document = licence.licence_document
+        log_entry.documents.add(licence.licence_document)
         log_entry.save()
     return log_entry
 
