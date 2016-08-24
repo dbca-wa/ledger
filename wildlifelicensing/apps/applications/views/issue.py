@@ -1,3 +1,4 @@
+import re
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
@@ -129,7 +130,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 # customer applied online
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
                                  'licencee.')
-                send_licence_issued_email(licence, application, request)
+                # add cc's
+                ccs = None
+                if 'ccs' in issue_licence_form.cleaned_data and issue_licence_form.cleaned_data['ccs']:
+                    ccs = re.split('[,;]', issue_licence_form.cleaned_data['ccs'])
+                send_licence_issued_email(licence, application, request, ccs)
             else:
                 # customer applied offline
                 messages.success(request, 'The licence has now been issued and must be posted to the licencee. Click '
