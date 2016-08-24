@@ -76,7 +76,7 @@ class WildlifeLicence(Licence):
     cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
-    regions = models.ManyToManyField(Region, blank=True)
+    regions = models.ManyToManyField(Region, blank=False)
 
     def __str__(self):
         return self.reference
