@@ -366,10 +366,7 @@ class DownloadReturnTemplate(OfficerOrCustomerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         return_type = get_object_or_404(ReturnType, pk=args[0])
         filename = 'Return_{}_template.xlsx'.format(return_type.licence_type.code)
-        template = return_type.template
-        # if no template in db generates one from the data_descriptor
-        if bool(template):
-            return excel.ExcelFileResponse(template.file, filename)
-        else:
-            wb = create_return_template_workbook(return_type)
-            return excel.WorkbookResponse(wb, filename)
+
+        wb = create_return_template_workbook(return_type)
+
+        return excel.WorkbookResponse(wb, filename)

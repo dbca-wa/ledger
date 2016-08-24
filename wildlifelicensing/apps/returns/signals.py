@@ -67,9 +67,6 @@ def create_return_type_for_superceding_licence_type(sender, **kwargs):
 
         new_return_type.licence_type = new_licence_type
 
-        # this will be generated from the schema
-        new_return_type.template = None
-
         new_return_type.save()
     except ReturnType.DoesNotExist:
         pass

@@ -12,7 +12,7 @@ class ReturnTypeAdminForm(forms.ModelForm):
 
     class Meta:
         model = ReturnType
-        exclude = ['template']
+        exclude = []
 
 
 @admin.register(ReturnType)
