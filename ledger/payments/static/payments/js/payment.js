@@ -10,6 +10,7 @@ $(function(){
     var $card_fieldset = $('#card_fieldset');
     var $storedcard_fieldset = $('#storedcard_fieldset');
     var invoice = $('#payment_div').data('reference');
+    var $regions = $('#regions');
     
     // Display for the external cash payment feature
     $('#other_external').click('on',function(){
@@ -59,6 +60,33 @@ $(function(){
         }
     }
     /*
+     * Update Region Districts
+     */
+    function updateDistricts(region) {
+        $('#dist_wrapper').addClass('hide');
+        if (!region) {
+            $('#districts').html("");
+        }
+        else{
+            $.get('/ledger/payments/api/regions/'+region+'.json',function(resp){
+                var districts = resp.districts;
+                $('#districts').html("");
+                if (districts.length > 0) {
+                    $('#districts').append('<option value="">---- Select District ----</option>');
+                    $(districts).each(function(i){
+                        $('#districts').append('<option value="'+districts[i].code+'">'+districts[i].name+'</option>');
+                    });
+                    if (districts.length === 1) {
+                        $('#districts').val(districts[0].code);
+                    }
+                }
+            });
+            if ($('#dist_wrapper').hasClass('hide')) {
+                $('#dist_wrapper').removeClass('hide');
+            }
+        }
+    }
+    /*
     * Make cash payments
     */
     function otherPayment(){
@@ -88,7 +116,8 @@ $(function(){
         // Check if the external checkbox is selected
         if ($('#other_external').is(':checked')){
             payload['external'] = true;
-            payload['location'] = $('#other_location').val();
+            payload['region'] = $('#regions').val();
+            payload['district'] = $('#districts').val();
             payload['receipt'] = $('#receipt_number').val();
         }
         
@@ -203,6 +232,11 @@ $(function(){
         otherPayment();
     });
     
+    $regions.change(function(){
+        updateDistricts($(this).val());
+    });
+    // Reset all forms when page is loaded
+    reset_forms();
     /*$card_form.submit(function(e){
         e.preventDefault();
         cardPayment();
