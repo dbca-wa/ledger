@@ -19,7 +19,7 @@ class Invoice(models.Model):
     token = models.CharField(max_length=25,null=True,blank=True)
 
     def __unicode__(self):
-        return 'Order #{0} Invoice #{1}'.format(self.reference,self.id)
+        return 'Invoice #{0}'.format(self.reference)
 
     # Properties
     # =============================================
