@@ -16,7 +16,8 @@
     require(['jQuery',
              'js/entry/application_preview',
              'js/entry/navigation'], function($, applicationPreview, navigation) {
-        applicationPreview.layoutPreviewItems('#formContainer', {{ structure|jsonify }}, {{ data|jsonify }});
+        applicationPreview.layoutPreviewItems('#formContainer', {{ application.licence_type.application_schema|jsonify }},
+                                              {{ application.data|jsonify }});
 
         $('#mainContainer').removeClass('hidden');
 
@@ -71,7 +72,7 @@
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="top-buffer">Selected Profile:</label>
-                <p>{{ profile.name }}</p>
+                <p>{{ application.applicant_profile.name }}</p>
                 <p><em><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Change Profile</a></em></p>
                 <nav class="hidden-xs top-buffer">
                     <div id="sectionList">
@@ -104,10 +105,10 @@
                     <div>
                         <a data-entry-link="True" class="btn btn-default" href="{% url 'wl_applications:enter_details' %}">Edit Application Details</a>
                         <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>
-                            {% if is_application_free %}
-                                Lodge Application
-                            {% else %}
+                            {% if is_payment_required %}
                                 Proceed to Payment
+                            {% else %}
+                                Lodge Application
                             {% endif %}
                         </button>
                     </div>
