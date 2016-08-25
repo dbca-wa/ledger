@@ -12,11 +12,12 @@ from bpoint.models import BpointTransaction, BpointToken
 from cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
 from ledger.accounts.models import EmailUser
 from ledger.catalogue.models import Product
-from utils import checkURL, createBasket, validSystem
+from utils import checkURL, createBasket, validSystem, systemid_check
 from facade import bpoint_facade
 from oscar.apps.order.models import Order
 from oscar.apps.payment import forms
 from reports import generate_csv
+import traceback
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
@@ -58,6 +59,7 @@ class BpayTransactionSerializer(serializers.ModelSerializer):
             "car",
             "discount_ref",
             "discount_method",
+            "approved"
         )
         
     def get_type(self, obj):
@@ -663,6 +665,14 @@ class ReportSerializer(serializers.Serializer):
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
 
+    def validate_system(self,value):
+        try:
+            if not validSystem(value):
+                raise serializers.ValidationError('This is not a valid system.')
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+        return value
+
 class ReportCreateView(generics.CreateAPIView):
     serializer_class = BpointPaymentSerializer
     renderer_classes = (JSONRenderer,)
@@ -677,7 +687,7 @@ class ReportCreateView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
             # Generate Report
-            report = generate_csv(serializer.validated_data['system'],serializer.validated_data['start'], serializer.validated_data['end'])
+            report = generate_csv(systemid_check(serializer.validated_data['system']),serializer.validated_data['start'], serializer.validated_data['end'])
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
                 response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
@@ -687,6 +697,7 @@ class ReportCreateView(generics.CreateAPIView):
         except serializers.ValidationError:
             raise
         except Exception as e:
+            traceback.print_exc()
             raise serializers.ValidationError(str(e))
 #######################################################
 #                                                     #
