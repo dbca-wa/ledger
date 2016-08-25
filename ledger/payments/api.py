@@ -16,7 +16,7 @@ from utils import checkURL, createBasket, validSystem, systemid_check
 from facade import bpoint_facade
 from oscar.apps.order.models import Order
 from oscar.apps.payment import forms
-from reports import generate_csv
+from reports import generate_items_csv, generate_trans_csv
 import traceback
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -664,6 +664,7 @@ class ReportSerializer(serializers.Serializer):
     system = serializers.CharField(max_length=4)
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
+    items = serializers.BooleanField(default=False)
 
     def validate_system(self,value):
         try:
@@ -687,7 +688,10 @@ class ReportCreateView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
             # Generate Report
-            report = generate_csv(systemid_check(serializer.validated_data['system']),serializer.validated_data['start'], serializer.validated_data['end'])
+            if serializer.validated_data['items']:
+                report = generate_items_csv(systemid_check(serializer.validated_data['system']),serializer.validated_data['start'], serializer.validated_data['end'])
+            else:
+                report = generate_trans_csv(systemid_check(serializer.validated_data['system']),serializer.validated_data['start'], serializer.validated_data['end'])
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
                 response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
