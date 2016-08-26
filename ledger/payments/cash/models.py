@@ -102,11 +102,11 @@ class CashTransaction(models.Model):
 
     def save(self, *args, **kwargs):
         # Validations
-        self.ledger_validations()
+        self.full_clean()
 
         super(CashTransaction, self).save(*args, **kwargs)
 
-    def ledger_validations(self):
+    def clean(self, *args, **kwargs):
         if not self.receipt and self.external:
             raise ValidationError("A receipt number is required for an external payment.ie receipt")
         if not (self.region or self.district) and self.external:
@@ -115,7 +115,14 @@ class CashTransaction(models.Model):
             raise ValidationError("A {} cannot be made for an unpaid invoice.".format(self.type))
         if self.type == 'refund' and (self.invoice.payment_amount < decimal.Decimal(self.amount)):
             raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
-        if self.invoice.payment_status == 'paid' and self.type == 'payment':
-            raise ValidationError('This invoice has already been paid for.')
-        if (decimal.Decimal(self.amount) > self.invoice.balance) and self.type == 'payment':
-            raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
+        if self.pk is None:
+            if self.invoice.payment_status == 'paid' and self.type == 'payment':
+                raise ValidationError('This invoice has already been paid for.')
+            if (decimal.Decimal(self.amount) > self.invoice.balance) and self.type == 'payment':
+                raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
+        else:
+            orig = CashTransaction.objects.get(pk=self.pk)
+            if orig.amount != self.amount:
+                raise ValidationError('The amount cannot be changed after the transaction has been inserted.')
+            if orig.type != self.type:
+                raise ValidationError('The transaction type cannot be changed after the transaction has been inserted.')
