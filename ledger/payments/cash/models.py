@@ -126,3 +126,9 @@ class CashTransaction(models.Model):
                 raise ValidationError('The amount cannot be changed after the transaction has been inserted.')
             if orig.type != self.type:
                 raise ValidationError('The transaction type cannot be changed after the transaction has been inserted.')
+            if (not orig.external and not self.external) and (self.region or self.district):
+                raise ValidationError('You need to make this transaction external before adding region/district.')
+            if orig.external and not self.external:
+                self.district = None
+                self.region = None
+                self.receipt = None
