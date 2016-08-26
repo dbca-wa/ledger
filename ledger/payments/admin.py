@@ -7,7 +7,20 @@ from . import models
 class CashAdmin(admin.ModelAdmin):
     list_display = (
         'invoice',
+        'amount',
+        'type',
+        'source',
+        'region',
+        'district',
+        'created'
     )
+    search_fields = [
+        'invoice__reference',
+        'type',
+        'source',
+        'region',
+        'district',
+    ]
 
 @admin.register(models.Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
