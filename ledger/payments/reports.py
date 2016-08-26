@@ -40,7 +40,7 @@ def generate_items_csv(system,start,end,region=None,district=None):
         
         # Dates row
         writer.writerow(['']+ dates_row.split(','))
-        writer.writerow([''] + ['Credit Card','Bpay','EFTPOS','Cash','Cheque','Money Order'] * len(dates) + ['','Credit Card','Bpay','EFTPOS','Cash','Cheque','Money Order'])
+        writer.writerow([''] + ['Credit Card','Bpay','EFTPOS','Cash','Cheque','Money Order'] * len(dates) + ['','Credit Card','Bpay','EFTPOS','Cash','Cheque','Money Order','Banked(Cash,Money Order,Cheque)'])
         for i in invoices:
             # Add items of invoice if not in list
             if i.order:
@@ -128,7 +128,7 @@ def generate_items_csv(system,start,end,region=None,district=None):
             item_str += '{},'.format(str(i.get('item').oracle_code))
             for d in i['dates']:
                 item_str += '{},{},{},{},{},{},'.format(d['amounts']['card'],d['amounts']['bpay'],d['amounts']['eft'],d['amounts']['cash'],d['amounts']['cheque'],d['amounts']['money_order'])
-            item_str += ',{},{},{},{},{},{},'.format(i['card'],i['bpay'],i['eft'],i['cash'],i['cheque'],i['money_order'])
+            item_str += ',{},{},{},{},{},{},{}'.format(i['card'],i['bpay'],i['eft'],i['cash'],i['cheque'],i['money_order'],sum([i['cash'],i['cheque'],i['money_order']]))
             writer.writerow(item_str.split(','))
         
         total_str = 'Totals,'
