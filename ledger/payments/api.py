@@ -2,7 +2,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
 from wsgiref.util import FileWrapper
-from rest_framework import viewsets, serializers, status, generics
+from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
@@ -674,17 +674,22 @@ class ReportSerializer(serializers.Serializer):
             raise serializers.ValidationError(str(e))
         return value
 
-class ReportCreateView(generics.CreateAPIView):
-    serializer_class = BpointPaymentSerializer
+class ReportCreateView(views.APIView):
+    authentication_classes = [SessionAuthentication]
     renderer_classes = (JSONRenderer,)
-    authentication_classes = []
 
-    def create(self, request):
+    def get(self,request,format=None):
         try:
             http_status = status.HTTP_200_OK
             #parse and validate data
             report = None
-            serializer = ReportSerializer(data=request.data)
+            data = {
+                "start":request.GET.get('start'),
+                "end":request.GET.get('end'),
+                "system":request.GET.get('system'),
+                "items": request.GET.get('items', False)
+            }
+            serializer = ReportSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
             # Generate Report
