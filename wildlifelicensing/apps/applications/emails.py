@@ -210,13 +210,16 @@ def send_licence_issued_email(licence, application, request, ccs=None, additiona
     to = [licence.profile.email]
     if ccs:
         to += ccs
+    if additional_attachments and not isinstance(additional_attachments, list):
+        additional_attachments = list(additional_attachments)
     if additional_attachments:
         attachments += additional_attachments
     msg = email.send(to, context=context, attachments=attachments)
     log_entry = _log_email(msg, application=application, sender=request.user)
     if licence.licence_document is not None:
         log_entry.documents.add(licence.licence_document)
-        log_entry.save()
+    if additional_attachments:
+        log_entry.documents.add(*additional_attachments)
     return log_entry
 
 
