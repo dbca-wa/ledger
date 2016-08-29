@@ -184,7 +184,7 @@ class LicenceIssuedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/licence_issued.txt'
 
 
-def send_licence_issued_email(licence, application, request, ccs=None, additional_attachments=None):
+def send_licence_issued_email(licence, application, request, to=None, cc=None, bcc=None, additional_attachments=None):
     email = LicenceIssuedEmail()
     url = request.build_absolute_uri(
         reverse('wl_dashboard:home')
@@ -207,14 +207,13 @@ def send_licence_issued_email(licence, application, request, ccs=None, additiona
     else:
         logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
         attachments = []
-    to = [licence.profile.email]
-    if ccs:
-        to += ccs
+    if not to:
+        to = [licence.profile.email]
     if additional_attachments and not isinstance(additional_attachments, list):
         additional_attachments = list(additional_attachments)
     if additional_attachments:
         attachments += additional_attachments
-    msg = email.send(to, context=context, attachments=attachments)
+    msg = email.send(to, context=context, attachments=attachments, cc=cc, bcc=bcc)
     log_entry = _log_email(msg, application=application, sender=request.user)
     if licence.licence_document is not None:
         log_entry.documents.add(licence.licence_document)
@@ -267,14 +266,23 @@ def _log_email(email_message, application, sender=None):
         fromm = smart_text(sender) if sender else smart_text(email_message.from_email)
         # the to email is normally a list
         if isinstance(email_message.to, list):
-            to = ';'.join(email_message.to)
+            to = ','.join(email_message.to)
         else:
             to = smart_text(email_message.to)
+        # we log the cc and bcc in the same cc field of the log entry as a ',' comma separated string
+        all_ccs = []
+        if email_message.cc:
+            all_ccs += list(email_message.cc)
+        if email_message.bcc:
+            all_ccs += list(email_message.bcc)
+        all_ccs = ','.join(all_ccs)
+
     else:
         text = smart_text(email_message)
         subject = ''
         to = application.applicant.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
+        all_ccs = ''
 
     customer = application.applicant
 
@@ -287,7 +295,8 @@ def _log_email(email_message, application, sender=None):
         'customer': customer,
         'officer': officer,
         'to': to,
-        'fromm': fromm
+        'fromm': fromm,
+        'cc': all_ccs
     }
 
     email_entry = ApplicationLogEntry.objects.create(**kwargs)

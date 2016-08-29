@@ -127,20 +127,25 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             # The licence should be emailed to the customer if they applied for it online. If an officer entered
             # the application on their behalf, the licence needs to be posted to the user.
+
+            # CC's and attachments
+            # Rules for emails:
+            #  If application lodged by proxy officer and there's a CC list: send email to CCs (to recipients = CCs)
+            #  else send the email to customer and if there are CCs put them into the bccs of the email
+                # add cc's and attachments
+            ccs = None
+            if 'ccs' in issue_licence_form.cleaned_data and issue_licence_form.cleaned_data['ccs']:
+                ccs = re.split('[,;]', issue_licence_form.cleaned_data['ccs'])
+            attachments = []
+            if request.FILES and 'attachments' in request.FILES:
+                for _file in request.FILES.getlist('attachments'):
+                    doc = Document.objects.create(file=_file, name=_file.name)
+                    attachments.append(doc)
             if application.proxy_applicant is None:
                 # customer applied online
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
                                  'licencee.')
-                # add cc's and attachments
-                ccs = None
-                if 'ccs' in issue_licence_form.cleaned_data and issue_licence_form.cleaned_data['ccs']:
-                    ccs = re.split('[,;]', issue_licence_form.cleaned_data['ccs'])
-                attachments = []
-                if request.FILES and 'attachments' in request.FILES:
-                    for _file in request.FILES.getlist('attachments'):
-                        doc = Document.objects.create(file=_file, name=_file.name)
-                        attachments.append(doc)
-                send_licence_issued_email(licence, application, request, ccs=ccs, additional_attachments=attachments)
+                send_licence_issued_email(licence, application, request, bcc=ccs, additional_attachments=attachments)
             else:
                 # customer applied offline
                 messages.success(request, 'The licence has now been issued and must be posted to the licencee. Click '
@@ -150,6 +155,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                  '</img>'.format(licence.licence_document.file.url, static('wl/img/pdf.png'),
                                                  licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
 
+            if ccs:
+                send_licence_issued_email(licence, application, request, to=ccs, additional_attachments=attachments)
             return redirect('wl_dashboard:home')
         else:
             messages.error(request, issue_licence_form.errors)

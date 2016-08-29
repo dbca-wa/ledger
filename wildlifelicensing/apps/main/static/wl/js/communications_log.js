@@ -132,11 +132,24 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                 },
                 {
                     title: 'To',
-                    data: 'to'
+                    data: 'to',
+                    render: function(value) {
+                        return value.replace(',', '\n');
+                    }
+                },
+                {
+                    title: 'CC',
+                    data: 'cc',
+                    render: function(value) {
+                        return value.replace(',', '\n');
+                    }
                 },
                 {
                     title: 'From',
-                    data: 'fromm'
+                    data: 'fromm',
+                    render: function(value) {
+                        return value.replace(',', '\n');
+                    }
                 },
                 {
                     title: 'Subject/Desc.',
