@@ -14,6 +14,7 @@ from wildlifelicensing.apps.applications.models import Application
 
 from wildlifelicensing.apps.payments.utils import get_product, to_json
 from wildlifelicensing.apps.payments.forms import PaymentsReportForm
+from wildlifelicensing.apps.main.helpers import is_officer
 
 
 JSON_REQUEST_HEADER_PARAMS = {
@@ -41,6 +42,8 @@ class CheckoutApplicationView(RedirectView):
             'fallback_url': error_url,
             'return_url': success_url,
             'forceRedirect': True,
+            'template': 'wl/payment_information.html',
+            'proxy': is_officer(request.user),
             "products": [
                 {"id": product.id if product is not None else None}
             ]
