@@ -5,7 +5,9 @@ from . import models
 
 @admin.register(models.CashTransaction)
 class CashAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        'invoice',
+    )
 
 @admin.register(models.Invoice)
 class InvoiceAdmin(admin.ModelAdmin):

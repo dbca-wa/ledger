@@ -18,7 +18,8 @@
 
 {% block requirements %}
     require(['jQuery', 'js/entry/application_entry', 'js/entry/navigation'], function($, applicationDetails, navigation) {
-        applicationDetails.layoutFormItems('#formContainer', {{ structure|jsonify }}{% if data %}, {{ data|jsonify }}{% endif %});
+        applicationDetails.layoutFormItems('#formContainer', {{ application.licence_type.application_schema|jsonify }}
+            {% if application.data %}, {{ application.data|jsonify }}{% endif %});
 
         $('#mainContainer').removeClass('hidden');
 
@@ -87,7 +88,7 @@
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="top-buffer">Selected Profile:</label>
-                <p>{{ profile.name }}</p>
+                <p>{{ application.applicant_profile.name }}</p>
                 <p><em><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Change Profile</a></em></p>
                 <nav class="hidden-xs top-buffer">
                     <div id="sectionList">
@@ -101,16 +102,19 @@
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
-                    {% if is_proxy_applicant %}
+                    {% if application.proxy_applicant %}
                         <h3 id="original-application-document" class="section">Original Application Document</h3>
                         <hr>
                         <div class="form-group">
                             <label>Application Document</label>
-                            {% if application_document %}
+                            {% if application.hard_copy %}
                                 <p>
-                                    Currently: <a href="{{ application_document }}" target="_blank">{{ application_document|get_url_filename }}</a>
+                                    Currently:
+                                    <a href="{{ application.hard_copy.file.url }}" target="_blank">
+                                        {{ application.hard_copy.file.url|get_url_filename }}
+                                    </a>
                                 </p>
-                                <input name="application_document-existing" type="hidden" value="{{ application_document|get_url_filename }}"/>
+                                <input name="application_document-existing" type="hidden" value="{{ application.hard_copy.file.url|get_url_filename }}"/>
                             {% endif %}
                             <input name="application_document" type="file" class="form-control" accept=".pdf, .docx, .doc">
                             <p class="help-block">Attach a scanned copy of the original application as a Word or PDF document</p>
