@@ -8,6 +8,7 @@ from django.views.generic import View, TemplateView
 
 from preserialize.serialize import serialize
 
+from ledger.accounts.models import Document
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.forms import IssueLicenceForm
@@ -75,10 +76,10 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         original_issue_date = None
         if application.licence is not None:
-            issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence)
+            issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES)
             original_issue_date = application.licence.issue_date
         else:
-            issue_licence_form = IssueLicenceForm(request.POST)
+            issue_licence_form = IssueLicenceForm(request.POST, files=request.FILES)
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
@@ -130,11 +131,16 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 # customer applied online
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
                                  'licencee.')
-                # add cc's
+                # add cc's and attachments
                 ccs = None
                 if 'ccs' in issue_licence_form.cleaned_data and issue_licence_form.cleaned_data['ccs']:
                     ccs = re.split('[,;]', issue_licence_form.cleaned_data['ccs'])
-                send_licence_issued_email(licence, application, request, ccs)
+                attachments = []
+                if request.FILES and 'attachments' in request.FILES:
+                    for _file in request.FILES.getlist('attachments'):
+                        doc = Document.objects.create(file=_file, name=_file.name)
+                        attachments.append(doc)
+                send_licence_issued_email(licence, application, request, ccs=ccs, additional_attachments=attachments)
             else:
                 # customer applied offline
                 messages.success(request, 'The licence has now been issued and must be posted to the licencee. Click '
