@@ -71,7 +71,13 @@ class IssueLicenceForm(forms.ModelForm):
 
         return_frequency = kwargs.pop('return_frequency', WildlifeLicence.DEFAULT_FREQUENCY)
 
+        skip_required = kwargs.pop('skip_required', False)
+
         super(IssueLicenceForm, self).__init__(*args, **kwargs)
+
+        if skip_required:
+            for field in self.fields.values():
+                field.required = False
 
         if purpose is not None:
             self.fields['purpose'].initial = purpose

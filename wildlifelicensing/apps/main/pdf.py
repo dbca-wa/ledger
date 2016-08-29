@@ -342,47 +342,14 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 
 
 def _create_letter_header_footer(canvas, doc):
-    canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
-
+    # header
     current_y = PAGE_HEIGHT - LETTER_HEADER_MARGIN
 
     dpaw_header_logo = ImageReader(COLOUR_DPAW_HEADER_LOGO)
     canvas.drawImage(dpaw_header_logo, LETTER_HEADER_MARGIN, current_y - LETTER_IMAGE_HEIGHT,
                      width=LETTER_IMAGE_WIDTH, height=LETTER_IMAGE_HEIGHT)
 
-    canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
-
-    canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
-
-    current_x = LETTER_HEADER_RIGHT_LABEL_OFFSET
-
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER), 'Your ref:')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER) * 2, 'Our ref:')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER) * 3, 'Enquiries:')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER) * 4, 'Phone:')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER) * 5, 'Email:')
-
-    current_x = LETTER_HEADER_RIGHT_INFO_OFFSET
-
-    canvas.setFillColor(black)
-
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER), '')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER) * 2, '')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER) * 3, '')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER) * 4, '(08) 9219 9831')
-
-    # draw email address as hyperlink
-    email_address = DPAW_EMAIL
-
-    current_y = current_y - (SMALL_FONTSIZE + LETTER_HEADER_SMALL_BUFFER) * 5
-    canvas.setFillColor(blue)
-    canvas.drawString(current_x, current_y, email_address)
-
-    email_address_width = canvas.stringWidth(email_address)
-
-    linkRect = (current_x, current_y, current_x + email_address_width, current_y)
-    canvas.linkURL('mailto:{}'.format(email_address), linkRect)
-
+    # footer
     current_x = PAGE_WIDTH - LETTER_HEADER_MARGIN
     current_y = LETTER_HEADER_MARGIN
 
@@ -426,6 +393,17 @@ def _create_letter_address(licence):
     return address_elements
 
 
+def _create_letter_paragraph(text, style='LetterLeft', blank_line_after=True):
+    paragraph_elements = []
+
+    paragraph_elements.append(Paragraph(text, styles[style]))
+
+    if blank_line_after:
+        paragraph_elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    return paragraph_elements
+
+
 def _create_letter_signature():
     signature_elements = []
     signature_elements.append(Paragraph('Yours sincerely', styles['LetterLeft']))
@@ -453,15 +431,14 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
     elements.append(Spacer(1, LETTER_ADDRESS_BUFFER_HEIGHT))
 
-    elements.append(Paragraph('Dear {}'.format(licence.holder.get_full_name()), styles['LetterLeft']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('{}'.format(licence.licence_type.name), styles['LetterBoldLeft'])),
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Please find attached licence', styles['LetterLeft']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Please ensure that all the licence conditions are complied with, including the '
-                              'forwarding of a return at the end of the licence period.', styles['LetterLeft']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements += _create_letter_paragraph('Dear {}'.format(licence.holder.get_full_name()))
+
+    elements += _create_letter_paragraph('{}'.format(licence.licence_type.name), style='LetterBoldLeft')
+
+    elements += _create_letter_paragraph('Please find the licence attached.')
+
+    elements += _create_letter_paragraph('Please ensure that all the licence conditions are complied with, including '
+                                         'the forwarding of a return at the end of the licence period.')
 
     if licence.cover_letter_message:
         for message in licence.cover_letter_message.split('\r\n'):
@@ -472,8 +449,8 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    elements.append(Paragraph('If you have any queries, please contact Mr Danny Stefoni on 9219 9833.', styles['LetterLeft']))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements += _create_letter_paragraph('If you have any queries, please contact the Wildlife Licensing department '
+                                         'on 9219 9833.')
 
     elements += _create_letter_signature()
 
@@ -483,28 +460,32 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
 
 def _create_licence_renewal_elements(licence):
-    return [
-        Paragraph('Dear {}'.format(licence.holder.get_full_name()), styles['LetterLeft']),
-        Spacer(1, SECTION_BUFFER_HEIGHT),
-        Paragraph('This is a reminder that your licence:', styles['LetterLeft']),
-        Spacer(1, SECTION_BUFFER_HEIGHT),
-        Paragraph('{}'.format(licence.licence_type.name), styles['LetterBoldLeft']),
-        Spacer(1, SECTION_BUFFER_HEIGHT),
-        Paragraph('is due to expire on {}.'.format(licence.end_date.strftime(DATE_FORMAT)), styles['LetterLeft']),
-        Spacer(1, SECTION_BUFFER_HEIGHT),
-        Paragraph('Please note that you are required to submit an electronic return and that '
-                  'the licence cannot be renewed until this.', styles['LetterLeft']),
-        Spacer(1, SECTION_BUFFER_HEIGHT),
-        Paragraph('If you have any queries, please contact Mr Danny Stefoni on 9219 9833 or '
-                  'email to wildlifelicensing@dpaw.wa.gov.au.', styles['LetterLeft']),
-        Spacer(1, SECTION_BUFFER_HEIGHT),
-    ]
+    licence_renewal_elements = []
+
+    licence_renewal_elements += _create_letter_paragraph('Dear {}'.format(licence.holder.get_full_name()))
+
+    licence_renewal_elements += _create_letter_paragraph('This is a reminder that your licence:')
+
+    licence_renewal_elements += _create_letter_paragraph('{}'.format(licence.licence_type.name), style='LetterBoldLeft')
+
+    licence_renewal_elements += _create_letter_paragraph('is due to expire on {}.'.
+                                                         format(licence.end_date.strftime(DATE_FORMAT)))
+
+    licence_renewal_elements += _create_letter_paragraph('Please note that if you have outstanding returns, these '
+                                                         'are required to be submitted before the licence can be '
+                                                         'renewed.')
+
+    licence_renewal_elements += _create_letter_paragraph('If you have any queries, please contact the Wildlife '
+                                                         'Licensing department on 9219 9833.')
+
+    return licence_renewal_elements
 
 
 def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
     licence_renewal_frame = Frame(LETTER_PAGE_MARGIN, LETTER_PAGE_MARGIN, PAGE_WIDTH - 2 * LETTER_PAGE_MARGIN,
                                   PAGE_HEIGHT - 160, id='LicenceRenewalFrame')
-    licence_renewal_template = PageTemplate(id='LicenceRenewalFrame', frames=licence_renewal_frame, onPage=_create_letter_header_footer)
+    licence_renewal_template = PageTemplate(id='LicenceRenewalFrame', frames=licence_renewal_frame,
+                                            onPage=_create_letter_header_footer)
 
     doc = BaseDocTemplate(licence_renewal_buffer, pageTemplates=[licence_renewal_template], pagesize=A4)
 
