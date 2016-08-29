@@ -554,6 +554,7 @@ class CheckoutSerializer(serializers.Serializer):
     associateInvoiceWithToken = serializers.BooleanField(default=False)
     forceRedirect = serializers.BooleanField(default=False)
     sendEmail = serializers.BooleanField(default=False)
+    proxy = serializers.BooleanField(default=False)
     checkoutWithToken = serializers.BooleanField(default=False)
     bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
@@ -610,6 +611,7 @@ class CheckoutCreateView(generics.CreateAPIView):
         "sendEmail": "false", (optional, default=False)
         "checkoutWithToken": "true", (optional, default=False)
         "bpay_format": "crn", (optional, default='crn')
+        "proxy": "true", (optional, default=False)
         "icrn_format": "ICRNAMT", (optional, default='ICRNAMT')
         "products": [ (mandatory)
             {"id": 1}
@@ -633,7 +635,7 @@ class CheckoutCreateView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             #create basket
             createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
-            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
+            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
                                                                                                 self.get_redirect_value(serializer,'card_method'),
                                                                                                 self.get_redirect_value(serializer,'basket_owner'),
                                                                                                 self.get_redirect_value(serializer,'template'),
@@ -642,6 +644,7 @@ class CheckoutCreateView(generics.CreateAPIView):
                                                                                                 self.get_redirect_value(serializer,'associateInvoiceWithToken'),
                                                                                                 self.get_redirect_value(serializer,'forceRedirect'),
                                                                                                 self.get_redirect_value(serializer,'sendEmail'),
+                                                                                                self.get_redirect_value(serializer,'proxy'),
                                                                                                 self.get_redirect_value(serializer,'checkoutWithToken'),
                                                                                                 self.get_redirect_value(serializer,'bpay_format'),
                                                                                                 self.get_redirect_value(serializer,'icrn_format')))
