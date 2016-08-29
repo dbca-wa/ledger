@@ -61,12 +61,33 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-2 col-sm-3">
+            <div class="col-md-3">
                 <nav class="hidden-xs top-buffer">
                     {% if customer %}
                         {% with disable_collapse=True add_text='Add entry' %}
                             {% include 'wl/communications_panel.html' %}
                         {% endwith %}
+                    {% else %}
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        Payment Status
+                                    </div>
+                                    <div class="panel-body">
+                                        <p class="no-margin">
+                                            {{ payment_status }}
+                                            {% if payment_status == 'Awaiting Payment' %}
+                                                <a class="left-buffer pull-right" href="{% url 'payments:invoice-pdf' application.invoice_reference %}" target="_blank">
+                                                    Invoice
+                                                    <img height="20px" src="{% static 'wl/img/pdf.png' %}"/>
+                                                </a>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     {% endif %}
                     <div id="sectionList">
                         <ul class="nav nav-stacked">
@@ -74,7 +95,7 @@
                     </div>
                 </nav>
             </div>
-            <div class="col-md-10 col-sm-9">
+            <div class="col-md-9">
                 <div id="applicationContainer"></div>
             </div>
         </div>
