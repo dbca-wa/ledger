@@ -122,7 +122,6 @@ def generate_items_csv(system,start,end,region=None,district=None):
                                     d['amounts']['bpay'] += D(item.get('item').line_price_before_discounts_incl_tax)
                                     item['bpay'] -= D(item.get('item').line_price_before_discounts_incl_tax)
                                     date_amounts[date_amount_index]['amounts']['bpay'] -= D(item.get('item').line_price_before_discounts_incl_tax)
-        
         for i in items:
             item_str = ''
             item_str += '{},'.format(str(i.get('item').oracle_code))
@@ -130,11 +129,26 @@ def generate_items_csv(system,start,end,region=None,district=None):
                 item_str += '{},{},{},{},{},{},'.format(d['amounts']['card'],d['amounts']['bpay'],d['amounts']['eft'],d['amounts']['cash'],d['amounts']['cheque'],d['amounts']['money_order'])
             item_str += ',{},{},{},{},{},{},{}'.format(i['card'],i['bpay'],i['eft'],i['cash'],i['cheque'],i['money_order'],sum([i['cash'],i['cheque'],i['money_order']]))
             writer.writerow(item_str.split(','))
-        
+
         total_str = 'Totals,'
+        total_amounts = {
+            'card': D('0.0'),
+            'bpay': D('0.0'),
+            'eft': D('0.0'),
+            'cash': D('0.0'),
+            'cheque': D('0.0'),
+            'money_order': D('0.0')
+        }
         for d in date_amounts:
+            total_amounts['card'] += d['amounts']['card']
+            total_amounts['bpay'] += d['amounts']['bpay']
+            total_amounts['eft'] += d['amounts']['eft']
+            total_amounts['cash'] += d['amounts']['cash']
+            total_amounts['cheque'] += d['amounts']['cheque']
+            total_amounts['money_order'] += d['amounts']['money_order']
             total_str += '{},{},{},{},{},{},'.format(d['amounts']['card'],d['amounts']['bpay'],d['amounts']['eft'],d['amounts']['cash'],d['amounts']['cheque'],d['amounts']['money_order'])
-            
+        total_str += ',{},{},{},{},{},{},'.format(total_amounts['card'],total_amounts['bpay'],total_amounts['eft'],total_amounts['cash'],total_amounts['cheque'],total_amounts['money_order'])
+        total_str += '{},'.format(sum([total_amounts['cash'],total_amounts['cheque'],total_amounts['money_order']]))
         writer.writerow('')
         writer.writerow(total_str.split(','))
         strIO.flush()
