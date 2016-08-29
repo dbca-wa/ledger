@@ -9,7 +9,8 @@ define([
         initialise: function() {
             var $issueLicenceForm = $('#issueLicenceForm'),
                 $issueButton = $('#issue'),
-                $regionSelect = $issueLicenceForm.find('select');
+                $regionSelect = $issueLicenceForm.find('select'),
+                $addAttachment = $('#add_attachment');
 
             // initialise all datapickers
             $("input[id$='date']").each(function() {
@@ -36,6 +37,15 @@ define([
                 placeholder: "Select applicable regions."
             });
             $regionSelect.removeClass('hidden');
+
+            $addAttachment.on('click', function (e) {
+                var inputNode = $('<input class="top-buffer" id="id_attach" name="attachments" type="file" multiple>');
+                e.preventDefault();
+                $(e.target).parent().append(inputNode);
+                inputNode.click();
+
+            });
+
         }
     };
 });

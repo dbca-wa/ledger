@@ -181,10 +181,10 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                     'render': function (values) {
                         var result = '';
                         _.forEach(values, function (value) {
-                            // display the first 20 chars of the file name
+                            // display the first  chars of the file name
                             var fileName = _.last(value.split('/'));
                             fileName = _.truncate(fileName, {
-                                length: 20,
+                                length: 18,
                                 omission: '...',
                                 separator: ' '
                             });

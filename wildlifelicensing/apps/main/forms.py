@@ -52,7 +52,6 @@ class IdentificationForm(forms.Form):
 class IssueLicenceForm(forms.ModelForm):
     ccs = forms.CharField(required=False, label='CCs',
                           help_text="A comma separated list of email addresses you want the licence email to be CC'ed")
-    attachments = forms.FileField(required=False, widget=forms.ClearableFileInput(attrs={'multiple': True}))
 
     class Meta:
         model = WildlifeLicence
