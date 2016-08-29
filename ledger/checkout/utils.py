@@ -107,6 +107,14 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def free_basket(self):
         return self._get('ledger','free_basket')
 
+    # Proxy Payment
+    # ===========================
+    def is_proxy(self, status):
+        self._set('ledger','proxy',status)
+
+    def proxy(self):
+        return self._get('ledger','proxy')
+
     # Email
     # ===========================
     def return_email(self, status):

@@ -119,7 +119,8 @@ class Invoice(models.Model):
         ''' Calcluate the amount of bpay payments made
             less the reversals for this invoice.
         '''
-        payments = reversals = 0
+        payments = 0
+        reversals = 0
         if self.bpay_transactions:
             payments = payments + dict(self.bpay_transactions.filter(p_instruction_code='05', type=399).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
             reversals = dict(self.bpay_transactions.filter(p_instruction_code='25', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')

@@ -1,6 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
+from django.core.exceptions import ValidationError
 from wsgiref.util import FileWrapper
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
@@ -441,6 +442,8 @@ class CashViewSet(viewsets.ModelViewSet):
             return Response(serializer.data,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             raise serializers.ValidationError(str(e[0]))
 
@@ -551,6 +554,7 @@ class CheckoutSerializer(serializers.Serializer):
     associateInvoiceWithToken = serializers.BooleanField(default=False)
     forceRedirect = serializers.BooleanField(default=False)
     sendEmail = serializers.BooleanField(default=False)
+    proxy = serializers.BooleanField(default=False)
     checkoutWithToken = serializers.BooleanField(default=False)
     bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
@@ -607,6 +611,7 @@ class CheckoutCreateView(generics.CreateAPIView):
         "sendEmail": "false", (optional, default=False)
         "checkoutWithToken": "true", (optional, default=False)
         "bpay_format": "crn", (optional, default='crn')
+        "proxy": "true", (optional, default=False)
         "icrn_format": "ICRNAMT", (optional, default='ICRNAMT')
         "products": [ (mandatory)
             {"id": 1}
@@ -630,7 +635,7 @@ class CheckoutCreateView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             #create basket
             createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
-            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
+            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
                                                                                                 self.get_redirect_value(serializer,'card_method'),
                                                                                                 self.get_redirect_value(serializer,'basket_owner'),
                                                                                                 self.get_redirect_value(serializer,'template'),
@@ -639,6 +644,7 @@ class CheckoutCreateView(generics.CreateAPIView):
                                                                                                 self.get_redirect_value(serializer,'associateInvoiceWithToken'),
                                                                                                 self.get_redirect_value(serializer,'forceRedirect'),
                                                                                                 self.get_redirect_value(serializer,'sendEmail'),
+                                                                                                self.get_redirect_value(serializer,'proxy'),
                                                                                                 self.get_redirect_value(serializer,'checkoutWithToken'),
                                                                                                 self.get_redirect_value(serializer,'bpay_format'),
                                                                                                 self.get_redirect_value(serializer,'icrn_format')))
@@ -664,6 +670,8 @@ class ReportSerializer(serializers.Serializer):
     system = serializers.CharField(max_length=4)
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
+    region = serializers.ChoiceField(required=False,allow_null=True,choices=REGION_CHOICES)
+    district = serializers.ChoiceField(required=False,allow_null=True,choices=DISTRICT_CHOICES)
     items = serializers.BooleanField(default=False)
 
     def validate_system(self,value):
@@ -687,16 +695,23 @@ class ReportCreateView(views.APIView):
                 "start":request.GET.get('start'),
                 "end":request.GET.get('end'),
                 "system":request.GET.get('system'),
-                "items": request.GET.get('items', False)
+                "items": request.GET.get('items', False),
+                "region": request.GET.get('region'),
+                "district": request.GET.get('district')
             }
             serializer = ReportSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
             # Generate Report
             if serializer.validated_data['items']:
-                report = generate_items_csv(systemid_check(serializer.validated_data['system']),serializer.validated_data['start'], serializer.validated_data['end'])
+                report = generate_items_csv(systemid_check(serializer.validated_data['system']),
+                                            serializer.validated_data['start'],
+                                            serializer.validated_data['end'])
             else:
-                report = generate_trans_csv(systemid_check(serializer.validated_data['system']),serializer.validated_data['start'], serializer.validated_data['end'])
+                report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
+                                            ,serializer.validated_data['start'],
+                                            serializer.validated_data['end'],
+                                            district = serializer.validated_data['district'])
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
                 response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
