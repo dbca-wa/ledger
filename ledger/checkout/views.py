@@ -63,6 +63,8 @@ class IndexView(CoreIndexView):
         self.__validate_force_redirect(details.get('forceRedirect'))
         # validate send email
         self.__validate_send_email(details.get('sendEmail'))
+        # validate proxy
+        self.__validate_proxy(details.get('proxy'))
         return True
 
     def __validate_send_email(self, details):
@@ -72,6 +74,14 @@ class IndexView(CoreIndexView):
             self.checkout_session.return_email(False)
         elif details == 'true' or details == 'True':
             self.checkout_session.return_email(True)
+
+    def __validate_proxy(self, details):
+        ''' Check proxy details to set the checkout session data
+        '''
+        if not details:
+            self.checkout_session.is_proxy(False)
+        elif details == 'true' or details == 'True':
+            self.checkout_session.is_proxy(True)
 
     def __validate_associate_token_details(self, details):
         ''' Check the associate with token details to set the checkout session data
@@ -195,6 +205,7 @@ class IndexView(CoreIndexView):
                 'associateInvoiceWithToken': request.GET.get('associateInvoiceWithToken',False),
                 'forceRedirect': request.GET.get('forceRedirect',False),
                 'sendEmail': request.GET.get('sendEmail',False),
+                'proxy': request.GET.get('proxy',False),
                 'checkoutWithToken': request.GET.get('checkoutWithToken',False),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
@@ -231,10 +242,23 @@ class PaymentDetailsView(CorePaymentDetailsView):
         'check_shipping_data_is_captured'
     ]
 
+    def get_skip_conditions(self, request):
+        if not self.preview:
+            # Payment details should only be collected if necessary
+            return ['skip_unless_payment_is_required','skip_payment_if_proxy']
+        return super(PaymentDetailsView, self).get_skip_conditions(request)
+
     def get(self, request, *args, **kwargs):
-        if self.skip_preview_if_free(request):
+        if self.skip_preview_if_free(request) or self.skip_if_proxy():
              return self.handle_place_order_submission(request)
+        if self.checkout_session.proxy() and not self.preview:
+            self.checkout_session.pay_by('other')
         return super(PaymentDetailsView, self).get(request, *args, **kwargs)
+
+    def skip_if_proxy(self):
+        if self.preview and self.checkout_session.proxy():
+            return True
+        return False
 
     def skip_preview_if_free(self, request):
         if self.preview:
