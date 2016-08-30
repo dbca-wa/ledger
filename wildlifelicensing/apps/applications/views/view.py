@@ -41,6 +41,9 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
                 to = application.proxy_applicant.email
 
             kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.email)
+        else:
+            kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                          get_application_payment_status(application))
 
         return super(ViewReadonlyView, self).get_context_data(**kwargs)
 
