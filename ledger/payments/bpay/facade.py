@@ -1,10 +1,13 @@
 import datetime
+import csv
 import logging
 import pytz
+from os import listdir
+from os.path import isfile, join
+from decimal import Decimal
+from django.db import IntegrityError
 from models import *
 from crn import getCRN
-import csv
-from decimal import Decimal
 
 logging.info('Starting logger for BPAY.')
 logger = logging.getLogger(__name__)
@@ -124,7 +127,7 @@ def validate_file(f):
     except:
         raise
 
-def parseFile(file_path='/mnt/storage/Apps/ledger/ledger/payments/bpay/dpaw.csv'):
+def parseFile(file_path):
     '''Parse the file in order to create the relevant
         objects.
     '''
@@ -172,7 +175,26 @@ def parseFile(file_path='/mnt/storage/Apps/ledger/ledger/payments/bpay/dpaw.csv'
         BpayTransaction.objects.bulk_create(transaction_list)
         
         return bpay_file
+    except IntegrityError as e:
+        if 'unique constraint' in e.message:
+            pass
     except Exception as e:
         print str(e)
     finally:
         f.close()
+
+def getfiles(path):
+    files = []
+    try:
+        files = [join(path, f) for f in listdir(path) if isfile(join(path, f)) and f.endswith('.csv')]
+    except Exception as e:
+        raise
+    return files
+
+def reconcile(path):
+    files = getfiles(path)
+    try:
+        for f in files:
+            parseFile(f)
+    except:
+        raise
