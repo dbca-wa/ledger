@@ -236,6 +236,7 @@ class IndexView(CoreIndexView):
 class PaymentDetailsView(CorePaymentDetailsView):
 
     pre_conditions = [
+        'check_if_checkout_is_active',
         'check_basket_is_not_empty',
         'check_basket_is_valid',
         'check_user_email_is_captured',
