@@ -8,7 +8,7 @@ from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, 
     KeepTogether, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
-from reportlab.lib.colors import HexColor, black, blue
+from reportlab.lib.colors import HexColor
 
 from django.core.files import File
 from django.conf import settings
@@ -24,9 +24,9 @@ COLOUR_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', '
                                        'colour_dpaw_header_logo.png')
 
 DPAW_EMAIL = 'wildlifelicensing@dpaw.wa.gov.au'
-DPAW_URL = 'dpaw.wa.gov.au'
+DPAW_URL = 'www.dpaw.wa.gov.au'
 DPAW_PHONE = '(08) 9219 9831'
-DPAW_FAX = '(08) 9423 2242'
+DPAW_FAX = '(08) 9423 8242'
 DPAW_PO_BOX = 'Locked Bag 104, Bentley Delivery Centre, Western Australia 6983'
 
 
@@ -366,6 +366,13 @@ def _create_letter_header_footer(canvas, doc):
     canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, 'Wildlife Licensing Section')
 
 
+def _format_name(user, include_first_name=False):
+    if user.title:
+        return '{} {}'.format(user.title, user.get_full_name() if include_first_name else user.last_name)
+    else:
+        return user.get_full_name()
+
+
 def _create_letter_address(licence):
     addressee = licence.holder
     address = licence.profile.postal_address
@@ -374,7 +381,7 @@ def _create_letter_address(licence):
 
     address_elements.append(Spacer(1, LETTER_ADDRESS_BUFFER_HEIGHT))
 
-    address_elements.append(Paragraph(addressee.get_full_name(), styles['LetterLeft']))
+    address_elements.append(Paragraph(_format_name(addressee, include_first_name=True), styles['LetterLeft']))
 
     if licence.profile.institution:
         address_elements.append(Paragraph(licence.profile.institution, styles['LetterLeft']))
@@ -421,7 +428,8 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
     cover_letter_frame = Frame(LETTER_PAGE_MARGIN, LETTER_PAGE_MARGIN, PAGE_WIDTH - 2 * LETTER_PAGE_MARGIN,
                                PAGE_HEIGHT - 160, id='CoverLetterFrame')
 
-    every_cover_letter_template = PageTemplate(id='CoverLetter', frames=cover_letter_frame, onPage=_create_letter_header_footer)
+    every_cover_letter_template = PageTemplate(id='CoverLetter', frames=cover_letter_frame,
+                                               onPage=_create_letter_header_footer)
 
     doc = BaseDocTemplate(cover_letter_buffer, pageTemplates=[every_cover_letter_template], pagesize=A4)
 
@@ -430,8 +438,6 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
     elements += _create_letter_address(licence)
 
     elements.append(Spacer(1, LETTER_ADDRESS_BUFFER_HEIGHT))
-
-    elements += _create_letter_paragraph('Dear {}'.format(licence.holder.get_full_name()))
 
     elements += _create_letter_paragraph('{}'.format(licence.licence_type.name), style='LetterBoldLeft')
 
@@ -449,8 +455,8 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    elements += _create_letter_paragraph('If you have any queries, please contact the Wildlife Licensing department '
-                                         'on 9219 9833.')
+    elements += _create_letter_paragraph('If you have any queries, please contact the Wildlife Licensing section '
+                                         'on 9219 9831.')
 
     elements += _create_letter_signature()
 
@@ -462,11 +468,13 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 def _create_licence_renewal_elements(licence):
     licence_renewal_elements = []
 
-    licence_renewal_elements += _create_letter_paragraph('Dear {}'.format(licence.holder.get_full_name()))
+    licence_renewal_elements += _create_letter_paragraph('Dear {}'.format(_format_name(licence.holder)))
 
     licence_renewal_elements += _create_letter_paragraph('This is a reminder that your licence:')
 
-    licence_renewal_elements += _create_letter_paragraph('{}'.format(licence.licence_type.name), style='LetterBoldLeft')
+    licence_renewal_elements += _create_letter_paragraph('{} <{}>'.format(licence.licence_type.name,
+                                                                          licence.reference),
+                                                         style='LetterBoldLeft')
 
     licence_renewal_elements += _create_letter_paragraph('is due to expire on {}.'.
                                                          format(licence.end_date.strftime(DATE_FORMAT)))
@@ -476,7 +484,7 @@ def _create_licence_renewal_elements(licence):
                                                          'renewed.')
 
     licence_renewal_elements += _create_letter_paragraph('If you have any queries, please contact the Wildlife '
-                                                         'Licensing department on 9219 9833.')
+                                                         'Licensing section on 9219 9831.')
 
     return licence_renewal_elements
 

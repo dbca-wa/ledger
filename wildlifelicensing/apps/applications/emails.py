@@ -191,7 +191,7 @@ def send_licence_issued_email(licence, application, request, ccs=None):
     )
     context = {
         'url': url,
-        'cover_letter_message': licence.cover_letter_message
+        'licence': licence
     }
     if licence.licence_document is not None:
         file_name = 'WL_licence_' + smart_text(licence.licence_type.code_slug)
