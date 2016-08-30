@@ -143,9 +143,10 @@
                 </a>
             </div>
             <div class="col-md-9">
-                <form method="post" id="issueLicenceForm">
+                <form method="post" id="issueLicenceForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% bootstrap_form issue_licence_form %}
+                    <a href="#" id="add_attachment" class="top-buffer">Add attachment</a>
                 </form>
             </div>
         </div>
