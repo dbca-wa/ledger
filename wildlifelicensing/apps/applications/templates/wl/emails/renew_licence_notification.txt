@@ -1,28 +1,21 @@
 {% extends 'wl/emails/base_email.html' %}
 
 {% block greetings %}
-Dear Licensee
+Dear {{ licence.holder.get_full_name }}
 {% endblock %}
 
 {% block content %}
-This is a reminder that your licence {{ licence.licence_number }}-{{ licence.licence_sequence }} is due to expire on {{ licence.end_date|date:'d/m/Y' }}.
+This is a reminder that your licence
 
-You are required to submit an electronic return. To do so, please logon to:
-{{ url }}
+{{ licence.licence_type.name }} <{{ licence.reference }}>
 
-Upon submitting your return, you will need to select one of the options listed below regarding licence renewal.
-Please note the licence cannot be renewed until this return has been submitted.
+is due to expire on {{ licence.end_date|date:'d/m/Y' }}.
 
-    Non-renewal
-    Renew
-    Renew with changes.
+Please note that if you have oustanding returns, these are required to be submitted before the licence can be renewed.
 
-If you select <strong>renew</strong>or <strong>renew with changes</strong>, please make the relevant 
-changes to your project from your original application (if applicable) and detail the new expiry date.
-
-If you have any queries, please contact Mr Danny Stefoni on 9219 9833 or <a href="mailto:wildlifelicensing@dpaw.wa.gov.au">wildlifelicensing@dpaw.wa.gov.au</a>.
-
+If you have any queries, please contact the wildlife licencing section on 9219 9831 or wildlifelicensing@dpaw.wa.gov.au.
 {% endblock %}
+
 {% block signature %}
 Yours sincerely
 

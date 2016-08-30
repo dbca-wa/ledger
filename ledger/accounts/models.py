@@ -219,8 +219,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         ('Ms', 'Ms'),
         ('Dr', 'Dr')
     )
-    title = models.CharField(max_length=100, choices=TITLE_CHOICES, null=True, blank=False, default=TITLE_CHOICES[0][0],
-                             verbose_name='title', help_text="")
+    title = models.CharField(max_length=100, choices=TITLE_CHOICES, null=True, blank=True,
+                             verbose_name='title', help_text='')
     dob = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=False,
                            verbose_name="date of birth", help_text='')
     phone_number = models.CharField(max_length=50, null=True, blank=True,

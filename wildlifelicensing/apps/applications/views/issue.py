@@ -177,10 +177,10 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
 
         original_issue_date = None
         if application.licence is not None:
-            issue_licence_form = IssueLicenceForm(request.GET, instance=application.licence)
+            issue_licence_form = IssueLicenceForm(request.GET, instance=application.licence, skip_required=True)
             original_issue_date = application.licence.issue_date
         else:
-            issue_licence_form = IssueLicenceForm(request.GET)
+            issue_licence_form = IssueLicenceForm(request.GET, skip_required=True)
 
         licence = issue_licence_form.save(commit=False)
         licence.licence_type = application.licence_type
