@@ -1,12 +1,11 @@
-import os
 import json
+import os
 from datetime import datetime
 
+from dateutil.relativedelta import relativedelta
 from django import forms
 from django.contrib.postgres.forms import JSONField
-from django.forms.widgets import MultipleHiddenInput, SelectMultiple
-
-from dateutil.relativedelta import relativedelta
+from django.forms.widgets import SelectMultiple
 
 from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
 
@@ -52,16 +51,21 @@ class IdentificationForm(forms.Form):
 
 class IssueLicenceForm(forms.ModelForm):
     ccs = forms.CharField(required=False, label='CCs',
-                                help_text="A comma separated list of email addresses you want the licence email to be CC'ed")
+                          help_text="A comma separated list of email addresses you want the licence email to be CC'ed")
 
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose', 'locations',
+        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose',
+                  'locations',
                   'additional_information', 'cover_letter_message']
         widgets = {
             'regions': SelectMultiple(
                 attrs={"class": "hidden"}
-            )
+            ),
+            'purpose': forms.Textarea(attrs={'cols': '40', 'rows': '8'}),
+            'locations': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
+            'additional_information': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
+            'cover_letter_message': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
         }
 
     def __init__(self, *args, **kwargs):

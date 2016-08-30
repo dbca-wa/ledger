@@ -101,12 +101,13 @@ class CommunicationsLogEntry(models.Model):
 
     to = models.CharField(max_length=200, blank=True, verbose_name="To")
     fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
+    cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
 
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
     reference = models.CharField(max_length=100, blank=True)
     subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
-    document = models.ForeignKey(Document, null=True, blank=False)
+    documents = models.ManyToManyField(Document, blank=True)
 
     customer = models.ForeignKey(EmailUser, null=True, related_name='customer')
     officer = models.ForeignKey(EmailUser, null=True, related_name='officer')
