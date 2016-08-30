@@ -43,7 +43,6 @@ define([
                 e.preventDefault();
                 $(e.target).parent().append(inputNode);
                 inputNode.click();
-
             });
 
         }
