@@ -44,6 +44,7 @@ class WildlifeLicenceCategory(models.Model):
 class WildlifeLicenceType(LicenceType):
     code_slug = models.SlugField(max_length=64, unique=True)
     identification_required = models.BooleanField(default=False)
+    senior_applicable = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
     application_schema = JSONField(blank=True, null=True)
     category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)

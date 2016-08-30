@@ -158,12 +158,14 @@
                             </div>
                                 <div class="col-md-5">
                                 <div class="row details-row-buffer">
+                                {%  if customer.is_senior %}
                                     <div class="col-md-12">
                                         <strong>Senior Card:</strong>
                                         {% if not customer.senior_card.file.url %}
                                             Not available
                                         {% endif %}
                                     </div>
+                                {%  endif %}
                                 </div>
                                 {% if customer.senior_card.file.url %}
                                     <div class="row details-row-buffer">

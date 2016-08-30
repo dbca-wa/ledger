@@ -9,14 +9,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from ledger.accounts.models import EmailUser, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
 
-from wildlifelicensing.apps.main.models import WildlifeLicenceType,\
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, \
     WildlifeLicenceCategory
-from wildlifelicensing.apps.main.forms import IdentificationForm
+from wildlifelicensing.apps.main.forms import IdentificationForm, SeniorCardForm
 
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
-from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin,\
+from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, \
     UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_customer
@@ -127,7 +127,8 @@ class AmendLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
         try:
             application = Application.objects.get(previous_application=previous_application)
             if application.customer_status == 'under_review':
-                messages.warning(request, 'An amendment for this licence has already been lodged and is awaiting review.')
+                messages.warning(request,
+                                 'An amendment for this licence has already been lodged and is awaiting review.')
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application, keep_invoice=True)
@@ -192,12 +193,12 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
         categories = {}
 
         for category in WildlifeLicenceCategory.objects.all():
-            categories[category.name] = WildlifeLicenceType.objects.\
+            categories[category.name] = WildlifeLicenceType.objects. \
                 filter(category=category, replaced_by__isnull=True).values('code_slug',
                                                                            'name', 'code')
 
         if WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True).exists():
-            categories['Other'] = WildlifeLicenceType.objects.\
+            categories['Other'] = WildlifeLicenceType.objects. \
                 filter(category__isnull=True, replaced_by__isnull=True).values('code_slug', 'name', 'code')
 
         return render(request, self.template_name, {'licence_categories': categories})
@@ -217,7 +218,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         if application.licence_type.identification_required and application.applicant.identification is None:
             return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
         else:
-            return redirect('wl_applications:create_select_profile')
+            return redirect('wl_applications:check_senior_card')
 
     def get_context_data(self, **kwargs):
         kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
@@ -238,13 +239,51 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         application.applicant.save()
 
         # update any other applications for this user that are awaiting ID upload
-#       for application in Application.objects.filter(applicant_profile__user=applicant):
+        #       for application in Application.objects.filter(applicant_profile__user=applicant):
         for app in Application.objects.filter(applicant=application.applicant):
             if app.id_check_status == 'awaiting_update':
                 app.id_check_status = 'updated'
                 app.save()
 
-        return redirect('wl_applications:create_select_profile', *self.args)
+        return redirect('wl_applications:check_senior_card')
+
+
+class CheckSeniorCardView(LoginRequiredMixin, ApplicationEntryBaseView, FormView):
+    template_name = 'wl/entry/upload_senior_card.html'
+    form_class = SeniorCardForm
+
+    def get(self, *args, **kwargs):
+        try:
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('wl_applications:new_application')
+
+        if application.licence_type.senior_applicable \
+                and application.applicant.is_senior \
+                and application.applicant.senior_card is None:
+            return super(CheckSeniorCardView, self).get(*args, **kwargs)
+        else:
+            return redirect('wl_applications:create_select_profile')
+
+    def get_context_data(self, **kwargs):
+        kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in self.form_class.VALID_FILE_TYPES])
+        return super(CheckSeniorCardView, self).get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        try:
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('wl_applications:new_application')
+
+        if application.applicant.senior_card is not None:
+            application.applicant.senior_card.delete()
+
+        application.applicant.senior_card = Document.objects.create(file=self.request.FILES['senior_card'])
+        application.applicant.save()
+
+        return redirect('wl_applications:create_select_profile')
 
 
 class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
@@ -399,13 +438,13 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             return redirect('wl_applications:new_application')
 
         kwargs['is_payment_required'] = not is_licence_free(application.licence_type) and \
-            not application.invoice_reference and is_customer(self.request.user)
+                                        not application.invoice_reference and is_customer(self.request.user)
 
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')
 
         if application.hard_copy is not None:
-            application.licence_type.application_schema, application.data = utils.\
+            application.licence_type.application_schema, application.data = utils. \
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
         else:
@@ -471,7 +510,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
         context['application'] = application
 
         context['show_invoice'] = not is_licence_free(application.licence_type) and \
-            not application.is_licence_amendment
+                                  not application.is_licence_amendment
 
         delete_session_application(request.session)
 

@@ -16,7 +16,7 @@ from django_countries.fields import CountryField
 
 from social.apps.django_app.default.models import UserSocialAuth
 
-from datetime import datetime
+from datetime import datetime, date
 
 from ledger.accounts.signals import name_changed, post_clean
 from ledger.address.models import UserAddress, Country
@@ -307,6 +307,18 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     @property
     def username(self):
         return self.email
+
+    @property
+    def is_senior(self):
+        return self.dob and self.age() >= 61
+
+    def age(self):
+        if self.dob:
+            today = date.today()
+            # calculate age with trick int(True) = 1 and int(False) = 0
+            return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+        else:
+            return -1
 
 
 class EmailUserListener(object):
