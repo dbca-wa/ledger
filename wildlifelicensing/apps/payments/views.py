@@ -1,6 +1,5 @@
 import json
 import requests
-from random import randint
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse, reverse_lazy
@@ -24,13 +23,10 @@ JSON_REQUEST_HEADER_PARAMS = {
 
 PAYMENT_SYSTEM_ID = 'S369'
 
-INVOICE_REFERENCE_LENGTH = 11
-
 
 class CheckoutApplicationView(RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
-
         product = get_product(application.licence_type)
         user = application.applicant_profile.user.id
 
@@ -112,14 +108,3 @@ class PaymentsReportView(View):
         else:
             messages.error(request, form.errors)
             return redirect(self.error_url)
-
-
-class FakeCheckoutApplicationView(RedirectView):
-    def get(self, request, *args, **kwargs):
-        success_url = request.build_absolute_uri(reverse('wl_applications:complete'))
-
-        params = {
-            'invoice': ''.join(["%s" % randint(0, 9) for num in range(0, INVOICE_REFERENCE_LENGTH)])
-        }
-
-        return redirect('{}?{}'.format(success_url, urlencode(params)))
