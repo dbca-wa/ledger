@@ -17,13 +17,17 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery', 'js/entry/application_entry'], function($, applicationDetails) {
-        applicationDetails.layoutFormItems('#formContainer', {{ structure|jsonify }}{% if data %}, {{ data|jsonify }}{% endif %});
+    require(['jQuery', 'js/entry/application_entry', 'js/entry/navigation'], function($, applicationDetails, navigation) {
+        applicationDetails.layoutFormItems('#formContainer', {{ application.licence_type.application_schema|jsonify }}
+            {% if application.data %}, {{ application.data|jsonify }}{% endif %});
 
         $('#mainContainer').removeClass('hidden');
 
         // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
         applicationDetails.initialiseSidebarMenu('#sectionList');
+
+        navigation.setupNavigateAway('Warning: any information entered into the form '+
+                                     'will be lost if not saved as draft.');
     });
 {% endblock %}
 
@@ -33,16 +37,11 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if application_pk %}
-                        <li><a href="{% url 'wl_applications:create_select_profile_existing_application' licence_type.code_slug application_pk %}">Select Profile</a></li>
-                    {% else %}
-                        {% if request.user|is_officer %}
-                            <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
-                        {% endif %}
-                        <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
-                        <li><a href="{% url 'wl_applications:create_select_profile' licence_type.code_slug %}">Select Profile</a></li>
+                    {% if request.user|is_officer %}
+                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
                     {% endif %}
-                    <li class="active">Enter Application Details</li>
+                    <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
+                    <li><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Select Profile</a></li>
                 </ol>
             </div>
         </div>
@@ -69,7 +68,7 @@
                 </p>
             </div>
         </div>
-        {%  if amendments %}
+        {% if amendments %}
             <div class="row">
                 <div class="col-sm-2 col-md-10 col-md-offset-2">
                     <div id="amendments-panel">
@@ -85,16 +84,12 @@
                     </div>
                 </div>
             </div>
-        {%  endif %}
+        {% endif %}
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="top-buffer">Selected Profile:</label>
-                <p>{{ profile.name }}</p>
-                {% if application_pk %}
-                    <p><em><a href="{% url 'wl_applications:create_select_profile_existing_application' licence_type.code_slug application_pk %}">Change Profile</a></em></p>
-                {% else %}
-                    <p><em><a href="{% url 'wl_applications:create_select_profile' licence_type.code_slug %}">Change Profile</a></em></p>
-                {% endif %}
+                <p>{{ application.applicant_profile.name }}</p>
+                <p><em><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Change Profile</a></em></p>
                 <nav class="hidden-xs top-buffer">
                     <div id="sectionList">
                         <ul class="nav nav-stacked">
@@ -107,16 +102,19 @@
                     {% csrf_token %}
                     <div id="formContainer">
                     </div>
-                    {% if is_proxy_applicant %}
+                    {% if application.proxy_applicant %}
                         <h3 id="original-application-document" class="section">Original Application Document</h3>
                         <hr>
                         <div class="form-group">
                             <label>Application Document</label>
-                            {% if application_document %}
+                            {% if application.hard_copy %}
                                 <p>
-                                    Currently: <a href="{{ application_document }}" target="_blank">{{ application_document|get_url_filename }}</a>
+                                    Currently:
+                                    <a href="{{ application.hard_copy.file.url }}" target="_blank">
+                                        {{ application.hard_copy.file.url|get_url_filename }}
+                                    </a>
                                 </p>
-                                <input name="application_document-existing" type="hidden" value="{{ application_document|get_url_filename }}"/>
+                                <input name="application_document-existing" type="hidden" value="{{ application.hard_copy.file.url|get_url_filename }}"/>
                             {% endif %}
                             <input name="application_document" type="file" class="form-control" accept=".pdf, .docx, .doc">
                             <p class="help-block">Attach a scanned copy of the original application as a Word or PDF document</p>

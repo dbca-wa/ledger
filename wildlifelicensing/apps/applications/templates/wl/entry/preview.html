@@ -13,8 +13,11 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery', 'js/entry/application_preview'], function($, applicationPreview) {
-        applicationPreview.layoutPreviewItems('#formContainer', {{ structure|jsonify }}, {{ data|jsonify }});
+    require(['jQuery',
+             'js/entry/application_preview',
+             'js/entry/navigation'], function($, applicationPreview, navigation) {
+        applicationPreview.layoutPreviewItems('#formContainer', {{ application.licence_type.application_schema|jsonify }},
+                                              {{ application.data|jsonify }});
 
         $('#mainContainer').removeClass('hidden');
 
@@ -22,6 +25,9 @@
         applicationPreview.initialiseSidebarMenu('#sectionList');
 
         applicationPreview.setupDisclaimer($('#disclaimers').find('input[type=checkbox]'), '#lodge');
+
+        navigation.setupNavigateAway('Warning: any information entered into the form '+
+                                     'will be lost if not saved as draft.');
     });
 {% endblock %}
 
@@ -31,17 +37,12 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if application_pk %}
-                        <li><a href="{% url 'wl_applications:create_select_profile_existing_application' licence_type.code_slug application_pk %}">Select Profile</a></li>
-                        <li><a href="{% url 'wl_applications:enter_details_existing_application' licence_type.code_slug application_pk %}">Enter Application Details</a></li>
-                    {% else %}
-                        {% if request.user|is_officer %}
-                            <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
-                        {% endif %}
-                        <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
-                        <li><a href="{% url 'wl_applications:create_select_profile' licence_type.code_slug %}">Select Profile</a></li>
-                        <li><a href="{% url 'wl_applications:enter_details' licence_type.code_slug %}">Enter Application Details</a></li>
+                    {% if request.user|is_officer %}
+                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
                     {% endif %}
+                    <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
+                    <li><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Select Profile</a></li>
+                    <li><a data-entry-link="True" href="{% url 'wl_applications:enter_details' %}">Enter Application Details</a></li>
                     <li class="active">Preview and Lodge Application</li>
                 </ol>
             </div>
@@ -71,12 +72,8 @@
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="top-buffer">Selected Profile:</label>
-                <p>{{ profile.name }}</p>
-                {% if application_pk %}
-                    <p><em><a href="{% url 'wl_applications:create_select_profile_existing_application' licence_type.code_slug application_pk %}">Change Profile</a></em></p>
-                {% else %}
-                    <p><em><a href="{% url 'wl_applications:create_select_profile' licence_type.code_slug %}">Change Profile</a></em></p>
-                {% endif %}
+                <p>{{ application.applicant_profile.name }}</p>
+                <p><em><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Change Profile</a></em></p>
                 <nav class="hidden-xs top-buffer">
                     <div id="sectionList">
                         <ul class="nav nav-stacked">
@@ -106,12 +103,14 @@
                         </div>
                     </div>
                     <div>
-                        {% if application_pk %}
-                            <a class="btn btn-default" href="{% url 'wl_applications:enter_details_existing_application' licence_type.code_slug application_pk %}">Edit Application Details</a>
-                        {% else %}
-                            <a class="btn btn-default" href="{% url 'wl_applications:enter_details' licence_type.code_slug %}">Edit Application Details</a>
-                        {% endif %}
-                        <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>Lodge Application</button>
+                        <a data-entry-link="True" class="btn btn-default" href="{% url 'wl_applications:enter_details' %}">Edit Application Details</a>
+                        <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>
+                            {% if is_payment_required %}
+                                Proceed to Payment
+                            {% else %}
+                                Lodge Application
+                            {% endif %}
+                        </button>
                     </div>
                 </form>
             </div>

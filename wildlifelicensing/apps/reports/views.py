@@ -13,6 +13,8 @@ from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.reports.forms import ReportForm
 from wildlifelicensing.apps.returns.models import Return
 
+from wildlifelicensing.apps.payments.forms import PaymentsReportForm
+
 
 def to_string(obj):
     return str(obj) if obj else ''
@@ -77,11 +79,12 @@ class ReportsView(OfficerRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs['form'] = ReportForm()
+        kwargs['payments_form'] = PaymentsReportForm()
 
         return TemplateView.get_context_data(self, **kwargs)
 
 
-class ApplicationsReportView(View):
+class ApplicationsReportView(OfficerRequiredMixin, View):
     APPLICATIONS_HEADERS = (
         'Lodgement Number',
         'Lodgement Date',
@@ -129,7 +132,7 @@ class ApplicationsReportView(View):
             redirect('wl_reports:reports')
 
 
-class LicencesReportView(View):
+class LicencesReportView(OfficerRequiredMixin, View):
     LICENCES_HEADERS = (
         'Licence Number',
         'Issue Date',
@@ -192,7 +195,7 @@ class LicencesReportView(View):
             redirect('wl_reports:reports')
 
 
-class ReturnsReportView(View):
+class ReturnsReportView(OfficerRequiredMixin, View):
     RETURNS_HEADERS = (
         'Lodgement Number',
         'Lodgement Date',
@@ -201,6 +204,8 @@ class ReturnsReportView(View):
         'Status',
         'Due Date',
         'Proxy',
+        'Nil Return',
+        'Comments'
     )
 
     @staticmethod
@@ -213,6 +218,8 @@ class ReturnsReportView(View):
             ret.status,
             ret.due_date,
             render_user_name(ret.proxy_customer),
+            'Yes' if ret.nil_return else 'No',
+            ret.comments
         )
 
     ALL_HEADERS = \

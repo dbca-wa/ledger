@@ -71,13 +71,27 @@
                     <hr>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <p>
+                        You can also choose to submit a Nil Return by clicking on the 'Submit Nil Return' button below.
+                        In this case, you will be asked to provide the reasons why you're not providing return data.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        {% bootstrap_form nil_return_form %}
+                        <button type="submit" class="btn btn-primary pull-right" name="nil">Submit Nil Return</button>
+                    </form>
+                </div>
+            </div>
         </div>
         <div class="row">
             <div class="col-md-12">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% bootstrap_form upload_spreadsheet_form %}
-                    <a href="{%  url 'wl_returns:download_return_template' return.return_type.id %}" class="pull-left" name="upload">Download Template</a>
+                    <a href="{% url 'wl_returns:download_return_template' return.return_type.id %}" class="pull-left"
+                       name="upload">Download Template</a>
                     <button type="submit" class="btn btn-primary pull-right" name="upload">Upload File</button>
                 </form>
             </div>

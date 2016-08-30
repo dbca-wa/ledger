@@ -17,12 +17,12 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
         });
 
         // multi-used selectors
-        var $logEntryModal = options.logEntryModalSelector ? $(options.logEntryModalSelector): null,
+        var $logEntryModal = options.logEntryModalSelector ? $(options.logEntryModalSelector) : null,
             $logListContent,
             logDataTable;
 
         // init log entry modal if provided
-        if($logEntryModal) {
+        if ($logEntryModal) {
             $(options.showLogEntryModalSelector).click(function () {
                 $logEntryModal.modal('show');
             });
@@ -30,7 +30,7 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
 
         // if log table is in a popover, need to prepare log table container before initializing table or 
         // search/paging/etc won't show 
-        if(options.showLogPopoverSelector) {
+        if (options.showLogPopoverSelector) {
             $logListContent = $('<div>').append($(options.logTableSelector));
         }
 
@@ -38,7 +38,7 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
         logDataTable = initLogTable(options.logListURL, options.logTableSelector);
 
         // init log table popover if provided
-        if(options.showLogPopoverSelector) {
+        if (options.showLogPopoverSelector) {
             $(options.showLogPopoverSelector).popover({
                 container: 'body',
                 title: 'Communication log',
@@ -60,7 +60,7 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
         }
 
         // init log entry form if provided
-        if(options.logEntryFormSelector) {
+        if (options.logEntryFormSelector) {
             $(options.logEntryFormSelector).submit(function (e) {
                 var formData, submitPromise;
 
@@ -71,27 +71,28 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                 formData = new FormData($(this).get(0));
 
                 submitPromise = $.ajax({
-                        url: options.addLogEntryURL,
-                        data: formData,
-                        contentType: false,
-                        processData: false,
-                        type: 'POST'
+                    url: options.addLogEntryURL,
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    type: 'POST'
                 });
 
-                submitPromise.done(function() {
+                submitPromise.done(function () {
                     logDataTable.ajax.reload();
                 });
 
-                submitPromise.done($.proxy(function() {
-                    if($logEntryModal) {
-                        $logEntryModal.modal('hide');
+                submitPromise.done($.proxy(function () {
+                        if ($logEntryModal) {
+                            $logEntryModal.modal('hide');
 
-                        // clear/reset form fields
-                        $(this).find('#id_type').val($('#id_type option:first').val());
-                        $(this).find('#id_subject').val('');
-                        $(this).find('#id_text').val('');
-                        $(this).find('#id_attachment').val('');
-                    }},
+                            // clear/reset form fields
+                            $(this).find('#id_type').val($('#id_type option:first').val());
+                            $(this).find('#id_subject').val('');
+                            $(this).find('#id_text').val('');
+                            $(this).find('#id_attachment').val('');
+                        }
+                    },
                     this)
                 );
             });
@@ -99,6 +100,10 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
     }
 
     function initLogTable(logListURL, tableSelector) {
+        function commaToNewline(s){
+             return s.replace(/[,;]/g, '\n');
+        }
+
         var $table = $(tableSelector),
             tableOptions = {
                 paging: true,
@@ -126,12 +131,23 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                     data: 'type'
                 },
                 {
+                    title: 'Reference',
+                    data: 'reference'
+                },
+                {
                     title: 'To',
-                    data: 'to'
+                    data: 'to',
+                    render: commaToNewline
+                },
+                {
+                    title: 'CC',
+                    data: 'cc',
+                    render: commaToNewline
                 },
                 {
                     title: 'From',
-                    data: 'fromm'
+                    data: 'fromm',
+                    render: commaToNewline
                 },
                 {
                     title: 'Subject/Desc.',
@@ -143,11 +159,11 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                     'render': function (value) {
                         var ellipsis = '...',
                             truncated = _.truncate(value, {
-                            length: 100,
-                            omission: ellipsis,
-                            separator: ' '
-                        }),
-                            result = '<span>' + truncated +'</span>',
+                                length: 100,
+                                omission: ellipsis,
+                                separator: ' '
+                            }),
+                            result = '<span>' + truncated + '</span>',
                             popTemplate = _.template('<a href="#" ' +
                                 'role="button" ' +
                                 'data-toggle="popover" ' +
@@ -158,7 +174,7 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                                 '>more</a>');
                         if (_.endsWith(truncated, ellipsis)) {
                             result += popTemplate({
-                               text: value
+                                text: value
                             });
                         }
 
@@ -171,10 +187,32 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                     }
                 },
                 {
-                    title: 'Document',
-                    data: 'document',
-                    'render': function (value) {
-                        return value ? '<a href="' + value + '" target="_blank"><p>View Document</p></a>': '';
+                    title: 'Documents',
+                    data: 'documents',
+                    'render': function (values) {
+                        var result = '';
+                        _.forEach(values, function (value) {
+                            // We expect an array [docName, url]
+                            // if it's a string it is the url
+                            var docName = '',
+                                url = '';
+                            if (_.isArray(value) && value.length > 1){
+                                docName = value[0];
+                                url = value[1];
+                            }
+                            if (typeof s === 'string'){
+                                url = value;
+                                // display the first  chars of the filename
+                                docName = _.last(value.split('/'));
+                                docName = _.truncate(docName, {
+                                    length: 18,
+                                    omission: '...',
+                                    separator: ' '
+                                });
+                            }
+                            result += '<a href="' + url + '" target="_blank"><p>' + docName+ '</p></a><br>';
+                        });
+                        return result;
                     }
                 }
             ];
@@ -185,10 +223,10 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
         // activate popover when table is drawn.
         $table.on('draw.dt', function () {
             var $tablePopover = $table.find('[data-toggle="popover"]');
-            if($tablePopover.length > 0) {
+            if ($tablePopover.length > 0) {
                 $tablePopover.popover();
                 // the next line prevents from scrolling up to the top after clicking on the popover.
-                $($tablePopover).on('click', function(e){
+                $($tablePopover).on('click', function (e) {
                     e.preventDefault();
                     return true;
                 });

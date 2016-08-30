@@ -12,7 +12,7 @@ from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_du
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_profile__user=user)
+    return Application.objects.filter(applicant_profile__user=user).exclude(customer_status='temp')
 
 
 class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
@@ -178,13 +178,15 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
     def render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
-            return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
-                'Continue application'
+            return '<a href="{0}">{1}</a> / <a href="{2}">{3}</a>'.format(
+                reverse('wl_applications:edit_application', args=[obj.pk]),
+                'Continue',
+                reverse('wl_applications:delete_application', args=[obj.pk]),
+                'Discard'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.pk]),
                 'Amend application'
             )
         elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
@@ -244,21 +246,20 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
     @staticmethod
     def _render_action(instance):
-        if not instance.is_renewable:
-            return 'Not renewable'
+        try:
+            application = Application.objects.get(licence=instance)
+            if Application.objects.filter(previous_application=application).exists():
+                return 'N/A'
+        except Application.DoesNotExist:
+            pass
+
+        expiry_days = (instance.end_date - datetime.date.today()).days
+        if expiry_days <= 30 and instance.is_renewable:
+            url = reverse('wl_applications:renew_licence', args=(instance.pk,))
+            return '<a href="{0}">Renew</a>'.format(url)
         else:
-            try:
-                application = Application.objects.get(licence=instance)
-                if Application.objects.filter(previous_application=application).exists():
-                    return 'Renewed'
-            except Application.DoesNotExist:
-                pass
-            expiry_days = (instance.end_date - datetime.date.today()).days
-            if expiry_days <= 30:
-                url = reverse('wl_applications:renew_licence', args=(instance.pk,))
-                return '<a href="{0}">Renew</a>'.format(url)
-            else:
-                return 'Renewable in ' + str(expiry_days - 30) + ' days'
+            url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+            return '<a href="{0}">Amend</a>'.format(url)
 
     @staticmethod
     def _search_licence_number(search):

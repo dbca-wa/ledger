@@ -4,7 +4,7 @@ define(['jQuery', 'select2', 'bootstrap-datetimepicker'], function($) {
             var $searchCustomer = $('#searchCustomer');
 
             $searchCustomer.select2({
-                minimumInputLength: 3,
+                minimumInputLength: 2,
                 ajax: {
                     url: '/search_customers',
                     dataType: 'json',

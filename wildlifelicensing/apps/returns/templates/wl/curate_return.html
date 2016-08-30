@@ -16,16 +16,16 @@
 
 {% block requirements %}
     require(["{% static 'wl/js/return_table.js' %}", 'js/communications_log'], function (returnTable, commsLog) {
-        returnTable.initTables();
+    returnTable.initTables();
 
-        commsLog.initCommunicationLog({
-            showLogPopoverSelector: '#showLog',
-            showLogEntryModalSelector: '#addLogEntry',
-            logEntryModalSelector: '#logEntryModal',
-            logEntryFormSelector: '#addLogEntryForm',
-            logListURL: "{% url 'wl_returns:log_list' return.id %}",
-            addLogEntryURL: "{% url 'wl_returns:add_log_entry' return.id %}"
-        });
+    commsLog.initCommunicationLog({
+    showLogPopoverSelector: '#showLog',
+    showLogEntryModalSelector: '#addLogEntry',
+    logEntryModalSelector: '#logEntryModal',
+    logEntryFormSelector: '#addLogEntryForm',
+    logListURL: "{% url 'wl_returns:log_list' return.id %}",
+    addLogEntryURL: "{% url 'wl_returns:add_log_entry' return.id %}"
+    });
     });
 {% endblock %}
 
@@ -82,7 +82,7 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label>Status</label>
-                                        <p>{{ return.status }}</p>
+                                        <p>{{ return.status }}{% if return.nil_return %} (Nil){% endif %}</p>
                                     </div>
                                     <div class="col-md-6">
                                         <label>Licence</label>
@@ -128,7 +128,8 @@
                                                                 <input name="{{ table.name }}::{{ header }}"
                                                                        value="{{ value }}"/>
                                                                 {% if error %}
-                                                                    <div><span class="text-danger">{{ error }}</span></div>
+                                                                    <div><span class="text-danger">{{ error }}</span>
+                                                                    </div>
                                                                 {% endif %}
                                                             </td>
                                                         {% endwith %}
@@ -138,11 +139,19 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <a class="add-return-row">Add Row</a>
+                                {% if not return.nil_return %}
+                                    <a class="add-return-row">Add Row</a>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 </form>
+                {% if return.comments %}
+                    <div id="comments" class="top-buffer">
+                        <label>Submitter Comments</label>
+                        <p>{{ return.comments }}</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

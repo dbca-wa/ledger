@@ -403,11 +403,9 @@ class AddCommunicationsLogEntryView(OfficerRequiredMixin, View):
 
             communications_log_entry.customer = customer
             communications_log_entry.officer = request.user
-
-            if request.FILES and 'attachment' in request.FILES:
-                communications_log_entry.document = Document.objects.create(file=request.FILES['attachment'])
-
             communications_log_entry.save()
+            if request.FILES and 'attachment' in request.FILES:
+                communications_log_entry.documents.add(Document.objects.create(file=request.FILES['attachment']))
 
             return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
         else:

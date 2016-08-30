@@ -1,7 +1,7 @@
 from django import forms
 from datetime import datetime, date
 
-from django.forms.widgets import MultipleHiddenInput, SelectMultiple
+from django.forms.widgets import SelectMultiple
 from wildlifelicensing.apps.main.models import Region
 
 

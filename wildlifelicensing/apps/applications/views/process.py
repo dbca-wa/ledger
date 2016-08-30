@@ -13,15 +13,17 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
-from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm
+from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm, \
+    ApplicationLogEntryForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
     send_id_update_request_email, send_returns_request_email, send_assessment_reminder_email
 from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
+
+from wildlifelicensing.apps.payments import utils as payment_utils
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
     CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
@@ -49,14 +51,14 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
             if previous_lodgement.hard_copy is not None:
                 previous_lodgement.licence_type.application_schema, previous_lodgement.data = \
-                    append_app_document_to_schema_data(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
+                    append_app_document_to_schema_data(previous_lodgement.licence_type.application_schema,
+                                                       previous_lodgement.data,
                                                        previous_lodgement.hard_copy.file.url)
 
             # reversion won't reference the previous many-to-many sets, only the latest one, so need to get documents as per below
             previous_lodgement_documents = Document.objects.filter(pk__in=revision.field_dict['documents'])
 
-            convert_documents_to_url(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
-                                     previous_lodgement_documents)
+            convert_documents_to_url(previous_lodgement.data, previous_lodgement_documents, '')
             previous_lodgements.append({'lodgement_number': '{}-{}'.format(previous_lodgement.lodgement_number,
                                                                            previous_lodgement.lodgement_sequence),
                                         'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
@@ -64,7 +66,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         previous_application_returns_outstanding = False
         if application.previous_application is not None:
-            previous_application_returns_outstanding = Return.objects.filter(licence=application.previous_application.licence).\
+            previous_application_returns_outstanding = Return.objects.filter(
+                licence=application.previous_application.licence). \
                 exclude(status='accepted').exclude(status='submitted').exists()
 
         if application.hard_copy is not None:
@@ -72,7 +75,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
 
-        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        convert_documents_to_url(application.data, application.documents.all(), '')
 
         data = {
             'user': serialize(request.user),
@@ -86,6 +89,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                                      posthook=format_assessment),
             'previous_versions': serialize(previous_lodgements),
             'returns_outstanding': previous_application_returns_outstanding,
+            'payment_status': payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                 get_application_payment_status(application)),
             'csrf_token': str(csrf(request).get('csrf_token'))
         }
 
@@ -100,11 +105,11 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, officer=self.request.user)
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user.get_full_name()
+            to = application.applicant.get_full_name()
         else:
             to = application.proxy_applicant.get_full_name()
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
 
         return super(ProcessView, self).get_context_data(**kwargs)
 
@@ -141,12 +146,13 @@ class AssignOfficerView(OfficerRequiredMixin, View):
 
         if application.assigned_officer is not None:
             assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
+                                                                               (application.assigned_officer.first_name,
+                                                                                application.assigned_officer.last_name)}
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
 
         return JsonResponse({'assigned_officer': assigned_officer,
-                            'processing_status': PROCESSING_STATUSES[application.processing_status]},
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
@@ -276,7 +282,7 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         ass_group = get_object_or_404(AssessorGroup, pk=request.POST['assGroupID'])
-        assessment, created = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)
+        assessment = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)[0]
 
         assessment.status = 'awaiting_assessment'
 

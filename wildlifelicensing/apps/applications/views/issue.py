@@ -1,3 +1,4 @@
+import re
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
@@ -7,15 +8,18 @@ from django.views.generic import View, TemplateView
 
 from preserialize.serialize import serialize
 
+from ledger.accounts.models import Document
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.main.forms import IssueLicenceForm, CommunicationsLogEntryForm
+from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
 from wildlifelicensing.apps.applications.utils import format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
+from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
+from wildlifelicensing.apps.payments import utils as payment_utils
 
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -45,29 +49,43 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                             return_frequency=return_frequency)
 
         if application.proxy_applicant is None:
-            to = application.applicant_profile.user
+            to = application.applicant
         else:
             to = application.proxy_applicant
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
+
+        kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                      get_application_payment_status(application))
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
+        payment_status = payment_utils.get_application_payment_status(application)
+
+        if payment_status == payment_utils.PAYMENT_STATUS_AWAITING:
+            messages.error(request, 'Payment is required before licence can be issued')
+
+            return redirect(request.get_full_path())
+
+        # do credit card payment if required
+        if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+                payment_utils.invoke_credit_card_payment(application)
+
         original_issue_date = None
         if application.licence is not None:
-            issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence)
+            issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES)
             original_issue_date = application.licence.issue_date
         else:
-            issue_licence_form = IssueLicenceForm(request.POST)
+            issue_licence_form = IssueLicenceForm(request.POST, files=request.FILES)
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
             licence.licence_type = application.licence_type
             licence.profile = application.applicant_profile
-            licence.holder = application.applicant_profile.user
+            licence.holder = application.applicant
             licence.issuer = request.user
 
             if application.previous_application is not None:
@@ -109,11 +127,24 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             # The licence should be emailed to the customer if they applied for it online. If an officer entered
             # the application on their behalf, the licence needs to be posted to the user.
+
+            # CC's and attachments
+            # Rules for emails:
+            #  If application lodged by proxy officer and there's a CC list: send email to CCs (to recipients = CCs)
+            #  else send the email to customer and if there are CCs put them into the bccs of the email
+            ccs = None
+            if 'ccs' in issue_licence_form.cleaned_data and issue_licence_form.cleaned_data['ccs']:
+                ccs = re.split('[,;]', issue_licence_form.cleaned_data['ccs'])
+            attachments = []
+            if request.FILES and 'attachments' in request.FILES:
+                for _file in request.FILES.getlist('attachments'):
+                    doc = Document.objects.create(file=_file, name=_file.name)
+                    attachments.append(doc)
             if application.proxy_applicant is None:
                 # customer applied online
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
                                  'licencee.')
-                send_licence_issued_email(licence, application, request)
+                send_licence_issued_email(licence, application, request, bcc=ccs, additional_attachments=attachments)
             else:
                 # customer applied offline
                 messages.success(request, 'The licence has now been issued and must be posted to the licencee. Click '
@@ -123,6 +154,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                  '</img>'.format(licence.licence_document.file.url, static('wl/img/pdf.png'),
                                                  licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
 
+            if ccs:
+                send_licence_issued_email(licence, application, request, to=ccs, additional_attachments=attachments)
             return redirect('wl_dashboard:home')
         else:
             messages.error(request, issue_licence_form.errors)
@@ -130,11 +163,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
             if application.proxy_applicant is None:
-                to = application.applicant_profile.user.get_full_name()
+                to = application.applicant.get_full_name()
             else:
                 to = application.proxy_applicant.get_full_name()
 
-            log_entry_form = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+            log_entry_form = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
 
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
                                                         'issue_licence_form': IssueLicenceForm(purpose=purposes),
@@ -156,15 +189,15 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
 
         original_issue_date = None
         if application.licence is not None:
-            issue_licence_form = IssueLicenceForm(request.GET, instance=application.licence)
+            issue_licence_form = IssueLicenceForm(request.GET, instance=application.licence, skip_required=True)
             original_issue_date = application.licence.issue_date
         else:
-            issue_licence_form = IssueLicenceForm(request.GET)
+            issue_licence_form = IssueLicenceForm(request.GET, skip_required=True)
 
         licence = issue_licence_form.save(commit=False)
         licence.licence_type = application.licence_type
         licence.profile = application.applicant_profile
-        licence.holder = application.applicant_profile.user
+        licence.holder = application.applicant
 
         filename = '%s.pdf' % application.lodgement_number
 

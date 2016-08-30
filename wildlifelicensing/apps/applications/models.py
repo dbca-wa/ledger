@@ -13,8 +13,9 @@ from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceT
 
 @python_2_unicode_compatible
 class Application(RevisionedMixin):
-    CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('under_review', 'Under Review'),
-                               ('id_required', 'Identification Required'), ('returns_required', 'Returns Completion Required'),
+    CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('under_review', 'Under Review'),
+                               ('id_required', 'Identification Required'),
+                               ('returns_required', 'Returns Completion Required'),
                                ('amendment_required', 'Amendment Required'),
                                ('id_and_amendment_required', 'Identification/Amendments Required'),
                                ('id_and_returns_required', 'Identification/Returns Required'),
@@ -23,16 +24,19 @@ class Application(RevisionedMixin):
                                ('approved', 'Approved'), ('declined', 'Declined'))
 
     # List of statuses from above that allow a customer to edit an application.
-    CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required', 'returns_and_amendment_required',
+    CUSTOMER_EDITABLE_STATE = ['temp', 'draft', 'amendment_required', 'id_and_amendment_required',
+                               'returns_and_amendment_required',
                                'id_and_returns_and_amendment_required']
 
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved']
 
-    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'), ('ready_for_action', 'Ready for Action'),
+    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'),
+                                 ('licence_amendment', 'Licence Amendment'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
-                                 ('awaiting_responses', 'Awaiting Responses'), ('ready_for_conditions', 'Ready for Conditions'),
+                                 ('awaiting_responses', 'Awaiting Responses'),
+                                 ('ready_for_conditions', 'Ready for Conditions'),
                                  ('ready_to_issue', 'Ready to Issue'), ('issued', 'Issued'), ('declined', 'Declined'))
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
@@ -49,15 +53,17 @@ class Application(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
-    licence_type = models.ForeignKey(WildlifeLicenceType)
+    licence_type = models.ForeignKey(WildlifeLicenceType, blank=True, null=True)
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
-    data = JSONField()
+    data = JSONField(blank=True, null=True)
     documents = models.ManyToManyField(Document)
     hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
     correctness_disclaimer = models.BooleanField(default=False)
     further_information_disclaimer = models.BooleanField(default=False)
-    applicant_profile = models.ForeignKey(Profile)
+
+    applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='applicant')
+    applicant_profile = models.ForeignKey(Profile, blank=True, null=True)
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
@@ -83,6 +89,9 @@ class Application(RevisionedMixin):
     licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    is_licence_amendment = models.BooleanField(default=False)
+
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
     def __str__(self):
         return self.reference
@@ -112,6 +121,12 @@ class Application(RevisionedMixin):
 
 class ApplicationLogEntry(CommunicationsLogEntry):
     application = models.ForeignKey(Application)
+
+    def save(self, **kwargs):
+        # save the application reference if the reference not provided
+        if not self.reference:
+            self.reference = self.application.reference
+        super(ApplicationLogEntry, self).save(**kwargs)
 
 
 class ApplicationRequest(models.Model):

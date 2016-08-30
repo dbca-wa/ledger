@@ -1,39 +1,38 @@
 from django.conf.urls import url
 
 from wildlifelicensing.apps.applications.views.entry import NewApplicationView, SelectLicenceTypeView, \
-    CreateSelectCustomer, EditApplicationView, CheckIdentificationRequiredView, CreateSelectProfileView, \
-    EnterDetailsView, PreviewView, RenewLicenceView
+    CreateSelectCustomer, EditApplicationView, DeleteApplicationView, CheckIdentificationRequiredView, \
+    CreateSelectProfileView, EnterDetailsView, PreviewView, ApplicationCompleteView, RenewLicenceView, \
+    AmendLicenceView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
     SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, RemindAssessmentView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
-    CreateConditionView, SetAssessmentConditionState, SubmitConditionsView, EnterConditionsAssessorView, \
-    SubmitConditionsAssessorView
+    CreateConditionView, SetAssessmentConditionState, EnterConditionsAssessorView
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
-from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, AssessorConditionsView, \
-    AddApplicationLogEntryView, ApplicationLogListView
+from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, ViewReadonlyOfficerView, \
+    AssessorConditionsView, AddApplicationLogEntryView, ApplicationLogListView
 
 
 urlpatterns = [
-    # application entry / licence renewal
+    # application entry / licence renewal/amendment
     url('^new-application/$', NewApplicationView.as_view(), name='new_application'),
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
+    url('^select-licence-type/([\w-]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^create-select-customer/$', CreateSelectCustomer.as_view(), name='create_select_customer'),
-    url('^([\w-]+)/edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
-    url('^([\w-]+)/check-identification/$', CheckIdentificationRequiredView.as_view(), name='check_identification'),
-    url('^([\w-]+)/profile/$', CreateSelectProfileView.as_view(), name='create_select_profile'),
-    url('^([\w-]+)/profile/([0-9]+)/$', CreateSelectProfileView.as_view(),
-        name='create_select_profile_existing_application'),
-    url('^([\w-]+)/enter-details/$', EnterDetailsView.as_view(), name='enter_details'),
-    url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details'),
-    url('^([\w-]+)/enter-details/([0-9]+)/$', EnterDetailsView.as_view(), name='enter_details_existing_application'),
-    url('^([\w-]+)/preview/$', PreviewView.as_view(), name='preview'),
-    url('^([\w-]+)/preview/([0-9]+)/$', PreviewView.as_view(), name='preview'),
+    url('^edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
+    url('^delete-application/([0-9]+)/$', DeleteApplicationView.as_view(), name='delete_application'),
+    url('^check-identification/$', CheckIdentificationRequiredView.as_view(), name='check_identification'),
+    url('^profile/$', CreateSelectProfileView.as_view(), name='create_select_profile'),
+    url('^enter-details/$', EnterDetailsView.as_view(), name='enter_details'),
+    url('^preview/$', PreviewView.as_view(), name='preview'),
+    url('^complete/$$', ApplicationCompleteView.as_view(), name='complete'),
     url('^renew-licence/([0-9]+)/$', RenewLicenceView.as_view(), name='renew_licence'),
+    url('^amend-licence/([0-9]+)/$', AmendLicenceView.as_view(), name='amend_licence'),
 
     # process
     url(r'^process/([0-9]+)/$', ProcessView.as_view(), name='process'),
@@ -59,9 +58,6 @@ urlpatterns = [
     url('^search-conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
     url('^create-condition/$', CreateConditionView.as_view(), name='create_condition'),
     url('^set-assessment-condition-state/$', SetAssessmentConditionState.as_view(), name='set_assessment_condition_state'),
-    url('^submit-conditions/([0-9]+)/$', SubmitConditionsView.as_view(), name='submit_conditions'),
-    url('^submit-conditions/([0-9]+)/assessment/([0-9]+)/?$', SubmitConditionsAssessorView.as_view(),
-        name='submit_conditions_assessor'),
 
     # issue
     url('^issue-licence/([0-9]+)/$', IssueLicenceView.as_view(), name='issue_licence'),
@@ -70,5 +66,6 @@ urlpatterns = [
 
     # view
     url('^view-application/([0-9]+)/$', ViewReadonlyView.as_view(), name='view_application'),
+    url('^view-application-officer/([0-9]+)/$', ViewReadonlyOfficerView.as_view(), name='view_application_officer'),
     url('^view-assessment/([0-9]+)/assessment/([0-9]+)/$', AssessorConditionsView.as_view(), name='view_assessment')
 ]

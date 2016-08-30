@@ -44,6 +44,11 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
                 'title': 'Proxy'
             },
             {
+                'title': 'Payment',
+                'searchable': False,
+                'orderable': False
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False

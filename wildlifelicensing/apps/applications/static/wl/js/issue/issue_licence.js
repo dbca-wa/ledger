@@ -6,9 +6,11 @@ define([
     "use strict";
 
     return {
-        initialise: function(options) {
+        initialise: function() {
             var $issueLicenceForm = $('#issueLicenceForm'),
-                $regionSelect = $issueLicenceForm.find('select');
+                $issueButton = $('#issue'),
+                $regionSelect = $issueLicenceForm.find('select'),
+                $addAttachment = $('#add_attachment');
 
             // initialise all datapickers
             $("input[id$='date']").each(function() {
@@ -17,9 +19,15 @@ define([
                 });
             });
 
-            $('#issue').click(function(e) {
-                $issueLicenceForm.submit();
+            $issueButton.click(function(e) {
+                if(!$(this).hasClass('disabled')) {
+                    $issueLicenceForm.submit();
+                }
             });
+
+            if($issueButton.hasClass('disabled')) {
+                $issueButton.tooltip({});
+            }
 
             $('#previewLicence').click(function(e) {
                 $(this).attr("href", this.href + '?' + $issueLicenceForm.serialize());
@@ -29,6 +37,14 @@ define([
                 placeholder: "Select applicable regions."
             });
             $regionSelect.removeClass('hidden');
+
+            $addAttachment.on('click', function (e) {
+                var inputNode = $('<input class="top-buffer" id="id_attach" name="attachments" type="file" multiple>');
+                e.preventDefault();
+                $(e.target).parent().append(inputNode);
+                inputNode.click();
+            });
+
         }
     };
 });
