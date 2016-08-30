@@ -61,7 +61,11 @@ class IssueLicenceForm(forms.ModelForm):
         widgets = {
             'regions': SelectMultiple(
                 attrs={"class": "hidden"}
-            )
+            ),
+            'purpose': forms.Textarea(attrs={'cols': '40', 'rows': '8'}),
+            'locations': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
+            'additional_information': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
+            'cover_letter_message': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
         }
 
     def __init__(self, *args, **kwargs):

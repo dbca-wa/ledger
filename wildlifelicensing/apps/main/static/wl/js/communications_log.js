@@ -100,6 +100,10 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
     }
 
     function initLogTable(logListURL, tableSelector) {
+        function commaToNewline(s){
+             return s.replace(/[,;]/g, '\n');
+        }
+
         var $table = $(tableSelector),
             tableOptions = {
                 paging: true,
@@ -133,23 +137,17 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                 {
                     title: 'To',
                     data: 'to',
-                    render: function(value) {
-                        return value.replace(',', '\n');
-                    }
+                    render: commaToNewline
                 },
                 {
                     title: 'CC',
                     data: 'cc',
-                    render: function(value) {
-                        return value.replace(',', '\n');
-                    }
+                    render: commaToNewline
                 },
                 {
                     title: 'From',
                     data: 'fromm',
-                    render: function(value) {
-                        return value.replace(',', '\n');
-                    }
+                    render: commaToNewline
                 },
                 {
                     title: 'Subject/Desc.',
@@ -194,14 +192,25 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
                     'render': function (values) {
                         var result = '';
                         _.forEach(values, function (value) {
-                            // display the first  chars of the file name
-                            var fileName = _.last(value.split('/'));
-                            fileName = _.truncate(fileName, {
-                                length: 18,
-                                omission: '...',
-                                separator: ' '
-                            });
-                            result += '<a href="' + value + '" target="_blank"><p>' + fileName+ '</p></a><br>';
+                            // We expect an array [docName, url]
+                            // if it's a string it is the url
+                            var docName = '',
+                                url = '';
+                            if (_.isArray(value) && value.length > 1){
+                                docName = value[0];
+                                url = value[1];
+                            }
+                            if (typeof s === 'string'){
+                                url = value;
+                                // display the first  chars of the filename
+                                docName = _.last(value.split('/'));
+                                docName = _.truncate(docName, {
+                                    length: 18,
+                                    omission: '...',
+                                    separator: ' '
+                                });
+                            }
+                            result += '<a href="' + url + '" target="_blank"><p>' + docName+ '</p></a><br>';
                         });
                         return result;
                     }

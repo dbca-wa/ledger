@@ -132,7 +132,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             # Rules for emails:
             #  If application lodged by proxy officer and there's a CC list: send email to CCs (to recipients = CCs)
             #  else send the email to customer and if there are CCs put them into the bccs of the email
-                # add cc's and attachments
             ccs = None
             if 'ccs' in issue_licence_form.cleaned_data and issue_licence_form.cleaned_data['ccs']:
                 ccs = re.split('[,;]', issue_licence_form.cleaned_data['ccs'])
