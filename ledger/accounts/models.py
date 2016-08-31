@@ -315,7 +315,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     def age(self):
         if self.dob:
             today = date.today()
-            # calculate age with trick int(True) = 1 and int(False) = 0
+            # calculate age with the help of trick int(True) = 1 and int(False) = 0
             return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
         else:
             return -1
