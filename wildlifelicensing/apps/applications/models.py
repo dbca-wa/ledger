@@ -118,6 +118,12 @@ class Application(RevisionedMixin):
         """
         return self.customer_status in self.CUSTOMER_VIEWABLE_STATE
 
+    @property
+    def is_senior_offer_applicable(self):
+        return self.licence_type.senior_applicable and \
+               self.applicant.user.is_senior and \
+               self.applicant.user.senior_card is not None
+
 
 class ApplicationLogEntry(CommunicationsLogEntry):
     application = models.ForeignKey(Application)

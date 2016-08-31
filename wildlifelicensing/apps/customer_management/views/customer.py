@@ -10,7 +10,7 @@ from wildlifelicensing.apps.customer_management.forms import CustomerDetailsForm
 
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import ProfileForm, AddressForm
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm, IdentificationForm, SeniorCardForm
 
 
 class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
@@ -171,8 +171,10 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         customer = get_object_or_404(EmailUser, pk=self.args[0])
-        kwargs['customer'] = customer
-        kwargs['form'] = CustomerDetailsForm(instance=customer)
+        if 'customer' not in kwargs:
+            kwargs['customer'] = customer
+        if 'form' not in kwargs:
+            kwargs['form'] = CustomerDetailsForm(instance=customer)
 
         return super(EditDetailsView, self).get_context_data(**kwargs)
 

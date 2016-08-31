@@ -8,8 +8,8 @@ class CustomerSearchForm(forms.Form):
 
 
 class CustomerDetailsForm(forms.ModelForm):
-    identification = forms.FileField(label='Photo Identification', required=False)
-    senior_card = forms.FileField(label='Senior Card', required=False)
+    # identification = forms.FileField(label='Photo Identification', required=False)
+    # senior_card = forms.FileField(label='Senior Card', required=False)
 
     def __init__(self, *args, **kwargs):
         super(CustomerDetailsForm, self).__init__(*args, **kwargs)

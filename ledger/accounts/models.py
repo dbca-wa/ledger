@@ -310,7 +310,24 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_senior(self):
-        return self.dob and self.age() >= 61
+        """
+        Test if the the user is a senior according to the rules of WA senior
+        dob is before 1 July 1955; or
+        dob is between 1 July 1955 and 30 June 1956 and age is 61 or older; or
+        dob is between 1 July 1956 and 30 June 1957 and age is 62 or older; or
+        dob is between 1 July 1957 and 30 June 1958 and age is 63 or older; or
+        dob is between 1 July 1958 and 30 June 1959 and age is 64 or older; or
+        dob is after 30 June 1959 and age is 65 or older
+
+        :return:
+        """
+        return \
+            self.dob < date(1955, 7, 1) or \
+            ((date(1955, 7, 1) <= self.dob <= date(1956, 6, 30)) and self.age() >= 61) or \
+            ((date(1956, 7, 1) <= self.dob <= date(1957, 6, 30)) and self.age() >= 62) or \
+            ((date(1957, 7, 1) <= self.dob <= date(1958, 6, 30)) and self.age() >= 63) or \
+            ((date(1958, 7, 1) <= self.dob <= date(1959, 6, 30)) and self.age() >= 64) or \
+            (self.dob > date(1959, 6, 1) and self.age() >= 65)
 
     def age(self):
         if self.dob:

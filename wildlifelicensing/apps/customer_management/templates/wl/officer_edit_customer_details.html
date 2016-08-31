@@ -25,11 +25,40 @@
                 <h2>Edit Customer Details</h2>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    {% bootstrap_form_errors form %}
+                    {% bootstrap_form_errors form%}
                     {% bootstrap_form form %}
-                    <button type="submit" class="btn btn-primary pull-right">Save</button>
+                    <button type="submit" class="btn btn-primary pull-right" name="save_details">Save</button>
                 </form>
             </div>
+        </div>
+        <div class="row">
+            <h3>Customer Documents</h3>
+            <div class="col-md-6">
+                <h4>ID</h4>
+                {% if id_image_url %}
+                {% else %}
+                    <h4 class="text-center">Missing</h4>
+                {% endif %}
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <a type="submit" class="btn btn-primary pull-right" name="upload_id">Upload</a>
+                </form>
+            </div>
+            {% if customer.is_senior %}
+            <div class="col-md-6">
+                <h4>Senior Card</h4>
+                    {% if senior_card_image_url %}
+
+                    {% else %}
+                        <h4 class="text-center">Missing</h4>
+                    {%  endif %}
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <a type="submit" class="btn btn-primary pull-right" name="upload_senior_card">Upload</a>
+                        <a type="submit" class="btn btn-danger pull-left" name="delete_senior_card">Delete</a>
+                    </form>
+            </div>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

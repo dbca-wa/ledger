@@ -49,6 +49,10 @@ class CheckoutApplicationView(RedirectView):
             ]
         }
 
+        # senior discount
+        if application.is_senior_offer_applicable:
+            parameters['vouchers'] = ['senior']
+
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')
         )
