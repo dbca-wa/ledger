@@ -2,10 +2,13 @@ import datetime
 import csv
 import logging
 import pytz
+import cStringIO
 from os import listdir
 from os.path import isfile, join
 from decimal import Decimal
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+from django.core.mail import EmailMessage
+from django.conf import settings
 from models import *
 from crn import getCRN
 
@@ -78,6 +81,11 @@ def check_amount(value):
         return Decimal('{0}.{1}'.format(value[:-2],value[-2:]))
     return Decimal('0')
 
+def checkStepValue(value):
+    if len(value) == 1:
+        return '0{}'.format(value)
+    return value
+
 def validate_file(f):
     '''Check if the specified file is valid.
     '''
@@ -100,14 +108,15 @@ def validate_file(f):
         6: 4,
         7: 4
     }
-    prev_step = current_step = 0
+    prev_step = 0
+    current_step = 0
     error = None
     line = 1
     try:
         reader = csv.reader(f)
         for row in reader:
             # Get current step value and check if it one step ahead of previous step.
-            current_step = steps.get(row[0])
+            current_step = steps.get(checkStepValue(row[0]))
             # Check if it is the transaction row since there may be multiple of them.
             if current_step == 4 and prev_step == 4:
                 pass
@@ -133,7 +142,9 @@ def parseFile(file_path):
     '''
     f = get_file(file_path)
     transaction_list = []
+    transaction_rows = []
     bpay_file = None
+    success = True
     try:
         # Validate the file first
         validate_file(f)
@@ -142,13 +153,14 @@ def parseFile(file_path):
         # Instanciate a new Bpay File
         bpay_file = BpayFile()
         for row in reader:
-            if row[0] == '01':
+            if checkStepValue(row[0]) == '01':
+                # Format the time to 24h
                 bpay_file.created = validate_datetime(row[3],row[4])
                 bpay_file.file_id = row[5]
-            elif row[0] == '02':
+            elif checkStepValue(row[0]) == '02':
                 bpay_file.settled = validate_datetime(row[4],row[5])
                 bpay_file.date_modifier = row[7].replace('/','')
-            elif row[0] == '03':
+            elif checkStepValue(row[0]) == '03':
                 bpay_file.credit_items = row[5]
                 bpay_file.credit_amount = check_amount(row[4])
                 bpay_file.cheque_items = row[9]
@@ -156,45 +168,99 @@ def parseFile(file_path):
                 bpay_file.debit_items = row[13]
                 bpay_file.debit_amount = check_amount(row[12])
                 # Save the file in order to use on the transactions
-                bpay_file.save()
-            elif row[0] == '30':
+                #bpay_file.save()
+            elif checkStepValue(row[0]) == '30':
                 if row[11] not in ['APF','LBX']:
-                    transaction_list.append(record_txn(row,bpay_file))
-            elif row[0] == '49':
+                    #transaction_list.append(record_txn(row,bpay_file))
+                    transaction_rows.append(row)
+            elif checkStepValue(row[0]) == '49':
                 bpay_file.account_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
                 bpay_file.account_records = row[2].replace('/','')
-            elif row[0] == '98':
+            elif checkStepValue(row[0]) == '98':
                 bpay_file.group_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
                 bpay_file.group_accounts = row[2]
                 bpay_file.group_records = row[3].replace('/','')
-            elif row[0] == '99':
+            elif checkStepValue(row[0]) == '99':
                 bpay_file.file_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
                 bpay_file.file_groups = row[2]
                 bpay_file.file_records = row[3].replace('/','')
-        bpay_file.save()
-        BpayTransaction.objects.bulk_create(transaction_list)
-        
-        return bpay_file
+
+        with transaction.atomic():
+            bpay_file.save()
+            for row in transaction_rows:
+                transaction_list.append(record_txn(row,bpay_file))
+            BpayTransaction.objects.bulk_create(transaction_list)
+
+        return success,bpay_file,''
     except IntegrityError as e:
-        if 'unique constraint' in e.message:
-            pass
+        success = False
+        return success,None,e.message
     except Exception as e:
-        print str(e)
+        success = False
+        return success,None,e.message
     finally:
         f.close()
 
 def getfiles(path):
     files = []
     try:
-        files = [join(path, f) for f in listdir(path) if isfile(join(path, f)) and f.endswith('.csv')]
+        files = [[join(path, f),f] for f in listdir(path) if isfile(join(path, f)) and f.endswith('.csv')]
     except Exception as e:
         raise
     return files
 
-def reconcile(path):
+def generateParserSummary(files):
+    valid = files['valid']
+    failed = files['failed']
+
+    output = cStringIO.StringIO()
+    output.write('Successful Files\n')
+    # Successful Files
+    for n,t in valid:
+        output.write('  File Name: {}\n'.format(n))
+        output.write('    Transactions:\n')
+        for trans in t.transactions.all():
+            output.write('      CRN: {}\n'.format(trans.crn))
+    # Failed files
+    output.write('Failed Files\n')
+    for n,r in failed:
+        output.write('  File Name: {}\n'.format(n))
+        output.write('    Reason: {}\n'.format(r))
+
+    contents = output.getvalue()
+    output.close()
+    return contents
+
+def sendEmail(summary):
+    dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    email = EmailMessage(
+        'BPAY Summary {}'.format(dt),
+        'BPAY Summary File for {}'.format(dt),
+        settings.DEFAULT_FROM_EMAIL,
+        to=[settings.NOTIFICATION_EMAIL]
+    )
+    email.attach('summary.txt', summary, 'text/plain')
+    email.send()
+
+def bpayParser(path):
     files = getfiles(path)
+    valid_files = []
+    failed_files = []
     try:
-        for f in files:
-            parseFile(f)
+        if settings.NOTIFICATION_EMAIL:
+            for p,n in files:
+                status,bfile,reason = parseFile(p)
+                if bfile is not None:
+                    valid_files.append([n,bfile])
+                else:
+                    failed_files.append([n,reason])
+
+            summary = generateParserSummary({
+                'valid': valid_files,
+                'failed': failed_files
+            })
+            sendEmail(summary)
+        else:
+            raise Exception('NOTIFICATION_EMAIL is not set.')
     except:
         raise
