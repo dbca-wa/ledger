@@ -19,7 +19,7 @@ from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin,\
     UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_officer, is_customer
+from wildlifelicensing.apps.main.helpers import is_customer
 from django.core.urlresolvers import reverse
 from wildlifelicensing.apps.applications.utils import delete_session_application
 from wildlifelicensing.apps.payments.utils import is_licence_free
@@ -399,7 +399,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             return redirect('wl_applications:new_application')
 
         kwargs['is_payment_required'] = not is_licence_free(application.licence_type) and \
-            not application.invoice_reference
+            not application.invoice_reference and is_customer(self.request.user)
 
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')
