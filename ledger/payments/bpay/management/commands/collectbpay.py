@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from ledger.payments.bpay.facade import reconcile
+from ledger.payments.bpay.facade import bpayParser
 
 class Command(BaseCommand):
     help = 'Reads the files in the commbank folder.'
@@ -9,10 +9,10 @@ class Command(BaseCommand):
     
     def handle(self, *args, **options):
         try:
-            reconcile(options['path'])
+            bpayParser(options['path'])
         except Exception as e:
             raise CommandError(e)
         
-        self.stdout.write(self.style.SUCCESS('Reconciled files successfully.'))
+        self.stdout.write(self.style.SUCCESS('Parsed files successfully.'))
     
     
