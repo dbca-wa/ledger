@@ -52,7 +52,7 @@ class IdentificationForm(forms.Form):
 class SeniorCardForm(forms.Form):
     VALID_FILE_TYPES = IdentificationForm.VALID_FILE_TYPES
 
-    senior_card = forms.FileField(label='Senior card',
+    senior_card = forms.FileField(label='Senior Card',
                                   help_text='A scan or a photo or your Senior Card')
 
     def clean_identification_file(self):

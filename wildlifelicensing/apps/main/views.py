@@ -14,7 +14,7 @@ from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, Docum
 
 from wildlifelicensing.apps.main.models import CommunicationsLogEntry,\
     WildlifeLicence
-from wildlifelicensing.apps.main.forms import IdentificationForm, CommunicationsLogEntryForm
+from wildlifelicensing.apps.main.forms import IdentificationForm, CommunicationsLogEntryForm, SeniorCardForm
 from wildlifelicensing.apps.main.mixins import CustomerRequiredMixin, OfficerRequiredMixin
 from wildlifelicensing.apps.main.signals import identification_uploaded
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
@@ -125,30 +125,49 @@ class EditProfilesView(CustomerRequiredMixin, TemplateView):
         return redirect('wl_main:list_profiles')
 
 
-class IdentificationView(LoginRequiredMixin, FormView):
+class IdentificationView(LoginRequiredMixin, TemplateView):
     template_name = 'wl/manage_identification.html'
     login_url = '/'
-    form_class = IdentificationForm
-    success_url = reverse_lazy('wl_main:identification')
-
-    def form_valid(self, form):
-        if self.request.user.identification is not None:
-            self.request.user.identification.delete()
-
-        self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
-        self.request.user.save()
-
-        identification_uploaded.send(sender=self.__class__, user=self.request.user)
-
-        return super(IdentificationView, self).form_valid(form)
 
     def get_context_data(self, **kwargs):
-        kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
-
-        if self.request.user.identification is not None:
+        if 'form_id' not in kwargs:
+            kwargs['form_id'] = IdentificationForm()
+        if self.request.user.identification:
             kwargs['existing_id_image_url'] = self.request.user.identification.file.url
 
+        if self.request.user.is_senior:
+            if 'form_senior' not in kwargs:
+                kwargs['form_senior'] = SeniorCardForm()
+            if self.request.user.senior_card:
+                kwargs['existing_senior_card_image_url'] = self.request.user.senior_card.file.url
+
+        if 'file_types' not in kwargs:
+            kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
         return super(IdentificationView, self).get_context_data(**kwargs)
+
+    def post(self, request, *args, **kwargs):
+        ctx = {}
+        if 'identification' in request.POST:
+            form = IdentificationForm(request.POST, files=request.FILES)
+            ctx['form_id'] = form
+            if form.is_valid():
+                previous_id = self.request.user.identification
+                self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
+                self.request.user.save()
+                if previous_id:
+                    previous_id.delete()
+                identification_uploaded.send(sender=self.__class__, user=self.request.user)
+        if 'senior_card' in request.POST:
+            form = SeniorCardForm(request.POST, files=request.FILES)
+            ctx['form_senior'] = form
+            if form.is_valid():
+                previous_senior_card = self.request.user.senior_card
+                self.request.user.senior_card = Document.objects.create(file=self.request.FILES['senior_card'])
+                self.request.user.save()
+                if previous_senior_card:
+                    previous_senior_card.delete()
+        # back to the same page with an updated ctx with forms
+        return super(IdentificationView, self).get(request, **ctx)
 
 
 class EditAccountView(CustomerRequiredMixin, TemplateView):
