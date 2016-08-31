@@ -42,11 +42,12 @@ class WildlifeLicenceCategory(models.Model):
 
 
 class WildlifeLicenceType(LicenceType):
-    code_slug = models.SlugField(max_length=64, unique=True)
+    product_code = models.SlugField(max_length=64, unique=True)
     identification_required = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
     application_schema = JSONField(blank=True, null=True)
     category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)
+    variant_group = models.ForeignKey('VariantGroup', null=True, blank=True)
 
     def clean(self):
         """
@@ -77,9 +78,16 @@ class WildlifeLicence(Licence):
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
     regions = models.ManyToManyField(Region, blank=False)
+    variants = models.ManyToManyField('Variant', blank=True, through='LicenceVariantLink')
 
     def __str__(self):
         return self.reference
+
+    def get_title_with_variants(self):
+        if self.variants.exists():
+            return '{} ({})'.format(self.licence_type.name, ' / '.join(self.variants.all().values_list('name', flat=True)))
+        else:
+            return self.licence_type.name
 
     @property
     def reference(self):
@@ -113,6 +121,34 @@ class CommunicationsLogEntry(models.Model):
     officer = models.ForeignKey(EmailUser, null=True, related_name='officer')
 
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+
+
+@python_2_unicode_compatible
+class Variant(models.Model):
+    name = models.CharField(max_length=200)
+    product_code = models.SlugField(max_length=64, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
+class VariantGroup(models.Model):
+    name = models.CharField(max_length=50)
+    child = models.ForeignKey('self', null=True, blank=True)
+    variants = models.ManyToManyField(Variant)
+
+    def __str__(self):
+        if self.child is None:
+            return self.name
+        else:
+            return '{} > {}'.format(self.name, self.child.__str__())
+
+
+class LicenceVariantLink(models.Model):
+    licence = models.ForeignKey(WildlifeLicence)
+    variant = models.ForeignKey(Variant)
+    order = models.IntegerField()
 
 
 @python_2_unicode_compatible

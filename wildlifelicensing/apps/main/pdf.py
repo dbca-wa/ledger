@@ -217,7 +217,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 
     elements.append(Paragraph(licence.licence_type.act, styles['InfoTitleLargeCenter']))
     elements.append(Paragraph(licence.licence_type.code.upper(), styles['InfoTitleLargeCenter']))
-    elements.append(Paragraph(licence.licence_type.name, styles['InfoTitleVeryLargeCenter']))
+    elements.append(Paragraph(licence.get_title_with_variants(), styles['InfoTitleVeryLargeCenter']))
     elements.append(Paragraph(licence.licence_type.statement, styles['InfoTitleLargeLeft']))
     elements.append(Paragraph(licence.licence_type.authority, styles['InfoTitleLargeRight']))
 

@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-    <p><strong>{{ licence.licence_type.name }}</strong></p>
+    <p><strong>{{ licence.get_title_with_variants }}</strong></p>
     <p>Please find the licence attached.</p>
     <p>Please ensure that all the licence conditions are complied with, including the forwarding of a return at the end of the licence period.</p>
     <p>{{ licence.cover_letter_message }}</p>

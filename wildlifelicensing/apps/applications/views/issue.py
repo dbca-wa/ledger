@@ -9,7 +9,8 @@ from django.views.generic import View, TemplateView
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
-from wildlifelicensing.apps.main.models import WildlifeLicence
+from wildlifelicensing.apps.main.models import WildlifeLicence,\
+    LicenceVariantLink
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
@@ -84,6 +85,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
             licence.licence_type = application.licence_type
+
+            licence.variants.clear()
+            for index, variant in enumerate(application.variants.all().order_by('order')):
+                LicenceVariantLink.objects.create(licence=licence, variant=variant, order=index)
+
             licence.profile = application.applicant_profile
             licence.holder = application.applicant
             licence.issuer = request.user

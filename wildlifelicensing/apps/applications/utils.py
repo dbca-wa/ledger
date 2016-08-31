@@ -179,6 +179,12 @@ def clone_application_with_status_reset(application, keep_invoice=False):
 
     application.save(no_revision=True)
 
+    # clone variants
+    for application_variant in Application.variants.through.objects.filter(application=original_application_pk):
+        application_variant.application = application
+        application_variant.pk = None
+        application_variant.save()
+
     # clone documents
     for application_document in Application.documents.through.objects.filter(application=original_application_pk):
         application_document.application = application
