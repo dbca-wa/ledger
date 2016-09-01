@@ -154,7 +154,7 @@ class IdentificationView(LoginRequiredMixin, TemplateView):
                 previous_id = self.request.user.identification
                 self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
                 self.request.user.save()
-                if previous_id:
+                if bool(previous_id):
                     previous_id.delete()
                 identification_uploaded.send(sender=self.__class__, user=self.request.user)
         if 'senior_card' in request.POST:
@@ -164,10 +164,10 @@ class IdentificationView(LoginRequiredMixin, TemplateView):
                 previous_senior_card = self.request.user.senior_card
                 self.request.user.senior_card = Document.objects.create(file=self.request.FILES['senior_card'])
                 self.request.user.save()
-                if previous_senior_card:
+                if bool(previous_senior_card):
                     previous_senior_card.delete()
         # back to the same page with an updated ctx with forms
-        return super(IdentificationView, self).get(request, **ctx)
+        return self.get(request, **ctx)
 
 
 class EditAccountView(CustomerRequiredMixin, TemplateView):
