@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.views.generic.base import RedirectView, View
 from django.utils.http import urlencode
+from django.conf import settings
 
 from django.utils import timezone
 
@@ -22,7 +23,9 @@ JSON_REQUEST_HEADER_PARAMS = {
     "Accept": "application/json"
 }
 
-PAYMENT_SYSTEM_ID = 'S369'
+PAYMENT_SYSTEM_ID = settings.WL_PAYMENT_SYSTEM_ID
+
+SENIOR_VOUCHER_CODE = settings.WL_SENIOR_VOUCHER_CODE
 
 
 class CheckoutApplicationView(RedirectView):
@@ -46,12 +49,13 @@ class CheckoutApplicationView(RedirectView):
             'proxy': is_officer(request.user),
             "products": [
                 {"id": product.id if product is not None else None}
-            ]
+            ],
+            "vouchers": []
         }
 
         # senior discount
         if application.is_senior_offer_applicable:
-            parameters['vouchers'] = ['senior']
+            parameters['vouchers'].append({'code': SENIOR_VOUCHER_CODE})
 
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')

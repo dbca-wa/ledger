@@ -121,8 +121,8 @@ class Application(RevisionedMixin):
     @property
     def is_senior_offer_applicable(self):
         return self.licence_type.senior_applicable and \
-               self.applicant.user.is_senior and \
-               self.applicant.user.senior_card is not None
+               self.applicant.is_senior and \
+               bool(self.applicant.senior_card)
 
 
 class ApplicationLogEntry(CommunicationsLogEntry):

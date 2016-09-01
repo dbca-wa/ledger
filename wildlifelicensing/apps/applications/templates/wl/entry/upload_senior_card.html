@@ -17,7 +17,8 @@
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
                     {% if request.user|is_officer %}
-                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
+                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a>
+                        </li>
                     {% endif %}
                     <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
                     <li class="active">Upload Senior Card</li>
@@ -35,26 +36,28 @@
                     {% include 'wl/entry/header.html' %}
                 {% endwith %}
                 <p>
-                    With this type of licence you are eligible for a senior discount if you are the holder of a Senior Card.
+                    With this type of licence you are eligible for a senior discount if you are the holder of a Senior
+                    Card.
                     I you have a scanned or photographed image of it, please upload it here..
                 </p>
+                <p><strong><em>Note: You must upload a Senior card document before lodging your application to be
+                    granted the senior discount.</em></strong></p>
                 <p>
-                    If you cannot provide a digital version of your senior card, you can skip this step of the application process. You can then, at
-                    any time, upload your Senior Card by selecting the Manage ID option under the Options menu on the menu bar. Alternatively,
-                    you can present your Senior Card in person at the Wildlife Licensing office, 17 Dick Perry Avenue, Kensington.
+                    If you are the holder of a Senior Card and you cannot provide a digital version of it, please contact
+                    the Wildlife Licensing office on 9219 9831 before lodging your application.
                 </p>
-                <p><strong><em>Note: You must upload a Senior card document before lodging your application to be granted the senior discount.</em></strong></p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% with field=form.senior_card %}
                         <div class="form-group">
                             <div class="{% if field.errors %} has-error has-feedback {% endif %}">
-                            <label for="{{ field.auto_id }}">{{ field.label }}</label> 
-                            <input id="{{ field.auto_id }}" name="{{ field.name }}" type="file" class="form-control" {% if file_types %}accept="{{ file_types }}"{% endif %}>
-                            {% if field.errors %}
-                                <span class="glyphicon glyphicon-remove form-control-feedback"></span>
-                                <span class='text-danger'>{{ field.errors|join:'<br />' }}</span>
-                            {% endif %}
+                                <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                                <input id="{{ field.auto_id }}" name="{{ field.name }}" type="file" class="form-control"
+                                       {% if file_types %}accept="{{ file_types }}"{% endif %}>
+                                {% if field.errors %}
+                                    <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+                                    <span class='text-danger'>{{ field.errors|join:'<br />' }}</span>
+                                {% endif %}
                             </div>
                             {% if field.help_text %}
                                 <p class="help-block">{{ field.help_text }}</p>
@@ -62,7 +65,8 @@
                         </div>
                     {% endwith %}
                     <button type="submit" class="btn btn-primary pull-right">Upload</button>
-                    <a class="btn btn-info pull-right right-buffer" href="{% url 'wl_applications:create_select_profile' %}">Skip this step</a>
+                    <a class="btn btn-info pull-right right-buffer"
+                       href="{% url 'wl_applications:create_select_profile' %}">Skip this step</a>
                 </form>
             </div>
         </div>
