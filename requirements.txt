@@ -1,6 +1,6 @@
 Django<1.10.0
 https://static.dpaw.wa.gov.au/static/py/dpaw-utils/dist/dpaw-utils-0.3a7.tar.gz
-django-oscar>=1.1
+django-oscar==1.2
 git+https://github.com/scottp-dpaw/python-social-auth@securityfix#egg=python-social-auth
 mixer>=5.4.1
 coverage>=4.0.3
