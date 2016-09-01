@@ -189,13 +189,13 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                 messages.error(self.request, e.message)
                 return redirect('wl_applications:new_application')
 
-            application.licence_type = WildlifeLicenceType.objects.get(product_code=self.args[0])
+            application.licence_type = WildlifeLicenceType.objects.get(id=self.args[0])
 
             application.variants.clear()
 
-            for index, variant_product_code in enumerate(request.GET.getlist('variants', [])):
+            for index, variant_id in enumerate(request.GET.getlist('variants', [])):
                 try:
-                    variant = Variant.objects.get(product_code=variant_product_code)
+                    variant = Variant.objects.get(id=variant_id)
 
                     ApplicationVariantLink.objects.create(application=application, variant=variant, order=index)
                 except Variant.DoesNotExist:
@@ -214,12 +214,12 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                 variant_dict = {'text': variant.name}
 
                 if variant_group.child is not None:
-                    variant_dict['nodes'] = _get_variants(variant_group.child, licence_type, current_params + [variant.product_code])
+                    variant_dict['nodes'] = _get_variants(variant_group.child, licence_type, current_params + [variant.id])
                 else:
-                    params = urlencode({'variants': current_params + [variant.product_code]}, doseq=True)
+                    params = urlencode({'variants': current_params + [variant.id]}, doseq=True)
 
                     variant_dict['href'] = '{}?{}'.format(reverse('wl_applications:select_licence_type',
-                                                                  args=(licence_type.product_code,)), params)
+                                                                  args=(licence_type.id,)), params)
 
                 variants.append(variant_dict)
 
@@ -236,7 +236,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                     licence_type_dict['nodes'] = _get_variants(licence_type.variant_group, licence_type, [])
                 else:
                     licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
-                                                        args=(licence_type.product_code,))
+                                                        args=(licence_type.id,))
 
                 category_dict['licence_types'].append(licence_type_dict)
 
@@ -254,7 +254,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                     licence_type_dict['nodes'] = _get_variants(licence_type.variant_group, licence_type, [])
                 else:
                     licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
-                                                        args=(licence_type.product_code,))
+                                                        args=(licence_type.id,))
 
                 category_dict['licence_types'].append(licence_type_dict)
 

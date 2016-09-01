@@ -22,7 +22,7 @@ urlpatterns = [
     # application entry / licence renewal/amendment
     url('^new-application/$', NewApplicationView.as_view(), name='new_application'),
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
-    url('^select-licence-type/([\w-]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
+    url('^select-licence-type/([0-9]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^create-select-customer/$', CreateSelectCustomer.as_view(), name='create_select_customer'),
     url('^edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
     url('^delete-application/([0-9]+)/$', DeleteApplicationView.as_view(), name='delete_application'),
