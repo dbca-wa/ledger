@@ -16,6 +16,7 @@ from ledger.catalogue.models import Product
 from utils import checkURL, createBasket, validSystem, systemid_check
 from facade import bpoint_facade
 from oscar.apps.order.models import Order
+from oscar.apps.voucher.models import Voucher
 from oscar.apps.payment import forms
 from reports import generate_items_csv, generate_trans_csv
 import traceback
@@ -544,6 +545,16 @@ class CheckoutProductSerializer(serializers.Serializer):
             raise serializers.ValidationError('{} (id={})'.format(str(e),value))
         return value
 
+class VoucherSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=128)
+
+    def validate_code(self, value):
+        try:
+            Voucher.objects.get(code=value)
+        except Voucher.DoesNotExist as e:
+            raise serializers.ValidationError('{} (code={})'.format(str(e),value))
+        return value
+
 class CheckoutSerializer(serializers.Serializer):
     card_method = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES, default='payment')
     system = serializers.CharField(max_length=4, min_length=4)
@@ -559,6 +570,7 @@ class CheckoutSerializer(serializers.Serializer):
     bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
     products = CheckoutProductSerializer(many=True)
+    vouchers = VoucherSerializer(many=True,required=False)
 
     def validate_template(self, value):
         try:
@@ -616,6 +628,9 @@ class CheckoutCreateView(generics.CreateAPIView):
         "products": [ (mandatory)
             {"id": 1}
         ]
+        "vouchers": [ (optional)
+            {"code": "<code>}
+        ]
     }
     '''
     serializer_class = CheckoutSerializer
@@ -634,7 +649,10 @@ class CheckoutCreateView(generics.CreateAPIView):
             serializer = self.serializer_class(data=request.data)
             serializer.is_valid(raise_exception=True)
             #create basket
-            createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
+            if serializer.validated_data.get('vouchers'):
+                createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
+            else:
+                createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
             redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
                                                                                                 self.get_redirect_value(serializer,'card_method'),
                                                                                                 self.get_redirect_value(serializer,'basket_owner'),
@@ -653,6 +671,7 @@ class CheckoutCreateView(generics.CreateAPIView):
         except serializers.ValidationError:
             raise
         except Exception as e:
+            traceback.print_exc()
             raise serializers.ValidationError(str(e))
 
 #######################################################

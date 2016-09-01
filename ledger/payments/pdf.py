@@ -232,6 +232,7 @@ def _create_invoice(invoice_buffer, invoice):
         ('ALIGN', (0, 0), (-1, -1), 'LEFT')
         ])
     items = invoice.order.lines.all()
+    discounts = invoice.order.basket_discounts
     data = [
         ['Item','Product', 'Quantity','Unit Price','GST', 'Amount']
     ]
@@ -245,6 +246,30 @@ def _create_invoice(invoice_buffer, invoice):
                 '${}'.format(item.line_price_before_discounts_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax)
+            ]
+        )
+        val += 1
+    # Discounts
+    data.append(
+        [
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        ]
+    )
+    for discount in discounts:
+        print discount.__dict__
+        data.append(
+            [
+                '',
+                discount.offer,
+                '',
+                '',
+                '',
+                '-${}'.format(discount.amount)
             ]
         )
         val += 1
