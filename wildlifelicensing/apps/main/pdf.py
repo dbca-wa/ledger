@@ -217,7 +217,15 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 
     elements.append(Paragraph(licence.licence_type.act, styles['InfoTitleLargeCenter']))
     elements.append(Paragraph(licence.licence_type.code.upper(), styles['InfoTitleLargeCenter']))
-    elements.append(Paragraph(licence.get_title_with_variants(), styles['InfoTitleVeryLargeCenter']))
+    
+    # cannot use licence get_title_with_variants because licence isn't saved yet so can't get variants
+    if application.variants.exists:
+        title = '{} ({})'.format(application.licence_type.name, ' / '.join(application.variants.all().
+                                                                           values_list('name', flat=True)))
+    else:
+        title = licence.licence_type.name
+
+    elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     elements.append(Paragraph(licence.licence_type.statement, styles['InfoTitleLargeLeft']))
     elements.append(Paragraph(licence.licence_type.authority, styles['InfoTitleLargeRight']))
 

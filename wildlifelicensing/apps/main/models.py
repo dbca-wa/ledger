@@ -56,7 +56,7 @@ class WildlifeLicenceType(LicenceType):
         must be created.
         :return: raise an exception if error
         """
-        if payment_utils.get_product(self) is None:
+        if payment_utils.get_product(self.product_code) is None:
             msg = "Payment product not found." \
                   "You must create a payment product before creating a new Licence Type, even if the licence is free."
             raise ValidationError(msg)
@@ -78,13 +78,13 @@ class WildlifeLicence(Licence):
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
     regions = models.ManyToManyField(Region, blank=False)
-    variants = models.ManyToManyField('Variant', blank=True, through='LicenceVariantLink')
+    variants = models.ManyToManyField('Variant', blank=True, through='WildlifeLicenceVariantLink')
 
     def __str__(self):
         return self.reference
 
     def get_title_with_variants(self):
-        if self.variants.exists():
+        if self.pk is not None and self.variants.exists():
             return '{} ({})'.format(self.licence_type.name, ' / '.join(self.variants.all().values_list('name', flat=True)))
         else:
             return self.licence_type.name
@@ -145,7 +145,7 @@ class VariantGroup(models.Model):
             return '{} > {}'.format(self.name, self.child.__str__())
 
 
-class LicenceVariantLink(models.Model):
+class WildlifeLicenceVariantLink(models.Model):
     licence = models.ForeignKey(WildlifeLicence)
     variant = models.ForeignKey(Variant)
     order = models.IntegerField()

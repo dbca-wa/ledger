@@ -10,7 +10,7 @@ from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
 from wildlifelicensing.apps.main.models import WildlifeLicence,\
-    LicenceVariantLink
+    WildlifeLicenceVariantLink
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
@@ -86,10 +86,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence = issue_licence_form.save(commit=False)
             licence.licence_type = application.licence_type
 
-            licence.variants.clear()
-            for index, variant in enumerate(application.variants.all().order_by('order')):
-                LicenceVariantLink.objects.create(licence=licence, variant=variant, order=index)
-
             licence.profile = application.applicant_profile
             licence.holder = application.applicant
             licence.issuer = request.user
@@ -120,6 +116,10 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                                              request.build_absolute_uri(reverse('home')))
 
             licence.save()
+
+            licence.variants.clear()
+            for index, avl in enumerate(application.variants.through.objects.all().order_by('order')):
+                WildlifeLicenceVariantLink.objects.create(licence=licence, variant=avl.variant, order=index)
 
             issue_licence_form.save_m2m()
 
