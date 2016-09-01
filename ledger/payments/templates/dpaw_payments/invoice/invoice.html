@@ -125,8 +125,8 @@
                     {% block discount_totals %}
                         {% if discounts %}
                             <tr>
-                                <td colspan="4">{% trans "Basket total (excl. discounts)" %}</td>
-                                <td colspan="2">${{ order.basket_total_before_discounts_incl_tax }}</td>
+                                <td colspan="4">{% trans "Basket total (before discounts)" %}</td>
+                                <td colspan="2">${{ invoice.order.basket_total_before_discounts_incl_tax }}</td>
                             </tr>
                             {% for discount in discounts %}
                             <tr>
@@ -143,7 +143,7 @@
                     {% block basket_total %}
                         {% if discounts %}
                             <tr>
-                                <th colspan="4">{% trans "Basket total (inc. discounts)" %}</th>
+                                <th colspan="4">{% trans "Basket total (after discounts)" %}</th>
                                 <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
                             </tr>
                         {% else %}
