@@ -9,6 +9,7 @@ from django.utils.six.moves.urllib.parse import urlparse
 from ledger.basket.models import Basket
 from ledger.catalogue.models import Product
 from oscar.core.loading import get_class
+from oscar.apps.voucher.models import Voucher
 
 OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
@@ -56,7 +57,7 @@ def validSystem(system_id):
     except:
         raise
 
-def createBasket(product_list,owner,system,force_flush=True):
+def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -103,6 +104,9 @@ def createBasket(product_list,owner,system,force_flush=True):
         # Add the valid products to the basket
         for p in valid_products:
             basket.add_product(p['product'],p['quantity'])
+        # Add vouchers to the basket
+        for v in vouchers:
+            basket.vouchers.add(Voucher.objects.get(code=v["code"]))
         # Save the basket
         basket.save()
         return basket
