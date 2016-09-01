@@ -84,7 +84,7 @@ class Invoice(models.Model):
         '''
         amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
 
-        if amount_paid == decimal.Decimal('0'):
+        if amount_paid == decimal.Decimal('0') and self.amount > 0:
             return 'unpaid'
         elif amount_paid < self.amount:
             return 'partially_paid'
