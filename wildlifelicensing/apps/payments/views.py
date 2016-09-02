@@ -100,6 +100,9 @@ class PaymentsReportView(View):
                 'start': start,
                 'end': end
             }
+            if 'items' in request.GET:
+                data['items'] = True
+
             response = requests.post(url,
                                      headers=JSON_REQUEST_HEADER_PARAMS,
                                      cookies=request.COOKIES,
