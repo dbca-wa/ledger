@@ -3,6 +3,7 @@ from django.conf import settings
 
 from wildlifelicensing.admin import wildlife_licensing_admin_site
 from wildlifelicensing.apps.dashboard.views.base import DashBoardRoutingView
+from wildlifelicensing.apps.returns.api import router as return_router
 from ledger.urls import urlpatterns as ledger_patterns
 
 urlpatterns = [
@@ -14,6 +15,7 @@ urlpatterns = [
     url(r'^customer_management/', include('wildlifelicensing.apps.customer_management.urls', namespace='wl_customer_management')),
     url(r'^reports/', include('wildlifelicensing.apps.reports.urls', namespace='wl_reports')),
     url(r'^returns/', include('wildlifelicensing.apps.returns.urls', namespace='wl_returns')),
+    # url(r'^returns/api', include(return_router.urls, namespace='wl_returns_api')),
     url(r'^payments/', include('wildlifelicensing.apps.payments.urls', namespace='wl_payments')),
 ] + ledger_patterns
 
