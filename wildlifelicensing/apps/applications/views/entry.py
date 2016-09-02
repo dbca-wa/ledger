@@ -12,7 +12,7 @@ from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType,\
     WildlifeLicenceCategory, Variant
-from wildlifelicensing.apps.main.forms import IdentificationForm
+from wildlifelicensing.apps.main.forms import IdentificationForm, SeniorCardForm
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest,\
     ApplicationVariantLink
 from wildlifelicensing.apps.applications import utils
@@ -227,8 +227,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
             return variants
 
         for category in WildlifeLicenceCategory.objects.all():
-            category_dict = {'name': category.name}
-            category_dict['licence_types'] = []
+            category_dict = {'name': category.name, 'licence_types': []}
 
             for licence_type in WildlifeLicenceType.objects.filter(category=category, replaced_by__isnull=True):
                 licence_type_dict = {'text': licence_type.name}
@@ -244,9 +243,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
             categories.append(category_dict)
 
         if WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True).exists():
-            category_dict = {'name': 'Other'}
-
-            category_dict['licence_types'] = []
+            category_dict = {'name': 'Other', 'licence_types': []}
 
             for licence_type in WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True):
                 licence_type_dict = {'text': licence_type.name}
