@@ -9,7 +9,7 @@
         This is a reminder that your licence
     </p>
     <p>
-        <strong>{{ licence.licence_type.name }} &lt;{{ licence.reference }}&gt;</strong>
+        <strong>{{ licence.get_title_with_variants }} &lt;{{ licence.reference }}&gt;</strong>
     </p>
     <p>
          is due to expire on {{ licence.end_date|date:'d/m/Y' }}.

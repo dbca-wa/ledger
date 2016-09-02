@@ -85,8 +85,8 @@ class DeleteProfileView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/list_profiles.html'
     login_url = '/'
 
-    def get(self, request, id, *args, **kwargs):
-        profile = get_object_or_404(Profile, pk=id)
+    def get(self, request, *args, **kwargs):
+        profile = get_object_or_404(Profile, pk=args[0])
         profile.delete()
         messages.success(request, "The profile '%s' was deleted." % profile.name)
         return redirect('wl_main:list_profiles')

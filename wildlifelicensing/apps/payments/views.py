@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from wildlifelicensing.apps.applications.models import Application
 
-from wildlifelicensing.apps.payments.utils import get_product, to_json
+from wildlifelicensing.apps.payments.utils import generate_product_code, get_product, to_json
 from wildlifelicensing.apps.payments.forms import PaymentsReportForm
 from wildlifelicensing.apps.main.helpers import is_officer
 
@@ -28,7 +28,7 @@ PAYMENT_SYSTEM_ID = 'S369'
 class CheckoutApplicationView(RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
-        product = get_product(application.licence_type)
+        product = get_product(generate_product_code(application))
         user = application.applicant_profile.user.id
 
         error_url = request.build_absolute_uri(reverse('wl_applications:preview'))
