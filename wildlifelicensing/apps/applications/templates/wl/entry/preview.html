@@ -37,10 +37,12 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if request.user|is_officer %}
-                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
+                    {% if application.is_temporary %}
+                        {% if request.user|is_officer %}
+                            <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
+                        {% endif %}
+                        <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
                     {% endif %}
-                    <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
                     <li><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Select Profile</a></li>
                     <li><a data-entry-link="True" href="{% url 'wl_applications:enter_details' %}">Enter Application Details</a></li>
                     <li class="active">Preview and Lodge Application</li>

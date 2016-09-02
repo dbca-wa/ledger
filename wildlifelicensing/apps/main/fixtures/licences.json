@@ -20,7 +20,7 @@
         "pk": 1,
         "fields": 
         {
-            "code_slug": "regulation-17",
+            "product_code": "regulation-17",
             "identification_required": true,
             "application_schema": 
             [

@@ -4,7 +4,7 @@ from django import forms
 from reversion.admin import VersionAdmin
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceCategory, WildlifeLicenceType, Condition, \
-    DefaultCondition, Region
+    DefaultCondition, Region, Variant, VariantGroup
 from wildlifelicensing.apps.main.forms import BetterJSONField
 
 
@@ -81,10 +81,20 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
 @admin.register(WildlifeLicenceType)
 class WildlifeLicenceTypeAdmin(VersionAdmin):
     list_display = ('name', 'display_name', 'version', 'code')
-    prepopulated_fields = {'code_slug': ('code', 'version')}
     filter_horizontal = ('default_conditions',)
     inlines = (DefaultConditionInline,)
     form = WildlifeLicenceTypeAdminForm
+
+
+@admin.register(Variant)
+class VariantAdmin(VersionAdmin):
+    list_display = ('name',)
+
+
+@admin.register(VariantGroup)
+class VariantGroupAdmin(VersionAdmin):
+    list_display = ('name',)
+    filter_horizontal = ('variants',)
 
 
 @admin.register(Condition)

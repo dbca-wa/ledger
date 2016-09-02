@@ -27,15 +27,25 @@ def to_json(data):
     return json.dumps(data, cls=WildlifeLicensingJSONEncoder)
 
 
-def get_product(licence_type):
+def generate_product_code(application):
+    product_code = application.licence_type.product_code
+
+    if application.variants.exists():
+        product_code += '_' + '_'.join(application.variants.through.objects.filter(application=application).
+                                       order_by('order').values_list('variant__product_code', flat=True))
+
+    return product_code
+
+
+def get_product(product_code):
     try:
-        return Product.objects.get(title=licence_type.code_slug)
+        return Product.objects.get(title=product_code)
     except Product.DoesNotExist:
         return None
 
 
-def is_licence_free(licence_type):
-    product = get_product(licence_type)
+def is_licence_free(product_code):
+    product = get_product(product_code)
 
     if product is None:
         return True

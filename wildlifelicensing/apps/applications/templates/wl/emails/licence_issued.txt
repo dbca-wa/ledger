@@ -5,7 +5,7 @@ Dear {{ licence.holder.get_full_name }}
 {% endblock %}
 
 {% block content %}
-    {{ licence.licence_type.name }}
+    {{ licence.get_title_with_variants }}
     Please find the licence attached.
     Please ensure that all the licence conditions are complied with, including the forwarding of a return at the end of the licence period.
     {{ licence.cover_letter_message }}
