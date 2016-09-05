@@ -102,11 +102,10 @@ class PaymentsReportView(View):
             }
             if 'items' in request.GET:
                 data['items'] = True
-
-            response = requests.post(url,
-                                     headers=JSON_REQUEST_HEADER_PARAMS,
-                                     cookies=request.COOKIES,
-                                     data=to_json(data))
+            response = requests.get(url,
+                                    headers=JSON_REQUEST_HEADER_PARAMS,
+                                    cookies=request.COOKIES,
+                                    params=data)
             if response.status_code == 200:
                 filename = 'wl_payments-{}_{}'.format(
                     str(start.date()),
