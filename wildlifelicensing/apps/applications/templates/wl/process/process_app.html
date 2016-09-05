@@ -16,21 +16,21 @@
 
 {% block requirements %}
     require(['js/process/process_app', 'js/communications_log'], function (app, commsLog) {
-    $(function () {
-    data = {{ data|jsonify }};
-    app.initialiseApplicationProcesssing(data);
+        $(function () {
+            data = {{ data|jsonify }};
+            app.initialiseApplicationProcesssing(data);
 
-    commsLog.initCommunicationLog({
-    showLogPopoverSelector: '#showLog',
-    showLogEntryModalSelector: '#addLogEntry',
-    logEntryModalSelector: '#logEntryModal',
-    logEntryFormSelector: '#addLogEntryForm',
-    logListURL: "{% url 'wl_applications:log_list' data.application.id %}",
-    addLogEntryURL: "{% url 'wl_applications:add_log_entry' data.application.id %}"
-    });
+            commsLog.initCommunicationLog({
+                showLogPopoverSelector: '#showLog',
+                showLogEntryModalSelector: '#addLogEntry',
+                logEntryModalSelector: '#logEntryModal',
+                logEntryFormSelector: '#addLogEntryForm',
+                logListURL: "{% url 'wl_applications:log_list' data.application.id %}",
+                addLogEntryURL: "{% url 'wl_applications:add_log_entry' data.application.id %}"
+            });
 
-    $('#mainContainer').removeClass('hidden');
-    });
+            $('#mainContainer').removeClass('hidden');
+        });
     });
 {% endblock %}
 
@@ -349,7 +349,7 @@
                             <div class="modal-body center">
                                 {% if user.identification.file.url|slice:'-3:' == 'pdf' %}
                                     <a href="{{ user.identification.file.url }}" target="_blank">
-                                        <img src="{% static 'wl/img/pdf.png' %}"></img>
+                                        <img src="{% static 'wl/img/pdf.png' %}">
                                         <p>View PDF</p>
                                     </a>
                                 {% else %}

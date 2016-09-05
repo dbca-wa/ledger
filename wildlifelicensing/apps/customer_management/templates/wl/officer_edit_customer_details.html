@@ -6,9 +6,9 @@
 
 {% block requirements %}
     require(['jQuery', 'js/officer_edit_customer_details'], function($, module) {
-    $(function(){
-    module.init();
-    });
+        $(function(){
+            module.init();
+        });
     });
 {% endblock %}
 
@@ -37,7 +37,7 @@
                     {% csrf_token %}
                     {% bootstrap_form_errors form %}
                     {% bootstrap_form form %}
-                    <button type="submit" class="btn btn-primary pull-right" name="save_details">Save</button>
+                    <button type="submit" class="btn btn-primary pull-right" name="save_details">Save and close</button>
                 </form>
             </div>
         </div>
@@ -65,7 +65,7 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="btn-toolbar">
-                            <button type="submit" class="btn btn-primary top-buffer" name="upload_id" id="upload_id">
+                            <button type="submit" class="btn btn-primary pull-left" name="upload_id" id="upload_id">
                                 Upload ID
                             </button>
                             <button type="submit" class="btn btn-danger top-buffer" name="delete_id">Delete</button>
@@ -96,7 +96,7 @@
                         <form method="post" enctype="multipart/form-data" id="senior_form">
                             {% csrf_token %}
                             <div class="btn-toolbar">
-                                <button type="submit" class="btn btn-primary pull-right top-buffer"
+                                <button type="submit" class="btn btn-primary pull-left"
                                         name="upload_senior_card"
                                         id="upload_senior_card">Upload Senior Card
                                 </button>
