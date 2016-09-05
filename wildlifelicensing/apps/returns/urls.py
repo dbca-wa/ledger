@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 
-from wildlifelicensing.apps.returns.api import router
+from wildlifelicensing.apps.returns.api.urls import urlpatterns as api_urlpatterns
 
 from wildlifelicensing.apps.returns.views import EnterReturnView, CurateReturnView, ViewReturnReadonlyView, \
     AddReturnLogEntryView, ReturnLogListView, DownloadReturnTemplate
@@ -16,5 +16,5 @@ urlpatterns = [
     url('^log-list/([0-9]+)/$', ReturnLogListView.as_view(), name='log_list'),
 
     # api
-    url(r'^api/', include(router.urls)),
+    url(r'^api/', include(api_urlpatterns, namespace='returns_api')),
 ]
