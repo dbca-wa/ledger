@@ -199,6 +199,7 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
                 emailuser_form.save()
                 messages.success(request,
                                  'The details were updated. Please note that this may require any licences held by the user to be reissued.')
+                return redirect('wl_customer_management:customer_lookup', customer.pk)
 
             else:
                 ctx['form'] = emailuser_form
@@ -229,7 +230,7 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
             if bool(customer.senior_card):
                 customer.senior_card.delete()
 
-        return redirect('wl_customer_management:customer_lookup', customer.pk)
+        return self.get(request, **ctx)
 
 
 class EditProfileView(OfficerRequiredMixin, TemplateView):
