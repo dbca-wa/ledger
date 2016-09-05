@@ -10,7 +10,7 @@ define([
             $formSenior = $('#senior_form');
 
         $uploadID.on('click', function (e) {
-            var $fileNode = $('<input class="top-buffer" id="id" name="id" type="file" multiple>');
+            var $fileNode = $('<input class="top-buffer hidden" id="id" name="id" type="file" multiple>');
             e.preventDefault();
             $fileNode.change(function (e) {
                 $formID.append($fileNode);
@@ -20,8 +20,7 @@ define([
         });
 
         $uploadSenior.on('click', function (e) {
-            console.log("click");
-            var $fileNode = $('<input class="top-buffer" id="senior_card" name="senior_card" type="file" multiple>');
+            var $fileNode = $('<input class="top-buffer hidden" id="senior_card" name="senior_card" type="file" multiple>');
             e.preventDefault();
             $fileNode.change(function (e) {
                 $formSenior.append($fileNode);
