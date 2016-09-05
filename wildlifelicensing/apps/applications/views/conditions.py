@@ -4,7 +4,7 @@ from django.db.utils import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import View, TemplateView
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.core.urlresolvers import reverse_lazy
 
 from preserialize.serialize import serialize
 
@@ -14,7 +14,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAs
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
 from wildlifelicensing.apps.applications.utils import append_app_document_to_schema_data, convert_documents_to_url, \
-    format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
+    get_log_entry_to, format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from wildlifelicensing.apps.applications.mixins import CanPerformAssessmentMixin
@@ -38,12 +38,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['form_structure'] = application.licence_type.application_schema
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
 
-        if application.proxy_applicant is None:
-            to = application.applicant.get_full_name()
-        else:
-            to = application.proxy_applicant.get_full_name()
-
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
         kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                       get_application_payment_status(application))
@@ -74,6 +69,7 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
     success_url = reverse_lazy('wl_dashboard:home')
 
+
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
         assessment = get_object_or_404(Assessment, pk=self.args[1])
@@ -92,6 +88,8 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
                                                 exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
+
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 

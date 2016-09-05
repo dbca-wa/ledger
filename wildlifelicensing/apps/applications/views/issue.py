@@ -17,7 +17,7 @@ from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
-from wildlifelicensing.apps.applications.utils import format_application
+from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.payments import utils as payment_utils
@@ -168,12 +168,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
-            if application.proxy_applicant is None:
-                to = application.applicant.get_full_name()
-            else:
-                to = application.proxy_applicant.get_full_name()
-
-            log_entry_form = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+            log_entry_form = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
                                                         'issue_licence_form': IssueLicenceForm(purpose=purposes),

@@ -286,14 +286,14 @@ def _log_email(email_message, application, sender=None):
 
     customer = application.applicant
 
-    officer = sender
+    staff = sender
 
     kwargs = {
         'subject': subject,
         'text': text,
         'application': application,
         'customer': customer,
-        'officer': officer,
+        'staff': staff,
         'to': to,
         'fromm': fromm,
         'cc': all_ccs

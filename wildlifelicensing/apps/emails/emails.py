@@ -69,6 +69,9 @@ class TemplateEmailBase(object):
             to_addresses = [to_addresses]
         if attachments is not None and not isinstance(attachments, list):
             attachments = list(attachments)
+        else:
+            attachments = []
+
         # Convert Documents to (filename, content, mime) attachment
         _attachments = []
         for attachment in attachments:

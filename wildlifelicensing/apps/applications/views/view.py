@@ -8,12 +8,12 @@ from wildlifelicensing.apps.payments import utils as payment_utils
 from wildlifelicensing.apps.applications.models import Application, Assessment, ApplicationLogEntry
 from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMixin, CanPerformAssessmentMixin
 from wildlifelicensing.apps.applications.utils import convert_documents_to_url, append_app_document_to_schema_data, \
-    format_application, format_assessment
+    get_log_entry_to, format_application, format_assessment
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.main.models import Document
 from wildlifelicensing.apps.main.helpers import is_officer
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
+from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 
 
@@ -35,12 +35,7 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
         if is_officer(self.request.user):
             kwargs['customer'] = application.applicant
 
-            if application.proxy_applicant is None:
-                to = application.applicant.email
-            else:
-                to = application.proxy_applicant.email
-
-            kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.email)
+            kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
         else:
             kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                           get_application_payment_status(application))
@@ -68,18 +63,13 @@ class ViewReadonlyOfficerView(UserCanViewApplicationMixin, TemplateView):
         kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                       get_application_payment_status(application))
 
-        if application.proxy_applicant is None:
-            to = application.applicant.email
-        else:
-            to = application.proxy_applicant.email
-
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.email)
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
         return super(ViewReadonlyOfficerView, self).get_context_data(**kwargs)
 
 
-class AssessorConditionsView(CanPerformAssessmentMixin, TemplateView):
-    template_name = 'wl/view/assessor_conditions_read_only.html'
+class ViewReadonlyAssessorView(CanPerformAssessmentMixin, TemplateView):
+    template_name = 'wl/view/view_readonly_assessor.html'
 
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
@@ -101,10 +91,12 @@ class AssessorConditionsView(CanPerformAssessmentMixin, TemplateView):
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
                                                 exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
 
-        return super(AssessorConditionsView, self).get_context_data(**kwargs)
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+
+        return super(ViewReadonlyAssessorView, self).get_context_data(**kwargs)
 
 
-class ApplicationLogListView(OfficerRequiredMixin, View):
+class ApplicationLogListView(OfficerOrAssessorRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
         data = serialize(ApplicationLogEntry.objects.filter(application=application),
@@ -114,7 +106,7 @@ class ApplicationLogListView(OfficerRequiredMixin, View):
         return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class AddApplicationLogEntryView(OfficerRequiredMixin, View):
+class AddApplicationLogEntryView(OfficerOrAssessorRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         form = ApplicationLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
@@ -122,10 +114,10 @@ class AddApplicationLogEntryView(OfficerRequiredMixin, View):
 
             customer = application.applicant
 
-            officer = request.user
+            staff = request.user
 
             kwargs = {
-                'officer': officer,
+                'staff': staff,
                 'customer': customer,
                 'application': application,
                 'type': form.cleaned_data['type'],
