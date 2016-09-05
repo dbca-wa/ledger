@@ -33,7 +33,7 @@ define([
         if ($contentContainer.children().length) {
             $contentContainer.find(':last-child').addClass('no-margin');
         } else {
-            $contentContainer.append($('<p>').addClass('no-margin').text("No assessors' comments available"));
+            $contentContainer.append($('<p>').addClass('no-margin').text("No other assessors' comments available"));
         }
 
         $viewOtherAssessorsComments.popover({container: 'body', content: $contentContainer, html: true});
