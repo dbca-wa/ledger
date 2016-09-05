@@ -7,9 +7,10 @@
 {% load jsonify %}
 
 {% block extra_css %}
-    <link href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css" rel="stylesheet" />
+    <link href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
-    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
+          rel="stylesheet"/>
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
 
@@ -81,7 +82,14 @@
                                                 {% else %}
                                                     ID Unavailable
                                                 {% endif %}
+                                                {% if applicant.user.senior_card %}
+                                                    /
+                                                    <a data-toggle="modal" data-target="#seniorCardModal">
+                                                        Senior Card
+                                                    </a>
+                                                {% endif %}
                                             </span>
+                                        </p>
                                         <p>{{ applicant.postal_address.search_text }}</p>
                                     {% endwith %}
                                     <div class="row">
@@ -104,7 +112,7 @@
                                         {{ data.payment_status }}
                                         {% if data.payment_status == 'Awaiting Payment' %}
                                             <a href="{% url 'wl_payments:manual_payment' data.application.id %}?redirect_url={{ request.build_absolute_uri }}"
-                                                class="pull-right">Enter Payment</a>
+                                               class="pull-right">Enter Payment</a>
                                         {% endif %}
                                     </p>
                                 </div>
@@ -168,7 +176,8 @@
                                             <label>Returns</label>
                                             {% if data.returns_outstanding %}
                                                 <p>Returns outstanding.</p>
-                                                <p><a href="{% url 'wl_dashboard:tables_returns_officer' %}" target="_blank">View Returns List</a></p>
+                                                <p><a href="{% url 'wl_dashboard:tables_returns_officer' %}"
+                                                      target="_blank">View Returns List</a></p>
                                             {% else %}
                                                 <p>No returns outstanding.</p>
                                             {% endif %}
@@ -214,7 +223,9 @@
                                         </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
-                                            <button type="button" class="btn btn-xs btn-warning">Request Return Completion</button>
+                                            <button type="button" class="btn btn-xs btn-warning">Request Return
+                                                Completion
+                                            </button>
                                         </div>
                                         <hr>
                                     </div>
@@ -254,7 +265,8 @@
                                         </div>
                                         <div class="action-buttons-group">
                                             <button type="button" class="btn btn-xs btn-success">Accept</button>
-                                            <button type="button" class="btn btn-xs btn-warning">Request Amendments</button>
+                                            <button type="button" class="btn btn-xs btn-warning">Request Amendments
+                                            </button>
                                         </div>
                                         <a id="showAmendmentRequests" class="hidden small-text" data-toggle="popover"
                                            data-placement="right" title="Amendment Requests">
@@ -297,12 +309,13 @@
                                     </div>
                                 </div>
                             </div>
-                            <form id="submissionForm" method="post" action="{% url 'wl_applications:process' data.application.id %}">
+                            <form id="submissionForm" method="post"
+                                  action="{% url 'wl_applications:process' data.application.id %}">
                                 {% csrf_token %}
                                 <button id="approve" type="submit" name="enterConditions" type="button"
                                         class="btn btn-sm btn-success pull-right disabled"
                                         data-title="You must complete all the processing steps above to proceed to conditions">
-                                            Enter Conditions
+                                    Enter Conditions
                                 </button>
                                 <button id="decline" type="submit" name="decline" type="button"
                                         class="btn btn-sm btn-danger">Decline Application
@@ -336,12 +349,40 @@
                             <div class="modal-body center">
                                 {% if user.identification.file.url|slice:'-3:' == 'pdf' %}
                                     <a href="{{ user.identification.file.url }}" target="_blank">
-                                        <img src="{% static 'wl/img/pdf.png' %}"></img>
+                                        <img src="{% static 'wl/img/pdf.png' %}">
                                         <p>View PDF</p>
                                     </a>
                                 {% else %}
                                     <a href="{{ user.identification.file.url }}" target="_blank">
                                         <img width="100%" src="{{ user.identification.file.url }}"/>
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            {% if user.senior_card %}
+                <div class="modal fade" id="seniorCardModal" tabindex="-1">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                                <h4 class="modal-title">Senior Card for {{ user.first_name }}
+                                    {{ user.last_name }}</h4>
+                            </div>
+                            <div class="modal-body center">
+                                {% if user.senior_card.file.url|slice:'-3:' == 'pdf' %}
+                                    <a href="{{ user.senior_card.file.url }}" target="_blank">
+                                        <img src="{% static 'wl/img/pdf.png' %}">
+                                        <p>View PDF</p>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ user.senior_card.file.url }}" target="_blank">
+                                        <img width="100%" src="{{ user.senior_card.file.url }}"/>
                                     </a>
                                 {% endif %}
                             </div>
@@ -400,7 +441,8 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                         <h4 class="modal-title">Request Amendments to Application</h4>
                     </div>
-                    <form id="amendmentRequestForm" method="post" action="{% url 'wl_applications:amendment_request' %}">
+                    <form id="amendmentRequestForm" method="post"
+                          action="{% url 'wl_applications:amendment_request' %}">
                         {% csrf_token %}
                         <div class="modal-body">
                             <div class="modal-body">

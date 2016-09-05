@@ -12,7 +12,7 @@ from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType,\
     WildlifeLicenceCategory, Variant
-from wildlifelicensing.apps.main.forms import IdentificationForm
+from wildlifelicensing.apps.main.forms import IdentificationForm, SeniorCardForm
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest,\
     ApplicationVariantLink
 from wildlifelicensing.apps.applications import utils
@@ -132,7 +132,8 @@ class AmendLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
         try:
             application = Application.objects.get(previous_application=previous_application)
             if application.customer_status == 'under_review':
-                messages.warning(request, 'An amendment for this licence has already been lodged and is awaiting review.')
+                messages.warning(request,
+                                 'An amendment for this licence has already been lodged and is awaiting review.')
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application, keep_invoice=True)
@@ -226,8 +227,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
             return variants
 
         for category in WildlifeLicenceCategory.objects.all():
-            category_dict = {'name': category.name}
-            category_dict['licence_types'] = []
+            category_dict = {'name': category.name, 'licence_types': []}
 
             for licence_type in WildlifeLicenceType.objects.filter(category=category, replaced_by__isnull=True):
                 licence_type_dict = {'text': licence_type.name}
@@ -243,9 +243,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
             categories.append(category_dict)
 
         if WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True).exists():
-            category_dict = {'name': 'Other'}
-
-            category_dict['licence_types'] = []
+            category_dict = {'name': 'Other', 'licence_types': []}
 
             for licence_type in WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True):
                 licence_type_dict = {'text': licence_type.name}
@@ -277,7 +275,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         if application.licence_type.identification_required and application.applicant.identification is None:
             return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
         else:
-            return redirect('wl_applications:create_select_profile')
+            return redirect('wl_applications:check_senior_card')
 
     def get_context_data(self, **kwargs):
         try:
@@ -312,7 +310,45 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
                 app.id_check_status = 'updated'
                 app.save()
 
-        return redirect('wl_applications:create_select_profile', *self.args)
+        return redirect('wl_applications:check_senior_card')
+
+
+class CheckSeniorCardView(LoginRequiredMixin, ApplicationEntryBaseView, FormView):
+    template_name = 'wl/entry/upload_senior_card.html'
+    form_class = SeniorCardForm
+
+    def get(self, *args, **kwargs):
+        try:
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('wl_applications:new_application')
+
+        if application.licence_type.senior_applicable \
+                and application.applicant.is_senior \
+                and application.applicant.senior_card is None:
+            return super(CheckSeniorCardView, self).get(*args, **kwargs)
+        else:
+            return redirect('wl_applications:create_select_profile')
+
+    def get_context_data(self, **kwargs):
+        kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in self.form_class.VALID_FILE_TYPES])
+        return super(CheckSeniorCardView, self).get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        try:
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, e.message)
+            return redirect('wl_applications:new_application')
+
+        if application.applicant.senior_card is not None:
+            application.applicant.senior_card.delete()
+
+        application.applicant.senior_card = Document.objects.create(file=self.request.FILES['senior_card'])
+        application.applicant.save()
+
+        return redirect('wl_applications:create_select_profile')
 
 
 class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):

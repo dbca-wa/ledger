@@ -8,9 +8,11 @@ class CustomerSearchForm(forms.Form):
 
 
 class CustomerDetailsForm(forms.ModelForm):
-    identification = forms.FileField(label='Photo Identification', required=False)
 
     class Meta:
         model = EmailUser
         fields = ['first_name', 'last_name', 'title', 'dob', 'email', 'phone_number', 'mobile_number', 'fax_number',
                   'character_flagged', 'character_comments']
+        widgets = {
+            'character_comments': forms.Textarea(attrs={'rows': 2})
+        }

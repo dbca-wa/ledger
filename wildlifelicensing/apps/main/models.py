@@ -40,10 +40,14 @@ class WildlifeLicenceCategory(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name_plural = 'Wildlife licence categories'
+
 
 class WildlifeLicenceType(LicenceType):
     product_code = models.SlugField(max_length=64, unique=True)
     identification_required = models.BooleanField(default=False)
+    senior_applicable = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
     application_schema = JSONField(blank=True, null=True)
     category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)
@@ -138,8 +142,16 @@ class VariantGroup(models.Model):
     child = models.ForeignKey('self', null=True, blank=True)
     variants = models.ManyToManyField(Variant)
 
+    def clean(self):
+        """
+        Guards against putting itself as child
+        :return:
+        """
+        if self.child and self.child.pk == self.pk:
+            raise ValidationError("Can't put yourself as a child")
+
     def __str__(self):
-        if self.child is None:
+        if self.child is None or self.child.pk == self.pk:
             return self.name
         else:
             return '{} > {}'.format(self.name, self.child.__str__())

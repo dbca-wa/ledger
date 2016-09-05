@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView, View
 from openpyxl.styles import Font
 from openpyxl.workbook import Workbook
@@ -80,6 +81,12 @@ class ReportsView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         kwargs['form'] = ReportForm()
         kwargs['payments_form'] = PaymentsReportForm()
+        kwargs['actions'] = {
+            'applications': reverse('wl_reports:applications_report'),
+            'licences': reverse('wl_reports:licences_report'),
+            'returns': reverse('wl_reports:returns_report'),
+            'payments': reverse('wl_payments:payments_report'),
+        }
 
         return TemplateView.get_context_data(self, **kwargs)
 

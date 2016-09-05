@@ -2,7 +2,7 @@
     <label>{{label}} </label>
     <textarea rows="3" name="{{name}}" class="form-control" {{#if required}}required{{/if}}>{{#if value}}{{value}}{{/if}}</textarea>
     {{#if help_text}}
-        <p class="help-block">{{help_text}}</p>
+        <p class="help-block">{{{help_text}}}</p>
     {{/if}}
     {{#if errors}}
         <span class="glyphicon glyphicon-remove form-control-feedback"></span>

@@ -3,7 +3,7 @@ from django.conf.urls import url
 from wildlifelicensing.apps.applications.views.entry import NewApplicationView, SelectLicenceTypeView, \
     CreateSelectCustomer, EditApplicationView, DeleteApplicationView, CheckIdentificationRequiredView, \
     CreateSelectProfileView, EnterDetailsView, PreviewView, ApplicationCompleteView, RenewLicenceView, \
-    AmendLicenceView
+    AmendLicenceView, CheckSeniorCardView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
@@ -27,6 +27,7 @@ urlpatterns = [
     url('^edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
     url('^delete-application/([0-9]+)/$', DeleteApplicationView.as_view(), name='delete_application'),
     url('^check-identification/$', CheckIdentificationRequiredView.as_view(), name='check_identification'),
+    url('^check-senior-card/$', CheckSeniorCardView.as_view(), name='check_senior_card'),
     url('^profile/$', CreateSelectProfileView.as_view(), name='create_select_profile'),
     url('^enter-details/$', EnterDetailsView.as_view(), name='enter_details'),
     url('^preview/$', PreviewView.as_view(), name='preview'),

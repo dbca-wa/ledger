@@ -137,7 +137,9 @@
                                     </div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-6">
+                        </div>
+                            <div class="row">
+                                <div class="col-md-7">
                                 <div class="row details-row-buffer">
                                     <div class="col-md-12">
                                         <strong>Identification:</strong>
@@ -154,7 +156,26 @@
                                     </div>
                                 {% endif %}
                             </div>
-                        </div>
+                                <div class="col-md-5">
+                                <div class="row details-row-buffer">
+                                {%  if customer.is_senior %}
+                                    <div class="col-md-12">
+                                        <strong>Senior Card:</strong>
+                                        {% if not customer.senior_card.file.url %}
+                                            Not available
+                                        {% endif %}
+                                    </div>
+                                {%  endif %}
+                                </div>
+                                {% if customer.senior_card.file.url %}
+                                    <div class="row details-row-buffer">
+                                        <div class="col-md-12">
+                                            <img src="{{ customer.senior_card.file.url }}" width="100%"/>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            </div>
                         <div class="row details-row-buffer">
                              <div class="col-md-12">
                                 <a href="{% url 'wl_customer_management:edit_customer_details' customer.pk %}" class="pull-right add-link">Edit Customer Details</a>
