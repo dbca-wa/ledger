@@ -16,7 +16,7 @@ from django_countries.fields import CountryField
 
 from social.apps.django_app.default.models import UserSocialAuth
 
-from datetime import datetime
+from datetime import datetime, date
 
 from ledger.accounts.signals import name_changed, post_clean
 from ledger.address.models import UserAddress, Country
@@ -238,6 +238,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
 
+    senior_card = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='senior_card')
+
     character_flagged = models.BooleanField(default=False)
 
     character_comments = models.TextField(blank=True)
@@ -305,6 +307,35 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     @property
     def username(self):
         return self.email
+
+    @property
+    def is_senior(self):
+        """
+        Test if the the user is a senior according to the rules of WA senior
+        dob is before 1 July 1955; or
+        dob is between 1 July 1955 and 30 June 1956 and age is 61 or older; or
+        dob is between 1 July 1956 and 30 June 1957 and age is 62 or older; or
+        dob is between 1 July 1957 and 30 June 1958 and age is 63 or older; or
+        dob is between 1 July 1958 and 30 June 1959 and age is 64 or older; or
+        dob is after 30 June 1959 and age is 65 or older
+
+        :return:
+        """
+        return \
+            self.dob < date(1955, 7, 1) or \
+            ((date(1955, 7, 1) <= self.dob <= date(1956, 6, 30)) and self.age() >= 61) or \
+            ((date(1956, 7, 1) <= self.dob <= date(1957, 6, 30)) and self.age() >= 62) or \
+            ((date(1957, 7, 1) <= self.dob <= date(1958, 6, 30)) and self.age() >= 63) or \
+            ((date(1958, 7, 1) <= self.dob <= date(1959, 6, 30)) and self.age() >= 64) or \
+            (self.dob > date(1959, 6, 1) and self.age() >= 65)
+
+    def age(self):
+        if self.dob:
+            today = date.today()
+            # calculate age with the help of trick int(True) = 1 and int(False) = 0
+            return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+        else:
+            return -1
 
 
 class EmailUserListener(object):

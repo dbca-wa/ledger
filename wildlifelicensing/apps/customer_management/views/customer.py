@@ -10,7 +10,7 @@ from wildlifelicensing.apps.customer_management.forms import CustomerDetailsForm
 
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import ProfileForm, AddressForm
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm, IdentificationForm, SeniorCardForm
 
 
 class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
@@ -158,8 +158,7 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
             kwargs['customer'] = customer
 
             kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=customer.get_full_name(),
-                                                                  fromm=self.request.user.get_full_name(),
-                                                                  reference=customer.get_full_name())
+                                                                  fromm=self.request.user.get_full_name())
 
             context = super(CustomerLookupView, self).get_context_data(**kwargs)
 
@@ -172,35 +171,66 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         customer = get_object_or_404(EmailUser, pk=self.args[0])
-        kwargs['customer'] = customer
-        kwargs['form'] = CustomerDetailsForm(instance=customer)
+        if 'customer' not in kwargs:
+            kwargs['customer'] = customer
+        if 'form' not in kwargs:
+            kwargs['form'] = CustomerDetailsForm(instance=customer)
+
+        # if 'form_id' not in kwargs:
+        #     kwargs['form_id'] = IdentificationForm()
+        if 'id_url' not in kwargs and bool(customer.identification):
+            kwargs['id_url'] = customer.identification.file.url
+
+        if 'senior_card_url' not in kwargs and bool(customer.senior_card):
+            kwargs['senior_card_url'] = customer.senior_card.file.url
 
         return super(EditDetailsView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
         customer = get_object_or_404(EmailUser, pk=self.args[0])
 
-        emailuser_form = CustomerDetailsForm(request.POST, instance=customer)
+        ctx = {
+            'customer': customer
+        }
 
-        if emailuser_form.is_valid():
-            emailuser_form.save()
+        if 'save_details' in request.POST:
+            emailuser_form = CustomerDetailsForm(request.POST, instance=customer)
+            if emailuser_form.is_valid():
+                emailuser_form.save()
+                messages.success(request,
+                                 'The details were updated. Please note that this may require any licences held by the user to be reissued.')
+                return redirect('wl_customer_management:customer_lookup', customer.pk)
 
-            if 'identification' in self.request.FILES:
-                if customer.identification is not None:
-                    customer.identification.delete()
+            else:
+                ctx['form'] = emailuser_form
+                return self.get(request, **ctx)
 
-                customer.identification = Document.objects.create(file=self.request.FILES['identification'])
-                customer.save()
+        if 'id' in self.request.FILES:
+            previous_id = customer.identification
+            customer.identification = Document.objects.create(file=self.request.FILES['id'])
+            customer.save()
+            if bool(previous_id):
+                previous_id.delete()
+            ctx['id_url'] = customer.identification.file.url
+            identification_uploaded.send(sender=self.__class__, user=self.request.user)
 
-                identification_uploaded.send(sender=self.__class__, user=self.request.user)
-        else:
-            return render(request, self.template_name, {'customer': customer,
-                                                        'form': emailuser_form})
+        if 'delete_id' in request.POST:
+            if bool(customer.identification):
+                customer.identification.delete()
 
-        messages.success(request,
-                         'The details were updated. Please note that this may require any licences held by the user to be reissued.')
+        if 'senior_card' in self.request.FILES:
+            previous = customer.senior_card
+            customer.senior_card = Document.objects.create(file=self.request.FILES['senior_card'])
+            customer.save()
+            if bool(previous):
+                previous.delete()
+            ctx['senior_card_url'] = customer.senior_card.file.url
 
-        return redirect('wl_customer_management:customer_lookup', customer.pk)
+        if 'delete_senior_card' in request.POST:
+            if bool(customer.senior_card):
+                customer.senior_card.delete()
+
+        return self.get(request, **ctx)
 
 
 class EditProfileView(OfficerRequiredMixin, TemplateView):

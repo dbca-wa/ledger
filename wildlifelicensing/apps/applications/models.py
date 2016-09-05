@@ -124,6 +124,12 @@ class Application(RevisionedMixin):
         """
         return self.customer_status in self.CUSTOMER_VIEWABLE_STATE
 
+    @property
+    def is_senior_offer_applicable(self):
+        return self.licence_type.senior_applicable and \
+               self.applicant.is_senior and \
+               bool(self.applicant.senior_card)
+
 
 class ApplicationVariantLink(models.Model):
     application = models.ForeignKey(Application)
