@@ -2,7 +2,6 @@ define([
     'jQuery',
     'js/process/preview_versions',
     'js/wl.dataTable',
-    'js/communications_log',
     'moment',
     'lodash',
     'bootstrap',
@@ -225,7 +224,8 @@ define([
     function initReturnsCheck() {
         var $container = $('#returnsCheck');
 
-        if (!application.previous_application) {
+        // for new applications or applications that are licence amendments, no need to check returns
+        if (!application.previous_application || application.is_licence_amendment) {
             $container.addClass('hidden');
             return;
         }
@@ -604,21 +604,16 @@ define([
     }
 
     function determineApplicationApprovable() {
-        var approvable = false,
-            $submissionForm = $('#submissionForm'),
+        var $submissionForm = $('#submissionForm'),
             $approve = $submissionForm.find('#approve'),
             $decline = $submissionForm.find('#decline'),
-            $buttonClicked;
-
-        if ((application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required) {
-            if ((application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application) {
-                if (application.character_check_status === 'Accepted') {
-                    if (application.review_status === 'Accepted') {
-                        approvable = true;
-                    }
-                }
-            }
-        }
+            $buttonClicked,
+            approvableConditions = [
+                (application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required,
+                (application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application || application.is_licence_amendment,
+                application.character_check_status === 'Accepted',
+                application.review_status === 'Accepted'
+            ];
 
         // ensure form only submits when either approve (enterConditions) is enabled or decline is clicked
         $($approve).click(function() {
@@ -635,7 +630,7 @@ define([
             }
         });
 
-        if(approvable) {
+        if(_.every(approvableConditions)) {
             $approve.removeClass('disabled');
             $approve.tooltip('destroy');
         } else {

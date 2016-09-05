@@ -212,7 +212,7 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
             if bool(previous_id):
                 previous_id.delete()
             ctx['id_url'] = customer.identification.file.url
-            identification_uploaded.send(sender=self.__class__, user=self.request.user)
+            identification_uploaded.send(sender=self.__class__, request=self.request)
 
         if 'delete_id' in request.POST:
             if bool(customer.identification):
