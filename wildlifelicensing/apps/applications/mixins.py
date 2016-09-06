@@ -3,14 +3,13 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 
 from wildlifelicensing.apps.main.helpers import is_customer, is_officer, get_user_assessor_groups
 from wildlifelicensing.apps.applications.models import Application, Assessment
-from wildlifelicensing.apps.applications import utils as applications_utils
 
 
 class UserCanEditApplicationMixin(UserPassesTestMixin):
     """
     CBV mixin that check that the user is the applicant and that the status of the application is
     in editable mode.
-    This mixin assume that the application id is in the session (@see applications_utils.get_session_application).
+    This mixin assume that the url contains the pk of the application on 2nd position.
     If the user is not logged-in it redirects to the login page, else it throws a 403
     Officers can edit an application
     """
@@ -19,9 +18,9 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
     raise_exception = True
 
     def get_application(self):
-        try:
-            return applications_utils.get_session_application(self.request.session)
-        except:
+        if self.args:
+            return Application.objects.filter(pk=self.args[0]).first()
+        else:
             return None
 
     def test_func(self):
