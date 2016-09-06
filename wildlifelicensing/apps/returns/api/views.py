@@ -12,7 +12,7 @@ from wildlifelicensing.apps.returns.utils_schema import Schema
 
 class ExplorerView(View):
     """
-    Return a JSOn representation of the ReturnTypes.
+    Return a JSON representation of the ReturnTypes.
     The main goal of this view is to provide for every resources (ReturnTable) a link to download the data
     (@see ReturnsDataView view)
     """
