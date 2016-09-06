@@ -5,6 +5,7 @@ from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.conf import settings
 from django.utils.encoding import python_2_unicode_compatible
+from django.core.exceptions import ValidationError
 from oscar.apps.order.models import Order
 from ledger.payments.bpay.crn import getCRN
 from ledger.payments.bpay.models import BpayTransaction
@@ -141,7 +142,7 @@ class Invoice(models.Model):
                     card_details[0],
                     card_details[1]
                 )
-                return bpoint_facade.pay_with_temptoken(
+                txn = bpoint_facade.pay_with_temptoken(
                         'payment',
                         'telephoneorder',
                         'single',
@@ -151,5 +152,12 @@ class Invoice(models.Model):
                         self.amount,
                         None
                     )
+                if txn.approved:
+                    bpoint_facade.delete_token(self.token)
+                    self.token = ''
+                    self.save()
+                return txn
+            else:
+                raise ValidationError('This invoice doesn\'t have any tokens attached to it.')
         except:
             raise

@@ -105,8 +105,9 @@ def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
         for p in valid_products:
             basket.add_product(p['product'],p['quantity'])
         # Add vouchers to the basket
-        for v in vouchers:
-            basket.vouchers.add(Voucher.objects.get(code=v["code"]))
+        if vouchers is not None:
+            for v in vouchers:
+                basket.vouchers.add(Voucher.objects.get(code=v["code"]))
         # Save the basket
         basket.save()
         return basket
