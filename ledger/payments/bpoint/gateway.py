@@ -1,7 +1,11 @@
 import logging
 from . import settings
 logger = logging.getLogger('bpoint_dpaw')
-from ledger.payments.bpoint.BPOINT.API import TransactionRequest,Credentials,TransactionSearchRequest, AddDVTokenRequest
+from ledger.payments.bpoint.BPOINT.API import (TransactionRequest,
+                                               Credentials,
+                                               TransactionSearchRequest,
+                                               AddDVTokenRequest,
+                                               DeleteDVTokenRequest)
 
 class Gateway(object):
 
@@ -66,6 +70,8 @@ class Gateway(object):
         
         return txn.submit()
     
-    
+    def delete_token(self,token):
+        req = DeleteDVTokenRequest(self.credentials,token)
+        return req.submit()
     
     

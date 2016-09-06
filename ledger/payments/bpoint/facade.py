@@ -215,6 +215,16 @@ class Facade(object):
         except BpointToken.DoesNotExist as e:
             raise UnableToTakePayment(str(e))
 
+    def delete_token(self,token):
+        try:
+            res = self.gateway.delete_token(token)
+        except Exception:
+            raise
+        # Check if the transaction was successful
+        if not res.api_response.response_code == 0:
+            raise UnableToTakePayment(res.api_response.response_text)
+        return res
+
     def friendly_error_msg(self, txn):
         if not txn.approved:
             raise UnableToTakePayment(txn.response_txt)
