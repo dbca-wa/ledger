@@ -1,14 +1,7 @@
-import os
-import shutil
-import string
-import random
-
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser, Document
-
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
-from collections import OrderedDict
 from wildlifelicensing.apps.main.helpers import is_customer, is_officer
 
 
