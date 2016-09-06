@@ -71,7 +71,8 @@ class TemplateEmailBase(object):
             attachments = []
         if attachments is not None and not isinstance(attachments, list):
             attachments = list(attachments)
-        else:
+
+        if attachments is None:
             attachments = []
 
         # Convert Documents to (filename, content, mime) attachment
