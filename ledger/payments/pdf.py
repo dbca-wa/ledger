@@ -261,7 +261,6 @@ def _create_invoice(invoice_buffer, invoice):
         ]
     )
     for discount in discounts:
-        print discount.__dict__
         data.append(
             [
                 '',
