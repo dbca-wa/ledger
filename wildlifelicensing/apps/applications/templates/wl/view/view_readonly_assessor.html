@@ -14,10 +14,19 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/conditions/assessor_conditions_read_only'], function (conditions) {
+    require(['js/view/view_readonly_assessor', 'js/communications_log'], function (conditions, commsLog) {
         $(function () {
             conditions.init({{ assessment|jsonify }}, {{ application|jsonify }},
                             {{ form_structure|jsonify }}, {{ other_assessments|jsonify }});
+
+            commsLog.initCommunicationLog({
+                showLogPopoverSelector: '#showLog',
+                showLogEntryModalSelector: '#addLogEntry',
+                logEntryModalSelector: '#logEntryModal',
+                logEntryFormSelector: '#addLogEntryForm',
+                logListURL: "{% url 'wl_applications:log_list' application.id %}",
+                addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+            });
         });
     });
 {% endblock %}
@@ -94,6 +103,9 @@
                         </div>
                     </div>
                 </div>
+                {% with disable_collapse=True add_text='Add application log entry' %}
+                    {% include 'wl/communications_panel.html' %}
+                {% endwith %}
                 <a href="{% url 'home' %}" type="button" class="btn btn-sm btn-primary pull-right">Close</a>
             </div>
             <div class="col-md-9">
@@ -134,4 +146,8 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block modals %}
+    {% include 'wl/communications_modal.html' %}
 {% endblock %}

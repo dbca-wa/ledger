@@ -122,7 +122,7 @@ class CommunicationsLogEntry(models.Model):
     documents = models.ManyToManyField(Document, blank=True)
 
     customer = models.ForeignKey(EmailUser, null=True, related_name='customer')
-    officer = models.ForeignKey(EmailUser, null=True, related_name='officer')
+    staff = models.ForeignKey(EmailUser, null=True, related_name='staff')
 
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 

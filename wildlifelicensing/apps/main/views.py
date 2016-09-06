@@ -264,7 +264,7 @@ class AddCommunicationsLogEntryView(OfficerRequiredMixin, View):
             communications_log_entry = form.save(commit=False)
 
             communications_log_entry.customer = customer
-            communications_log_entry.officer = request.user
+            communications_log_entry.staff = request.user
             communications_log_entry.save()
             if request.FILES and 'attachment' in request.FILES:
                 communications_log_entry.documents.add(Document.objects.create(file=request.FILES['attachment']))

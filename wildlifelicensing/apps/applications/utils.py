@@ -211,6 +211,13 @@ def append_app_document_to_schema_data(schema, data, app_doc):
     return schema, data
 
 
+def get_log_entry_to(application):
+    if application.proxy_applicant is None:
+        return application.applicant.get_full_name()
+    else:
+        return application.proxy_applicant.get_full_name()
+
+
 def format_application(instance, attrs):
     attrs['processing_status'] = PROCESSING_STATUSES[attrs['processing_status']]
     attrs['id_check_status'] = ID_CHECK_STATUSES[attrs['id_check_status']]
