@@ -16,5 +16,5 @@ urlpatterns = [
     url('^log-list/([0-9]+)/$', ReturnLogListView.as_view(), name='log_list'),
 
     # api
-    url(r'^api/', include(api_urlpatterns, namespace='returns_api')),
+    url(r'^api/', include(api_urlpatterns, namespace='api')),
 ]

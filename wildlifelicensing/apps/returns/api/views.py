@@ -1,24 +1,55 @@
 import csv
+from collections import OrderedDict
 
-from django.views.generic import View
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, Http404
-from rest_framework.generics import ListAPIView
-from rest_framework.renderers import JSONRenderer
+from django.views.generic import View
 
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
-from wildlifelicensing.apps.returns.models import ReturnType, ReturnTable, ReturnRow
+from wildlifelicensing.apps.returns.models import ReturnType, ReturnRow
 from wildlifelicensing.apps.returns.utils_schema import Schema
-from wildlifelicensing.apps.returns.api.serializers import ReturnTypeSerializer
 
 
-class ReturnListView(OfficerRequiredMixin, ListAPIView):
-    queryset = ReturnType.objects.all()
-    renderer_classes = (JSONRenderer,)
-    serializer_class = ReturnTypeSerializer
+class ExplorerView(View):
+    """
+    Return a JSOn representation of the ReturnTypes.
+    The main goal of this view is to provide for every resources (ReturnTable) a link to download the data
+    (@see ReturnsDataView view)
+    """
+
+    def get(self, request):
+        queryset = ReturnType.objects.all()
+        results = []
+        for rt in queryset:
+            return_obj = OrderedDict({'id': rt.id})
+            licence_type = {
+                'display_name': rt.licence_type.display_name,
+                'code': rt.licence_type.code
+            }
+            return_obj['license_type'] = licence_type
+            # resources
+            resources = []
+            for idx, resource in enumerate(rt.resources):
+                resource_obj = OrderedDict()
+                resource_obj['name'] = resource.get('name', '')
+                resource_obj['data'] = request.build_absolute_uri(reverse('wl_returns:api:data', kwargs={
+                    'return_type_pk': rt.pk,
+                    'resource_number': idx
+                }))
+                resource_obj['schema'] = resource.get('schema', {})
+                resources.append(resource_obj)
+
+            return_obj['resources'] = resources
+            results.append(return_obj)
+
+        return JsonResponse(results, safe=False)
 
 
-class ReturnsData(OfficerRequiredMixin, View):
+class ReturnsDataView(View):
+    """
+    Export returns data in CSV format.
+    """
+
     def get(self, request, *args, **kwargs):
         return_type = get_object_or_404(ReturnType, pk=kwargs.get('return_type_pk'))
         resource_number = kwargs.get('resource_number')
