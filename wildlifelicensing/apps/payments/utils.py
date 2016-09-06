@@ -27,6 +27,24 @@ def to_json(data):
     return json.dumps(data, cls=WildlifeLicensingJSONEncoder)
 
 
+def generate_product_code_variants(licence_type):
+    def __append_variant_codes(product_code, variant_group, current_variant_codes):
+        if variant_group is None:
+            variant_codes.append(product_code)
+            return
+
+        for variant in variant_group.variants.all():
+            variant_code = '{}_{}'.format(product_code, variant.product_code)
+
+            __append_variant_codes(variant_code, variant_group.child, variant_codes)
+
+    variant_codes = []
+
+    __append_variant_codes(licence_type.product_code, licence_type.variant_group, variant_codes)
+
+    return variant_codes
+
+
 def generate_product_code(application):
     product_code = application.licence_type.product_code
 

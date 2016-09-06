@@ -23,6 +23,9 @@ BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'stat
 COLOUR_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
                                        'colour_dpaw_header_logo.png')
 
+LICENCE_HEADER_IMAGE_WIDTH = 170
+LICENCE_HEADER_IMAGE_HEIGHT = 42
+
 DPAW_EMAIL = 'wildlifelicensing@dpaw.wa.gov.au'
 DPAW_URL = 'www.dpaw.wa.gov.au'
 DPAW_PHONE = '(08) 9219 9831'
@@ -93,10 +96,10 @@ def _create_licence_header(canvas, doc, draw_page_number=True):
     current_y -= 30
 
     dpaw_header_logo = ImageReader(BW_DPAW_HEADER_LOGO)
-    dpaw_header_logo_size = dpaw_header_logo.getSize()
-    canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - dpaw_header_logo_size[1])
+    canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - 40,
+                     width=LICENCE_HEADER_IMAGE_WIDTH, height=LICENCE_HEADER_IMAGE_HEIGHT)
 
-    current_x = HEADER_MARGIN + dpaw_header_logo_size[0] + 5
+    current_x = HEADER_MARGIN + LICENCE_HEADER_IMAGE_WIDTH + 5
 
     canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
 
