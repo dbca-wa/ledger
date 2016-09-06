@@ -167,12 +167,10 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         else:
             messages.error(request, issue_licence_form.errors)
 
-            purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
-
             log_entry_form = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
-                                                        'issue_licence_form': IssueLicenceForm(purpose=purposes),
+                                                        'issue_licence_form': issue_licence_form,
                                                         'log_entry_form': log_entry_form})
 
 

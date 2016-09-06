@@ -233,6 +233,8 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     if application.conditions.exists():
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Conditions', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
         conditionList = ListFlowable(
             [Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
@@ -242,6 +244,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     if licence.purpose:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Purpose', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         for purpose in licence.purpose.split('\r\n'):
             if purpose:
@@ -253,6 +256,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     if licence.locations:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Locations', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         for location in licence.locations.split('\r\n'):
             if location:
@@ -265,6 +269,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     if len(authorised_persons) > 0:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Authorised Persons', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         for ap in authorised_persons:
             elements.append(Paragraph(ap, styles['Left']))
