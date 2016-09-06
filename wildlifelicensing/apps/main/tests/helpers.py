@@ -152,6 +152,7 @@ def clear_mailbox():
 def upload_id(user):
     with open(TestData.TEST_ID_PATH, 'rb') as fp:
         post_params = {
+            'identification': True,
             'identification_file': fp
         }
         client = SocialClient()

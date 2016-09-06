@@ -83,10 +83,10 @@ class ApplicationEntryTestCase(TestCase):
                 'identification_file': fp
             }
             response = self.client.post(reverse('wl_applications:check_identification'),
-                                        post_params)
+                                        post_params, follow=True)
 
             self.assertRedirects(response, reverse('wl_applications:create_select_profile'),
-                                 status_code=302, target_status_code=200, fetch_redirect_response=False)
+                                 status_code=302, target_status_code=200, fetch_redirect_response=True)
 
             # update customer
             self.customer = EmailUser.objects.get(email=self.customer.email)
@@ -107,9 +107,9 @@ class ApplicationEntryTestCase(TestCase):
             self.customer.save()
 
         # check that client is redirected to profile creation / selection page
-        response = self.client.get(reverse('wl_applications:check_identification'))
+        response = self.client.get(reverse('wl_applications:check_identification'), follow=True)
         self.assertRedirects(response, reverse('wl_applications:create_select_profile'),
-                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+                             status_code=302, target_status_code=200, fetch_redirect_response=True)
 
     def test_create_select_profile_create(self):
         """Testing that a user can display the create / select profile page and create a profile
