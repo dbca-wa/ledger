@@ -84,6 +84,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
+
             licence.licence_type = application.licence_type
 
             licence.profile = application.applicant_profile

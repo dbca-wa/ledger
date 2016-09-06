@@ -10,7 +10,7 @@ from wildlifelicensing.apps.customer_management.forms import CustomerDetailsForm
 
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import ProfileForm, AddressForm
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm, IdentificationForm, SeniorCardForm
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 
 
 class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):

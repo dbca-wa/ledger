@@ -136,7 +136,7 @@ class AmendLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
                                  'An amendment for this licence has already been lodged and is awaiting review.')
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
-            application = utils.clone_application_with_status_reset(previous_application, keep_invoice=True)
+            application = utils.clone_application_with_status_reset(previous_application, is_licence_amendment=True)
             application.processing_status = 'licence_amendment'
             application.is_licence_amendment = True
             application.save()
