@@ -5,12 +5,11 @@ from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.base import View, TemplateView
-from django.views.generic.edit import FormView
 
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Profile, Document, EmailUser
-from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, DocumentForm
+from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm
 
 from wildlifelicensing.apps.main.models import CommunicationsLogEntry,\
     WildlifeLicence
@@ -156,7 +155,7 @@ class IdentificationView(LoginRequiredMixin, TemplateView):
                 self.request.user.save()
                 if bool(previous_id):
                     previous_id.delete()
-                identification_uploaded.send(sender=self.__class__, user=self.request.user)
+                identification_uploaded.send(sender=self.__class__, request=self.request)
         if 'senior_card' in request.POST:
             form = SeniorCardForm(request.POST, files=request.FILES)
             ctx['form_senior'] = form

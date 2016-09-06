@@ -148,7 +148,7 @@ def remove_temp_applications_for_user(user):
         Application.objects.filter(proxy_applicant=user, customer_status='temp').delete()
 
 
-def clone_application_with_status_reset(application, keep_invoice=False):
+def clone_application_with_status_reset(application, is_licence_amendment=False):
     application.customer_status = 'temp'
     application.processing_status = 'temp'
 
@@ -168,7 +168,9 @@ def clone_application_with_status_reset(application, keep_invoice=False):
 
     application.licence = None
 
-    if not keep_invoice:
+    application.is_licence_amendment = is_licence_amendment
+
+    if not is_licence_amendment:
         application.invoice_reference = ''
 
     original_application_pk = application.pk

@@ -10,7 +10,7 @@ from wildlifelicensing.apps.customer_management.forms import CustomerDetailsForm
 
 from ledger.accounts.models import EmailUser, Profile, Document
 from ledger.accounts.forms import ProfileForm, AddressForm
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm, IdentificationForm, SeniorCardForm
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 
 
 class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
@@ -212,7 +212,7 @@ class EditDetailsView(OfficerRequiredMixin, TemplateView):
             if bool(previous_id):
                 previous_id.delete()
             ctx['id_url'] = customer.identification.file.url
-            identification_uploaded.send(sender=self.__class__, user=self.request.user)
+            identification_uploaded.send(sender=self.__class__, request=self.request)
 
         if 'delete_id' in request.POST:
             if bool(customer.identification):
