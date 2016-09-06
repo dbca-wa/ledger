@@ -23,9 +23,9 @@ class ApplicationEntryTestCase(TestCase):
 
         self.client = SocialClient()
 
-        licence_type = WildlifeLicenceType.objects.get(product_code='regulation-17')
-        licence_type.identification_required = True
-        licence_type.save()
+        self.licence_type = WildlifeLicenceType.objects.get(product_code='regulation-17')
+        self.licence_type.identification_required = True
+        self.licence_type.save()
 
     def tearDown(self):
         self.client.logout()
@@ -60,7 +60,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         # check that client can select a licence type the licence type selection list
-        response = self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        response = self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         self.assertRedirects(response, reverse('wl_applications:check_identification'),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
@@ -72,7 +72,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # check that client can access the identification required page
         response = self.client.get(reverse('wl_applications:check_identification'))
@@ -98,7 +98,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
         self.client.get(reverse('wl_applications:check_identification'))
 
         with open(TEST_ID_PATH, 'rb') as fp:
@@ -120,7 +120,7 @@ class ApplicationEntryTestCase(TestCase):
         original_profile_count = self.customer.profile_set.count()
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # check that client can access the profile create/select page
         response = self.client.get(reverse('wl_applications:create_select_profile'))
@@ -161,7 +161,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # create profiles
         address1 = Address.objects.create(line1='1 Test Street', locality='Test Suburb', state='WA', postcode='0001')
@@ -199,7 +199,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         application = Application.objects.first()
 
@@ -235,7 +235,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         application = Application.objects.first()
 
@@ -272,7 +272,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # check that client can access the enter details page
         response = self.client.get(reverse('wl_applications:enter_details'))
@@ -303,7 +303,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         application = Application.objects.first()
 
@@ -364,7 +364,7 @@ class ApplicationEntrySecurity(TransactionTestCase):
         self.client.login(customer1)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(1,)))
 
         application = Application.objects.first()
 
@@ -394,7 +394,7 @@ class ApplicationEntrySecurity(TransactionTestCase):
         self.client.login(customer1)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(1,)))
 
         application = Application.objects.first()
 
