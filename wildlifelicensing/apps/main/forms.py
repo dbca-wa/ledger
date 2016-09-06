@@ -105,7 +105,8 @@ class IssueLicenceForm(forms.ModelForm):
 
         self.fields['is_renewable'].widget = forms.CheckboxInput()
 
-        if 'instance' not in kwargs:
+        # if a licence instance has not been passed in nor any POST data (i.e. this is creating the 'get' version of the form)
+        if 'instance' not in kwargs and len(args) == 0:
             today_date = datetime.now()
             self.fields['issue_date'].initial = today_date.strftime(DATE_FORMAT)
             self.fields['start_date'].initial = today_date.strftime(DATE_FORMAT)

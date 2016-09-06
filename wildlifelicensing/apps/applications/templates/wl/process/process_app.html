@@ -172,16 +172,18 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <div>
-                                            <label>Returns</label>
-                                            {% if data.returns_outstanding %}
-                                                <p>Returns outstanding.</p>
-                                                <p><a href="{% url 'wl_dashboard:tables_returns_officer' %}"
-                                                      target="_blank">View Returns List</a></p>
-                                            {% else %}
-                                                <p>No returns outstanding.</p>
-                                            {% endif %}
-                                        </div>
+                                        {% if not data.application.is_licence_amendment %}
+                                            <div>
+                                                <label>Returns</label>
+                                                {% if data.returns_outstanding %}
+                                                    <p>Returns outstanding.</p>
+                                                    <p><a href="{% url 'wl_dashboard:tables_returns_officer' %}"
+                                                          target="_blank">View Returns List</a></p>
+                                                {% else %}
+                                                    <p>No returns outstanding.</p>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
