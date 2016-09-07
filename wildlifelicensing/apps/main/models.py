@@ -5,6 +5,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
+from django.conf import settings
 
 from ledger.accounts.models import RevisionedMixin, EmailUser, Document, Profile
 from ledger.licence.models import LicenceType, Licence
@@ -58,8 +59,8 @@ class WildlifeLicenceType(LicenceType):
     def clean(self):
         """
         Pre save validation:
-        - A payment product must exist before creating a LicenceType. Even if the licence is free, a product with price=0
-        must be created.
+        - A payment product and all its variants must exist before creating a LicenceType.
+        - Check for senior voucher if applicable.
         :return: raise an exception if error
         """
         variant_codes = generate_product_code_variants(self)
@@ -76,6 +77,13 @@ class WildlifeLicenceType(LicenceType):
                             "variants, even if the licence is free. <ul><li>{}</li></ul>".
                             format('</li><li>'.join(missing_product_variants)))
 
+            raise ValidationError(msg)
+
+        if self.senior_applicable and payment_utils.get_voucher(settings.WL_SENIOR_VOUCHER_CODE) is None:
+            msg = mark_safe("The senior voucher with code={} cannot be found. It must be created before setting a "
+                            "licence type to be senior applicable.<br>"
+                            "Note: the senior voucher code can be changed in the settings of the application."
+                            .format(settings.WL_SENIOR_VOUCHER_CODE))
             raise ValidationError(msg)
 
 
