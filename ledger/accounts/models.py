@@ -135,8 +135,8 @@ class Address(models.Model):
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
     oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses',null=True,blank=True)
-    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
-    hash = models.CharField(max_length=255, db_index=True, editable=False)
+    user = models.ForeignKey('EmailUser', related_name='profile_adresses', null=True)
+    hash = models.CharField(max_length=255, db_index=True, editable=False, null=True)
 
     def __str__(self):
         return self.summary
