@@ -32,7 +32,7 @@ class CheckoutApplicationView(RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
         product = get_product(generate_product_code(application))
-        user = application.applicant_profile.user.id
+        user = application.applicant.id
 
         error_url = request.build_absolute_uri(reverse('wl_applications:preview'))
         success_url = request.build_absolute_uri(reverse('wl_applications:complete'))

@@ -4,11 +4,10 @@ import os
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from social.apps.django_app.default.models import UserSocialAuth
 
-from ledger.accounts.models import EmailUser, Address, Profile, Document
-
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, get_or_create_default_officer, TestData
+from ledger.accounts.models import EmailUser, Profile
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
+    get_or_create_default_officer, TestData, upload_id
 
 TEST_ID_PATH = TestData.TEST_ID_PATH
 
@@ -135,19 +134,13 @@ class AccountsTestCase(TestCase):
         self.assertIsNone(self.customer.identification)
         response = self.client.get(reverse('wl_main:identification'))
         self.assertEqual(200, response.status_code)
+        response = upload_id(self.customer)
+        self.assertEqual(200, response.status_code)
 
-        with open(TEST_ID_PATH, 'rb') as fp:
-            post_params = {
-                'identification_file': fp
-            }
-            self.client.login(self.customer.email)
-            response = self.client.post(reverse('wl_main:identification'), post_params, follow=True)
-            self.assertEqual(200, response.status_code)
+        # update customer
+        self.customer = EmailUser.objects.get(email=self.customer.email)
 
-            # update customer
-            self.customer = EmailUser.objects.get(email=self.customer.email)
+        self.assertIsNotNone(self.customer.identification)
 
-            self.assertIsNotNone(self.customer.identification)
-
-            # assert image url is the customer ID's url path
-            self.assertEqual(response.context['existing_id_image_url'], self.customer.identification.file.url)
+        # assert image url is the customer ID's url path
+        self.assertEqual(response.context['existing_id_image_url'], self.customer.identification.file.url)
