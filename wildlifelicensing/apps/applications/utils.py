@@ -1,14 +1,7 @@
-import os
-import shutil
-import string
-import random
-
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser, Document
-
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
-from collections import OrderedDict
 from wildlifelicensing.apps.main.helpers import is_customer, is_officer
 
 
@@ -148,7 +141,7 @@ def remove_temp_applications_for_user(user):
         Application.objects.filter(proxy_applicant=user, customer_status='temp').delete()
 
 
-def clone_application_with_status_reset(application, keep_invoice=False):
+def clone_application_with_status_reset(application, is_licence_amendment=False):
     application.customer_status = 'temp'
     application.processing_status = 'temp'
 
@@ -168,7 +161,9 @@ def clone_application_with_status_reset(application, keep_invoice=False):
 
     application.licence = None
 
-    if not keep_invoice:
+    application.is_licence_amendment = is_licence_amendment
+
+    if not is_licence_amendment:
         application.invoice_reference = ''
 
     original_application_pk = application.pk
@@ -178,6 +173,12 @@ def clone_application_with_status_reset(application, keep_invoice=False):
     application.pk = None
 
     application.save(no_revision=True)
+
+    # clone variants
+    for application_variant in Application.variants.through.objects.filter(application=original_application_pk):
+        application_variant.application = application
+        application_variant.pk = None
+        application_variant.save()
 
     # clone documents
     for application_document in Application.documents.through.objects.filter(application=original_application_pk):
@@ -203,6 +204,13 @@ def append_app_document_to_schema_data(schema, data, app_doc):
     data.append({'original_application_document': [{'application_document': app_doc}]})
 
     return schema, data
+
+
+def get_log_entry_to(application):
+    if application.proxy_applicant is None:
+        return application.applicant.get_full_name()
+    else:
+        return application.proxy_applicant.get_full_name()
 
 
 def format_application(instance, attrs):

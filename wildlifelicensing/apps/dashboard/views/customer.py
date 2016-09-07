@@ -80,6 +80,9 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
                 'orderable': False
             },
             {
+                'title': 'Status'
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -212,6 +215,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         'start_date',
         'end_date',
         'licence',
+        'status',
         'action']
     order_columns = [
         'licence_number',
@@ -239,10 +243,34 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         'licence': {
             'render': lambda self, instance: base.render_licence_document(instance)
         },
+        'status': {
+            'render': lambda self, instance: self._render_status(instance)
+        },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
     })
+
+    @staticmethod
+    def _render_status(instance):
+        try:
+            application = Application.objects.get(licence=instance)
+            replacing_application = Application.objects.get(previous_application=application)
+
+            if replacing_application.is_licence_amendment:
+                return 'Amended'
+            else:
+                return 'Renewed'
+        except Application.DoesNotExist:
+            pass
+
+        expiry_days = (instance.end_date - datetime.date.today()).days
+        if expiry_days <= 30 and instance.is_renewable:
+            return '<span class="label label-warning">Due for renewal</span>'
+        elif instance.end_date < datetime.date.today():
+            return 'Expired'
+        else:
+            return 'Current'
 
     @staticmethod
     def _render_action(instance):
@@ -257,9 +285,11 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         if expiry_days <= 30 and instance.is_renewable:
             url = reverse('wl_applications:renew_licence', args=(instance.pk,))
             return '<a href="{0}">Renew</a>'.format(url)
-        else:
+        elif instance.end_date >= datetime.date.today():
             url = reverse('wl_applications:amend_licence', args=(instance.pk,))
             return '<a href="{0}">Amend</a>'.format(url)
+        else:
+            return 'N/A'
 
     @staticmethod
     def _search_licence_number(search):

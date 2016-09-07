@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.dispatch import receiver
+from django.contrib import messages
 
 from ledger.accounts.signals import name_changed
 
@@ -22,13 +23,21 @@ def name_changed_callback(sender, **kwargs):
 
 @receiver(identification_uploaded)
 def identification_uploaded_callback(sender, **kwargs):
-    if 'user' in kwargs:
-        for application in Application.objects.filter(applicant_profile__user=kwargs.get('user')):
+    if 'request' in kwargs:
+        request = kwargs.get('request')
+        is_app_awaiting_id_check = False
+        for application in Application.objects.filter(applicant_profile__user=request.user):
             if application.id_check_status == 'awaiting_update':
                 application.id_check_status = 'updated'
                 application.customer_status = determine_customer_status(application)
                 application.processing_status = determine_processing_status(application)
                 application.save()
+
+                is_app_awaiting_id_check = True
+
+        if is_app_awaiting_id_check:
+            messages.success(request, 'Thank you for providing your photographic identification. Any application(s) '
+                             'currently awaiting this identification will now proceed with processing.')
 
 
 @receiver(return_submitted)

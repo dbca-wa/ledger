@@ -194,7 +194,7 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
         'licence': licence
     }
     if licence.licence_document is not None:
-        file_name = 'WL_licence_' + smart_text(licence.licence_type.code_slug)
+        file_name = 'WL_licence_' + smart_text(licence.licence_type.product_code)
         if licence.licence_number:
             file_name += '_' + smart_text(licence.licence_number)
         if licence.licence_sequence:
@@ -286,14 +286,14 @@ def _log_email(email_message, application, sender=None):
 
     customer = application.applicant
 
-    officer = sender
+    staff = sender
 
     kwargs = {
         'subject': subject,
         'text': text,
         'application': application,
         'customer': customer,
-        'officer': officer,
+        'staff': staff,
         'to': to,
         'fromm': fromm,
         'cc': all_ccs

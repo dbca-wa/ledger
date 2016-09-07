@@ -26,7 +26,7 @@ from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.payments import utils as payment_utils
 
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
-    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
+    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, get_log_entry_to, \
     format_amendment_request, format_assessment, append_app_document_to_schema_data
 
 
@@ -104,12 +104,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         kwargs['returns_request_form'] = ReturnsRequestForm(application=application, officer=self.request.user)
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, officer=self.request.user)
 
-        if application.proxy_applicant is None:
-            to = application.applicant.get_full_name()
-        else:
-            to = application.proxy_applicant.get_full_name()
-
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
         return super(ProcessView, self).get_context_data(**kwargs)
 

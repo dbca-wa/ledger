@@ -3,7 +3,7 @@ from django.conf.urls import url
 from wildlifelicensing.apps.applications.views.entry import NewApplicationView, SelectLicenceTypeView, \
     CreateSelectCustomer, EditApplicationView, DeleteApplicationView, CheckIdentificationRequiredView, \
     CreateSelectProfileView, EnterDetailsView, PreviewView, ApplicationCompleteView, RenewLicenceView, \
-    AmendLicenceView
+    AmendLicenceView, CheckSeniorCardView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
@@ -15,18 +15,19 @@ from wildlifelicensing.apps.applications.views.conditions import EnterConditions
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
 from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, ViewReadonlyOfficerView, \
-    AssessorConditionsView, AddApplicationLogEntryView, ApplicationLogListView
+    ViewReadonlyAssessorView, AddApplicationLogEntryView, ApplicationLogListView
 
 
 urlpatterns = [
     # application entry / licence renewal/amendment
     url('^new-application/$', NewApplicationView.as_view(), name='new_application'),
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
-    url('^select-licence-type/([\w-]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
+    url('^select-licence-type/([0-9]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^create-select-customer/$', CreateSelectCustomer.as_view(), name='create_select_customer'),
     url('^edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
     url('^delete-application/([0-9]+)/$', DeleteApplicationView.as_view(), name='delete_application'),
     url('^check-identification/$', CheckIdentificationRequiredView.as_view(), name='check_identification'),
+    url('^check-senior-card/$', CheckSeniorCardView.as_view(), name='check_senior_card'),
     url('^profile/$', CreateSelectProfileView.as_view(), name='create_select_profile'),
     url('^enter-details/$', EnterDetailsView.as_view(), name='enter_details'),
     url('^preview/$', PreviewView.as_view(), name='preview'),
@@ -67,5 +68,5 @@ urlpatterns = [
     # view
     url('^view-application/([0-9]+)/$', ViewReadonlyView.as_view(), name='view_application'),
     url('^view-application-officer/([0-9]+)/$', ViewReadonlyOfficerView.as_view(), name='view_application_officer'),
-    url('^view-assessment/([0-9]+)/assessment/([0-9]+)/$', AssessorConditionsView.as_view(), name='view_assessment')
+    url('^view-assessment/([0-9]+)/assessment/([0-9]+)/$', ViewReadonlyAssessorView.as_view(), name='view_assessment')
 ]

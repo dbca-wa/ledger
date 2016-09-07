@@ -326,10 +326,10 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
 
             customer = ret.licence.holder
 
-            officer = request.user
+            staff = request.user
 
             kwargs = {
-                'officer': officer,
+                'staff': staff,
                 'customer': customer,
                 'ret': ret,
                 'type': form.cleaned_data['type'],

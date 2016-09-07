@@ -15,7 +15,7 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
         if ($contentContainer.children().length) {
             $contentContainer.find(':last-child').addClass('no-margin');
         } else {
-            $contentContainer.append($('<p>').addClass('no-margin').text("No other assessors' comments available"));
+            $contentContainer.append($('<p>').addClass('no-margin').text("No assessors' comments available"));
         }
 
         $viewAssessorsComments.popover({container: 'body', content: $contentContainer, html: true});

@@ -1,4 +1,5 @@
 import os
+import json
 
 from django.core.urlresolvers import reverse
 from django.core.files import File
@@ -7,7 +8,8 @@ from django.test import TestCase, TransactionTestCase
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, create_random_customer, \
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
+    create_random_customer, \
     is_login_page
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.applications.tests import helpers
@@ -23,9 +25,9 @@ class ApplicationEntryTestCase(TestCase):
 
         self.client = SocialClient()
 
-        licence_type = WildlifeLicenceType.objects.get(code_slug='regulation-17')
-        licence_type.identification_required = True
-        licence_type.save()
+        self.licence_type = WildlifeLicenceType.objects.get(product_code='regulation-17')
+        self.licence_type.identification_required = True
+        self.licence_type.save()
 
     def tearDown(self):
         self.client.logout()
@@ -60,7 +62,7 @@ class ApplicationEntryTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         # check that client can select a licence type the licence type selection list
-        response = self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        response = self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         self.assertRedirects(response, reverse('wl_applications:check_identification'),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
@@ -72,7 +74,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # check that client can access the identification required page
         response = self.client.get(reverse('wl_applications:check_identification'))
@@ -83,10 +85,10 @@ class ApplicationEntryTestCase(TestCase):
                 'identification_file': fp
             }
             response = self.client.post(reverse('wl_applications:check_identification'),
-                                        post_params)
+                                        post_params, follow=True)
 
             self.assertRedirects(response, reverse('wl_applications:create_select_profile'),
-                                 status_code=302, target_status_code=200, fetch_redirect_response=False)
+                                 status_code=302, target_status_code=200, fetch_redirect_response=True)
 
             # update customer
             self.customer = EmailUser.objects.get(email=self.customer.email)
@@ -98,7 +100,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
         self.client.get(reverse('wl_applications:check_identification'))
 
         with open(TEST_ID_PATH, 'rb') as fp:
@@ -107,9 +109,9 @@ class ApplicationEntryTestCase(TestCase):
             self.customer.save()
 
         # check that client is redirected to profile creation / selection page
-        response = self.client.get(reverse('wl_applications:check_identification'))
+        response = self.client.get(reverse('wl_applications:check_identification'), follow=True)
         self.assertRedirects(response, reverse('wl_applications:create_select_profile'),
-                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+                             status_code=302, target_status_code=200, fetch_redirect_response=True)
 
     def test_create_select_profile_create(self):
         """Testing that a user can display the create / select profile page and create a profile
@@ -120,7 +122,7 @@ class ApplicationEntryTestCase(TestCase):
         original_profile_count = self.customer.profile_set.count()
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # check that client can access the profile create/select page
         response = self.client.get(reverse('wl_applications:create_select_profile'))
@@ -161,7 +163,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # create profiles
         address1 = Address.objects.create(line1='1 Test Street', locality='Test Suburb', state='WA', postcode='0001')
@@ -199,7 +201,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         application = Application.objects.first()
 
@@ -235,7 +237,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         application = Application.objects.first()
 
@@ -272,7 +274,7 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # check that client can access the enter details page
         response = self.client.get(reverse('wl_applications:enter_details'))
@@ -303,14 +305,15 @@ class ApplicationEntryTestCase(TestCase):
         self.client.login(self.customer.email)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         application = Application.objects.first()
+        self.assertIsNotNone(application.applicant)
 
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'))
+        response = self.client.post(reverse('wl_applications:preview'), follow=True)
 
         # check that client is redirected to complete
         self.assertRedirects(response, reverse('wl_applications:complete'),
@@ -364,18 +367,20 @@ class ApplicationEntrySecurity(TransactionTestCase):
         self.client.login(customer1)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(1,)))
 
         application = Application.objects.first()
+        self.assertIsNotNone(application)
+        self.assertIsNotNone(application.applicant)
 
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'))
+        response = self.client.post(reverse('wl_applications:preview'), follow=True)
 
         # check that client is redirected to home
         self.assertRedirects(response, reverse('wl_dashboard:home'),
-                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+                             status_code=302, target_status_code=200, fetch_redirect_response=True)
 
         application.refresh_from_db()
 
@@ -394,14 +399,15 @@ class ApplicationEntrySecurity(TransactionTestCase):
         self.client.login(customer1)
 
         self.client.get(reverse('wl_applications:new_application'))
-        self.client.get(reverse('wl_applications:select_licence_type', args=('regulation-17',)))
+        self.client.get(reverse('wl_applications:select_licence_type', args=(1,)))
 
         application = Application.objects.first()
+        self.assertIsNotNone(application)
 
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'))
+        response = self.client.post(reverse('wl_applications:preview'), follow=True)
 
         # check that client is redirected to home
         self.assertRedirects(response, reverse('wl_dashboard:home'),

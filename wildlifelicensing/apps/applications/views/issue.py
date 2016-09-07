@@ -9,14 +9,15 @@ from django.views.generic import View, TemplateView
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
-from wildlifelicensing.apps.main.models import WildlifeLicence
+from wildlifelicensing.apps.main.models import WildlifeLicence,\
+    WildlifeLicenceVariantLink
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
-from wildlifelicensing.apps.applications.utils import format_application
+from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.payments import utils as payment_utils
@@ -83,7 +84,9 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
+
             licence.licence_type = application.licence_type
+
             licence.profile = application.applicant_profile
             licence.holder = application.applicant
             licence.issuer = request.user
@@ -114,6 +117,10 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                                              request.build_absolute_uri(reverse('home')))
 
             licence.save()
+
+            licence.variants.clear()
+            for index, avl in enumerate(application.variants.through.objects.all().order_by('order')):
+                WildlifeLicenceVariantLink.objects.create(licence=licence, variant=avl.variant, order=index)
 
             issue_licence_form.save_m2m()
 
@@ -160,17 +167,10 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         else:
             messages.error(request, issue_licence_form.errors)
 
-            purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
-
-            if application.proxy_applicant is None:
-                to = application.applicant.get_full_name()
-            else:
-                to = application.proxy_applicant.get_full_name()
-
-            log_entry_form = ApplicationLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+            log_entry_form = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
-                                                        'issue_licence_form': IssueLicenceForm(purpose=purposes),
+                                                        'issue_licence_form': issue_licence_form,
                                                         'log_entry_form': log_entry_form})
 
 

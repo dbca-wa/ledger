@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
 from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceType, Condition, \
-    CommunicationsLogEntry, AssessorGroup
+    CommunicationsLogEntry, AssessorGroup, Variant
 
 
 @python_2_unicode_compatible
@@ -93,6 +93,8 @@ class Application(RevisionedMixin):
 
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
+    variants = models.ManyToManyField(Variant, blank=True, through='ApplicationVariantLink')
+
     def __str__(self):
         return self.reference
 
@@ -103,6 +105,10 @@ class Application(RevisionedMixin):
     @property
     def is_assigned(self):
         return self.assigned_officer is not None
+
+    @property
+    def is_temporary(self):
+        return self.customer_status == 'temp' and self.processing_status == 'temp'
 
     @property
     def can_user_edit(self):
@@ -117,6 +123,18 @@ class Application(RevisionedMixin):
         :return: True if the application is in one of the approved status.
         """
         return self.customer_status in self.CUSTOMER_VIEWABLE_STATE
+
+    @property
+    def is_senior_offer_applicable(self):
+        return self.licence_type.senior_applicable and \
+               self.applicant.is_senior and \
+               bool(self.applicant.senior_card)
+
+
+class ApplicationVariantLink(models.Model):
+    application = models.ForeignKey(Application)
+    variant = models.ForeignKey(Variant)
+    order = models.IntegerField()
 
 
 class ApplicationLogEntry(CommunicationsLogEntry):
