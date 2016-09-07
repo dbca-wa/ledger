@@ -1,4 +1,5 @@
 import os
+import json
 
 from django.core.urlresolvers import reverse
 from django.core.files import File
@@ -7,7 +8,8 @@ from django.test import TestCase, TransactionTestCase
 from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, create_random_customer, \
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
+    create_random_customer, \
     is_login_page
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.applications.tests import helpers
@@ -306,11 +308,12 @@ class ApplicationEntryTestCase(TestCase):
         self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         application = Application.objects.first()
+        self.assertIsNotNone(application.applicant)
 
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'))
+        response = self.client.post(reverse('wl_applications:preview'), follow=True)
 
         # check that client is redirected to complete
         self.assertRedirects(response, reverse('wl_applications:complete'),
@@ -367,15 +370,17 @@ class ApplicationEntrySecurity(TransactionTestCase):
         self.client.get(reverse('wl_applications:select_licence_type', args=(1,)))
 
         application = Application.objects.first()
+        self.assertIsNotNone(application)
+        self.assertIsNotNone(application.applicant)
 
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'))
+        response = self.client.post(reverse('wl_applications:preview'), follow=True)
 
         # check that client is redirected to home
         self.assertRedirects(response, reverse('wl_dashboard:home'),
-                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+                             status_code=302, target_status_code=200, fetch_redirect_response=True)
 
         application.refresh_from_db()
 
@@ -397,11 +402,12 @@ class ApplicationEntrySecurity(TransactionTestCase):
         self.client.get(reverse('wl_applications:select_licence_type', args=(1,)))
 
         application = Application.objects.first()
+        self.assertIsNotNone(application)
 
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'))
+        response = self.client.post(reverse('wl_applications:preview'), follow=True)
 
         # check that client is redirected to home
         self.assertRedirects(response, reverse('wl_dashboard:home'),
