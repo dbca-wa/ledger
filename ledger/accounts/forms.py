@@ -13,11 +13,43 @@ class FirstTimeForm(forms.Form):
 
 
 class AddressForm(forms.ModelForm):
+    update = forms.BooleanField(required=False,help_text='Check to update other addresses linked to this one.')
     class Meta:
         model = Address
-        fields = ['line1', 'line2', 'line3', 'locality', 'state', 'country', 'postcode']
-        widgets = {'country': CountrySelectWidget()}
+        fields = ['line1', 'line2', 'line3', 'locality', 'state', 'country', 'postcode','user']
+        widgets = {'country': CountrySelectWidget(),'user': forms.HiddenInput()}
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        self.profiles = None
+        super(AddressForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.profiles = Profile.objects.filter(postal_address=self.instance)
+            if len(self.profiles) == 1:
+                self.fields.pop('update')
+        else:
+            self.fields.pop('update')
+
+        if user is not None:
+            self.fields['user'].initial = user
+
+    def save(self, commit=True):
+        try:
+            if 'update' in self.fields:
+                if self.cleaned_data['update']:
+                    address = Address.objects.get(user=self.instance.user,hash=self.instance.generate_hash())
+                    self.profiles.update(postal_address=address)
+                    return address
+                else:
+                    address = Address.objects.get(user=self.instance.user,hash=self.instance.generate_hash())
+                    return address
+
+            address = Address.objects.get(user=self.instance.user,hash=self.instance.generate_hash())
+            return address
+        except Address.DoesNotExist:
+            if 'update' in self.fields and not self.cleaned_data['update']:
+                self.instance.id = None
+            return super(AddressForm, self).save(commit)
 
 class ProfileBaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

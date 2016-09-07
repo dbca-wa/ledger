@@ -689,6 +689,8 @@ class ReportSerializer(serializers.Serializer):
     system = serializers.CharField(max_length=4)
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
+    banked_start = serializers.DateTimeField(required=False,allow_null=True)
+    banked_end = serializers.DateTimeField(required=False,allow_null=True)
     region = serializers.ChoiceField(required=False,allow_null=True,choices=REGION_CHOICES)
     district = serializers.ChoiceField(required=False,allow_null=True,choices=DISTRICT_CHOICES)
     items = serializers.BooleanField(default=False)
@@ -700,6 +702,11 @@ class ReportSerializer(serializers.Serializer):
         except Exception as e:
             raise serializers.ValidationError(str(e))
         return value
+
+    def validate(self,data):
+        if data['items'] and not (data['banked_start'] and data['banked_end']):
+            raise serializers.ValidationError('banked_start and banked_end are required for items csv. ')
+        return data
 
 class ReportCreateView(views.APIView):
     authentication_classes = [SessionAuthentication]
@@ -713,6 +720,8 @@ class ReportCreateView(views.APIView):
             data = {
                 "start":request.GET.get('start'),
                 "end":request.GET.get('end'),
+                "banked_start":request.GET.get('banked_start',None),
+                "banked_end":request.GET.get('banked_end',None),
                 "system":request.GET.get('system'),
                 "items": request.GET.get('items', False),
                 "region": request.GET.get('region'),
@@ -725,7 +734,9 @@ class ReportCreateView(views.APIView):
             if serializer.validated_data['items']:
                 report = generate_items_csv(systemid_check(serializer.validated_data['system']),
                                             serializer.validated_data['start'],
-                                            serializer.validated_data['end'])
+                                            serializer.validated_data['end'],
+                                            serializer.validated_data['banked_start'],
+                                            serializer.validated_data['banked_end'])
             else:
                 report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
                                             ,serializer.validated_data['start'],
