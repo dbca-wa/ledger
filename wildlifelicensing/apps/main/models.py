@@ -4,11 +4,13 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
 
 from ledger.accounts.models import RevisionedMixin, EmailUser, Document, Profile
 from ledger.licence.models import LicenceType, Licence
 
 from wildlifelicensing.apps.payments import utils as payment_utils
+from wildlifelicensing.apps.payments.utils import generate_product_code_variants
 
 
 @python_2_unicode_compatible
@@ -60,9 +62,20 @@ class WildlifeLicenceType(LicenceType):
         must be created.
         :return: raise an exception if error
         """
-        if payment_utils.get_product(self.product_code) is None:
-            msg = "Payment product not found." \
-                  "You must create a payment product before creating a new Licence Type, even if the licence is free."
+        variant_codes = generate_product_code_variants(self)
+
+        missing_product_variants = []
+
+        for variant_code in variant_codes:
+            if payment_utils.get_product(variant_code) is None:
+                missing_product_variants.append(variant_code)
+
+        if missing_product_variants:
+            msg = mark_safe("The payments products with titles matching the below list of product codes were not "
+                            "found. Note: You must create a payment product(s) for a new licence type and all its "
+                            "variants, even if the licence is free. <ul><li>{}</li></ul>".
+                            format('</li><li>'.join(missing_product_variants)))
+
             raise ValidationError(msg)
 
 
