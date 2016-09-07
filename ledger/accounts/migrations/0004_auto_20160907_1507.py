@@ -6,6 +6,15 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 
+from ledger.accounts.models import Profile
+
+def update_profile_postal_address_user(apps, schema_editor):
+    # Required for updating each postal_address__user_id record
+    try:
+        for p in Profile.objects.all():
+            p.postal_address.user = p.user
+            p.postal_address.save()
+    except: pass
 
 class Migration(migrations.Migration):
 
@@ -30,4 +39,6 @@ class Migration(migrations.Migration):
             name='user',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='profile_adresses', to=settings.AUTH_USER_MODEL),
         ),
+        migrations.RunPython(update_profile_postal_address_user),
     ]
+

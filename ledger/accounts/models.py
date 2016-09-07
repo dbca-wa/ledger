@@ -134,9 +134,9 @@ class Address(models.Model):
     postcode = models.CharField(max_length=10)
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
-    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses',null=True,blank=True)
-    user = models.ForeignKey('EmailUser', related_name='profile_adresses', null=True)
-    hash = models.CharField(max_length=255, db_index=True, editable=False, null=True)
+    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
+    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    hash = models.CharField(max_length=255, db_index=True, editable=False)
 
     def __str__(self):
         return self.summary
@@ -581,6 +581,11 @@ class AddressListener(object):
         if instance.pk:
             original_instance = Address.objects.get(pk=instance.pk)
             setattr(instance, "_original_instance", original_instance)
+            try:
+                check_address = UserAddress.objects.get(hash=check_address.generate_hash())
+            except UserAddress.DoesNotExist:
+                check_address.save()
+            instance.oscar_address = check_address
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
