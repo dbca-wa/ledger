@@ -19,3 +19,4 @@ python-dateutil==2.5.3
 py4j==0.10.2.1
 djangorestframework==3.4.0
 pycountry==1.20
+six>=1.10.0
