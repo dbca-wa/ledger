@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
 import os
+import zlib
 
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import JSONField
-from django.db import models
+from django.db import models, IntegrityError
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
@@ -133,6 +134,9 @@ class Address(models.Model):
     postcode = models.CharField(max_length=10)
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
+    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses',null=True,blank=True)
+    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    hash = models.CharField(max_length=255, db_index=True, editable=False)
 
     def __str__(self):
         return self.summary
@@ -149,6 +153,7 @@ class Address(models.Model):
 
     def save(self, *args, **kwargs):
         self._update_search_text()
+        self.hash = self.generate_hash()
         super(Address, self).save(*args, **kwargs)
 
     def _update_search_text(self):
@@ -181,6 +186,12 @@ class Address(models.Model):
             value = getattr(self, field)
             field_values.append(value)
         return separator.join(filter(bool, field_values))
+
+    def generate_hash(self):
+        """
+            Returns a hash of the address summary
+        """
+        return zlib.crc32(self.summary.strip().upper().encode('UTF8'))
 
 @python_2_unicode_compatible
 class EmailIdentity(models.Model):
@@ -466,20 +477,38 @@ class ProfileListener(object):
 
         if not original_instance:
             address = instance.postal_address
-            UserAddress.objects.create(
-                #first_name = profile.user.first_name,
-                #last_name = profile.user.last_name,
-                line1 = address.line1,
-                line2 = address.line2,
-                line3 = address.line3,
-                line4 = address.locality,
-                state = address.state,
-                postcode = address.postcode,
-                country = Country.objects.get(iso_3166_1_a2=address.country),
-                profile_address = address,
-                user = instance.user
-            )
-
+            try:
+                # Check if the user has the same profile address
+                # Check if there is a user address
+                oscar_add = UserAddress.objects.get(
+                    line1 = address.line1,
+                    line2 = address.line2,
+                    line3 = address.line3,
+                    line4 = address.locality,
+                    state = address.state,
+                    postcode = address.postcode,
+                    country = Country.objects.get(iso_3166_1_a2=address.country),
+                    user = instance.user
+                )
+                if not address.oscar_address:
+                    address.oscar_address = oscar_add
+                    address.save()
+                elif address.oscar_address.id != oscar_add.id:
+                    address.oscar_address = oscar_add
+                    address.save()
+            except UserAddress.DoesNotExist:
+                oscar_address = UserAddress.objects.create(
+                    line1 = address.line1,
+                    line2 = address.line2,
+                    line3 = address.line3,
+                    line4 = address.locality,
+                    state = address.state,
+                    postcode = address.postcode,
+                    country = Country.objects.get(iso_3166_1_a2=address.country),
+                    user = instance.user
+                )
+                address.oscar_address = oscar_address
+                address.save()
 
 class EmailIdentityListener(object):
     """
@@ -508,25 +537,46 @@ class AddressListener(object):
     @staticmethod
     @receiver(pre_save, sender=Address)
     def _pre_save(sender, instance, **kwargs):
+        check_address = UserAddress(
+            line1 = instance.line1,
+            line2 = instance.line2,
+            line3 = instance.line3,
+            line4 = instance.locality,
+            state = instance.state,
+            postcode = instance.postcode,
+            country = Country.objects.get(iso_3166_1_a2=instance.country),
+            user = instance.user
+        )
         if instance.pk:
             original_instance = Address.objects.get(pk=instance.pk)
             setattr(instance, "_original_instance", original_instance)
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
+        else:
+            try:
+                check_address = UserAddress.objects.get(hash=check_address.generate_hash())
+            except UserAddress.DoesNotExist:
+                check_address.save()
+            instance.oscar_address = check_address
 
     @staticmethod
     @receiver(post_save, sender=Address)
     def _post_save(sender, instance, **kwargs):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         if original_instance:
-            oscar_address = original_instance.oscar_address.first()
-            if oscar_address is not None:
-                oscar_address.line1 = instance.line1
-                oscar_address.line2 = instance.line2
-                oscar_address.line3 = instance.line3
-                oscar_address.line4 = instance.locality
-                oscar_address.state = instance.state
-                oscar_address.postcode = instance.postcode
-                oscar_address.country = Country.objects.get(iso_3166_1_a2=instance.country)
-                oscar_address.profile_address = instance
-                oscar_address.save()
+            oscar_address = original_instance.oscar_address
+            try:
+                if oscar_address is not None:
+                    oscar_address.line1 = instance.line1
+                    oscar_address.line2 = instance.line2
+                    oscar_address.line3 = instance.line3
+                    oscar_address.line4 = instance.locality
+                    oscar_address.state = instance.state
+                    oscar_address.postcode = instance.postcode
+                    oscar_address.country = Country.objects.get(iso_3166_1_a2=instance.country)
+                    oscar_address.save()
+            except IntegrityError as e:
+                if 'unique constraint' in e.message:
+                    raise ValidationError('Multiple profiles cannot have the same address.')
+                else:
+                    raise
