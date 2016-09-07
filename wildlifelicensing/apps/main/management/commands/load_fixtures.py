@@ -12,6 +12,9 @@ class Command(BaseCommand):
         'default-conditions',
         'returns',
         'regions',
+        'countries',
+        # 'catalogue',
+        # 'partner'
     ]
 
     def handle(self, *args, **options):

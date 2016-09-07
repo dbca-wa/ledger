@@ -42,7 +42,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Applications</h3>
-                <form method="get" id="application-form" action="{% url 'wl_reports:applications_report' %}">
+                <form method="get" id="application-form" action="{{ actions.applications }}">
                     {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
@@ -64,7 +64,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Licences</h3>
-                <form method="get" id="licence-form" action="{% url 'wl_reports:licences_report' %}">
+                <form method="get" id="licence-form" action="{{ actions.licences }}">
                     {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
@@ -89,7 +89,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Returns</h3>
-                <form method="get" id="return-form" action="{% url 'wl_reports:returns_report' %}">
+                <form method="get" id="return-form" action="{{ actions.returns }}">
                     {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
@@ -111,7 +111,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Payments</h3>
-                <form method="get" id="payments-form" action="{% url 'wl_payments:payments_report' %}">
+                <form method="get" id="payments-form" action="{{ actions.payments }}">
                     {% csrf_token %}
                     <div class="row">
                         <div class="col-md-4">
@@ -123,7 +123,8 @@
                     </div>
                     <div class="row">
                         <div class="col-md-8">
-                            <button type=submit class="btn btn-primary">Generate Payments Report</button>
+                            <button type=submit class="btn btn-primary pull-left" name="items">Generate Report By Accounts</button>
+                            <button type=submit class="btn btn-primary pull-right" name="flat">Generate Report Flat</button>
                             <hr>
                         </div>
                     </div>

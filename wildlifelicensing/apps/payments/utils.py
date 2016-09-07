@@ -3,6 +3,7 @@ import json
 from django.shortcuts import get_object_or_404
 
 from oscar.apps.partner.strategy import Selector
+from oscar.apps.voucher.models import Voucher
 
 from ledger.catalogue.models import Product
 from ledger.payments.invoice.models import Invoice
@@ -27,15 +28,43 @@ def to_json(data):
     return json.dumps(data, cls=WildlifeLicensingJSONEncoder)
 
 
-def get_product(licence_type):
+def generate_product_code_variants(licence_type):
+    def __append_variant_codes(product_code, variant_group, current_variant_codes):
+        if variant_group is None:
+            variant_codes.append(product_code)
+            return
+
+        for variant in variant_group.variants.all():
+            variant_code = '{}_{}'.format(product_code, variant.product_code)
+
+            __append_variant_codes(variant_code, variant_group.child, variant_codes)
+
+    variant_codes = []
+
+    __append_variant_codes(licence_type.product_code, licence_type.variant_group, variant_codes)
+
+    return variant_codes
+
+
+def generate_product_code(application):
+    product_code = application.licence_type.product_code
+
+    if application.variants.exists():
+        product_code += '_' + '_'.join(application.variants.through.objects.filter(application=application).
+                                       order_by('order').values_list('variant__product_code', flat=True))
+
+    return product_code
+
+
+def get_product(product_code):
     try:
-        return Product.objects.get(title=licence_type.code_slug)
+        return Product.objects.get(title=product_code)
     except Product.DoesNotExist:
         return None
 
 
-def is_licence_free(licence_type):
-    product = get_product(licence_type)
+def is_licence_free(product_code):
+    product = get_product(product_code)
 
     if product is None:
         return True
@@ -77,3 +106,7 @@ def invoke_credit_card_payment(application):
         raise Exception('Application invoice does have a credit payment token')
 
     invoice.make_payment()
+
+
+def get_voucher(voucher_code):
+    return Voucher.objects.filter(code=voucher_code).first()

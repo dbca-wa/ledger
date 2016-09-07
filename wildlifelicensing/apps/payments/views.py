@@ -7,12 +7,13 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.views.generic.base import RedirectView, View
 from django.utils.http import urlencode
+from django.conf import settings
 
 from django.utils import timezone
 
 from wildlifelicensing.apps.applications.models import Application
 
-from wildlifelicensing.apps.payments.utils import get_product, to_json
+from wildlifelicensing.apps.payments.utils import generate_product_code, get_product, to_json
 from wildlifelicensing.apps.payments.forms import PaymentsReportForm
 from wildlifelicensing.apps.main.helpers import is_officer
 
@@ -22,14 +23,16 @@ JSON_REQUEST_HEADER_PARAMS = {
     "Accept": "application/json"
 }
 
-PAYMENT_SYSTEM_ID = 'S369'
+PAYMENT_SYSTEM_ID = settings.WL_PAYMENT_SYSTEM_ID
+
+SENIOR_VOUCHER_CODE = settings.WL_SENIOR_VOUCHER_CODE
 
 
 class CheckoutApplicationView(RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
-        product = get_product(application.licence_type)
-        user = application.applicant_profile.user.id
+        product = get_product(generate_product_code(application))
+        user = application.applicant.id
 
         error_url = request.build_absolute_uri(reverse('wl_applications:preview'))
         success_url = request.build_absolute_uri(reverse('wl_applications:complete'))
@@ -46,8 +49,13 @@ class CheckoutApplicationView(RedirectView):
             'proxy': is_officer(request.user),
             "products": [
                 {"id": product.id if product is not None else None}
-            ]
+            ],
+            "vouchers": []
         }
+
+        # senior discount
+        if application.is_senior_offer_applicable:
+            parameters['vouchers'].append({'code': SENIOR_VOUCHER_CODE})
 
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')
@@ -92,10 +100,12 @@ class PaymentsReportView(View):
                 'start': start,
                 'end': end
             }
-            response = requests.post(url,
-                                     headers=JSON_REQUEST_HEADER_PARAMS,
-                                     cookies=request.COOKIES,
-                                     data=to_json(data))
+            if 'items' in request.GET:
+                data['items'] = True
+            response = requests.get(url,
+                                    headers=JSON_REQUEST_HEADER_PARAMS,
+                                    cookies=request.COOKIES,
+                                    params=data)
             if response.status_code == 200:
                 filename = 'wl_payments-{}_{}'.format(
                     str(start.date()),

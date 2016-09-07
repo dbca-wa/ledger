@@ -103,8 +103,8 @@ def get_or_create_default_officer():
     return user
 
 
-def create_licence_type(code_slug='regulation-17'):
-    return WildlifeLicenceType.objects.get_or_create(code_slug=code_slug)[0]
+def create_licence_type(product_code='regulation-17'):
+    return WildlifeLicenceType.objects.get_or_create(product_code=product_code)[0]
 
 
 def get_or_create_default_assessor():
@@ -152,6 +152,7 @@ def clear_mailbox():
 def upload_id(user):
     with open(TestData.TEST_ID_PATH, 'rb') as fp:
         post_params = {
+            'identification': True,
             'identification_file': fp
         }
         client = SocialClient()

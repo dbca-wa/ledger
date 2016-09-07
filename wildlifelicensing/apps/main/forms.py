@@ -49,6 +49,23 @@ class IdentificationForm(forms.Form):
         return id_file
 
 
+class SeniorCardForm(forms.Form):
+    VALID_FILE_TYPES = IdentificationForm.VALID_FILE_TYPES
+
+    senior_card = forms.FileField(label='Senior Card',
+                                  help_text='A scan or a photo or your Senior Card')
+
+    def clean_identification_file(self):
+        id_file = self.cleaned_data.get('senior_card')
+
+        ext = os.path.splitext(str(id_file))[1][1:]
+
+        if ext not in self.VALID_FILE_TYPES:
+            raise forms.ValidationError('Uploaded image must be of file type: %s' % ', '.join(self.VALID_FILE_TYPES))
+
+        return id_file
+
+
 class IssueLicenceForm(forms.ModelForm):
     ccs = forms.CharField(required=False, label='CCs',
                           help_text="A comma separated list of email addresses you want the licence email to be CC'ed")
@@ -88,7 +105,8 @@ class IssueLicenceForm(forms.ModelForm):
 
         self.fields['is_renewable'].widget = forms.CheckboxInput()
 
-        if 'instance' not in kwargs:
+        # if a licence instance has not been passed in nor any POST data (i.e. this is creating the 'get' version of the form)
+        if 'instance' not in kwargs and len(args) == 0:
             today_date = datetime.now()
             self.fields['issue_date'].initial = today_date.strftime(DATE_FORMAT)
             self.fields['start_date'].initial = today_date.strftime(DATE_FORMAT)

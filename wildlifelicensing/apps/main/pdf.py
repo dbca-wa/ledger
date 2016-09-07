@@ -23,6 +23,9 @@ BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'stat
 COLOUR_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
                                        'colour_dpaw_header_logo.png')
 
+LICENCE_HEADER_IMAGE_WIDTH = 170
+LICENCE_HEADER_IMAGE_HEIGHT = 42
+
 DPAW_EMAIL = 'wildlifelicensing@dpaw.wa.gov.au'
 DPAW_URL = 'www.dpaw.wa.gov.au'
 DPAW_PHONE = '(08) 9219 9831'
@@ -93,10 +96,10 @@ def _create_licence_header(canvas, doc, draw_page_number=True):
     current_y -= 30
 
     dpaw_header_logo = ImageReader(BW_DPAW_HEADER_LOGO)
-    dpaw_header_logo_size = dpaw_header_logo.getSize()
-    canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - dpaw_header_logo_size[1])
+    canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - 40,
+                     width=LICENCE_HEADER_IMAGE_WIDTH, height=LICENCE_HEADER_IMAGE_HEIGHT)
 
-    current_x = HEADER_MARGIN + dpaw_header_logo_size[0] + 5
+    current_x = HEADER_MARGIN + LICENCE_HEADER_IMAGE_WIDTH + 5
 
     canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
 
@@ -217,14 +220,24 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 
     elements.append(Paragraph(licence.licence_type.act, styles['InfoTitleLargeCenter']))
     elements.append(Paragraph(licence.licence_type.code.upper(), styles['InfoTitleLargeCenter']))
-    elements.append(Paragraph(licence.licence_type.name, styles['InfoTitleVeryLargeCenter']))
+
+    # cannot use licence get_title_with_variants because licence isn't saved yet so can't get variants
+    if application.variants.exists:
+        title = '{} ({})'.format(application.licence_type.name, ' / '.join(application.variants.all().
+                                                                           values_list('name', flat=True)))
+    else:
+        title = licence.licence_type.name
+
+    elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     elements.append(Paragraph(licence.licence_type.statement, styles['InfoTitleLargeLeft']))
     elements.append(Paragraph(licence.licence_type.authority, styles['InfoTitleLargeRight']))
 
     # licence conditions
     if application.conditions.exists():
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        elements.append(Paragraph('Conditions', styles['InfoTitleLargeCenter']))
+        elements.append(Paragraph('Conditions', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
         conditionList = ListFlowable(
             [Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
@@ -233,66 +246,63 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     # purpose
     if licence.purpose:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements.append(Paragraph('Purpose', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-        purposes = []
         for purpose in licence.purpose.split('\r\n'):
             if purpose:
-                purposes.append(Paragraph(purpose, styles['Left']))
+                elements.append(Paragraph(purpose, styles['Left']))
             else:
-                purposes.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-        elements.append(Table([[Paragraph('Purpose', styles['BoldLeft']), purposes]],
-                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
-                              style=licence_table_style))
+                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     # locations
     if licence.locations:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements.append(Paragraph('Locations', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-        locations = []
         for location in licence.locations.split('\r\n'):
             if location:
-                locations.append(Paragraph(location, styles['Left']))
-
-        elements.append(Table([[Paragraph('Locations', styles['BoldLeft']), locations]],
-                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
-                              style=licence_table_style))
+                elements.append(Paragraph(location, styles['Left']))
+            else:
+                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     # authorised persons
     authorised_persons = _get_authorised_person_names(application)
     if len(authorised_persons) > 0:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        authorised_persons_paragraph = [Paragraph(ap, styles['Left']) for ap in authorised_persons]
-        elements.append(Table([[Paragraph('Authorised Persons', styles['BoldLeft']), authorised_persons_paragraph]],
-                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
-                              style=licence_table_style))
+        elements.append(Paragraph('Authorised Persons', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        for ap in authorised_persons:
+            elements.append(Paragraph(ap, styles['Left']))
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     # species
     species = _get_species(application)
     if len(species) > 0:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        species_names = [Paragraph(s[0], styles['Left']) for s in species]
-        species_count = [Paragraph(s[1], styles['Left']) for s in species]
+
         section_width = (PAGE_WIDTH - (2 * PAGE_MARGIN) - 100) / 2
 
         elements.append(Table([[Paragraph('Species', styles['BoldLeft']), Paragraph('Name', styles['BoldLeft']),
-                                Paragraph('Count', styles['BoldLeft'])],
-                               ['', species_names, species_count]],
+                                Paragraph('Count', styles['BoldLeft'])]],
                               colWidths=(100, section_width, section_width), style=licence_table_style))
+
+        for s in species:
+            elements.append(Table([['', Paragraph(s[0], styles['Left']), Paragraph(s[1], styles['Left'])]],
+                                  colWidths=(100, section_width, section_width), style=licence_table_style))
 
     # additional information
     if licence.additional_information:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements.append(Paragraph('Additional Information', styles['BoldLeft']))
 
-        additional_information_paragraphs = []
         for paragraph in licence.additional_information.split('\r\n'):
             if paragraph:
-                additional_information_paragraphs.append(Paragraph(paragraph, styles['Left']))
-
-        elements.append(Table([[Paragraph('Additional Information', styles['BoldLeft']),
-                                additional_information_paragraphs]],
-                              colWidths=(100, PAGE_WIDTH - (2 * PAGE_MARGIN) - 100),
-                              style=licence_table_style))
+                elements.append(Paragraph(paragraph, styles['Left']))
+            else:
+                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     # delegation holds the dates, licencee and issuer details.
     delegation = []

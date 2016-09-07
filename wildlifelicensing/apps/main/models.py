@@ -4,11 +4,14 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
+from django.conf import settings
 
 from ledger.accounts.models import RevisionedMixin, EmailUser, Document, Profile
 from ledger.licence.models import LicenceType, Licence
 
 from wildlifelicensing.apps.payments import utils as payment_utils
+from wildlifelicensing.apps.payments.utils import generate_product_code_variants
 
 
 @python_2_unicode_compatible
@@ -40,24 +43,47 @@ class WildlifeLicenceCategory(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name_plural = 'Wildlife licence categories'
+
 
 class WildlifeLicenceType(LicenceType):
-    code_slug = models.SlugField(max_length=64, unique=True)
+    product_code = models.SlugField(max_length=64, unique=True)
     identification_required = models.BooleanField(default=False)
+    senior_applicable = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
     application_schema = JSONField(blank=True, null=True)
     category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)
+    variant_group = models.ForeignKey('VariantGroup', null=True, blank=True)
 
     def clean(self):
         """
         Pre save validation:
-        - A payment product must exist before creating a LicenceType. Even if the licence is free, a product with price=0
-        must be created.
+        - A payment product and all its variants must exist before creating a LicenceType.
+        - Check for senior voucher if applicable.
         :return: raise an exception if error
         """
-        if payment_utils.get_product(self) is None:
-            msg = "Payment product not found." \
-                  "You must create a payment product before creating a new Licence Type, even if the licence is free."
+        variant_codes = generate_product_code_variants(self)
+
+        missing_product_variants = []
+
+        for variant_code in variant_codes:
+            if payment_utils.get_product(variant_code) is None:
+                missing_product_variants.append(variant_code)
+
+        if missing_product_variants:
+            msg = mark_safe("The payments products with titles matching the below list of product codes were not "
+                            "found. Note: You must create a payment product(s) for a new licence type and all its "
+                            "variants, even if the licence is free. <ul><li>{}</li></ul>".
+                            format('</li><li>'.join(missing_product_variants)))
+
+            raise ValidationError(msg)
+
+        if self.senior_applicable and payment_utils.get_voucher(settings.WL_SENIOR_VOUCHER_CODE) is None:
+            msg = mark_safe("The senior voucher with code={} cannot be found. It must be created before setting a "
+                            "licence type to be senior applicable.<br>"
+                            "Note: the senior voucher code can be changed in the settings of the application."
+                            .format(settings.WL_SENIOR_VOUCHER_CODE))
             raise ValidationError(msg)
 
 
@@ -77,9 +103,16 @@ class WildlifeLicence(Licence):
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     previous_licence = models.ForeignKey('self', blank=True, null=True)
     regions = models.ManyToManyField(Region, blank=False)
+    variants = models.ManyToManyField('Variant', blank=True, through='WildlifeLicenceVariantLink')
 
     def __str__(self):
         return self.reference
+
+    def get_title_with_variants(self):
+        if self.pk is not None and self.variants.exists():
+            return '{} ({})'.format(self.licence_type.name, ' / '.join(self.variants.all().values_list('name', flat=True)))
+        else:
+            return self.licence_type.name
 
     @property
     def reference(self):
@@ -110,9 +143,45 @@ class CommunicationsLogEntry(models.Model):
     documents = models.ManyToManyField(Document, blank=True)
 
     customer = models.ForeignKey(EmailUser, null=True, related_name='customer')
-    officer = models.ForeignKey(EmailUser, null=True, related_name='officer')
+    staff = models.ForeignKey(EmailUser, null=True, related_name='staff')
 
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+
+
+@python_2_unicode_compatible
+class Variant(models.Model):
+    name = models.CharField(max_length=200)
+    product_code = models.SlugField(max_length=64, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
+class VariantGroup(models.Model):
+    name = models.CharField(max_length=50)
+    child = models.ForeignKey('self', null=True, blank=True)
+    variants = models.ManyToManyField(Variant)
+
+    def clean(self):
+        """
+        Guards against putting itself as child
+        :return:
+        """
+        if self.child and self.child.pk == self.pk:
+            raise ValidationError("Can't put yourself as a child")
+
+    def __str__(self):
+        if self.child is None or self.child.pk == self.pk:
+            return self.name
+        else:
+            return '{} > {}'.format(self.name, self.child.__str__())
+
+
+class WildlifeLicenceVariantLink(models.Model):
+    licence = models.ForeignKey(WildlifeLicence)
+    variant = models.ForeignKey(Variant)
+    order = models.IntegerField()
 
 
 @python_2_unicode_compatible

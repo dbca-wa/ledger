@@ -7,7 +7,7 @@ Dear {{ licence.holder.get_full_name }}
 {% block content %}
 This is a reminder that your licence
 
-{{ licence.licence_type.name }} <{{ licence.reference }}>
+{{ licence.get_title_with_variants }} <{{ licence.reference }}>
 
 is due to expire on {{ licence.end_date|date:'d/m/Y' }}.
 
