@@ -3,6 +3,7 @@ import json
 from django.shortcuts import get_object_or_404
 
 from oscar.apps.partner.strategy import Selector
+from oscar.apps.voucher.models import Voucher
 
 from ledger.catalogue.models import Product
 from ledger.payments.invoice.models import Invoice
@@ -105,3 +106,7 @@ def invoke_credit_card_payment(application):
         raise Exception('Application invoice does have a credit payment token')
 
     invoice.make_payment()
+
+
+def get_voucher(voucher_code):
+    return Voucher.objects.filter(code=voucher_code).first()
