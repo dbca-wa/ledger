@@ -1,5 +1,4 @@
 import os
-import json
 
 from django.core.urlresolvers import reverse
 from django.core.files import File
@@ -9,8 +8,7 @@ from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
-    create_random_customer, \
-    is_login_page
+    create_random_customer, is_login_page
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.applications.tests import helpers
 
