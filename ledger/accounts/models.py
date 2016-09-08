@@ -143,6 +143,19 @@ class Address(models.Model):
 
     class Meta:
         verbose_name_plural = 'addresses'
+        unique_together = ('user','hash')
+
+    def validate_unique(self, exclude=None):
+        super(Address, self).validate_unique(exclude)
+        qs = self.__class__.objects.filter(
+            user=self.user,
+            hash=self.generate_hash())
+        if self.id:
+            qs = qs.exclude(id=self.id)
+        if qs.exists():
+            raise exceptions.ValidationError({
+                '__all__': [_("This address is already in your address"
+                              " book")]})
 
     def clean(self):
         # Strip all whitespace
