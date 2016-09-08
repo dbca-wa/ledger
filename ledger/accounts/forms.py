@@ -13,10 +13,10 @@ class FirstTimeForm(forms.Form):
 
 
 class AddressForm(forms.ModelForm):
-    update = forms.BooleanField(required=False,help_text='Check to update other addresses linked to this one.')
+    update = forms.BooleanField(required=False,label='Check this to update all linked profiles.')
     class Meta:
         model = Address
-        fields = ['line1', 'line2', 'line3', 'locality', 'state', 'country', 'postcode','user']
+        fields = ['update','line1', 'line2', 'line3', 'locality', 'state', 'country', 'postcode','user']
         widgets = {'country': CountrySelectWidget(),'user': forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
