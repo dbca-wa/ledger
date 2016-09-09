@@ -130,6 +130,12 @@ class Invoice(models.Model):
 
     # Functions
     # =============================================
+    def save(self,*args,**kwargs):
+        # prevent circular import
+        from ledger.payments.utils import systemid_check
+        self.system = systemid_check(self.system)
+        super(Invoice,self).save(*args,**kwargs)
+
     def make_payment(self):
         ''' Pay this invoice with the token attached to it.
         :return: BpointTransaction
