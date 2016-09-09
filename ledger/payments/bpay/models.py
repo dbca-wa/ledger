@@ -96,7 +96,7 @@ class BpayTransaction(models.Model):
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     type = models.CharField(max_length=3,choices=TRANSACTION_TYPE, help_text='Indicates whether it is a credit or debit item',validators=[MinLengthValidator(3)],)
     cheque_num = models.IntegerField(default=0, help_text='Number of cheques in deposit')
-    crn = models.BigIntegerField(help_text='Customer Referencer Number')
+    crn = models.CharField(max_length=20,help_text='Customer Referencer Number')
     txn_ref = models.CharField(max_length=21, help_text='Transaction Reference Number',validators=[MinLengthValidator(12)])
     service_code = models.CharField(max_length=7, help_text='Unique identification for a service provider realting to a bill.', validators=[MinLengthValidator(1)])
     p_instruction_code = models.CharField(max_length=2,choices=PAYMENT_INSTRUCTION_CODES, help_text='Payment instruction method.',validators=[MinLengthValidator(2)])
