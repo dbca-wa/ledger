@@ -204,7 +204,7 @@ def parseFile(file_path):
 def getfiles(path):
     files = []
     try:
-        files = [[join(path, f),f] for f in listdir(path) if isfile(join(path, f)) and f.endswith('.csv')]
+        files = [[join(path, f),f] for f in listdir(path) if isfile(join(path, f))]
     except Exception as e:
         raise
     return files
