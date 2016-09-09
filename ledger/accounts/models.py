@@ -427,7 +427,7 @@ class Profile(RevisionedMixin):
     user = models.ForeignKey(EmailUser, verbose_name='User')
     name = models.CharField('Display Name', max_length=100, help_text='e.g Personal, Work, University, etc')
     email = models.EmailField('Email')
-    postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT)
+    postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT, related_name='profiles')
     institution = models.CharField('Institution', max_length=200, blank=True, default='', help_text='e.g. Company Name, Tertiary Institution, Government Department, etc')
 
     @property
@@ -541,6 +541,13 @@ class ProfileListener(object):
                 )
                 address.oscar_address = oscar_address
                 address.save()
+        # Clear out unused addresses
+        user = instance.user
+        user_addr = Address.objects.filter(user=user)
+        for u in user_addr:
+            if not u.profiles.all():
+                u.oscar_address.delete()
+                u.delete()
 
 class EmailIdentityListener(object):
     """
