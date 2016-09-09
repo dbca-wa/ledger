@@ -133,7 +133,8 @@ class Invoice(models.Model):
     def save(self,*args,**kwargs):
         # prevent circular import
         from ledger.payments.utils import systemid_check
-        self.system = systemid_check(self.system)
+        if self.pk:
+            self.system = systemid_check(self.system)
         super(Invoice,self).save(*args,**kwargs)
 
     def make_payment(self):
