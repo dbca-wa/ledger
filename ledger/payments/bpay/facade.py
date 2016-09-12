@@ -175,7 +175,7 @@ def validate_file(f):
                 # Get current step value and check if it one step ahead of previous step.
                 current_step = steps.get(checkStepValue(row[0]))
                 # Check for multiple row record types.
-                if current_step == prev_step:
+                if (current_step == prev_step) or (current_step == 7 and prev_step == 1):
                     pass
                 elif (current_step - 1) == prev_step:
                     prev_step = current_step
