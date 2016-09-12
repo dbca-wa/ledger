@@ -115,22 +115,23 @@ def validate_file(f):
     try:
         reader = csv.reader(f)
         for row in reader:
-            # Get current step value and check if it one step ahead of previous step.
-            current_step = steps.get(checkStepValue(row[0]))
-            # Check if it is the transaction row since there may be multiple of them.
-            if current_step == 4 and prev_step == 4:
-                pass
-            elif (current_step - 1) == prev_step:
-                prev_step = current_step
-            else:
-                error = 'An error occured at line {0}: Ensure that the file contains all the record types.'.format(line)
-                logger.error(error)
-                raise Exception(error)
-            # Get current step valid column number
-            if len(row) != step_column_length.get(current_step):
-                error = 'An error occured at line {0}: Check this line and make sure that it meets the required length of {1}.'.format(line, step_column_length.get(current_step))
-                logger.error(error)
-                raise Exception(error)
+            if row:
+                # Get current step value and check if it one step ahead of previous step.
+                current_step = steps.get(checkStepValue(row[0]))
+                # Check if it is the transaction row since there may be multiple of them.
+                if current_step == 4 and prev_step == 4:
+                    pass
+                elif (current_step - 1) == prev_step:
+                    prev_step = current_step
+                else:
+                    error = 'An error occured at line {0}: Ensure that the file contains all the record types.'.format(line)
+                    logger.error(error)
+                    raise Exception(error)
+                # Get current step valid column number
+                if len(row) != step_column_length.get(current_step):
+                    error = 'An error occured at line {0}: Check this line and make sure that it meets the required length of {1}.'.format(line, step_column_length.get(current_step))
+                    logger.error(error)
+                    raise Exception(error)
             line += 1
             
     except:
@@ -153,37 +154,38 @@ def parseFile(file_path):
         # Instanciate a new Bpay File
         bpay_file = BpayFile()
         for row in reader:
-            if checkStepValue(row[0]) == '01':
-                # Format the time to 24h
-                bpay_file.created = validate_datetime(row[3],row[4])
-                bpay_file.file_id = row[5]
-            elif checkStepValue(row[0]) == '02':
-                bpay_file.settled = validate_datetime(row[4],row[5])
-                bpay_file.date_modifier = row[7].replace('/','')
-            elif checkStepValue(row[0]) == '03':
-                bpay_file.credit_items = row[5]
-                bpay_file.credit_amount = check_amount(row[4])
-                bpay_file.cheque_items = row[9]
-                bpay_file.cheque_amount = check_amount(row[8])
-                bpay_file.debit_items = row[13]
-                bpay_file.debit_amount = check_amount(row[12])
-                # Save the file in order to use on the transactions
-                #bpay_file.save()
-            elif checkStepValue(row[0]) == '30':
-                if row[11] not in ['APF','LBX']:
-                    #transaction_list.append(record_txn(row,bpay_file))
-                    transaction_rows.append(row)
-            elif checkStepValue(row[0]) == '49':
-                bpay_file.account_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
-                bpay_file.account_records = row[2].replace('/','')
-            elif checkStepValue(row[0]) == '98':
-                bpay_file.group_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
-                bpay_file.group_accounts = row[2]
-                bpay_file.group_records = row[3].replace('/','')
-            elif checkStepValue(row[0]) == '99':
-                bpay_file.file_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
-                bpay_file.file_groups = row[2]
-                bpay_file.file_records = row[3].replace('/','')
+            if row:
+                if checkStepValue(row[0]) == '01':
+                    # Format the time to 24h
+                    bpay_file.created = validate_datetime(row[3],row[4])
+                    bpay_file.file_id = row[5]
+                elif checkStepValue(row[0]) == '02':
+                    bpay_file.settled = validate_datetime(row[4],row[5])
+                    bpay_file.date_modifier = row[7].replace('/','')
+                elif checkStepValue(row[0]) == '03':
+                    bpay_file.credit_items = row[5]
+                    bpay_file.credit_amount = check_amount(row[4])
+                    bpay_file.cheque_items = row[9]
+                    bpay_file.cheque_amount = check_amount(row[8])
+                    bpay_file.debit_items = row[13]
+                    bpay_file.debit_amount = check_amount(row[12])
+                    # Save the file in order to use on the transactions
+                    #bpay_file.save()
+                elif checkStepValue(row[0]) == '30':
+                    if row[11] not in ['APF','LBX']:
+                        #transaction_list.append(record_txn(row,bpay_file))
+                        transaction_rows.append(row)
+                elif checkStepValue(row[0]) == '49':
+                    bpay_file.account_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
+                    bpay_file.account_records = row[2].replace('/','')
+                elif checkStepValue(row[0]) == '98':
+                    bpay_file.group_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
+                    bpay_file.group_accounts = row[2]
+                    bpay_file.group_records = row[3].replace('/','')
+                elif checkStepValue(row[0]) == '99':
+                    bpay_file.file_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
+                    bpay_file.file_groups = row[2]
+                    bpay_file.file_records = row[3].replace('/','')
 
         with transaction.atomic():
             bpay_file.save()
