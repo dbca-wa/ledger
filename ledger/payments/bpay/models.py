@@ -33,7 +33,7 @@ class BpayFileTrailer(models.Model):
 def update_file_view(sender, instance, **kwargs):
     try:
         cursor = connection.cursor()
-        sql = 'CREATE OR REPLACE VIEW payments_bpaycollection_v AS \
+        sql = 'CREATE OR REPLACE VIEW bpay_bpaycollection_v AS \
                 select date(created), count(*), sum(a.credit_total) as credit_total, \
                 sum(a.cheque_total) as cheque_total,sum(a.debit_total) as debit_total, \
                 (sum(a.credit_total)+sum(a.cheque_total)+sum(a.debit_total)) as total from bpay_bpayfile f\
