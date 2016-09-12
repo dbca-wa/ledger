@@ -1,4 +1,4 @@
-from models import Invoice
+from ledger.payments.invoice.models import Invoice
 from ledger.payments.bpay.crn import getCRN, getICRN
 
 def create_invoice_crn(order_number,amount,crn_string,system):

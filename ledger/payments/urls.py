@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 from rest_framework import routers
-from api import (
+from ledger.payments.api import (
                 BpayTransactionViewSet,
                 BpayCollectionViewSet,
                 InvoiceTransactionViewSet,
@@ -13,11 +13,11 @@ from api import (
                 RegionViewSet
                 )
 
-from bpay.dashboard.app import application as bpay
-from invoice.dashboard.app import application as invoice_dash
-from bpoint.dashboard.app import application as bpoint_dash
-from invoice.views import InvoiceHistoryView
-import views
+from ledger.payments.bpay.dashboard.app import application as bpay
+from ledger.payments.invoice.dashboard.app import application as invoice_dash
+from ledger.payments.bpoint.dashboard.app import application as bpoint_dash
+from ledger.payments.invoice.views import InvoiceHistoryView
+from ledger.payments import views
 # api patterns
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'^bpay/files', BpayFileList)

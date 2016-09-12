@@ -6,7 +6,7 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 from django.contrib.auth.models import Group
-from mixer.backend.django import mixer
+from django_dynamic_fixture import get as get_ddf
 from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser
@@ -84,7 +84,7 @@ def get_or_create_user(email, defaults):
 
 
 def create_random_user():
-    return mixer.blend(EmailUser)
+    return get_ddf(EmailUser)
 
 
 def create_random_customer():

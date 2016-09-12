@@ -1,8 +1,8 @@
-import StringIO
+from six.moves import StringIO
 import csv
 from datetime import timedelta
 from decimal import Decimal as D
-from models import Invoice, CashTransaction
+from ledger.payments.models import Invoice, CashTransaction
 
 def daterange(start,end):
     for n in range(int ((end-start).days) + 1):
