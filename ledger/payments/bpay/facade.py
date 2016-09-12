@@ -1,4 +1,5 @@
 import datetime
+import traceback
 import csv
 import logging
 import pytz
@@ -21,6 +22,61 @@ def get_file(file_name):
     f = open(file_name, 'rt')
     
     return f
+
+def record_grouprec(row,_file):
+    '''
+        Make a new Bpay Group Record
+    '''
+    return BpayGroupRecord(
+        settled = validate_datetime(row[4],row[5]),
+        modifier = row[7].replace('/',''),
+        file = _file
+    )
+
+def record_accounttrailer(row,_file):
+    '''
+        Make a new Bpay Account Trailer Record
+    '''
+    return BpayAccountTrailer(
+        total = '{0}.{1}'.format(row[1][:-2],row[1][-2:]),
+        records = row[2].replace('/',''),
+        file = _file
+    )
+
+def record_grouptrailer(row, _file):
+    '''
+        Make a new Bpay Group Trailer Record
+    '''
+    return BpayGroupTrailer(
+        total = '{0}.{1}'.format(row[1][:-2],row[1][-2:]),
+        accounts = row[2],
+        records = row[3].replace('/',''),
+        file = _file
+    )
+
+def record_filetrailer(row,_file):
+    '''
+        Make a new Bpay File Trailer Record
+    '''
+    return BpayFileTrailer(
+        total = '{0}.{1}'.format(row[1][:-2],row[1][-2:]),
+        groups = row[2],
+        records = row[3].replace('/',''),
+        file = _file
+    )
+def record_accountrec(row,_file):
+    '''
+        Make a new Bpay Account Record
+    '''
+    return BpayAccountRecord(
+        credit_items = row[5],
+        credit_amount = check_amount(row[4]),
+        cheque_items = row[9],
+        cheque_amount = check_amount(row[8]),
+        debit_items = row[13],
+        debit_amount = check_amount(row[12]),
+        file = _file
+    )
 
 def record_txn(row,_file):
     '''
@@ -118,8 +174,8 @@ def validate_file(f):
             if row:
                 # Get current step value and check if it one step ahead of previous step.
                 current_step = steps.get(checkStepValue(row[0]))
-                # Check if it is the transaction row since there may be multiple of them.
-                if current_step == 4 and prev_step == 4:
+                # Check for multiple row record types.
+                if current_step == prev_step:
                     pass
                 elif (current_step - 1) == prev_step:
                     prev_step = current_step
@@ -142,8 +198,10 @@ def parseFile(file_path):
         objects.
     '''
     f = get_file(file_path)
-    transaction_list = []
-    transaction_rows = []
+    transaction_list, group_list, account_list = [], [], []
+    transaction_rows, group_rows, account_rows  = [], [], []
+    accountttrailer_rows, grouptrailer_rows, filetrailer_row = [], [], None
+    accountttrailer_list, grouptrailer_list = [], []
     bpay_file = None
     success = True
     try:
@@ -160,44 +218,52 @@ def parseFile(file_path):
                     bpay_file.created = validate_datetime(row[3],row[4])
                     bpay_file.file_id = row[5]
                 elif checkStepValue(row[0]) == '02':
-                    bpay_file.settled = validate_datetime(row[4],row[5])
-                    bpay_file.date_modifier = row[7].replace('/','')
+                    group_rows.append(row)
                 elif checkStepValue(row[0]) == '03':
-                    bpay_file.credit_items = row[5]
-                    bpay_file.credit_amount = check_amount(row[4])
-                    bpay_file.cheque_items = row[9]
-                    bpay_file.cheque_amount = check_amount(row[8])
-                    bpay_file.debit_items = row[13]
-                    bpay_file.debit_amount = check_amount(row[12])
-                    # Save the file in order to use on the transactions
-                    #bpay_file.save()
+                    account_rows.append(row)
                 elif checkStepValue(row[0]) == '30':
                     if row[11] not in ['APF','LBX']:
                         #transaction_list.append(record_txn(row,bpay_file))
                         transaction_rows.append(row)
                 elif checkStepValue(row[0]) == '49':
-                    bpay_file.account_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
-                    bpay_file.account_records = row[2].replace('/','')
+                    accountttrailer_rows.append(row)
                 elif checkStepValue(row[0]) == '98':
-                    bpay_file.group_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
-                    bpay_file.group_accounts = row[2]
-                    bpay_file.group_records = row[3].replace('/','')
+                    grouptrailer_rows.append(row)
                 elif checkStepValue(row[0]) == '99':
-                    bpay_file.file_total = '{0}.{1}'.format(row[1][:-2],row[1][-2:])
-                    bpay_file.file_groups = row[2]
-                    bpay_file.file_records = row[3].replace('/','')
+                    filetrailer_row = row
 
         with transaction.atomic():
             bpay_file.save()
+            # Create Group Records
+            for row in group_rows:
+                group_list.append(record_grouprec(row,bpay_file))
+            # Create Account Records
+            for row in account_rows:
+                account_list.append(record_accountrec(row,bpay_file))
+            # Create transactions
             for row in transaction_rows:
                 transaction_list.append(record_txn(row,bpay_file))
+            # Create Account Trailer Records
+            for row in accountttrailer_rows:
+                accountttrailer_list.append(record_accounttrailer(row,bpay_file))
+            # Create Group Trailer Records
+            for row in grouptrailer_rows:
+                grouptrailer_list.append(record_grouptrailer(row,bpay_file))
+            # Store Records
+            BpayGroupRecord.objects.bulk_create(group_list)
+            BpayAccountRecord.objects.bulk_create(account_list)
             BpayTransaction.objects.bulk_create(transaction_list)
+            BpayAccountTrailer.objects.bulk_create(accountttrailer_list)
+            BpayGroupTrailer.objects.bulk_create(grouptrailer_list)
+            # Create File Trailer Record
+            record_filetrailer(filetrailer_row,bpay_file).save()
 
         return success,bpay_file,''
     except IntegrityError as e:
         success = False
         return success,None,e.message
     except Exception as e:
+        traceback.print_exc()
         success = False
         return success,None,e.message
     finally:
