@@ -1,5 +1,7 @@
 from ledger.settings_base import *
 
+ROOT_URLCONF = 'wildlifelicensing.urls'
+
 INSTALLED_APPS += [
     'bootstrap3',
     'wildlifelicensing.apps.dashboard',
