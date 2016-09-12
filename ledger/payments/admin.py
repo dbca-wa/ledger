@@ -43,7 +43,6 @@ class BpayFileAdmin(admin.ModelAdmin):
         #'creation_date',
         #'creation_time',
         'created',
-        'settled',
     )
 
 @admin.register(models.BpointTransaction)
