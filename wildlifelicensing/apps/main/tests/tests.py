@@ -13,8 +13,6 @@ TEST_ID_PATH = TestData.TEST_ID_PATH
 
 
 class AccountsTestCase(TestCase):
-    fixtures = ['countries.json']
-
     def setUp(self):
         self.customer = get_or_create_default_customer()
 

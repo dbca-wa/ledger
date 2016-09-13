@@ -249,6 +249,10 @@ LOGGING = {
         },
     }
 }
+
+# django-dynamic-fields test generation settings
+DDF_FILL_NULLABLE_FIELDS = False
+
 # Ledger settings
 CMS_URL=env('CMS_URL',None)
 LEDGER_USER=env('LEDGER_USER',None)
