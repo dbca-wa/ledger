@@ -166,11 +166,13 @@ class ApplicationEntryTestCase(TestCase):
         self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # create profiles
-        address1 = Address.objects.create(line1='1 Test Street', locality='Test Suburb', state='WA', postcode='0001')
+        address1 = Address.objects.create(user=self.customer, line1='1 Test Street', locality='Test Suburb', 
+                                          state='WA', postcode='0001')
         profile1 = Profile.objects.create(user=self.customer, name='Test Profile', email='test@testplace.net.au',
                                           institution='Test Institution', postal_address=address1)
 
-        address2 = Address.objects.create(line1='2 Test Street', locality='Test Suburb', state='WA', postcode='0001')
+        address2 = Address.objects.create(user=self.customer, line1='2 Test Street', locality='Test Suburb', 
+                                          state='WA', postcode='0001')
         profile2 = Profile.objects.create(user=self.customer, name='Test Profile 2', email='test@testplace.net.au',
                                           institution='Test Institution', postal_address=address2)
 
