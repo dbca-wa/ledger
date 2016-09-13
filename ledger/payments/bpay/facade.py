@@ -279,6 +279,7 @@ def getfiles(path):
 
 def generateParserSummary(files):
     valid = files['valid']
+    other = files['other']
     failed = files['failed']
 
     output = cStringIO.StringIO()
@@ -294,6 +295,10 @@ def generateParserSummary(files):
     for n,r in failed:
         output.write('  File Name: {}\n'.format(n))
         output.write('    Reason: {}\n'.format(r))
+    # Other Files
+    output.write('Other Files\n')
+    for n,t in other:
+        output.write('  File Name: {}\n'.format(n))
 
     contents = output.getvalue()
     output.close()
@@ -314,18 +319,23 @@ def bpayParser(path):
     files = getfiles(path)
     valid_files = []
     failed_files = []
+    other_files = []
     try:
         if settings.NOTIFICATION_EMAIL:
             for p,n in files:
                 status,bfile,reason = parseFile(p)
                 if bfile is not None:
-                    valid_files.append([n,bfile])
+                    if bfile.transactions.all():
+                        valid_files.append([n,bfile])
+                    else:
+                        other_files.append([n,bfile])
                 else:
                     failed_files.append([n,reason])
 
             summary = generateParserSummary({
                 'valid': valid_files,
-                'failed': failed_files
+                'failed': failed_files,
+                'other': other_files
             })
             sendEmail(summary)
         else:

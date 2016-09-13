@@ -424,7 +424,7 @@ class RevisionedMixin(models.Model):
 
 @python_2_unicode_compatible
 class Profile(RevisionedMixin):
-    user = models.ForeignKey(EmailUser, verbose_name='User')
+    user = models.ForeignKey(EmailUser, verbose_name='User', related_name='profiles')
     name = models.CharField('Display Name', max_length=100, help_text='e.g Personal, Work, University, etc')
     email = models.EmailField('Email')
     postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT, related_name='profiles')
