@@ -119,7 +119,7 @@ class ApplicationEntryTestCase(TestCase):
         """
         self.client.login(self.customer.email)
 
-        original_profile_count = self.customer.profile_set.count()
+        original_profile_count = self.customer.profiles.count()
 
         self.client.get(reverse('wl_applications:new_application'))
         self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
@@ -151,10 +151,10 @@ class ApplicationEntryTestCase(TestCase):
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         # check that a new profile was created
-        self.assertEqual(self.customer.profile_set.count(), original_profile_count + 1)
+        self.assertEqual(self.customer.profiles.count(), original_profile_count + 1)
 
         # check the created profile has been set in the application
-        self.assertEquals(self.customer.profile_set.first(), Application.objects.first().applicant_profile)
+        self.assertEquals(self.customer.profiles.first(), Application.objects.first().applicant_profile)
 
     def test_create_select_profile_select(self):
         """Testing that a user can display the create / select profile page and select a profile

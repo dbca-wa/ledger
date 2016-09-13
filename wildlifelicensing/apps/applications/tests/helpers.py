@@ -83,7 +83,7 @@ class HelpersTest(TestCase):
         profile = create_profile(user)
         self.assertIsNotNone(profile)
         self.assertEquals(user, profile.user)
-        self.assertEquals(profile, user.profile_set.first())
+        self.assertEquals(profile, user.profiles.first())
 
     def test_create_application(self):
         application = create_application()
