@@ -84,7 +84,7 @@ def get_or_create_user(email, defaults):
 
 
 def create_random_user():
-    return get_ddf(EmailUser)
+    return get_ddf(EmailUser, dob='1970-01-01')
 
 
 def create_random_customer():

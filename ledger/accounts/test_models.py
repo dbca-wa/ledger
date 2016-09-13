@@ -7,7 +7,7 @@ class EmailUserTest(TestCase):
 
     def setUp(self):
         super(EmailUserTest, self).setUp()
-        self.user = get_ddf(EmailUser)
+        self.user = get_ddf(EmailUser, dob='1970-01-01')
 
     def test_str(self):
         """Test the EmailUser __str__ method returns email
