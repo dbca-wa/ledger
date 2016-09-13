@@ -591,7 +591,7 @@ class AddressListener(object):
             setattr(instance, "_original_instance", original_instance)
             if original_instance.oscar_address is None:
                 try:
-                    check_address = UserAddress.objects.get(hash=check_address.generate_hash())
+                    check_address = UserAddress.objects.get(hash=check_address.generate_hash(),user=check_address.user)
                 except UserAddress.DoesNotExist:
                     check_address.save()
                 instance.oscar_address = check_address
@@ -599,7 +599,7 @@ class AddressListener(object):
             delattr(instance, "_original_instance")
         else:
             try:
-                check_address = UserAddress.objects.get(hash=check_address.generate_hash())
+                check_address = UserAddress.objects.get(hash=check_address.generate_hash(),user=check_address.user)
             except UserAddress.DoesNotExist:
                 check_address.save()
             instance.oscar_address = check_address
