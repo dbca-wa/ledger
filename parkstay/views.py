@@ -1,8 +1,8 @@
 
 from django.shortcuts import render
 from rest_framework import viewsets
-from ledger.parkstay.serialisers import CampsiteBookingSerialiser, CampsiteSerialiser
-from ledger.parkstay.models import CampsiteBooking, Campsite, Booking
+from parkstay.serialisers import CampsiteBookingSerialiser, CampsiteSerialiser
+from parkstay.models import CampsiteBooking, Campsite, Booking
 from django_ical.views import ICalFeed
 
 
