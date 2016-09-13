@@ -363,7 +363,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
 
         kwargs['application'] = application
 
-        profile_exists = application.applicant.profile_set.count() > 0
+        profile_exists = application.applicant.profiles.count() > 0
 
         if application.applicant_profile is not None:
             kwargs['profile_selection_form'] = ProfileSelectionForm(user=application.applicant,

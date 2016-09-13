@@ -4,8 +4,8 @@ from django.utils.translation import ugettext_lazy as _
 from oscar.apps.payment.exceptions import UnableToTakePayment, InvalidGatewayRequestError
 from django.core.exceptions import ValidationError
 
-from models import BpointTransaction
-from gateway import Gateway
+from ledger.payments.bpoint.models import BpointTransaction
+from ledger.payments.bpoint.gateway import Gateway
 from ledger.payments.bpoint.BPOINT.API import CardDetails
 
 from ledger.payments.bpoint import settings as bpoint_settings
@@ -134,7 +134,7 @@ class Facade(object):
         try:
             res = self.gateway.request_new_token(card_details,reference)
         except Exception as e:
-            print str(e)
+            print(str(e))
             raise
 
         # Check if the transaction was successful

@@ -73,7 +73,7 @@ def convert_documents_to_url(data, document_queryset, suffix):
         for item in data:
             convert_documents_to_url(item, document_queryset, '')
     else:
-        for item, value in data.iteritems():
+        for item, value in data.items():
             if isinstance(value, list):
                 for rep in xrange(0, len(value)):
                     convert_documents_to_url(value[rep], document_queryset, '{}-{}'.format(suffix, rep))

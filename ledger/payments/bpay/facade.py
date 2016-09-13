@@ -3,15 +3,15 @@ import traceback
 import csv
 import logging
 import pytz
-import cStringIO
+from six.moves import StringIO
 from os import listdir
 from os.path import isfile, join
 from decimal import Decimal
 from django.db import IntegrityError, transaction
 from django.core.mail import EmailMessage
 from django.conf import settings
-from models import *
-from crn import getCRN
+from ledger.payments.bpay.models import *
+from ledger.payments.bpay.crn import getCRN
 
 logging.info('Starting logger for BPAY.')
 logger = logging.getLogger(__name__)
@@ -282,7 +282,7 @@ def generateParserSummary(files):
     other = files['other']
     failed = files['failed']
 
-    output = cStringIO.StringIO()
+    output = StringIO()
     output.write('Successful Files\n')
     # Successful Files
     for n,t in valid:

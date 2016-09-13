@@ -208,7 +208,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for profile in customer.profile_set.all|dictsort:'pk' %}
+                                {% for profile in customer.profiles.all|dictsort:'pk' %}
                                     <tr>
                                         <td>{{ profile.name }}</td>
                                         <td>{{ profile.email }}</td>

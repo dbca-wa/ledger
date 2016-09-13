@@ -2,7 +2,7 @@ import re
 
 from django.conf import settings
 from django.core import mail
-from django_hosts.resolvers import reverse
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test import Client
 from social.apps.django_app.default.models import UserSocialAuth
@@ -31,10 +31,10 @@ class AccountsTestCase(TestCase):
         # check user is not logged in at this point
         self.assertNotIn('_auth_user_id', self.client.session)
 
-        response = self.client.post(reverse('social:complete', kwargs={'backend': "email"}, host='ledger'), {'email': REGISTERED_USER_EMAIL}, follow=True)
+        response = self.client.post(reverse('social:complete', kwargs={'backend': "email"}), {'email': REGISTERED_USER_EMAIL}, follow=True)
 
         # check response status is 302 - REDIRECT and redirects to validation complete
-        # self.assertRedirects(response, reverse('home', host='ledger'), status_code=302, target_status_code=200)
+        # self.assertRedirects(response, reverse('home'), status_code=302, target_status_code=200)
         self.assertEqual(200, response.status_code)
 
         # check user is not logged in at this point
@@ -56,7 +56,7 @@ class AccountsTestCase(TestCase):
         response = self.client.get(login_verification_url, follow=True)
 
         # check response status is 302 - REDIRECT and redirects to validation complete
-        # self.assertRedirects(response, reverse('accounts:done', host='ledger'), status_code=302, target_status_code=200)
+        # self.assertRedirects(response, reverse('accounts:done'), status_code=302, target_status_code=200)
 
         # check user is logged in
         # self.assertIn('_auth_user_id', self.client.session)
@@ -68,7 +68,7 @@ class AccountsTestCase(TestCase):
         """Testing that a user can logout"""
         self.client.force_login(EmailUser.objects.first(), backend=settings.AUTHENTICATION_BACKENDS[0])
 
-        response = self.client.get(reverse('accounts:logout', host='ledger'))
+        response = self.client.get(reverse('accounts:logout'))
 
         # check response status is 302 - REDIRECT
         self.assertRedirects(response, settings.SOCIAL_AUTH_LOGIN_REDIRECT_URL, status_code=302, target_status_code=200)
@@ -84,10 +84,10 @@ class AccountsTestCase(TestCase):
         # # check user is not logged in at this point
         # self.assertNotIn('_auth_user_id', self.client.session)
         #
-        # response = self.client.post(reverse('social:complete', kwargs={'backend': "email"}, host='ledger'), {'email': NEW_USER_EMAIL})
+        # response = self.client.post(reverse('social:complete', kwargs={'backend': "email"}), {'email': NEW_USER_EMAIL})
         #
         # # check response status is 302 - REDIRECT and redirects to validation complete
-        # # self.assertRedirects(response, reverse('accounts:validation_sent', host='ledger'), status_code=302, target_status_code=200)
+        # # self.assertRedirects(response, reverse('accounts:validation_sent'), status_code=302, target_status_code=200)
         #
         # # check user is not logged in at this point
         # self.assertNotIn('_auth_user_id', self.client.session)
@@ -108,7 +108,7 @@ class AccountsTestCase(TestCase):
         # response = self.client.get(login_verification_url, follow=True)
 
         # check response status is 302 - REDIRECT and redirects to validation complete
-        #self.assertRedirects(response, reverse('accounts:customer_create', host='ledger'), status_code=302, target_status_code=200)
+        #self.assertRedirects(response, reverse('accounts:customer_create'), status_code=302, target_status_code=200)
 
         # check user is logged in
         #self.assertIn('_auth_user_id', self.client.session)

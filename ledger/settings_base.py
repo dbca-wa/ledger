@@ -16,12 +16,6 @@ CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
     ALLOWED_HOSTS = env('ALLOWED_HOSTS', [])
-ROOT_URLCONF = 'ledger.urls'
-ROOT_HOSTCONF = 'ledger.hosts'
-DEFAULT_HOST = env('DEFAULT_HOST', 'ledger')
-PARENT_HOST = env('PARENT_HOST', 'localhost')
-HOST_PORT = env('HOST_PORT', '8000')
-HOST_SCHEME = env('HOST_SCHEME', 'https')
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -34,8 +28,6 @@ INSTALLED_APPS = [
     'django.contrib.flatpages',
     'social.apps.django_app.default',
     'django_extensions',
-    'django_hosts',
-    'bootstrap3',
     'reversion',
     'widget_tweaks',
     'django_countries',
@@ -57,20 +49,9 @@ INSTALLED_APPS = [
     'ledger.payments.cash',
     'ledger.payments.invoice',
     'ledger.taxonomy',
-    'wildlifelicensing.apps.dashboard',
-    'wildlifelicensing.apps.main',
-    'wildlifelicensing.apps.applications',
-    'wildlifelicensing.apps.emails',
-    'wildlifelicensing.apps.returns',
-    'wildlifelicensing.apps.customer_management',
-    'wildlifelicensing.apps.reports',
-    'wildlifelicensing.apps.payments'
 ]
 
-SITE_ID = 1
-SITE_URL = env('SITE_URL', 'http://localhost:8000')
 MIDDLEWARE_CLASSES = [
-    'django_hosts.middleware.HostsRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -84,7 +65,6 @@ MIDDLEWARE_CLASSES = [
     'ledger.middleware.FirstTimeNagScreenMiddleware',
     'oscar.apps.basket.middleware.BasketMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
-    'django_hosts.middleware.HostsResponseMiddleware',
 ]
 
 # Authentication settings
@@ -131,11 +111,7 @@ EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
-WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wildlifelicensing@dpaw.wa.gov.au')
 
-HERBIE_SPECIES_WFS_URL = env('HERBIE_SPECIES_WFS_URL',
-                             'https://kmi.dpaw.wa.gov.au/geoserver/ows?service=wfs&version=1.1.0&'
-                             'request=GetFeature&typeNames=public:herbie_hbvspecies_public&outputFormat=application/json')
 
 TEMPLATES = [
     {
@@ -143,7 +119,6 @@ TEMPLATES = [
         'DIRS': [
             os.path.join(PROJECT_DIR, 'templates'),
             OSCAR_MAIN_TEMPLATE_DIR,
-            os.path.join(BASE_DIR, 'wildlifelicensing', 'templates'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -232,12 +207,6 @@ if not os.path.exists(os.path.join(BASE_DIR, 'media')):
 MEDIA_ROOT = env('MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
 MEDIA_URL = '/media/'
 
-CRON_CLASSES = [
-    'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
-    'wildlifelicensing.apps.applications.cron.AssessmentRemindersCronJob',
-    'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
-]
-
 # Logging settings
 # Ensure that the logs directory exists:
 if not os.path.exists(os.path.join(BASE_DIR, 'logs')):
@@ -280,6 +249,10 @@ LOGGING = {
         },
     }
 }
+
+# django-dynamic-fields test generation settings
+DDF_FILL_NULLABLE_FIELDS = False
+
 # Ledger settings
 CMS_URL=env('CMS_URL',None)
 LEDGER_USER=env('LEDGER_USER',None)
@@ -318,6 +291,3 @@ OSCAR_DASHBOARD_NAVIGATION.append(
         ]
     }
 )
-# WL specific
-WL_PAYMENT_SYSTEM_ID = env('WL_PAYMENT_SYSTEM_ID', 'S369')
-WL_SENIOR_VOUCHER_CODE = env('WL_SENIOR_VOUCHER_CODE', 'WL_SENIOR_VOUCHER')
