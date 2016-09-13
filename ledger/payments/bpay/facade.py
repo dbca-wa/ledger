@@ -3,7 +3,7 @@ import traceback
 import csv
 import logging
 import pytz
-from six.moves import cStringIO
+from six.moves import StringIO
 from os import listdir
 from os.path import isfile, join
 from decimal import Decimal
@@ -282,7 +282,7 @@ def generateParserSummary(files):
     other = files['other']
     failed = files['failed']
 
-    output = cStringIO.StringIO()
+    output = StringIO()
     output.write('Successful Files\n')
     # Successful Files
     for n,t in valid:

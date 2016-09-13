@@ -16,7 +16,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
     items = []
     date_format = '%A %d/%m/%y'
     if invoices:
-        strIO = StringIO.StringIO()
+        strIO = StringIO()
         fieldnames = ['Account Code', 'Day']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
@@ -228,7 +228,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
     strIO = None
     invoices = Invoice.objects.filter(system=system)
     if invoices:
-        strIO = StringIO.StringIO()
+        strIO = StringIO()
         fieldnames = ['Created', 'Payment Method', 'Transaction Type', 'Amount', 'Approved', 'Source', 'Product Names',
                       'Product Codes']
         writer = csv.DictWriter(strIO, fieldnames=fieldnames)
