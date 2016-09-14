@@ -9,5 +9,7 @@ router = routers.DefaultRouter()
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^campsites/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
+    url(r'^api/campsites/$', views.get_campsite_bookings, name='get_campsite_bookings') 
 ] + ledger_patterns
 
