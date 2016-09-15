@@ -7,7 +7,7 @@ INSTALLED_APPS += [
 ]
 
 # maximum number of days allowed for a booking
-PS_MAX_BOOKING_LENGTH = 30
+PS_MAX_BOOKING_LENGTH = 90
 
 WSGI_APPLICATION = 'parkstay.wsgi.application'
 

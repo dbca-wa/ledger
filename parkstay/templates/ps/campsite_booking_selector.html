@@ -118,15 +118,15 @@ table tbody tr:nth-child(2n):hover > td.available {
             format: 'dd/mm/yyyy',
             onRender: function (date) {
                 // disallow start dates before today
-                //return date.valueOf() < now.valueOf() ? 'disabled': '';
-                return '';
+                return date.valueOf() < now.valueOf() ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
-            if (ev.date.valueOf() > departureData.date.valueOf()) {
+            if (ev.date.valueOf() >= departureData.date.valueOf()) {
                 var newDate = new Date(ev.date);
                 newDate.setDate(newDate.getDate()+1);
                 departureData.update(newDate);
+                departureEl.trigger('changeDate');
             }
             arrivalData.hide();
             sitesCal.arrivalDate = moment(arrivalData.date);
@@ -156,8 +156,8 @@ table tbody tr:nth-child(2n):hover > td.available {
         var sitesCal = new Vue({
             el: '#sites-cal',
             data: {
-                arrivalDate: moment(),
-                departureDate: moment().add(5, 'days'),
+                arrivalDate: moment(now),
+                departureDate: moment(now).add(5, 'days'),
                 days: 5,
                 adults: 1,
                 children: 0,
