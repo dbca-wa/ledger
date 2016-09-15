@@ -2,6 +2,7 @@
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.base import View, TemplateView
+from django.conf import settings
 
 from parkstay.serialisers import CampsiteBookingSerialiser, CampsiteSerialiser
 from parkstay.models import Campground, CampsiteBooking, Campsite, CampsiteRate, Booking
@@ -24,7 +25,11 @@ def get_campsite_bookings(request):
     ground = Campground.objects.get(pk=request.GET['ground_id'])
     start_date = datetime.strptime(request.GET['arrival'], '%Y/%m/%d').date()
     end_date = datetime.strptime(request.GET['departure'], '%Y/%m/%d').date()
+    
     length = max(0, (end_date-start_date).days)
+    if length > settings.PS_MAX_BOOKING_LENGTH:
+        length = settings.PS_MAX_BOOKING_LENGTH
+        end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
     
     bookings_qs =   CampsiteBooking.objects.filter(
                         campsite__campground=ground, 
@@ -39,7 +44,7 @@ def get_campsite_bookings(request):
     bookings_map = {}
 
     result = {
-        'arrival': start_date,
+        'arrival': start_date.strftime('%Y/%m/%d'),
         'days': length,
         'adults': 1,
         'children': 0,
