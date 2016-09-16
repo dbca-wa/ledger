@@ -110,8 +110,29 @@ table tbody tr:nth-child(2n):hover > td.available {
     <script type="text/javascript">
     //$(function() {
 
+        var debounce = function (func, wait, immediate) {
+            // Returns a function, that, as long as it continues to be invoked, will not
+            // be triggered. The function will be called after it stops being called for
+            // N milliseconds. If `immediate` is passed, trigger the function on the
+            // leading edge, instead of the trailing.
+            'use strict';
+            var timeout;
+            return function () {
+                var context = this;
+                var args = arguments;
+                var later = function () {
+                    timeout = null;
+                    if (!immediate) func.apply(context, args);
+                };
+                var callNow = immediate && !timeout;
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+                if (callNow) func.apply(context, args);
+            }
+        }
+
         var nowTemp = new Date();
-        var now = new Date(nowTemp.getFullYear(), nowTemp.getMonth(), nowTemp.getDate(), 0, 0, 0, 0);
+        var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
         var arrivalEl = $('#date-arrival');
         var arrivalData = arrivalEl.fdatepicker({
@@ -129,7 +150,9 @@ table tbody tr:nth-child(2n):hover > td.available {
                 departureEl.trigger('changeDate');
             }
             arrivalData.hide();
-            sitesCal.arrivalDate = moment(arrivalData.date);
+            sitesCal.arrivalDate = moment.utc(arrivalData.date);
+            sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
+            sitesCal.sites = [];
             sitesCal.update();
         }).data('datepicker');
 
@@ -142,7 +165,9 @@ table tbody tr:nth-child(2n):hover > td.available {
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
             departureData.hide();
-            sitesCal.departureDate = moment(departureData.date);
+            sitesCal.departureDate = moment.utc(departureData.date);
+            sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
+            sitesCal.sites = [];
             sitesCal.update();
         }).data('datepicker');
 
@@ -156,8 +181,8 @@ table tbody tr:nth-child(2n):hover > td.available {
         var sitesCal = new Vue({
             el: '#sites-cal',
             data: {
-                arrivalDate: moment(now),
-                departureDate: moment(now).add(5, 'days'),
+                arrivalDate: moment.utc(now),
+                departureDate: moment.utc(now).add(5, 'days'),
                 days: 5,
                 adults: 1,
                 children: 0,
@@ -167,24 +192,26 @@ table tbody tr:nth-child(2n):hover > td.available {
             },
             methods: {
                 getDateString: function (date, offset) {
-                    return moment(date).add(offset, 'days').format('ddd MMM D');
+                    return moment.utc(date).add(offset, 'days').format('ddd MMM D');
                 },
                 update: function() {
                     var vm = this;
-                    var url = '{% url 'get_campsite_bookings' %}?'+$.param({
-                        ground_id: 32,
-                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                        departure: moment(vm.departureDate).format('YYYY/MM/DD')
-                    });
-                    console.log('AJAX '+url)
-                    $.ajax({
-                        url: url,
-                        dataType: 'json',
-                        success: function(data, stat, xhr) {
-                            vm.days = data.days;
-                            vm.sites = data.sites;
-                        }
-                    });
+                    debounce(function() {
+                        var url = '{% url 'get_campsite_bookings' %}?'+$.param({
+                            ground_id: 32,
+                            arrival: moment.utc(vm.arrivalDate).format('YYYY/MM/DD'),
+                            departure: moment.utc(vm.departureDate).format('YYYY/MM/DD')
+                        });
+                        console.log('AJAX '+url)
+                        $.ajax({
+                            url: url,
+                            dataType: 'json',
+                            success: function(data, stat, xhr) {
+                                vm.days = data.days;
+                                vm.sites = data.sites;
+                            }
+                        });
+                    }, 500)();
                 }
             },
             ready: function () {
