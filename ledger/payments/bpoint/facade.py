@@ -181,7 +181,7 @@ class Facade(object):
         )
         return token
 
-    def checkout_with_token(self,user,reference,bankcard=None,store_card=False):
+    def create_token(self,user,reference,bankcard=None,store_card=False):
         ''' Create a token on checkout
             Used to create a token and store it against a
             user when checking out

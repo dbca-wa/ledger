@@ -422,7 +422,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                     else:
                         # Store card if user wants to store card
                         if self.checkout_session.store_card():
-                            resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'],True)
+                            resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'],True)
                             if self.checkout_session.invoice_association():
                                 invoice.token = resp
                                 invoice.save()
@@ -443,8 +443,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 self.add_payment_source(source)
                                 self.add_payment_event('Paid', total.incl_tax)
                         else:
-                            resp = bpoint_facade.checkout_with_token(user,invoice.reference,kwargs['bankcard'])
                             if self.checkout_session.invoice_association():
+                                resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'])
                                 invoice.token = resp
                                 invoice.save()
                             else:
