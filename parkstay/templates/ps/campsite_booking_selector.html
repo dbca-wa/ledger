@@ -14,9 +14,10 @@
 
 th.site {
     width: 30%;
+    min-width: 200px;
 }
 th.book {
-    min-width: 120px;
+    min-width: 100px;
 }
 th.date {
     min-width: 60px;
@@ -90,7 +91,7 @@ table tbody tr:nth-child(2n):hover > td.available {
                 </thead>
                 <tbody>
                     <tr v-for="site in sites">
-                        <td>{{ site.name }}</td>
+                        <td>{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span></td>
                         <td class="book">
                             <button v-if="site.price" class="button"><small>Book now</small><br/>{{ site.price }}</button>
                             <button v-else class="button secondary disabled" disabled>Change dates</button>
@@ -139,7 +140,8 @@ table tbody tr:nth-child(2n):hover > td.available {
             format: 'dd/mm/yyyy',
             onRender: function (date) {
                 // disallow start dates before today
-                return date.valueOf() < now.valueOf() ? 'disabled': '';
+                //return date.valueOf() < now.valueOf() ? 'disabled': '';
+                return '';
             }
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
@@ -188,6 +190,7 @@ table tbody tr:nth-child(2n):hover > td.available {
                 children: 0,
                 maxAdults: 30,
                 maxChildren: 30,
+                classes: {},
                 sites: []
             },
             methods: {
@@ -197,7 +200,7 @@ table tbody tr:nth-child(2n):hover > td.available {
                 update: function() {
                     var vm = this;
                     debounce(function() {
-                        var url = '{% url 'get_campsite_bookings' %}?'+$.param({
+                        var url = '{% url 'get_campsite_class_bookings' %}?'+$.param({
                             ground_id: 32,
                             arrival: moment.utc(vm.arrivalDate).format('YYYY/MM/DD'),
                             departure: moment.utc(vm.departureDate).format('YYYY/MM/DD')
@@ -208,6 +211,7 @@ table tbody tr:nth-child(2n):hover > td.available {
                             dataType: 'json',
                             success: function(data, stat, xhr) {
                                 vm.days = data.days;
+                                vm.classes = data.classes;
                                 vm.sites = data.sites;
                             }
                         });
