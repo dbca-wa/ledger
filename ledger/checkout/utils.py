@@ -69,11 +69,11 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     # Checkout using Token
     # ===========================
-    def checkout_using_token(self, status):
-        self._set('ledger','checkout_by_token',status)
+    def checkout_using_token(self, token):
+        self._set('ledger','checkout_token',token)
 
     def checkoutWithToken(self):
-        return self._get('ledger','checkout_by_token')
+        return self._get('ledger','checkout_token')
 
     # Associate token to invoice
     # ===========================

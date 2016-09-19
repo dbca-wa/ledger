@@ -1,5 +1,6 @@
 import datetime
 import decimal
+from django.db import IntegrityError
 from django.utils.translation import ugettext_lazy as _
 from oscar.apps.payment.exceptions import UnableToTakePayment, InvalidGatewayRequestError
 from django.core.exceptions import ValidationError
@@ -134,7 +135,6 @@ class Facade(object):
         try:
             res = self.gateway.request_new_token(card_details,reference)
         except Exception as e:
-            print(str(e))
             raise
 
         # Check if the transaction was successful
@@ -181,20 +181,25 @@ class Facade(object):
         )
         return token
 
-    def checkout_with_token(self,user,reference,bankcard=None,store_card=False):
+    def create_token(self,user,reference,bankcard=None,store_card=False):
         ''' Create a token on checkout
             Used to create a token and store it against a
             user when checking out
         '''
         resp =  self.request_token(reference,bankcard)
         if store_card:
-            return self.store_token(
-                user,
-                resp.dvtoken,
-                bankcard.obfuscated_number,
-                resp.card_details.expiry_date,
-                resp.card_type
-            )
+            try:
+                self.store_token(
+                    user,
+                    resp.dvtoken,
+                    bankcard.obfuscated_number,
+                    resp.card_details.expiry_date,
+                    resp.card_type
+                )
+            except IntegrityError as e:
+                if 'unique constraint' in e.message:
+                    pass
+            return '{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date)
         else:
             return '{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date)
 

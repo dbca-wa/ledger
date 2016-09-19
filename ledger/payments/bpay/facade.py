@@ -284,22 +284,22 @@ def generateParserSummary(files):
     processed = files['processed']
 
     output = StringIO()
-    output.write('Successful Files:\n')
+    output.write('Successful Files with transactions:\n')
     # Successful Files
     for n,t in valid:
         output.write('  File Name: {}\n'.format(n))
         output.write('    Transactions:\n')
         for trans in t.transactions.all():
             output.write('      CRN: {}\n'.format(trans.crn))
+    # Successful Files without transactions
+    output.write('\nSuccessful Files without transactions:\n')
+    for n,t in other:
+        output.write('  File Name: {}\n'.format(n))
     # Failed files
     output.write('\nFailed Files:\n')
     for n,r in failed:
         output.write('  File Name: {}\n'.format(n))
         output.write('    Reason: {}\n'.format(r))
-    # Other Files
-    output.write('\nOther Files:\n')
-    for n,t in other:
-        output.write('  File Name: {}\n'.format(n))
     # Already processed Files
     output.write('\nFiles previously processed:\n')
     for n,t in processed:
