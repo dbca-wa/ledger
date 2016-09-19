@@ -91,10 +91,10 @@ class BpayTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     
 class BpayFileSerializer(serializers.ModelSerializer):
-    date_modifier = serializers.SerializerMethodField()
+    #date_modifier = serializers.SerializerMethodField()
     transactions = BpayTransactionSerializer(many=True)
     created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
-    settled = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    #settled = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = BpayFile
         fields = (
@@ -102,22 +102,22 @@ class BpayFileSerializer(serializers.ModelSerializer):
             "inserted",
             "created",
             "file_id",
-            "settled",
-            "date_modifier",
-            "credit_items",
-            "credit_amount",
-            "cheque_items",
-            "cheque_amount",
-            "debit_amount",
-            "debit_items",
-            "account_total",
-            "account_records",
-            "group_total",
-            "group_accounts",
-            "group_records",
-            "file_total",
-            "file_groups",
-            "file_records",
+            #"settled",
+            #"date_modifier",
+            #"credit_items",
+            #"credit_amount",
+            #"cheque_items",
+            #"cheque_amount",
+            #"debit_amount",
+            #"debit_items",
+            #"account_total",
+            #"account_records",
+            #"group_total",
+            #"group_accounts",
+            #"group_records",
+            #"file_total",
+            #"file_groups",
+            #"file_records",
             "transactions"
         )
         
@@ -574,6 +574,10 @@ class CheckoutSerializer(serializers.Serializer):
     products = CheckoutProductSerializer(many=True)
     vouchers = VoucherSerializer(many=True,required=False)
 
+    def validate(self, data):
+        if data['proxy'] and not data['basket_owner']:
+            raise serializers.ValidationError('A proxy payment requires the basket_owner to be set.')
+        return data
     def validate_template(self, value):
         try:
             get_template(value)
