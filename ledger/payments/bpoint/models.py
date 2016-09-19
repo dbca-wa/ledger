@@ -88,6 +88,9 @@ class BpointToken(models.Model):
     expiry_date = models.DateField()
     card_type = models.CharField(max_length=2, choices=CARD_TYPES, blank=True, null=True)
 
+    class Meta:
+        unique_together = ('user', 'masked_card','expiry_date','card_type')
+
     @property
     def last_digits(self):
         return self.masked_card[-4:]
