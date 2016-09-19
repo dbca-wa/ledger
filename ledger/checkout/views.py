@@ -405,20 +405,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                             invoice.save()
                         else:
                             bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
-                            # Record payment source and event
-                            source_type, is_created = models.SourceType.objects.get_or_create(
-                                name='Bpoint')
-                            # amount_allocated if action is preauth and amount_debited if action is payment
-                            if card_method == 'payment':
-                                source = source_type.sources.model(
-                                    source_type=source_type,
-                                    amount_debited=total.incl_tax, currency=total.currency)
-                            elif card_method == 'preauth':
-                                source = source_type.sources.model(
-                                    source_type=source_type,
-                                    amount_allocated=total.incl_tax, currency=total.currency)
-                            self.add_payment_source(source)
-                            self.add_payment_event('Paid', total.incl_tax)
                     else:
                         # Store card if user wants to store card
                         if self.checkout_session.store_card():
@@ -428,20 +414,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 invoice.save()
                             else:
                                 resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
-                                # Record payment source and event
-                                source_type, is_created = models.SourceType.objects.get_or_create(
-                                    name='Bpoint')
-                                # amount_allocated if action is preauth and amount_debited if action is payment
-                                if card_method == 'payment':
-                                    source = source_type.sources.model(
-                                        source_type=source_type,
-                                        amount_debited=total.incl_tax, currency=total.currency)
-                                elif card_method == 'preauth':
-                                    source = source_type.sources.model(
-                                        source_type=source_type,
-                                        amount_allocated=total.incl_tax, currency=total.currency)
-                                self.add_payment_source(source)
-                                self.add_payment_event('Paid', total.incl_tax)
                         else:
                             if self.checkout_session.invoice_association():
                                 resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'])
@@ -449,20 +421,21 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 invoice.save()
                             else:
                                 resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
-                                # Record payment source and event
-                                source_type, is_created = models.SourceType.objects.get_or_create(
-                                    name='Bpoint')
-                                # amount_allocated if action is preauth and amount_debited if action is payment
-                                if card_method == 'payment':
-                                    source = source_type.sources.model(
-                                        source_type=source_type,
-                                        amount_debited=total.incl_tax, currency=total.currency)
-                                elif card_method == 'preauth':
-                                    source = source_type.sources.model(
-                                        source_type=source_type,
-                                        amount_allocated=total.incl_tax, currency=total.currency)
-                                self.add_payment_source(source)
-                                self.add_payment_event('Paid', total.incl_tax)
+                    if not self.checkout_session.invoice_association():
+                        # Record payment source and event
+                        source_type, is_created = models.SourceType.objects.get_or_create(
+                            name='Bpoint')
+                        # amount_allocated if action is preauth and amount_debited if action is payment
+                        if card_method == 'payment':
+                            source = source_type.sources.model(
+                                source_type=source_type,
+                                amount_debited=total.incl_tax, currency=total.currency)
+                        elif card_method == 'preauth':
+                            source = source_type.sources.model(
+                                source_type=source_type,
+                                amount_allocated=total.incl_tax, currency=total.currency)
+                        self.add_payment_source(source)
+                        self.add_payment_event('Paid', total.incl_tax)
                 except Exception as e:
                     raise
             else:
