@@ -195,7 +195,6 @@ class IndexView(CoreIndexView):
                 'forceRedirect': request.GET.get('forceRedirect',False),
                 'sendEmail': request.GET.get('sendEmail',False),
                 'proxy': request.GET.get('proxy',False),
-                'checkoutWithToken': request.GET.get('checkoutWithToken',False),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
                     'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
