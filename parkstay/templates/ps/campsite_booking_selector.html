@@ -48,6 +48,24 @@ table tbody tr:nth-child(2n):hover > td.available {
     background-color: #b8f0cd;
 }
 
+table tbody tr.breakdown, table tbody tr.breakdown:hover  {
+    background-color: #656869;
+    color: white;
+}
+table tbody tr.breakdown:nth-child(2n), table tbody tr.breakdown:nth-child(2n):hover {
+    background-color: #454d50;
+    color: white;
+}
+table tbody tr.breakdown > td.available {
+    background-color: #468a05;
+    color: white;
+}
+table tbody tr.breakdown:nth-child(2n) > td.available {
+    background-color: #305e04;
+    color: white;
+}
+
+
     </style>
 </head>
 <body>
@@ -89,16 +107,24 @@ table tbody tr:nth-child(2n):hover > td.available {
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i) }}</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr v-for="site in sites">
+                <tbody><template v-for="site in sites">
+                    <tr>
                         <td>{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span></td>
                         <td class="book">
                             <button v-if="site.price" class="button"><small>Book now</small><br/>{{ site.price }}</button>
-                            <button v-else class="button secondary disabled" disabled>Change dates</button>
+                            <template v-else>
+                                <button v-if="site.breakdown" class="button warning">Show availability</button>
+                                <button v-else class="button secondary disabled" disabled>Change dates</button>
+                            </template>
                         </td>
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                     </tr>
-                </tbody>
+                    <tr v-for="line in site.breakdown" class="breakdown">
+                        <td></td>
+                        <td></td>
+                        <td class="date" v-for="day in line" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                    </tr>
+                </templates></tbody>
             </table>
         </div></div>
     </div>

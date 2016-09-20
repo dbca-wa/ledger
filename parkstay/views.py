@@ -142,7 +142,8 @@ def get_campsite_class_bookings(request):
             'id': None,
             'type': ground.campground_type,
             'price': '{}'.format(rate*length),
-            'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)]
+            'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
+            'breakdown': OrderedDict()
         }
         result['sites'].append(site)
         classes_map[c[1]] = site
@@ -154,9 +155,13 @@ def get_campsite_class_bookings(request):
             class_sites_map[s.campsite_class.pk] = set()
 
         class_sites_map[s.campsite_class.pk].add(s.pk)
+        rate = rates_map[s.campsite_class.pk]
+        classes_map[s.campsite_class.pk]['breakdown'][s.pk] = [[True, '${}'.format(rate), rate] for i in range(length)]
 
     # store number of campsites in each class
     class_sizes = {k: len(v) for k, v in class_sites_map.items()}
+
+    
 
     # strike out existing bookings
     for b in bookings_qs:
@@ -166,6 +171,9 @@ def get_campsite_class_bookings(request):
         # clear the campsite from the class sites map
         if b.campsite.pk in class_sites_map[key]:
             class_sites_map[key].remove(b.campsite.pk)
+
+        classes_map[key]['breakdown'][b.campsite.pk][offset][0] = False
+        classes_map[key]['breakdown'][b.campsite.pk][offset][1] = 'Closed' if (b.booking_type == 2) else 'Sold'
 
         # update the availability status based on 
         book_offset = 1 if (b.booking_type == 2) else 0
@@ -183,6 +191,9 @@ def get_campsite_class_bookings(request):
         classes_map[key]['availability'][offset][0] = False
         classes_map[key]['price'] = False
 
+    for k, v in classes_map.items():
+        v['breakdown'] = [x for x in v['breakdown'].values()]
+
     # for each class, any campsites remaining in the class sites map have zero bookings!
     # pick one of those and return that as the target
     for k, v in class_sites_map.items():
@@ -191,7 +202,8 @@ def get_campsite_class_bookings(request):
             classes_map[k].update({
                 'id': v.pop(),
                 'price': '{}'.format(rate*length),
-                'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)]
+                'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
+                'breakdown': []
             })
 
 
