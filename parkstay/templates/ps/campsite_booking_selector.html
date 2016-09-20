@@ -171,13 +171,15 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
             }
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
-            if (ev.date.valueOf() >= departureData.date.valueOf()) {
-                var newDate = moment.utc(ev.date).add(1, 'days').toDate();
-                departureData.update(newDate);
+            if (arrivalData.date.valueOf() >= departureData.date.valueOf()) {
+                var newDate = moment(arrivalData.date).add(1, 'days').toDate();
+                departureData.date = newDate;
+                departureData.setValue();
+                departureData.fill();
                 departureEl.trigger('changeDate');
             }
             arrivalData.hide();
-            sitesCal.arrivalDate = moment.utc(arrivalData.date);
+            sitesCal.arrivalDate = moment(arrivalData.date);
             sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
             sitesCal.sites = [];
             sitesCal.update();
@@ -192,7 +194,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
             departureData.hide();
-            sitesCal.departureDate = moment.utc(departureData.date);
+            sitesCal.departureDate = moment(departureData.date);
             sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
             sitesCal.sites = [];
             sitesCal.update();
@@ -220,7 +222,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
             },
             methods: {
                 getDateString: function (date, offset) {
-                    return moment.utc(date).add(offset, 'days').format('ddd MMM D');
+                    return moment(date).add(offset, 'days').format('ddd MMM D');
                 },
                 toggleBreakdown: function (site) {
                     if (site.showBreakdown) {
@@ -237,8 +239,8 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                     debounce(function() {
                         var url = '{% url 'get_campsite_class_bookings' %}?'+$.param({
                             ground_id: 32,
-                            arrival: moment.utc(vm.arrivalDate).format('YYYY/MM/DD'),
-                            departure: moment.utc(vm.departureDate).format('YYYY/MM/DD')
+                            arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                            departure: moment(vm.departureDate).format('YYYY/MM/DD')
                         });
                         console.log('AJAX '+url)
                         $.ajax({
@@ -261,8 +263,12 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                 //departureData.update('09/04/2016');
                 //this.arrivalDate = moment(arrivalData.date);
                 //this.departureDate = moment(departureData.date);
-                arrivalData.update(this.arrivalDate.toDate());
-                departureData.update(this.departureDate.toDate());
+                arrivalData.date = this.arrivalDate.toDate();
+                arrivalData.setValue();
+                arrivalData.fill();
+                departureData.date = this.departureDate.toDate();
+                departureData.setValue();
+                departureData.fill();
                 this.update();
             }
         });
