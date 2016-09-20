@@ -113,18 +113,18 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                         <td class="book">
                             <button v-if="site.price" class="button"><small>Book now</small><br/>{{ site.price }}</button>
                             <template v-else>
-                                <button v-if="site.breakdown" class="button warning">Show availability</button>
+                                <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)">Show availability</button>
                                 <button v-else class="button secondary disabled" disabled>Change dates</button>
                             </template>
                         </td>
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                     </tr>
-                    <tr v-for="line in site.breakdown" class="breakdown">
+                    <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
                         <td></td>
                         <td></td>
                         <td class="date" v-for="day in line" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
-                    </tr>
-                </templates></tbody>
+                    </tr></template>
+                </template></tbody>
             </table>
         </div></div>
     </div>
@@ -172,8 +172,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
             if (ev.date.valueOf() >= departureData.date.valueOf()) {
-                var newDate = new Date(ev.date);
-                newDate.setDate(newDate.getDate()+1);
+                var newDate = moment.utc(ev.date).add(1, 'days').toDate();
                 departureData.update(newDate);
                 departureEl.trigger('changeDate');
             }
@@ -223,6 +222,16 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                 getDateString: function (date, offset) {
                     return moment.utc(date).add(offset, 'days').format('ddd MMM D');
                 },
+                toggleBreakdown: function (site) {
+                    if (site.showBreakdown) {
+                        site.showBreakdown = false;
+                    } else {
+                        this.sites.forEach(function(el) {
+                            el.showBreakdown = false;
+                        });
+                        site.showBreakdown = true;
+                    }
+                },
                 update: function() {
                     var vm = this;
                     debounce(function() {
@@ -238,6 +247,9 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                             success: function(data, stat, xhr) {
                                 vm.days = data.days;
                                 vm.classes = data.classes;
+                                data.sites.forEach(function(el) {
+                                    el.showBreakdown = false;
+                                });
                                 vm.sites = data.sites;
                             }
                         });

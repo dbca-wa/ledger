@@ -141,7 +141,7 @@ def get_campsite_class_bookings(request):
             'name': c[2],
             'id': None,
             'type': ground.campground_type,
-            'price': '{}'.format(rate*length),
+            'price': '${}'.format(rate*length),
             'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
             'breakdown': OrderedDict()
         }
@@ -172,17 +172,18 @@ def get_campsite_class_bookings(request):
         if b.campsite.pk in class_sites_map[key]:
             class_sites_map[key].remove(b.campsite.pk)
 
+        # update the per-site availability
         classes_map[key]['breakdown'][b.campsite.pk][offset][0] = False
         classes_map[key]['breakdown'][b.campsite.pk][offset][1] = 'Closed' if (b.booking_type == 2) else 'Sold'
 
-        # update the availability status based on 
+        # update the class availability status
         book_offset = 1 if (b.booking_type == 2) else 0
         classes_map[key]['availability'][offset][3][book_offset] += 1
         if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
             classes_map[key]['availability'][offset][1] = 'Fully Booked'
         elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
             classes_map[key]['availability'][offset][1] = 'Closed'
-        elif classes_map[key]['availability'][offset][3][0] > classes_map[key]['availability'][offset][3][1]:
+        elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
             classes_map[key]['availability'][offset][1] = 'Partially Booked'
         else:
             classes_map[key]['availability'][offset][1] = 'Partially Closed'
@@ -191,17 +192,18 @@ def get_campsite_class_bookings(request):
         classes_map[key]['availability'][offset][0] = False
         classes_map[key]['price'] = False
 
+    # convert breakdowns to a dumb list
     for k, v in classes_map.items():
         v['breakdown'] = [x for x in v['breakdown'].values()]
 
-    # for each class, any campsites remaining in the class sites map have zero bookings!
-    # pick one of those and return that as the target
+    # any campsites remaining in the class sites map have zero bookings!
+    # check if there's any left for each class, and if so return that as the target
     for k, v in class_sites_map.items():
         if v:
             rate = rates_map[k]
             classes_map[k].update({
                 'id': v.pop(),
-                'price': '{}'.format(rate*length),
+                'price': '${}'.format(rate*length),
                 'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
                 'breakdown': []
             })
