@@ -101,3 +101,11 @@ class BpointToken(models.Model):
             self.DVToken,
             self.expiry_date.strftime("%m%y")
         )
+
+    def delete(self):
+        UsedBpointToken.objects.create(DVToken=self.DVToken)
+        super(BpointToken,self).delete()
+
+class UsedBpointToken(models.Model):
+    added = models.DateTimeField(auto_now_add=True)
+    DVToken = models.CharField(max_length=128)
