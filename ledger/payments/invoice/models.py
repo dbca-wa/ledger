@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from oscar.apps.order.models import Order
 from ledger.payments.bpay.crn import getCRN
 from ledger.payments.bpay.models import BpayTransaction
-from ledger.payments.bpoint.models import BpointTransaction, TempBankCard
+from ledger.payments.bpoint.models import BpointTransaction, TempBankCard, BpointToken, UsedBpointToken
 
 class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -160,11 +160,17 @@ class Invoice(models.Model):
                         None
                     )
                 if txn.approved:
-                    bpoint_facade.delete_token(self.token)
-                    self.token = ''
-                    self.save()
+                    try:
+                        BpointToken.objects.get(DVToken=card_details[0])
+                        self.token = ''
+                        self.save()
+                    except BpointToken.DoesNotExist:
+                        UsedBpointToken.objects.create(DVToken=card_details[0])
+                        self.token = ''
+                        self.save()
                 return txn
             else:
                 raise ValidationError('This invoice doesn\'t have any tokens attached to it.')
-        except:
+        except Exception as e:
+            print str(e)
             raise
