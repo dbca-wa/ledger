@@ -22,6 +22,9 @@ th.book {
 th.date {
     min-width: 60px;
 }
+td.site {
+    font-size: 0.8em;
+}
 .date, .book {
     text-align: center;
 }
@@ -72,31 +75,44 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
 {% verbatim %}
     <div id="sites-cal">
         <div class="row">
-            <div class="columns small-6 medium-4 large-shrink">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-4 large-shrink">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Departure
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-2 large-shrink">
+            <div class="columns small-6 medium-3 large-2">
                 <label>Adults
-                    <select @change="update()" v-model="adults">
+                    <select @change="update()" v-model="numAdults">
                         <option v-for="i in maxAdults">{{ i }}</option>
                     </select>
                 </label>
             </div>
-            <div class="columns small-6 medium-2 large-shrink">
+            <div class="columns small-6 medium-3 large-2">
+                <label>Concessions
+                    <select @change="update()" v-model="numConcessions">
+                        <option v-for="i in maxAdults">{{ i }}</option>
+                    </select>
+                </label>
+            </div>
+            <div class="columns small-6 medium-3 large-2">
                 <label>Children
-                    <select @change="update()" v-model="children">
+                    <select @change="update()" v-model="numChildren">
                         <option v-for="i in maxChildren">{{ i }}</option>
                     </select>
                 </label>
             </div>
-
+            <div class="columns small-6 medium-3 large-2">
+                <label>Infants
+                    <select @change="update()" v-model="numInfants">
+                        <option v-for="i in maxChildren">{{ i }}</option>
+                    </select>
+                </label>
+            </div>
         </div>
         <div class="row"><div class="columns table-scroll">
             <table class="hover">
@@ -109,7 +125,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                 </thead>
                 <tbody><template v-for="site in sites">
                     <tr>
-                        <td>{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span></td>
+                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span></td>
                         <td class="book">
                             <button v-if="site.price" class="button"><small>Book now</small><br/>{{ site.price }}</button>
                             <template v-else>
@@ -120,7 +136,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                     </tr>
                     <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
-                        <td>Site: {{ line.name }}</td>
+                        <td class="site">Site: {{ line.name }}</td>
                         <td></td>
                         <td class="date" v-for="day in line.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                     </tr></template>
@@ -213,8 +229,10 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                 arrivalDate: moment.utc(now),
                 departureDate: moment.utc(now).add(5, 'days'),
                 days: 5,
-                adults: 1,
-                children: 0,
+                numAdults: 1,
+                numChildren: 0,
+                numConcessions: 0,
+                numInfants: 0,
                 maxAdults: 30,
                 maxChildren: 30,
                 classes: {},
@@ -241,8 +259,10 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                             ground_id: 32,
                             arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                             departure: moment(vm.departureDate).format('YYYY/MM/DD'),
-                            num_adult: vm.adults,
-                            num_child: vm.children
+                            num_adult: vm.numAdults,
+                            num_child: vm.numChildren,
+                            num_concession: vm.numConcessions,
+                            num_infant: vm.numInfants
                         });
                         console.log('AJAX '+url)
                         $.ajax({
