@@ -165,7 +165,7 @@ def get_campsite_class_bookings(request):
 
         class_sites_map[s.campsite_class.pk].add(s.pk)
         rate = rates_map[s.campsite_class.pk]
-        classes_map[s.campsite_class.pk]['breakdown'][s.pk] = [[True, '${}'.format(rate), rate] for i in range(length)]
+        classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate), rate] for i in range(length)]
 
     # store number of campsites in each class
     class_sizes = {k: len(v) for k, v in class_sites_map.items()}
@@ -182,8 +182,8 @@ def get_campsite_class_bookings(request):
             class_sites_map[key].remove(b.campsite.pk)
 
         # update the per-site availability
-        classes_map[key]['breakdown'][b.campsite.pk][offset][0] = False
-        classes_map[key]['breakdown'][b.campsite.pk][offset][1] = 'Closed' if (b.booking_type == 2) else 'Sold'
+        classes_map[key]['breakdown'][b.campsite.name][offset][0] = False
+        classes_map[key]['breakdown'][b.campsite.name][offset][1] = 'Closed' if (b.booking_type == 2) else 'Sold'
 
         # update the class availability status
         book_offset = 1 if (b.booking_type == 2) else 0
@@ -201,9 +201,9 @@ def get_campsite_class_bookings(request):
         classes_map[key]['availability'][offset][0] = False
         classes_map[key]['price'] = False
 
-    # convert breakdowns to a dumb list
-    for k, v in classes_map.items():
-        v['breakdown'] = [x for x in v['breakdown'].values()]
+    # convert breakdowns to a flat list
+    for klass in classes_map.values():
+        klass['breakdown'] = [{'name': k, 'availability': v} for k, v in klass['breakdown'].items()]
 
     # any campsites remaining in the class sites map have zero bookings!
     # check if there's any left for each class, and if so return that as the target

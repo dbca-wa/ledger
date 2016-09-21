@@ -154,9 +154,9 @@ class CampsiteRate(models.Model):
     rate_child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')
     rate_infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
    
-    def rate(self, adult=0, concession=0, child=0, infant=0):
-        return self.rate_adult*adult + self.rate_concession*concession + \
-                self.rate_child*child + self.rate_infant*infant
+    def rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
+        return self.rate_adult*num_adult + self.rate_concession*num_concession + \
+                self.rate_child*num_child + self.rate_infant*num_infant
 
     def __str__(self):
         return '{} - {} (adult: ${}, concession: ${}, child: ${}, infant: ${})'.format(self.campground, self.campsite_class, self.rate_adult, self.rate_concession, self.rate_child, self.rate_infant)

@@ -120,9 +120,9 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                     </tr>
                     <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
+                        <td>Site: {{ line.name }}</td>
                         <td></td>
-                        <td></td>
-                        <td class="date" v-for="day in line" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td class="date" v-for="day in line.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                     </tr></template>
                 </template></tbody>
             </table>
