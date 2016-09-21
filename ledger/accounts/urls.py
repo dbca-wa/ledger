@@ -5,7 +5,7 @@ from ledger.accounts import views
 from ledger.accounts.api import UserReportView
 
 api_patterns = [
-    url(r'api/report$', UserReportView.as_view(),name='ledger-user-report'),
+    url(r'api/report/duplicate_identity$', UserReportView.as_view(),name='ledger-user-report'),
 ]
 
 urlpatterns = patterns('accounts',
