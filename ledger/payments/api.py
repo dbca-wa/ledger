@@ -15,9 +15,10 @@ from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
 from ledger.payments.utils import checkURL, createBasket, validSystem, systemid_check
 from ledger.payments.facade import bpoint_facade
-from ledger.payments.reports import generate_items_csv, generate_trans_csv, user_report
+from ledger.payments.reports import generate_items_csv, generate_trans_csv
 
 from ledger.accounts.models import EmailUser
+from ledger.accounts.reports import user_report
 from ledger.catalogue.models import Product
 from oscar.apps.order.models import Order
 from oscar.apps.voucher.models import Voucher
