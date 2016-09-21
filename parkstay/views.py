@@ -27,7 +27,12 @@ def get_campsite_bookings(request):
     ground = Campground.objects.get(pk=request.GET['ground_id'])
     start_date = datetime.strptime(request.GET['arrival'], '%Y/%m/%d').date()
     end_date = datetime.strptime(request.GET['departure'], '%Y/%m/%d').date()
-    
+    num_adult = int(request.GET.get('num_adult', 0))
+    num_concession = int(request.GET.get('num_concession', 0))
+    num_child = int(request.GET.get('num_child', 0))
+    num_infant = int(request.GET.get('num_infant', 0))
+
+
     # get a length of the stay (in days), capped if necessary to the request maximum
     length = max(0, (end_date-start_date).days)
     if length > settings.PS_MAX_BOOKING_LENGTH:
@@ -45,7 +50,7 @@ def get_campsite_bookings(request):
     rates_qs = CampsiteRate.objects.filter(campground=ground)
 
     # make a map of campsite class to cost
-    rates_map = {r.campsite_class_id: r.cost_per_day for r in rates_qs}
+    rates_map = {r.campsite_class_id: r.rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
 
     # from our campsite queryset, generate a digest for each site
     sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates_map[s.campsite_class_id])) for s in sites_qs])
@@ -96,7 +101,11 @@ def get_campsite_class_bookings(request):
     ground = Campground.objects.get(pk=request.GET['ground_id'])
     start_date = datetime.strptime(request.GET['arrival'], '%Y/%m/%d').date()
     end_date = datetime.strptime(request.GET['departure'], '%Y/%m/%d').date()
-    
+    num_adult = int(request.GET.get('num_adult', 0))
+    num_concession = int(request.GET.get('num_concession', 0))
+    num_child = int(request.GET.get('num_child', 0))
+    num_infant = int(request.GET.get('num_infant', 0))
+
     # get a length of the stay (in days), capped if necessary to the request maximum
     length = max(0, (end_date-start_date).days)
     if length > settings.PS_MAX_BOOKING_LENGTH:
@@ -114,7 +123,7 @@ def get_campsite_class_bookings(request):
     rates_qs = CampsiteRate.objects.filter(campground=ground)
 
     # make a map of campsite class to cost
-    rates_map = {r.campsite_class_id: r.cost_per_day for r in rates_qs}
+    rates_map = {r.campsite_class_id: r.rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
     
     # from our campsite queryset, generate a distinct list of campsite classes
     classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name')]

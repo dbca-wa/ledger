@@ -113,8 +113,8 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                         <td class="book">
                             <button v-if="site.price" class="button"><small>Book now</small><br/>{{ site.price }}</button>
                             <template v-else>
-                                <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)">Show availability</button>
-                                <button v-else class="button secondary disabled" disabled>Change dates</button>
+                                <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)"><small>Show availability</small></button>
+                                <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
                             </template>
                         </td>
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
@@ -240,7 +240,9 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                         var url = '{% url 'get_campsite_class_bookings' %}?'+$.param({
                             ground_id: 32,
                             arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                            departure: moment(vm.departureDate).format('YYYY/MM/DD')
+                            departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                            num_adult: vm.adults,
+                            num_child: vm.children
                         });
                         console.log('AJAX '+url)
                         $.ajax({

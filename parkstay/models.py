@@ -149,10 +149,17 @@ class CampsiteRate(models.Model):
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
     allow_public_holidays = models.BooleanField(default=True)
-    cost_per_day = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
+    rate_adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
+    rate_concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60')
+    rate_child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')
+    rate_infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+   
+    def rate(self, adult=0, concession=0, child=0, infant=0):
+        return self.rate_adult*adult + self.rate_concession*concession + \
+                self.rate_child*child + self.rate_infant*infant
 
     def __str__(self):
-        return '{} - {} (${})'.format(self.campground, self.campsite_class, self.cost_per_day)
+        return '{} - {} (adult: ${}, concession: ${}, child: ${}, infant: ${})'.format(self.campground, self.campsite_class, self.rate_adult, self.rate_concession, self.rate_child, self.rate_infant)
 
     class Meta:
         unique_together = (('campground', 'campsite_class'))
