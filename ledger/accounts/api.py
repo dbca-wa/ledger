@@ -12,7 +12,7 @@ class UserReportView(views.APIView):
             http_status = status.HTTP_200_OK
             report = None
 
-            filename = 'emailuser-report'
+            filename = 'duplicate-identity-report'
             # Generate Report
             report = user_report()
             if report:
