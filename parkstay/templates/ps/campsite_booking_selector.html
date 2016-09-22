@@ -256,7 +256,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                     var vm = this;
                     debounce(function() {
                         var url = '{% url 'get_campsite_class_bookings' %}?'+$.param({
-                            ground_id: 32,
+                            ground_id: '{{ ground_id }}',
                             arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                             departure: moment(vm.departureDate).format('YYYY/MM/DD'),
                             num_adult: vm.numAdults,

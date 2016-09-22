@@ -43,22 +43,16 @@ class Campground(models.Model):
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
     address = JSONField(null=True)
     features = models.ManyToManyField('CampgroundFeature')
-    mappinglink = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    checkin_times = models.TextField(blank=True, null=True)
+    rules = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
     driving_directions = models.TextField(blank=True, null=True)
-    airports = models.TextField(blank=True, null=True)
+    fees = models.TextField(blank=True, null=True)
     othertransport = models.TextField(blank=True, null=True)
-    policies_disclaimers = models.TextField(blank=True, null=True)
     key = models.CharField(max_length=255, blank=True, null=True)
     is_published = models.BooleanField(default=False)
-    apikey = models.CharField(max_length=255, blank=True, null=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
-    metatitle = models.CharField(max_length=150, blank=True, null=True)
-    metadescription = models.CharField(max_length=150, blank=True, null=True)
     metakeywords = models.TextField(blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -71,7 +65,6 @@ class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT)
-    features = models.ManyToManyField('CampsiteFeature')
     max_people = models.SmallIntegerField(default=6)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
@@ -100,13 +93,11 @@ class Region(models.Model):
 
 class CampsiteClass(models.Model):
     name = models.CharField(max_length=255, unique=True)
-   
-    def __str__(self):
-        return self.name
-
-
-class CampsiteFeature(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    tents = models.SmallIntegerField(default=0)
+    parking_spaces = models.SmallIntegerField(default=0)
+    allow_campervan = models.BooleanField(default=False)
+    allow_trailer = models.BooleanField(default=False)
+    allow_generator = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
