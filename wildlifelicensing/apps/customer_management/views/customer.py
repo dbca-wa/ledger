@@ -260,6 +260,10 @@ class EditProfileView(OfficerRequiredMixin, TemplateView):
             profile_form = ProfileForm(request.POST, instance=profile)
             address_form = AddressForm(request.POST, instance=profile.postal_address)
         else:
+            mutable = request.POST._mutable
+            request.POST._mutable = True
+            request.POST['user'] = customer.id
+            request.POST._mutable = mutable
             profile_form = ProfileForm(request.POST)
             address_form = AddressForm(request.POST)
 
