@@ -172,5 +172,5 @@ class Invoice(models.Model):
             else:
                 raise ValidationError('This invoice doesn\'t have any tokens attached to it.')
         except Exception as e:
-            print str(e)
+            print(str(e))
             raise
