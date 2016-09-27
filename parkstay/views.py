@@ -16,7 +16,6 @@ class CampsiteBookingSelector(TemplateView):
     template_name = 'ps/campsite_booking_selector.html'
 
     def get(self, request, *args, **kwargs):
-        print(request.__dict__)
         return super(CampsiteBookingSelector, self).get(request, *args, **kwargs)
 
 
