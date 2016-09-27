@@ -1,2 +1,6 @@
 [report]
-omit = */migrations/*
+omit = 
+    ledger/*/migrations/*
+    ledger/payments/*/migrations/*
+    wildlifelicensing/apps/*/migrations/*
+    parkstay/migrations/*
