@@ -1,6 +1,7 @@
 from ledger.settings_base import *
 
 ROOT_URLCONF = 'parkstay.urls'
+SITE_ID = 1
 
 INSTALLED_APPS += [
     'parkstay'

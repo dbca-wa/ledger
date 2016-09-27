@@ -226,9 +226,22 @@ def get_campsite_class_bookings(request):
 class CampgroundFeed(ICalFeed):
     timezone = 'UTC+8'
 
-    def items(self):
-#        return CampsiteBooking.objects.filter(campsite__campground__name='Yardie Creek').order_by('-date','campsite__name') 
-        return Booking.objects.filter(campground__name='Yardie Creek').order_by('-arrival','campground__name')
+    def get_object(self, request, ground_id):
+        # FIXME: add authentication parameter check
+        return Campground.objects.get(pk=ground_id)
+
+    def title(self, obj):
+        return 'Bookings for {}'.format(obj.name)
+
+    def items(self, obj):
+#        return CampsiteBooking.objects.filter(campsite__campground__name='Yardie Creek').order_by('-date','campsite__name')
+        now = datetime.utcnow()
+        low_bound = now - timedelta(days=60)
+        up_bound = now + timedelta(days=90)
+        return Booking.objects.filter(campground=obj, arrival__gte=low_bound, departure__lt=up_bound).order_by('-arrival','campground__name')
+
+    def item_link(self, item):
+        return 'http://www.geocities.com/replacethiswithalinktotheadmin'
 
     def item_title(self, item):
         return item.legacy_name
