@@ -232,6 +232,9 @@ class Facade(object):
 
     def friendly_error_msg(self, txn):
         if not txn.approved:
-            raise UnableToTakePayment(txn.response_txt)
+            if txn.response_code == 'PT_T7':
+                raise UnableToTakePayment('Your stored card has expired. Please consider adding a new card and removing this one.')
+            else:
+                raise UnableToTakePayment(txn.response_txt)
         return False
     
