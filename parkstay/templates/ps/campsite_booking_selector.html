@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Parkstay - Campsite Booking Selector</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.1/foundation-flex.css">
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
+
+    <style>
+
+th.site {
+    width: 30%;
+    min-width: 200px;
+}
+th.book {
+    min-width: 100px;
+}
+th.date {
+    min-width: 60px;
+}
+td.site {
+    font-size: 0.8em;
+}
+.date, .book {
+    text-align: center;
+}
+td .button {
+    margin: 0;
+}
+.table-scroll table {
+    width: 100%;
+}
+
+td.available {
+    color: #082d15;
+}
+table tbody tr > td.available {
+    background-color: #edfbf3;
+}
+table tbody tr:hover > td.available {
+    background-color: #ddf8e8;
+}
+table tbody tr:nth-child(2n) > td.available {
+    background-color: #cef5dd;
+}
+table tbody tr:nth-child(2n):hover > td.available {
+    background-color: #b8f0cd;
+}
+
+table tbody tr.breakdown, table tbody tr.breakdown:hover  {
+    background-color: #656869;
+    color: white;
+}
+table tbody tr.breakdown:nth-child(2n), table tbody tr.breakdown:nth-child(2n):hover {
+    background-color: #454d50;
+    color: white;
+}
+table tbody tr.breakdown > td.available {
+    background-color: #468a05;
+    color: white;
+}
+table tbody tr.breakdown:nth-child(2n) > td.available {
+    background-color: #305e04;
+    color: white;
+}
+
+
+    </style>
+</head>
+<body>
+{% verbatim %}
+    <div id="sites-cal">
+        <div class="row">
+            <div class="columns small-6 medium-6 large-2">
+                <label>Arrival
+                    <input id="date-arrival" type="text" placeholder="dd/mm/yyyy"/>
+                </label>
+            </div>
+            <div class="columns small-6 medium-6 large-2">
+                <label>Departure
+                    <input id="date-departure" type="text" placeholder="dd/mm/yyyy"/>
+                </label>
+            </div>
+            <div class="columns small-6 medium-3 large-2">
+                <label>Adults
+                    <select @change="update()" v-model="numAdults">
+                        <option v-for="i in maxAdults">{{ i }}</option>
+                    </select>
+                </label>
+            </div>
+            <div class="columns small-6 medium-3 large-2">
+                <label>Concessions
+                    <select @change="update()" v-model="numConcessions">
+                        <option v-for="i in maxAdults">{{ i }}</option>
+                    </select>
+                </label>
+            </div>
+            <div class="columns small-6 medium-3 large-2">
+                <label>Children
+                    <select @change="update()" v-model="numChildren">
+                        <option v-for="i in maxChildren">{{ i }}</option>
+                    </select>
+                </label>
+            </div>
+            <div class="columns small-6 medium-3 large-2">
+                <label>Infants
+                    <select @change="update()" v-model="numInfants">
+                        <option v-for="i in maxChildren">{{ i }}</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+        <div class="row"><div class="columns table-scroll">
+            <table class="hover">
+                <thead>
+                    <tr>
+                        <th class="site">Campsite</th>
+                        <th class="book">Book</th>
+                        <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i) }}</th>
+                    </tr>
+                </thead>
+                <tbody><template v-for="site in sites">
+                    <tr>
+                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span></td>
+                        <td class="book">
+                            <button v-if="site.price" class="button"><small>Book now</small><br/>{{ site.price }}</button>
+                            <template v-else>
+                                <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)"><small>Show availability</small></button>
+                                <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
+                            </template>
+                        </td>
+                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                    </tr>
+                    <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
+                        <td class="site">Site: {{ line.name }}</td>
+                        <td></td>
+                        <td class="date" v-for="day in line.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                    </tr></template>
+                </template></tbody>
+            </table>
+        </div></div>
+    </div>
+{% endverbatim %}
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.1/foundation.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/vue/1.0.9/vue.min.js"></script>
+    <script type="text/javascript">
+    //$(function() {
+
+        var debounce = function (func, wait, immediate) {
+            // Returns a function, that, as long as it continues to be invoked, will not
+            // be triggered. The function will be called after it stops being called for
+            // N milliseconds. If `immediate` is passed, trigger the function on the
+            // leading edge, instead of the trailing.
+            'use strict';
+            var timeout;
+            return function () {
+                var context = this;
+                var args = arguments;
+                var later = function () {
+                    timeout = null;
+                    if (!immediate) func.apply(context, args);
+                };
+                var callNow = immediate && !timeout;
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+                if (callNow) func.apply(context, args);
+            }
+        }
+
+        var nowTemp = new Date();
+        var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+
+        var arrivalEl = $('#date-arrival');
+        var arrivalData = arrivalEl.fdatepicker({
+            format: 'dd/mm/yyyy',
+            onRender: function (date) {
+                // disallow start dates before today
+                //return date.valueOf() < now.valueOf() ? 'disabled': '';
+                return '';
+            }
+        }).on('changeDate', function (ev) {
+            console.log('arrivalEl changeDate');
+            if (arrivalData.date.valueOf() >= departureData.date.valueOf()) {
+                var newDate = moment(arrivalData.date).add(1, 'days').toDate();
+                departureData.date = newDate;
+                departureData.setValue();
+                departureData.fill();
+                departureEl.trigger('changeDate');
+            }
+            arrivalData.hide();
+            sitesCal.arrivalDate = moment(arrivalData.date);
+            sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
+            sitesCal.sites = [];
+            sitesCal.update();
+        }).data('datepicker');
+
+        var departureEl = $('#date-departure');
+        var departureData = departureEl.fdatepicker({
+            format: 'dd/mm/yyyy',
+            onRender: function (date) {
+                return (date.valueOf() <= arrivalData.date.valueOf()) ? 'disabled': '';
+            }
+        }).on('changeDate', function (ev) {
+            console.log('departureEl changeDate');
+            departureData.hide();
+            sitesCal.departureDate = moment(departureData.date);
+            sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
+            sitesCal.sites = [];
+            sitesCal.update();
+        }).data('datepicker');
+
+        var siteType = {
+            NOBOOKINGS: 0,
+            ONLINE: 1,
+            PHONE: 2,
+            OTHER: 3
+        }
+
+        var sitesCal = new Vue({
+            el: '#sites-cal',
+            data: {
+                arrivalDate: moment.utc(now),
+                departureDate: moment.utc(now).add(5, 'days'),
+                days: 5,
+                numAdults: 1,
+                numChildren: 0,
+                numConcessions: 0,
+                numInfants: 0,
+                maxAdults: 30,
+                maxChildren: 30,
+                classes: {},
+                sites: []
+            },
+            methods: {
+                getDateString: function (date, offset) {
+                    return moment(date).add(offset, 'days').format('ddd MMM D');
+                },
+                toggleBreakdown: function (site) {
+                    if (site.showBreakdown) {
+                        site.showBreakdown = false;
+                    } else {
+                        this.sites.forEach(function(el) {
+                            el.showBreakdown = false;
+                        });
+                        site.showBreakdown = true;
+                    }
+                },
+                update: function() {
+                    var vm = this;
+                    debounce(function() {
+                        var url = '{% url 'get_campsite_class_bookings' %}?'+$.param({
+                            ground_id: '{{ ground_id }}',
+                            arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                            departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                            num_adult: vm.numAdults,
+                            num_child: vm.numChildren,
+                            num_concession: vm.numConcessions,
+                            num_infant: vm.numInfants
+                        });
+                        console.log('AJAX '+url)
+                        $.ajax({
+                            url: url,
+                            dataType: 'json',
+                            success: function(data, stat, xhr) {
+                                vm.days = data.days;
+                                vm.classes = data.classes;
+                                data.sites.forEach(function(el) {
+                                    el.showBreakdown = false;
+                                });
+                                vm.sites = data.sites;
+                            }
+                        });
+                    }, 500)();
+                }
+            },
+            ready: function () {
+                //arrivalData.update('04/04/2016');
+                //departureData.update('09/04/2016');
+                //this.arrivalDate = moment(arrivalData.date);
+                //this.departureDate = moment(departureData.date);
+                arrivalData.date = this.arrivalDate.toDate();
+                arrivalData.setValue();
+                arrivalData.fill();
+                departureData.date = this.departureDate.toDate();
+                departureData.setValue();
+                departureData.fill();
+                this.update();
+            }
+        });
+    //});
+    </script>
+
+</body>
+</html>
