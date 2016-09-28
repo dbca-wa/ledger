@@ -9,6 +9,14 @@ class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
             model = PromoArea
 
+class CampgroundCampsiteFilterSerializer(serializers.Serializer):
+    arrival = serializers.DateField(input_formats=['%Y/%m/%d'])
+    departure = serializers.DateField(input_formats=['%Y/%m/%d'])
+    num_adult = serializers.IntegerField(default=0)
+    num_concession = serializers.IntegerField(default=0)
+    num_child = serializers.IntegerField(default=0)
+    num_infant = serializers.IntegerField(default=0)
+
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     site_type = serializers.SerializerMethodField()
     campground_type = serializers.SerializerMethodField()
