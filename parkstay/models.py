@@ -53,6 +53,7 @@ class Campground(models.Model):
     is_published = models.BooleanField(default=False)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     metakeywords = models.TextField(blank=True, null=True)
+    ratis_id = models.IntegerField(null=True,blank=True)
 
     def __str__(self):
         return self.name
