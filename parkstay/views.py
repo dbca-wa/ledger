@@ -7,6 +7,7 @@ from django.conf import settings
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
                                     CampgroundSerializer,
+                                    CampgroundCampsiteFilterSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     CampgroundFeatureSerializer,
@@ -296,18 +297,26 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['get']) 
     def campsite_bookings(self, request, pk=None, format=None):
         """Fetch campsite availability for a campground."""
-        # FIXME: port this junk to rest_framework
-
         # convert GET parameters to objects
         ground = self.get_object()
-        start_date = datetime.strptime(request.GET['arrival'], '%Y/%m/%d').date()
-        end_date = datetime.strptime(request.GET['departure'], '%Y/%m/%d').date()
-        num_adult = int(request.GET.get('num_adult', 0))
-        num_concession = int(request.GET.get('num_concession', 0))
-        num_child = int(request.GET.get('num_child', 0))
-        num_infant = int(request.GET.get('num_infant', 0))
+        # Validate parameters
+        data = {
+            "arrival" : request.GET.get('arrival'),
+            "departure" : request.GET.get('departure'),
+            "num_adult" : request.GET.get('num_adult', 0),
+            "num_concession" : request.GET.get('num_concession', 0),
+            "num_child" : request.GET.get('num_child', 0),
+            "num_infant" : request.GET.get('num_infant', 0)
+        }
+        serializer = CampgroundCampsiteFilterSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
 
-
+        start_date = serializer.validated_data['arrival']
+        end_date = serializer.validated_data['departure']
+        num_adult = serializer.validated_data['num_adult']
+        num_concession = serializer.validated_data['num_concession']
+        num_child = serializer.validated_data['num_child']
+        num_infant = serializer.validated_data['num_infant']
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
         if length > settings.PS_MAX_BOOKING_LENGTH:
@@ -370,16 +379,26 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['get'])
     def campsite_class_bookings(self, request, pk=None, format=None):
         """Fetch campsite availability for a campground, grouped by campsite class."""
-        # FIXME: port this junk to rest_framework maybe?
-
         # convert GET parameters to objects
         ground = self.get_object() 
-        start_date = datetime.strptime(request.GET['arrival'], '%Y/%m/%d').date()
-        end_date = datetime.strptime(request.GET['departure'], '%Y/%m/%d').date()
-        num_adult = int(request.GET.get('num_adult', 0))
-        num_concession = int(request.GET.get('num_concession', 0))
-        num_child = int(request.GET.get('num_child', 0))
-        num_infant = int(request.GET.get('num_infant', 0))
+        # Validate parameters
+        data = {
+            "arrival" : request.GET.get('arrival'),
+            "departure" : request.GET.get('departure'),
+            "num_adult" : request.GET.get('num_adult', 0),
+            "num_concession" : request.GET.get('num_concession', 0),
+            "num_child" : request.GET.get('num_child', 0),
+            "num_infant" : request.GET.get('num_infant', 0)
+        }
+        serializer = CampgroundCampsiteFilterSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        start_date = serializer.validated_data['arrival']
+        end_date = serializer.validated_data['departure']
+        num_adult = serializer.validated_data['num_adult']
+        num_concession = serializer.validated_data['num_concession']
+        num_child = serializer.validated_data['num_child']
+        num_infant = serializer.validated_data['num_infant']
 
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
