@@ -528,7 +528,7 @@ class CampgroundFeatureViewSet(viewsets.ModelViewSet):
 
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all()
-    serializer_class = Region.objects.all()
+    serializer_class = RegionSerializer
 
 class CampsiteClassViewSet(viewsets.ModelViewSet):
     queryset = CampsiteClass.objects.all()
