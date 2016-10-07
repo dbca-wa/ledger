@@ -625,3 +625,18 @@ class AddressListener(object):
                     raise ValidationError('Multiple profiles cannot have the same address.')
                 else:
                     raise
+
+@python_2_unicode_compatible
+class EmailUserReport(models.Model):
+    hash = models.TextField(primary_key=True)
+    occurence = models.IntegerField()
+    first_name = models.CharField(max_length=128, blank=False)
+    last_name = models.CharField(max_length=128, blank=False)
+    dob = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=False,verbose_name="date of birth", help_text='')
+
+    def __str__(self):
+        return 'First Name: {}, Last Name: {}, DOB: {}, Occurence: {}'.format(self.first_name,self.last_name,self.dob,self.occurence)
+
+    class Meta:
+        managed = False
+        db_table = 'accounts_emailuser_report_v'

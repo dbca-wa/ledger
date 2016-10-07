@@ -281,23 +281,28 @@ def generateParserSummary(files):
     valid = files['valid']
     other = files['other']
     failed = files['failed']
+    processed = files['processed']
 
     output = StringIO()
-    output.write('Successful Files\n')
+    output.write('Successful Files with transactions:\n')
     # Successful Files
     for n,t in valid:
         output.write('  File Name: {}\n'.format(n))
         output.write('    Transactions:\n')
         for trans in t.transactions.all():
             output.write('      CRN: {}\n'.format(trans.crn))
+    # Successful Files without transactions
+    output.write('\nSuccessful Files without transactions:\n')
+    for n,t in other:
+        output.write('  File Name: {}\n'.format(n))
     # Failed files
-    output.write('Failed Files\n')
+    output.write('\nFailed Files:\n')
     for n,r in failed:
         output.write('  File Name: {}\n'.format(n))
         output.write('    Reason: {}\n'.format(r))
-    # Other Files
-    output.write('Other Files\n')
-    for n,t in other:
+    # Already processed Files
+    output.write('\nFiles previously processed:\n')
+    for n,t in processed:
         output.write('  File Name: {}\n'.format(n))
 
     contents = output.getvalue()
@@ -320,6 +325,7 @@ def bpayParser(path):
     valid_files = []
     failed_files = []
     other_files = []
+    processed_files = []
     try:
         if settings.NOTIFICATION_EMAIL:
             for p,n in files:
@@ -330,12 +336,16 @@ def bpayParser(path):
                     else:
                         other_files.append([n,bfile])
                 else:
-                    failed_files.append([n,reason])
+                    if 'unique constraint' in reason:
+                        processed_files.append([n,'processed'])
+                    else:
+                        failed_files.append([n,reason])
 
             summary = generateParserSummary({
                 'valid': valid_files,
                 'failed': failed_files,
-                'other': other_files
+                'other': other_files,
+                'processed': processed_files
             })
             sendEmail(summary)
         else:

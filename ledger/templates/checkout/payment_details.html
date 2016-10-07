@@ -1,4 +1,5 @@
 {% extends 'checkout/payment_details.html' %}
+{% load static %}
 {% load i18n %}
 
 {% block payment_details %}
@@ -15,7 +16,43 @@
                 <div class="sub-header">
                     <h3>{% trans "Card Details" %}</h3>
                 </div>
-                <form method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
+                {% if store_card and cards %}
+                    <div class="checkbox">
+                        <label><input type="checkbox" id="use_stored" name="use_stored" value="True"/>Use Stored Cards</label>
+                    </div>
+                    <form id="stored_card_form" method="post" action="{% url 'checkout:preview' %}" class="hide form-stacked">
+                        {% csrf_token %}
+                        <input type="hidden" name="checkout_token" readonly value="True"/>
+                        <input type="hidden" name="payment_method" readonly value="card"/>
+                        <fieldset  id="storedcard_fieldset">
+                            <legend>Stored Cards</legend>
+                            <table style="width:20%;">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Ending</th>
+                                        <th>Expiry Date</th>
+                                        <th>Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for card in cards %}
+                                    <tr>
+                                        <td><input  type="radio" name="card" value="{{card.id}}" selected/></td>
+                                        <td>{{card.last_digits}}</td>
+                                        <td>{{card.expiry_date|date:'m/Y'}}</td>
+                                        <td>{{card.get_card_type_display}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </fieldset>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-large btn-primary pull-right">{% trans "Continue" %}</button>
+                        </div>
+                    </form>
+                {% endif %}
+                <form id="new_card_form" method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
                     {% csrf_token %}
                     {% include "partials/form_fields.html" with form=bankcard_form %}
                     {% if store_card %}
@@ -63,4 +100,8 @@
         </div>
     </div>
 </div> 
+{% endblock %}
+{% block extrascripts %}
+    <script type="text/javascript" src="{% static 'payments/js/checkout.js'%}"></script>
+    {{ block.super }}
 {% endblock %}
