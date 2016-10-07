@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Park, Campground, Campsite, CampgroundFeature, Region, CampsiteClass, CampsiteBooking, Booking,PromoArea, CampsiteRate
+from .models import Park, Campground, Campsite, CampgroundFeature, District, Region, CampsiteClass, CampsiteBooking, Booking,PromoArea, CampsiteRate
 
 @admin.register(CampsiteClass)
 class CampsiteClassAdmin(admin.ModelAdmin):
@@ -10,9 +10,9 @@ class CampsiteClassAdmin(admin.ModelAdmin):
 
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
-    list_display = ('name','region')
+    list_display = ('name','district')
     ordering = ('name',)
-    list_filter = ('region',)
+    list_filter = ('district',)
     search_fields = ('name',)
 
 @admin.register(Campground)
@@ -55,5 +55,6 @@ class CampsiteRateAdmin(admin.ModelAdmin):
     list_filter = ('campground','campsite_class','allow_public_holidays')
 
 admin.site.register(Region)
+admin.site.register(District)
 admin.site.register(PromoArea)
 
