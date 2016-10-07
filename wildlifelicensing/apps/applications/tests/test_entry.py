@@ -315,10 +315,10 @@ class ApplicationEntryTestCase(TestCase):
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'), follow=True)
+        response = self.client.post(reverse('wl_applications:preview'))
 
-        # check that client is redirected to complete
-        self.assertRedirects(response, reverse('wl_applications:complete'),
+        # check that client is redirected to checkout
+        self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         application.refresh_from_db()
@@ -329,6 +329,7 @@ class ApplicationEntryTestCase(TestCase):
 
 class ApplicationEntrySecurity(TransactionTestCase):
     fixtures = ['licences.json']
+    serialized_rollback = True
 
     def setUp(self):
         self.client = SocialClient()
@@ -343,6 +344,7 @@ class ApplicationEntrySecurity(TransactionTestCase):
         customer1 = create_random_customer()
         customer2 = create_random_customer()
         self.assertNotEqual(customer1, customer2)
+
         application1 = helpers.create_application(user=customer1)
         application2 = helpers.create_application(user=customer2)
         self.assertNotEqual(application1, application2)
@@ -378,11 +380,11 @@ class ApplicationEntrySecurity(TransactionTestCase):
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'), follow=True)
+        response = self.client.post(reverse('wl_applications:preview'))
 
-        # check that client is redirected to home
-        self.assertRedirects(response, reverse('wl_dashboard:home'),
-                             status_code=302, target_status_code=200, fetch_redirect_response=True)
+        # check that client is redirected to checkout
+        self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         application.refresh_from_db()
 
@@ -409,10 +411,10 @@ class ApplicationEntrySecurity(TransactionTestCase):
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'), follow=True)
+        response = self.client.post(reverse('wl_applications:preview'))
 
-        # check that client is redirected to home
-        self.assertRedirects(response, reverse('wl_dashboard:home'),
+        # check that client is redirected to checkout
+        self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         application.refresh_from_db()
