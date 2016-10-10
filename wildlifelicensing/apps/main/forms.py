@@ -2,11 +2,11 @@ import json
 import os
 from datetime import datetime
 
-from dateutil.relativedelta import relativedelta
 from django import forms
 from django.contrib.postgres.forms import JSONField
 from django.forms.widgets import SelectMultiple
 
+from dateutil.relativedelta import relativedelta
 from django_gaia_jsoneditor.widgets import JSONEditorWidget
 
 from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry

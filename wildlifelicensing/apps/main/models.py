@@ -11,7 +11,6 @@ from ledger.accounts.models import RevisionedMixin, EmailUser, Document, Profile
 from ledger.licence.models import LicenceType, Licence
 
 from wildlifelicensing.apps.payments import utils as payment_utils
-from wildlifelicensing.apps.payments.utils import generate_product_code_variants
 
 
 @python_2_unicode_compatible
@@ -63,7 +62,7 @@ class WildlifeLicenceType(LicenceType):
         - Check for senior voucher if applicable.
         :return: raise an exception if error
         """
-        variant_codes = generate_product_code_variants(self)
+        variant_codes = payment_utils.generate_product_code_variants(self)
 
         missing_product_variants = []
 
