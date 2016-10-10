@@ -101,10 +101,10 @@ def create_random_customer():
 
 
 def get_or_create_default_customer(include_default_profile=False):
-    user = get_or_create_user(TestData.DEFAULT_CUSTOMER['email'], TestData.DEFAULT_CUSTOMER)[0]
+    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER['email'], TestData.DEFAULT_CUSTOMER)
 
     if include_default_profile:
-        address = Address.objects.create(**TestData.DEFAULT_ADDRESS)
+        address = Address.objects.create(user=user, **TestData.DEFAULT_ADDRESS)
         profile = Profile.objects.create(user=user, postal_address=address, **TestData.DEFAULT_PROFILE)
         profile.user = user
 
@@ -124,7 +124,7 @@ def get_or_create_licence_type(product_code='regulation-17'):
 
 def create_licence(holder, issuer, product_code='regulation-17'):
     licence_type = get_or_create_licence_type(product_code)
-    return WildlifeLicence.objects.create(licence_type=licence_type, holder=holder, issuer=issuer, profile=holder.profile_set.first())
+    return WildlifeLicence.objects.create(licence_type=licence_type, holder=holder, issuer=issuer, profile=holder.profiles.first())
 
 
 def get_or_create_default_assessor():
