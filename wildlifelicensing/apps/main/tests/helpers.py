@@ -6,7 +6,9 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 from django.contrib.auth.models import Group
+from django_dynamic_fixture import get as get_ddf
 from mixer.backend.django import mixer
+from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser, Profile, Address
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence, AssessorGroup
@@ -79,7 +81,7 @@ def belongs_to(user, group_name):
 
 def add_to_group(user, group_name):
     if not belongs_to(user, group_name):
-        group = Group.objects.get_or_create(name=group_name)[0]
+        group, created = Group.objects.get_or_create(name=group_name)
         user.groups.add(group)
         user.save()
     return user
@@ -91,7 +93,7 @@ def get_or_create_user(email, defaults):
 
 
 def create_random_user():
-    return mixer.blend(EmailUser)
+    return get_ddf(EmailUser, dob='1970-01-01')
 
 
 def create_random_customer():
@@ -99,10 +101,10 @@ def create_random_customer():
 
 
 def get_or_create_default_customer(include_default_profile=False):
-    user = get_or_create_user(TestData.DEFAULT_CUSTOMER['email'], TestData.DEFAULT_CUSTOMER)[0]
+    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER['email'], TestData.DEFAULT_CUSTOMER)
 
     if include_default_profile:
-        address = Address.objects.create(**TestData.DEFAULT_ADDRESS)
+        address = Address.objects.create(user=user, **TestData.DEFAULT_ADDRESS)
         profile = Profile.objects.create(user=user, postal_address=address, **TestData.DEFAULT_PROFILE)
         profile.user = user
 
@@ -122,7 +124,7 @@ def get_or_create_licence_type(product_code='regulation-17'):
 
 def create_licence(holder, issuer, product_code='regulation-17'):
     licence_type = get_or_create_licence_type(product_code)
-    return WildlifeLicence.objects.create(licence_type=licence_type, holder=holder, issuer=issuer, profile=holder.profile_set.first())
+    return WildlifeLicence.objects.create(licence_type=licence_type, holder=holder, issuer=issuer, profile=holder.profiles.first())
 
 
 def get_or_create_default_assessor():

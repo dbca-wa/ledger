@@ -7,18 +7,20 @@ from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
-from bpay.models import BpayTransaction, BpayFile, BpayCollection
-from invoice.models import Invoice
-from bpoint.models import BpointTransaction, BpointToken
-from cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
+
+from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollection
+from ledger.payments.invoice.models import Invoice
+from ledger.payments.bpoint.models import BpointTransaction, BpointToken
+from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
+from ledger.payments.utils import checkURL, createBasket, validSystem, systemid_check
+from ledger.payments.facade import bpoint_facade
+from ledger.payments.reports import generate_items_csv, generate_trans_csv
+
 from ledger.accounts.models import EmailUser
 from ledger.catalogue.models import Product
-from utils import checkURL, createBasket, validSystem, systemid_check
-from facade import bpoint_facade
 from oscar.apps.order.models import Order
 from oscar.apps.voucher.models import Voucher
 from oscar.apps.payment import forms
-from reports import generate_items_csv, generate_trans_csv
 import traceback
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -89,10 +91,10 @@ class BpayTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     
 class BpayFileSerializer(serializers.ModelSerializer):
-    date_modifier = serializers.SerializerMethodField()
+    #date_modifier = serializers.SerializerMethodField()
     transactions = BpayTransactionSerializer(many=True)
     created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
-    settled = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    #settled = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = BpayFile
         fields = (
@@ -100,22 +102,22 @@ class BpayFileSerializer(serializers.ModelSerializer):
             "inserted",
             "created",
             "file_id",
-            "settled",
-            "date_modifier",
-            "credit_items",
-            "credit_amount",
-            "cheque_items",
-            "cheque_amount",
-            "debit_amount",
-            "debit_items",
-            "account_total",
-            "account_records",
-            "group_total",
-            "group_accounts",
-            "group_records",
-            "file_total",
-            "file_groups",
-            "file_records",
+            #"settled",
+            #"date_modifier",
+            #"credit_items",
+            #"credit_amount",
+            #"cheque_items",
+            #"cheque_amount",
+            #"debit_amount",
+            #"debit_items",
+            #"account_total",
+            #"account_records",
+            #"group_total",
+            #"group_accounts",
+            #"group_records",
+            #"file_total",
+            #"file_groups",
+            #"file_records",
             "transactions"
         )
         
@@ -572,6 +574,10 @@ class CheckoutSerializer(serializers.Serializer):
     products = CheckoutProductSerializer(many=True)
     vouchers = VoucherSerializer(many=True,required=False)
 
+    def validate(self, data):
+        if data['proxy'] and not data['basket_owner']:
+            raise serializers.ValidationError('A proxy payment requires the basket_owner to be set.')
+        return data
     def validate_template(self, value):
         try:
             get_template(value)
@@ -689,6 +695,8 @@ class ReportSerializer(serializers.Serializer):
     system = serializers.CharField(max_length=4)
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
+    banked_start = serializers.DateTimeField(required=False,allow_null=True)
+    banked_end = serializers.DateTimeField(required=False,allow_null=True)
     region = serializers.ChoiceField(required=False,allow_null=True,choices=REGION_CHOICES)
     district = serializers.ChoiceField(required=False,allow_null=True,choices=DISTRICT_CHOICES)
     items = serializers.BooleanField(default=False)
@@ -700,6 +708,11 @@ class ReportSerializer(serializers.Serializer):
         except Exception as e:
             raise serializers.ValidationError(str(e))
         return value
+
+    def validate(self,data):
+        if data['items'] and not (data['banked_start'] and data['banked_end']):
+            raise serializers.ValidationError('banked_start and banked_end are required for items csv. ')
+        return data
 
 class ReportCreateView(views.APIView):
     authentication_classes = [SessionAuthentication]
@@ -713,6 +726,8 @@ class ReportCreateView(views.APIView):
             data = {
                 "start":request.GET.get('start'),
                 "end":request.GET.get('end'),
+                "banked_start":request.GET.get('banked_start',None),
+                "banked_end":request.GET.get('banked_end',None),
                 "system":request.GET.get('system'),
                 "items": request.GET.get('items', False),
                 "region": request.GET.get('region'),
@@ -725,7 +740,9 @@ class ReportCreateView(views.APIView):
             if serializer.validated_data['items']:
                 report = generate_items_csv(systemid_check(serializer.validated_data['system']),
                                             serializer.validated_data['start'],
-                                            serializer.validated_data['end'])
+                                            serializer.validated_data['end'],
+                                            serializer.validated_data['banked_start'],
+                                            serializer.validated_data['banked_end'])
             else:
                 report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
                                             ,serializer.validated_data['start'],

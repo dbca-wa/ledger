@@ -1,6 +1,6 @@
 import logging
 import six
-from urlparse import urlparse, urlunparse
+from six.moves.urllib.parse import urlparse, urlunparse
 import mimetypes
 
 
@@ -8,7 +8,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template import loader, Template, Context
 from django.utils.html import strip_tags
 from django.conf import settings
-from django_hosts import reverse
+from django.core.urlresolvers import reverse
 from django.utils.encoding import smart_text
 
 from ledger.accounts.models import Document

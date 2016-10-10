@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
-from django.utils.six.moves.urllib.parse import urlparse
+from six.moves.urllib.parse import urlparse
 #
 from ledger.basket.models import Basket
 from ledger.catalogue.models import Product

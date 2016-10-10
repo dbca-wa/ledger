@@ -58,7 +58,7 @@ class CreateProfilesView(CustomerRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {'profile_form': ProfileForm(user=request.user),
-                                                    'address_form': AddressForm()})
+                                                    'address_form': AddressForm(user=request.user)})
 
     def post(self, request, *args, **kwargs):
         if request.user.pk != int(request.POST['user']):
@@ -114,7 +114,8 @@ class EditProfilesView(CustomerRequiredMixin, TemplateView):
 
         if profile_form.is_valid() and address_form.is_valid():
             profile = profile_form.save()
-            address_form.save()
+            profile.postal_address = address_form.save()
+            profile.save()
         else:
             return render(request, self.template_name, {'profile_form': profile_form,
                                                         'address_form': address_form})

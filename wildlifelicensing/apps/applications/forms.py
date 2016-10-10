@@ -18,12 +18,12 @@ class ProfileSelectionForm(forms.Form):
 
         super(ProfileSelectionForm, self).__init__(*args, **kwargs)
 
-        self.fields['profile'].queryset = user.profile_set.all()
+        self.fields['profile'].queryset = user.profiles.all()
 
         if selected_profile is not None:
             self.fields['profile'].initial = selected_profile
         else:
-            self.fields['profile'].initial = user.profile_set.first()
+            self.fields['profile'].initial = user.profiles.first()
 
 
 class IDRequestForm(forms.ModelForm):

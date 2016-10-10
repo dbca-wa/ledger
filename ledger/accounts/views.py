@@ -59,7 +59,10 @@ def validation_sent(request):
 
 
 def logout(request, *args, **kwargs):
+    user = request.user
     auth_logout(request)
+    if bool(request.GET.get('link_account')) and not user.profiles.all():
+        user.delete()
     messages.success(request,
                      "You have successfully logged out.")
     if 'next' in kwargs:

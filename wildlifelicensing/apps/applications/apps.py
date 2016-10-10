@@ -12,6 +12,6 @@ class ApplicationsConfig(AppConfig):
 
     def ready(self):
         if not self.run_once:
-            import signals
+            from wildlifelicensing.apps.applications import signals
 
         self.run_once = True

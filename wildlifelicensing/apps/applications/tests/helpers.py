@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.test import TestCase
-from mixer.backend.django import mixer
+from django_dynamic_fixture import get as get_ddf
 
 from django.core.urlresolvers import reverse, reverse_lazy
 
@@ -14,7 +14,7 @@ from wildlifelicensing.apps.main.tests.helpers import create_random_customer, ge
 
 
 def create_profile(user):
-    return mixer.blend(Profile, user=user)
+    return get_ddf(Profile, user=user)
 
 
 def create_application(user=None, **kwargs):
@@ -28,7 +28,7 @@ def create_application(user=None, **kwargs):
         kwargs['licence_type'] = get_or_create_licence_type()
     if 'data' not in kwargs:
         kwargs['data'] = {}
-    application = mixer.blend(Application, **kwargs)
+    application = get_ddf(Application, **kwargs)
     return application
 
 
@@ -83,7 +83,7 @@ class HelpersTest(TestCase):
         profile = create_profile(user)
         self.assertIsNotNone(profile)
         self.assertEquals(user, profile.user)
-        self.assertEquals(profile, user.profile_set.first())
+        self.assertEquals(profile, user.profiles.first())
 
     def test_create_application(self):
         application = create_application()
