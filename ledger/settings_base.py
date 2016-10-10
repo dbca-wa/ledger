@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     'social.apps.django_app.default',
     'django_extensions',
     'reversion',
-    'django_gaia_jsoneditor',
     'widget_tweaks',
     'django_countries',
     'django_cron',

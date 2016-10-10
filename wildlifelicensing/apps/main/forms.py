@@ -7,7 +7,6 @@ from django.contrib.postgres.forms import JSONField
 from django.forms.widgets import SelectMultiple
 
 from dateutil.relativedelta import relativedelta
-from django_gaia_jsoneditor.widgets import JSONEditorWidget
 
 from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
 
@@ -21,7 +20,7 @@ class BetterJSONField(JSONField):
     """
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('widget', JSONEditorWidget)
+        kwargs.setdefault('widget', forms.Textarea(attrs={'cols': 80, 'rows': 20}))
         super(JSONField, self).__init__(**kwargs)
 
     def prepare_value(self, value):

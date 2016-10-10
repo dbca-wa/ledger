@@ -22,4 +22,3 @@ djangorestframework==3.4.0
 pycountry==1.20
 six>=1.10.0
 django-ical>=1.4
-git+https://gitlab.gaiaresources.com.au/robert/django-gaia-jsoneditor.git#egg=django-gaia-jsoneditor
