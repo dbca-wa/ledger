@@ -7,6 +7,8 @@ from django import forms
 from django.contrib.postgres.forms import JSONField
 from django.forms.widgets import SelectMultiple
 
+from django_gaia_jsoneditor.widgets import JSONEditorWidget
+
 from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
 
 DATE_FORMAT = '%d/%m/%Y'
@@ -19,7 +21,7 @@ class BetterJSONField(JSONField):
     """
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('widget', forms.Textarea(attrs={'cols': 80, 'rows': 20}))
+        kwargs.setdefault('widget', JSONEditorWidget)
         super(JSONField, self).__init__(**kwargs)
 
     def prepare_value(self, value):

@@ -9,7 +9,7 @@ from ledger.accounts.models import Profile
 
 from wildlifelicensing.apps.applications.views.entry import LICENCE_TYPE_NUM_CHARS, LODGEMENT_NUMBER_NUM_CHARS
 from wildlifelicensing.apps.applications.models import Application, Assessment, Condition
-from wildlifelicensing.apps.main.tests.helpers import create_random_customer, create_licence_type, \
+from wildlifelicensing.apps.main.tests.helpers import create_random_customer, get_or_create_licence_type, \
     SocialClient, get_or_create_default_assessor_group, get_or_create_default_officer
 
 
@@ -25,7 +25,7 @@ def create_application(user=None, **kwargs):
     if 'applicant_profile' not in kwargs:
         kwargs['applicant_profile'] = create_profile(user)
     if 'licence_type' not in kwargs:
-        kwargs['licence_type'] = create_licence_type()
+        kwargs['licence_type'] = get_or_create_licence_type()
     if 'data' not in kwargs:
         kwargs['data'] = {}
     application = mixer.blend(Application, **kwargs)

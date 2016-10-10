@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django_hosts',
     'bootstrap3',
     'reversion',
+    'django_gaia_jsoneditor',
     'widget_tweaks',
     'django_countries',
     'django_cron',

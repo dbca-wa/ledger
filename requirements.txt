@@ -21,3 +21,4 @@ py4j==0.10.2.1
 djangorestframework==3.4.0
 pycountry==1.20
 svglib==0.6.3
+git+https://gitlab.gaiaresources.com.au/robert/django-gaia-jsoneditor.git#egg=django-gaia-jsoneditor
