@@ -81,7 +81,6 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
 
         return schema
 
-
 @admin.register(WildlifeLicenceType)
 class WildlifeLicenceTypeAdmin(VersionAdmin):
     list_display = ('name', 'display_name', 'version', 'code')
@@ -121,7 +120,6 @@ class VariantGroupAdminForm(forms.ModelForm):
             previous_variants = list(self.instance.variants.all())
 
             self.instance.variants = self.cleaned_data['variants']
-            self.instance.save()
 
             missing_product_variants = []
 
@@ -140,7 +138,6 @@ class VariantGroupAdminForm(forms.ModelForm):
 
                 # revert back to previous variants list
                 self.instance.variants = previous_variants
-                self.instance.save()
 
                 raise ValidationError(msg)
 
