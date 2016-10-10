@@ -88,6 +88,9 @@ class BpointToken(models.Model):
     expiry_date = models.DateField()
     card_type = models.CharField(max_length=2, choices=CARD_TYPES, blank=True, null=True)
 
+    class Meta:
+        unique_together = ('user', 'masked_card','expiry_date','card_type')
+
     @property
     def last_digits(self):
         return self.masked_card[-4:]
@@ -98,3 +101,11 @@ class BpointToken(models.Model):
             self.DVToken,
             self.expiry_date.strftime("%m%y")
         )
+
+    def delete(self):
+        UsedBpointToken.objects.create(DVToken=self.DVToken)
+        super(BpointToken,self).delete()
+
+class UsedBpointToken(models.Model):
+    added = models.DateTimeField(auto_now_add=True)
+    DVToken = models.CharField(max_length=128)

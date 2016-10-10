@@ -16,7 +16,7 @@ TEST_ID_PATH = os.path.join('wildlifelicensing', 'apps', 'main', 'test_data', 't
 
 
 class ApplicationEntryTestCase(TestCase):
-    fixtures = ['licences.json', 'countries.json', 'catalogue.json', 'partner.json']
+    fixtures = ['licences.json', 'catalogue.json', 'partner.json']
 
     def setUp(self):
         self.customer = get_or_create_default_customer()
@@ -117,7 +117,7 @@ class ApplicationEntryTestCase(TestCase):
         """
         self.client.login(self.customer.email)
 
-        original_profile_count = self.customer.profile_set.count()
+        original_profile_count = self.customer.profiles.count()
 
         self.client.get(reverse('wl_applications:new_application'))
         self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
@@ -149,10 +149,10 @@ class ApplicationEntryTestCase(TestCase):
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         # check that a new profile was created
-        self.assertEqual(self.customer.profile_set.count(), original_profile_count + 1)
+        self.assertEqual(self.customer.profiles.count(), original_profile_count + 1)
 
         # check the created profile has been set in the application
-        self.assertEquals(self.customer.profile_set.first(), Application.objects.first().applicant_profile)
+        self.assertEquals(self.customer.profiles.first(), Application.objects.first().applicant_profile)
 
     def test_create_select_profile_select(self):
         """Testing that a user can display the create / select profile page and select a profile
@@ -164,11 +164,13 @@ class ApplicationEntryTestCase(TestCase):
         self.client.get(reverse('wl_applications:select_licence_type', args=(self.licence_type.pk,)))
 
         # create profiles
-        address1 = Address.objects.create(line1='1 Test Street', locality='Test Suburb', state='WA', postcode='0001')
+        address1 = Address.objects.create(user=self.customer, line1='1 Test Street', locality='Test Suburb', 
+                                          state='WA', postcode='0001')
         profile1 = Profile.objects.create(user=self.customer, name='Test Profile', email='test@testplace.net.au',
                                           institution='Test Institution', postal_address=address1)
 
-        address2 = Address.objects.create(line1='2 Test Street', locality='Test Suburb', state='WA', postcode='0001')
+        address2 = Address.objects.create(user=self.customer, line1='2 Test Street', locality='Test Suburb', 
+                                          state='WA', postcode='0001')
         profile2 = Profile.objects.create(user=self.customer, name='Test Profile 2', email='test@testplace.net.au',
                                           institution='Test Institution', postal_address=address2)
 
@@ -311,10 +313,10 @@ class ApplicationEntryTestCase(TestCase):
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'), follow=True)
+        response = self.client.post(reverse('wl_applications:preview'))
 
-        # check that client is redirected to complete
-        self.assertRedirects(response, reverse('wl_applications:complete'),
+        # check that client is redirected to checkout
+        self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         application.refresh_from_db()
@@ -325,6 +327,7 @@ class ApplicationEntryTestCase(TestCase):
 
 class ApplicationEntrySecurity(TransactionTestCase):
     fixtures = ['licences.json']
+    serialized_rollback = True
 
     def setUp(self):
         self.client = SocialClient()
@@ -339,6 +342,7 @@ class ApplicationEntrySecurity(TransactionTestCase):
         customer1 = create_random_customer()
         customer2 = create_random_customer()
         self.assertNotEqual(customer1, customer2)
+
         application1 = helpers.create_application(user=customer1)
         application2 = helpers.create_application(user=customer2)
         self.assertNotEqual(application1, application2)
@@ -374,11 +378,11 @@ class ApplicationEntrySecurity(TransactionTestCase):
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'), follow=True)
+        response = self.client.post(reverse('wl_applications:preview'))
 
-        # check that client is redirected to home
-        self.assertRedirects(response, reverse('wl_dashboard:home'),
-                             status_code=302, target_status_code=200, fetch_redirect_response=True)
+        # check that client is redirected to checkout
+        self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         application.refresh_from_db()
 
@@ -405,10 +409,10 @@ class ApplicationEntrySecurity(TransactionTestCase):
         # check that the state of the application is temp
         self.assertEqual(application.processing_status, 'temp')
 
-        response = self.client.post(reverse('wl_applications:preview'), follow=True)
+        response = self.client.post(reverse('wl_applications:preview'))
 
-        # check that client is redirected to home
-        self.assertRedirects(response, reverse('wl_dashboard:home'),
+        # check that client is redirected to checkout
+        self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
         application.refresh_from_db()

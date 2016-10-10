@@ -6,7 +6,9 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 from django.contrib.auth.models import Group
+from django_dynamic_fixture import get as get_ddf
 from mixer.backend.django import mixer
+from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser, Profile, Address
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence, AssessorGroup
@@ -79,7 +81,7 @@ def belongs_to(user, group_name):
 
 def add_to_group(user, group_name):
     if not belongs_to(user, group_name):
-        group = Group.objects.get_or_create(name=group_name)[0]
+        group, created = Group.objects.get_or_create(name=group_name)
         user.groups.add(group)
         user.save()
     return user
@@ -91,7 +93,7 @@ def get_or_create_user(email, defaults):
 
 
 def create_random_user():
-    return mixer.blend(EmailUser)
+    return get_ddf(EmailUser, dob='1970-01-01')
 
 
 def create_random_customer():

@@ -173,6 +173,7 @@ class Remittance(Flowable):
 
 def _create_header(canvas, doc, draw_page_number=True):
     canvas.saveState()
+    canvas.setTitle('Invoice')
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN

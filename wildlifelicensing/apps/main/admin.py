@@ -65,7 +65,7 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
                     for item in schema['children']:
                         __check_name(item)
                 if 'conditions' in schema:
-                    for condition, condition_values in schema['conditions'].iteritems():
+                    for condition, condition_values in schema['conditions'].items():
                         if type(condition_values) is list:
                             for item in condition_values:
                                 __check_name(item)

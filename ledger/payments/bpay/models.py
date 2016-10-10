@@ -8,32 +8,10 @@ from django.core.exceptions import ValidationError
 import datetime
 
 class BpayFile(models.Model):
-    DATE_MODIFIERS = (
-        (1,'interim/previous day'),
-        (2, 'final/previous day'),
-        (3, 'interim/same day'),
-        (4, 'final/same day')
-    )
     inserted = models.DateTimeField(auto_now_add=True)
     created = models.DateTimeField(help_text='File Creation Date Time.')
     file_id = models.BigIntegerField(help_text='File Identification Number.')
-    settled = models.DateTimeField(help_text='File Settlement Date Time')
-    date_modifier = models.IntegerField(choices=DATE_MODIFIERS, help_text='As of Date modifier')
-    credit_items = models.IntegerField(default=0)
-    credit_amount = models.DecimalField(default=0,decimal_places=2,max_digits=12)
-    cheque_items = models.IntegerField(default=0)
-    cheque_amount =models.DecimalField(default=0,decimal_places=2,max_digits=12)
-    debit_amount =models.DecimalField(default=0,decimal_places=2,max_digits=12)
-    debit_items = models.IntegerField(default=0)
-    account_total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
-    account_records = models.IntegerField(default=0)
-    group_total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
-    group_accounts = models.IntegerField(default=0)
-    group_records = models.IntegerField(default=0)
-    file_total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
-    file_groups = models.IntegerField(default=0)
-    file_records = models.IntegerField(default=0)
-    
+
     class Meta:
         unique_together = ('created','file_id')
         
@@ -44,16 +22,29 @@ class BpayFile(models.Model):
     def items_validated(self):
         total_items = (self.credit_items + self.debit_items + self.cheque_items)
         return self.transactions.count() == total_items
-    
-@receiver(post_save, sender=BpayFile)
+
+class BpayFileTrailer(models.Model):
+    total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
+    groups = models.IntegerField(default=0)
+    records = models.IntegerField(default=0)
+    file = models.OneToOneField(BpayFile, related_name='trailer')
+
+@receiver(post_save, sender=BpayFileTrailer)
 def update_file_view(sender, instance, **kwargs):
     try:
         cursor = connection.cursor()
-        cursor.execute('CREATE OR REPLACE VIEW payments_bpaycollection_v AS SELECT date(created),\
-                       count(*),sum(credit_amount) AS credit_total\
-                       , sum(cheque_amount) as cheque_total, sum(debit_amount) as debit_total,sum(file_total) as total  from bpay_bpayfile GROUP BY date(created)')
+        sql = 'CREATE OR REPLACE VIEW bpay_bpaycollection_v AS \
+                select date(created), count(*), sum(a.credit_total) as credit_total, \
+                sum(a.cheque_total) as cheque_total,sum(a.debit_total) as debit_total, \
+                (sum(a.credit_total)+sum(a.cheque_total)+sum(a.debit_total)) as total from bpay_bpayfile f\
+                inner join \
+                (select file_id,sum(credit_amount) as credit_total,sum(cheque_amount) as cheque_total,\
+                sum(debit_amount) as debit_total from bpay_bpayaccountrecord GROUP BY \
+                file_id,credit_amount,cheque_amount,debit_amount) a \
+                on f.id=a.file_id \
+                group by date(f.created);'
+        cursor.execute(sql)
     except Exception as e:
-        connection.rollback()
         raise ValidationError(e)
 
 class BpayTransaction(models.Model):
@@ -96,7 +87,7 @@ class BpayTransaction(models.Model):
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     type = models.CharField(max_length=3,choices=TRANSACTION_TYPE, help_text='Indicates whether it is a credit or debit item',validators=[MinLengthValidator(3)],)
     cheque_num = models.IntegerField(default=0, help_text='Number of cheques in deposit')
-    crn = models.BigIntegerField(help_text='Customer Referencer Number')
+    crn = models.CharField(max_length=20,help_text='Customer Referencer Number')
     txn_ref = models.CharField(max_length=21, help_text='Transaction Reference Number',validators=[MinLengthValidator(12)])
     service_code = models.CharField(max_length=7, help_text='Unique identification for a service provider realting to a bill.', validators=[MinLengthValidator(1)])
     p_instruction_code = models.CharField(max_length=2,choices=PAYMENT_INSTRUCTION_CODES, help_text='Payment instruction method.',validators=[MinLengthValidator(2)])
@@ -129,7 +120,38 @@ class BpayTransaction(models.Model):
 
     def __unicode__(self):
         return str(self.crn)
-    
+
+class BpayGroupRecord(models.Model):
+    DATE_MODIFIERS = (
+        (1,'interim/previous day'),
+        (2, 'final/previous day'),
+        (3, 'interim/same day'),
+        (4, 'final/same day')
+    )
+    settled = models.DateTimeField(help_text='File Settlement Date Time')
+    modifier = models.IntegerField(choices=DATE_MODIFIERS, help_text='As of Date modifier')
+    file = models.ForeignKey(BpayFile, related_name='group_records')
+
+class BpayGroupTrailer(models.Model):
+    total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
+    accounts = models.IntegerField(default=0)
+    records = models.IntegerField(default=0)
+    file = models.ForeignKey(BpayFile, related_name='group_trailerrecords')
+
+class BpayAccountRecord(models.Model):
+    credit_items = models.IntegerField(default=0)
+    credit_amount = models.DecimalField(default=0,decimal_places=2,max_digits=12)
+    cheque_items = models.IntegerField(default=0)
+    cheque_amount = models.DecimalField(default=0,decimal_places=2,max_digits=12)
+    debit_amount =models.DecimalField(default=0,decimal_places=2,max_digits=12)
+    debit_items = models.IntegerField(default=0)
+    file = models.ForeignKey(BpayFile, related_name='account_records')
+
+class BpayAccountTrailer(models.Model):
+    total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
+    records = models.IntegerField(default=0)
+    file = models.ForeignKey(BpayFile, related_name='account_trailerrecords')
+
 class BpayCollection(models.Model):
     date = models.DateField(primary_key=True)
     count = models.IntegerField()
