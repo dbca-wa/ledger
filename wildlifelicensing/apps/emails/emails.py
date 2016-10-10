@@ -1,18 +1,14 @@
 import logging
-import six
-from six.moves.urllib.parse import urlparse, urlunparse
 import mimetypes
 
-
+import six
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.core.urlresolvers import reverse
 from django.template import loader, Template, Context
 from django.utils.html import strip_tags
-from django.conf import settings
-from django.core.urlresolvers import reverse
-from django.utils.encoding import smart_text
 
 from ledger.accounts.models import Document
-
 
 logger = logging.getLogger('log')
 
@@ -25,11 +21,8 @@ def _render(template, context):
     return template.render(context)
 
 
-def hosts_reverse(name, args=None, kwargs=None):
-    scheme, netloc, path, params, query, fragment = urlparse(reverse(name, args=args, kwargs=kwargs))
-    if netloc.startswith(settings.DEFAULT_HOST + '.' + settings.PARENT_HOST):
-        netloc = netloc.replace(settings.DEFAULT_HOST + '.', '', 1)
-    return urlunparse((scheme, netloc, path, params, query, fragment))
+def host_reverse(name, args=None, kwargs=None):
+    return "{}{}".format(settings.DEFAULT_HOST, reverse(name, args=args, kwargs=kwargs))
 
 
 class TemplateEmailBase(object):

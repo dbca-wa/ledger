@@ -1,19 +1,18 @@
 from __future__ import unicode_literals
-import re
-import os
 
+import os
+import re
+
+from django.contrib.auth.models import Group
 from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
-from django.contrib.auth.models import Group
+from django.utils.encoding import smart_text
 from django_dynamic_fixture import get as get_ddf
-from mixer.backend.django import mixer
-from social.apps.django_app.default.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser, Profile, Address
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence, AssessorGroup
 from wildlifelicensing.apps.main import helpers as accounts_helpers
-from django.utils.encoding import smart_text
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence, AssessorGroup
 
 
 class TestData(object):
@@ -124,7 +123,8 @@ def get_or_create_licence_type(product_code='regulation-17'):
 
 def create_licence(holder, issuer, product_code='regulation-17'):
     licence_type = get_or_create_licence_type(product_code)
-    return WildlifeLicence.objects.create(licence_type=licence_type, holder=holder, issuer=issuer, profile=holder.profiles.first())
+    return WildlifeLicence.objects.create(licence_type=licence_type, holder=holder, issuer=issuer,
+                                          profile=holder.profiles.first())
 
 
 def get_or_create_default_assessor():

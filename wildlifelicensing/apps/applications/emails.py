@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils.encoding import smart_text
 
-from wildlifelicensing.apps.emails.emails import TemplateEmailBase, hosts_reverse
+from wildlifelicensing.apps.emails.emails import TemplateEmailBase, host_reverse
 from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
@@ -75,14 +75,13 @@ def send_assessment_reminder_email(assessment, request=None):
     application = assessment.application
 
     email = ApplicationAssessmentReminderEmail()
-
     if request is not None:
         url = request.build_absolute_uri(
             reverse('wl_applications:enter_conditions_assessor',
                     args=(application.pk, assessment.pk))
         )
     else:
-        url = hosts_reverse('wl_applications:enter_conditions_assessor', args=(application.pk, assessment.pk))
+        url = host_reverse('wl_applications:enter_conditions_assessor', args=(application.pk, assessment.pk))
 
     context = {
         'assessor': assessment.assessor_group,
@@ -230,7 +229,7 @@ class LicenceRenewalNotificationEmail(TemplateEmailBase):
 
 def send_licence_renewal_email_notification(licence):
     email = LicenceRenewalNotificationEmail()
-    url = hosts_reverse('wl_home')
+    url = host_reverse('wl_home')
 
     context = {
         'url': url,
@@ -249,7 +248,7 @@ class UserNameChangeNotificationEmail(TemplateEmailBase):
 def send_user_name_change_notification_email(licence):
     email = UserNameChangeNotificationEmail()
 
-    url = hosts_reverse('wl_applications:reissue_licence', args=(licence.pk,))
+    url = host_reverse('wl_applications:reissue_licence', args=(licence.pk,))
 
     context = {
         'licence': licence,
