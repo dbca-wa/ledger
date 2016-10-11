@@ -379,7 +379,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                                                           initial_email=application.applicant.email,
                                                           user=application.applicant)
 
-        kwargs['address_form'] = AddressForm()
+        kwargs['address_form'] = AddressForm(user=application.applicant)
 
         return super(CreateSelectProfileView, self).get_context_data(**kwargs)
 
@@ -400,7 +400,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                 return render(request, self.template_name, {'licence_type': application.licence_type,
                                                             'profile_selection_form': profile_selection_form,
                                                             'profile_creation_form': ProfileForm(),
-                                                            'address_form': AddressForm()})
+                                                            'address_form': AddressForm(user=application.applicant)})
         elif 'create' in request.POST:
             profile_form = ProfileForm(request.POST)
             address_form = AddressForm(request.POST)

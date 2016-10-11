@@ -15,7 +15,6 @@ env:
     global:
         - SECRET_KEY=SecretKeyForTravis
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
-        - DEFAULT_HOST="wildlifelicensing"
 install:
     - pip install -r requirements.txt
     - pip install coveralls
