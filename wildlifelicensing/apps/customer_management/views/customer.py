@@ -248,7 +248,7 @@ class EditProfileView(OfficerRequiredMixin, TemplateView):
             kwargs['address_form'] = AddressForm(instance=profile.postal_address)
         else:
             kwargs['profile_form'] = ProfileForm(user=customer)
-            kwargs['address_form'] = AddressForm()
+            kwargs['address_form'] = AddressForm(user=customer)
 
         return super(EditProfileView, self).get_context_data(**kwargs)
 
