@@ -69,6 +69,8 @@ class Campsite(models.Model):
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT)
     max_people = models.SmallIntegerField(default=6)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
+    min_days = models.SmallIntegerField(default=1)
+    max_days = models.SmallIntegerField(default=28)
 
     def __str__(self):
         return '{} - {}'.format(self.campground, self.name)
@@ -109,6 +111,8 @@ class CampsiteClass(models.Model):
     name = models.CharField(max_length=255, unique=True)
     tents = models.SmallIntegerField(default=0)
     parking_spaces = models.SmallIntegerField(default=0)
+    min_people = models.SmallIntegerField(default=1)
+    max_people = models.SmallIntegerField(default=12)
     allow_campervan = models.BooleanField(default=False)
     allow_trailer = models.BooleanField(default=False)
     allow_generator = models.BooleanField(default=False)
@@ -143,30 +147,38 @@ class Booking(models.Model):
     departure = models.DateField()
     details = JSONField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    campsite_rate = models.ForeignKey(CampsiteRate, db_index=True, on_delete=models.PROTECT)
     campground = models.ForeignKey('Campground', null=True)
 
 
 class CampsiteRate(models.Model):
-    campground = models.ForeignKey('Campground', on_delete=models.PROTECT)
-    campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT)
-    min_days = models.SmallIntegerField(default=1)
-    max_days = models.SmallIntegerField(default=28)
-    min_people = models.SmallIntegerField(default=1)
-    max_people = models.SmallIntegerField(default=12)
+    RATE_TYPE_CHOICES = (
+        (0, 'Fixed Price'),
+        (1, 'Price per Person'),
+        (2, 'Discounted'),
+    )
+
+    campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT)
+    rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
     allow_public_holidays = models.BooleanField(default=True)
+    date_start = models.DateField()
+    date_end = models.DateField()
+   
+    def rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
+        return self.rate.rate_adult*num_adult + self.rate.rate_concession*num_concession + \
+                self.rate.rate_child*num_child + self.rate.rate_infant*num_infant
+
+    def __str__(self):
+        return '{} - ({})'.format(self.campsite, self.rate)
+
+    class Meta:
+        unique_together = (('campsite', 'rate'))
+
+class Rate(models.Model):
     rate_adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
     rate_concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60')
     rate_child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')
     rate_infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
-   
-    def rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
-        return self.rate_adult*num_adult + self.rate_concession*num_concession + \
-                self.rate_child*num_child + self.rate_infant*num_infant
-
+    
     def __str__(self):
-        return '{} - {} (adult: ${}, concession: ${}, child: ${}, infant: ${})'.format(self.campground, self.campsite_class, self.rate_adult, self.rate_concession, self.rate_child, self.rate_infant)
-
-    class Meta:
-        unique_together = (('campground', 'campsite_class'))
-
-
+        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.rate_adult, self.rate_concession, self.rate_child, self.rate_infant)
