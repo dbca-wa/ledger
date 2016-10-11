@@ -228,6 +228,9 @@ class LicenceRenewalPDFView(OfficerRequiredMixin, View):
         response.write(create_licence_renewal_pdf_bytes(filename, licence,
                                                         request.build_absolute_uri(reverse('home'))))
 
+        licence.renewal_sent = True
+        licence.save()
+
         return response
 
 
@@ -240,6 +243,10 @@ class BulkLicenceRenewalPDFView(OfficerRequiredMixin, View):
         filename = 'bulk-renewals.pdf'
         response = HttpResponse(content_type='application/pdf')
         response.write(bulk_licence_renewal_pdf_bytes(licences, request.build_absolute_uri(reverse('home'))))
+
+        if licences:
+            licences.update(renewal_sent=True)
+
         return response
 
 

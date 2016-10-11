@@ -149,8 +149,8 @@ class LicencesReportView(OfficerRequiredMixin, View):
         'Regions',
         'Purpose',
         'Locations',
-        'Additional Info'
-        'Previous Licence',
+        'Additional Info',
+        'Replaced By',
         'Lodgement Number',
     )
 
@@ -167,7 +167,7 @@ class LicencesReportView(OfficerRequiredMixin, View):
             to_string(licence.purpose),
             to_string(licence.locations),
             to_string(licence.additional_information),
-            licence.previous_licence.reference if licence.previous_licence else '',
+            licence.replaced_by.reference if licence.replaced_by else '',
             application.reference if application else '',
         )
 
