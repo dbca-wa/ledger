@@ -1,5 +1,6 @@
 [report]
-omit = 
+omit =
+    venv/*
     ledger/*/migrations/*
     ledger/payments/*/migrations/*
     wildlifelicensing/apps/*/migrations/*

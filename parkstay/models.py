@@ -7,13 +7,14 @@ from django.contrib.postgres.fields import JSONField
 
 class Park(models.Model):
     name = models.CharField(max_length=255)
-    region = models.ForeignKey('Region', on_delete=models.PROTECT)
+    district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
+    ratis_id = models.IntegerField(default=-1)
     
     def __str__(self):
-        return '{} - {}'.format(self.name, self.region)
+        return '{} - {}'.format(self.name, self.district)
 
     class Meta:
-        unique_together = (('name', 'region'),)
+        unique_together = (('name',),)
 
 
 class PromoArea(models.Model):
@@ -38,6 +39,7 @@ class Campground(models.Model):
 
     name = models.CharField(max_length=255, null=True)
     park = models.ForeignKey('Park', on_delete=models.PROTECT)
+    ratis_id = models.IntegerField(default=-1)
     campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=0)
     promo_area = models.ForeignKey('PromoArea', on_delete=models.PROTECT, null=True)
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
@@ -53,13 +55,12 @@ class Campground(models.Model):
     is_published = models.BooleanField(default=False)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     metakeywords = models.TextField(blank=True, null=True)
-    ratis_id = models.IntegerField(null=True,blank=True)
 
     def __str__(self):
         return self.name
 
     class Meta:
-        unique_together = (('name','park'),)
+        unique_together = (('name', 'park'),)
     
 
 class Campsite(models.Model):
@@ -87,6 +88,18 @@ class CampgroundFeature(models.Model):
 
 class Region(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    abbreviation = models.CharField(max_length=16, null=True, unique=True)
+    ratis_id = models.IntegerField(default=-1)
+
+    def __str__(self):
+        return self.name
+
+
+class District(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    abbreviation = models.CharField(max_length=16, null=True, unique=True)
+    region = models.ForeignKey('Region', on_delete=models.PROTECT)
+    ratis_id = models.IntegerField(default=-1)
 
     def __str__(self):
         return self.name
