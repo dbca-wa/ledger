@@ -56,7 +56,7 @@ def _get_table_rows_from_post(table_name, post_data):
     by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if
                       key.startswith(table_namespace)])
     # by_column is of format {'col_header':[row1_val, row2_val,...],...}
-    num_rows = len(by_column.values()[0])
+    num_rows = len(list(by_column.values())[0])
     rows = []
     for row_num in range(num_rows):
         row_data = {}

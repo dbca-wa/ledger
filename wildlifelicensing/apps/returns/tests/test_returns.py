@@ -91,7 +91,7 @@ class ReturnsTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         # assert values in the response context match those in the spreadsheet
-        for key, value in response.context['tables'][0]['data'][0].iteritems():
+        for key, value in response.context['tables'][0]['data'][0].items():
             self.assertEqual(value['value'], TEST_VALUES[key])
 
     def test_lodge_return(self):
@@ -105,7 +105,7 @@ class ReturnsTestCase(TestCase):
             'lodge': True,
         }
 
-        for key, value in TEST_VALUES.iteritems():
+        for key, value in TEST_VALUES.items():
             post_params['regulation-17::{}'.format(key)] = value
 
         response = self.client.post(reverse('wl_returns:enter_return', args=(self.ret.pk,)), post_params)
@@ -119,5 +119,5 @@ class ReturnsTestCase(TestCase):
         self.assertEqual(self.ret.status, 'submitted')
 
         # assert values in the return is what is expected
-        for key, value in self.ret.returntable_set.first().returnrow_set.first().data.iteritems():
-            self.assertEqual(value, unicode(TEST_VALUES[key]))
+        for key, value in self.ret.returntable_set.first().returnrow_set.first().data.items():
+            self.assertEqual(value, str(TEST_VALUES[key]))
