@@ -221,24 +221,6 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
     return log_entry
 
 
-class LicenceRenewalNotificationEmail(TemplateEmailBase):
-    subject = 'Your wildlife licence is due for renewal.'
-    html_template = 'wl/emails/renew_licence_notification.html'
-    txt_template = 'wl/emails/renew_licence_notification.txt'
-
-
-def send_licence_renewal_email_notification(licence):
-    email = LicenceRenewalNotificationEmail()
-    url = host_reverse('wl_home')
-
-    context = {
-        'url': url,
-        'licence': licence
-    }
-
-    email.send(licence.profile.email, context=context)
-
-
 class UserNameChangeNotificationEmail(TemplateEmailBase):
     subject = 'User has changed name and requires licence reissue.'
     html_template = 'wl/emails/user_name_change_notification.html'

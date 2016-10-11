@@ -810,4 +810,6 @@ class BulkLicenceRenewalPDFView(DataTableLicencesOfficerView):
             licences = self.qs
         response = HttpResponse(content_type='application/pdf')
         response.write(bulk_licence_renewal_pdf_bytes(licences, request.build_absolute_uri(reverse('home'))))
+        if licences:
+            licences.update(renewal_sent=True)
         return response
