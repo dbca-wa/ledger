@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
+from datetime import date
 
 # Create your models here.
 
@@ -141,14 +142,16 @@ class CampsiteBooking(models.Model):
 
 
 class Rate(models.Model):
-    rate_adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
-    rate_concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60')
-    rate_child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')
-    rate_infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
+    concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60')
+    child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')
+    infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
     
     def __str__(self):
-        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.rate_adult, self.rate_concession, self.rate_child, self.rate_infant)
+        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
 
+    class Meta:
+        unique_together = (('adult', 'concession', 'child', 'infant'),)
 
 class CampsiteRate(models.Model):
     RATE_TYPE_CHOICES = (
@@ -163,8 +166,8 @@ class CampsiteRate(models.Model):
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT)
     rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
     allow_public_holidays = models.BooleanField(default=True)
-    date_start = models.DateField()
-    date_end = models.DateField()
+    date_start = models.DateField(default=date.today)
+    date_end = models.DateField(null=True, blank=True)
     rate_type = models.SmallIntegerField(choices=RATE_TYPE_CHOICES, default=0)
     price_model = models.SmallIntegerField(choices=PRICE_MODEL_CHOICES, default=0)
    
@@ -176,7 +179,7 @@ class CampsiteRate(models.Model):
         return '{} - ({})'.format(self.campsite, self.rate)
 
     class Meta:
-        unique_together = (('campsite', 'rate'))
+        unique_together = (('campsite', 'rate'),)
 
 
 class Booking(models.Model):
