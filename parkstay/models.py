@@ -152,16 +152,21 @@ class Rate(models.Model):
 
 class CampsiteRate(models.Model):
     RATE_TYPE_CHOICES = (
-        (0, 'Fixed Price'),
-        (1, 'Price per Person'),
-        (2, 'Discounted'),
+        (0, 'Standard'),
+        (1, 'Discounted'),
     )
 
+    PRICE_MODEL_CHOICES = (
+        (0, 'Price per Person'),
+        (1, 'Fixed Price'),
+    )
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT)
     rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
     allow_public_holidays = models.BooleanField(default=True)
     date_start = models.DateField()
     date_end = models.DateField()
+    rate_type = models.SmallIntegerField(choices=RATE_TYPE_CHOICES, default=0)
+    price_model = models.SmallIntegerField(choices=PRICE_MODEL_CHOICES, default=0)
    
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
         return self.rate.rate_adult*num_adult + self.rate.rate_concession*num_concession + \
