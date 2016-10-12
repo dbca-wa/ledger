@@ -17,7 +17,8 @@ from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
 from wildlifelicensing.apps.applications.models import Application, Assessment
-from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_application
+from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_application, \
+    extract_licence_fields, update_licence_fields
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.payments import utils as payment_utils
@@ -38,6 +39,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         # if reissue
         if application.licence:
             kwargs['issue_licence_form'] = IssueLicenceForm(instance=application.licence)
+
+            kwargs['extracted_fields'] = application.licence.extracted_fields
         else:
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
@@ -48,6 +51,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable,
                                                             return_frequency=return_frequency)
+
+            kwargs['extracted_fields'] = extract_licence_fields(application.licence_type.application_schema, application.data)
 
         if application.proxy_applicant is None:
             to = application.applicant
@@ -79,8 +84,13 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         if application.licence is not None:
             issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES)
             original_issue_date = application.licence.issue_date
+            extracted_fields = application.licence.extracted_fields
         else:
             issue_licence_form = IssueLicenceForm(request.POST, files=request.FILES)
+            extracted_fields = extract_licence_fields(application.licence_type.application_schema, application.data)
+
+        # update contents of extracted field based on posted data
+        extracted_fields = update_licence_fields(extracted_fields, request.POST)
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
@@ -106,6 +116,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                     str(licence.id).zfill(LICENCE_NUMBER_NUM_CHARS))
 
             licence.licence_sequence += 1
+
+            licence.extracted_fields = extracted_fields
 
             # reset renewal_sent flag in case of reissue
             licence.renewal_sent = False
@@ -178,8 +190,12 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             log_entry_form = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
+            payment_status = payment_utils.PAYMENT_STATUSES.get(payment_utils.get_application_payment_status(application))
+
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
                                                         'issue_licence_form': issue_licence_form,
+                                                        'extracted_fields': extracted_fields,
+                                                        'payment_status': payment_status,
                                                         'log_entry_form': log_entry_form})
 
 
@@ -200,13 +216,16 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
         if application.licence is not None:
             issue_licence_form = IssueLicenceForm(request.GET, instance=application.licence, skip_required=True)
             original_issue_date = application.licence.issue_date
+            extracted_fields = application.licence.extracted_fields
         else:
             issue_licence_form = IssueLicenceForm(request.GET, skip_required=True)
+            extracted_fields = extract_licence_fields(application.licence_type.application_schema, application.data)
 
         licence = issue_licence_form.save(commit=False)
         licence.licence_type = application.licence_type
         licence.profile = application.applicant_profile
         licence.holder = application.applicant
+        licence.extracted_fields = update_licence_fields(extracted_fields, request.GET)
 
         filename = '%s.pdf' % application.lodgement_number
 

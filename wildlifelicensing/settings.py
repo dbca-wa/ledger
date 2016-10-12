@@ -27,6 +27,7 @@ BOOTSTRAP3 = {
     'javascript_in_head': False,
     'include_jquery': False,
     'required_css_class': 'required-form-field',
+    'success_css_class': '',
     'set_placeholder': False,
 }
 

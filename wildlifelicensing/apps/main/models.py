@@ -103,6 +103,7 @@ class WildlifeLicence(Licence):
     regions = models.ManyToManyField(Region, blank=False)
     variants = models.ManyToManyField('Variant', blank=True, through='WildlifeLicenceVariantLink')
     renewal_sent = models.BooleanField(default=False)
+    extracted_fields = JSONField(blank=True, null=True)
 
     def __str__(self):
         return self.reference

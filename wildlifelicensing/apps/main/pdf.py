@@ -145,64 +145,6 @@ def _create_licence_header(canvas, doc, draw_page_number=True):
                           '%s-%d' % (doc.licence.licence_number, doc.licence.licence_sequence))
 
 
-def _get_authorised_person_names(application):
-    def __find_authorised_persons_dict(data):
-        authorised_persons = []
-        for item in data:
-            if isinstance(item, list):
-                authorised_persons = __find_authorised_persons_dict(item)
-                if len(authorised_persons) > 0:
-                    return authorised_persons
-            if isinstance(item, dict):
-                if 'authorised_persons' in item:
-                    return item['authorised_persons']
-                else:
-                    for value in item.values():
-                        if isinstance(value, list):
-                            authorised_persons = __find_authorised_persons_dict(value)
-                            if len(authorised_persons) > 0:
-                                return authorised_persons
-
-        return authorised_persons
-
-    authorised_person_names = []
-
-    for ap in __find_authorised_persons_dict(application.data):
-        if ap.get('ap_given_names') and ap.get('ap_surname'):
-            authorised_person_names.append('%s %s' % (ap['ap_given_names'], ap['ap_surname']))
-
-    return authorised_person_names
-
-
-def _get_species(application):
-    def __find_species_dict(data):
-        species = []
-        for item in data:
-            if isinstance(item, list):
-                species = __find_species_dict(item)
-                if len(species) > 0:
-                    return species
-            if isinstance(item, dict):
-                if 'species_summary' in item:
-                    return item['species_summary']
-                else:
-                    for value in item.values():
-                        if isinstance(value, list):
-                            species = __find_species_dict(value)
-                            if len(species) > 0:
-                                return species
-
-        return species
-
-    species_names_and_count = []
-
-    for s in __find_species_dict(application.data):
-        if s.get('species_name') and s.get('species_count'):
-            species_names_and_count.append((s['species_name'], s['species_count']))
-
-    return species_names_and_count
-
-
 def _create_licence(licence_buffer, licence, application, site_url, original_issue_date):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
@@ -267,31 +209,34 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
             else:
                 elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    # authorised persons
-    authorised_persons = _get_authorised_person_names(application)
-    if len(authorised_persons) > 0:
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        elements.append(Paragraph('Authorised Persons', styles['BoldLeft']))
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-        for ap in authorised_persons:
-            elements.append(Paragraph(ap, styles['Left']))
+    # information extracted from application
+    for field in licence.extracted_fields:
+        if 'children' not in field:
             elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+            elements.append(Paragraph(field['label'], styles['BoldLeft']))
+            for paragraph in field['data'].split('\r\n'):
+                if paragraph:
+                    elements.append(Paragraph(paragraph, styles['Left']))
+                else:
+                    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        else:
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+            elements.append(Paragraph(field['label'], styles['BoldLeft']))
 
-    # species
-    species = _get_species(application)
-    if len(species) > 0:
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+            table_data = []
+            for index, group in enumerate(field['children']):
+                if index == 0:
+                    heading_row = []
+                    for child_field in group:
+                        heading_row.append(Paragraph(child_field['label'], styles['BoldLeft']))
+                    table_data.append(heading_row)
 
-        section_width = (PAGE_WIDTH - (2 * PAGE_MARGIN) - 100) / 2
+                row = []
+                for child_field in group:
+                    row.append(child_field['data'])
+                table_data.append(row)
 
-        elements.append(Table([[Paragraph('Species', styles['BoldLeft']), Paragraph('Name', styles['BoldLeft']),
-                                Paragraph('Count', styles['BoldLeft'])]],
-                              colWidths=(100, section_width, section_width), style=licence_table_style))
-
-        for s in species:
-            elements.append(Table([['', Paragraph(s[0], styles['Left']), Paragraph(s[1], styles['Left'])]],
-                                  colWidths=(100, section_width, section_width), style=licence_table_style))
+            elements.append(Table(table_data))
 
     # additional information
     if licence.additional_information:

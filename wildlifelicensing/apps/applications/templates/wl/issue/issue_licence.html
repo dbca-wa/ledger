@@ -6,6 +6,8 @@
 
 {% load jsonify %}
 
+{% load maths_helpers %}
+
 {% block extra_css %}
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
@@ -147,6 +149,43 @@
                     {% csrf_token %}
                     {% bootstrap_form issue_licence_form %}
                     <a href="#" id="add_attachment" class="top-buffer">Add attachment</a>
+                    {% if extracted_fields %}
+                        <div class="panel panel-default top-buffer">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">Fields from application</h4>
+                            </div>
+                            <div class="panel-body">
+                                {% for item in extracted_fields %}
+                                    {% if not item.readonly %}
+                                        {% if not item.children %}
+                                            <div class="form-group">
+                                                <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
+                                                <input class="form-control" type="{{ item.type }}" id="id_{{ item.name }}" name="{{ item.name }}" value="{{ item.data }}"></input>
+                                            </div>
+                                        {% else %}
+                                            <label class="control-label" for="id_{{ item.name }}">{{ item.label }}(s)</label>
+                                            {% for item_group in item.children %}
+                                                <div class="row">
+                                                    {% for child_item in item_group %}
+                                                        {% with width=item_group|length|divide_into:12 %}
+                                                            <div class="col-md-{{ width }}">
+                                                                <div class="form-group">
+                                                                    {% if forloop.parentloop.first %}
+                                                                        <label class="control-label">{{ child_item.label }}</label>
+                                                                    {% endif %}
+                                                                    <input class="form-control" type="{{ child_item.type }}" name="{{ child_item.name }}" value="{{ child_item.data }}"></input>
+                                                                </div>
+                                                            </div>
+                                                        {% endwith %}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
                 </form>
             </div>
         </div>
