@@ -15,12 +15,13 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/process/process_app', 'js/communications_log'], function (app, commsLog) {
-        $(function () {
-            data = {{ data|jsonify }};
-            app.initialiseApplicationProcesssing(data);
+    require(['js/process/process_app', 'js/communications_log', 'js/actions_log'],
+        function (app, commsLog, actionsLog) {
+            $(function () {
+                data = {{ data|jsonify }};
+                app.initialiseApplicationProcesssing(data);
 
-            commsLog.initCommunicationLog({
+                commsLog.initCommunicationLog({
                 showLogPopoverSelector: '#showLog',
                 showLogEntryModalSelector: '#addLogEntry',
                 logEntryModalSelector: '#logEntryModal',
@@ -29,9 +30,14 @@
                 addLogEntryURL: "{% url 'wl_applications:add_log_entry' data.application.id %}"
             });
 
+            actionsLog.init({
+                showLogPopoverSelector: '#showActionLog',
+                logListURL: "{% url 'wl_applications:action_list' data.application.id %}",
+            });
+
             $('#mainContainer').removeClass('hidden');
+            });
         });
-    });
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -119,9 +125,7 @@
                             </div>
                         </div>
                     </div>
-                    {% with disable_collapse=True add_text='Add application log entry' %}
-                        {% include 'wl/communications_panel.html' %}
-                    {% endwith %}
+                    {% include 'wl/communications_panel.html' %}
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">

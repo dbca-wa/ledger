@@ -2,7 +2,7 @@ define(['jQuery', 'lodash', 'moment', 'js/wl.dataTable'], function ($, _, moment
     "use strict";
 
     // constants
-    var DATE_TIME_FORMAT = 'DD/MM/YYYY HH:mm A';
+    var DATE_TIME_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 
     function initCommunicationLog(options) {
         // default options

@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
 from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceType, Condition, \
-    CommunicationsLogEntry, AssessorGroup, Variant
+    CommunicationsLogEntry, AssessorGroup, Variant, UserAction
 
 
 @python_2_unicode_compatible
@@ -130,6 +130,9 @@ class Application(RevisionedMixin):
                self.applicant.is_senior and \
                bool(self.applicant.senior_card)
 
+    def log_user_action(self, action, request):
+        return ApplicationUserAction.log_action(self, action, request.user)
+
 
 class ApplicationVariantLink(models.Model):
     application = models.ForeignKey(Application)
@@ -208,6 +211,33 @@ class AssessmentCondition(models.Model):
 
     class Meta:
         unique_together = ('condition', 'assessment', 'order')
+
+
+class ApplicationUserAction(UserAction):
+    ACTION_ASSIGN_TO_ = "Assign to {}"
+    ACTION_UNASSIGN = "Unassign"
+    ACTION_ACCEPT_ID = "Accept ID"
+    ACTION_RESET_ID = "Reset ID"
+    ACTION_ID_REQUEST_UPDATE = 'Request ID update'
+    ACTION_ACCEPT_CHARACTER = 'Accept character'
+    ACTION_RESET_CHARACTER = "Reset character"
+    ACTION_ACCEPT_REVIEW = 'Accept review'
+    ACTION_RESET_REVIEW = "Reset review"
+    ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
+    SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
+    SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
+    ACTION_DECLINE_APPLICATION = "Decline application"
+    ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
+
+    @classmethod
+    def log_action(cls, application, action, user):
+        return cls.objects.create(
+            application=application,
+            who=user,
+            what=str(action)
+        )
+
+    application = models.ForeignKey(Application)
 
 
 @receiver(pre_delete, sender=Application)

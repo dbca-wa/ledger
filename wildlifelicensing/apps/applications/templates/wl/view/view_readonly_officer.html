@@ -17,8 +17,9 @@
     require(['jQuery',
              'js/view/view_readonly_officer', 
              'js/entry/application_preview',
-             'js/communications_log'], 
-             function($, viewReadonlyOfficer, applicationPreview, commsLog) {
+             'js/communications_log',
+             'js/actions_log'],
+             function($, viewReadonlyOfficer, applicationPreview, commsLog, actionsLog) {
         viewReadonlyOfficer.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}});
 
         $('#mainContainer').removeClass('hidden');
@@ -30,6 +31,10 @@
             logEntryFormSelector: '#addLogEntryForm',
             logListURL: "{% url 'wl_applications:log_list' application.id %}",
             addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+        });
+        actionsLog.init({
+            showLogPopoverSelector: '#showActionLog',
+            logListURL: "{% url 'wl_applications:action_list' application.id %}",
         });
 
         // need to initialise sidebar menu after showing main container otherwise affix height will be wrong

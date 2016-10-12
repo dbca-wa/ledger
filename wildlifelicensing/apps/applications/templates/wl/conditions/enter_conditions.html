@@ -15,17 +15,26 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/conditions/enter_conditions', 'js/communications_log'], function (enterConditions, commLog) {
-        enterConditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}}, '{{ csrf_token }}');
+    require([
+        'js/conditions/enter_conditions',
+        'js/communications_log',
+        'js/actions_log'
+    ], function (enterConditions, commLog, actionsLog) {
+           enterConditions.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}}, '{{ csrf_token }}');
 
-        commLog.initCommunicationLog({
-            showLogPopoverSelector: '#showLog',
-            showLogEntryModalSelector: '#addLogEntry',
-            logEntryModalSelector: '#logEntryModal',
-            logEntryFormSelector: '#addLogEntryForm',
-            logListURL: "{% url 'wl_applications:log_list' application.id %}",
-            addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+            commLog.initCommunicationLog({
+                showLogPopoverSelector: '#showLog',
+                showLogEntryModalSelector: '#addLogEntry',
+                logEntryModalSelector: '#logEntryModal',
+                logEntryFormSelector: '#addLogEntryForm',
+                logListURL: "{% url 'wl_applications:log_list' application.id %}",
+                addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+            });
+            actionsLog.init({
+                showLogPopoverSelector: '#showActionLog',
+                logListURL: "{% url 'wl_applications:action_list' application.id %}",
         });
+
     });
 {% endblock %}
 

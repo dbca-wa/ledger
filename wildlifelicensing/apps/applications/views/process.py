@@ -15,7 +15,7 @@ from ledger.accounts.models import EmailUser, Document
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment, ApplicationUserAction
 from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm, \
     ApplicationLogEntryForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
@@ -119,6 +119,10 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         elif 'decline' in request.POST:
             application.processing_status = 'declined'
             application.save()
+            application.log_user_action(
+                ApplicationUserAction.ACTION_DECLINE_APPLICATION,
+                request
+            )
 
             messages.warning(request, 'The application was declined.')
 
@@ -140,11 +144,16 @@ class AssignOfficerView(OfficerRequiredMixin, View):
         application.save()
 
         if application.assigned_officer is not None:
-            assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                                                               (application.assigned_officer.first_name,
-                                                                                application.assigned_officer.last_name)}
+            name = render_user_name(application.assigned_officer)
+            assigned_officer = {'id': application.assigned_officer.id, 'text': name}
+            application.log_user_action(
+                ApplicationUserAction.ACTION_ASSIGN_TO_.format(name),
+                request)
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
+            application.log_user_action(
+                ApplicationUserAction.ACTION_UNASSIGN,
+                request)
 
         return JsonResponse({'assigned_officer': assigned_officer,
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
@@ -154,11 +163,22 @@ class AssignOfficerView(OfficerRequiredMixin, View):
 class SetIDCheckStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
+        previous_status = application.id_check_status
         application.id_check_status = request.POST['status']
 
         application.customer_status = determine_customer_status(application)
         application.processing_status = determine_processing_status(application)
         application.save()
+
+        if application.id_check_status != previous_status:
+            # log action
+            status = application.id_check_status
+            user_action = "ID check:" + status  # default action
+            if status == 'accepted':
+                user_action = ApplicationUserAction.ACTION_ACCEPT_ID
+            elif status == 'not_checked':
+                user_action = ApplicationUserAction.ACTION_RESET_ID
+            application.log_user_action(user_action, request)
 
         return JsonResponse({'id_check_status': ID_CHECK_STATUSES[application.id_check_status],
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
@@ -176,6 +196,7 @@ class IDRequestView(OfficerRequiredMixin, View):
             application.customer_status = determine_customer_status(application)
             application.processing_status = determine_processing_status(application)
             application.save()
+            application.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE, request)
             send_id_update_request_email(id_request, request)
 
             response = {'id_check_status': ID_CHECK_STATUSES[application.id_check_status],
@@ -224,10 +245,21 @@ class SetReturnsCheckStatusView(OfficerRequiredMixin, View):
 class SetCharacterCheckStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
+        previous_status = application.character_check_status
         application.character_check_status = request.POST['status']
 
         application.processing_status = determine_processing_status(application)
         application.save()
+
+        if application.character_check_status != previous_status:
+            # log action
+            status = application.character_check_status
+            user_action = "Character check:" + status  # default action
+            if status == 'accepted':
+                user_action = ApplicationUserAction.ACTION_ACCEPT_CHARACTER
+            elif status == 'not_checked':
+                user_action = ApplicationUserAction.ACTION_RESET_CHARACTER
+            application.log_user_action(user_action, request)
 
         return JsonResponse({'character_check_status': CHARACTER_CHECK_STATUSES[application.character_check_status],
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
@@ -237,11 +269,22 @@ class SetCharacterCheckStatusView(OfficerRequiredMixin, View):
 class SetReviewStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
+        previous_status = application.review_status
         application.review_status = request.POST['status']
 
         application.customer_status = determine_customer_status(application)
         application.processing_status = determine_processing_status(application)
         application.save()
+
+        if application.review_status != previous_status:
+            # log action
+            status = application.review_status
+            user_action = "Character check:" + status  # default action
+            if status == 'accepted':
+                user_action = ApplicationUserAction.ACTION_ACCEPT_REVIEW
+            elif status == 'not_reviewed':
+                user_action = ApplicationUserAction.ACTION_RESET_REVIEW
+            application.log_user_action(user_action, request)
 
         response = {'review_status': REVIEW_STATUSES[application.review_status],
                     'processing_status': PROCESSING_STATUSES[application.processing_status]}
@@ -260,7 +303,7 @@ class AmendmentRequestView(OfficerRequiredMixin, View):
             application.customer_status = determine_customer_status(application)
             application.processing_status = determine_processing_status(application)
             application.save()
-
+            application.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS, request)
             send_amendment_requested_email(amendment_request, request=request)
 
             response = {'review_status': REVIEW_STATUSES[application.review_status],
@@ -285,6 +328,9 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 
         application.processing_status = determine_processing_status(application)
         application.save()
+        application.log_user_action(
+            ApplicationUserAction.SEND_FOR_ASSESSMENT_TO_.format(ass_group),
+            request)
 
         send_assessment_requested_email(assessment, request)
 
@@ -301,6 +347,11 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 class RemindAssessmentView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=request.POST['assessmentID'])
+
+        assessment.application.log_user_action(
+            ApplicationUserAction.SEND_ASSESSMENT_REMINDER_TO_.format(assessment.assessor_group),
+            request
+        )
 
         send_assessment_reminder_email(assessment, request)
 

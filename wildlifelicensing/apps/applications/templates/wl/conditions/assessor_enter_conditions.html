@@ -14,7 +14,11 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/conditions/assessor_enter_conditions', 'js/communications_log'], function (enter_conditions, commsLog) {
+    require([
+        'js/conditions/assessor_enter_conditions',
+        'js/communications_log',
+        'js/actions_log
+    ], function (enter_conditions, commsLog, actionsLog) {
         $(function () {
             enter_conditions.init({{ assessment|jsonify }}, {{ application|jsonify }},
                                   {{ form_structure|jsonify }}, {{ other_assessments|jsonify }});
@@ -27,6 +31,11 @@
                 logListURL: "{% url 'wl_applications:log_list' application.id %}",
                 addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
             });
+            actionsLog.init({
+                showLogPopoverSelector: '#showActionLog',
+                logListURL: "{% url 'wl_applications:action_list' application.id %}",
+            });
+
         });
     });
 {% endblock %}
