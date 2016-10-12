@@ -51,8 +51,8 @@ class CampsiteBookingAdmin(admin.ModelAdmin):
 
 @admin.register(CampsiteRate)
 class CampsiteRateAdmin(admin.ModelAdmin):
-    list_display = ('campground','campsite_class','min_days','max_days','min_people','max_people','allow_public_holidays','rate_adult','rate_concession','rate_child','rate_infant')
-    list_filter = ('campground','campsite_class','allow_public_holidays')
+    list_display = ('campsite','rate','allow_public_holidays')
+    list_filter = ('campsite','rate','allow_public_holidays')
 
 admin.site.register(Region)
 admin.site.register(District)

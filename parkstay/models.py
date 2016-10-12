@@ -140,15 +140,14 @@ class CampsiteBooking(models.Model):
         unique_together = (('campsite', 'date'),)
 
 
-class Booking(models.Model):
-    legacy_id = models.IntegerField(unique=True)
-    legacy_name = models.CharField(max_length=255, blank=True)
-    arrival = models.DateField()
-    departure = models.DateField()
-    details = JSONField(null=True)
-    cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    campsite_rate = models.ForeignKey(CampsiteRate, db_index=True, on_delete=models.PROTECT)
-    campground = models.ForeignKey('Campground', null=True)
+class Rate(models.Model):
+    rate_adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
+    rate_concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60')
+    rate_child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')
+    rate_infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    
+    def __str__(self):
+        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.rate_adult, self.rate_concession, self.rate_child, self.rate_infant)
 
 
 class CampsiteRate(models.Model):
@@ -164,7 +163,7 @@ class CampsiteRate(models.Model):
     date_start = models.DateField()
     date_end = models.DateField()
    
-    def rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
+    def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
         return self.rate.rate_adult*num_adult + self.rate.rate_concession*num_concession + \
                 self.rate.rate_child*num_child + self.rate.rate_infant*num_infant
 
@@ -174,11 +173,13 @@ class CampsiteRate(models.Model):
     class Meta:
         unique_together = (('campsite', 'rate'))
 
-class Rate(models.Model):
-    rate_adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
-    rate_concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60')
-    rate_child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')
-    rate_infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
-    
-    def __str__(self):
-        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.rate_adult, self.rate_concession, self.rate_child, self.rate_infant)
+
+class Booking(models.Model):
+    legacy_id = models.IntegerField(unique=True)
+    legacy_name = models.CharField(max_length=255, blank=True)
+    arrival = models.DateField()
+    departure = models.DateField()
+    details = JSONField(null=True)
+    cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    campsite_rate = models.ForeignKey(CampsiteRate, db_index=True, on_delete=models.PROTECT)
+    campground = models.ForeignKey('Campground', null=True)

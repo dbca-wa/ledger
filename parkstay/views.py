@@ -71,7 +71,7 @@ def get_campsite_bookings(request):
                     ).order_by('date', 'campsite__name')
     # fetch all the campsites and applicable rates for the campground
     sites_qs = Campsite.objects.filter(campground=ground).order_by('name')
-    rates_qs = CampsiteRate.objects.filter(campground=ground)
+    rates_qs = CampsiteRate.objects.filter(sites_qs)
 
     # make a map of campsite class to cost
     rates_map = {r.campsite_class_id: r.rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
