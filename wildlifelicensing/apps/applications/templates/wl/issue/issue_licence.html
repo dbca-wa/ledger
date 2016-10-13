@@ -160,10 +160,10 @@
                                         {% if not item.children %}
                                             <div class="form-group">
                                                 <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
-                                                <input class="form-control" type="{{ item.type }}" id="id_{{ item.name }}" name="{{ item.name }}" value="{{ item.data }}"></input>
+                                                {% include 'wl/issue/licence_fields.html' with licence_field=item %}
                                             </div>
                                         {% else %}
-                                            <label class="control-label" for="id_{{ item.name }}">{{ item.label }}(s)</label>
+                                            <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
                                             {% for item_group in item.children %}
                                                 <div class="row">
                                                     {% for child_item in item_group %}
@@ -173,7 +173,7 @@
                                                                     {% if forloop.parentloop.first %}
                                                                         <label class="control-label">{{ child_item.label }}</label>
                                                                     {% endif %}
-                                                                    <input class="form-control" type="{{ child_item.type }}" name="{{ child_item.name }}" value="{{ child_item.data }}"></input>
+                                                                    {% include 'wl/issue/licence_fields.html' with licence_field=child_item %}
                                                                 </div>
                                                             </div>
                                                         {% endwith %}

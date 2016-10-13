@@ -3,6 +3,7 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 from wildlifelicensing.apps.main.helpers import is_customer, is_officer
+from django.contrib.gis.gdal.field import Field
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
@@ -82,20 +83,26 @@ def _extract_licence_fields_from_item(item, data, licence_fields):
 
     if item.get('isLicenceField', False):
         if 'children' not in item:
-            licence_field = {
-                'name': item['name'],
-                'label': item['label'],
-                'type': item['type'],
-                'readonly': item.get('isLicenceFieldReadonly', False)
-            }
+            # label / checkbox types are extracted differently so skip here
+            if item['type'] not in ('label', 'checkbox'):
+                licence_field = {
+                    'name': item['name'],
+                    'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
+                    'type': item['type'],
+                    'readonly': item.get('isLicenceFieldReadonly', False)
+                }
 
-            licence_field['data'] = _extract_item_data(item['name'], data)
+                if 'options' in item:
+                    licence_field['options'] = item['options']
+                    licence_field['defaultBlank'] = item.get('defaultBlank', False)
 
-            licence_fields.append(licence_field)
+                licence_field['data'] = _extract_item_data(item['name'], data)
+
+                licence_fields.append(licence_field)
         else:
             licence_field = {
                 'name': item['name'],
-                'label': item['label'],
+                'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
                 'type': item['type'],
                 'readonly': item.get('isLicenceFieldReadonly', False),
                 'children': []
@@ -106,6 +113,9 @@ def _extract_licence_fields_from_item(item, data, licence_fields):
             for index in range(len(child_data)):
                 group_licence_fields = []
                 for child_item in item.get('children'):
+                    if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                        _extract_label_and_checkboxes(child_item, item.get('children'), child_data[index], group_licence_fields)
+
                     _extract_licence_fields_from_item(child_item, child_data[index], group_licence_fields)
                 licence_field['children'].append(group_licence_fields)
 
@@ -116,13 +126,42 @@ def _extract_licence_fields_from_item(item, data, licence_fields):
     # extract licence fields from field's children
     if 'children' in item and not children_extracted:
         for child_item in item.get('children'):
+            if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                _extract_label_and_checkboxes(child_item, item.get('children'), data, licence_fields)
             _extract_licence_fields_from_item(child_item, data, licence_fields)
 
     # extract licence fields from field's conditional children
     if 'conditions' in item:
         for condition in item['conditions'].keys():
             for child_item in item['conditions'][condition]:
+                if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                    _extract_label_and_checkboxes(child_item, item['conditions'][condition], data, licence_fields)
                 _extract_licence_fields_from_item(child_item, data, licence_fields)
+
+
+def _extract_label_and_checkboxes(current_item, items, data, licence_fields):
+    licence_field = {
+        'name': current_item['name'],
+        'label': current_item['licenceFieldLabel'] if 'licenceFieldLabel' in current_item else current_item['label'],
+        'type': current_item['type'],
+        'readonly': current_item.get('isLicenceFieldReadonly', False),
+        'options': []
+    }
+
+    checkbox_index = 0
+    while checkbox_index < len(items) and items[checkbox_index]['name'] != current_item['name']:
+        checkbox_index += 1
+
+    checkbox_index += 1
+
+    while checkbox_index < len(items) and items[checkbox_index]['type'] == 'checkbox':
+        licence_field['options'].append({'value': items[checkbox_index]['name'],
+                                         'label': items[checkbox_index]['label']})
+        checkbox_index += 1
+
+    # TODO insert data
+
+    licence_fields.append(licence_field)
 
 
 def _extract_item_data(name, data):

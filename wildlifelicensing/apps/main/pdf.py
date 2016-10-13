@@ -190,64 +190,22 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Purpose', styles['BoldLeft']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-        for purpose in licence.purpose.split('\r\n'):
-            if purpose:
-                elements.append(Paragraph(purpose, styles['Left']))
-            else:
-                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements += _layout_paragraphs(licence.purpose)
 
     # locations
     if licence.locations:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Locations', styles['BoldLeft']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements += _layout_paragraphs(licence.locations)
 
-        for location in licence.locations.split('\r\n'):
-            if location:
-                elements.append(Paragraph(location, styles['Left']))
-            else:
-                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    # information extracted from application
-    for field in licence.extracted_fields:
-        if 'children' not in field:
-            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-            elements.append(Paragraph(field['label'], styles['BoldLeft']))
-            for paragraph in field['data'].split('\r\n'):
-                if paragraph:
-                    elements.append(Paragraph(paragraph, styles['Left']))
-                else:
-                    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        else:
-            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-            elements.append(Paragraph(field['label'], styles['BoldLeft']))
-
-            table_data = []
-            for index, group in enumerate(field['children']):
-                if index == 0:
-                    heading_row = []
-                    for child_field in group:
-                        heading_row.append(Paragraph(child_field['label'], styles['BoldLeft']))
-                    table_data.append(heading_row)
-
-                row = []
-                for child_field in group:
-                    row.append(child_field['data'])
-                table_data.append(row)
-
-            elements.append(Table(table_data))
+    elements += _layout_extracted_fields(licence.extracted_fields)
 
     # additional information
     if licence.additional_information:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        elements.append(Paragraph('Additional Information', styles['BoldLeft']))
-
-        for paragraph in licence.additional_information.split('\r\n'):
-            if paragraph:
-                elements.append(Paragraph(paragraph, styles['Left']))
-            else:
-                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements.append(Paragraph('Additional Information', styles['Bo_layout_extracted_fieldsldLeft']))
+        elements += _layout_paragraphs(licence.additional_information)
 
     # delegation holds the dates, licencee and issuer details.
     delegation = []
@@ -294,6 +252,59 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     doc.build(elements)
 
     return licence_buffer
+
+
+def _layout_extracted_fields(extracted_fields):
+    elements = []
+    # information extracted from application
+    for field in extracted_fields:
+        if 'children' not in field:
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+            elements.append(Paragraph(field['label'], styles['BoldLeft']))
+            if 'data' in field and field['data']:
+                if field['type'] in ['text', 'text_area']:
+                    elements += _layout_paragraphs(field['data'])
+                elif field['type'] in ['radiobuttons', 'select']:
+                    elements.append(Paragraph(dict([i.values() for i in field['options']]).
+                                              get(field['data'], 'Not Specified'), styles['Left']))
+            else:
+                elements.append(Paragraph('Not Specified', styles['Left']))
+        else:
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+            elements.append(Paragraph(field['label'], styles['BoldLeft']))
+
+            table_data = []
+            for index, group in enumerate(field['children']):
+                if index == 0:
+                    heading_row = []
+                    for child_field in group:
+                        heading_row.append(Paragraph(child_field['label'], styles['BoldLeft']))
+                    table_data.append(heading_row)
+
+                row = []
+                for child_field in group:
+                    if 'data' in child_field and child_field['data']:
+                        if child_field['type'] in ['text', 'text_area']:
+                            row.append(Paragraph(child_field['data'], styles['Left']))
+                        elif child_field['type'] in ['radiobuttons', 'select']:
+                            row.append(Paragraph(dict([i.values() for i in child_field['options']]).
+                                                 get(child_field['data'], 'Not Specified'), styles['Left']))
+                table_data.append(row)
+
+            elements.append(Table(table_data))
+
+    return elements
+
+
+def _layout_paragraphs(text):
+    elements = []
+    for paragraph in text.split('\r\n'):
+        if paragraph:
+            elements.append(Paragraph(paragraph, styles['Left']))
+        else:
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    return elements
 
 
 def _create_letter_header_footer(canvas, doc):
