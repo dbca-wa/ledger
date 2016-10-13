@@ -31,7 +31,8 @@ class Campground(models.Model):
         (0, 'Campground: no bookings'),
         (1, 'Campground: book online'),
         (2, 'Campground: book by phone'),
-        (3, 'Other accomodation')
+        (3, 'Other accomodation'),
+        (4, 'Not Published')
     )
 
     SITE_TYPE_CHOICES = (
@@ -46,17 +47,14 @@ class Campground(models.Model):
     promo_area = models.ForeignKey('PromoArea', on_delete=models.PROTECT, null=True)
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
     address = JSONField(null=True)
-    features = models.ManyToManyField('CampgroundFeature')
+    features = models.ManyToManyField('Feature', null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     rules = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
+    # Tags for communications methods available and access type
+    tags = TaggableManager()
     driving_directions = models.TextField(blank=True, null=True)
-    fees = models.TextField(blank=True, null=True)
-    othertransport = models.TextField(blank=True, null=True)
-    key = models.CharField(max_length=255, blank=True, null=True)
-    is_published = models.BooleanField(default=False)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
-    metakeywords = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -73,6 +71,7 @@ class Campsite(models.Model):
     min_days = models.SmallIntegerField(default=1)
     max_days = models.SmallIntegerField(default=28)
     allow_generator = models.BooleanField(default=False)
+    facility = models.ManyToManyField('Feature', null=True, blank=True)
 
     def __str__(self):
         return '{} - {}'.format(self.campground, self.name)
@@ -81,7 +80,7 @@ class Campsite(models.Model):
         unique_together = (('campground', 'name'),)
 
 
-class CampgroundFeature(models.Model):
+class Feature(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True)
     image = models.ImageField(null=True)
@@ -131,6 +130,8 @@ class CampsiteClass(models.Model):
     number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default='0')
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
+    hard_surface = models.BooleanField(default=False)
+    dimensions = models.CharField(max_length=12, default='6x4')
 
     def __str__(self):
         return self.name
