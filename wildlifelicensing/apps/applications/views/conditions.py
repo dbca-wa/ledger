@@ -100,10 +100,6 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=args[1])
 
-        assessment.application.log_user_action(
-            ApplicationUserAction.ACTION_OPEN_ASSESSMENT_.format(assessment.assessor_group),
-            request)
-
         if assessment.status == 'assessed':
             messages.warning(request, 'This assessment has already been concluded and may only be viewed in read-only mode.')
             return redirect('wl_applications:view_assessment', *args)
@@ -120,11 +116,13 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
                                                assessment=assessment, order=order)
 
         # set the assessment request status to be 'assessed' if concluding
+        user_action = ApplicationUserAction.ACTION_SAVE_ASSESSMENT_
         if 'conclude' in request.POST:
             assessment.status = 'assessed'
-            application.log_user_action(
-                ApplicationUserAction.ACTION_CONCLUDE_ASSESSMENT_.format(assessment.assessor_group),
-                request)
+            user_action = ApplicationUserAction.ACTION_CONCLUDE_ASSESSMENT_
+        application.log_user_action(
+            user_action.format(assessment.assessor_group),
+            request)
 
         comment = request.POST.get('comment', '')
         if len(comment.strip()) > 0:

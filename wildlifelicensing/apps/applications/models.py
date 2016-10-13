@@ -233,7 +233,8 @@ class ApplicationUserAction(UserAction):
     ACTION_ENTER_CONDITIONS = "Enter Conditions"
     ACTION_CREATE_CONDITION_ = "Create condition {}"
     ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
-    ACTION_OPEN_ASSESSMENT_ = "Open assessment {}"
+    # Assessors
+    ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
 
     @classmethod
