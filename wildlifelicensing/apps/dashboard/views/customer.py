@@ -27,7 +27,7 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
         # Applications
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'
@@ -100,7 +100,7 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
         # Returns
         data['returns']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'

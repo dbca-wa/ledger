@@ -19,7 +19,7 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
         data = super(TableAssessorView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'

@@ -23,7 +23,7 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
         # applications
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'
@@ -109,7 +109,7 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
         # returns
         data['returns']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'

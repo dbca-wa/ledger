@@ -127,7 +127,7 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         data = super(TableApplicationsOfficerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'
@@ -282,7 +282,7 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
         data['applications'] = officer_data['applications']
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'
@@ -614,7 +614,7 @@ class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         del data['licences']
         data['returns']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'
