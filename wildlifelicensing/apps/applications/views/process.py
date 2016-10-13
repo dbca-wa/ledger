@@ -329,7 +329,7 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         application.processing_status = determine_processing_status(application)
         application.save()
         application.log_user_action(
-            ApplicationUserAction.SEND_FOR_ASSESSMENT_TO_.format(ass_group),
+            ApplicationUserAction.ACTION_SEND_FOR_ASSESSMENT_TO_.format(ass_group),
             request)
 
         send_assessment_requested_email(assessment, request)
@@ -349,7 +349,7 @@ class RemindAssessmentView(OfficerRequiredMixin, View):
         assessment = get_object_or_404(Assessment, pk=request.POST['assessmentID'])
 
         assessment.application.log_user_action(
-            ApplicationUserAction.SEND_ASSESSMENT_REMINDER_TO_.format(assessment.assessor_group),
+            ApplicationUserAction.ACTION_SEND_ASSESSMENT_REMINDER_TO_.format(assessment.assessor_group),
             request
         )
 

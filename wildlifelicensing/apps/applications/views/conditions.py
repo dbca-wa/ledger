@@ -12,7 +12,8 @@ from wildlifelicensing.apps.payments import utils as payment_utils
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
+from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment,\
+    AssessmentCondition, ApplicationUserAction
 from wildlifelicensing.apps.applications.utils import append_app_document_to_schema_data, convert_documents_to_url, \
     get_log_entry_to, format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
@@ -96,6 +97,10 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=args[1])
 
+        assessment.application.log_user_action(
+            ApplicationUserAction.ACTION_OPEN_ASSESSMENT_.format(assessment.assessor_group),
+            request)
+
         if assessment.status == 'assessed':
             messages.warning(request, 'This assessment has already been concluded and may only be viewed in read-only mode.')
             return redirect('wl_applications:view_assessment', *args)
@@ -114,6 +119,9 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         # set the assessment request status to be 'assessed' if concluding
         if 'conclude' in request.POST:
             assessment.status = 'assessed'
+            application.log_user_action(
+                ApplicationUserAction.ACTION_CONCLUDE_ASSESSMENT_.format(assessment.assessor_group),
+                request)
 
         comment = request.POST.get('comment', '')
         if len(comment.strip()) > 0:

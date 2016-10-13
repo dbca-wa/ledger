@@ -214,6 +214,9 @@ class AssessmentCondition(models.Model):
 
 
 class ApplicationUserAction(UserAction):
+    ACTION_CREATE_CUSTOMER_ = "Create customer {}"
+    ACTION_CREATE_PROFILE_ = "Create profile {}"
+    ACTION_LODGE_APPLICATION = "Lodge application {}"
     ACTION_ASSIGN_TO_ = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_ACCEPT_ID = "Accept ID"
@@ -224,10 +227,12 @@ class ApplicationUserAction(UserAction):
     ACTION_ACCEPT_REVIEW = 'Accept review'
     ACTION_RESET_REVIEW = "Reset review"
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
-    SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
-    SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
+    ACTION_SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
+    ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
     ACTION_DECLINE_APPLICATION = "Decline application"
     ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
+    ACTION_OPEN_ASSESSMENT_ = "Open assessment {}"
+    ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
 
     @classmethod
     def log_action(cls, application, action, user):

@@ -14,26 +14,22 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['jQuery',
-             'js/view/view_readonly_officer', 
-             'js/entry/application_preview',
-             'js/communications_log',
-             'js/actions_log'],
-             function($, viewReadonlyOfficer, applicationPreview, commsLog, actionsLog) {
+    require([
+        'jQuery',
+        'js/view/view_readonly_officer',
+        'js/entry/application_preview',
+        'js/logs'
+    ],
+    function($, viewReadonlyOfficer, applicationPreview, logs) {
         viewReadonlyOfficer.init({{ application|jsonify }}, {{ assessments|jsonify }}, {{form_structure|jsonify}});
 
         $('#mainContainer').removeClass('hidden');
 
-        commsLog.initCommunicationLog({
-            showLogPopoverSelector: '#showLog',
-            showLogEntryModalSelector: '#addLogEntry',
-            logEntryModalSelector: '#logEntryModal',
-            logEntryFormSelector: '#addLogEntryForm',
+        logs.initCommunicationLog({
             logListURL: "{% url 'wl_applications:log_list' application.id %}",
             addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
         });
-        actionsLog.init({
-            showLogPopoverSelector: '#showActionLog',
+        logs.initActionLog({
             logListURL: "{% url 'wl_applications:action_list' application.id %}",
         });
 
@@ -121,9 +117,7 @@
                         </div>
                     </div>
                 </div>
-                {% with disable_collapse=True add_text='Add application log entry' %}
-                    {% include 'wl/communications_panel.html' %}
-                {% endwith %}
+                {% include 'wl/logs_panel.html' %}
                 <div id="sectionList">
                     <div class="application-sections-heading">
                         <h4>Application Sections</h4>
@@ -140,5 +134,5 @@
 {% endblock %}
 
 {% block modals %}
-    {% include 'wl/communications_modal.html' %}
+    {% include 'wl/logs_comm_entry_modal.html' %}
 {% endblock %}

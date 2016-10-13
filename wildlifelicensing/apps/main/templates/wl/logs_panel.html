@@ -12,24 +12,26 @@
             <div id="logBody" class="panel-body panel-collapse in">
                 <div class="row">
                     <div class="col-md-12">
-                        <label>Communications</label>
+                        <label>{% if type %}{{ type }} {% endif %}Communications</label>
                     </div>
                     <div class="col-md-6">
-                        <a id="showLog" data-toggle="popover" class="pull-left" role="button">Show</a>
+                        <a id="showCommunicationLog" data-toggle="popover" class="pull-left" role="button">Show</a>
                     </div>
                     <div class="col-md-6">
-                        <a id="addLogEntry" class="pull-right">
+                        <a id="addCommunicationLogEntry" class="pull-right">
                             {% if add_text %}{{ add_text }}{% else %}Add entry{% endif %}</a>
                     </div>
                 </div>
-                <div class="row top-buffer-s">
-                    <div class="col-md-12">
-                        <label>Actions</label>
+                {% if not hide_action_log %}
+                    <div class="row top-buffer-s">
+                        <div class="col-md-12">
+                            <label>{% if type %}{{ type }} {% endif %}Actions</label>
+                        </div>
+                        <div class="col-md-12">
+                            <a id="showActionLog" data-toggle="popover" class="pull-left" role="button">Show</a>
+                        </div>
                     </div>
-                    <div class="col-md-12">
-                        <a id="showActionLog" data-toggle="popover" class="pull-left" role="button">Show</a>
-                    </div>
-                </div>
+                {% endif %}
             </div>
         </div>
     </div>
