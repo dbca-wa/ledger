@@ -60,7 +60,7 @@ urlpatterns = [
     url('^enter-conditions/([0-9]+)/assessment/([0-9]+)/?$', EnterConditionsAssessorView.as_view(),
         name='enter_conditions_assessor'),
     url('^search-conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
-    url('^create-condition/$', CreateConditionView.as_view(), name='create_condition'),
+    url('^create-condition/([0-9]+)/$', CreateConditionView.as_view(), name='create_condition'),
     url('^set-assessment-condition-state/$', SetAssessmentConditionState.as_view(), name='set_assessment_condition_state'),
 
     # issue

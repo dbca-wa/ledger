@@ -230,6 +230,8 @@ class ApplicationUserAction(UserAction):
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
     ACTION_DECLINE_APPLICATION = "Decline application"
+    ACTION_ENTER_CONDITIONS = "Enter Conditions"
+    ACTION_CREATE_CONDITION_ = "Create condition {}"
     ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
     ACTION_OPEN_ASSESSMENT_ = "Open assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"

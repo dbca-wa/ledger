@@ -55,6 +55,9 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         application.conditions.clear()
 
         application.save()
+        application.log_user_action(
+            ApplicationUserAction.ACTION_ENTER_CONDITIONS,
+            request)
 
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
             ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
@@ -167,8 +170,15 @@ class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
 class CreateConditionView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
-            response = serialize(Condition.objects.create(code=request.POST.get('code'), text=request.POST.get('text'),
-                                                          one_off=not request.POST.get('addToGeneralList', False)))
+            condition = Condition.objects.create(code=request.POST.get('code'), text=request.POST.get('text'),
+                                                          one_off=not request.POST.get('addToGeneralList', False))
+            if len(self.args) > 0:
+                application = get_object_or_404(Application, pk=self.args[0])
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_CREATE_CONDITION_.format(condition),
+                    request
+                )
+            response = serialize(condition)
         except IntegrityError:
             response = 'This code has already been used. Please enter a unique code.'
 
