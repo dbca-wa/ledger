@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
 from datetime import date
+from taggit.managers import TaggableManager
 
 # Create your models here.
 
@@ -68,10 +69,10 @@ class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT)
-    max_people = models.SmallIntegerField(default=6)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     min_days = models.SmallIntegerField(default=1)
     max_days = models.SmallIntegerField(default=28)
+    allow_generator = models.BooleanField(default=False)
 
     def __str__(self):
         return '{} - {}'.format(self.campground, self.name)
@@ -109,14 +110,27 @@ class District(models.Model):
 
 
 class CampsiteClass(models.Model):
+    PARKING_SPACE_CHOICES = (
+        (0, 'Parking within site.'),
+        (1, 'Parking for exclusive use of site occupiers next to site, but separated from tent space.'),
+        (2, 'Parking for exclusive use of occupiers, short walk from tent space.'),
+        (3, 'Shared parking (not allocated), short walk from tent space.')
+    )
+
+    NUMBER_VEHICLE_CHOICES = (
+        (0, 'One vehicle'),
+        (1, 'Two vehicles'),
+        (2, 'One vehicle + small trailer'),
+        (3, 'One vehicle + small trailer/large vehicle')
+    )
+
     name = models.CharField(max_length=255, unique=True)
+    camp_unit_suitability = TaggableManager()
     tents = models.SmallIntegerField(default=0)
-    parking_spaces = models.SmallIntegerField(default=0)
+    parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default='0')
+    number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default='0')
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
-    allow_campervan = models.BooleanField(default=False)
-    allow_trailer = models.BooleanField(default=False)
-    allow_generator = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -172,8 +186,8 @@ class CampsiteRate(models.Model):
     price_model = models.SmallIntegerField(choices=PRICE_MODEL_CHOICES, default=0)
    
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
-        return self.rate.rate_adult*num_adult + self.rate.rate_concession*num_concession + \
-                self.rate.rate_child*num_child + self.rate.rate_infant*num_infant
+        return self.rate.adult*num_adult + self.rate.concession*num_concession + \
+                self.rate.child*num_child + self.rate.infant*num_infant
 
     def __str__(self):
         return '{} - ({})'.format(self.campsite, self.rate)

@@ -4,7 +4,8 @@ ROOT_URLCONF = 'parkstay.urls'
 SITE_ID = 1
 
 INSTALLED_APPS += [
-    'parkstay'
+    'parkstay',
+    'taggit'
 ]
 
 # maximum number of days allowed for a booking

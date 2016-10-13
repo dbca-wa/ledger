@@ -3,10 +3,10 @@ from .models import Park, Campground, Campsite, CampgroundFeature, District, Reg
 
 @admin.register(CampsiteClass)
 class CampsiteClassAdmin(admin.ModelAdmin):
-    list_display = ('name','tents','parking_spaces','allow_campervan','allow_trailer','allow_generator')
+    list_display = ('name',)
     ordering = ('name',)
     search_fields = ('name',)
-    list_filter = ('allow_campervan','allow_trailer','allow_generator')
+    list_filter = ('name',)
 
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
@@ -24,7 +24,7 @@ class CampgroundAdmin(admin.ModelAdmin):
 
 @admin.register(Campsite)
 class CampsiteAdmin(admin.ModelAdmin):
-    list_display = ('name','campground','campsite_class','max_people')
+    list_display = ('name','campground','campsite_class')
     ordering = ('name',)
     list_filter = ('campground','campsite_class')
     search_fields = ('name',)
