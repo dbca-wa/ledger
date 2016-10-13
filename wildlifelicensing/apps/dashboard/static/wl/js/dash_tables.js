@@ -53,7 +53,7 @@ define(
         }
 
         function initApplicationsTable() {
-            var applicationsTableOptions = $.extend({}, tableOptions, {
+            var applicationsTableOptions = $.extend({order: [[0, 'desc']]}, tableOptions, {
                     ajax: {
                         url: options.data.applications.ajax.url,
                         data: function (d) {
@@ -126,7 +126,7 @@ define(
         }
 
         function initLicenceTable() {
-            var licencesTableOptions = $.extend({}, tableOptions, {
+            var licencesTableOptions = $.extend({order: [[0, 'desc']]}, tableOptions, {
                     ajax: {
                         url: options.data.licences.ajax.url,
                         data: function (d) {

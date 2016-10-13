@@ -338,7 +338,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
     def get_initial_queryset(self):
         if self.model:
-            return self.model.objects.all().exclude(processing_status='temp')
+            return self.model.objects.all()
         else:
             return EmptyQuerySet()
 
@@ -382,3 +382,6 @@ class DataTableApplicationBaseView(DataTableBaseView):
     @staticmethod
     def filter_licence_type(value):
         return Q(licence_type__pk=value) if value.lower() != 'all' else None
+
+    def get_initial_queryset(self):
+        return self.model.objects.all().exclude(processing_status='temp')
