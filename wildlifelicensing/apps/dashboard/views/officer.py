@@ -167,7 +167,8 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer')
         # global table options
         data['applications']['tableOptions'] = {
-            'pageLength': 25
+            'pageLength': 25,
+            'order': [[4, 'desc'], [0, 'desc']]
         }
         return data
 
@@ -424,7 +425,7 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'title': 'User'
             },
             {
-                'title': 'Start Date'
+                'title': 'Issue Date'
             },
             {
                 'title': 'Expiry Date'
@@ -466,7 +467,8 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
         data['licences']['filters'].update(filters)
         # global table options
         data['licences']['tableOptions'] = {
-            'pageLength': 25
+            'pageLength': 25,
+            'order': [[3, 'desc'], [0, 'desc']]
         }
         # other stuff
         data['licences']['bulkRenewalURL'] = reverse('wl_dashboard:bulk_licence_renewal_pdf')
@@ -479,7 +481,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'licence_number',
         'licence_type',
         'profile.user',
-        'start_date',
+        'issue_date',
         'end_date',
         'licence',
         'cover_letter',
@@ -489,7 +491,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'licence_number',
         ['licence_type.short_name', 'licence_type.name'],
         ['profile.user.last_name', 'profile.user.first_name'],
-        'start_date',
+        'issue_date',
         'end_date',
         '',
         '']
