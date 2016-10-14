@@ -12,7 +12,7 @@ from wildlifelicensing.apps.payments import utils as payment_utils
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment,\
+from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, \
     AssessmentCondition, ApplicationUserAction
 from wildlifelicensing.apps.applications.utils import append_app_document_to_schema_data, convert_documents_to_url, \
     get_log_entry_to, format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
@@ -37,9 +37,11 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = application.licence_type.application_schema
-        kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
+        kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
+                                          posthook=format_assessment)
 
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
+                                                           fromm=self.request.user.get_full_name())
 
         kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                       get_application_payment_status(application))
@@ -73,7 +75,6 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
     success_url = reverse_lazy('wl_dashboard:home')
 
-
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
         assessment = get_object_or_404(Assessment, pk=self.args[1])
@@ -93,7 +94,8 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
                                                 exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
 
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
+                                                           fromm=self.request.user.get_full_name())
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
@@ -101,7 +103,8 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         assessment = get_object_or_404(Assessment, pk=args[1])
 
         if assessment.status == 'assessed':
-            messages.warning(request, 'This assessment has already been concluded and may only be viewed in read-only mode.')
+            messages.warning(request,
+                             'This assessment has already been concluded and may only be viewed in read-only mode.')
             return redirect('wl_applications:view_assessment', *args)
 
         return super(EnterConditionsAssessorView, self).get(*args, **kwargs)
@@ -142,7 +145,7 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
             send_assessment_done_email(assessment, request)
 
             messages.success(request, 'The application assessment has been forwarded back to the Wildlife Licensing '
-                             'office for review.')
+                                      'office for review.')
 
             return redirect(self.success_url)
         else:
@@ -169,7 +172,7 @@ class CreateConditionView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             condition = Condition.objects.create(code=request.POST.get('code'), text=request.POST.get('text'),
-                                                          one_off=not request.POST.get('addToGeneralList', False))
+                                                 one_off=not request.POST.get('addToGeneralList', False))
             if len(self.args) > 0:
                 application = get_object_or_404(Application, pk=self.args[0])
                 application.log_user_action(
