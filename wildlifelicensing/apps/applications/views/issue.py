@@ -91,12 +91,14 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence.holder = application.applicant
             licence.issuer = request.user
 
+            previous_licence = None
             if application.previous_application is not None:
-                licence.licence_number = application.previous_application.licence.licence_number
+                previous_licence = application.previous_application.licence
+                licence.licence_number = previous_licence.licence_number
 
-                # if licence is renewal, use previous licence's sequence number
+                # if licence is renewal, start with previous licence's sequence number
                 if licence.licence_sequence == 0:
-                    licence.licence_sequence = application.previous_application.licence.licence_sequence
+                    licence.licence_sequence = previous_licence.licence_sequence
 
             if not licence.licence_number:
                 licence.save(no_revision=True)
@@ -104,6 +106,9 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                     str(licence.id).zfill(LICENCE_NUMBER_NUM_CHARS))
 
             licence.licence_sequence += 1
+
+            # reset renewal_sent flag in case of reissue
+            licence.renewal_sent = False
 
             licence_filename = 'licence-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
@@ -117,6 +122,10 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                                              request.build_absolute_uri(reverse('home')))
 
             licence.save()
+
+            if previous_licence is not None:
+                previous_licence.replaced_by = licence
+                previous_licence.save()
 
             licence.variants.clear()
             for index, avl in enumerate(application.variants.through.objects.all().order_by('order')):
@@ -160,9 +169,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                  '<a href="{2}" target="_blank">Cover Letter PDF</a><img height="20px" src="{3}">'
                                  '</img>'.format(licence.licence_document.file.url, static('wl/img/pdf.png'),
                                                  licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
-
-            if ccs:
-                send_licence_issued_email(licence, application, request, to=ccs, additional_attachments=attachments)
+                if ccs:
+                    send_licence_issued_email(licence, application, request, to=ccs, additional_attachments=attachments)
             return redirect('wl_dashboard:home')
         else:
             messages.error(request, issue_licence_form.errors)

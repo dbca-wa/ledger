@@ -11,7 +11,6 @@ from ledger.accounts.models import RevisionedMixin, EmailUser, Document, Profile
 from ledger.licence.models import LicenceType, Licence
 
 from wildlifelicensing.apps.payments import utils as payment_utils
-from wildlifelicensing.apps.payments.utils import generate_product_code_variants
 
 
 @python_2_unicode_compatible
@@ -63,7 +62,7 @@ class WildlifeLicenceType(LicenceType):
         - Check for senior voucher if applicable.
         :return: raise an exception if error
         """
-        variant_codes = generate_product_code_variants(self)
+        variant_codes = payment_utils.generate_product_code_variants(self)
 
         missing_product_variants = []
 
@@ -93,7 +92,6 @@ class WildlifeLicence(Licence):
     DEFAULT_FREQUENCY = MONTH_FREQUENCY_CHOICES[0][0]
 
     profile = models.ForeignKey(Profile)
-    sequence_number = models.IntegerField(default=1)
     purpose = models.TextField(blank=True)
     locations = models.TextField(blank=True)
     cover_letter_message = models.TextField(blank=True)
@@ -101,9 +99,10 @@ class WildlifeLicence(Licence):
     licence_document = models.ForeignKey(Document, blank=True, null=True, related_name='licence_document')
     cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
     return_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
-    previous_licence = models.ForeignKey('self', blank=True, null=True)
+    replaced_by = models.ForeignKey('self', blank=True, null=True)
     regions = models.ManyToManyField(Region, blank=False)
     variants = models.ManyToManyField('Variant', blank=True, through='WildlifeLicenceVariantLink')
+    renewal_sent = models.BooleanField(default=False)
 
     def __str__(self):
         return self.reference
@@ -116,7 +115,7 @@ class WildlifeLicence(Licence):
 
     @property
     def reference(self):
-        return '{}-{}'.format(self.licence_number, self.sequence_number)
+        return '{}-{}'.format(self.licence_number, self.licence_sequence)
 
 
 class DefaultCondition(models.Model):

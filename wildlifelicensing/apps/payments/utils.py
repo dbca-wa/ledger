@@ -61,6 +61,8 @@ def get_product(product_code):
         return Product.objects.get(title=product_code)
     except Product.DoesNotExist:
         return None
+    except Product.MultipleObjectsReturned:
+        return None
 
 
 def is_licence_free(product_code):

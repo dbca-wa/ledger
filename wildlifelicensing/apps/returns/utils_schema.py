@@ -3,7 +3,7 @@ from jsontableschema import types
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.writer.write_only import WriteOnlyCell
-
+from django.utils import six
 from django.utils.encoding import python_2_unicode_compatible
 
 from wildlifelicensing.apps.main.excel import is_blank_value
@@ -50,9 +50,9 @@ class SchemaField:
         if is_blank_value(value):
             # must do that because an empty string is considered as valid even if required by the StringType
             value = None
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types) and not isinstance(value, six.text_type):
             # the StringType accepts only unicode
-            value = unicode(value)
+            value = six.u(value)
         return self.type.cast(value)
 
     def validate(self, value):

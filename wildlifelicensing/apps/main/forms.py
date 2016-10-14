@@ -2,10 +2,12 @@ import json
 import os
 from datetime import datetime
 
-from dateutil.relativedelta import relativedelta
+from django.utils import six
 from django import forms
 from django.contrib.postgres.forms import JSONField
 from django.forms.widgets import SelectMultiple
+
+from dateutil.relativedelta import relativedelta
 
 from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
 
@@ -25,7 +27,7 @@ class BetterJSONField(JSONField):
     def prepare_value(self, value):
         if value is None:
             return ""
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             # already a string
             return value
         else:
