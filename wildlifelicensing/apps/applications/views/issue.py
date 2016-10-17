@@ -66,6 +66,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
+￼	Code reformat			9038801
+
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
@@ -153,6 +155,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             application.save()
 
+            application.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(licence),
+                request
+            )
+
             # The licence should be emailed to the customer if they applied for it online. If an officer entered
             # the application on their behalf, the licence needs to be posted to the user.
 
@@ -181,9 +188,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                  '<a href="{2}" target="_blank">Cover Letter PDF</a><img height="20px" src="{3}">'
                                  '</img>'.format(licence.licence_document.file.url, static('wl/img/pdf.png'),
                                                  licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
-
-            if ccs:
-                send_licence_issued_email(licence, application, request, to=ccs, additional_attachments=attachments)
+                if ccs:
+                    send_licence_issued_email(licence, application, request, to=ccs, additional_attachments=attachments)
             return redirect('wl_dashboard:home')
         else:
             messages.error(request, issue_licence_form.errors)
