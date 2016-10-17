@@ -123,7 +123,7 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
 
     STATUS_PENDING = 'pending'
 
-    def _build_data(self):
+    def _build_data(self, request=None):
         data = super(TableApplicationsOfficerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
@@ -166,10 +166,29 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         }
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer')
         # global table options
+        data_view_class = DataTableApplicationsOfficerView
+        request = request or self.request if hasattr(self, 'request') else None
+        print('session', data_view_class.get_session_data(request))
         data['applications']['tableOptions'] = {
-            'pageLength': 25,
-            'order': [[4, 'desc'], [0, 'desc']]
+            'pageLength': data_view_class.get_session_page_length(
+                request,
+                default=10
+            ),
+            'order': data_view_class.get_session_order(
+                request,
+                default=[[4, 'desc'], [0, 'desc']]),
+            'search': {
+                'search': data_view_class.get_session_search_term(
+                    request,
+                    default=''
+                )
+            }
         }
+
+        # filters from session
+        if request and not request.GET.get('filters', {}):
+            data['filters'] = data['filters'] if hasattr(data, 'filters') else {}
+            data['filters']['applications'] = data_view_class.get_session_filters(request)
         return data
 
 
@@ -226,6 +245,8 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
                 reverse('wl_dashboard:tables_applications_officer')))
         },
     })
+
+    SESSION_SAVE_SETTINGS = True
 
     @staticmethod
     def _get_pending_processing_statuses():

@@ -27,6 +27,8 @@ define(
             $applicationsLicenceTypeFilter,
             $applicationsStatusTypeFilter,
             $applicationsAssigneeTypeFilter,
+            $applicationResetFilterButton,
+
             $licencesLicenceTypeFilter,
             $licencesStatusFilter,
             $licencesExpireAfterFilter,
@@ -112,7 +114,6 @@ define(
                     applicationsTable.ajax.reload();
                 });
             }
-
             // assignee filter
             if ($applicationsAssigneeTypeFilter.length && data.applications.filters.assignee) {
                 _.forEach(data.applications.filters.assignee.values, function (value) {
@@ -123,6 +124,39 @@ define(
                     applicationsTable.ajax.reload();
                 });
             }
+
+            if ($applicationResetFilterButton.length) {
+                $applicationResetFilterButton.on('click', function () {
+                    resetApplicationsFilters();
+                });
+            }
+        }
+
+        /**
+         *
+         * @param filters.licenceType
+         * @param filters.status
+         * @param filters.assignee
+         * @param filters.search
+         */
+        function setApplicationFilters(filters) {
+            $('#applications-collapse').collapse('show');
+            if (filters.licenceType) {
+                $applicationsLicenceTypeFilter.val(filters.licenceType).select2();
+            }
+            if (filters.status) {
+                $applicationsStatusTypeFilter.val(filters.status).select2();
+            }
+            if (filters.assignee) {
+                $applicationsAssigneeTypeFilter.val(filters.assignee).select2();
+            }
+        }
+
+        function resetApplicationsFilters() {
+            $applicationsLicenceTypeFilter.prop('selectedIndex', 0).select2();
+            $applicationsStatusTypeFilter.prop('selectedIndex', 0).select2();
+            $applicationsAssigneeTypeFilter.prop('selectedIndex', 0).select2();
+            applicationsTable.search('').ajax.reload();
         }
 
         function initLicenceTable() {
@@ -314,17 +348,13 @@ define(
 
         /**
          *
-         * @param query
-         * @param query.application_status
-         * @param query.application_assignee
+         * @param filters.applications
+         * @param filters.licences
+         * @param filters.returns
          */
-        function setFilters(query) {
-            $('#applications-collapse').collapse('show');
-            if (query.application_status) {
-                $applicationsStatusTypeFilter.val(query.application_status);
-            }
-            if (query.application_assignee) {
-                $applicationsAssigneeTypeFilter.val(query.application_assignee);
+        function setFilters(filters) {
+            if (filters.applications){
+                setApplicationFilters(filters.applications);
             }
         }
 
@@ -337,6 +367,7 @@ define(
                     applicationsLicenceTypeFilter: '#applications-filter-licence-type',
                     applicationsStatusFilter: '#applications-filter-status',
                     applicationsAssigneeFilter: '#applications-filter-assignee',
+                    applicationResetFilterButton: '#reset-application-filter-button',
 
                     licencesTable: '#licences-table',
                     licencesAccordion: '#licences-collapse',
@@ -374,6 +405,7 @@ define(
                 $applicationsLicenceTypeFilter = $(options.selectors.applicationsLicenceTypeFilter);
                 $applicationsStatusTypeFilter = $(options.selectors.applicationsStatusFilter);
                 $applicationsAssigneeTypeFilter = $(options.selectors.applicationsAssigneeFilter);
+                $applicationResetFilterButton = $(options.selectors.applicationResetFilterButton);
 
                 $licencesLicenceTypeFilter = $(options.selectors.licencesLicenceTypeFilter);
                 $licencesStatusFilter = $(options.selectors.licencesStatusFilter);
@@ -388,9 +420,9 @@ define(
 
                 // filters need to be set before the tables
                 initFilters();
-                if (options.data.query) {
-                    // set filter according to query data
-                    setFilters(options.data.query);
+                if (options.data.filters) {
+                    // set filters according to query data
+                    setFilters(options.data.filters);
                 }
                 initTables();
 

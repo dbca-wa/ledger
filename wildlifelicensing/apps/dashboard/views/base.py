@@ -20,7 +20,6 @@ from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.dashboard.forms import LoginForm
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, render_user_name
 
-
 from wildlifelicensing.apps.payments.utils import get_application_payment_status, PAYMENT_STATUS_AWAITING, \
     PAYMENT_STATUSES
 
@@ -202,8 +201,8 @@ class TableBaseView(TemplateView):
     def get_context_data(self, **kwargs):
         if 'dataJSON' not in kwargs:
             data = self._build_data()
-            # add the request query to the data
-            data['query'] = self.request.GET.dict()
+            if 'filters' not in data:
+                data['filters'] = self.request.GET.get('filters', {})
             kwargs['dataJSON'] = json.dumps(data)
         return super(TableBaseView, self).get_context_data(**kwargs)
 
@@ -233,7 +232,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
             'render': callable(model_instance)
        }
     }
-
+    17/10/2016: Added support for saving column order and search in session
     """
     model = None
     columns = [
@@ -251,6 +250,37 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
                 ['licence_type__short_name', 'licence_type__name'], search)
         }
     }
+
+    SESSION_SAVE_SETTINGS = True  # Set to True if you want to save order/search in the session
+    SESSION_KEY = None  # if you don't specify a session_key one will be generated based on the class name
+
+    @classmethod
+    def get_session_key(cls):
+        result = cls.SESSION_KEY or 'dt_{}'.format(cls.__name__)
+        return result
+
+    @classmethod
+    def get_session_data(cls, request):
+        result = {}
+        if request:
+            result = request.session.get(cls.get_session_key(), {})
+        return result
+
+    @classmethod
+    def get_session_order(cls, request, default=None):
+        return cls.get_session_data(request).get('order', default)
+
+    @classmethod
+    def get_session_search_term(cls, request, default=''):
+        return cls.get_session_data(request).get('search', default)
+
+    @classmethod
+    def get_session_page_length(cls, request, default=10):
+        return cls.get_session_data(request).get('pageLength', default)
+
+    @classmethod
+    def get_session_filters(cls, request):
+        return cls.get_session_data(request).get('filters', {})
 
     def _build_global_search_query(self, search):
         # a bit of a hack for searching for date with a '/', ex 27/05/2016
@@ -276,7 +306,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
                     query |= Q(**{'{0}__icontains'.format(self.columns[col_no].replace('.', '__')): search})
         return query
 
-    def _parse_filters(self):
+    def _get_filters(self):
         """
         The additional filters are sent in the query param with the following form (example):
         'filters[0][name]': '['licence_type']'
@@ -300,6 +330,66 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
             filter_key = 'filters[{0}][name]'.format(counter)
         return result
 
+    def _get_order_config_array(self):
+        """
+        From the order parameters passed in the request, return a datatable configuration array that can be stored
+        in session. See https://datatables.net/reference/option/order
+        Example:
+        Received params:
+        (u'order[0][column]', u'4'), (u'order[0][dir]', u'desc'), (u'order[1][column]', u'0'), (u'order[1][dir]', u'desc')
+        Returned array:
+        [[4, 'desc'], [0, 'desc']]
+        :return:
+        """
+        result = []
+        querydict = self._querydict
+        counter = 0
+        order_col_number_key = 'order[{0}][column]'.format(counter)
+        order_direction_key = 'order[{0}][dir]'.format(counter)
+        while order_col_number_key in querydict and order_direction_key in querydict:
+            result.append([
+                int(querydict[order_col_number_key]),
+                querydict[order_direction_key]
+            ])
+            counter += 1
+            order_col_number_key = 'order[{0}][column]'.format(counter)
+            order_direction_key = 'order[{0}][dir]'.format(counter)
+        return result
+
+    def _get_search_value(self):
+        # return the search value parameter
+        return self._querydict.get('search[value]')
+
+    def _get_page_length(self):
+        return int(self._querydict.get('length', 10))
+
+    def save_session_data(self):
+        data = {
+            'order': self._get_order_config_array(),
+            'search': self._get_search_value(),
+            'pageLength': self._get_page_length(),
+            'filters': self._get_filters()
+        }
+        self.request.session[self.get_session_key()] = data
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Override this method just to add a call to save_session_data if set-up.
+        The post_process is not supposed to return anything. It will mostly be used to store session data like the
+        column ordering and the search
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        result = super(DataTableBaseView, self).get_context_data(*args, **kwargs)
+        try:
+            if self.SESSION_SAVE_SETTINGS:
+                self.save_session_data()
+        except Exception as e:
+            logger.exception(str(e))
+
+        return result
+
     def filter_queryset(self, qs):
         """
         Two level of filtering:
@@ -310,7 +400,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
         """
         query = Q()
         # part 1: filter from top level filters
-        filters = self._parse_filters()
+        filters = self._get_filters()
         for filter_name, filter_value in filters.items():
             # look for a filter_<filter_name> method and call it with the filter value
             # the method must return a Q instance, if it returns None or anything else it will be ignored
