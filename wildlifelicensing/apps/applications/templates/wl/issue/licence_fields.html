@@ -9,13 +9,22 @@
     <span class="input-group-addon">
         <span class="glyphicon glyphicon-calendar"></span>
     </span>
-{% elif licence_field.type == 'checkbox' %}
-    <input name="{{name}}" type="checkbox"> {{ licence_field.label }}
+{% elif licence_field.type == 'label' %}
+    {% for option in licence_field.options %}
+        <div>
+            {% if group_index %}
+                <input id="{{ option.name }}{{ group_index }}Hidden" name="{{ option.name }}" type="hidden" value="off">
+            {% endif %}
+            <input name="{{ option.name }}" {% if group_index %} id="{{ option.name }}{{ group_index }}" class="extracted-checkbox"{% endif %}
+                type="checkbox" {% if option.data == 'on' %}checked{% endif %}>
+            {{ option.label }}
+        </div>
+    {% endfor %}
 {% elif licence_field.type == 'radiobuttons' %}
     {% for option in licence_field.options %}
         <div class="radio">
             <label>
-                <input name="{{ licence_field.name }}" type="radio" value="{{ licence_field.data }}" {% if option.value == licence_field.data %}checked{% endif %}>
+                <input name="{{ licence_field.name }}" type="radio" value="{{ option.value}}" {% if option.value == licence_field.data %}checked{% endif %}>
                 {{ option.label }}
             </label>
         </div>
@@ -23,10 +32,10 @@
 {% elif licence_field.type == 'select' %}
     <select name="{{ licence_field.name}}" class="form-control">
         {% if licence_field.defaultBlank %}
-            <option disabled selected value=" ">Please Choose</option>
+            <option disabled {% if not licence_field.data %}selected{% endif %}>Please Choose</option>
         {% endif %}
         {% for option in licence_field.options %}
-            <option value="{{ licence_field.data }}" class="form-control" {% if option.value == licence_field.data %}selected{% endif %}>{{ option.label }}</option>
+            <option class="form-control" value="{{ option.value}}" {% if option.value == licence_field.data %}selected{% endif %}>{{ option.label }}</option>
         {% endfor %}
     </select>
 {% elif licence_field.type == 'species' %}

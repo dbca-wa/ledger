@@ -148,18 +148,25 @@ def _extract_label_and_checkboxes(current_item, items, data, licence_fields):
         'options': []
     }
 
+    # find index of first checkbox after checkbox label within current item list
     checkbox_index = 0
     while checkbox_index < len(items) and items[checkbox_index]['name'] != current_item['name']:
         checkbox_index += 1
-
     checkbox_index += 1
 
+    # add all checkboxes to licence field options
     while checkbox_index < len(items) and items[checkbox_index]['type'] == 'checkbox':
-        licence_field['options'].append({'value': items[checkbox_index]['name'],
-                                         'label': items[checkbox_index]['label']})
-        checkbox_index += 1
+        name = items[checkbox_index]['name']
+        option = {
+            'name': name,
+            'label': items[checkbox_index]['label']
+        }
+        if name in data:
+            option['data'] = data[name]
 
-    # TODO insert data
+        licence_field['options'].append(option)
+
+        checkbox_index += 1
 
     licence_fields.append(licence_field)
 
@@ -183,13 +190,25 @@ def _extract_item_data(name, data):
 def update_licence_fields(licence_fields, post_data):
     for field in licence_fields:
         if 'children' not in field:
-            field['data'] = post_data.get(field['name'])
+            if field['type'] == 'label':
+                for option in field['options']:
+                    if option['name'] in post_data:
+                        option['data'] = post_data[option['name']]
+            else:
+                field['data'] = post_data.get(field['name'])
         else:
             for index, group in enumerate(field['children']):
                 for child_field in group:
-                    data_list = post_data.getlist(child_field['name'])
-                    if index < len(data_list):
-                        child_field['data'] = data_list[index]
+                    if child_field['type'] == 'label':
+                        for option in child_field['options']:
+                            if option['name'] in post_data:
+                                data_list = post_data.getlist(option['name'])
+                                if index < len(data_list):
+                                    option['data'] = data_list[index]
+                    else:
+                        data_list = post_data.getlist(child_field['name'])
+                        if index < len(data_list):
+                            child_field['data'] = data_list[index]
 
     return licence_fields
 

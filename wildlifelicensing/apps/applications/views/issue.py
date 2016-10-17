@@ -66,8 +66,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         return super(IssueLicenceView, self).get_context_data(**kwargs)
 
-￼	Code reformat			9038801
-
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 

@@ -146,11 +146,10 @@
                 <form method="post" id="issueLicenceForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% bootstrap_form issue_licence_form %}
-                    <a href="#" id="add_attachment" class="top-buffer">Add attachment</a>
                     {% if extracted_fields %}
                         <div class="panel panel-default top-buffer">
                             <div class="panel-heading">
-                                <h4 class="panel-title">Fields from application</h4>
+                                <h4 class="panel-title">Editable application fields (will appear on licence)</h4>
                             </div>
                             <div class="panel-body">
                                 {% for item in extracted_fields %}
@@ -171,7 +170,7 @@
                                                                     {% if forloop.parentloop.first %}
                                                                         <label class="control-label">{{ child_item.label }}</label>
                                                                     {% endif %}
-                                                                    {% include 'wl/issue/licence_fields.html' with licence_field=child_item %}
+                                                                    {% include 'wl/issue/licence_fields.html' with licence_field=child_item group_index=forloop.parentloop.counter %}
                                                                 </div>
                                                             </div>
                                                         {% endwith %}
@@ -184,6 +183,7 @@
                             </div>
                         </div>
                     {% endif %}
+                    <a href="#" id="add_attachment" class="top-buffer">Add attachment</a>
                 </form>
             </div>
         </div>

@@ -16,6 +16,7 @@ from django.conf import settings
 from wildlifelicensing.apps.main.helpers import render_user_name
 
 from ledger.accounts.models import Document
+from django.db.models import options
 
 BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
                                    'bw_dpaw_header_logo.png')
@@ -256,19 +257,26 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 
 def _layout_extracted_fields(extracted_fields):
     elements = []
+
     # information extracted from application
     for field in extracted_fields:
         if 'children' not in field:
-            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-            elements.append(Paragraph(field['label'], styles['BoldLeft']))
             if 'data' in field and field['data']:
+                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+                elements.append(Paragraph(field['label'], styles['BoldLeft']))
+
                 if field['type'] in ['text', 'text_area']:
                     elements += _layout_paragraphs(field['data'])
                 elif field['type'] in ['radiobuttons', 'select']:
                     elements.append(Paragraph(dict([i.values() for i in field['options']]).
                                               get(field['data'], 'Not Specified'), styles['Left']))
-            else:
-                elements.append(Paragraph('Not Specified', styles['Left']))
+            elif field['type'] == 'label':
+                if any([option.get('data', 'off') == 'on' for option in field['options']]):
+                    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+                    elements.append(Paragraph(field['label'], styles['BoldLeft']))
+                    elements.append(Paragraph(', '.join([option['label'] for option in field['options']
+                                                          if option.get('data', 'off') == 'on']),
+                                    styles['Left']))
         else:
             elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
             elements.append(Paragraph(field['label'], styles['BoldLeft']))
@@ -283,15 +291,22 @@ def _layout_extracted_fields(extracted_fields):
 
                 row = []
                 for child_field in group:
-                    if 'data' in child_field and child_field['data']:
-                        if child_field['type'] in ['text', 'text_area']:
-                            row.append(Paragraph(child_field['data'], styles['Left']))
-                        elif child_field['type'] in ['radiobuttons', 'select']:
-                            row.append(Paragraph(dict([i.values() for i in child_field['options']]).
-                                                 get(child_field['data'], 'Not Specified'), styles['Left']))
+                    if child_field['type'] in ['radiobuttons', 'select']:
+                        row.append(Paragraph(dict([i.values() for i in child_field['options']]).
+                                             get(child_field['data'], 'Not Specified'), styles['Left']))
+                    elif child_field['type'] == 'label':
+                        if any([option.get('data', 'off') == 'on' for option in child_field['options']]):
+                            row.append(Paragraph(', '.join([option['label'] for option in child_field['options']
+                                                            if option.get('data', 'off') == 'on']),
+                                                 styles['Left']))
+                        else:
+                            row.append(Paragraph('Not Specified', styles['Left']))
+                    else:
+                        row.append(Paragraph(child_field['data'], styles['Left']))
+
                 table_data.append(row)
 
-            elements.append(Table(table_data))
+            elements.append(Table(table_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 
     return elements
 

@@ -31,13 +31,17 @@ define([
             }
 
             $('#previewLicence').click(function(e) {
+                $issueLicenceForm.find('.extracted-checkbox').each(function() {
+                    $issueLicenceForm.find('#' + this.id + 'Hidden').prop('disabled', this.checked);
+                });
                 var url = this.href + '?' + $issueLicenceForm.serialize();
                 window.open(url);
+                $issueLicenceForm.find("input:hidden").prop('disabled', false);
                 return false;
             });
 
             $regionSelect.select2({
-                placeholder: "Select applicable regions."
+                placeholder: 'Select applicable regions.'
             });
             $regionSelect.removeClass('hidden');
 
