@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function, absolute_import, division
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -109,7 +109,8 @@ class WildlifeLicence(Licence):
 
     def get_title_with_variants(self):
         if self.pk is not None and self.variants.exists():
-            return '{} ({})'.format(self.licence_type.name, ' / '.join(self.variants.all().values_list('name', flat=True)))
+            return '{} ({})'.format(self.licence_type.name,
+                                    ' / '.join(self.variants.all().values_list('name', flat=True)))
         else:
             return self.licence_type.name
 
@@ -192,3 +193,20 @@ class AssessorGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+
+@python_2_unicode_compatible
+class UserAction(models.Model):
+    who = models.ForeignKey(EmailUser, null=False, blank=False)
+    when = models.DateTimeField(null=False, blank=False, auto_now_add=True)
+    what = models.TextField(blank=False)
+
+    def __str__(self):
+        return "{what} ({who} at {when})".format(
+            what=self.what,
+            who=self.who,
+            when=self.when
+        )
+
+    class Meta:
+        abstract = True

@@ -251,14 +251,20 @@ class BulkLicenceRenewalPDFView(OfficerRequiredMixin, View):
 
 
 class CommunicationsLogListView(OfficerRequiredMixin, View):
+    serial_template = {
+        'exclude': ['communicationslogentry_ptr', 'customer', 'staff'],
+        'posthook': format_communications_log_entry
+    }
+
     def get(self, request, *args, **kwargs):
-        q = Q(officer=args[0]) | Q(customer=args[0])
+        q = Q(staff=args[0]) | Q(customer=args[0])
 
-        data = serialize(CommunicationsLogEntry.objects.filter(q).order_by('created'),
-                         posthook=format_communications_log_entry,
-                         exclude=['communicationslogentry_ptr', 'customer', 'officer']),
+        data = serialize(
+            CommunicationsLogEntry.objects.filter(q).order_by('created'),
+            **self.serial_template
+        )
 
-        return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
+        return JsonResponse({'data': data}, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class AddCommunicationsLogEntryView(OfficerRequiredMixin, View):

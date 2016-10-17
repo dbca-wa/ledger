@@ -14,13 +14,13 @@ from wildlifelicensing.apps.main.models import WildlifeLicenceType,\
     WildlifeLicenceCategory, Variant
 from wildlifelicensing.apps.main.forms import IdentificationForm, SeniorCardForm
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest,\
-    ApplicationVariantLink
+    ApplicationVariantLink, ApplicationUserAction
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin,\
     UserCanViewApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_customer
+from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
 from django.core.urlresolvers import reverse
 from wildlifelicensing.apps.applications.utils import delete_session_application
 from wildlifelicensing.apps.payments.utils import is_licence_free,\
@@ -100,7 +100,7 @@ class DeleteApplicationView(View, UserCanViewApplicationMixin):
         return redirect('wl_dashboard:home')
 
 
-class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
+class RenewLicenceView(View):  # TODO: need a UserCanRenewLicence type mixin
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
@@ -171,6 +171,10 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
                 customer = create_customer_form.save()
                 application.applicant = customer
                 application.save()
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_CREATE_CUSTOMER_.format(render_user_name(customer)),
+                    request
+                )
             else:
                 context = {'create_customer_form': create_customer_form}
                 return render(request, self.template_name, context)
@@ -412,6 +416,10 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
 
                 application.applicant_profile = profile
                 application.save()
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_CREATE_PROFILE_.format(profile),
+                    request
+                )
             else:
                 return render(request, self.template_name,
                               {'licence_type': application.licence_type,
@@ -548,6 +556,10 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                                                       str(application.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
         application.save(version_user=application.applicant, version_comment='Details Modified')
+        application.log_user_action(
+            ApplicationUserAction.ACTION_LODGE_APPLICATION.format(application),
+            request
+        )
 
         if application.invoice_reference:
             return redirect('wl_applications:complete')

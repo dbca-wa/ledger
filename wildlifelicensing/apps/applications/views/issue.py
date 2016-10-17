@@ -16,7 +16,7 @@ from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
-from wildlifelicensing.apps.applications.models import Application, Assessment
+from wildlifelicensing.apps.applications.models import Application, Assessment, ApplicationUserAction
 from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_application
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
@@ -140,6 +140,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             application.licence = licence
 
             application.save()
+
+            application.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(licence),
+                request
+            )
 
             # The licence should be emailed to the customer if they applied for it online. If an officer entered
             # the application on their behalf, the licence needs to be posted to the user.
