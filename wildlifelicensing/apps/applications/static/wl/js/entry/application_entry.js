@@ -241,7 +241,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                 $(this).replaceWith(speciesClone);
             });
 
-            itemCopy.find('[id^="remove_' + item.name + '"]').removeClass('hidden');
+            itemCopy.find('[id^="remove_' + item.name + '"]').parent().removeClass('hidden');
             itemCopy.find('[id^="description_' + item.name + '"]').addClass('hidden');
             itemSelector.after(itemCopy);
             groupInput.val(groupCount + 1);
@@ -274,6 +274,32 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
                 formContainer.append(_layoutItem(formStructure[i], 0, '', itemData));
             }
+
+            $('.collapse-link').each(function() {
+                var $link = $(this),
+                    $linkSpan = $(this).find('span'),
+                    $collapsible = $link.siblings('.children-anchor-point');
+
+                $link.click(function() {
+                    $collapsible.collapse('toggle');
+                })
+
+                $collapsible.on('hide.bs.collapse', function () {
+                    if($link.hasClass('collapse-link-top')) {
+                        $linkSpan.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+                    } else if($link.hasClass('collapse-link-bottom')) {
+                        $link.hide();
+                    }
+                }).on('show.bs.collapse', function() {
+                    if($link.hasClass('collapse-link-top')) {
+                        $linkSpan.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+                    }
+                }).on('shown.bs.collapse', function() {
+                    if($link.hasClass('collapse-link-bottom')) {
+                        $link.show();
+                    };
+                });
+            });
 
             // initialise parsley form validation
             $('form').parsley({
