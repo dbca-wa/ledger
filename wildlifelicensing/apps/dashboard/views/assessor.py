@@ -47,6 +47,38 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
             [('all', 'All')] + [(v, l) for v, l in Assessment.STATUS_CHOICES]
         # override the data url
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_assessor')
+        # global table options
+        data['applications']['tableOptions'] = {
+            'pageLength': 25,
+            'order': [[4, 'desc'], [0, 'desc']]
+        }
+
+        # load dataTables settings and filters from session?
+        # We load settings from session only if there is no query parameters in the get, otherwise we consider that
+        # it may come from the dashboard with some filters.
+        request = self.request if hasattr(self, 'request') else None
+        if request and not request.GET:
+            data_view_class = DataTableApplicationAssessorView
+            # use session data
+            data['applications']['tableOptions'].update({
+                'pageLength': data_view_class.get_session_page_length(
+                    request,
+                    default=data['applications']['tableOptions']['pageLength']
+                ),
+                'order': data_view_class.get_session_order(
+                    request,
+                    default=data['applications']['tableOptions']['order']
+                ),
+                'search': {
+                    'search': data_view_class.get_session_search_term(
+                        request,
+                        default=''
+                    )
+                }
+            })
+            # use the filters from the session. Prefix the keys with application and pass it as the query dict
+            filters = data_view_class.get_session_filters(request)
+            data['query'] = dict([('application_{}'.format(k), v) for k, v in filters.items()])
         return data
 
 

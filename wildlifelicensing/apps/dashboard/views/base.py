@@ -201,8 +201,8 @@ class TableBaseView(TemplateView):
     def get_context_data(self, **kwargs):
         if 'dataJSON' not in kwargs:
             data = self._build_data()
-            if 'filters' not in data:
-                data['filters'] = self.request.GET.get('filters', {})
+            if 'query' not in data:
+                data['query'] = self.request.GET.dict()
             kwargs['dataJSON'] = json.dumps(data)
         return super(TableBaseView, self).get_context_data(**kwargs)
 
@@ -232,7 +232,7 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
             'render': callable(model_instance)
        }
     }
-    17/10/2016: Added support for saving column order and search in session
+    17/10/2016: Added support for saving column_order/search/page_length in session
     """
     model = None
     columns = [

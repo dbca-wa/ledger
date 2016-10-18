@@ -36,7 +36,11 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
         result = []
         statuses = base.get_processing_statuses_but_draft()
         all_applications = Application.objects.filter(processing_status__in=[s[0] for s in statuses])
-        all_applications_node = self._create_node('All applications', href=url,
+        # the next query param is necessary to avoid loading parameters from the session.
+        query = {
+            'show': 'applications'
+        }
+        all_applications_node = self._create_node('All applications', href=base.build_url(url, query),
                                                   count=all_applications.count())
         all_applications_node['state']['expanded'] = False
         for s_value, s_title in statuses:
@@ -106,11 +110,19 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
 
         # Licences
         url = reverse_lazy('wl_dashboard:tables_licences_officer')
+        query = {
+            'show': 'licences'
+        }
+        url = base.build_url(url, query)
         all_licences_node = self._create_node('All licences', href=url, count=WildlifeLicence.objects.count())
         result.append(all_licences_node)
 
         # Returns
         url = reverse_lazy('wl_dashboard:tables_returns_officer')
+        query = {
+            'show': 'returns'
+        }
+        url = base.build_url(url, query)
         all_returns_node = self._create_node('All returns', href=url,
                                              count=Return.objects.exclude(status__in=['draft', 'future']).count())
         result.append(all_returns_node)
@@ -123,7 +135,7 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
 
     STATUS_PENDING = 'pending'
 
-    def _build_data(self, request=None):
+    def _build_data(self):
         data = super(TableApplicationsOfficerView, self)._build_data()
         data['applications']['columnDefinitions'] = [
             {
@@ -166,29 +178,37 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         }
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer')
         # global table options
-        data_view_class = DataTableApplicationsOfficerView
-        request = request or self.request if hasattr(self, 'request') else None
-        print('session', data_view_class.get_session_data(request))
         data['applications']['tableOptions'] = {
-            'pageLength': data_view_class.get_session_page_length(
-                request,
-                default=10
-            ),
-            'order': data_view_class.get_session_order(
-                request,
-                default=[[4, 'desc'], [0, 'desc']]),
-            'search': {
-                'search': data_view_class.get_session_search_term(
-                    request,
-                    default=''
-                )
-            }
+            'pageLength': 25,
+            'order': [[4, 'desc'], [0, 'desc']]
         }
 
-        # filters from session
-        if request and not request.GET.get('filters', {}):
-            data['filters'] = data['filters'] if hasattr(data, 'filters') else {}
-            data['filters']['applications'] = data_view_class.get_session_filters(request)
+        # load dataTables settings and filters from session?
+        # We load settings from session only if there is no query parameters in the get, otherwise we consider that
+        # it may come from the dashboard with some filters.
+        request = self.request if hasattr(self, 'request') else None
+        if request and not request.GET:
+            data_view_class = DataTableApplicationsOfficerView
+            # use session data
+            data['applications']['tableOptions'].update({
+                'pageLength': data_view_class.get_session_page_length(
+                    request,
+                    default=data['applications']['tableOptions']['pageLength']
+                ),
+                'order': data_view_class.get_session_order(
+                    request,
+                    default=data['applications']['tableOptions']['order']
+                ),
+                'search': {
+                    'search': data_view_class.get_session_search_term(
+                        request,
+                        default=''
+                    )
+                }
+            })
+            # use the filters from the session. Prefix the keys with application and pass it as the query dict
+            filters = data_view_class.get_session_filters(request)
+            data['query'] = dict([('application_{}'.format(k), v) for k, v in filters.items()])
         return data
 
 
@@ -300,8 +320,8 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
 
     def _build_data(self):
         data = super(TablesOfficerOnBehalfView, self)._build_data()
-        officer_data = TableApplicationsOfficerView()._build_data()
-        data['applications'] = officer_data['applications']
+        # officer_data = TableApplicationsOfficerView()._build_data()
+        # data['applications'] = officer_data['applications']
         data['applications']['columnDefinitions'] = [
             {
                 'title': 'Lodgement Number'
@@ -410,7 +430,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
 
     @staticmethod
     def _get_proxy_applications(user):
-        return Application.objects.filter(proxy_applicant=user)
+        return Application.objects.filter(proxy_applicant=user).exclude(customer_status='temp')
 
     @staticmethod
     def filter_status(value):
@@ -493,6 +513,33 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
         }
         # other stuff
         data['licences']['bulkRenewalURL'] = reverse('wl_dashboard:bulk_licence_renewal_pdf')
+
+        # load dataTables settings and filters from session?
+        # We load settings from session only if there is no query parameters in the get, otherwise we consider that
+        # it may come from the dashboard with some filters.
+        request = self.request if hasattr(self, 'request') else None
+        if request and not request.GET:
+            data_view_class = DataTableLicencesOfficerView
+            # use session data
+            data['licences']['tableOptions'].update({
+                'pageLength': data_view_class.get_session_page_length(
+                    request,
+                    default=data['licences']['tableOptions']['pageLength']
+                ),
+                'order': data_view_class.get_session_order(
+                    request,
+                    default=data['licences']['tableOptions']['order']
+                ),
+                'search': {
+                    'search': data_view_class.get_session_search_term(
+                        request,
+                        default=''
+                    )
+                }
+            })
+            # use the filters from the session. Prefix the keys with licence and pass it as the query dict
+            filters = data_view_class.get_session_filters(request)
+            data['query'] = dict([('licence_{}'.format(k), v) for k, v in filters.items()])
         return data
 
 
@@ -667,7 +714,8 @@ class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
         data['returns']['ajax']['url'] = reverse('wl_dashboard:data_returns_officer')
         # global table options
         data['returns']['tableOptions'] = {
-            'pageLength': 25
+            'pageLength': 25,
+            'order': [[0, 'asc']]
         }
         filters = {
             'status': {
@@ -678,6 +726,33 @@ class TableReturnsOfficerView(OfficerRequiredMixin, base.TableBaseView):
             }
         }
         data['returns']['filters'].update(filters)
+
+        # load dataTables settings and filters from session?
+        # We load settings from session only if there is no query parameters in the get, otherwise we consider that
+        # it may come from the dashboard with some filters.
+        request = self.request if hasattr(self, 'request') else None
+        if request and not request.GET:
+            data_view_class = DataTableReturnsOfficerView
+            # use session data
+            data['returns']['tableOptions'].update({
+                'pageLength': data_view_class.get_session_page_length(
+                    request,
+                    default=data['returns']['tableOptions']['pageLength']
+                ),
+                'order': data_view_class.get_session_order(
+                    request,
+                    default=data['returns']['tableOptions']['order']
+                ),
+                'search': {
+                    'search': data_view_class.get_session_search_term(
+                        request,
+                        default=''
+                    )
+                }
+            })
+            # use the filters from the session. Prefix the keys with licence and pass it as the query dict
+            filters = data_view_class.get_session_filters(request)
+            data['query'] = dict([('return_{}'.format(k), v) for k, v in filters.items()])
 
         return data
 
