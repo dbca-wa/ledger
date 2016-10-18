@@ -17,6 +17,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         if(item.type === 'section' || item.type === 'group') {
             item.isPreviewMode = true;
             itemContainer.append(Handlebars.templates[item.type](item));
+            _initCollapsible(itemContainer);
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
             var isSpecified = false;
             itemContainer.append($('<label>').text(item.label));
@@ -65,7 +66,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
 
         if(item.conditions !== undefined) {
-
             if(item.conditions !== undefined) {
                 $.each(item.conditions, function(condition, children) {
                     if(condition === itemData[item.name]) {
@@ -120,6 +120,36 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         }
 
         return $childrenAnchorPoint;
+    }
+
+    function _initCollapsible($itemContainer) {
+        var $collapsible = $itemContainer.find('.children-anchor-point').first(),
+            $topLink = $collapsible.siblings('.collapse-link-top'),
+            $topLinkSpan = $topLink.find('span'),
+            $bottomLink = $collapsible.siblings('.collapse-link-bottom').first();
+
+        $collapsible.on('hide.bs.collapse', function () {
+            $topLinkSpan.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+            if($bottomLink.length > 0) {
+                $bottomLink.hide();
+            }
+        }).on('show.bs.collapse', function() {
+            $topLinkSpan.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+        }).on('shown.bs.collapse', function() {
+            if($bottomLink.length) {
+                $bottomLink.show();
+            };
+        });
+
+        $topLink.click(function() {
+            $collapsible.collapse('toggle');
+        });
+
+        if($bottomLink.length) {
+            $bottomLink.click(function() {
+                $collapsible.collapse('toggle');
+            });
+        }
     }
 
     return {
