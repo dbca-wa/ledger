@@ -226,6 +226,8 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                     variant_dict['href'] = '{}?{}'.format(reverse('wl_applications:select_licence_type',
                                                                   args=(licence_type.id,)), params)
 
+                    variant_dict['help_text'] = variant.help_text
+
                 variants.append(variant_dict)
 
             return variants
@@ -244,6 +246,8 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
 
                 category_dict['licence_types'].append(licence_type_dict)
 
+                licence_type_dict['help_text'] = licence_type.help_text
+
             categories.append(category_dict)
 
         if WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True).exists():
@@ -257,6 +261,8 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                 else:
                     licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
                                                         args=(licence_type.id,))
+
+                licence_type_dict['help_text'] = licence_type.help_text
 
                 category_dict['licence_types'].append(licence_type_dict)
 
