@@ -5,7 +5,7 @@ SITE_ID = 1
 
 INSTALLED_APPS += [
     'bootstrap3',
-    'parkstay'
+    'parkstay',
     'taggit'
 ]
 
