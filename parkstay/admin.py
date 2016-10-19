@@ -40,7 +40,7 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = ('arrival','departure','campground','legacy_id','legacy_name','cost_total')
     ordering = ('-arrival',)
     search_fileds = ('arrival','departure')
-    list_filter = ('campground',)
+    list_filter = ('arrival','departure')
 
 @admin.register(CampsiteBooking)
 class CampsiteBookingAdmin(admin.ModelAdmin):
@@ -53,6 +53,7 @@ class CampsiteBookingAdmin(admin.ModelAdmin):
 class CampsiteRateAdmin(admin.ModelAdmin):
     list_display = ('campground','campsite_class','min_days','max_days','min_people','max_people','allow_public_holidays','rate_adult','rate_concession','rate_child','rate_infant')
     list_filter = ('campground','campsite_class','allow_public_holidays')
+    search_fields = ('campground__name',)
 
 admin.site.register(Region)
 admin.site.register(District)
