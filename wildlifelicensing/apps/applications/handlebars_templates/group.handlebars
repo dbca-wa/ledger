@@ -14,10 +14,10 @@
                 {{#if isRepeatable }}
                     <a id="copy_{{name}}">Copy {{label}}</a>
                 {{/if}}
-                    <span class="{{#unless isRemovable}}hidden{{/unless}}">
-                        &nbsp;&nbsp;|&nbsp;&nbsp;
-                        <a id="remove_{{name}}" ">Remove {{label}}</a>
-                    </span>
+                <span class="{{#unless isRemovable}}hidden{{/unless}}">
+                    <span class="margin-left margin-right">|</span>
+                    <a id="remove_{{name}}" ">Remove {{label}}</a>
+                </span>
             {{/unless}}
             <a class="collapse-link-bottom pull-right"><span class="glyphicon glyphicon-chevron-up"></a>
         </div>
