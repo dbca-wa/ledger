@@ -320,8 +320,6 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
 
     def _build_data(self):
         data = super(TablesOfficerOnBehalfView, self)._build_data()
-        # officer_data = TableApplicationsOfficerView()._build_data()
-        # data['applications'] = officer_data['applications']
         data['applications']['columnDefinitions'] = [
             {
                 'title': 'Lodgement Number'
@@ -365,6 +363,54 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TableBaseView):
             }
         }
         data['returns']['filters'].update(filters)
+
+        request = self.request if hasattr(self, 'request') else None
+        # load table session data
+        # application
+        if request and not request.GET:
+            data_view_class = DataTableApplicationsOfficerOnBehalfView
+            # use session data
+            data['applications']['tableOptions'].update({
+                'pageLength': data_view_class.get_session_page_length(
+                    request,
+                    default=data['applications']['tableOptions']['pageLength']
+                ),
+                'order': data_view_class.get_session_order(
+                    request,
+                    default=data['applications']['tableOptions']['order']
+                ),
+                'search': {
+                    'search': data_view_class.get_session_search_term(
+                        request,
+                        default=''
+                    )
+                }
+            })
+            # use the filters from the session. Prefix the keys with the table name and pass it as the query dict.
+            filters = data_view_class.get_session_filters(request)
+            data['query'] = dict([('application_{}'.format(k), v) for k, v in filters.items()])
+            # returns
+            data_view_class = DataTableReturnsOfficerOnBehalfView
+            # use session data
+            data['returns']['tableOptions'].update({
+                'pageLength': data_view_class.get_session_page_length(
+                    request,
+                    default=data['returns']['tableOptions']['pageLength']
+                ),
+                'order': data_view_class.get_session_order(
+                    request,
+                    default=data['returns']['tableOptions']['order']
+                ),
+                'search': {
+                    'search': data_view_class.get_session_search_term(
+                        request,
+                        default=''
+                    )
+                }
+            })
+            # use the filters from the session. Prefix the keys with licence and pass it as the query dict
+            filters = data_view_class.get_session_filters(request)
+            data['query'] = dict([('return_{}'.format(k), v) for k, v in filters.items()])
 
         return data
 

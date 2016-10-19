@@ -160,6 +160,10 @@ class TableBaseView(TemplateView):
         licence_types = [('all', 'All')] + [(lt.pk, lt.display_name) for lt in LicenceType.objects.all()]
         data = {
             'applications': {
+                'tableOptions': {
+                    'pageLength': 10,
+                    'order': [[0, 'asc']],
+                },
                 'columnDefinitions': [],
                 'filters': {
                     'licenceType': {
@@ -174,6 +178,10 @@ class TableBaseView(TemplateView):
                 }
             },
             'licences': {
+                'tableOptions': {
+                    'pageLength': 10,
+                    'order': [[0, 'asc']],
+                },
                 'columnDefinitions': [],
                 'filters': {
                     'licenceType': {
@@ -185,6 +193,10 @@ class TableBaseView(TemplateView):
                 }
             },
             'returns': {
+                'tableOptions': {
+                    'pageLength': 10,
+                    'order': [[0, 'asc']],
+                },
                 'columnDefinitions': [],
                 'filters': {
                     'licenceType': {
