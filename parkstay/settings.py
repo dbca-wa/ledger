@@ -6,6 +6,7 @@ SITE_ID = 1
 INSTALLED_APPS += [
     'bootstrap3',
     'parkstay'
+    'taggit'
 ]
 
 # maximum number of days allowed for a booking

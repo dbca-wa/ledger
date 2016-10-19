@@ -10,7 +10,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundCampsiteFilterSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
-                                    CampgroundFeatureSerializer,
+                                    FeatureSerializer,
                                     RegionSerializer,
                                     CampsiteClassSerializer,
                                     BookingSerializer,
@@ -23,7 +23,7 @@ from parkstay.models import (Campground,
                                 Booking,
                                 PromoArea,
                                 Park,
-                                CampgroundFeature,
+                                Feature,
                                 Region,
                                 CampsiteClass,
                                 Booking,
@@ -127,7 +127,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                         ).order_by('date', 'campsite__name')
         # fetch all the campsites and applicable rates for the campground
         sites_qs = Campsite.objects.filter(campground=ground).order_by('name')
-        rates_qs = CampsiteRate.objects.filter(campground=ground)
+        rates_qs = CampsiteRate.objects.filter(sites_qs)
 
         # make a map of campsite class to cost
         rates_map = {r.campsite_class_id: r.rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
@@ -318,9 +318,9 @@ class ParkViewSet(viewsets.ModelViewSet):
     queryset = Park.objects.all()
     serializer_class = ParkSerializer
 
-class CampgroundFeatureViewSet(viewsets.ModelViewSet):
-    queryset = CampgroundFeature.objects.all()
-    serializer_class = CampgroundFeatureSerializer
+class FeatureViewSet(viewsets.ModelViewSet):
+    queryset = Feature.objects.all()
+    serializer_class = CampgroundSerializer
 
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all()

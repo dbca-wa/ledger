@@ -1,12 +1,12 @@
 from django.contrib import admin
-from .models import Park, Campground, Campsite, CampgroundFeature, District, Region, CampsiteClass, CampsiteBooking, Booking,PromoArea, CampsiteRate
+from .models import Park, Campground, Campsite, Feature, District, Region, CampsiteClass, CampsiteBooking, Booking,PromoArea, CampsiteRate
 
 @admin.register(CampsiteClass)
 class CampsiteClassAdmin(admin.ModelAdmin):
-    list_display = ('name','tents','parking_spaces','allow_campervan','allow_trailer','allow_generator')
+    list_display = ('name',)
     ordering = ('name',)
     search_fields = ('name',)
-    list_filter = ('allow_campervan','allow_trailer','allow_generator')
+    list_filter = ('name',)
 
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
@@ -17,20 +17,20 @@ class ParkAdmin(admin.ModelAdmin):
 
 @admin.register(Campground)
 class CampgroundAdmin(admin.ModelAdmin):
-    list_display = ('name','park','promo_area','campground_type','site_type','fees','is_published')
+    list_display = ('name','park','promo_area','campground_type','site_type')
     ordering = ('name',)
     search_fields = ('name',)
-    list_filter = ('campground_type','site_type','is_published')
+    list_filter = ('campground_type','site_type')
 
 @admin.register(Campsite)
 class CampsiteAdmin(admin.ModelAdmin):
-    list_display = ('name','campground','campsite_class','max_people')
+    list_display = ('name','campground','campsite_class')
     ordering = ('name',)
     list_filter = ('campground','campsite_class')
     search_fields = ('name',)
 
-@admin.register(CampgroundFeature)
-class CampgroundfeatureAdmin(admin.ModelAdmin):
+@admin.register(Feature)
+class FeatureAdmin(admin.ModelAdmin):
     list_display = ('name','description')
     ordering = ('name',)
     search_fields = ('name',)
@@ -51,8 +51,8 @@ class CampsiteBookingAdmin(admin.ModelAdmin):
 
 @admin.register(CampsiteRate)
 class CampsiteRateAdmin(admin.ModelAdmin):
-    list_display = ('campground','campsite_class','min_days','max_days','min_people','max_people','allow_public_holidays','rate_adult','rate_concession','rate_child','rate_infant')
-    list_filter = ('campground','campsite_class','allow_public_holidays')
+    list_display = ('campsite','rate','allow_public_holidays')
+    list_filter = ('campsite','rate','allow_public_holidays')
     search_fields = ('campground__name',)
 
 admin.site.register(Region)

@@ -1,4 +1,4 @@
-from parkstay.models import CampsiteBooking, Campsite, Campground, Park, PromoArea, CampgroundFeature, Region, CampsiteClass, Booking, CampsiteRate
+from parkstay.models import CampsiteBooking, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate
 from rest_framework import serializers
 
 class ParkSerializer(serializers.HyperlinkedModelSerializer):
@@ -34,9 +34,9 @@ class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
         model = Campsite
         fields = ('campground', 'name', 'campsite_class', 'features', 'max_people')
 
-class CampgroundFeatureSerializer(serializers.HyperlinkedModelSerializer):
+class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = CampgroundFeature
+        model = Feature
 
 class RegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
