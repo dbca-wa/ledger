@@ -42,9 +42,15 @@ define(
             $returnsResetFilterButton;
 
         function initFilters() {
-            initApplicationsFilters();
-            initLicencesFilters();
-            initReturnsFilters();
+            if (options.data.applications && options.data.applications.filters) {
+                initApplicationsFilters();
+            }
+            if (options.data.licences && options.data.licences.filters) {
+                initLicencesFilters();
+            }
+            if (options.data.returns && options.data.returns.filters) {
+                initReturnsFilters();
+            }
         }
 
         function initTables() {
@@ -108,12 +114,14 @@ define(
             }
 
             // licence type
-            if ($applicationsLicenceTypeFilter.length && data.applications.filters.licenceType) {
-                _.forEach(data.applications.filters.licenceType.values, function (value) {
-
+            if ($applicationsLicenceTypeFilter.length && data.applications.filters.licence_type) {
+                _.forEach(data.applications.filters.licence_type.values, function (value) {
                     $node = createOptionNode(value);
                     $applicationsLicenceTypeFilter.append($node);
                 });
+                if (data.applications.filters.licence_type.selected) {
+                    $applicationsLicenceTypeFilter.val(data.applications.filters.licence_type.selected);
+                }
                 $applicationsLicenceTypeFilter.on('change', function () {
                     if (applicationsTable) {
                         applicationsTable.ajax.reload();
@@ -126,6 +134,9 @@ define(
                     $node = createOptionNode(value);
                     $applicationsStatusFilter.append($node);
                 });
+                if (data.applications.filters.status.selected) {
+                    $applicationsStatusFilter.val(data.applications.filters.status.selected);
+                }
                 $applicationsStatusFilter.on('change', function () {
                     if (applicationsTable) {
                         applicationsTable.ajax.reload();
@@ -138,6 +149,9 @@ define(
                     $node = createOptionNode(value);
                     $applicationsAssigneeFilter.append($node);
                 });
+                if (data.applications.filters.assignee.selected) {
+                    $applicationsAssigneeFilter.val(data.applications.filters.assignee.selected);
+                }
                 $applicationsAssigneeFilter.on('change', function () {
                     if (applicationsTable) {
                         applicationsTable.ajax.reload();
@@ -201,6 +215,7 @@ define(
         function initLicencesFilters() {
             var data = options.data,
                 optionTemplate = _.template('<option value="<%= value %>"><%= title %></option>'),
+                date,
                 $node;
 
             function createOptionNode(tuple) {
@@ -220,14 +235,16 @@ define(
                 }
             }
 
-
             // licence type
-            if ($licencesLicenceTypeFilter && $licencesLicenceTypeFilter.length && data.licences.filters.licenceType) {
-                _.forEach(data.licences.filters.licenceType.values, function (value) {
+            if ($licencesLicenceTypeFilter && $licencesLicenceTypeFilter.length && data.licences.filters.licence_type) {
+                _.forEach(data.licences.filters.licence_type.values, function (value) {
 
                     $node = createOptionNode(value);
                     $licencesLicenceTypeFilter.append($node);
                 });
+                if (data.licences.filters.licence_type.selected) {
+                    $licencesLicenceTypeFilter.val(data.licences.filters.licence_type.selected);
+                }
                 $licencesLicenceTypeFilter.on('change', function () {
                     if (licencesTable) {
                         licencesTable.ajax.reload();
@@ -240,6 +257,9 @@ define(
                     $node = createOptionNode(value);
                     $licencesStatusFilter.append($node);
                 });
+                if (data.licences.filters.status.selected) {
+                    $licencesStatusFilter.val(data.licences.filters.status.selected);
+                }
                 $licencesStatusFilter.on('change', function () {
                     if (licencesTable) {
                         licencesTable.ajax.reload();
@@ -251,6 +271,10 @@ define(
                 $licencesExpireAfterFilter.datetimepicker({
                     format: dateFormat
                 });
+                if (data.licences.filters.expiry_after.selected) {
+                    date = moment(data.licences.filters.expiry_after.selected, dateFormat);
+                    $licencesExpireAfterFilter.data('DateTimePicker').date(date);
+                }
                 $licencesExpireAfterFilter.on('dp.change', function () {
                     if (licencesTable) {
                         licencesTable.ajax.reload();
@@ -261,6 +285,10 @@ define(
                 $licencesExpireBeforeFilter.datetimepicker({
                     format: dateFormat
                 });
+                if (data.licences.filters.expiry_before.selected) {
+                    date = moment(data.licences.filters.expiry_before.selected, dateFormat);
+                    $licencesExpireBeforeFilter.data('DateTimePicker').date(date);
+                }
                 $licencesExpireBeforeFilter.on('dp.change', function () {
                     if (licencesTable) {
                         licencesTable.ajax.reload();
@@ -325,12 +353,15 @@ define(
             }
 
             // licence type
-            if ($returnsLicenceTypeFilter && $returnsLicenceTypeFilter.length && data.returns.filters.licenceType) {
-                _.forEach(data.returns.filters.licenceType.values, function (value) {
+            if ($returnsLicenceTypeFilter && $returnsLicenceTypeFilter.length && data.returns.filters.licence_type) {
+                _.forEach(data.returns.filters.licence_type.values, function (value) {
 
                     $node = createOptionNode(value);
                     $returnsLicenceTypeFilter.append($node);
                 });
+                if (data.returns.filters.licence_type.selected) {
+                    $returnsLicenceTypeFilter.val(data.returns.filters.licence_type.selected);
+                }
                 $returnsLicenceTypeFilter.on('change', function () {
                     if (returnsTable) {
                         returnsTable.ajax.reload();
@@ -343,6 +374,9 @@ define(
                     $node = createOptionNode(value);
                     $returnsStatusFilter.append($node);
                 });
+                if (data.returns.filters.status.selected) {
+                    $returnsStatusFilter.val(data.returns.filters.status.selected);
+                }
                 $returnsStatusFilter.on('change', function () {
                     if (returnsTable) {
                         returnsTable.ajax.reload();

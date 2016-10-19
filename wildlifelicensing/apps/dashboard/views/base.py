@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import json
 import logging
+import copy
 
 from dateutil.parser import parse as date_parse
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -149,8 +150,160 @@ class DashboardTreeViewBase(TemplateView):
         return super(DashboardTreeViewBase, self).get_context_data(**kwargs)
 
 
+class TablesBaseView(TemplateView):
+    """
+    Base View for showing the datatables Applications/Licences/Returns.
+    """
+    template_name = 'wl/dash_tables.html'
+
+    default_table_config = {
+        # global dataTable options
+        'tableOptions': {
+            'pageLength': 10,
+            'order': [[0, 'asc']],
+            'search': {
+                'search': ''
+            }
+        },
+        # dataTable column definitions
+        'columnDefinitions': [],
+        # default top level filters
+        'filters': {
+            'licence_type': {
+                'values': [],
+            },
+            'status': {
+                'values': [],
+            }
+        },
+        'ajax': {
+            'url': ''
+        }
+    }
+
+    @staticmethod
+    def set_data_url(table_config, url):
+        table_config['ajax'].update({
+            'url': url
+        })
+        return table_config
+
+    @staticmethod
+    def get_licence_types_values():
+        return [('all', 'All')] + [(lt.pk, lt.display_name) for lt in LicenceType.objects.all()]
+
+    @staticmethod
+    def set_licence_type_filter(table_config):
+        return TablesBaseView.set_filter(table_config, 'licence_type', TablesBaseView.get_licence_types_values)
+
+    @staticmethod
+    def set_columns_definition(table_config, columns):
+        if not isinstance(columns, list):
+            columns = list(columns)
+        table_config.update({
+            'columnDefinitions': columns
+        })
+        return table_config
+
+    @staticmethod
+    def update_table_options(table_config, options):
+        table_config['tableOptions'].update(options)
+        return table_config
+
+    @staticmethod
+    def set_table_options(table_config, table_options):
+        table_config.update({
+            'tableOptions': table_options
+        })
+        return table_config
+
+    @staticmethod
+    def set_filter(table_config, name, values):
+        table_config['filters'].update({
+            name: {
+                'values': values,
+            }
+        })
+        return table_config
+
+    @staticmethod
+    def set_filter_selected_value(table_config, filter_name, filter_value):
+        if filter_name in table_config.get('filters', {}):
+            table_config['filters'][filter_name]['selected'] = filter_value
+        else:
+            table_config['filters'][filter_name] = {
+                'selected': filter_value
+            }
+        return table_config
+
+    @staticmethod
+    def update_with_session_data(table_config, session_data):
+        """
+        :param table_config:
+        :param session_data:
+         {
+             'pageLength': ...
+             'order': [[]]
+             'search': 'term'
+             'filters': {
+                'name': 'value:
+              }
+          }
+        :return:
+        """
+        # dataTable options
+        dt_options = {}
+        if session_data.get('pageLength'):
+            dt_options['pageLength'] = session_data.get('pageLength')
+        if session_data.get('order'):
+            dt_options['order'] = session_data.get('order')
+        if session_data.get('search'):
+            dt_options['search'] = {
+                'search': session_data.get('search')
+            }
+        TablesBaseView.update_table_options(table_config, dt_options)
+
+        # filters
+        if session_data.get('filters'):
+            for k, v in session_data.get('filters').items():
+                TablesBaseView.set_filter_selected_value(table_config, k, v)
+        return table_config
+
+    def get_default_table_config(self, with_licence_type_filter=False):
+        result = copy.deepcopy(self.default_table_config)
+        if with_licence_type_filter:
+            self.set_licence_type_filter(result)
+        return result
+
+    def get_applications_context_data(self):
+        return None
+
+    def get_licences_context_data(self):
+        return None
+
+    def get_returns_context_data(self):
+        return None
+
+    def get_query_params(self):
+        return self.request.GET.dict()
+
+    def get_context_data(self, **kwargs):
+        if 'dataJSON' not in kwargs:
+            data = {
+                'applications': self.get_applications_context_data() or None,
+                'licences': self.get_licences_context_data() or None,
+                'returns': self.get_returns_context_data() or None,
+                'query': self.get_query_params() or None
+            }
+            kwargs['dataJSON'] = json.dumps(data)
+        return super(TablesBaseView, self).get_context_data(**kwargs)
+
+
 class TableBaseView(TemplateView):
     template_name = 'wl/dash_tables.html'
+
+    def __init__(self, **kwargs):
+        super(TableBaseView, self).__init__(**kwargs)
 
     def _build_data(self):
         """
@@ -166,7 +319,7 @@ class TableBaseView(TemplateView):
                 },
                 'columnDefinitions': [],
                 'filters': {
-                    'licenceType': {
+                    'licence_type': {
                         'values': licence_types,
                     },
                     'status': {
@@ -184,7 +337,7 @@ class TableBaseView(TemplateView):
                 },
                 'columnDefinitions': [],
                 'filters': {
-                    'licenceType': {
+                    'licence_type': {
                         'values': licence_types,
                     },
                 },
@@ -199,7 +352,7 @@ class TableBaseView(TemplateView):
                 },
                 'columnDefinitions': [],
                 'filters': {
-                    'licenceType': {
+                    'licence_type': {
                         'values': licence_types,
                     },
                 },

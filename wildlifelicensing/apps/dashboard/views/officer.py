@@ -130,14 +130,16 @@ class DashboardOfficerTreeView(OfficerRequiredMixin, base.DashboardTreeViewBase)
         return result
 
 
-class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
+class TableApplicationsOfficerView(OfficerRequiredMixin, base.TablesBaseView):
     template_name = 'wl/dash_tables_applications_officer.html'
 
     STATUS_PENDING = 'pending'
 
-    def _build_data(self):
-        data = super(TableApplicationsOfficerView, self)._build_data()
-        data['applications']['columnDefinitions'] = [
+    data_url_lazy = reverse_lazy('wl_dashboard:data_application_officer')
+
+    @property
+    def columns(self):
+        return [
             {
                 'title': 'Lodgement Number'
             },
@@ -170,46 +172,58 @@ class TableApplicationsOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        data['applications']['filters']['status']['values'] = \
-            [('all', 'All')] + [(self.STATUS_PENDING, self.STATUS_PENDING.capitalize())] + \
-            base.get_processing_statuses_but_draft()
-        data['applications']['filters']['assignee'] = {
-            'values': [('all', 'All')] + [(user.pk, base.render_user_name(user),) for user in get_all_officers()]
-        }
-        data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_officer')
-        # global table options
-        data['applications']['tableOptions'] = {
+
+    @property
+    def table_options(self):
+        return {
             'pageLength': 25,
             'order': [[4, 'desc'], [0, 'desc']]
         }
 
-        # load dataTables settings and filters from session?
-        # We load settings from session only if there is no query parameters in the get, otherwise we consider that
-        # it may come from the dashboard with some filters.
+    @property
+    def data_url(self):
+        return str(self.data_url_lazy)
+
+    @property
+    def filters(self):
+        status_filter_values = \
+            [('all', 'All')] + [(self.STATUS_PENDING, self.STATUS_PENDING.capitalize())] + \
+            base.get_processing_statuses_but_draft()
+
+        assignee_filter_values = [('all', 'All')] + [(user.pk, base.render_user_name(user),) for user in
+                                                     get_all_officers()]
+        return {
+            'license_type': self.get_licence_types_values(),
+            'status': status_filter_values,
+            'assignee': assignee_filter_values
+        }
+
+    @property
+    def get_session_data(self):
+        return DataTableApplicationsOfficerView.get_session_data(self.request)
+
+    def get_applications_context_data(self):
+        result = self.get_default_table_config()
+        # columns
+        if self.columns:
+            self.set_columns_definition(result, self.columns)
+        # table options
+        if self.table_options:
+            self.update_table_options(result, self.table_options)
+        # data url
+        if self.data_url:
+            self.set_data_url(result, self.data_url)
+        # filters
+        for name, values in self.filters.items():
+            self.set_filter(result, name, values)
+
+        # apply session if no query parameters
         request = self.request if hasattr(self, 'request') else None
         if request and not request.GET:
-            data_view_class = DataTableApplicationsOfficerView
-            # use session data
-            data['applications']['tableOptions'].update({
-                'pageLength': data_view_class.get_session_page_length(
-                    request,
-                    default=data['applications']['tableOptions']['pageLength']
-                ),
-                'order': data_view_class.get_session_order(
-                    request,
-                    default=data['applications']['tableOptions']['order']
-                ),
-                'search': {
-                    'search': data_view_class.get_session_search_term(
-                        request,
-                        default=''
-                    )
-                }
-            })
-            # use the filters from the session. Prefix the keys with application and pass it as the query dict
-            filters = data_view_class.get_session_filters(request)
-            data['query'] = dict([('application_{}'.format(k), v) for k, v in filters.items()])
-        return data
+            session_data = self.get_session_data
+            if session_data:
+                self.update_with_session_data(result, session_data)
+        return result
 
 
 class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableApplicationBaseView):
@@ -489,7 +503,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
         return self._get_proxy_applications(self.request.user)
 
 
-class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
+class TableLicencesOfficerView(OfficerRequiredMixin, base.TablesBaseView):
     template_name = 'wl/dash_tables_licences_officer.html'
 
     STATUS_FILTER_ACTIVE = 'active'
@@ -497,11 +511,11 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
     STATUS_FILTER_EXPIRED = 'expired'
     STATUS_FILTER_ALL = 'all'
 
-    def _build_data(self):
-        data = super(TableLicencesOfficerView, self)._build_data()
-        del data['applications']
-        del data['returns']
-        data['licences']['columnDefinitions'] = [
+    data_url_lazy = reverse_lazy('wl_dashboard:data_licences_officer')
+
+    @property
+    def columns(self):
+        return [
             {
                 'title': 'Licence Number'
             },
@@ -538,55 +552,63 @@ class TableLicencesOfficerView(OfficerRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        data['licences']['ajax']['url'] = reverse('wl_dashboard:data_licences_officer')
-        # filters (note: there is already the licenceType from the super class)
-        filters = {
-            'status': {
-                'values': [
-                    (self.STATUS_FILTER_ALL, self.STATUS_FILTER_ALL.capitalize()),
-                    (self.STATUS_FILTER_ACTIVE, self.STATUS_FILTER_ACTIVE.capitalize()),
-                    (self.STATUS_FILTER_RENEWABLE,
-                     self.STATUS_FILTER_RENEWABLE.capitalize() + ' (expires within 30 days)'),
-                    (self.STATUS_FILTER_EXPIRED, self.STATUS_FILTER_EXPIRED.capitalize()),
-                ]
-            }
-        }
-        data['licences']['filters'].update(filters)
-        # global table options
-        data['licences']['tableOptions'] = {
+
+    @property
+    def table_options(self):
+        return {
             'pageLength': 25,
             'order': [[3, 'desc'], [0, 'desc']]
         }
-        # other stuff
-        data['licences']['bulkRenewalURL'] = reverse('wl_dashboard:bulk_licence_renewal_pdf')
 
-        # load dataTables settings and filters from session?
-        # We load settings from session only if there is no query parameters in the get, otherwise we consider that
-        # it may come from the dashboard with some filters.
+    @property
+    def data_url(self):
+        return str(self.data_url_lazy)
+
+    @property
+    def filters(self):
+        status_filter_values = [
+            (self.STATUS_FILTER_ALL, self.STATUS_FILTER_ALL.capitalize()),
+            (self.STATUS_FILTER_ACTIVE, self.STATUS_FILTER_ACTIVE.capitalize()),
+            (self.STATUS_FILTER_RENEWABLE,
+             self.STATUS_FILTER_RENEWABLE.capitalize() + ' (expires within 30 days)'),
+            (self.STATUS_FILTER_EXPIRED, self.STATUS_FILTER_EXPIRED.capitalize()),
+        ]
+        return {
+            'licence_type': self.get_licence_types_values(),
+            'status': status_filter_values,
+            'expiry_after': None,
+            'expiry_before': None
+        }
+
+    @property
+    def get_session_data(self):
+        return DataTableLicencesOfficerView.get_session_data(self.request)
+
+    def get_licences_context_data(self):
+        result = self.get_default_table_config()
+        # columns
+        if self.columns:
+            self.set_columns_definition(result, self.columns)
+        # table options
+        if self.table_options:
+            self.update_table_options(result, self.table_options)
+        # data url
+        if self.data_url:
+            self.set_data_url(result, self.data_url)
+        # filters
+        for name, values in self.filters.items():
+            self.set_filter(result, name, values)
+
+        # specific stuff
+        result['bulkRenewalURL'] = reverse('wl_dashboard:bulk_licence_renewal_pdf')
+
+        # apply session if no query parameters
         request = self.request if hasattr(self, 'request') else None
         if request and not request.GET:
-            data_view_class = DataTableLicencesOfficerView
-            # use session data
-            data['licences']['tableOptions'].update({
-                'pageLength': data_view_class.get_session_page_length(
-                    request,
-                    default=data['licences']['tableOptions']['pageLength']
-                ),
-                'order': data_view_class.get_session_order(
-                    request,
-                    default=data['licences']['tableOptions']['order']
-                ),
-                'search': {
-                    'search': data_view_class.get_session_search_term(
-                        request,
-                        default=''
-                    )
-                }
-            })
-            # use the filters from the session. Prefix the keys with licence and pass it as the query dict
-            filters = data_view_class.get_session_filters(request)
-            data['query'] = dict([('licence_{}'.format(k), v) for k, v in filters.items()])
-        return data
+            session_data = self.get_session_data
+            if session_data:
+                self.update_with_session_data(result, session_data)
+        return result
 
 
 class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView):
