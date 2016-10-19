@@ -17,10 +17,10 @@ class ParkAdmin(admin.ModelAdmin):
 
 @admin.register(Campground)
 class CampgroundAdmin(admin.ModelAdmin):
-    list_display = ('name','park','promo_area','campground_type','site_type','fees','is_published')
+    list_display = ('name','park','promo_area','campground_type','site_type')
     ordering = ('name',)
     search_fields = ('name',)
-    list_filter = ('campground_type','site_type','is_published')
+    list_filter = ('campground_type','site_type')
 
 @admin.register(Campsite)
 class CampsiteAdmin(admin.ModelAdmin):
