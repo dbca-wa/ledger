@@ -127,10 +127,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                         ).order_by('date', 'campsite__name')
         # fetch all the campsites and applicable rates for the campground
         sites_qs = Campsite.objects.filter(campground=ground).order_by('name')
-        rates_qs = CampsiteRate.objects.filter(sites_qs)
+        rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
 
         # make a map of campsite class to cost
-        rates_map = {r.campsite_class_id: r.rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
+        rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
 
         # from our campsite queryset, generate a digest for each site
         sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates_map[s.campsite_class_id])) for s in sites_qs])
@@ -210,10 +210,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                         ).order_by('date', 'campsite__name')
         # fetch all the campsites and applicable rates for the campground
         sites_qs = Campsite.objects.filter(campground=ground)
-        rates_qs = CampsiteRate.objects.filter(campground=ground)
+        rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
 
         # make a map of campsite class to cost
-        rates_map = {r.campsite_class_id: r.rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
+        rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
         
         # from our campsite queryset, generate a distinct list of campsite classes
         classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name')]
