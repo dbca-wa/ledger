@@ -117,9 +117,10 @@ class VariantGroupAdminForm(forms.ModelForm):
             __get_group_and_parent_groups(self.instance, related_variant_groups)
 
             # keep previous variants in case the validation fails
-            previous_variants = list(self.instance.variants.all())
+            if hasattr(self.instance, 'variants'):
+                previous_variants = list(self.instance.variants.all())
 
-            self.instance.variants = self.cleaned_data['variants']
+                self.instance.variants = self.cleaned_data['variants']
 
             missing_product_variants = []
 
@@ -136,8 +137,9 @@ class VariantGroupAdminForm(forms.ModelForm):
                                 "to this variant group, even if the licence is free. <ul><li>{}</li></ul>".
                                 format('</li><li>'.join(missing_product_variants)))
 
-                # revert back to previous variants list
-                self.instance.variants = previous_variants
+                if hasattr(self.instance, 'variants'):
+                    # revert back to previous variants list
+                    self.instance.variants = previous_variants
 
                 raise ValidationError(msg)
 
