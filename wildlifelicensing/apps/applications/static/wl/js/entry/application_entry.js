@@ -210,7 +210,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
         $collapsible.on('hide.bs.collapse', function () {
             $topLinkSpan.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
-            if($bottomLink.length > 0) {
+            if($bottomLink.length) {
                 $bottomLink.hide();
             }
         }).on('show.bs.collapse', function() {
