@@ -8,4 +8,4 @@ def divide_into(denominator, numerator):
     elif denominator > numerator:
         return 1
     else:
-        return numerator / denominator
+        return int(numerator / denominator)
