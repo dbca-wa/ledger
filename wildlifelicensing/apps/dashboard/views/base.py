@@ -618,8 +618,6 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
     def get_context_data(self, *args, **kwargs):
         """
         Override this method just to add a call to save_session_data if set-up.
-        The post_process is not supposed to return anything. It will mostly be used to store session data like the
-        column ordering and the search
         :param args:
         :param kwargs:
         :return:
