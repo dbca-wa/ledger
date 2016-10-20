@@ -55,13 +55,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='campground',
             name='check_in',
-            field=models.TimeField(default=1400),
+            field=models.TimeField(default='14:00'),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='campground',
             name='check_out',
-            field=models.TimeField(default=1000),
+            field=models.TimeField(default='10:00'),
             preserve_default=False,
         ),
         migrations.AddField(
