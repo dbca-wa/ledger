@@ -1,7 +1,7 @@
 import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Q
 
 from wildlifelicensing.apps.applications.models import Application
@@ -15,17 +15,23 @@ def _get_user_applications(user):
     return Application.objects.filter(applicant_profile__user=user).exclude(customer_status='temp')
 
 
-class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
+class TableCustomerView(LoginRequiredMixin, base.TablesBaseView):
     """
     This view includes the table definitions and filters for applications, licences and returns for the customers
     as it is displayed on the same page.
     """
     template_name = 'wl/dash_tables_customer.html'
 
-    def _build_data(self):
-        data = super(TableCustomerView, self)._build_data()
-        # Applications
-        data['applications']['columnDefinitions'] = [
+    applications_data_url_lazy = reverse_lazy('wl_dashboard:data_application_customer')
+    licences_data_url_lazy = reverse_lazy('wl_dashboard:data_licences_customer')
+    returns_data_url_lazy = reverse_lazy('wl_dashboard:data_returns_customer')
+
+    #############
+    # Applications
+    #############
+    @property
+    def applications_columns(self):
+        return [
             {
                 'title': 'Lodgement Number'
             },
@@ -47,18 +53,34 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        # no filters
-        if 'filters' in data['applications']:
-            del data['applications']['filters']
-        # global table options
-        data['applications']['tableOptions'] = {
-            'order': [[0, 'desc']]
+
+    @property
+    def applications_table_options(self):
+        return {
+            'pageLength': 25,
+            'order': [[0, 'desc'], [4, 'desc']]
         }
 
-        data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_customer')
+    @property
+    def applications_data_url(self):
+        return str(self.applications_data_url_lazy)
 
-        # Licences
-        data['licences']['columnDefinitions'] = [
+    @property
+    def applications_filters(self):
+        # no filters
+        return {}
+
+    @property
+    def get_applications_session_data(self):
+        # no session
+        return {}
+
+    #############
+    # Licences
+    #############
+    @property
+    def licences_columns(self):
+        return [
             {
                 'title': 'Licence Number'
             },
@@ -88,17 +110,34 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        data['licences']['ajax']['url'] = reverse('wl_dashboard:data_licences_customer')
-        # no filters
-        if 'filters' in data['licences']:
-            del data['licences']['filters']
-        # global table options
-        data['licences']['tableOptions'] = {
+
+    @property
+    def licences_table_options(self):
+        return {
+            'pageLength': 10,
             'order': [[4, 'desc']]
         }
 
-        # Returns
-        data['returns']['columnDefinitions'] = [
+    @property
+    def licences_data_url(self):
+        return str(self.licences_data_url_lazy)
+
+    @property
+    def licences_filters(self):
+        # no filters
+        return {}
+
+    @property
+    def get_licences_session_data(self):
+        # no session
+        return {}
+
+    #############
+    # Returns
+    #############
+    @property
+    def returns_columns(self):
+        return [
             {
                 'title': 'Lodgement Number'
             },
@@ -124,16 +163,26 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
                 'orderable': False
             }
         ]
-        data['returns']['ajax']['url'] = reverse('wl_dashboard:data_returns_customer')
-        # no filters
-        if 'filters' in data['returns']:
-            del data['returns']['filters']
-        # global table options
-        data['returns']['tableOptions'] = {
+
+    @property
+    def returns_table_options(self):
+        return {
+            'pageLength': 10,
             'order': [[3, 'desc']]
         }
 
-        return data
+    @property
+    def returns_data_url(self):
+        return str(self.returns_data_url_lazy)
+
+    @property
+    def returns_filters(self):
+        # no filters
+        return {}
+
+    @property
+    def get_returns_session_data(self):
+        return {}
 
 
 class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
@@ -386,7 +435,8 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
 
-            return Q(licence__licence_number__icontains=licence_number) & Q(licence__licence_sequence__icontains=licence_sequence)
+            return Q(licence__licence_number__icontains=licence_number) & Q(
+                licence__licence_sequence__icontains=licence_sequence)
         else:
             return Q(licence__licence_number__icontains=search)
 

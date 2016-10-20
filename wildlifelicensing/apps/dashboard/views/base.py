@@ -153,6 +153,14 @@ class DashboardTreeViewBase(TemplateView):
 class TablesBaseView(TemplateView):
     """
     Base View for showing the datatables Applications/Licences/Returns.
+    This includes:
+     setting the columns configuration
+     setting the table options (pageLength, order,...)
+     setting the data_url (ajax)
+     settings filters (values, selected)
+
+    Subclass should override the @properties corresponding to the tables they want to show.
+    For fine grain implementation (e.g add more data) see the get_<table>_context_data.
     """
     template_name = 'wl/dash_tables.html'
 
@@ -180,6 +188,158 @@ class TablesBaseView(TemplateView):
             'url': ''
         }
     }
+
+    #########################
+    # Applications
+    #########################
+    
+    @property
+    def applications_columns(self):
+        return []
+
+    @property
+    def applications_table_options(self):
+        return {}
+
+    @property
+    def applications_data_url(self):
+        return None
+
+    @property
+    def applications_filters(self):
+        return {}
+
+    @property
+    def get_applications_session_data(self):
+        return {}
+
+    def get_applications_context_data(self):
+        result = self.get_default_table_config()
+        # columns
+        columns = self.applications_columns
+        if columns:
+            self.set_columns_definition(result, columns)
+        # table options
+        table_options = self.applications_table_options
+        if table_options:
+            self.update_table_options(result, table_options)
+        # data url
+        data_url = self.applications_data_url
+        if data_url:
+            self.set_data_url(result, data_url)
+        # filters
+        filters = self.applications_filters.items()
+        for name, values in filters:
+            self.set_filter(result, name, values)
+
+        # apply session if no query parameters
+        request = self.request if hasattr(self, 'request') else None
+        if request and not request.GET:
+            session_data = self.get_applications_session_data
+            if session_data:
+                self.update_with_session_data(result, session_data)
+        return result
+
+    #########################
+    # Licences
+    #########################
+    @property
+    def licences_columns(self):
+        return []
+
+    @property
+    def licences_table_options(self):
+        return {}
+
+    @property
+    def licences_data_url(self):
+        return None
+
+    @property
+    def licences_filters(self):
+        return {}
+
+    @property
+    def get_licences_session_data(self):
+        return {}
+
+    def get_licences_context_data(self):
+        result = self.get_default_table_config()
+        # columns
+        columns = self.licences_columns
+        if columns:
+            self.set_columns_definition(result, columns)
+        # table options
+        table_options = self.licences_table_options
+        if table_options:
+            self.update_table_options(result, table_options)
+        # data url
+        data_url = self.licences_data_url
+        if data_url:
+            self.set_data_url(result, data_url)
+        # filters
+        filters = self.licences_filters.items()
+        for name, values in filters:
+            self.set_filter(result, name, values)
+
+        # apply session if no query parameters
+        request = self.request if hasattr(self, 'request') else None
+        if request and not request.GET:
+            session_data = self.get_licences_session_data
+            if session_data:
+                self.update_with_session_data(result, session_data)
+        return result
+
+    #########################
+    # Returns
+    #########################
+    @property
+    def returns_columns(self):
+        return []
+
+    @property
+    def returns_table_options(self):
+        return {}
+
+    @property
+    def returns_data_url(self):
+        return None
+
+    @property
+    def returns_filters(self):
+        return {}
+
+    @property
+    def get_returns_session_data(self):
+        return {}
+
+    def get_returns_context_data(self):
+        result = self.get_default_table_config()
+        # columns
+        columns = self.returns_columns
+        if columns:
+            self.set_columns_definition(result, columns)
+        # table options
+        table_options = self.returns_table_options
+        if table_options:
+            self.update_table_options(result, table_options)
+        # data url
+        data_url = self.returns_data_url
+        if data_url:
+            self.set_data_url(result, data_url)
+        # filters
+        filters = self.returns_filters.items()
+        for name, values in filters:
+            self.set_filter(result, name, values)
+
+        # apply session if no query parameters
+        request = self.request if hasattr(self, 'request') else None
+        if request and not request.GET:
+            session_data = self.get_returns_session_data
+            if session_data:
+                self.update_with_session_data(result, session_data)
+        return result
+
 
     @staticmethod
     def set_data_url(table_config, url):
@@ -275,15 +435,6 @@ class TablesBaseView(TemplateView):
             self.set_licence_type_filter(result)
         return result
 
-    def get_applications_context_data(self):
-        return None
-
-    def get_licences_context_data(self):
-        return None
-
-    def get_returns_context_data(self):
-        return None
-
     def get_query_params(self):
         return self.request.GET.dict()
 
@@ -297,79 +448,6 @@ class TablesBaseView(TemplateView):
             }
             kwargs['dataJSON'] = json.dumps(data)
         return super(TablesBaseView, self).get_context_data(**kwargs)
-
-
-class TableBaseView(TemplateView):
-    template_name = 'wl/dash_tables.html'
-
-    def __init__(self, **kwargs):
-        super(TableBaseView, self).__init__(**kwargs)
-
-    def _build_data(self):
-        """
-        Build data skeleton for all the tables definitions, filters....
-        :return:
-        """
-        licence_types = [('all', 'All')] + [(lt.pk, lt.display_name) for lt in LicenceType.objects.all()]
-        data = {
-            'applications': {
-                'tableOptions': {
-                    'pageLength': 10,
-                    'order': [[0, 'asc']],
-                },
-                'columnDefinitions': [],
-                'filters': {
-                    'licence_type': {
-                        'values': licence_types,
-                    },
-                    'status': {
-                        'values': [],
-                    }
-                },
-                'ajax': {
-                    'url': ''
-                }
-            },
-            'licences': {
-                'tableOptions': {
-                    'pageLength': 10,
-                    'order': [[0, 'asc']],
-                },
-                'columnDefinitions': [],
-                'filters': {
-                    'licence_type': {
-                        'values': licence_types,
-                    },
-                },
-                'ajax': {
-                    'url': ''
-                }
-            },
-            'returns': {
-                'tableOptions': {
-                    'pageLength': 10,
-                    'order': [[0, 'asc']],
-                },
-                'columnDefinitions': [],
-                'filters': {
-                    'licence_type': {
-                        'values': licence_types,
-                    },
-                },
-                'ajax': {
-                    'url': ''
-                }
-            }
-        }
-        return data
-
-    def get_context_data(self, **kwargs):
-        if 'dataJSON' not in kwargs:
-            data = self._build_data()
-            if 'query' not in data:
-                data['query'] = self.request.GET.dict()
-            kwargs['dataJSON'] = json.dumps(data)
-        return super(TableBaseView, self).get_context_data(**kwargs)
 
 
 def build_field_query(fields_to_search, search):

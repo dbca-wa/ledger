@@ -1,23 +1,26 @@
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Q
 
 from wildlifelicensing.apps.applications.models import Assessment
 from wildlifelicensing.apps.dashboard.views import base
-from wildlifelicensing.apps.dashboard.views.officer import TableApplicationsOfficerView
 from wildlifelicensing.apps.main.helpers import render_user_name
 from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin, \
     AssessorRequiredMixin
 
 
-class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
+class TableAssessorView(AssessorRequiredMixin, base.TablesBaseView):
     """
     Same table as officer with limited filters
     """
     template_name = 'wl/dash_tables_assessor.html'
 
-    def _build_data(self):
-        data = super(TableAssessorView, self)._build_data()
-        data['applications']['columnDefinitions'] = [
+    STATUS_PENDING = 'pending'
+
+    applications_data_url_lazy = reverse_lazy('wl_dashboard:data_application_assessor')
+
+    @property
+    def applications_columns(self):
+        return [
             {
                 'title': 'Lodgement Number'
             },
@@ -42,44 +45,29 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
                 'orderable': False
             }
         ]
-        # override the status to have have the Assessment status instead of the application status
-        data['applications']['filters']['status']['values'] = \
-            [('all', 'All')] + [(v, l) for v, l in Assessment.STATUS_CHOICES]
-        # override the data url
-        data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_assessor')
-        # global table options
-        data['applications']['tableOptions'] = {
+
+    @property
+    def applications_table_options(self):
+        return {
             'pageLength': 25,
             'order': [[4, 'desc'], [0, 'desc']]
         }
 
-        # load dataTables settings and filters from session?
-        # We load settings from session only if there is no query parameters in the get, otherwise we consider that
-        # it may come from the dashboard with some filters.
-        request = self.request if hasattr(self, 'request') else None
-        if request and not request.GET:
-            data_view_class = DataTableApplicationAssessorView
-            # use session data
-            data['applications']['tableOptions'].update({
-                'pageLength': data_view_class.get_session_page_length(
-                    request,
-                    default=data['applications']['tableOptions']['pageLength']
-                ),
-                'order': data_view_class.get_session_order(
-                    request,
-                    default=data['applications']['tableOptions']['order']
-                ),
-                'search': {
-                    'search': data_view_class.get_session_search_term(
-                        request,
-                        default=''
-                    )
-                }
-            })
-            # use the filters from the session. Prefix the keys with application and pass it as the query dict
-            filters = data_view_class.get_session_filters(request)
-            data['query'] = dict([('application_{}'.format(k), v) for k, v in filters.items()])
-        return data
+    @property
+    def applications_data_url(self):
+        return str(self.applications_data_url_lazy)
+
+    @property
+    def applications_filters(self):
+        status_filter_values = [('all', 'All')] + [(v, l) for v, l in Assessment.STATUS_CHOICES]
+        return {
+            'licence_type': self.get_licence_types_values(),
+            'status': status_filter_values,
+        }
+
+    @property
+    def get_applications_session_data(self):
+        return DataTableApplicationAssessorView.get_session_data(self.request)
 
 
 class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.DataTableBaseView):
