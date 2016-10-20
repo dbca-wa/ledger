@@ -62,6 +62,7 @@ class Campground(models.Model):
     tags = TaggableManager()
     driving_directions = models.TextField(blank=True, null=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
+    bookable_per_site = models.BooleanField(default=False)
     dog_permitted = models.BooleanField(default=False)
     # Minimum and Maximum days that a booking can be made before arrival
     min_dba = models.SmallIntegerField(default=0)

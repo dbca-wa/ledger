@@ -255,8 +255,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                 update: function() {
                     var vm = this;
                     debounce(function() {
-                        var url = '{% url 'get_campsite_class_bookings' %}?'+$.param({
-                            ground_id: '{{ ground_id }}',
+                        var url = '{% url 'campground-campsite-class-bookings' pk=ground_id %}?'+$.param({
                             arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                             departure: moment(vm.departureDate).format('YYYY/MM/DD'),
                             num_adult: vm.numAdults,
@@ -281,10 +280,6 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                 }
             },
             ready: function () {
-                //arrivalData.update('04/04/2016');
-                //departureData.update('09/04/2016');
-                //this.arrivalDate = moment(arrivalData.date);
-                //this.departureDate = moment(departureData.date);
                 arrivalData.date = this.arrivalDate.toDate();
                 arrivalData.setValue();
                 arrivalData.fill();

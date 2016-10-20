@@ -1,0 +1,65 @@
+{% extends 'ps/dash/dash_tables.html' %}
+
+{% block campgrounds_filters %}
+    <form class="form" id="campgrounds-filter-form">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="campgrounds-filter-status">Status: </label>
+                <select class="form-control" name="status"
+                        id="applications-filter-status">
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="applications-filter-region">Region: </label>
+                <select class="form-control" name="region"
+                        id="applications-filter-region">
+                </select>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+{% block campground_table %}
+    {% verbatim %}
+      <table class="hover">
+            <thead>
+                <tr>
+                    <th class="id">Campground ID</th>
+                    <th class="name">Campground Name</th>
+                    <th class="status">Status</th>
+                    <th class="region">Region</th>
+                    <th class="dogs_allowed">Dogs Allowed</th>
+                    <th class="campfires_allowed">Campfires Allowed</th>
+                    <th class="action">Action</th>
+                </tr>
+            </thead>
+            <tbody><template v-for="ground in grounds">
+                <tr>
+                    <td class="id">{{ ground.id }}</td>
+                    <td class="name">{{ ground.name }}</td>
+                    <td class="status">{{ ground.status }}</td>
+                    <td class="region">{{ ground.region }}</td>
+                    <td class="dogs_allowed">
+                        <span v-if="ground.dogs_allowed" >Yes</span>
+                        <span v-else >No</span>
+                    </td>
+                    <td class="campfires_allowed">
+                        <span v-if="ground.campfrires_allowed" >Yes</span>
+                        <span v-else >No</span>
+                    </td>
+                    <td class="action" >
+                        <a href={{ground.id}}>Edit Campground Details</a>
+                        <span
+                    </td>
+                </tr>
+            </template></tbody>
+        </table>
+
+    {% endverbatim %}
+{% endblock %}
+{% block campsite_types %}
+{%  endblock %}
+
+{% block bulk_pricing %}
+{%  endblock %}
