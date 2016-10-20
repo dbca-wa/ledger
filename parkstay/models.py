@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
-from datetime import date
+from datetime import date, time
 from taggit.managers import TaggableManager
 
 # Create your models here.
@@ -69,8 +69,8 @@ class Campground(models.Model):
     max_dba = models.SmallIntegerField(default=180)
     no_booking_start = models.DateTimeField(blank=True, null=True)
     no_booking_end = models.DateTimeField(blank=True, null=True)
-    check_in = models.TimeField()
-    check_out = models.TimeField()
+    check_in = models.TimeField(default=time(14))
+    check_out = models.TimeField(default=time(10))
 
     def __str__(self):
         return self.name

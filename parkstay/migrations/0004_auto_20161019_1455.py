@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import django.db.models.deletion
 import taggit.managers
-
+import datetime
 
 class Migration(migrations.Migration):
 
@@ -55,13 +55,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='campground',
             name='check_in',
-            field=models.TimeField(default='14:00'),
+            field=models.TimeField(default=datetime.time(14)),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='campground',
             name='check_out',
-            field=models.TimeField(default='10:00'),
+            field=models.TimeField(default=datetime.time(10)),
             preserve_default=False,
         ),
         migrations.AddField(
