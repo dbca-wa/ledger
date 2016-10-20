@@ -229,7 +229,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
 
         $collapsible.on('hide.bs.collapse', function () {
             $topLinkSpan.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
-            if($bottomLink.length > 0) {
+            if($bottomLink.length) {
                 $bottomLink.hide();
             }
         }).on('show.bs.collapse', function() {
