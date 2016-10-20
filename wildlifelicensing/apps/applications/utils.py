@@ -172,19 +172,24 @@ def _extract_label_and_checkboxes(current_item, items, data, licence_fields):
 
 
 def _extract_item_data(name, data):
-    if isinstance(data, dict):
-        if name in data:
-            return data[name]
-        else:
-            for value in data.values():
-                result = _extract_item_data(name, value)
+    def ___extract_item_data(name, data):
+        if isinstance(data, dict):
+            if name in data:
+                return data[name]
+            else:
+                for value in data.values():
+                    result = ___extract_item_data(name, value)
+                    if result is not None:
+                        return result
+        if isinstance(data, list):
+            for item in data:
+                result = ___extract_item_data(name, item)
                 if result is not None:
                     return result
-    if isinstance(data, list):
-        for item in data:
-            result = _extract_item_data(name, item)
-            if result is not None:
-                return result
+
+    result = ___extract_item_data(name, data)
+
+    return result if result is not None else ''
 
 
 def update_licence_fields(licence_fields, post_data):

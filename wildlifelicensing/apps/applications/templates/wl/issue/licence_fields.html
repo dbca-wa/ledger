@@ -5,10 +5,7 @@
 {% elif licence_field.type == 'number' %}
     <input class="form-control" type="{{ licence_field.type }}" name="{{ licence_field.name }}" value="{{ licence_field.data }}"></input>
 {% elif licence_field.type == 'date' %}
-    <input class="form-control" name="{{ licence_field.name }}" value="{{ licence_field.data }}"></input>
-    <span class="input-group-addon">
-        <span class="glyphicon glyphicon-calendar"></span>
-    </span>
+    <input id="{{ licence_field.name }}{{ group_index }}_date" class="form-control" name="{{ licence_field.name }}" value="{{ licence_field.data }}"></input>
 {% elif licence_field.type == 'label' %}
     {% for option in licence_field.options %}
         <div>

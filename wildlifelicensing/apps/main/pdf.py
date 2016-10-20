@@ -165,7 +165,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     elements.append(Paragraph(licence.licence_type.code.upper(), styles['InfoTitleLargeCenter']))
 
     # cannot use licence get_title_with_variants because licence isn't saved yet so can't get variants
-    if application.variants.exists:
+    if application.variants.exists():
         title = '{} ({})'.format(application.licence_type.name, ' / '.join(application.variants.all().
                                                                            values_list('name', flat=True)))
     else:
@@ -270,12 +270,15 @@ def _layout_extracted_fields(extracted_fields):
                 elif field['type'] in ['radiobuttons', 'select']:
                     elements.append(Paragraph(dict([i.values() for i in field['options']]).
                                               get(field['data'], 'Not Specified'), styles['Left']))
+                else:
+                    elements.append(Paragraph(field['data'], styles['Left']))
+
             elif field['type'] == 'label':
                 if any([option.get('data', 'off') == 'on' for option in field['options']]):
                     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
                     elements.append(Paragraph(field['label'], styles['BoldLeft']))
                     elements.append(Paragraph(', '.join([option['label'] for option in field['options']
-                                                          if option.get('data', 'off') == 'on']),
+                                                        if option.get('data', 'off') == 'on']),
                                     styles['Left']))
         else:
             elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))

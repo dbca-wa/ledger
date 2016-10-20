@@ -16,7 +16,7 @@ from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
-from wildlifelicensing.apps.applications.models import Application, Assessment
+from wildlifelicensing.apps.applications.models import Application, Assessment, ApplicationUserAction
 from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_application, \
     extract_licence_fields, update_licence_fields
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
