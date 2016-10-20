@@ -1,3 +1,29 @@
+/* =========================================================
+ * bootstrap-treeview.js v1.2.0
+ * =========================================================
+ * Copyright 2013 Jonathan Miles
+ * Project URL : http://www.jondmiles.com/bootstrap-treeview
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ * This version has been modified to allow rendering of help text for each
+ * node. This is done in the buildTree function. It was not possible to override
+ * this one function in another module because the Tree function is not accessible
+ * externally.
+ * 
+ * ========================================================= */
+
+
 define(['jQuery'], function ($) {
     /*global jQuery, console*/
 

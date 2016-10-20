@@ -212,61 +212,50 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
 
         categories = []
 
-        def _get_variants(variant_group, licence_type, current_params):
+        def __get_variants(variant_group, licence_type, current_params):
             variants = []
 
             for variant in variant_group.variants.all():
                 variant_dict = {'text': variant.name}
 
                 if variant_group.child is not None:
-                    variant_dict['nodes'] = _get_variants(variant_group.child, licence_type, current_params + [variant.id])
+                    variant_dict['nodes'] = __get_variants(variant_group.child, licence_type, current_params + [variant.id])
                 else:
                     params = urlencode({'variants': current_params + [variant.id]}, doseq=True)
 
                     variant_dict['href'] = '{}?{}'.format(reverse('wl_applications:select_licence_type',
                                                                   args=(licence_type.id,)), params)
 
-                    variant_dict['help_text'] = variant.help_text
+                variant_dict['help_text'] = variant.help_text
 
                 variants.append(variant_dict)
 
             return variants
 
+        def __populate_category_dict(category_dict, licence_type_queryset, categories):
+            for licence_type in licence_type_queryset:
+                licence_type_dict = {'text': licence_type.name}
+
+                if licence_type.variant_group is not None:
+                    licence_type_dict['nodes'] = __get_variants(licence_type.variant_group, licence_type, [])
+                else:
+                    licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
+                                                        args=(licence_type.id,))
+
+                category_dict['licence_types'].append(licence_type_dict)
+
+                licence_type_dict['help_text'] = licence_type.help_text
+
+            categories.append(category_dict)
+
         for category in WildlifeLicenceCategory.objects.all():
-            category_dict = {'name': category.name, 'licence_types': []}
+            __populate_category_dict({'name': category.name, 'licence_types': []},
+                                     WildlifeLicenceType.objects.filter(category=category, replaced_by__isnull=True),
+                                     categories)
 
-            for licence_type in WildlifeLicenceType.objects.filter(category=category, replaced_by__isnull=True):
-                licence_type_dict = {'text': licence_type.name}
-
-                if licence_type.variant_group is not None:
-                    licence_type_dict['nodes'] = _get_variants(licence_type.variant_group, licence_type, [])
-                else:
-                    licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
-                                                        args=(licence_type.id,))
-
-                category_dict['licence_types'].append(licence_type_dict)
-
-                licence_type_dict['help_text'] = licence_type.help_text
-
-            categories.append(category_dict)
-
-        if WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True).exists():
-            category_dict = {'name': 'Other', 'licence_types': []}
-
-            for licence_type in WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True):
-                licence_type_dict = {'text': licence_type.name}
-
-                if licence_type.variant_group is not None:
-                    licence_type_dict['nodes'] = _get_variants(licence_type.variant_group, licence_type, [])
-                else:
-                    licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
-                                                        args=(licence_type.id,))
-
-                licence_type_dict['help_text'] = licence_type.help_text
-
-                category_dict['licence_types'].append(licence_type_dict)
-
-            categories.append(category_dict)
+        uncategorised_queryset = WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True)
+        if uncategorised_queryset.exists():
+            __populate_category_dict({'name': 'Other', 'licence_types': []}, uncategorised_queryset, categories)
 
         return render(request, self.template_name, {'categories': categories})
 
