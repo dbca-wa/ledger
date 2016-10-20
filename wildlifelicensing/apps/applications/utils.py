@@ -3,7 +3,6 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
 from wildlifelicensing.apps.main.helpers import is_customer, is_officer
-from django.contrib.gis.gdal.field import Field
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
