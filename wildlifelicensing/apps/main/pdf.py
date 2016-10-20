@@ -204,7 +204,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     # additional information
     if licence.additional_information:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        elements.append(Paragraph('Additional Information', styles['Bo_layout_extracted_fieldsldLeft']))
+        elements.append(Paragraph('Additional Information', styles['BoldLeft']))
         elements += _layout_paragraphs(licence.additional_information)
 
     # delegation holds the dates, licencee and issuer details.
