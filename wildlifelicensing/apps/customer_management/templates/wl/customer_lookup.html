@@ -12,13 +12,14 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/customer_search', 'js/dash_tables', 'js/communications_log'], function (customerSearch, dashTables, commLog) {
+    require(['js/customer_search', 'js/dash_tables', 'js/logs'], function (customerSearch, dashTables, logs) {
         customerSearch.init();
 
         {% if customer %} 
             dashTables({data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}});
 
-            commLog.initCommunicationLog({
+            logs.initCommunicationLog({
+                showLogPopoverSelector: null,
                 showLogEntryModalSelector: '#addLogEntry',
                 logEntryModalSelector: '#logEntryModal',
                 logEntryFormSelector: '#addLogEntryForm',
@@ -311,6 +312,6 @@
 
 {% block modals %}
     {% if customer %}
-        {% include 'wl/communications_modal.html' %}
+        {% include 'wl/logs_comm_entry_modal.html' %}
     {% endif %}
 {% endblock %}

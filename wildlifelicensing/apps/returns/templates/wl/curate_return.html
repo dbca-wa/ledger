@@ -15,17 +15,17 @@
 {% endblock %}
 
 {% block requirements %}
-    require(["{% static 'wl/js/return_table.js' %}", 'js/communications_log'], function (returnTable, commsLog) {
-    returnTable.initTables();
+    require([
+        "{% static 'wl/js/return_table.js' %}",
+        'js/logs'
+    ],
+    function (returnTable, logs) {
+        returnTable.initTables();
 
-    commsLog.initCommunicationLog({
-    showLogPopoverSelector: '#showLog',
-    showLogEntryModalSelector: '#addLogEntry',
-    logEntryModalSelector: '#logEntryModal',
-    logEntryFormSelector: '#addLogEntryForm',
-    logListURL: "{% url 'wl_returns:log_list' return.id %}",
-    addLogEntryURL: "{% url 'wl_returns:add_log_entry' return.id %}"
-    });
+        logs.initCommunicationLog({
+            logListURL: "{% url 'wl_returns:log_list' return.id %}",
+            addLogEntryURL: "{% url 'wl_returns:add_log_entry' return.id %}"
+        });
     });
 {% endblock %}
 
@@ -91,9 +91,9 @@
                                 </div>
                             </div>
                         </div>
-                        {% with add_text='Add return log entry' %}
-                            {% include 'wl/communications_panel.html' %}
-                        {% endwith %}
+                        {%  with hide_action_log=True %}
+                            {% include 'wl/logs_panel.html' %}
+                        {%  endwith %}
                     </div>
                 </div>
                 <button id="accept" type="submit" name="accept" type="button"
@@ -158,5 +158,5 @@
 {% endblock %}
 
 {% block modals %}
-    {% include 'wl/communications_modal.html' %}
+    {% include 'wl/logs_comm_entry_modal.html' %}
 {% endblock %}

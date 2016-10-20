@@ -34,6 +34,14 @@
     margin-top: 20px;
 }
 
+.top-buffer-s {
+    margin-top: 10px;
+}
+
+.top-buffer-xs {
+    margin-top: 5px;
+}
+
 .bottom-buffer {
     margin-bottom: 20px;
 }
