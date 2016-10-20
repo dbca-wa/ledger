@@ -16,7 +16,6 @@ from django.conf import settings
 from wildlifelicensing.apps.main.helpers import render_user_name
 
 from ledger.accounts.models import Document
-from django.db.models import options
 
 BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
                                    'bw_dpaw_header_logo.png')
