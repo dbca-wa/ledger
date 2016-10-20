@@ -618,7 +618,7 @@ define(['jQuery'], function ($) {
             if (node.help_text) {
                 var width = level * HELP_TEXT_INDENT + HELP_TEXT_INDENT_BUFFER;
                 treeItem.append($('<div>').text(node.help_text).css('color', 'black').css('margin-left', width).
-                    css('cursor', 'default'));
+                    css('font-style', 'italic').css('cursor', 'default'));
             }
 
             // Add item to the tree
