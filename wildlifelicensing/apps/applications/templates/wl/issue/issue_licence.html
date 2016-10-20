@@ -157,7 +157,7 @@
                                         {% if not item.children %}
                                             <div class="form-group">
                                                 <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
-                                                {% include 'wl/issue/licence_fields.html' with licence_field=item %}
+                                                {% include 'wl/issue/extracted_field.html' with field=item %}
                                             </div>
                                         {% else %}
                                             <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
@@ -170,7 +170,7 @@
                                                                     {% if forloop.parentloop.first %}
                                                                         <label class="control-label">{{ child_item.label }}</label>
                                                                     {% endif %}
-                                                                    {% include 'wl/issue/licence_fields.html' with licence_field=child_item group_index=forloop.parentloop.counter %}
+                                                                    {% include 'wl/issue/extracted_field.html' with field=child_item group_index=forloop.parentloop.counter %}
                                                                 </div>
                                                             </div>
                                                         {% endwith %}
