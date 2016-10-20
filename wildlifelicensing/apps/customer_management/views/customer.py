@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 
 from wildlifelicensing.apps.dashboard.views import base
+from wildlifelicensing.apps.dashboard.views.officer import TablesApplicationsOfficerView, TablesLicencesOfficerView, \
+    TablesReturnsOfficerView
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.signals import identification_uploaded
 from wildlifelicensing.apps.customer_management.forms import CustomerDetailsForm
@@ -13,9 +15,10 @@ from ledger.accounts.forms import ProfileForm, AddressForm
 from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 
 
-class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
+class CustomerLookupView(TablesApplicationsOfficerView, TablesLicencesOfficerView, TablesReturnsOfficerView):
     template_name = 'wl/customer_lookup.html'
     login_url = '/'
+
 
     def _build_data(self):
         data = super(CustomerLookupView, self)._build_data()
@@ -23,7 +26,7 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
         # applications
         data['applications']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'
@@ -109,7 +112,7 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
         # returns
         data['returns']['columnDefinitions'] = [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'
@@ -143,6 +146,81 @@ class CustomerLookupView(OfficerRequiredMixin, base.TableBaseView):
         }
 
         return data
+
+    #########################
+    # Applications
+    #########################
+    @property
+    def applications_table_options(self):
+        result = super(CustomerLookupView, self).applications_table_options
+        result.update({
+            'pageLength': 10,
+        })
+        return result
+
+    @property
+    def applications_data_url(self):
+        return reverse('wl_customer_management:data_applications', args=self.args)
+
+    @property
+    def applications_filters(self):
+        # no filters
+        return {}
+
+    @property
+    def get_applications_session_data(self):
+        # no session
+        return {}
+
+    #########################
+    # Licences
+    #########################
+    @property
+    def licences_table_options(self):
+        result = super(CustomerLookupView, self).licences_table_options
+        result.update({
+            'pageLength': 10,
+        })
+        return result
+
+    @property
+    def licences_data_url(self):
+        return reverse('wl_customer_management:data_licences', args=self.args)
+
+    @property
+    def licences_filters(self):
+        # no filters
+        return {}
+
+    @property
+    def get_licences_session_data(self):
+        # no session
+        return {}
+
+    #########################
+    # Returns
+    #########################
+    @property
+    def returns_table_options(self):
+        result = super(CustomerLookupView, self).returns_table_options
+        result.update({
+            'pageLength': 10,
+        })
+        return result
+
+    @property
+    def returns_data_url(self):
+        return reverse('wl_customer_management:data_returns', args=self.args)
+
+    @property
+    def returns_filters(self):
+        # no filters
+        return {}
+
+    @property
+    def get_returns_session_data(self):
+        # no session
+        return {}
 
     def get(self, request, *args, **kwargs):
         if 'customer' in self.request.GET:
