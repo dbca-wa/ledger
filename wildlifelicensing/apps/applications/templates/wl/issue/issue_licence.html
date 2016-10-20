@@ -6,7 +6,7 @@
 
 {% load jsonify %}
 
-{% load maths_helpers %}
+{% load application_filters %}
 
 {% block extra_css %}
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
@@ -163,8 +163,8 @@
                                             <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
                                             {% for item_group in item.children %}
                                                 <div class="row">
-                                                    {% for child_item in item_group %}
-                                                        {% with width=item_group|length|divide_into:12 %}
+                                                    {% with width=item_group|length|derive_col_width %}
+                                                        {% for child_item in item_group %}
                                                             <div class="col-md-{{ width }}">
                                                                 <div class="form-group">
                                                                     {% if forloop.parentloop.first %}
@@ -173,8 +173,8 @@
                                                                     {% include 'wl/issue/extracted_field.html' with field=child_item group_index=forloop.parentloop.counter %}
                                                                 </div>
                                                             </div>
-                                                        {% endwith %}
-                                                    {% endfor %}
+                                                        {% endfor %}
+                                                    {% endwith %}
                                                 </div>
                                             {% endfor %}
                                         {% endif %}
