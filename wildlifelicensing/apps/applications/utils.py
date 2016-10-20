@@ -1,14 +1,8 @@
-import os
-import shutil
-import string
-import random
-
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser, Document
-
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, AmendmentRequest, Assessment, AssessmentCondition
-from collections import OrderedDict
+from wildlifelicensing.apps.main.helpers import is_customer, is_officer
 
 
 PROCESSING_STATUSES = dict(Application.PROCESSING_STATUS_CHOICES)
@@ -25,10 +19,10 @@ def _extend_item_name(name, suffix, repetition):
     return '{}{}-{}'.format(name, suffix, repetition)
 
 
-def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):
+def create_data_from_form(schema, post_data, file_data, post_data_index=None):
     data = []
 
-    for item in form_structure:
+    for item in schema:
         data.append(_create_data_from_item(item, post_data, file_data, 0, ''))
 
     return data
@@ -74,81 +68,172 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     return item_data
 
 
-def _append_random_to_filename(file_name, random_string_size=5):
-    name, extention = os.path.splitext(file_name)
+def extract_licence_fields(schema, data):
+    licence_fields = []
 
-    chars = string.ascii_uppercase + string.digits
+    for item in schema:
+        _extract_licence_fields_from_item(item, data, licence_fields)
 
-    random_string = ''.join(random.choice(chars) for _ in range(random_string_size))
-
-    return '{}-{}{}'.format(name, random_string, extention)
-
-
-def rename_filename_doubleups(post_data, file_data):
-    counter = 0
-
-    ordered_file_data = OrderedDict(file_data)
-    post_data_values = post_data.values()
-    file_data_values = [str(file_value) for file_value in ordered_file_data.values()]
-
-    for file_key, file_value in ordered_file_data.iteritems():
-        if str(file_value) in file_data_values[:counter] or str(file_value) in post_data_values:
-            file_data[file_key].name = _append_random_to_filename(file_value.name)
-
-        counter += 1
+    return licence_fields
 
 
-def get_all_filenames_from_application_data(item, data):
-    filenames = []
+def _extract_licence_fields_from_item(item, data, licence_fields):
+    children_extracted = False
 
-    if isinstance(item, list):
-        for i, child in enumerate(item):
-            filenames += get_all_filenames_from_application_data(child, data[i])
-    elif 'children' in item:
-        for child in item['children']:
-            for child_data in data[item['name']]:
-                filenames += get_all_filenames_from_application_data(child, child_data)
+    if item.get('isLicenceField', False):
+        if 'children' not in item:
+            # label / checkbox types are extracted differently so skip here
+            if item['type'] not in ('label', 'checkbox'):
+                licence_field = {
+                    'name': item['name'],
+                    'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
+                    'type': item['type'],
+                    'readonly': item.get('isLicenceFieldReadonly', False)
+                }
+
+                if 'options' in item:
+                    licence_field['options'] = item['options']
+                    licence_field['defaultBlank'] = item.get('defaultBlank', False)
+
+                licence_field['data'] = _extract_item_data(item['name'], data)
+
+                licence_fields.append(licence_field)
+        else:
+            licence_field = {
+                'name': item['name'],
+                'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
+                'type': item['type'],
+                'readonly': item.get('isLicenceFieldReadonly', False),
+                'children': []
+            }
+
+            child_data = _extract_item_data(item['name'], data)
+
+            for index in range(len(child_data)):
+                group_licence_fields = []
+                for child_item in item.get('children'):
+                    if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                        _extract_label_and_checkboxes(child_item, item.get('children'), child_data[index], group_licence_fields)
+
+                    _extract_licence_fields_from_item(child_item, child_data[index], group_licence_fields)
+                licence_field['children'].append(group_licence_fields)
+
+            licence_fields.append(licence_field)
+
+            children_extracted = True
+
+    # extract licence fields from field's children
+    if 'children' in item and not children_extracted:
+        for child_item in item.get('children'):
+            if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                _extract_label_and_checkboxes(child_item, item.get('children'), data, licence_fields)
+            _extract_licence_fields_from_item(child_item, data, licence_fields)
+
+    # extract licence fields from field's conditional children
+    if 'conditions' in item:
+        for condition in item['conditions'].keys():
+            for child_item in item['conditions'][condition]:
+                if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                    _extract_label_and_checkboxes(child_item, item['conditions'][condition], data, licence_fields)
+                _extract_licence_fields_from_item(child_item, data, licence_fields)
+
+
+def _extract_label_and_checkboxes(current_item, items, data, licence_fields):
+    licence_field = {
+        'name': current_item['name'],
+        'label': current_item['licenceFieldLabel'] if 'licenceFieldLabel' in current_item else current_item['label'],
+        'type': current_item['type'],
+        'readonly': current_item.get('isLicenceFieldReadonly', False),
+        'options': []
+    }
+
+    # find index of first checkbox after checkbox label within current item list
+    checkbox_index = 0
+    while checkbox_index < len(items) and items[checkbox_index]['name'] != current_item['name']:
+        checkbox_index += 1
+    checkbox_index += 1
+
+    # add all checkboxes to licence field options
+    while checkbox_index < len(items) and items[checkbox_index]['type'] == 'checkbox':
+        name = items[checkbox_index]['name']
+        option = {
+            'name': name,
+            'label': items[checkbox_index]['label']
+        }
+        if name in data:
+            option['data'] = data[name]
+
+        licence_field['options'].append(option)
+
+        checkbox_index += 1
+
+    licence_fields.append(licence_field)
+
+
+def _extract_item_data(name, data):
+    def ___extract_item_data(name, data):
+        if isinstance(data, dict):
+            if name in data:
+                return data[name]
+            else:
+                for value in data.values():
+                    result = ___extract_item_data(name, value)
+                    if result is not None:
+                        return result
+        if isinstance(data, list):
+            for item in data:
+                result = ___extract_item_data(name, item)
+                if result is not None:
+                    return result
+
+    result = ___extract_item_data(name, data)
+
+    return result if result is not None else ''
+
+
+def update_licence_fields(licence_fields, post_data):
+    for field in licence_fields:
+        if 'children' not in field:
+            if field['type'] == 'label':
+                for option in field['options']:
+                    if option['name'] in post_data:
+                        option['data'] = post_data[option['name']]
+            else:
+                field['data'] = post_data.get(field['name'])
+        else:
+            for index, group in enumerate(field['children']):
+                for child_field in group:
+                    if child_field['type'] == 'label':
+                        for option in child_field['options']:
+                            if option['name'] in post_data:
+                                data_list = post_data.getlist(option['name'])
+                                if index < len(data_list):
+                                    option['data'] = data_list[index]
+                    else:
+                        data_list = post_data.getlist(child_field['name'])
+                        if index < len(data_list):
+                            child_field['data'] = data_list[index]
+
+    return licence_fields
+
+
+def convert_documents_to_url(data, document_queryset, suffix):
+    if isinstance(data, list):
+        for item in data:
+            convert_documents_to_url(item, document_queryset, '')
     else:
-        if item.get('type', '') == 'file':
-            if item['name'] in data and len(data[item['name']]) > 0:
-                filenames.append(data[item['name']])
-
-    return filenames
-
-
-def prepend_url_to_files(item, data, root_url):
-    # ensure root url ends with a /
-    if root_url[-1] != '/':
-        root_url += '/'
-
-    if item is not None:
-        if isinstance(item, list) and isinstance(data, list):
-            for i, child in enumerate(item):
-                prepend_url_to_files(child, data[i], root_url)
-        elif 'children' in item:
-            for child in item['children']:
-                for child_data in data[item['name']]:
-                    prepend_url_to_files(child, child_data, root_url)
-        else:
-            if isinstance(item, dict) and item.get('type', '') == 'file':
-                if item['name'] in data and len(data[item['name']]) > 0:
-                    data[item['name']] = root_url + data[item['name']]
-
-
-def convert_documents_to_url(item, data, document_queryset):
-    if item is not None:
-        if isinstance(item, list) and isinstance(data, list):
-            for i, child in enumerate(item):
-                convert_documents_to_url(child, data[i], document_queryset)
-        elif 'children' in item:
-            for child in item['children']:
-                for child_data in data[item['name']]:
-                    convert_documents_to_url(child, child_data, document_queryset)
-        else:
-            if isinstance(item, dict) and item.get('type', '') == 'file':
-                if item['name'] in data and len(data[item['name']]) > 0:
+        for item, value in data.items():
+            if isinstance(value, list):
+                for rep in xrange(0, len(value)):
+                    convert_documents_to_url(value[rep], document_queryset, '{}-{}'.format(suffix, rep))
+            else:
+                try:
+                    # for legacy applications, need to check if there's a document where file is
+                    # named by the file name rather than the form field name
+                    data[item] = document_queryset.get(name=value).file.url
+                except Document.DoesNotExist:
                     try:
-                        data[item['name']] = document_queryset.get(name=data[item['name']]).file.url
+                        data[item] = document_queryset.get(name='{}{}-0'.format(item, suffix)).file.url
                     except Document.DoesNotExist:
                         pass
 
@@ -174,46 +259,48 @@ def determine_applicant(request):
     return applicant
 
 
-def set_app_session_data(session, key, value):
-    if 'application' not in session:
-        session['application'] = {}
-
-    session['application'][key] = value
+def set_session_application(session, application):
+    session['application_id'] = application.id
 
     session.modified = True
 
 
-def is_app_session_data_set(session, key):
-    return 'application' in session and key in session['application']
-
-
-def get_app_session_data(session, key):
-    if is_app_session_data_set(session, key):
-        return session['application'][key]
+def get_session_application(session):
+    if 'application_id' in session:
+        application_id = session['application_id']
     else:
-        return None
+        raise Exception('Application not in Session')
+
+    try:
+        return Application.objects.get(id=application_id)
+    except Application.DoesNotExist:
+        raise Exception('Application not found for application_id {}'.format(application_id))
 
 
-def delete_app_session_data(session):
-    temp_files_dir = get_app_session_data(session, 'temp_files_dir')
-
-    if temp_files_dir is not None:
-        try:
-            shutil.rmtree(temp_files_dir)
-        except (shutil.Error, OSError) as e:
-            raise e
-
-    if 'application' in session:
-        del session['application']
+def delete_session_application(session):
+    if 'application_id' in session:
+        del session['application_id']
+        session.modified = True
 
 
-def clone_application_for_renewal(application, save=False):
-    application.customer_status = 'draft'
-    application.processing_status = 'renewal'
+def remove_temp_applications_for_user(user):
+    if is_customer(user):
+        Application.objects.filter(applicant=user, customer_status='temp').delete()
+    elif is_officer(user):
+        Application.objects.filter(proxy_applicant=user, customer_status='temp').delete()
+
+
+def clone_application_with_status_reset(application, is_licence_amendment=False):
+    application.customer_status = 'temp'
+    application.processing_status = 'temp'
 
     application.id_check_status = 'not_checked'
     application.character_check_status = 'not_checked'
+    application.returns_check_status = 'not_checked'
     application.review_status = 'not_reviewed'
+
+    application.correctness_disclaimer = False
+    application.further_information_disclaimer = False
 
     application.lodgement_number = ''
     application.lodgement_sequence = 0
@@ -223,6 +310,11 @@ def clone_application_for_renewal(application, save=False):
 
     application.licence = None
 
+    application.is_licence_amendment = is_licence_amendment
+
+    if not is_licence_amendment:
+        application.invoice_reference = ''
+
     original_application_pk = application.pk
 
     application.previous_application = Application.objects.get(pk=original_application_pk)
@@ -230,6 +322,12 @@ def clone_application_for_renewal(application, save=False):
     application.pk = None
 
     application.save(no_revision=True)
+
+    # clone variants
+    for application_variant in Application.variants.through.objects.filter(application=original_application_pk):
+        application_variant.application = application
+        application_variant.pk = None
+        application_variant.save()
 
     # clone documents
     for application_document in Application.documents.through.objects.filter(application=original_application_pk):
@@ -244,6 +342,24 @@ def clone_application_for_renewal(application, save=False):
         application_condition.save()
 
     return application
+
+
+def append_app_document_to_schema_data(schema, data, app_doc):
+    section = {'type': 'section', 'label': 'Original Application Document', 'name': 'original_application_document'}
+    section['children'] = [{'type': 'file', 'label': 'Application Document File', 'name': 'application_document'}]
+
+    schema.append(section)
+
+    data.append({'original_application_document': [{'application_document': app_doc}]})
+
+    return schema, data
+
+
+def get_log_entry_to(application):
+    if application.proxy_applicant is None:
+        return application.applicant.get_full_name()
+    else:
+        return application.proxy_applicant.get_full_name()
 
 
 def format_application(instance, attrs):

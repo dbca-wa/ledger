@@ -17,6 +17,28 @@ define([
         $viewApplicationDetails.popover({container: 'body', content: $contentContainer, html: true});
     }
 
+    function initOtherAssessorsCommentsPopover(assessments) {
+        var $contentContainer = $('<div>'),
+            $viewOtherAssessorsComments = $('#viewOtherAssessorsComments');
+
+        if(assessments.length) {
+            $.each(assessments, function(index, assessment) {
+                if(assessment.status === 'Assessed') {
+                    var assessorGroupName = '<strong>' + assessment.assessor_group.name + ': </strong>';
+                    $contentContainer.append($('<p>').html(assessorGroupName + assessment.comment));
+                }
+            })
+        }
+
+        if ($contentContainer.children().length) {
+            $contentContainer.find(':last-child').addClass('no-margin');
+        } else {
+            $contentContainer.append($('<p>').addClass('no-margin').text("No other assessors' comments available"));
+        }
+
+        $viewOtherAssessorsComments.popover({container: 'body', content: $contentContainer, html: true});
+    }
+
     function createConditionTableRow(condition, rowClass, readonly) {
         var $row = $('<tr>').addClass(rowClass);
 
@@ -71,7 +93,7 @@ define([
         });
     }
 
-    function initAdditionalConditions() {
+    function initAdditionalConditions(assessment) {
         var conditions = {},
             $searchConditions = $('#searchConditions'),
             $addCondition = $('#addCondition'),
@@ -126,25 +148,35 @@ define([
             if(!_.includes(_.map(existingConditions, function(condition) {return $(condition).val()}), String(condition.id), 1)) {
                     createConditionTableRow(condition, 'additional');
             } else {
-                window.alert('The specified ondition has already been entered.')
+                window.alert('The specified condition has already been entered.');
             }
 
             $searchConditions.select2('val', '');
         });
+
+        $.each(assessment.conditions, function(index, condition) {
+            createConditionTableRow(condition, 'additional', false);
+        });
     }
 
     function initForm() {
-        $('#assessmentDone').click(function() {
+        $('#save, #conclude').click(function() {
             var $conditionsForm = $('#conditionsForm');
+
+            if($(this).attr('id') === 'conclude') {
+                $conditionsForm.append($('<input>').attr('type', 'hidden').attr('name', 'conclude'));
+            }
+
             $conditionsForm.submit();
         });
     }
 
     return {
-        init: function (application, formStructure) {
+        init: function (assessment, application, formStructure, otherAssessments) {
             initApplicationDetailsPopover(application, formStructure);
+            initOtherAssessorsCommentsPopover(otherAssessments);
             initDefaultConditions(application.licence_type.default_conditions);
-            initAdditionalConditions();
+            initAdditionalConditions(assessment);
             initForm();
         }
     }

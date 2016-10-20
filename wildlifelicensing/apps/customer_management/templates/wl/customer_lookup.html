@@ -12,13 +12,14 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/customer_search', 'js/dash_tables', 'js/communications_log'], function (customerSearch, dashTables, commLog) {
+    require(['js/customer_search', 'js/dash_tables', 'js/logs'], function (customerSearch, dashTables, logs) {
         customerSearch.init();
 
         {% if customer %} 
             dashTables({data: {% if dataJSON %} {{ dataJSON|safe }} {% else %} {} {% endif %}});
 
-            commLog.initCommunicationLog({
+            logs.initCommunicationLog({
+                showLogPopoverSelector: null,
                 showLogEntryModalSelector: '#addLogEntry',
                 logEntryModalSelector: '#logEntryModal',
                 logEntryFormSelector: '#addLogEntryForm',
@@ -137,7 +138,9 @@
                                     </div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-6">
+                        </div>
+                            <div class="row">
+                                <div class="col-md-7">
                                 <div class="row details-row-buffer">
                                     <div class="col-md-12">
                                         <strong>Identification:</strong>
@@ -154,7 +157,26 @@
                                     </div>
                                 {% endif %}
                             </div>
-                        </div>
+                                <div class="col-md-5">
+                                <div class="row details-row-buffer">
+                                {%  if customer.is_senior %}
+                                    <div class="col-md-12">
+                                        <strong>Senior Card:</strong>
+                                        {% if not customer.senior_card.file.url %}
+                                            Not available
+                                        {% endif %}
+                                    </div>
+                                {%  endif %}
+                                </div>
+                                {% if customer.senior_card.file.url %}
+                                    <div class="row details-row-buffer">
+                                        <div class="col-md-12">
+                                            <img src="{{ customer.senior_card.file.url }}" width="100%"/>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            </div>
                         <div class="row details-row-buffer">
                              <div class="col-md-12">
                                 <a href="{% url 'wl_customer_management:edit_customer_details' customer.pk %}" class="pull-right add-link">Edit Customer Details</a>
@@ -187,7 +209,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for profile in customer.profile_set.all|dictsort:'pk' %}
+                                {% for profile in customer.profiles.all|dictsort:'pk' %}
                                     <tr>
                                         <td>{{ profile.name }}</td>
                                         <td>{{ profile.email }}</td>
@@ -290,6 +312,6 @@
 
 {% block modals %}
     {% if customer %}
-        {% include 'wl/communications_modal.html' %}
+        {% include 'wl/logs_comm_entry_modal.html' %}
     {% endif %}
 {% endblock %}

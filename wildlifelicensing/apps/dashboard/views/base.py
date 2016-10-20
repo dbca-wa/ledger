@@ -7,7 +7,7 @@ import logging
 from dateutil.parser import parse as date_parse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles.templatetags.staticfiles import static
-from django.core.urlresolvers import reverse_lazy, reverse
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.models.query import EmptyQuerySet
 from django.shortcuts import redirect
@@ -20,6 +20,10 @@ from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.dashboard.forms import LoginForm
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, render_user_name
 
+
+from wildlifelicensing.apps.payments.utils import get_application_payment_status, PAYMENT_STATUS_AWAITING, \
+    PAYMENT_STATUSES
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +32,7 @@ def build_url(base, query):
 
 
 def get_processing_statuses_but_draft():
-    return [s for s in Application.PROCESSING_STATUS_CHOICES if s[0] != 'draft']
+    return [s for s in Application.PROCESSING_STATUS_CHOICES if s[0] != 'draft' and s[0] != 'temp']
 
 
 # render date in dd/mm/yyyy format
@@ -67,6 +71,18 @@ def render_download_return_template(ret):
     return '<a href="{}">Download (XLSX)</a>'.format(url)
 
 
+def render_payment(application, redirect_url):
+    status = get_application_payment_status(application)
+    result = '{}'.format(PAYMENT_STATUSES[status])
+    if status == PAYMENT_STATUS_AWAITING:
+        url = '{}?redirect_url={}'.format(
+            reverse('wl_payments:manual_payment', args=[application.id]),
+            redirect_url
+        )
+        result += ' <a href="{}">Enter payment</a>'.format(url)
+    return result
+
+
 class DashBoardRoutingView(TemplateView):
     template_name = 'wl/index.html'
 
@@ -85,7 +101,6 @@ class DashBoardRoutingView(TemplateView):
 
 class DashboardTreeViewBase(TemplateView):
     template_name = 'wl/dash_tree.html'
-    url = reverse_lazy('wl_dashboard:tables_applications_officer')
 
     @staticmethod
     def _create_node(title, href=None, count=None):
@@ -143,7 +158,7 @@ class TableBaseView(TemplateView):
         Build data skeleton for all the tables definitions, filters....
         :return:
         """
-        licence_types = [('all', 'All')] + [(lt.pk, lt.code) for lt in LicenceType.objects.all()]
+        licence_types = [('all', 'All')] + [(lt.pk, lt.display_name) for lt in LicenceType.objects.all()]
         data = {
             'applications': {
                 'columnDefinitions': [],
@@ -221,12 +236,25 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
     """
     model = None
+    columns = [
+        'licence_type'
+    ]
+    order_columns = [
+        ['licence_type.short_name', 'licence_type.name'],
+    ]
     columns_helpers = {
+        # a global render and search fot the licence_type column.
+        # Note: this has to be overridden if the model hasn't the licence_type related field.
+        'licence_type': {
+            'render': lambda self, instance: instance.licence_type.display_name,
+            'search': lambda self, search: build_field_query(
+                ['licence_type__short_name', 'licence_type__name'], search)
+        }
     }
 
     def _build_global_search_query(self, search):
         # a bit of a hack for searching for date with a '/', ex 27/05/2016
-        # The rigth way to search for a date is to use the format YYYY-MM-DD.
+        # The right way to search for a date is to use the format YYYY-MM-DD.
         # To search with dd/mm/yyyy we use the dateutil parser to infer a date
         if search and search.find('/') >= 0:
             try:
@@ -310,19 +338,29 @@ class DataTableBaseView(LoginRequiredMixin, BaseDatatableView):
 
     def get_initial_queryset(self):
         if self.model:
-            return self.model.objects.all()
+            return self.model.objects.all().exclude(processing_status='temp')
         else:
             return EmptyQuerySet()
 
 
 class DataTableApplicationBaseView(DataTableBaseView):
     model = Application
-    columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
-    order_columns = ['licence_type.code', 'applicant_profile.user', 'applicant_profile', 'processing_status']
+    columns = [
+        'licence_type',
+        'applicant',
+        'applicant_profile',
+        'processing_status'
+    ]
+    order_columns = [
+        ['licence_type.short_name', 'licence_type.name'],
+        'applicant',
+        'applicant_profile',
+        'processing_status'
+    ]
 
-    columns_helpers = {
-        'applicant_profile.user': {
-            'render': lambda self, instance: render_user_name(instance.applicant_profile.user, first_name_first=False),
+    columns_helpers = dict(DataTableBaseView.columns_helpers.items(), **{
+        'applicant': {
+            'render': lambda self, instance: render_user_name(instance.applicant, first_name_first=False),
             'search': lambda self, search: build_field_query(
                 ['applicant_profile__user__last_name', 'applicant_profile__user__first_name'], search)
         },
@@ -330,8 +368,8 @@ class DataTableApplicationBaseView(DataTableBaseView):
             'render': lambda self, instance: '{}'.format(instance.applicant_profile),
             'search': lambda self, search: build_field_query(
                 ['applicant_profile__email', 'applicant_profile__name'], search)
-        }
-    }
+        },
+    })
 
     @staticmethod
     def filter_status(value):

@@ -12,7 +12,7 @@ from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_du
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_profile__user=user)
+    return Application.objects.filter(applicant_profile__user=user).exclude(customer_status='temp')
 
 
 class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
@@ -80,6 +80,9 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
                 'orderable': False
             },
             {
+                'title': 'Status'
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -134,10 +137,21 @@ class TableCustomerView(LoginRequiredMixin, base.TableBaseView):
 
 
 class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
-    columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
-               'action']
-    order_columns = ['lodgement_number', 'licence_type.code', 'applicant_profile', 'customer_status', 'lodgement_date',
-                     '']
+    columns = [
+        'lodgement_number',
+        'licence_type',
+        'applicant_profile',
+        'customer_status',
+        'lodgement_date',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        'applicant_profile',
+        'customer_status',
+        'lodgement_date',
+        '']
 
     columns_helpers = dict(base.DataTableApplicationBaseView.columns_helpers.items(), **{
         'lodgement_number': {
@@ -167,13 +181,15 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
     def render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
-            return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
-                'Continue application'
+            return '<a href="{0}">{1}</a> / <a href="{2}">{3}</a>'.format(
+                reverse('wl_applications:edit_application', args=[obj.pk]),
+                'Continue',
+                reverse('wl_applications:delete_application', args=[obj.pk]),
+                'Discard'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.licence_type.code_slug, obj.pk]),
+                reverse('wl_applications:edit_application', args=[obj.pk]),
                 'Amend application'
             )
         elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
@@ -192,10 +208,25 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
 
 class DataTableLicencesCustomerView(base.DataTableBaseView):
     model = WildlifeLicence
-    columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', 'licence', 'action']
-    order_columns = ['licence_number', 'licence_type.code', 'issue_date', 'start_date', 'end_date', '', '']
+    columns = [
+        'licence_number',
+        'licence_type',
+        'issue_date',
+        'start_date',
+        'end_date',
+        'licence',
+        'status',
+        'action']
+    order_columns = [
+        'licence_number',
+        ['licence_type.short_name', 'licence_type.name'],
+        'issue_date',
+        'start_date',
+        'end_date',
+        '',
+        '']
 
-    columns_helpers = {
+    columns_helpers = dict(base.DataTableBaseView.columns_helpers.items(), **{
         'licence_number': {
             'search': lambda self, search: DataTableLicencesCustomerView._search_licence_number(search),
             'render': lambda self, instance: base.render_licence_number(instance)
@@ -212,28 +243,53 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         'licence': {
             'render': lambda self, instance: base.render_licence_document(instance)
         },
+        'status': {
+            'render': lambda self, instance: self._render_status(instance)
+        },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
         }
-    }
+    })
+
+    @staticmethod
+    def _render_status(instance):
+        try:
+            application = Application.objects.get(licence=instance)
+            replacing_application = Application.objects.get(previous_application=application)
+
+            if replacing_application.is_licence_amendment:
+                return 'Amended'
+            else:
+                return 'Renewed'
+        except Application.DoesNotExist:
+            pass
+
+        expiry_days = (instance.end_date - datetime.date.today()).days
+        if expiry_days <= 30 and instance.is_renewable:
+            return '<span class="label label-warning">Due for renewal</span>'
+        elif instance.end_date < datetime.date.today():
+            return 'Expired'
+        else:
+            return 'Current'
 
     @staticmethod
     def _render_action(instance):
-        if not instance.is_renewable:
-            return 'Not renewable'
+        try:
+            application = Application.objects.get(licence=instance)
+            if Application.objects.filter(previous_application=application).exists():
+                return 'N/A'
+        except Application.DoesNotExist:
+            pass
+
+        expiry_days = (instance.end_date - datetime.date.today()).days
+        if expiry_days <= 30 and instance.is_renewable:
+            url = reverse('wl_applications:renew_licence', args=(instance.pk,))
+            return '<a href="{0}">Renew</a>'.format(url)
+        elif instance.end_date >= datetime.date.today():
+            url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+            return '<a href="{0}">Amend</a>'.format(url)
         else:
-            try:
-                application = Application.objects.get(licence=instance)
-                if Application.objects.filter(previous_application=application).exists():
-                    return 'Renewed'
-            except Application.DoesNotExist:
-                pass
-            expiry_days = (instance.end_date - datetime.date.today()).days
-            if expiry_days <= 30:
-                url = reverse('wl_applications:renew_licence', args=(instance.pk,))
-                return '<a href="{0}">Renew</a>'.format(url)
-            else:
-                return 'Renewable in ' + str(expiry_days - 30) + ' days'
+            return 'N/A'
 
     @staticmethod
     def _search_licence_number(search):
@@ -252,13 +308,33 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
 class DataTableReturnsCustomerView(base.DataTableBaseView):
     model = Return
-    columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status',
-               'licence', 'action']
-    order_columns = ['lodgement_number', 'licence.licence_type.code', 'lodgement_date', 'due_date', 'status',
-                     '', '']
+    columns = [
+        'lodgement_number',
+        'licence.licence_type',
+        'lodgement_date',
+        'due_date',
+        'status',
+        'licence',
+        'action'
+    ]
+    order_columns = [
+        'lodgement_number',
+        ['licence.licence_type.short_name', 'licence.licence_type.name'],
+        'lodgement_date',
+        'due_date',
+        'status',
+        '',
+        ''
+    ]
     columns_helpers = {
         'lodgement_number': {
             'render': lambda self, instance: instance.lodgement_number
+        },
+        'licence.licence_type': {
+            'render': lambda self, instance: instance.licence.licence_type.display_name,
+            'search': lambda self, search: base.build_field_query(
+                ['licence__licence_type__short_name', 'licence__licence_type__name', 'licence__licence_type__version'],
+                search)
         },
         'lodgement_date': {
             'render': lambda self, instance: base.render_date(instance.lodgement_date)

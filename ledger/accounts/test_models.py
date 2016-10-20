@@ -1,5 +1,5 @@
 from django.test import TestCase
-from mixer.backend.django import mixer
+from django_dynamic_fixture import get as get_ddf
 from ledger.accounts.models import EmailUser, Address
 
 
@@ -7,7 +7,7 @@ class EmailUserTest(TestCase):
 
     def setUp(self):
         super(EmailUserTest, self).setUp()
-        self.user = mixer.blend(EmailUser)
+        self.user = get_ddf(EmailUser, dob='1970-01-01')
 
     def test_str(self):
         """Test the EmailUser __str__ method returns email
@@ -50,7 +50,7 @@ class AddressTest(TestCase):
 
     def setUp(self):
         super(AddressTest, self).setUp()
-        self.address1 = mixer.blend(Address)
+        self.address1 = get_ddf(Address)
 
     def test_prop_join_fields(self):
         """Test the Address join_fields property

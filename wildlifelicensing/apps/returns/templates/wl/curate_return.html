@@ -15,14 +15,14 @@
 {% endblock %}
 
 {% block requirements %}
-    require(["{% static 'wl/js/return_table.js' %}", 'js/communications_log'], function (returnTable, commsLog) {
+    require([
+        "{% static 'wl/js/return_table.js' %}",
+        'js/logs'
+    ],
+    function (returnTable, logs) {
         returnTable.initTables();
 
-        commsLog.initCommunicationLog({
-            showLogPopoverSelector: '#showLog',
-            showLogEntryModalSelector: '#addLogEntry',
-            logEntryModalSelector: '#logEntryModal',
-            logEntryFormSelector: '#addLogEntryForm',
+        logs.initCommunicationLog({
             logListURL: "{% url 'wl_returns:log_list' return.id %}",
             addLogEntryURL: "{% url 'wl_returns:add_log_entry' return.id %}"
         });
@@ -82,7 +82,7 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label>Status</label>
-                                        <p>{{ return.status }}</p>
+                                        <p>{{ return.status }}{% if return.nil_return %} (Nil){% endif %}</p>
                                     </div>
                                     <div class="col-md-6">
                                         <label>Licence</label>
@@ -91,9 +91,9 @@
                                 </div>
                             </div>
                         </div>
-                        {% with add_text='Add return log entry' %}
-                            {% include 'wl/communications_panel.html' %}
-                        {% endwith %}
+                        {%  with hide_action_log=True %}
+                            {% include 'wl/logs_panel.html' %}
+                        {%  endwith %}
                     </div>
                 </div>
                 <button id="accept" type="submit" name="accept" type="button"
@@ -128,7 +128,8 @@
                                                                 <input name="{{ table.name }}::{{ header }}"
                                                                        value="{{ value }}"/>
                                                                 {% if error %}
-                                                                    <div><span class="text-danger">{{ error }}</span></div>
+                                                                    <div><span class="text-danger">{{ error }}</span>
+                                                                    </div>
                                                                 {% endif %}
                                                             </td>
                                                         {% endwith %}
@@ -138,16 +139,24 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <a class="add-return-row">Add Row</a>
+                                {% if not return.nil_return %}
+                                    <a class="add-return-row">Add Row</a>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 </form>
+                {% if return.comments %}
+                    <div id="comments" class="top-buffer">
+                        <label>Submitter Comments</label>
+                        <p>{{ return.comments }}</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 {% endblock %}
 
 {% block modals %}
-    {% include 'wl/communications_modal.html' %}
+    {% include 'wl/logs_comm_entry_modal.html' %}
 {% endblock %}

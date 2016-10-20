@@ -28,6 +28,9 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
                 'title': 'User'
             },
             {
+                'title': 'Status'
+            },
+            {
                 'title': 'Lodged on'
             },
             {
@@ -39,40 +42,53 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
                 'orderable': False
             }
         ]
+        # override the status to have have the Assessment status instead of the application status
+        data['applications']['filters']['status']['values'] = \
+            [('all', 'All')] + [(v, l) for v, l in Assessment.STATUS_CHOICES]
+        # override the data url
         data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_assessor')
         return data
 
 
 class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.DataTableBaseView):
     """
-    Model of this table is not Application but Assessment
-     see: get_initial_queryset method
+    The model of this table is not Application but Assessment.
     """
+    model = Assessment
     columns = [
         'application.lodgement_number',
-        'application.licence_type.code',
-        'application.applicant_profile.user',
+        'licence_type',
+        'application.applicant',
+        'status',
         'application.lodgement_date',
         'application.assigned_officer',
         'action'
     ]
     order_columns = [
         'application.lodgement_number',
-        'application.licence_type.code',
-        ['application.applicant_profile.user.last_name', 'application.applicant_profile.user.first_name',
-         'application.applicant_profile.user.email'],
+        ['application.licence_type.short_name', 'application.licence_type.name'],
+        ['application.applicant.last_name', 'application.applicant.first_name',
+         'application.applicant.email'],
+        'status',
         'application.lodgement_date',
         ['application.assigned_officer.first_name', 'application.assigned_officer.last_name',
          'application.assigned_officer.email'], ''
     ]
 
     columns_helpers = dict(**{
+        'licence_type': {
+            'render': lambda self, instance: instance.application.licence_type.display_name,
+            'search': lambda self, search: base.build_field_query(
+                ['application__licence_type__short_name', 'application__licence_type__name',
+                 'application__licence_type__version'],
+                search)
+        },
         'application.lodgement_number': {
             'search': lambda self, search: DataTableApplicationAssessorView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance.application)
         },
-        'application.applicant_profile.user': {
-            'render': lambda self, instance: render_user_name(instance.application.applicant_profile.user),
+        'application.applicant': {
+            'render': lambda self, instance: render_user_name(instance.application.applicant),
             'search': lambda self, search: base.build_field_query(
                 ['application__applicant_profile__user__last_name', 'application__applicant_profile__user__first_name'],
                 search
@@ -96,9 +112,14 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
 
     @staticmethod
     def render_action_column(obj):
-        return '<a href="{0}">Assess</a>'.format(
-            reverse('wl_applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
-        )
+        if obj.status == 'awaiting_assessment':
+            return '<a href="{0}">Assess</a>'.format(
+                reverse('wl_applications:enter_conditions_assessor', args=[obj.application.pk, obj.pk])
+            )
+        else:
+            return '<a href="{0}">View (read-only)</a>'.format(
+                reverse('wl_applications:view_assessment', args=[obj.application.pk, obj.pk])
+            )
 
     @staticmethod
     def _search_lodgement_number(search):
@@ -108,11 +129,19 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
             lodgement_number, lodgement_sequence = '-'.join(components[:2]), '-'.join(components[2:])
 
             return Q(application__lodgement_number__icontains=lodgement_number) & \
-                Q(application__lodgement_sequence__icontains=lodgement_sequence)
+                   Q(application__lodgement_sequence__icontains=lodgement_sequence)
         else:
             return Q(application__lodgement_number__icontains=search)
 
+    @staticmethod
+    def filter_licence_type(value):
+        return Q(application__licence_type__pk=value) if value.lower() != 'all' else None
+
+    @staticmethod
+    def filter_status(value):
+        return Q(status=value) if value.lower() != 'all' else None
+
     def get_initial_queryset(self):
         groups = self.request.user.assessorgroup_set.all()
-        assessments = Assessment.objects.filter(assessor_group__in=groups).filter(status='awaiting_assessment')
+        assessments = self.model.objects.filter(assessor_group__in=groups).all()
         return assessments

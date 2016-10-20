@@ -16,8 +16,11 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if request.user|is_officer %}
-                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
+                    {% if application.is_temporary %}
+                        {% if request.user|is_officer %}
+                            <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
+                        {% endif %}
+                        <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
                     {% endif %}
                     <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
                     <li class="active">Upload Identification</li>
@@ -62,7 +65,7 @@
                         </div>
                     {% endwith %}
                     <button type="submit" class="btn btn-primary pull-right">Upload</button>
-                    <a class="btn btn-info pull-right right-buffer" href="{% url 'wl_applications:create_select_profile' licence_type.code_slug %}">Skip this step</a>
+                    <a class="btn btn-info pull-right right-buffer" href="{% url 'wl_applications:check_senior_card' %}">Skip this step</a>
                 </form>
             </div>
         </div>

@@ -5,9 +5,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils.encoding import smart_text
 
-from django_hosts import reverse as hosts_reverse
-
-from wildlifelicensing.apps.emails.emails import TemplateEmailBase
+from wildlifelicensing.apps.emails.emails import TemplateEmailBase, host_reverse
 from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
@@ -25,8 +23,7 @@ def send_amendment_requested_email(amendment_request, request):
     application = amendment_request.application
     email = ApplicationAmendmentRequestedEmail()
     url = request.build_absolute_uri(
-        reverse('wl_applications:edit_application',
-                args=[application.licence_type.code_slug, application.pk])
+        reverse('wl_applications:edit_application', args=[application.pk])
     )
 
     context = {
@@ -74,20 +71,26 @@ class ApplicationAssessmentReminderEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_assessment_reminder.txt'
 
 
-def send_assessment_reminder_email(assessment, request):
+def send_assessment_reminder_email(assessment, request=None):
     application = assessment.application
 
     email = ApplicationAssessmentReminderEmail()
-    url = request.build_absolute_uri(
-        reverse('wl_applications:enter_conditions_assessor',
-                args=[application.pk, assessment.pk])
-    )
+    if request is not None:
+        url = request.build_absolute_uri(
+            reverse('wl_applications:enter_conditions_assessor',
+                    args=(application.pk, assessment.pk))
+        )
+    else:
+        url = host_reverse('wl_applications:enter_conditions_assessor', args=(application.pk, assessment.pk))
+
     context = {
         'assessor': assessment.assessor_group,
         'url': url
     }
+
     msg = email.send(assessment.assessor_group.email, context=context)
-    _log_email(msg, application=application, sender=request.user)
+    sender = request.user if request is not None else None
+    _log_email(msg, application=application, sender=sender)
 
 
 class ApplicationAssessmentDoneEmail(TemplateEmailBase):
@@ -180,17 +183,17 @@ class LicenceIssuedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/licence_issued.txt'
 
 
-def send_licence_issued_email(licence, application, request):
+def send_licence_issued_email(licence, application, request, to=None, cc=None, bcc=None, additional_attachments=None):
     email = LicenceIssuedEmail()
     url = request.build_absolute_uri(
         reverse('wl_dashboard:home')
     )
     context = {
         'url': url,
-        'cover_letter_message': licence.cover_letter_message
+        'licence': licence
     }
     if licence.licence_document is not None:
-        file_name = 'WL_licence_' + smart_text(licence.licence_type.code_slug)
+        file_name = 'WL_licence_' + smart_text(licence.licence_type.product_code)
         if licence.licence_number:
             file_name += '_' + smart_text(licence.licence_number)
         if licence.licence_sequence:
@@ -202,32 +205,20 @@ def send_licence_issued_email(licence, application, request):
         attachments = [attachment]
     else:
         logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
-        attachments = None
-
-    msg = email.send(licence.profile.email, context=context, attachments=attachments)
+        attachments = []
+    if not to:
+        to = [licence.profile.email]
+    if additional_attachments and not isinstance(additional_attachments, list):
+        additional_attachments = list(additional_attachments)
+    if additional_attachments:
+        attachments += additional_attachments
+    msg = email.send(to, context=context, attachments=attachments, cc=cc, bcc=bcc)
     log_entry = _log_email(msg, application=application, sender=request.user)
     if licence.licence_document is not None:
-        log_entry.document = licence.licence_document
-        log_entry.save()
+        log_entry.documents.add(licence.licence_document)
+    if additional_attachments:
+        log_entry.documents.add(*additional_attachments)
     return log_entry
-
-
-class LicenceRenewalNotificationEmail(TemplateEmailBase):
-    subject = 'Your wildlife licence is due for renewal.'
-    html_template = 'wl/emails/renew_licence_notification.html'
-    txt_template = 'wl/emails/renew_licence_notification.txt'
-
-
-def send_licence_renewal_email_notification(licence):
-    email = LicenceRenewalNotificationEmail()
-    url = 'http:' + hosts_reverse('wl_home')
-
-    context = {
-        'url': url,
-        'licence': licence
-    }
-
-    email.send(licence.profile.email, context=context)
 
 
 class UserNameChangeNotificationEmail(TemplateEmailBase):
@@ -239,7 +230,7 @@ class UserNameChangeNotificationEmail(TemplateEmailBase):
 def send_user_name_change_notification_email(licence):
     email = UserNameChangeNotificationEmail()
 
-    url = 'http:' + hosts_reverse('wl_applications:reissue_licence', args=(licence.pk,))
+    url = host_reverse('wl_applications:reissue_licence', args=(licence.pk,))
 
     context = {
         'licence': licence,
@@ -256,27 +247,39 @@ def _log_email(email_message, application, sender=None):
         fromm = smart_text(sender) if sender else smart_text(email_message.from_email)
         # the to email is normally a list
         if isinstance(email_message.to, list):
-            to = ';'.join(email_message.to)
+            to = ','.join(email_message.to)
         else:
             to = smart_text(email_message.to)
+        # we log the cc and bcc in the same cc field of the log entry as a ',' comma separated string
+        all_ccs = []
+        if email_message.cc:
+            all_ccs += list(email_message.cc)
+        if email_message.bcc:
+            all_ccs += list(email_message.bcc)
+        all_ccs = ','.join(all_ccs)
+
     else:
         text = smart_text(email_message)
         subject = ''
-        to = application.applicant_profile.user.email
+        to = application.applicant.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
+        all_ccs = ''
 
-    customer = application.applicant_profile.user
+    customer = application.applicant
 
-    officer = sender
+    staff = sender
 
     kwargs = {
         'subject': subject,
         'text': text,
         'application': application,
         'customer': customer,
-        'officer': officer,
+        'staff': staff,
         'to': to,
-        'fromm': fromm
+        'fromm': fromm,
+        'cc': all_ccs
     }
+
     email_entry = ApplicationLogEntry.objects.create(**kwargs)
+
     return email_entry

@@ -20,7 +20,7 @@
         "pk": 1,
         "fields": 
         {
-            "code_slug": "regulation-17",
+            "product_code": "regulation-17",
             "identification_required": true,
             "application_schema": 
             [
@@ -130,7 +130,7 @@
                         {
                             "type": "radiobuttons",
                             "label": "How is your project funded?",
-                            "name": "financial_basis",
+                            "name": "fund",
                             "options": 
                             [
                                 {
@@ -152,7 +152,7 @@
                                 [
                                     {
                                         "type": "text_area",
-                                        "label": "Grant Details",
+                                        "label": "Provide details of the grant or sponsorship, including name, address and contact details of the organisation funding the project",
                                         "name": "grant_details"
                                     }
                                 ],
@@ -160,7 +160,7 @@
                                 [
                                     {
                                         "type": "text_area",
-                                        "label": "Contract Details",
+                                        "label": "Provide details of the Client, including name, address and contact details",
                                         "name": "contract_details"
                                     }
                                 ],
@@ -168,7 +168,7 @@
                                 [
                                     {
                                         "type": "text_area",
-                                        "label": "Affiliated Organisation / Client / Sponsor",
+                                        "label": "Provide details of who is funding the project or how the project is being funded",
                                         "name": "financial_details_other"
                                     }
                                 ]
@@ -184,7 +184,7 @@
                     [
                         {
                             "type": "text",
-                            "label": "Provide relevant qualifications and/or experience details specific to this project (if not already provided in your profile)",
+                            "label": "Provide relevant qualifications and/or experience details specific to this project",
                             "name": "qualifications"
                         },
                         {
@@ -355,7 +355,7 @@
                         {
                             "type": "select",
                             "label": "Which of the following describes your project?",
-                            "name": "project_description",
+                            "name": "project",
                             "defaultBlank": true,
                             "options": 
                             [
@@ -1239,7 +1239,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Please Provide Details",
-                                                                                                "name": "survey_level_1_excavation_details"
+                                                                                                "name": "survey_level_1_other_hand_capture_techniques_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -1358,7 +1358,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Provide any other details relating to measurements and condition",
-                                                                                                "name": "survey_level_1_mophometric_other_details"
+                                                                                                "name": "survey_level_1_mophometric_measurements_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -1486,7 +1486,7 @@
                                                                                             {
                                                                                                 "type": "select",
                                                                                                 "label": "What marking will be done and why?",
-                                                                                                "name": "survey_level_1_marking",
+                                                                                                "name": "survey_level_1_marking_what_why",
                                                                                                 "options": 
                                                                                                 [
                                                                                                     {
@@ -2760,7 +2760,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Please Provide Details",
-                                                                                                "name": "survey_level_2_excavation_details"
+                                                                                                "name": "survey_level_2_other_hand_capture_techniques_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -2879,7 +2879,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Provide any other details relating to measurements and condition",
-                                                                                                "name": "survey_level_2_mophometric_other_details"
+                                                                                                "name": "survey_level_2_mophometric_measurements_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -3007,7 +3007,7 @@
                                                                                             {
                                                                                                 "type": "select",
                                                                                                 "label": "What marking will be done and why?",
-                                                                                                "name": "survey_level_2_marking",
+                                                                                                "name": "survey_level_2_marking_what_why",
                                                                                                 "options": 
                                                                                                 [
                                                                                                     {
@@ -3977,7 +3977,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Provide any other details relating to measurements and condition",
-                                                                                                "name": "survey_sre_mophometric_other_details"
+                                                                                                "name": "survey_sre_mophometric_measurements_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -4105,7 +4105,7 @@
                                                                                             {
                                                                                                 "type": "select",
                                                                                                 "label": "What marking will be done and why?",
-                                                                                                "name": "survey_sre_marking",
+                                                                                                "name": "survey_sre_marking_what_why",
                                                                                                 "options": 
                                                                                                 [
                                                                                                     {
@@ -4647,7 +4647,7 @@
                                                                                 {
                                                                                     "type": "text_area",
                                                                                     "label": "Provide any other details relating to measurements and condition",
-                                                                                    "name": "survey_subterranean_mophometric_other_details"
+                                                                                    "name": "survey_subterranean_mophometric_measurements_details"
                                                                                 }
                                                                             ]
                                                                         }
@@ -4775,7 +4775,7 @@
                                                                                 {
                                                                                     "type": "select",
                                                                                     "label": "What marking will be done and why?",
-                                                                                    "name": "survey_subterranean_marking",
+                                                                                    "name": "survey_subterranean_marking_what_why",
                                                                                     "options": 
                                                                                     [
                                                                                         {
@@ -5625,7 +5625,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Please Provide Details",
-                                                                                                "name": "survey_aquatic_excavation_details"
+                                                                                                "name": "survey_aquatic_other_hand_capture_techniques_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -5744,7 +5744,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Provide any other details relating to measurements and condition",
-                                                                                                "name": "survey_aquatic_mophometric_other_details"
+                                                                                                "name": "survey_aquatic_mophometric_measurements_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -5872,7 +5872,7 @@
                                                                                             {
                                                                                                 "type": "select",
                                                                                                 "label": "What marking will be done and why?",
-                                                                                                "name": "survey_aquatic_marking",
+                                                                                                "name": "survey_aquatic_marking_what_why",
                                                                                                 "options": 
                                                                                                 [
                                                                                                     {
@@ -6943,7 +6943,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Please Provide Details",
-                                                                                                "name": "survey_marine_excavation_details"
+                                                                                                "name": "survey_marine_other_hand_capture_techniques_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -7062,7 +7062,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Provide any other details relating to measurements and condition",
-                                                                                                "name": "survey_marine_mophometric_other_details"
+                                                                                                "name": "survey_marine_mophometric_measurements_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -7190,7 +7190,7 @@
                                                                                             {
                                                                                                 "type": "select",
                                                                                                 "label": "What marking will be done and why?",
-                                                                                                "name": "survey_marine_marking",
+                                                                                                "name": "survey_marine_marking_what_why",
                                                                                                 "options": 
                                                                                                 [
                                                                                                     {
@@ -8358,7 +8358,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Please Provide Details",
-                                                                                                "name": "survey_targeted_excavation_details"
+                                                                                                "name": "survey_targeted_other_hand_capture_techniques_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -8477,7 +8477,7 @@
                                                                                             {
                                                                                                 "type": "text_area",
                                                                                                 "label": "Provide any other details relating to measurements and condition",
-                                                                                                "name": "survey_targeted_mophometric_other_details"
+                                                                                                "name": "survey_targeted_mophometric_measurements_details"
                                                                                             }
                                                                                         ]
                                                                                     }
@@ -8605,7 +8605,7 @@
                                                                                             {
                                                                                                 "type": "select",
                                                                                                 "label": "What marking will be done and why?",
-                                                                                                "name": "survey_targeted_marking",
+                                                                                                "name": "survey_targeted_marking_what_why",
                                                                                                 "options": 
                                                                                                 [
                                                                                                     {
@@ -10608,7 +10608,7 @@
                                                                                 {
                                                                                     "type": "text_area",
                                                                                     "label": "Provide any other details relating to measurements and condition",
-                                                                                    "name": "monitoring_mophometric_other_details"
+                                                                                    "name": "monitoring_mophometric_measurements_details"
                                                                                 }
                                                                             ]
                                                                         }
@@ -10624,7 +10624,7 @@
                                                                                 {
                                                                                     "type": "label",
                                                                                     "label": "What samples will be taken?",
-                                                                                    "name": "monitoring_samples"
+                                                                                    "name": "monitoring_sampling_what"
                                                                                 },
                                                                                 {
                                                                                     "type": "checkbox",
@@ -10736,7 +10736,7 @@
                                                                                 {
                                                                                     "type": "select",
                                                                                     "label": "What marking will be done and why?",
-                                                                                    "name": "monitoring_marking",
+                                                                                    "name": "monitoring_marking_what_why",
                                                                                     "options": 
                                                                                     [
                                                                                         {
@@ -11499,7 +11499,7 @@
                                     {
                                         "type": "label",
                                         "label": "Survey should be selected if your study includes capture and release, for one or a few field sessions, and total project duration up to but not greater than 12 months.",
-                                        "name": "research_note_2"
+                                        "name": "research_note_3"
                                     },
                                     {
                                         "type": "radiobuttons",
@@ -12034,7 +12034,7 @@
                                                                     {
                                                                         "type": "text_area",
                                                                         "label": "Provide any other details relating to measurements and condition",
-                                                                        "name": "research_mophometric_other_details"
+                                                                        "name": "research_mophometric_measurements_details"
                                                                     }
                                                                 ]
                                                             }
@@ -12162,7 +12162,7 @@
                                                                     {
                                                                         "type": "select",
                                                                         "label": "What marking will be done and why?",
-                                                                        "name": "research_marking",
+                                                                        "name": "research_marking_what",
                                                                         "options": 
                                                                         [
                                                                             {

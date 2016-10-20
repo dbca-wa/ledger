@@ -5,16 +5,15 @@ from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.base import View, TemplateView
-from django.views.generic.edit import FormView
 
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Profile, Document, EmailUser
-from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm, DocumentForm
+from ledger.accounts.forms import AddressForm, ProfileForm, EmailUserForm
 
 from wildlifelicensing.apps.main.models import CommunicationsLogEntry,\
     WildlifeLicence
-from wildlifelicensing.apps.main.forms import IdentificationForm, CommunicationsLogEntryForm
+from wildlifelicensing.apps.main.forms import IdentificationForm, CommunicationsLogEntryForm, SeniorCardForm
 from wildlifelicensing.apps.main.mixins import CustomerRequiredMixin, OfficerRequiredMixin
 from wildlifelicensing.apps.main.signals import identification_uploaded
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
@@ -59,7 +58,7 @@ class CreateProfilesView(CustomerRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {'profile_form': ProfileForm(user=request.user),
-                                                    'address_form': AddressForm()})
+                                                    'address_form': AddressForm(user=request.user)})
 
     def post(self, request, *args, **kwargs):
         if request.user.pk != int(request.POST['user']):
@@ -85,8 +84,8 @@ class DeleteProfileView(CustomerRequiredMixin, TemplateView):
     template_name = 'wl/list_profiles.html'
     login_url = '/'
 
-    def get(self, request, id, *args, **kwargs):
-        profile = get_object_or_404(Profile, pk=id)
+    def get(self, request, *args, **kwargs):
+        profile = get_object_or_404(Profile, pk=args[0])
         profile.delete()
         messages.success(request, "The profile '%s' was deleted." % profile.name)
         return redirect('wl_main:list_profiles')
@@ -115,7 +114,8 @@ class EditProfilesView(CustomerRequiredMixin, TemplateView):
 
         if profile_form.is_valid() and address_form.is_valid():
             profile = profile_form.save()
-            address_form.save()
+            profile.postal_address = address_form.save()
+            profile.save()
         else:
             return render(request, self.template_name, {'profile_form': profile_form,
                                                         'address_form': address_form})
@@ -125,30 +125,49 @@ class EditProfilesView(CustomerRequiredMixin, TemplateView):
         return redirect('wl_main:list_profiles')
 
 
-class IdentificationView(LoginRequiredMixin, FormView):
+class IdentificationView(LoginRequiredMixin, TemplateView):
     template_name = 'wl/manage_identification.html'
     login_url = '/'
-    form_class = IdentificationForm
-    success_url = reverse_lazy('wl_main:identification')
-
-    def form_valid(self, form):
-        if self.request.user.identification is not None:
-            self.request.user.identification.delete()
-
-        self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
-        self.request.user.save()
-
-        identification_uploaded.send(sender=self.__class__, user=self.request.user)
-
-        return super(IdentificationView, self).form_valid(form)
 
     def get_context_data(self, **kwargs):
-        kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
-
-        if self.request.user.identification is not None:
+        if 'form_id' not in kwargs:
+            kwargs['form_id'] = IdentificationForm()
+        if self.request.user.identification:
             kwargs['existing_id_image_url'] = self.request.user.identification.file.url
 
+        if self.request.user.is_senior:
+            if 'form_senior' not in kwargs:
+                kwargs['form_senior'] = SeniorCardForm()
+            if self.request.user.senior_card:
+                kwargs['existing_senior_card_image_url'] = self.request.user.senior_card.file.url
+
+        if 'file_types' not in kwargs:
+            kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in IdentificationForm.VALID_FILE_TYPES])
         return super(IdentificationView, self).get_context_data(**kwargs)
+
+    def post(self, request, *args, **kwargs):
+        ctx = {}
+        if 'identification' in request.POST:
+            form = IdentificationForm(request.POST, files=request.FILES)
+            ctx['form_id'] = form
+            if form.is_valid():
+                previous_id = self.request.user.identification
+                self.request.user.identification = Document.objects.create(file=self.request.FILES['identification_file'])
+                self.request.user.save()
+                if bool(previous_id):
+                    previous_id.delete()
+                identification_uploaded.send(sender=self.__class__, request=self.request)
+        if 'senior_card' in request.POST:
+            form = SeniorCardForm(request.POST, files=request.FILES)
+            ctx['form_senior'] = form
+            if form.is_valid():
+                previous_senior_card = self.request.user.senior_card
+                self.request.user.senior_card = Document.objects.create(file=self.request.FILES['senior_card'])
+                self.request.user.save()
+                if bool(previous_senior_card):
+                    previous_senior_card.delete()
+        # back to the same page with an updated ctx with forms
+        return self.get(request, **ctx)
 
 
 class EditAccountView(CustomerRequiredMixin, TemplateView):
@@ -158,119 +177,21 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         emailuser = get_object_or_404(EmailUser, pk=request.user.id)
-        # get address source type
-        # residential_address_source_type = "added" if emailuser.residential_address else "removed"
-        # postal_address_source_type =  "removed" if not emailuser.postal_address else ("residential_address" if emailuser.postal_address == emailuser.residential_address else "added")
-        # billing_address_source_type =  "removed" if not emailuser.billing_address else ("residential_address" if emailuser.billing_address == emailuser.residential_address else ("postal_address" if emailuser.billing_address == emailuser.postal_address else "added"))
-
         # if user doesn't choose a identification, display a warning message
         if not emailuser.identification:
             messages.warning(request, "Please upload your identification.")
 
-        return render(request, self.template_name, {'emailuser_form': EmailUserForm(instance=emailuser),
-                                                    # 'residential_address_form': AddressForm(prefix="residential_address",instance=emailuser.residential_address),
-                                                    # 'postal_address_form': AddressForm(prefix="postal_address",instance=emailuser.postal_address),
-                                                    # 'billing_address_form': AddressForm(prefix="billing_address",instance=emailuser.billing_address),
-                                                    # 'residential_address_source_type':residential_address_source_type,
-                                                    # 'postal_address_source_type':postal_address_source_type,
-                                                    # 'billing_address_source_type':billing_address_source_type,
-                                                    })
+        return render(request, self.template_name, {'emailuser_form': EmailUserForm(instance=emailuser),})
 
     def post(self, request, *args, **kwargs):
-        # validate request
-        # residential_address_source_type = request.POST.get("residential_address-source_type")
-        # if not residential_address_source_type:
-        #    return HttpResponseBadRequest("Missing resiential address source type.")
-
-        # postal_address_source_type = request.POST.get("postal_address-source_type")
-        # if not postal_address_source_type:
-        #    return HttpResponseBadRequest("Missing postal address source type.")
-
-        # billing_address_source_type = request.POST.get("billing_address-source_type")
-        # if not billing_address_source_type:
-        #    return HttpResponseBadRequest("Missing billing address source type.")
-
         emailuser = get_object_or_404(EmailUser, pk=request.user.pk)
         # Save the original user data.
         original_first_name = emailuser.first_name
         original_last_name = emailuser.last_name
-        # original_identification = emailuser.identification
-
-        # original_residential_address_source_type = "added" if emailuser.residential_address else "removed"
-        # original_postal_address_source_type =  "removed" if not emailuser.postal_address else ("residential_address" if emailuser.postal_address == emailuser.residential_address else "added")
-        # original_billing_address_source_type =  "removed" if not emailuser.billing_address else ("residential_address" if emailuser.billing_address == emailuser.residential_address else ("postal_address" if emailuser.billing_address == emailuser.postal_address else "added"))
-
-        # original_residential_address = emailuser.residential_address
-        # original_postal_address =  emailuser.postal_address
-        # original_billing_address =  emailuser.billing_address
-
         emailuser_form = EmailUserForm(request.POST, instance=emailuser)
-
-        # populate address form to validate and save if required
-        # if residential_address_source_type == "added":
-        #    residential_address_form = AddressForm(request.POST,prefix="residential_address",instance=emailuser.residential_address)
-        # else:
-        #    residential_address_form = None
-
-        # if postal_address_source_type == "added":
-        #    if original_postal_address_source_type == "added":
-        #        postal_address_form = AddressForm(request.POST,prefix="postal_address",instance=emailuser.postal_address)
-        #    else:
-        #        postal_address_form = AddressForm(request.POST,prefix="postal_address")
-        # else:
-        #    postal_address_form = None
-
-        # if billing_address_source_type == "added":
-        #    if original_billing_address_source_type == "added":
-        #        billing_address_form = AddressForm(request.POST,prefix="billing_address",instance=emailuser.billing_address)
-        #    else:
-        #        billing_address_form = AddressForm(request.POST,prefix="billing_address")
-        # else:
-        #    billing_address_form = None
-
-        if (emailuser_form.is_valid()
-        #    and (not residential_address_form or  residential_address_form.is_valid())
-        #    and (not postal_address_form or postal_address_form.is_valid())
-        #    and (not billing_address_form or billing_address_form.is_valid())
-        ):
+        if emailuser_form.is_valid():
             emailuser = emailuser_form.save(commit=False)
             is_name_changed = any([original_first_name != emailuser.first_name, original_last_name != emailuser.last_name])
-
-            # save user address information.
-
-            # if residential_address_source_type == "added":
-            #    emailuser.residential_address = residential_address_form.save()
-            # else:
-            #    emailuser.residential_address = None
-
-            # if postal_address_source_type == "added":
-            #    emailuser.postal_address = postal_address_form.save()
-            # elif postal_address_source_type == "residential_address":
-            #    emailuser.postal_address = emailuser.residential_address
-            # else:
-            #    emailuser.postal_address = None
-
-            # if billing_address_source_type == "added":
-            #    emailuser.billing_address = billing_address_form.save()
-            # elif billing_address_source_type == "residential_address":
-            #    emailuser.billing_address = emailuser.residential_address
-            # elif billing_address_source_type == "postal_address":
-            #    emailuser.billing_address = emailuser.postal_address
-            # else:
-            #    emailuser.billing_address = None
-
-            # save user info
-            emailuser.save()
-
-            # remove old address if required.
-            # if residential_address_source_type == "removed" and original_residential_address:
-            #    original_residential_address.delete()
-
-            # if original_postal_address_source_type == "added" and postal_address_source_type != "added":
-            #    original_postal_address.delete()
-
-            # if original_billing_address_source_type == "added" and billing_address_source_type != "added":
-            #    original_billing_address.delete()
 
             # send signal if either first name or last name is changed
             if is_name_changed:
@@ -281,14 +202,7 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
             else:
                 messages.success(request, "User account was saved.")
 
-        return render(request, self.template_name, {'emailuser_form': emailuser_form,
-                                                    # 'residential_address_form': residential_address_form or AddressForm(prefix="residential_address"),
-                                                    # 'postal_address_form': postal_address_form or AddressForm(prefix="postal_address"),
-                                                    # 'billing_address_form': billing_address_form or AddressForm(prefix="billing_address"),
-                                                    # 'residential_address_source_type':residential_address_source_type,
-                                                    # 'postal_address_source_type':postal_address_source_type,
-                                                    # 'billing_address_source_type':billing_address_source_type,
-                                                    })
+        return render(request, self.template_name, {'emailuser_form': emailuser_form,})
 
 
 class ListDocumentView(CustomerRequiredMixin, TemplateView):
@@ -303,58 +217,6 @@ class ListDocumentView(CustomerRequiredMixin, TemplateView):
         return context
 
 
-class CreateDocumentView(CustomerRequiredMixin, TemplateView):
-    template_name = 'wl/create_document.html'
-    login_url = '/'
-
-    def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'document_form': DocumentForm()})
-
-    def post(self, request, *args, **kwargs):
-        user = get_object_or_404(EmailUser, pk=request.user.id)
-
-        document_form = DocumentForm(request.POST, request.FILES)
-
-        if document_form.is_valid():
-            document = document_form.save()
-            user.documents.add(document)
-            messages.success(request, "The document '%s' was created." % document.name)
-            return redirect('wl_main:list_documents')
-        else:
-            return render(request, self.template_name, {'document_form': document_form})
-
-
-class DeleteDocumentView(CustomerRequiredMixin, TemplateView):
-    template_name = 'wl/list_documents.html'
-    login_url = '/'
-
-    def get(self, request, id, *args, **kwargs):
-        document = get_object_or_404(Document, pk=id)
-        document.delete()
-        messages.success(request, "The document '%s' was deleted." % document.name)
-        return redirect('wl_main:list_documents')
-
-
-class EditDocumentView(CustomerRequiredMixin, TemplateView):
-    template_name = 'wl/edit_document.html'
-    login_url = '/'
-
-    def get(self, request, id, *args, **kwargs):
-        document = get_object_or_404(Document, pk=id)
-        return render(request, self.template_name, {'document_form': DocumentForm(instance=document)})
-
-    def post(self, request, id, *args, **kwargs):
-        document = get_object_or_404(Document, pk=id)
-        document_form = DocumentForm(request.POST, request.FILES, instance=document)
-
-        if document_form.is_valid():
-            document = document_form.save()
-            messages.success(request, "The document '%s' was edited." % document.name)
-            return redirect('wl_main:list_documents')
-        else:
-            return render(request, self.template_name, {'document_form': document_form})
-
-
 class LicenceRenewalPDFView(OfficerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         licence = get_object_or_404(WildlifeLicence, pk=self.args[0])
@@ -365,6 +227,9 @@ class LicenceRenewalPDFView(OfficerRequiredMixin, View):
 
         response.write(create_licence_renewal_pdf_bytes(filename, licence,
                                                         request.build_absolute_uri(reverse('home'))))
+
+        licence.renewal_sent = True
+        licence.save()
 
         return response
 
@@ -378,18 +243,28 @@ class BulkLicenceRenewalPDFView(OfficerRequiredMixin, View):
         filename = 'bulk-renewals.pdf'
         response = HttpResponse(content_type='application/pdf')
         response.write(bulk_licence_renewal_pdf_bytes(licences, request.build_absolute_uri(reverse('home'))))
+
+        if licences:
+            licences.update(renewal_sent=True)
+
         return response
 
 
 class CommunicationsLogListView(OfficerRequiredMixin, View):
+    serial_template = {
+        'exclude': ['communicationslogentry_ptr', 'customer', 'staff'],
+        'posthook': format_communications_log_entry
+    }
+
     def get(self, request, *args, **kwargs):
-        q = Q(officer=args[0]) | Q(customer=args[0])
+        q = Q(staff=args[0]) | Q(customer=args[0])
 
-        data = serialize(CommunicationsLogEntry.objects.filter(q).order_by('created'),
-                         posthook=format_communications_log_entry,
-                         exclude=['communicationslogentry_ptr', 'customer', 'officer']),
+        data = serialize(
+            CommunicationsLogEntry.objects.filter(q).order_by('created'),
+            **self.serial_template
+        )
 
-        return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
+        return JsonResponse({'data': data}, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class AddCommunicationsLogEntryView(OfficerRequiredMixin, View):
@@ -402,12 +277,10 @@ class AddCommunicationsLogEntryView(OfficerRequiredMixin, View):
             communications_log_entry = form.save(commit=False)
 
             communications_log_entry.customer = customer
-            communications_log_entry.officer = request.user
-
-            if request.FILES and 'attachment' in request.FILES:
-                communications_log_entry.document = Document.objects.create(file=request.FILES['attachment'])
-
+            communications_log_entry.staff = request.user
             communications_log_entry.save()
+            if request.FILES and 'attachment' in request.FILES:
+                communications_log_entry.documents.add(Document.objects.create(file=request.FILES['attachment']))
 
             return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
         else:

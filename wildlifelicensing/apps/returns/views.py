@@ -18,13 +18,12 @@ from ledger.accounts.models import Document
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType
 from wildlifelicensing.apps.main import excel
-from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm
+from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm, NilReturnForm, ReturnsLogEntryForm
 from wildlifelicensing.apps.returns.utils_schema import Schema, create_return_template_workbook
 from wildlifelicensing.apps.returns.utils import format_return
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -57,7 +56,7 @@ def _get_table_rows_from_post(table_name, post_data):
     by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if
                       key.startswith(table_namespace)])
     # by_column is of format {'col_header':[row1_val, row2_val,...],...}
-    num_rows = len(by_column.values()[0])
+    num_rows = len(list(by_column.values())[0])
     rows = []
     for row_num in range(num_rows):
         row_data = {}
@@ -89,6 +88,34 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
     template_name = 'wl/enter_return.html'
     login_url = '/'
 
+    def _set_submitted(self, ret):
+        ret.lodgement_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
+                                          str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
+
+        ret.lodgement_date = date.today()
+
+        if is_officer(self.request.user):
+            ret.proxy_customer = self.request.user
+
+        ret.status = 'submitted'
+        ret.save()
+
+        message = 'Return successfully submitted.'
+
+        # update next return in line's status to become the new current return
+        next_ret = Return.objects.filter(licence=ret.licence, status='future').order_by('due_date').first()
+
+        if next_ret is not None:
+            next_ret.status = 'current'
+            next_ret.save()
+
+            message += ' The next return for this licence can now be entered and is due on {}.'. \
+                format(next_ret.due_date.strftime(DATE_FORMAT))
+
+        return_submitted.send(sender=self.__class__, ret=ret)
+
+        messages.success(self.request, message)
+
     def get_context_data(self, **kwargs):
         ret = get_object_or_404(Return, pk=self.args[0])
 
@@ -114,6 +141,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
             kwargs['tables'].append(table)
 
         kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
+        kwargs['nil_return_form'] = NilReturnForm()
 
         return super(EnterReturnView, self).get_context_data(**kwargs)
 
@@ -166,39 +194,21 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
                 _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
-                ret.lodgement_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
-                                                  str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
-
-                ret.lodgement_date = date.today()
-
-                if is_officer(request.user):
-                    ret.proxy_customer = request.user
-
-                ret.status = 'submitted'
-                ret.save()
-
-                message = 'Return successfully submitted.'
-
-                # update next return in line's status to become the new current return
-                next_ret = Return.objects.filter(licence=ret.licence, status='future').order_by('due_date').first()
-
-                if next_ret is not None:
-                    next_ret.status = 'current'
-                    next_ret.save()
-
-                    message += ' The next return for this licence can now be entered and is due on {}.'.\
-                        format(next_ret.due_date.strftime(DATE_FORMAT))
-
-                return_submitted.send(sender=self.__class__, ret=ret)
-
-                messages.success(request, message)
-
+                self._set_submitted(ret)
                 return redirect('home')
             else:
                 for table in context['tables']:
                     table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
                     if len(table['data']) == 0:
-                        messages.warning(request, "You must enter data for {}".format(table.get('name')))
+                        messages.warning(request,
+                                         "You must enter data for {} or submit a Nil Return".format(table.get('name')))
+        elif 'nil' in request.POST:
+            form = NilReturnForm(request.POST)
+            if form.is_valid():
+                ret.nil_return = True
+                ret.comments = form.cleaned_data['comments']
+                self._set_submitted(ret)
+                return redirect('home')
 
         return render(request, self.template_name, context)
 
@@ -237,7 +247,9 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
         else:
             to = ret.proxy_customer
 
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to.get_full_name(), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ReturnsLogEntryForm(to=to.get_full_name(),
+                                                       fromm=self.request.user.get_full_name(),
+                                                       )
 
         return super(CurateReturnView, self).get_context_data(**kwargs)
 
@@ -308,22 +320,16 @@ class ReturnLogListView(OfficerRequiredMixin, View):
 
 class AddReturnLogEntryView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        form = CommunicationsLogEntryForm(data=request.POST, files=request.FILES)
+        form = ReturnsLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
             ret = get_object_or_404(Return, pk=args[0])
 
             customer = ret.licence.holder
 
-            officer = request.user
-
-            document = None
-
-            if request.FILES and 'attachment' in request.FILES:
-                document = Document.objects.create(file=request.FILES['attachment'])
+            staff = request.user
 
             kwargs = {
-                'document': document,
-                'officer': officer,
+                'staff': staff,
                 'customer': customer,
                 'ret': ret,
                 'type': form.cleaned_data['type'],
@@ -332,8 +338,10 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                 'to': form.cleaned_data['to'],
                 'fromm': form.cleaned_data['fromm']
             }
-
-            ReturnLogEntry.objects.create(**kwargs)
+            entry = ReturnLogEntry.objects.create(**kwargs)
+            if request.FILES and 'attachment' in request.FILES:
+                document = Document.objects.create(file=request.FILES['attachment'])
+                entry.documents.add(document)
 
             return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
         else:
@@ -351,14 +359,10 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
 
 
 class DownloadReturnTemplate(OfficerOrCustomerRequiredMixin, View):
-
     def get(self, request, *args, **kwargs):
         return_type = get_object_or_404(ReturnType, pk=args[0])
         filename = 'Return_{}_template.xlsx'.format(return_type.licence_type.code)
-        template = return_type.template
-        # if no template in db generates one from the data_descriptor
-        if bool(template):
-            return excel.ExcelFileResponse(template.file, filename)
-        else:
-            wb = create_return_template_workbook(return_type)
-            return excel.WorkbookResponse(wb, filename)
+
+        wb = create_return_template_workbook(return_type)
+
+        return excel.WorkbookResponse(wb, filename)

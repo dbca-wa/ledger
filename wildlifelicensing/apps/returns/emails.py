@@ -1,6 +1,6 @@
 import logging
 
-from django_hosts import reverse as hosts_reverse
+from django.core.urlresolvers import reverse
 
 from wildlifelicensing.apps.emails.emails import TemplateEmailBase
 
@@ -15,7 +15,7 @@ class ReturnOverdueNotificationEmail(TemplateEmailBase):
 
 def send_return_overdue_email_notification(ret):
     email = ReturnOverdueNotificationEmail()
-    url = 'http:' + hosts_reverse('wl_returns:enter_return', args=(ret.pk,))
+    url = 'http:' + reverse('wl_returns:enter_return', args=(ret.pk,))
 
     context = {
         'url': url,

@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.context_processors import csrf
 from django.contrib import messages
 from django.http import JsonResponse
@@ -8,22 +10,24 @@ from django.utils import formats
 from reversion import revisions
 from preserialize.serialize import serialize
 
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, Document
 
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
-from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_name
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment
-from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment, ApplicationUserAction
+from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm, \
+    ApplicationLogEntryForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
     send_id_update_request_email, send_returns_request_email, send_assessment_reminder_email
 from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
 
+from wildlifelicensing.apps.payments import utils as payment_utils
+
 from wildlifelicensing.apps.applications.utils import PROCESSING_STATUSES, ID_CHECK_STATUSES, RETURNS_CHECK_STATUSES, \
-    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, \
-    format_amendment_request, format_assessment
+    CHARACTER_CHECK_STATUSES, REVIEW_STATUSES, convert_documents_to_url, format_application, get_log_entry_to, \
+    format_amendment_request, format_assessment, append_app_document_to_schema_data
 
 
 class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
@@ -39,12 +43,22 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         ass_groups = [{'id': ass_group.id, 'text': ass_group.name} for ass_group in
                       AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups])]
 
+        # extract and format the previous lodgements of the application
         previous_lodgements = []
         for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
                 '-revision__date_created'):
             previous_lodgement = revision.object_version.object
-            convert_documents_to_url(previous_lodgement.licence_type.application_schema, previous_lodgement.data,
-                                     previous_lodgement.documents.all())
+
+            if previous_lodgement.hard_copy is not None:
+                previous_lodgement.licence_type.application_schema, previous_lodgement.data = \
+                    append_app_document_to_schema_data(previous_lodgement.licence_type.application_schema,
+                                                       previous_lodgement.data,
+                                                       previous_lodgement.hard_copy.file.url)
+
+            # reversion won't reference the previous many-to-many sets, only the latest one, so need to get documents as per below
+            previous_lodgement_documents = Document.objects.filter(pk__in=revision.field_dict['documents'])
+
+            convert_documents_to_url(previous_lodgement.data, previous_lodgement_documents, '')
             previous_lodgements.append({'lodgement_number': '{}-{}'.format(previous_lodgement.lodgement_number,
                                                                            previous_lodgement.lodgement_sequence),
                                         'date': formats.date_format(revision.revision.date_created, 'd/m/Y', True),
@@ -52,10 +66,16 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         previous_application_returns_outstanding = False
         if application.previous_application is not None:
-            previous_application_returns_outstanding = Return.objects.filter(licence=application.previous_application.licence).\
+            previous_application_returns_outstanding = Return.objects.filter(
+                licence=application.previous_application.licence). \
                 exclude(status='accepted').exclude(status='submitted').exists()
 
-        convert_documents_to_url(application.licence_type.application_schema, application.data, application.documents.all())
+        if application.hard_copy is not None:
+            application.licence_type.application_schema, application.data = \
+                append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
+                                                   application.hard_copy.file.url)
+
+        convert_documents_to_url(application.data, application.documents.all(), '')
 
         data = {
             'user': serialize(request.user),
@@ -69,6 +89,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                                      posthook=format_assessment),
             'previous_versions': serialize(previous_lodgements),
             'returns_outstanding': previous_application_returns_outstanding,
+            'payment_status': payment_utils.PAYMENT_STATUSES.get(payment_utils.
+                                                                 get_application_payment_status(application)),
             'csrf_token': str(csrf(request).get('csrf_token'))
         }
 
@@ -82,12 +104,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         kwargs['returns_request_form'] = ReturnsRequestForm(application=application, officer=self.request.user)
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, officer=self.request.user)
 
-        if application.proxy_applicant is None:
-            to = application.applicant_profile.user.get_full_name()
-        else:
-            to = application.proxy_applicant.get_full_name()
-
-        kwargs['log_entry_form'] = CommunicationsLogEntryForm(to=to, fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
         return super(ProcessView, self).get_context_data(**kwargs)
 
@@ -102,6 +119,10 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         elif 'decline' in request.POST:
             application.processing_status = 'declined'
             application.save()
+            application.log_user_action(
+                ApplicationUserAction.ACTION_DECLINE_APPLICATION,
+                request
+            )
 
             messages.warning(request, 'The application was declined.')
 
@@ -123,24 +144,41 @@ class AssignOfficerView(OfficerRequiredMixin, View):
         application.save()
 
         if application.assigned_officer is not None:
-            assigned_officer = {'id': application.assigned_officer.id, 'text': '%s %s' %
-                                (application.assigned_officer.first_name, application.assigned_officer.last_name)}
+            name = render_user_name(application.assigned_officer)
+            assigned_officer = {'id': application.assigned_officer.id, 'text': name}
+            application.log_user_action(
+                ApplicationUserAction.ACTION_ASSIGN_TO_.format(name),
+                request)
         else:
             assigned_officer = {'id': 0, 'text': 'Unassigned'}
+            application.log_user_action(
+                ApplicationUserAction.ACTION_UNASSIGN,
+                request)
 
         return JsonResponse({'assigned_officer': assigned_officer,
-                            'processing_status': PROCESSING_STATUSES[application.processing_status]},
+                             'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class SetIDCheckStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
+        previous_status = application.id_check_status
         application.id_check_status = request.POST['status']
 
         application.customer_status = determine_customer_status(application)
         application.processing_status = determine_processing_status(application)
         application.save()
+
+        if application.id_check_status != previous_status:
+            # log action
+            status = application.id_check_status
+            user_action = "ID check:" + status  # default action
+            if status == 'accepted':
+                user_action = ApplicationUserAction.ACTION_ACCEPT_ID
+            elif status == 'not_checked':
+                user_action = ApplicationUserAction.ACTION_RESET_ID
+            application.log_user_action(user_action, request)
 
         return JsonResponse({'id_check_status': ID_CHECK_STATUSES[application.id_check_status],
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
@@ -158,6 +196,7 @@ class IDRequestView(OfficerRequiredMixin, View):
             application.customer_status = determine_customer_status(application)
             application.processing_status = determine_processing_status(application)
             application.save()
+            application.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE, request)
             send_id_update_request_email(id_request, request)
 
             response = {'id_check_status': ID_CHECK_STATUSES[application.id_check_status],
@@ -206,10 +245,21 @@ class SetReturnsCheckStatusView(OfficerRequiredMixin, View):
 class SetCharacterCheckStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
+        previous_status = application.character_check_status
         application.character_check_status = request.POST['status']
 
         application.processing_status = determine_processing_status(application)
         application.save()
+
+        if application.character_check_status != previous_status:
+            # log action
+            status = application.character_check_status
+            user_action = "Character check:" + status  # default action
+            if status == 'accepted':
+                user_action = ApplicationUserAction.ACTION_ACCEPT_CHARACTER
+            elif status == 'not_checked':
+                user_action = ApplicationUserAction.ACTION_RESET_CHARACTER
+            application.log_user_action(user_action, request)
 
         return JsonResponse({'character_check_status': CHARACTER_CHECK_STATUSES[application.character_check_status],
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
@@ -219,11 +269,22 @@ class SetCharacterCheckStatusView(OfficerRequiredMixin, View):
 class SetReviewStatusView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
+        previous_status = application.review_status
         application.review_status = request.POST['status']
 
         application.customer_status = determine_customer_status(application)
         application.processing_status = determine_processing_status(application)
         application.save()
+
+        if application.review_status != previous_status:
+            # log action
+            status = application.review_status
+            user_action = "Character check:" + status  # default action
+            if status == 'accepted':
+                user_action = ApplicationUserAction.ACTION_ACCEPT_REVIEW
+            elif status == 'not_reviewed':
+                user_action = ApplicationUserAction.ACTION_RESET_REVIEW
+            application.log_user_action(user_action, request)
 
         response = {'review_status': REVIEW_STATUSES[application.review_status],
                     'processing_status': PROCESSING_STATUSES[application.processing_status]}
@@ -242,7 +303,7 @@ class AmendmentRequestView(OfficerRequiredMixin, View):
             application.customer_status = determine_customer_status(application)
             application.processing_status = determine_processing_status(application)
             application.save()
-
+            application.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS, request)
             send_amendment_requested_email(amendment_request, request=request)
 
             response = {'review_status': REVIEW_STATUSES[application.review_status],
@@ -259,13 +320,24 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         ass_group = get_object_or_404(AssessorGroup, pk=request.POST['assGroupID'])
-        assessment = Assessment.objects.create(application=application, assessor_group=ass_group,
-                                               status=request.POST['status'])
+        assessment = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)[0]
+
+        assessment.status = 'awaiting_assessment'
+
+        assessment.save()
 
         application.processing_status = determine_processing_status(application)
         application.save()
+        application.log_user_action(
+            ApplicationUserAction.ACTION_SEND_FOR_ASSESSMENT_TO_.format(ass_group),
+            request)
 
         send_assessment_requested_email(assessment, request)
+
+        # need to only set and save this after the email was sent in case the email fails whereby it should remain null
+        assessment.date_last_reminded = date.today()
+
+        assessment.save()
 
         return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment),
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
@@ -276,7 +348,16 @@ class RemindAssessmentView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=request.POST['assessmentID'])
 
+        assessment.application.log_user_action(
+            ApplicationUserAction.ACTION_SEND_ASSESSMENT_REMINDER_TO_.format(assessment.assessor_group),
+            request
+        )
+
         send_assessment_reminder_email(assessment, request)
+
+        assessment.date_last_reminded = date.today()
+
+        assessment.save()
 
         return JsonResponse('ok', safe=False, encoder=WildlifeLicensingJSONEncoder)
 

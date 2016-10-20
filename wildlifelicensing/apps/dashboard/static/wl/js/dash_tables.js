@@ -288,6 +288,29 @@ define(
             }
         }
 
+        function showTable(table) {
+            if (table === 'applications') {
+                $(options.selectors.applicationsAccordion).collapse('show');
+                $(options.selectors.licencesAccordion).collapse('hide');
+                $(options.selectors.returnsAccordion).collapse('hide');
+            } else if (table === 'licences') {
+                $(options.selectors.applicationsAccordion).collapse('hide');
+                $(options.selectors.licencesAccordion).collapse('show');
+                $(options.selectors.returnsAccordion).collapse('hide');
+            } else if (table === 'returns') {
+                $(options.selectors.applicationsAccordion).collapse('hide');
+                $(options.selectors.licencesAccordion).collapse('hide');
+                $(options.selectors.returnsAccordion).collapse('show');
+            } else if (table === 'none') {
+                $(options.selectors.applicationsAccordion).collapse('hide');
+                $(options.selectors.licencesAccordion).collapse('hide');
+                $(options.selectors.returnsAccordion).collapse('hide');
+            } else {
+                $(options.selectors.applicationsAccordion).collapse('show');
+                $(options.selectors.licencesAccordion).collapse('show');
+                $(options.selectors.returnsAccordion).collapse('show');
+            }
+        }
 
         /**
          *
@@ -360,7 +383,8 @@ define(
                 $returnsLicenceTypeFilter = $(options.selectors.returnsLicenceTypeFilter);
                 $returnsStatusTypeFilter = $(options.selectors.returnsStatusFilter);
 
-                $(options.selectors.applicationsAccordion).collapse('show');
+                // show a specific table?
+                showTable(_.get(options, 'data.query.show', 'all'));
 
                 // filters need to be set before the tables
                 initFilters();
@@ -372,6 +396,8 @@ define(
 
                 // apply the bootstrap select2 to the filters.
                 $(options.selectors.applicationsFilterForm + ' select').select2();
+                $(options.selectors.licencesFilterForm + ' select').select2();
+                $(options.selectors.returnsFilterForm + ' select').select2();
             });
         };
     }

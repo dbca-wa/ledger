@@ -2,7 +2,8 @@ from django import forms
 
 from ledger.accounts.models import Profile
 
-from wildlifelicensing.apps.applications.models import IDRequest, ReturnsRequest, AmendmentRequest
+from wildlifelicensing.apps.applications.models import IDRequest, ReturnsRequest, AmendmentRequest, ApplicationLogEntry
+from wildlifelicensing.apps.main.forms import CommunicationsLogEntryForm
 
 
 class ProfileSelectionForm(forms.Form):
@@ -17,12 +18,12 @@ class ProfileSelectionForm(forms.Form):
 
         super(ProfileSelectionForm, self).__init__(*args, **kwargs)
 
-        self.fields['profile'].queryset = user.profile_set.all()
+        self.fields['profile'].queryset = user.profiles.all()
 
         if selected_profile is not None:
             self.fields['profile'].initial = selected_profile
         else:
-            self.fields['profile'].initial = user.profile_set.first()
+            self.fields['profile'].initial = user.profiles.first()
 
 
 class IDRequestForm(forms.ModelForm):
@@ -80,3 +81,9 @@ class AmendmentRequestForm(forms.ModelForm):
 
         if officer is not None:
             self.fields['officer'].initial = officer
+
+
+class ApplicationLogEntryForm(CommunicationsLogEntryForm):
+    class Meta:
+        model = ApplicationLogEntry
+        fields = ['to', 'fromm', 'type', 'subject', 'text', 'attachment']

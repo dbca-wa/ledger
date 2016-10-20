@@ -1,16 +1,26 @@
 {% extends 'wl/emails/base_email.txt' %}
 
+{% block greetings %}
+Dear {{ licence.holder.get_full_name }}
+{% endblock %}
+
 {% block content %}
-    Congratulations, your Wildlife Licensing application has been approved and the corresponding licence has been issued.
-    Your licence is attached. Please read it carefully.
+    {{ licence.get_title_with_variants }}
+    Please find the licence attached.
+    Please ensure that all the licence conditions are complied with, including the forwarding of a return at the end of the licence period.
+    {{ licence.cover_letter_message }}
+    If you have any queries, please contact the Wildlife Licensing section on 9219 9831.
+{% endblock %}
 
-    {% comment 'Removed link to online system for beta' %}
-    {% if url %}
-        You also can access it from your Wildlife Licensing dashboard by copying and pasting the following link in your browser:
-        {{ url }}
-        Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.
-    {% endif %}
-    {% endcomment %}
+{% block signature %}
+Yours sincerely
 
-    {{ cover_letter_message }}
+
+
+from Jim Sharp
+
+DIRECTOR GENERAL
+
+{% now 'd/m/Y' %}
+
 {% endblock %}

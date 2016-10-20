@@ -1,9 +1,11 @@
-import os
 import json
+import os
 from datetime import datetime
 
+from django.utils import six
 from django import forms
 from django.contrib.postgres.forms import JSONField
+from django.forms.widgets import SelectMultiple
 
 from dateutil.relativedelta import relativedelta
 
@@ -25,7 +27,7 @@ class BetterJSONField(JSONField):
     def prepare_value(self, value):
         if value is None:
             return ""
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             # already a string
             return value
         else:
@@ -49,11 +51,41 @@ class IdentificationForm(forms.Form):
         return id_file
 
 
+class SeniorCardForm(forms.Form):
+    VALID_FILE_TYPES = IdentificationForm.VALID_FILE_TYPES
+
+    senior_card = forms.FileField(label='Senior Card',
+                                  help_text='A scan or a photo or your Senior Card')
+
+    def clean_identification_file(self):
+        id_file = self.cleaned_data.get('senior_card')
+
+        ext = os.path.splitext(str(id_file))[1][1:]
+
+        if ext not in self.VALID_FILE_TYPES:
+            raise forms.ValidationError('Uploaded image must be of file type: %s' % ', '.join(self.VALID_FILE_TYPES))
+
+        return id_file
+
+
 class IssueLicenceForm(forms.ModelForm):
+    ccs = forms.CharField(required=False, label='CCs',
+                          help_text="A comma separated list of email addresses you want the licence email to be CC'ed")
+
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'purpose', 'locations',
-                  'cover_letter_message']
+        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose',
+                  'locations',
+                  'additional_information', 'cover_letter_message']
+        widgets = {
+            'regions': SelectMultiple(
+                attrs={"class": "hidden"}
+            ),
+            'purpose': forms.Textarea(attrs={'cols': '40', 'rows': '8'}),
+            'locations': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
+            'additional_information': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
+            'cover_letter_message': forms.Textarea(attrs={'cols': '40', 'rows': '5'}),
+        }
 
     def __init__(self, *args, **kwargs):
         purpose = kwargs.pop('purpose', None)
@@ -62,14 +94,21 @@ class IssueLicenceForm(forms.ModelForm):
 
         return_frequency = kwargs.pop('return_frequency', WildlifeLicence.DEFAULT_FREQUENCY)
 
+        skip_required = kwargs.pop('skip_required', False)
+
         super(IssueLicenceForm, self).__init__(*args, **kwargs)
+
+        if skip_required:
+            for field in self.fields.values():
+                field.required = False
 
         if purpose is not None:
             self.fields['purpose'].initial = purpose
 
         self.fields['is_renewable'].widget = forms.CheckboxInput()
 
-        if 'instance' not in kwargs:
+        # if a licence instance has not been passed in nor any POST data (i.e. this is creating the 'get' version of the form)
+        if 'instance' not in kwargs and len(args) == 0:
             today_date = datetime.now()
             self.fields['issue_date'].initial = today_date.strftime(DATE_FORMAT)
             self.fields['start_date'].initial = today_date.strftime(DATE_FORMAT)
@@ -90,11 +129,12 @@ class CommunicationsLogEntryForm(forms.ModelForm):
 
     class Meta:
         model = CommunicationsLogEntry
-        fields = ['to', 'fromm', 'type', 'subject', 'text', 'attachment']
+        fields = ['reference', 'to', 'fromm', 'type', 'subject', 'text', 'attachment']
 
     def __init__(self, *args, **kwargs):
         to = kwargs.pop('to', None)
         fromm = kwargs.pop('fromm', None)
+        reference = kwargs.pop('reference', None)
 
         super(CommunicationsLogEntryForm, self).__init__(*args, **kwargs)
 
@@ -103,3 +143,6 @@ class CommunicationsLogEntryForm(forms.ModelForm):
 
         if fromm is not None:
             self.fields['fromm'].initial = fromm
+
+        if reference is not None:
+            self.fields['reference'].initial = reference

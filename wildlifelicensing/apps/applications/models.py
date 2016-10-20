@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.db.models.signals import pre_delete
@@ -7,12 +8,14 @@ from django.dispatch import receiver
 
 from ledger.accounts.models import EmailUser, Profile, Document, RevisionedMixin
 from wildlifelicensing.apps.main.models import WildlifeLicence, WildlifeLicenceType, Condition, \
-    CommunicationsLogEntry, AssessorGroup
+    CommunicationsLogEntry, AssessorGroup, Variant, UserAction
 
 
+@python_2_unicode_compatible
 class Application(RevisionedMixin):
-    CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'), ('under_review', 'Under Review'),
-                               ('id_required', 'Identification Required'), ('returns_required', 'Returns Completion Required'),
+    CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('under_review', 'Under Review'),
+                               ('id_required', 'Identification Required'),
+                               ('returns_required', 'Returns Completion Required'),
                                ('amendment_required', 'Amendment Required'),
                                ('id_and_amendment_required', 'Identification/Amendments Required'),
                                ('id_and_returns_required', 'Identification/Returns Required'),
@@ -21,16 +24,19 @@ class Application(RevisionedMixin):
                                ('approved', 'Approved'), ('declined', 'Declined'))
 
     # List of statuses from above that allow a customer to edit an application.
-    CUSTOMER_EDITABLE_STATE = ['draft', 'amendment_required', 'id_and_amendment_required', 'returns_and_amendment_required',
+    CUSTOMER_EDITABLE_STATE = ['temp', 'draft', 'amendment_required', 'id_and_amendment_required',
+                               'returns_and_amendment_required',
                                'id_and_returns_and_amendment_required']
 
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved']
 
-    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'), ('ready_for_action', 'Ready for Action'),
+    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'),
+                                 ('licence_amendment', 'Licence Amendment'), ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
-                                 ('awaiting_responses', 'Awaiting Responses'), ('ready_for_conditions', 'Ready for Conditions'),
+                                 ('awaiting_responses', 'Awaiting Responses'),
+                                 ('ready_for_conditions', 'Ready for Conditions'),
                                  ('ready_to_issue', 'Ready to Issue'), ('issued', 'Issued'), ('declined', 'Declined'))
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
@@ -47,15 +53,17 @@ class Application(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
-    licence_type = models.ForeignKey(WildlifeLicenceType)
+    licence_type = models.ForeignKey(WildlifeLicenceType, blank=True, null=True)
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
-    data = JSONField()
+    data = JSONField(blank=True, null=True)
     documents = models.ManyToManyField(Document)
     hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
     correctness_disclaimer = models.BooleanField(default=False)
     further_information_disclaimer = models.BooleanField(default=False)
-    applicant_profile = models.ForeignKey(Profile)
+
+    applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='applicant')
+    applicant_profile = models.ForeignKey(Profile, blank=True, null=True)
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
@@ -81,10 +89,26 @@ class Application(RevisionedMixin):
     licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    is_licence_amendment = models.BooleanField(default=False)
+
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    variants = models.ManyToManyField(Variant, blank=True, through='ApplicationVariantLink')
+
+    def __str__(self):
+        return self.reference
+
+    @property
+    def reference(self):
+        return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 
     @property
     def is_assigned(self):
         return self.assigned_officer is not None
+
+    @property
+    def is_temporary(self):
+        return self.customer_status == 'temp' and self.processing_status == 'temp'
 
     @property
     def can_user_edit(self):
@@ -100,9 +124,30 @@ class Application(RevisionedMixin):
         """
         return self.customer_status in self.CUSTOMER_VIEWABLE_STATE
 
+    @property
+    def is_senior_offer_applicable(self):
+        return self.licence_type.senior_applicable and \
+               self.applicant.is_senior and \
+               bool(self.applicant.senior_card)
+
+    def log_user_action(self, action, request):
+        return ApplicationUserAction.log_action(self, action, request.user)
+
+
+class ApplicationVariantLink(models.Model):
+    application = models.ForeignKey(Application)
+    variant = models.ForeignKey(Variant)
+    order = models.IntegerField()
+
 
 class ApplicationLogEntry(CommunicationsLogEntry):
     application = models.ForeignKey(Application)
+
+    def save(self, **kwargs):
+        # save the application reference if the reference not provided
+        if not self.reference:
+            self.reference = self.application.reference
+        super(ApplicationLogEntry, self).save(**kwargs)
 
 
 class ApplicationRequest(models.Model):
@@ -141,6 +186,7 @@ class Assessment(ApplicationRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
     assessor_group = models.ForeignKey(AssessorGroup)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
+    date_last_reminded = models.DateField(null=True, blank=True)
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
@@ -165,6 +211,41 @@ class AssessmentCondition(models.Model):
 
     class Meta:
         unique_together = ('condition', 'assessment', 'order')
+
+
+class ApplicationUserAction(UserAction):
+    ACTION_CREATE_CUSTOMER_ = "Create customer {}"
+    ACTION_CREATE_PROFILE_ = "Create profile {}"
+    ACTION_LODGE_APPLICATION = "Lodge application {}"
+    ACTION_ASSIGN_TO_ = "Assign to {}"
+    ACTION_UNASSIGN = "Unassign"
+    ACTION_ACCEPT_ID = "Accept ID"
+    ACTION_RESET_ID = "Reset ID"
+    ACTION_ID_REQUEST_UPDATE = 'Request ID update'
+    ACTION_ACCEPT_CHARACTER = 'Accept character'
+    ACTION_RESET_CHARACTER = "Reset character"
+    ACTION_ACCEPT_REVIEW = 'Accept review'
+    ACTION_RESET_REVIEW = "Reset review"
+    ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
+    ACTION_SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
+    ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
+    ACTION_DECLINE_APPLICATION = "Decline application"
+    ACTION_ENTER_CONDITIONS = "Enter Conditions"
+    ACTION_CREATE_CONDITION_ = "Create condition {}"
+    ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
+    # Assessors
+    ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
+    ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
+
+    @classmethod
+    def log_action(cls, application, action, user):
+        return cls.objects.create(
+            application=application,
+            who=user,
+            what=str(action)
+        )
+
+    application = models.ForeignKey(Application)
 
 
 @receiver(pre_delete, sender=Application)

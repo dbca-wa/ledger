@@ -7,7 +7,7 @@ from ledger.licence.models import LicenceType, Licence
 
 @admin.register(LicenceType)
 class LicenceTypeAdmin(VersionAdmin):
-    list_display = ('name', 'code')
+    list_display = ('name', 'display_name', 'code')
 
 
 @admin.register(Licence)

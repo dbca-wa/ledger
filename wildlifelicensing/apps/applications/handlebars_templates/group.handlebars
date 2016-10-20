@@ -1,22 +1,25 @@
 <div class="top-buffer bottom-buffer">
-    <h4>{{label}}</h4>
+    <h4 class="inline">{{label}}</h4>
     {{#unless isRemovable}}
         {{#if help_text}}
-            <p id="description_{{name}}" >{{help_text}}</p>
+            <p id="description_{{name}}" >{{{help_text}}}</p>
         {{/if}}
     {{/unless}}
     <div class="panel panel-default">
         <div class="panel-body">
-            <div class="children-anchor-point" style="padding-left: 0px">
+            <a class="collapse-link-top pull-right"><span class="glyphicon glyphicon-chevron-down"></a>
+            <div class="children-anchor-point collapse in" style="padding-left: 0px">
             </div>
             {{#unless isPreviewMode }}
                 {{#if isRepeatable }}
                     <a id="copy_{{name}}">Copy {{label}}</a>
                 {{/if}}
-                <div class="pull-right">
-                    <a id="remove_{{name}}" class="{{#unless isRemovable}}hidden{{/unless}}">Remove</a>
-                </div>
+                <span class="{{#unless isRemovable}}hidden{{/unless}}">
+                    <span class="margin-left margin-right">|</span>
+                    <a id="remove_{{name}}" ">Remove {{label}}</a>
+                </span>
             {{/unless}}
+            <a class="collapse-link-bottom pull-right"><span class="glyphicon glyphicon-chevron-up"></a>
         </div>
     </div>
 </div>

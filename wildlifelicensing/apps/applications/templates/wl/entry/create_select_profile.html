@@ -10,17 +10,24 @@
     <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
 {% endblock %}
 
+{% block requirements %}
+    require(['js/entry/navigation'], function(navigation) {
+        navigation.setupNavigateAway('Warning: any information entered into the form '+
+                                     'will be lost if not saved as draft.');
+    });
+{% endblock %}
+
 {% block breadcrumbs %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if not application_pk %}
+                    {% if application.is_temporary %}
+                        {% if request.user|is_officer %}
+                            <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
+                        {% endif %}
                         <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
-                    {% endif %}
-                    {% if request.user|is_officer %}
-                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
                     {% endif %}
                     <li class="active">{% if profile_selection_form %}Select{% else %}Create{% endif %} Profile</li>
                 </ol>

@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
 import os
+import zlib
 
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import JSONField
-from django.db import models
+from django.db import models, IntegrityError
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
@@ -16,10 +17,10 @@ from django_countries.fields import CountryField
 
 from social.apps.django_app.default.models import UserSocialAuth
 
-from datetime import datetime
+from datetime import datetime, date
 
 from ledger.accounts.signals import name_changed, post_clean
-
+from ledger.address.models import UserAddress, Country
 
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
@@ -133,12 +134,16 @@ class Address(models.Model):
     postcode = models.CharField(max_length=10)
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
+    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
+    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    hash = models.CharField(max_length=255, db_index=True, editable=False)
 
     def __str__(self):
         return self.summary
 
     class Meta:
         verbose_name_plural = 'addresses'
+        unique_together = ('user','hash')
 
     def clean(self):
         # Strip all whitespace
@@ -149,6 +154,7 @@ class Address(models.Model):
 
     def save(self, *args, **kwargs):
         self._update_search_text()
+        self.hash = self.generate_hash()
         super(Address, self).save(*args, **kwargs)
 
     def _update_search_text(self):
@@ -182,6 +188,11 @@ class Address(models.Model):
             field_values.append(value)
         return separator.join(filter(bool, field_values))
 
+    def generate_hash(self):
+        """
+            Returns a hash of the address summary
+        """
+        return zlib.crc32(self.summary.strip().upper().encode('UTF8'))
 
 @python_2_unicode_compatible
 class EmailIdentity(models.Model):
@@ -220,8 +231,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         ('Ms', 'Ms'),
         ('Dr', 'Dr')
     )
-    title = models.CharField(max_length=100, choices=TITLE_CHOICES, null=True, blank=False, default=TITLE_CHOICES[0][0],
-                             verbose_name='title', help_text="")
+    title = models.CharField(max_length=100, choices=TITLE_CHOICES, null=True, blank=True,
+                             verbose_name='title', help_text='')
     dob = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=False,
                            verbose_name="date of birth", help_text='')
     phone_number = models.CharField(max_length=50, null=True, blank=True,
@@ -238,6 +249,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
 
     identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
+
+    senior_card = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='senior_card')
 
     character_flagged = models.BooleanField(default=False)
 
@@ -306,6 +319,35 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     @property
     def username(self):
         return self.email
+
+    @property
+    def is_senior(self):
+        """
+        Test if the the user is a senior according to the rules of WA senior
+        dob is before 1 July 1955; or
+        dob is between 1 July 1955 and 30 June 1956 and age is 61 or older; or
+        dob is between 1 July 1956 and 30 June 1957 and age is 62 or older; or
+        dob is between 1 July 1957 and 30 June 1958 and age is 63 or older; or
+        dob is between 1 July 1958 and 30 June 1959 and age is 64 or older; or
+        dob is after 30 June 1959 and age is 65 or older
+
+        :return:
+        """
+        return \
+            self.dob < date(1955, 7, 1) or \
+            ((date(1955, 7, 1) <= self.dob <= date(1956, 6, 30)) and self.age() >= 61) or \
+            ((date(1956, 7, 1) <= self.dob <= date(1957, 6, 30)) and self.age() >= 62) or \
+            ((date(1957, 7, 1) <= self.dob <= date(1958, 6, 30)) and self.age() >= 63) or \
+            ((date(1958, 7, 1) <= self.dob <= date(1959, 6, 30)) and self.age() >= 64) or \
+            (self.dob > date(1959, 6, 1) and self.age() >= 65)
+
+    def age(self):
+        if self.dob:
+            today = date.today()
+            # calculate age with the help of trick int(True) = 1 and int(False) = 0
+            return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+        else:
+            return -1
 
 
 class EmailUserListener(object):
@@ -382,10 +424,10 @@ class RevisionedMixin(models.Model):
 
 @python_2_unicode_compatible
 class Profile(RevisionedMixin):
-    user = models.ForeignKey(EmailUser, verbose_name='User')
+    user = models.ForeignKey(EmailUser, verbose_name='User', related_name='profiles')
     name = models.CharField('Display Name', max_length=100, help_text='e.g Personal, Work, University, etc')
     email = models.EmailField('Email')
-    postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT)
+    postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT, related_name='profiles')
     institution = models.CharField('Institution', max_length=200, blank=True, default='', help_text='e.g. Company Name, Tertiary Institution, Government Department, etc')
 
     @property
@@ -465,6 +507,47 @@ class ProfileListener(object):
             EmailIdentity.objects.filter(email=original_instance.email, user=original_instance.user).delete()
             UserSocialAuth.objects.filter(provider="email", uid=original_instance.email, user=original_instance.user).delete()
 
+        if not original_instance:
+            address = instance.postal_address
+            try:
+                # Check if the user has the same profile address
+                # Check if there is a user address
+                oscar_add = UserAddress.objects.get(
+                    line1 = address.line1,
+                    line2 = address.line2,
+                    line3 = address.line3,
+                    line4 = address.locality,
+                    state = address.state,
+                    postcode = address.postcode,
+                    country = Country.objects.get(iso_3166_1_a2=address.country),
+                    user = instance.user
+                )
+                if not address.oscar_address:
+                    address.oscar_address = oscar_add
+                    address.save()
+                elif address.oscar_address.id != oscar_add.id:
+                    address.oscar_address = oscar_add
+                    address.save()
+            except UserAddress.DoesNotExist:
+                oscar_address = UserAddress.objects.create(
+                    line1 = address.line1,
+                    line2 = address.line2,
+                    line3 = address.line3,
+                    line4 = address.locality,
+                    state = address.state,
+                    postcode = address.postcode,
+                    country = Country.objects.get(iso_3166_1_a2=address.country),
+                    user = instance.user
+                )
+                address.oscar_address = oscar_address
+                address.save()
+        # Clear out unused addresses
+        user = instance.user
+        user_addr = Address.objects.filter(user=user)
+        for u in user_addr:
+            if not u.profiles.all():
+                u.oscar_address.delete()
+                u.delete()
 
 class EmailIdentityListener(object):
     """
@@ -486,3 +569,74 @@ class EmailIdentityListener(object):
                 # Email already used by other user in email identity.
                 raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
 
+class AddressListener(object):
+    """
+        Event listener for Address
+    """
+    @staticmethod
+    @receiver(pre_save, sender=Address)
+    def _pre_save(sender, instance, **kwargs):
+        check_address = UserAddress(
+            line1 = instance.line1,
+            line2 = instance.line2,
+            line3 = instance.line3,
+            line4 = instance.locality,
+            state = instance.state,
+            postcode = instance.postcode,
+            country = Country.objects.get(iso_3166_1_a2=instance.country),
+            user = instance.user
+        )
+        if instance.pk:
+            original_instance = Address.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+            if original_instance.oscar_address is None:
+                try:
+                    check_address = UserAddress.objects.get(hash=check_address.generate_hash(),user=check_address.user)
+                except UserAddress.DoesNotExist:
+                    check_address.save()
+                instance.oscar_address = check_address
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                check_address = UserAddress.objects.get(hash=check_address.generate_hash(),user=check_address.user)
+            except UserAddress.DoesNotExist:
+                check_address.save()
+            instance.oscar_address = check_address
+
+    @staticmethod
+    @receiver(post_save, sender=Address)
+    def _post_save(sender, instance, **kwargs):
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        if original_instance:
+            oscar_address = original_instance.oscar_address
+            try:
+                if oscar_address is not None:
+                    oscar_address.line1 = instance.line1
+                    oscar_address.line2 = instance.line2
+                    oscar_address.line3 = instance.line3
+                    oscar_address.line4 = instance.locality
+                    oscar_address.state = instance.state
+                    oscar_address.postcode = instance.postcode
+                    oscar_address.country = Country.objects.get(iso_3166_1_a2=instance.country)
+                    oscar_address.save()
+            except IntegrityError as e:
+                if 'unique constraint' in e.message:
+                    raise ValidationError('Multiple profiles cannot have the same address.')
+                else:
+                    raise
+
+@python_2_unicode_compatible
+class EmailUserReport(models.Model):
+    hash = models.TextField(primary_key=True)
+    occurence = models.IntegerField()
+    first_name = models.CharField(max_length=128, blank=False)
+    last_name = models.CharField(max_length=128, blank=False)
+    dob = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=False,verbose_name="date of birth", help_text='')
+
+    def __str__(self):
+        return 'First Name: {}, Last Name: {}, DOB: {}, Occurence: {}'.format(self.first_name,self.last_name,self.dob,self.occurence)
+
+    class Meta:
+        managed = False
+        db_table = 'accounts_emailuser_report_v'

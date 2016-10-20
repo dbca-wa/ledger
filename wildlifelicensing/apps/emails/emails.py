@@ -1,8 +1,14 @@
 import logging
+import mimetypes
+
+import six
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.core.urlresolvers import reverse
 from django.template import loader, Template, Context
 from django.utils.html import strip_tags
-import six
+
+from ledger.accounts.models import Document
 
 logger = logging.getLogger('log')
 
@@ -15,6 +21,10 @@ def _render(template, context):
     return template.render(context)
 
 
+def host_reverse(name, args=None, kwargs=None):
+    return "{}{}".format(settings.DEFAULT_HOST, reverse(name, args=args, kwargs=kwargs))
+
+
 class TemplateEmailBase(object):
     subject = ''
     html_template = 'wl/emails/base_email.html'
@@ -24,7 +34,7 @@ class TemplateEmailBase(object):
     def send_to_user(self, user, context=None):
         return self.send(user.email, context=context)
 
-    def send(self, to_addresses, from_address=None, context=None, attachments=None):
+    def send(self, to_addresses, from_address=None, context=None, attachments=None, cc=None, bcc=None):
         """
         Send an email using EmailMultiAlternatives with text and html.
         :param to_addresses: a string or a list of addresses
@@ -32,6 +42,9 @@ class TemplateEmailBase(object):
         :param context: a dictionary or a Context object used for rendering the templates.
         :param attachments: a list of (filepath, content, mimetype) triples
                (see https://docs.djangoproject.com/en/1.9/topics/email/)
+               or Documents
+        :param bcc:
+        :param cc:
         :return:
         """
         # The next line will throw a TemplateDoesNotExist if html template cannot be found
@@ -47,10 +60,26 @@ class TemplateEmailBase(object):
         # build message
         if isinstance(to_addresses, six.string_types):
             to_addresses = [to_addresses]
+        if attachments is None:
+            attachments = []
         if attachments is not None and not isinstance(attachments, list):
             attachments = list(attachments)
+
+        if attachments is None:
+            attachments = []
+
+        # Convert Documents to (filename, content, mime) attachment
+        _attachments = []
+        for attachment in attachments:
+            if isinstance(attachment, Document):
+                filename = str(attachment)
+                content = attachment.file.read()
+                mime = mimetypes.guess_type(attachment.filename)[0]
+                _attachments.append((filename, content, mime))
+            else:
+                _attachments.append(attachment)
         msg = EmailMultiAlternatives(self.subject, txt_body, from_email=from_address, to=to_addresses,
-                                     attachments=attachments)
+                                     attachments=_attachments, cc=cc, bcc=bcc)
         msg.attach_alternative(html_body, 'text/html')
         try:
             msg.send(fail_silently=False)
