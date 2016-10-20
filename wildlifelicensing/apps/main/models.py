@@ -54,6 +54,7 @@ class WildlifeLicenceType(LicenceType):
     application_schema = JSONField(blank=True, null=True)
     category = models.ForeignKey(WildlifeLicenceCategory, null=True, blank=True)
     variant_group = models.ForeignKey('VariantGroup', null=True, blank=True)
+    help_text = models.TextField(blank=True)
 
     def clean(self):
         """
@@ -152,6 +153,7 @@ class CommunicationsLogEntry(models.Model):
 class Variant(models.Model):
     name = models.CharField(max_length=200)
     product_code = models.SlugField(max_length=64, unique=True)
+    help_text = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
