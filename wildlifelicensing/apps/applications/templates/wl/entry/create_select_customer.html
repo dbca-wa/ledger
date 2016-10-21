@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/entry/entry_base.html' %}
 
 {% load static %}
 
@@ -33,16 +33,13 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}<h3>Select or Create Customer</h3>{% endblock %}
+{% block intro_subtitle %}<h4>Select or create the customer for whom the application is being applied on behalf of.</h4>{% endblock %}
+
 {% block content %}
     <div class="container bottom-buffer">
         <div class="row">
             <div class="col-md-12">
-                    {% with heading='Select or Create Customer' %}
-                        {% include 'wl/entry/header.html' %}
-                    {% endwith %}
-                <p>
-                    Select or create the customer for whom the application is being applied on behalf of.
-                </p>
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-group">

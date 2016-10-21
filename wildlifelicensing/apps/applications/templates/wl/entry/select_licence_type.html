@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/entry/entry_base.html' %}
 
 {% load static %}
 
@@ -34,17 +34,15 @@
     </div>
 {% endblock %}
 
-{% block intro_title %}Select Licence Type{% endblock %}
-{% block intro_subtitle %}Select the type of licence you wish to apply for from the list below.{% endblock %}
+{% block intro_title %}<h3>Select Licence Type</h3>{% endblock %}
+{% block intro_subtitle %}
+    <h4>
+        Select the type of licence you wish to apply for from the list below.
+    </h4>
+{% endblock %}
 
 {% block content %}
     <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h2>Select Licence Type</h2>
-                <hr>
-            </div>
-        </div>
         {% for category in categories %}
             <h4>{{ category.name }}</h4>
             <div class="row">

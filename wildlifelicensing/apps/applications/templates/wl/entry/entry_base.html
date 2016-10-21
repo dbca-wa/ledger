@@ -1,0 +1,12 @@
+{% extends 'wl/base.html' %}
+
+{% block intro %}
+    <div class="container">
+        <div class="top-buffer bottom-buffer intro application-intro">
+            {% block intro_title %}{% endblock %}
+            {% block intro_subtitle %}{% endblock %}
+            {% block intro_text%}{% endblock %}
+        </div>
+        <hr>
+    </div>
+{% endblock %}
