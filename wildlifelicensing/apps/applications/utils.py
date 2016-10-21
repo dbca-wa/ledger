@@ -19,10 +19,10 @@ def _extend_item_name(name, suffix, repetition):
     return '{}{}-{}'.format(name, suffix, repetition)
 
 
-def create_data_from_form(form_structure, post_data, file_data, post_data_index=None):
+def create_data_from_form(schema, post_data, file_data, post_data_index=None):
     data = []
 
-    for item in form_structure:
+    for item in schema:
         data.append(_create_data_from_item(item, post_data, file_data, 0, ''))
 
     return data
@@ -66,6 +66,155 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
     return item_data
+
+
+def extract_licence_fields(schema, data):
+    licence_fields = []
+
+    for item in schema:
+        _extract_licence_fields_from_item(item, data, licence_fields)
+
+    return licence_fields
+
+
+def _extract_licence_fields_from_item(item, data, licence_fields):
+    children_extracted = False
+
+    if item.get('isLicenceField', False):
+        if 'children' not in item:
+            # label / checkbox types are extracted differently so skip here
+            if item['type'] not in ('label', 'checkbox'):
+                licence_field = {
+                    'name': item['name'],
+                    'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
+                    'type': item['type'],
+                    'readonly': item.get('isLicenceFieldReadonly', False)
+                }
+
+                if 'options' in item:
+                    licence_field['options'] = item['options']
+                    licence_field['defaultBlank'] = item.get('defaultBlank', False)
+
+                licence_field['data'] = _extract_item_data(item['name'], data)
+
+                licence_fields.append(licence_field)
+        else:
+            licence_field = {
+                'name': item['name'],
+                'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
+                'type': item['type'],
+                'readonly': item.get('isLicenceFieldReadonly', False),
+                'children': []
+            }
+
+            child_data = _extract_item_data(item['name'], data)
+
+            for index in range(len(child_data)):
+                group_licence_fields = []
+                for child_item in item.get('children'):
+                    if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                        _extract_label_and_checkboxes(child_item, item.get('children'), child_data[index], group_licence_fields)
+
+                    _extract_licence_fields_from_item(child_item, child_data[index], group_licence_fields)
+                licence_field['children'].append(group_licence_fields)
+
+            licence_fields.append(licence_field)
+
+            children_extracted = True
+
+    # extract licence fields from field's children
+    if 'children' in item and not children_extracted:
+        for child_item in item.get('children'):
+            if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                _extract_label_and_checkboxes(child_item, item.get('children'), data, licence_fields)
+            _extract_licence_fields_from_item(child_item, data, licence_fields)
+
+    # extract licence fields from field's conditional children
+    if 'conditions' in item:
+        for condition in item['conditions'].keys():
+            for child_item in item['conditions'][condition]:
+                if child_item['type'] == 'label' and child_item.get('isLicenceField', False):
+                    _extract_label_and_checkboxes(child_item, item['conditions'][condition], data, licence_fields)
+                _extract_licence_fields_from_item(child_item, data, licence_fields)
+
+
+def _extract_label_and_checkboxes(current_item, items, data, licence_fields):
+    licence_field = {
+        'name': current_item['name'],
+        'label': current_item['licenceFieldLabel'] if 'licenceFieldLabel' in current_item else current_item['label'],
+        'type': current_item['type'],
+        'readonly': current_item.get('isLicenceFieldReadonly', False),
+        'options': []
+    }
+
+    # find index of first checkbox after checkbox label within current item list
+    checkbox_index = 0
+    while checkbox_index < len(items) and items[checkbox_index]['name'] != current_item['name']:
+        checkbox_index += 1
+    checkbox_index += 1
+
+    # add all checkboxes to licence field options
+    while checkbox_index < len(items) and items[checkbox_index]['type'] == 'checkbox':
+        name = items[checkbox_index]['name']
+        option = {
+            'name': name,
+            'label': items[checkbox_index]['label']
+        }
+        if name in data:
+            option['data'] = data[name]
+
+        licence_field['options'].append(option)
+
+        checkbox_index += 1
+
+    licence_fields.append(licence_field)
+
+
+def _extract_item_data(name, data):
+    def ___extract_item_data(name, data):
+        if isinstance(data, dict):
+            if name in data:
+                return data[name]
+            else:
+                for value in data.values():
+                    result = ___extract_item_data(name, value)
+                    if result is not None:
+                        return result
+        if isinstance(data, list):
+            for item in data:
+                result = ___extract_item_data(name, item)
+                if result is not None:
+                    return result
+
+    result = ___extract_item_data(name, data)
+
+    return result if result is not None else ''
+
+
+def update_licence_fields(licence_fields, post_data):
+    for field in licence_fields:
+        if 'children' not in field:
+            if field['type'] == 'label':
+                for option in field['options']:
+                    if option['name'] in post_data:
+                        option['data'] = post_data[option['name']]
+            else:
+                field['data'] = post_data.get(field['name'])
+        else:
+            for index, group in enumerate(field['children']):
+                for child_field in group:
+                    if child_field['type'] == 'label':
+                        for option in child_field['options']:
+                            if option['name'] in post_data:
+                                data_list = post_data.getlist(option['name'])
+                                if index < len(data_list):
+                                    option['data'] = data_list[index]
+                    else:
+                        data_list = post_data.getlist(child_field['name'])
+                        if index < len(data_list):
+                            child_field['data'] = data_list[index]
+
+    return licence_fields
 
 
 def convert_documents_to_url(data, document_queryset, suffix):

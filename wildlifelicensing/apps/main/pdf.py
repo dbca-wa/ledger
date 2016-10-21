@@ -145,64 +145,6 @@ def _create_licence_header(canvas, doc, draw_page_number=True):
                           '%s-%d' % (doc.licence.licence_number, doc.licence.licence_sequence))
 
 
-def _get_authorised_person_names(application):
-    def __find_authorised_persons_dict(data):
-        authorised_persons = []
-        for item in data:
-            if isinstance(item, list):
-                authorised_persons = __find_authorised_persons_dict(item)
-                if len(authorised_persons) > 0:
-                    return authorised_persons
-            if isinstance(item, dict):
-                if 'authorised_persons' in item:
-                    return item['authorised_persons']
-                else:
-                    for value in item.values():
-                        if isinstance(value, list):
-                            authorised_persons = __find_authorised_persons_dict(value)
-                            if len(authorised_persons) > 0:
-                                return authorised_persons
-
-        return authorised_persons
-
-    authorised_person_names = []
-
-    for ap in __find_authorised_persons_dict(application.data):
-        if ap.get('ap_given_names') and ap.get('ap_surname'):
-            authorised_person_names.append('%s %s' % (ap['ap_given_names'], ap['ap_surname']))
-
-    return authorised_person_names
-
-
-def _get_species(application):
-    def __find_species_dict(data):
-        species = []
-        for item in data:
-            if isinstance(item, list):
-                species = __find_species_dict(item)
-                if len(species) > 0:
-                    return species
-            if isinstance(item, dict):
-                if 'species_summary' in item:
-                    return item['species_summary']
-                else:
-                    for value in item.values():
-                        if isinstance(value, list):
-                            species = __find_species_dict(value)
-                            if len(species) > 0:
-                                return species
-
-        return species
-
-    species_names_and_count = []
-
-    for s in __find_species_dict(application.data):
-        if s.get('species_name') and s.get('species_count'):
-            species_names_and_count.append((s['species_name'], s['species_count']))
-
-    return species_names_and_count
-
-
 def _create_licence(licence_buffer, licence, application, site_url, original_issue_date):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
@@ -222,7 +164,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     elements.append(Paragraph(licence.licence_type.code.upper(), styles['InfoTitleLargeCenter']))
 
     # cannot use licence get_title_with_variants because licence isn't saved yet so can't get variants
-    if application.variants.exists:
+    if application.variants.exists():
         title = '{} ({})'.format(application.licence_type.name, ' / '.join(application.variants.all().
                                                                            values_list('name', flat=True)))
     else:
@@ -248,61 +190,22 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Purpose', styles['BoldLeft']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-        for purpose in licence.purpose.split('\r\n'):
-            if purpose:
-                elements.append(Paragraph(purpose, styles['Left']))
-            else:
-                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements += _layout_paragraphs(licence.purpose)
 
     # locations
     if licence.locations:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Locations', styles['BoldLeft']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements += _layout_paragraphs(licence.locations)
 
-        for location in licence.locations.split('\r\n'):
-            if location:
-                elements.append(Paragraph(location, styles['Left']))
-            else:
-                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    # authorised persons
-    authorised_persons = _get_authorised_person_names(application)
-    if len(authorised_persons) > 0:
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        elements.append(Paragraph('Authorised Persons', styles['BoldLeft']))
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-        for ap in authorised_persons:
-            elements.append(Paragraph(ap, styles['Left']))
-            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    # species
-    species = _get_species(application)
-    if len(species) > 0:
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-        section_width = (PAGE_WIDTH - (2 * PAGE_MARGIN) - 100) / 2
-
-        elements.append(Table([[Paragraph('Species', styles['BoldLeft']), Paragraph('Name', styles['BoldLeft']),
-                                Paragraph('Count', styles['BoldLeft'])]],
-                              colWidths=(100, section_width, section_width), style=licence_table_style))
-
-        for s in species:
-            elements.append(Table([['', Paragraph(s[0], styles['Left']), Paragraph(s[1], styles['Left'])]],
-                                  colWidths=(100, section_width, section_width), style=licence_table_style))
+    elements += _layout_extracted_fields(licence.extracted_fields)
 
     # additional information
     if licence.additional_information:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Additional Information', styles['BoldLeft']))
-
-        for paragraph in licence.additional_information.split('\r\n'):
-            if paragraph:
-                elements.append(Paragraph(paragraph, styles['Left']))
-            else:
-                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements += _layout_paragraphs(licence.additional_information)
 
     # delegation holds the dates, licencee and issuer details.
     delegation = []
@@ -349,6 +252,76 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
     doc.build(elements)
 
     return licence_buffer
+
+
+def _layout_extracted_fields(extracted_fields):
+    elements = []
+
+    # information extracted from application
+    for field in extracted_fields:
+        if 'children' not in field:
+            if 'data' in field and field['data']:
+                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+                elements.append(Paragraph(field['label'], styles['BoldLeft']))
+
+                if field['type'] in ['text', 'text_area']:
+                    elements += _layout_paragraphs(field['data'])
+                elif field['type'] in ['radiobuttons', 'select']:
+                    elements.append(Paragraph(dict([i.values() for i in field['options']]).
+                                              get(field['data'], 'Not Specified'), styles['Left']))
+                else:
+                    elements.append(Paragraph(field['data'], styles['Left']))
+
+            elif field['type'] == 'label':
+                if any([option.get('data', 'off') == 'on' for option in field['options']]):
+                    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+                    elements.append(Paragraph(field['label'], styles['BoldLeft']))
+                    elements.append(Paragraph(', '.join([option['label'] for option in field['options']
+                                                        if option.get('data', 'off') == 'on']),
+                                    styles['Left']))
+        else:
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+            elements.append(Paragraph(field['label'], styles['BoldLeft']))
+
+            table_data = []
+            for index, group in enumerate(field['children']):
+                if index == 0:
+                    heading_row = []
+                    for child_field in group:
+                        heading_row.append(Paragraph(child_field['label'], styles['BoldLeft']))
+                    table_data.append(heading_row)
+
+                row = []
+                for child_field in group:
+                    if child_field['type'] in ['radiobuttons', 'select']:
+                        row.append(Paragraph(dict([i.values() for i in child_field['options']]).
+                                             get(child_field['data'], 'Not Specified'), styles['Left']))
+                    elif child_field['type'] == 'label':
+                        if any([option.get('data', 'off') == 'on' for option in child_field['options']]):
+                            row.append(Paragraph(', '.join([option['label'] for option in child_field['options']
+                                                            if option.get('data', 'off') == 'on']),
+                                                 styles['Left']))
+                        else:
+                            row.append(Paragraph('Not Specified', styles['Left']))
+                    else:
+                        row.append(Paragraph(child_field['data'], styles['Left']))
+
+                table_data.append(row)
+
+            elements.append(Table(table_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
+
+    return elements
+
+
+def _layout_paragraphs(text):
+    elements = []
+    for paragraph in text.split('\r\n'):
+        if paragraph:
+            elements.append(Paragraph(paragraph, styles['Left']))
+        else:
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    return elements
 
 
 def _create_letter_header_footer(canvas, doc):
