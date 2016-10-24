@@ -58,12 +58,12 @@
                                         <li><a href="{% url 'wl_main:contact_us' %}">Contact Us</a></li>
                                         <li><a href="{% url 'wl_main:further_information' %}">Further Information</a></li>
                                     {% elif request.user|is_officer %}
-                                        <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
                                         <li><a href="{% url 'wl_dashboard:tables_applications_officer' %}">Applications</a></li>
                                         <li><a href="{% url 'wl_dashboard:tables_licences_officer' %}">Licences</a></li>
                                         <li><a href="{% url 'wl_dashboard:tables_returns_officer' %}">Returns</a></li>
                                         <li><a href="{% url 'wl_customer_management:customer_lookup' %}">Customers</a></li>
                                         <li><a href="{% url 'wl_reports:reports' %}">Reports</a></li>
+                                        <li><a href="{% url 'wl_dashboard:tables_officer_onbehalf' %}">Proxy Applications/Returns</a></li>
                                     {% else %}
                                         <li><a href="{% url 'wl_dashboard:tables_assessor' %}">Applications</a></li>
                                     {% endif %}

@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/returns_base.html' %}
 
 {% load static %}
 
@@ -12,6 +12,8 @@
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
           rel="stylesheet"/>
+    <link href="{% static 'wl/css/returns.css' %}" rel="stylesheet"/>
+    {{ block.super }}
 {% endblock %}
 
 {% block requirements %}
@@ -35,6 +37,9 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
+                    {% if request.user|is_officer %}
+                        <li><a href="{% url 'wl_dashboard:tables_returns_officer' %}">Returns</a></li>
+                    {% endif %}
                     <li class="active">Curate Return</li>
                 </ol>
             </div>
@@ -42,15 +47,20 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}
+    <h3>Curate Return</h3>
+{% endblock %}
+{% block intro_subtitle %}
+     <h4 class="inline">
+         {{ return.licence.licence_type.name }}
+     </h4>
+     {% if request.user|is_officer %}
+         <h4 class="pull-right">Customer: {{ return.licence.holder.get_full_name }}</h4>
+     {% endif %}
+{% endblock %}
+
 {% block content %}
     <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h2>Curate Return</h2>
-                <h3>{{ return.licence.licence_type.name }}</h3>
-                <hr>
-            </div>
-        </div>
         <div class="row">
             <div class="col-md-3">
                 <div class="row">

@@ -190,7 +190,7 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
         original_last_name = emailuser.last_name
         emailuser_form = EmailUserForm(request.POST, instance=emailuser)
         if emailuser_form.is_valid():
-            emailuser = emailuser_form.save(commit=False)
+            emailuser = emailuser_form.save()
             is_name_changed = any([original_first_name != emailuser.first_name, original_last_name != emailuser.last_name])
 
             # send signal if either first name or last name is changed

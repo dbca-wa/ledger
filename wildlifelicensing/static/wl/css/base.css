@@ -110,23 +110,17 @@
     padding-bottom: 10px;
 }
 
-.intro div {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: white;
-}
-
 .applications {
     color: #fff !important;
-    background-color: #000080 !important;
+    background-color: #7d9acc!important;
 }
 
 .licences {
     color: #fff !important;
-    background-color: #e6b800 !important;
+    background-color: #ead47c!important;
 }
 
 .returns {
     color: #fff !important;
-    background-color: #b30000 !important;
+    background-color: #b30000!important;
 }

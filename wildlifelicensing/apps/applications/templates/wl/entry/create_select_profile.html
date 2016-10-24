@@ -6,10 +6,6 @@
 
 {% load users %}
 
-{% block extra_css %}
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
-{% endblock %}
-
 {% block requirements %}
     require(['js/entry/navigation'], function(navigation) {
         navigation.setupNavigateAway('Warning: any information entered into the form '+
@@ -49,13 +45,12 @@
             <em>({{ variants }})</em>
         </h4>
     {% endif %}
-{% endblock %}{% block intro_text %}
-    <div>
-        <p>
-            The Wildlife Licensing system utilises the concept of profiles to allow users to apply for a licence under different circumstances, such holding a licence
-            for personal, commercial or research purposes. Please select an existing profile or alternatively create a new profile for this licence application.
-        </p>
-    </div>
+{% endblock %}
+{% block intro_text %}
+    <p>
+        The Wildlife Licensing system utilises the concept of profiles to allow users to apply for a licence under different circumstances, such holding a licence
+        for personal, commercial or research purposes. Please select an existing profile or alternatively create a new profile for this licence application.
+    </p>
 {% endblock %}
 
 {% block content %}

@@ -6,10 +6,6 @@
 
 {% load users %}
 
-{% block extra_css %}
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
-{% endblock %}
-
 {% block breadcrumbs %}
     <div class="container">
         <div class="row">
@@ -44,18 +40,16 @@
     {% endif %}
 {% endblock %}
 {% block intro_text %}
-    <div>
-        <p>
-            This type of licence requires photographic identification. You can upload a scanned or photographed image of a valid
-            Australian driver’s licence, passport, or proof-of-age card.
-        </p>
-        <p>
-            If you cannot provide identification at this point, you can skip this step of the application process. You can then, at
-            any time, upload your photo ID by selecting the Manage ID option under the Options menu on the menu bar. Alternatively,
-            you can present your photo ID in person at the Wildlife Licensing office, 17 Dick Perry Avenue, Kensington.
-        </p>
-        <p><strong><em>Note: your application will not be approved until identification has been submitted.</em></strong></p>
-    </div>
+    <p>
+        This type of licence requires photographic identification. You can upload a scanned or photographed image of a valid
+        Australian driver’s licence, passport, or proof-of-age card.
+    </p>
+    <p>
+        If you cannot provide identification at this point, you can skip this step of the application process. You can then, at
+        any time, upload your photo ID by selecting the Manage ID option under the Options menu on the menu bar. Alternatively,
+        you can present your photo ID in person at the Wildlife Licensing office, 17 Dick Perry Avenue, Kensington.
+    </p>
+    <p><strong><em>Note: your application will not be approved until identification has been submitted.</em></strong></p>
 {% endblock %}
 
 {% block content %}

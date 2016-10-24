@@ -8,10 +8,6 @@
 
 {% load users %}
 
-{% block extra_css %}
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
-{% endblock %}
-
 {% block requirements %}
     require(['js/entry/select_licence_type'], function(selectLicenceType) {
         selectLicenceType.init({{ categories|jsonify }});
