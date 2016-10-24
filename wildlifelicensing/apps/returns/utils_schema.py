@@ -40,7 +40,7 @@ class DayFirstDateType(types.DateType):
             # there's a 'bug' in dateutil.parser.parse (2.5.3)if you are using
             # dayfirst=True. It will parse YYYY-MM-DD as YYYY-DD-MM !!
             # https://github.com/dateutil/dateutil/issues/268
-            dayfirst = False if YYYY_MM_DD_REGEX.match(value) else True
+            dayfirst = not YYYY_MM_DD_REGEX.match(value)
             return date_parse(value, dayfirst=dayfirst).date()
         except (TypeError, ValueError) as e:
             raise_with_traceback(InvalidDateType(e))
@@ -70,10 +70,13 @@ class WLSchema:
       constraints: ....
       wl: {
                 type: "species"
-              }
+                speciesType: 'fauna'|'flora'|'all'
+          }
     }
     """
-    SPECIES_NAME_TYPE_NAME = 'species'
+    SPECIES_TYPE_NAME = 'species'
+    SPECIES_TYPE_FLORA_NAME = 'flora'
+    SPECIES_TYPE_FAUNA_NAME = 'fauna'
 
     def __init__(self, data):
         self.data = data or {}
@@ -89,11 +92,15 @@ class WLSchema:
     def type(self):
         return self.get('type')
 
+    @property
+    def species_type(self):
+        return self.get('speciesType')
+
     def get(self, k, d=None):
         return self.data.get(k, d)
 
-    def is_species_name(self):
-        return self.type == self.SPECIES_NAME_TYPE_NAME
+    def is_species_type(self):
+        return self.type == self.SPECIES_TYPE_NAME
 
 
 @python_2_unicode_compatible
@@ -146,6 +153,17 @@ class SchemaField:
     @property
     def required(self):
         return self.constraints.required
+
+    @property
+    def is_species(self):
+        return self.wl.is_species_type()
+
+    @property
+    def species_type(self):
+        result = None
+        if self.is_species:
+            return self.wl.species_type or 'all'
+        return result
 
     def cast(self, value):
         """
@@ -228,7 +246,7 @@ class Schema:
         self.data = schema
         self.schema_model = SchemaModel(schema)
         self.fields = [SchemaField(f) for f in self.schema_model.fields]
-        self.species_fields = self.find_species_name_fields(self)
+        self.species_fields = self.find_species_fields(self)
 
     # implement some dict like methods
     def __getitem__(self, item):
@@ -238,23 +256,16 @@ class Schema:
         return self.data.get(k, d)
 
     @staticmethod
-    def find_species_name_fields(schema):
+    def find_species_fields(schema):
         """
         Precedence Rules:
-        2- Look for wl.type = 'speciesName'
-        3- Look for a field with name in ['species name', 'species_name'] case insensitive
+        1- Look for field of wl.type = 'species'
         :param schema: a dict descriptor or a Schema instance
         :return: an array of [SchemaField] or []
         """
         if not isinstance(schema, Schema):
             schema = Schema(schema)
-        fields = [f for f in schema.fields if f.wl.is_species_name()]
-        if fields:
-            return fields
-        else:
-            # look for column name
-            names = ['species name', 'species_name']
-            return [field for field in schema.fields if field.name.lower() in names]
+        return [f for f in schema.fields if f.is_species]
 
     @property
     def headers(self):

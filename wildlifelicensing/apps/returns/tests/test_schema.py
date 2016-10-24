@@ -185,6 +185,11 @@ class TestSpeciesField(TestCase):
         self.assertFalse(sch.species_fields)
 
     def test_species_by_field_name(self):
+        """
+        A previous implementation supported species field detection by just the field name.
+        Not anymore
+        :return:
+        """
         names = ['species name', 'Species Name', 'SPECIES_NAME', 'species_Name']
         for name in names:
             descriptor = clone(helpers.GENERIC_SCHEMA)
@@ -196,8 +201,7 @@ class TestSpeciesField(TestCase):
             field['name'] = name
             descriptor['fields'].append(field)
             sch = Schema(descriptor)
-            self.assertEqual(1, len(sch.species_fields))
-            self.assertEquals(name, sch.species_fields[0].name)
+            self.assertEqual(0, len(sch.species_fields))
 
     def test_species_by_wl_tag(self):
         # adding a wl species tag to a field turns it into a species field (whatever its name)
