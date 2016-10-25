@@ -20,6 +20,10 @@
 {% block requirements %}
     require(["{% static 'wl/js/return_table.js' %}"], function (returnTable) {
         returnTable.initTables();
+        // disable form submit by 'enter' key
+        $(document).on("keypress", "form", function(event) {
+             return event.keyCode != 13;
+        });
     });
 {% endblock %}
 
@@ -53,16 +57,16 @@
 {% block intro_text %}
     <p>
         Please enter the return data for the relevant period as specified in your licence conditions.
-        The data can be entered directly in the table(s) below or uploaded from the appropriate Excel spreadsheet template. If you upload an
-        Excel template, this will pre-fill the corresponding tables. When finished, click "Lodge" to lodge the return.
+        The data can be entered directly in the table(s) below or uploaded from the appropriate Excel spreadsheet
+        template. If you upload an Excel template, this will pre-fill the corresponding tables. When finished,
+        click "Lodge" to lodge the return.
     </p>
     <p>
         At any point you can save the return data as a draft by clicking the Save Draft button at the
-        bottom-left, allowing you to complete the
-        return at a later time.
+        bottom-left, allowing you to complete the return at a later time.
     </p>
     <p>
-        You can also choose to submit a Nil Return by clicking on the 'Submit Nil Return' button below.
+        You can also choose to submit a Nil Return by clicking on the 'Submit Nil Return' button at the bottom.
         In this case, you must provide the reasons why you're not providing return data.
     </p>
 {% endblock %}
@@ -105,7 +109,11 @@
                                                             {% with value=row|get_item:header.title|get_item:'value' error=row|get_item:header.title|get_item:'error' %}
                                                                 <td>
                                                                     <input name="{{ table.name }}::{{ header.title }}"
-                                                                           value="{{ value|default_if_none:"" }}"/>
+                                                                           value="{{ value|default_if_none:"" }}"
+                                                                           {%  if header.species %}
+                                                                               data-species="{{ header.species }}"
+                                                                           {% endif %}
+                                                                    />
                                                                     {% if error %}
                                                                         <div><span class="text-danger">{{ error }}</span></div>
                                                                     {% endif %}
@@ -119,7 +127,11 @@
                                                     <tr>
                                                         {% for header in table.headers %}
                                                             <td>
-                                                                <input name="{{ table.name }}::{{ header.title }}"/>
+                                                                <input name="{{ table.name }}::{{ header.title }}"
+                                                                       {%  if header.species %}
+                                                                           data-species="{{ header.species }}"
+                                                                       {% endif %}
+                                                                />
                                                             </td>
                                                         {% endfor %}
                                                     </tr>
@@ -142,15 +154,15 @@
             </div>
         </div>
         <hr>
-        <h4>Nil Return</h4>
         <div class="row">
             <div class="col-md-12">
+                <h4>Nil Return</h4>
                 <form method="post">
                     {% csrf_token %}
                     {% bootstrap_form nil_return_form %}
                     <button type="submit" class="btn btn-primary pull-right" name="nil">Submit Nil Return</button>
                 </form>
-            </div>
+        </div>
         </div>
     </div>
 {% endblock %}

@@ -31,10 +31,18 @@
 {% endblock %}
 
 {% block intro_title %}<h3>Select Licence Type</h3>{% endblock %}
-{% block intro_subtitle %}
-    <h4>
-        Select the type of licence you wish to apply for from the list below.
-    </h4>
+{% block intro_text %}
+    <p>
+        Please select the type of licence you wish to apply for from the list below.
+    </p>
+
+    <p>
+        Licences with the <span class="glyphicon glyphicon-triangle-right node-other"></span>
+        symbol have variations to the nature of the licence and/or the licence duration. Click the arrow or licence name to expand
+        these variations.
+    </p>
+    
+    <p>Note that some licence types may incur a fee.</p>
 {% endblock %}
 
 {% block content %}
@@ -47,6 +55,5 @@
                 </div>
             </div>
         {% endfor %}
-        </div>
     </div>
 {% endblock %}

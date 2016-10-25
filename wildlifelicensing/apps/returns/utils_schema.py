@@ -1,5 +1,15 @@
+from __future__ import absolute_import, unicode_literals, print_function, division
+from future.utils import raise_with_traceback
+
+import json
+import re
+
+from dateutil.parser import parse as date_parse
+
 from jsontableschema.model import SchemaModel
 from jsontableschema import types
+from jsontableschema.exceptions import InvalidDateType
+
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.writer.write_only import WriteOnlyCell
@@ -10,6 +20,106 @@ from wildlifelicensing.apps.main.excel import is_blank_value
 
 COLUMN_HEADER_FONT = Font(bold=True)
 
+YYYY_MM_DD_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
+
+
+class FieldSchemaError(Exception):
+    pass
+
+
+def parse_datetime_day_first(value):
+    """
+    use the dateutil.parse() to parse a date/datetime with the date first (dd/mm/yyyy) (not month first mm/dd/yyyy)
+    in case of ambiguity
+    :param value:
+    :return:
+    """
+    # there's a 'bug' in dateutil.parser.parse (2.5.3). If you are using
+    # dayfirst=True. It will parse YYYY-MM-DD as YYYY-DD-MM !!
+    # https://github.com/dateutil/dateutil/issues/268
+    dayfirst = not YYYY_MM_DD_REGEX.match(value)
+    return date_parse(value, dayfirst=dayfirst)
+
+
+class DayFirstDateType(types.DateType):
+    """
+    Extend the jsontableschema DateType which use the mm/dd/yyyy date model for the 'any' format
+    to use dd/mm/yyyy.
+    """
+
+    def cast_any(self, value, fmt=None):
+        if isinstance(value, self.python_type):
+            return value
+        try:
+            return parse_datetime_day_first(value).date()
+        except (TypeError, ValueError) as e:
+            raise_with_traceback(InvalidDateType(e))
+
+
+class DayFirstDateTimeType(types.DateTimeType):
+    """
+    Extend the jsontableschema DateType which use the mm/dd/yyyy date model for the 'any' format
+    to use dd/mm/yyyy
+    """
+
+    def cast_any(self, value, fmt=None):
+        if isinstance(value, self.python_type):
+            return value
+        try:
+            return parse_datetime_day_first(value)
+        except (TypeError, ValueError) as e:
+            raise_with_traceback(InvalidDateType(e))
+
+
+class NotBlankStringType(types.StringType):
+    """
+    The default StringType accepts empty string when required = True
+    """
+    null_values = ['null', 'none', 'nil', 'nan', '-', '']
+
+
+@python_2_unicode_compatible
+class WLSchema:
+    """
+    The utility class for the wildlife licensing data within a schema field
+    Use to tag a filed to be a species field
+    {
+      name: "...."
+      constraints: ....
+      wl: {
+                type: "species"
+                speciesType: 'fauna'|'flora'|'all'
+          }
+    }
+    """
+    SPECIES_TYPE_NAME = 'species'
+    SPECIES_TYPE_FLORA_NAME = 'flora'
+    SPECIES_TYPE_FAUNA_NAME = 'fauna'
+
+    def __init__(self, data):
+        self.data = data or {}
+
+    # implement some dict like methods
+    def __getitem__(self, item):
+        return self.data.__getitem__(item)
+
+    def __str__(self):
+        return "WLSchema: {}".format(self.data)
+
+    @property
+    def type(self):
+        return self.get('type')
+
+    @property
+    def species_type(self):
+        return self.get('speciesType')
+
+    def get(self, k, d=None):
+        return self.data.get(k, d)
+
+    def is_species_type(self):
+        return self.type == self.SPECIES_TYPE_NAME
+
 
 @python_2_unicode_compatible
 class SchemaField:
@@ -19,24 +129,59 @@ class SchemaField:
     https://github.com/frictionlessdata/jsontableschema-py#types
     for validation.
     """
+    # For most of the type we use the jsontableschema ones
+    BASE_TYPE_MAP = SchemaModel._type_map()
+    # except for anything date.
+    BASE_TYPE_MAP['date'] = DayFirstDateType
+    BASE_TYPE_MAP['datetime'] = DayFirstDateTimeType
+    # and string
+    BASE_TYPE_MAP['string'] = NotBlankStringType
+
+    WL_TYPE_MAP = {
+    }
 
     def __init__(self, data):
         self.data = data
-        self.name = data['name']  # We want to throw an exception if there is no name
-        # use of jsontableschema.types to help constraint validation
-        self.type = SchemaModel._type_map()[data.get('type')](data)
+        self.name = self.data.get('name')
+        # We want to throw an exception if there is no name
+        if not self.name:
+            raise FieldSchemaError("A field without a name: {}".format(json.dumps(data)))
+        # wl specific
+        self.wl = WLSchema(self.data.get('wl'))
+        # set the type: wl type as precedence
+        type_class = self.WL_TYPE_MAP.get(self.wl.type) or self.BASE_TYPE_MAP.get(self.data.get('type'))
+        self.type = type_class(self.data)
+        self.constraints = SchemaConstraints(self.data.get('constraints', {}))
+
+    # implement some dict like methods
+    def __getitem__(self, item):
+        return self.data.__getitem__(item)
+
+    def get(self, k, d=None):
+        return self.data.get(k, d)
+
+    @property
+    def title(self):
+        return self.data.get('title')
 
     @property
     def column_name(self):
         return self.name
 
     @property
-    def constraints(self):
-        return self.data.get('constraints', {})
+    def required(self):
+        return self.constraints.required
 
     @property
-    def required(self):
-        return self.constraints.get('required', False)
+    def is_species(self):
+        return self.wl.is_species_type()
+
+    @property
+    def species_type(self):
+        result = None
+        if self.is_species:
+            return self.wl.species_type or 'all'
+        return result
 
     def cast(self, value):
         """
@@ -47,9 +192,6 @@ class SchemaField:
         :param value:
         :return:
         """
-        if is_blank_value(value):
-            # must do that because an empty string is considered as valid even if required by the StringType
-            value = None
         if isinstance(value, six.string_types) and not isinstance(value, six.text_type):
             # the StringType accepts only unicode
             value = six.u(value)
@@ -91,6 +233,26 @@ class SchemaField:
         return '{}'.format(self.name)
 
 
+class SchemaConstraints:
+    """
+    A helper class for a schema field constraints
+    """
+
+    def __init__(self, data):
+        self.data = data or {}
+
+    # implement some dict like methods
+    def __getitem__(self, item):
+        return self.data.__getitem__(item)
+
+    def get(self, k, d=None):
+        return self.data.get(k, d)
+
+    @property
+    def required(self):
+        return self.get('required', False)
+
+
 class Schema:
     """
     A utility class for schema.
@@ -99,8 +261,29 @@ class Schema:
     """
 
     def __init__(self, schema):
+        self.data = schema
         self.schema_model = SchemaModel(schema)
         self.fields = [SchemaField(f) for f in self.schema_model.fields]
+        self.species_fields = self.find_species_fields(self)
+
+    # implement some dict like methods
+    def __getitem__(self, item):
+        return self.data.__getitem__(item)
+
+    def get(self, k, d=None):
+        return self.data.get(k, d)
+
+    @staticmethod
+    def find_species_fields(schema):
+        """
+        Precedence Rules:
+        1- Look for field of wl.type = 'species'
+        :param schema: a dict descriptor or a Schema instance
+        :return: an array of [SchemaField] or []
+        """
+        if not isinstance(schema, Schema):
+            schema = Schema(schema)
+        return [f for f in schema.fields if f.is_species]
 
     @property
     def headers(self):
