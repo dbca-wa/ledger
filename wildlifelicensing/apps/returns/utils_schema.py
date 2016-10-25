@@ -27,6 +27,20 @@ class FieldSchemaError(Exception):
     pass
 
 
+def parse_datetime_day_first(value):
+    """
+    use the dateutil.parse() to parse a date/datetime with the date first (dd/mm/yyyy) (not month first mm/dd/yyyy)
+    in case of ambiguity
+    :param value:
+    :return:
+    """
+    # there's a 'bug' in dateutil.parser.parse (2.5.3). If you are using
+    # dayfirst=True. It will parse YYYY-MM-DD as YYYY-DD-MM !!
+    # https://github.com/dateutil/dateutil/issues/268
+    dayfirst = not YYYY_MM_DD_REGEX.match(value)
+    return date_parse(value, dayfirst=dayfirst)
+
+
 class DayFirstDateType(types.DateType):
     """
     Extend the jsontableschema DateType which use the mm/dd/yyyy date model for the 'any' format
@@ -37,20 +51,24 @@ class DayFirstDateType(types.DateType):
         if isinstance(value, self.python_type):
             return value
         try:
-            # there's a 'bug' in dateutil.parser.parse (2.5.3)if you are using
-            # dayfirst=True. It will parse YYYY-MM-DD as YYYY-DD-MM !!
-            # https://github.com/dateutil/dateutil/issues/268
-            dayfirst = not YYYY_MM_DD_REGEX.match(value)
-            return date_parse(value, dayfirst=dayfirst).date()
+            return parse_datetime_day_first(value).date()
         except (TypeError, ValueError) as e:
             raise_with_traceback(InvalidDateType(e))
 
 
-class DayFirstDateTimeType(DayFirstDateType):
+class DayFirstDateTimeType(types.DateTimeType):
     """
     Extend the jsontableschema DateType which use the mm/dd/yyyy date model for the 'any' format
     to use dd/mm/yyyy
     """
+
+    def cast_any(self, value, fmt=None):
+        if isinstance(value, self.python_type):
+            return value
+        try:
+            return parse_datetime_day_first(value)
+        except (TypeError, ValueError) as e:
+            raise_with_traceback(InvalidDateType(e))
 
 
 class NotBlankStringType(types.StringType):

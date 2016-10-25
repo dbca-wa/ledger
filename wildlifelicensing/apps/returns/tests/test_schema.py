@@ -175,6 +175,37 @@ class TestSchemaFieldCast(TestCase):
         self.assertIsInstance(f.cast(value), six.text_type)
         self.assertEqual(f.cast(value), value)
 
+    def test_datetime_any(self):
+        """
+        test datetime field with 'any' format
+        :return:
+        """
+        descriptor = clone(BASE_FIELD)
+        descriptor['type'] = 'datetime'
+        # format='any'.
+        # The main problem is to be sure that a dd/mm/yyyy is not interpreted as mm/dd/yyyy
+        descriptor['format'] = 'any'
+        f = SchemaField(descriptor)
+        valid_values = [
+            '2016-07-10 13:55:00',
+            '10/07/2016 13:55',
+            '10/07/16 1:55 pm',
+            '2016-07-10 13:55:00',
+            '10-July-2016 13:55:00',
+            '10-JUlY-16 13:55:00',
+            '10-07-2016 13:55:00',
+            '10-07-16 13:55:00'
+        ]
+        expected_dt = datetime.datetime(2016, 7, 10, 13, 55, 00)
+        for v in valid_values:
+            dt = f.cast(v)
+            self.assertIsInstance(dt, datetime.datetime)
+            self.assertEqual(expected_dt, dt)
+        invalid_value = ['djskdj']
+        for v in invalid_value:
+            with self.assertRaises(Exception):
+                f.cast(v)
+
 
 class TestSpeciesField(TestCase):
 
