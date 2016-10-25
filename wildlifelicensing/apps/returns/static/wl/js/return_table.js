@@ -34,6 +34,20 @@ define([
         }
     }
 
+    function validateSpeciesField($field, speciesType) {
+        // Rules: if only one species is returned from the api we consider the name to be valid.
+        // Trick: the species can be recorded as: species_name (common name) in this case the search will fail
+        // (species_name or common name but not both). We get rid of anything in parenthesis.
+        var value = $field.val();
+        if (value) {
+            value = value.replace(/\s?\(.*\)/, '');
+            querySpecies(speciesType, value.trim(), function (data) {
+                var valid = data && data.length === 1;
+                setSpeciesValid($field, valid);
+            });
+        }
+    }
+
     function initSpeciesFields($parent) {
         var $species_fields = $parent.find('input[data-species]');
         if ($species_fields.length > 0) {
@@ -42,7 +56,7 @@ define([
                     speciesType = $node.attr('data-species'),
                     value;
                 $node.typeahead({
-                    minLength: 3,
+                    minLength: 2,
                     items: 'all',
                     source: function (query, process) {
                         querySpecies(speciesType, query, function (data) {
@@ -53,11 +67,7 @@ define([
                 value = $node.val();
                 if (value) {
                     // already some data. We try to validate.
-                    // Rules: if only one species is returned from the api we consider the name to be valid.
-                    querySpecies(speciesType, value, function (data) {
-                        var valid = data && data.length === 1;
-                        setSpeciesValid($node, valid);
-                    });
+                    validateSpeciesField($node, speciesType);
                 }
             });
         }
