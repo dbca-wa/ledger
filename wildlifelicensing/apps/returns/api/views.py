@@ -6,11 +6,12 @@ from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
 
+from wildlifelicensing.apps.returns.api.mixins import APIUserRequiredMixin
 from wildlifelicensing.apps.returns.models import ReturnType, ReturnRow
 from wildlifelicensing.apps.returns.utils_schema import Schema
 
 
-class ExplorerView(View):
+class ExplorerView(APIUserRequiredMixin, View):
     """
     Return a JSON representation of the ReturnTypes.
     The main goal of this view is to provide for every resources (ReturnTable) a link to download the data
@@ -30,12 +31,19 @@ class ExplorerView(View):
             # resources
             resources = []
             for idx, resource in enumerate(rt.resources):
-                resource_obj = OrderedDict()
-                resource_obj['name'] = resource.get('name', '')
-                resource_obj['data'] = request.build_absolute_uri(reverse('wl_returns:api:data', kwargs={
+                url = request.build_absolute_uri(reverse('wl_returns:api:data', kwargs={
                     'return_type_pk': rt.pk,
                     'resource_number': idx
                 }))
+                resource_obj = OrderedDict()
+                resource_obj['name'] = resource.get('name', '')
+                resource_obj['data'] = url
+                sessionid = self.request.session.session_key
+                resource_obj['sessionid'] = sessionid
+                resource_obj['script'] = "requests.get('{0}', cookies={{'sessionid':'{1}'}}).content".format(
+                    url,
+                    sessionid
+                )
                 resource_obj['schema'] = resource.get('schema', {})
                 resources.append(resource_obj)
 
@@ -45,7 +53,7 @@ class ExplorerView(View):
         return JsonResponse(results, safe=False)
 
 
-class ReturnsDataView(View):
+class ReturnsDataView(APIUserRequiredMixin, View):
     """
     Export returns data in CSV format.
     """
