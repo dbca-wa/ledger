@@ -52,10 +52,10 @@ define([
         var $species_fields = $parent.find('input[data-species]');
         if ($species_fields.length > 0) {
             $species_fields.each(function () {
-                var $node = $(this),
-                    speciesType = $node.attr('data-species'),
+                var $field = $(this),
+                    speciesType = $field.attr('data-species'),
                     value;
-                $node.typeahead({
+                $field.typeahead({
                     minLength: 2,
                     items: 'all',
                     source: function (query, process) {
@@ -64,10 +64,10 @@ define([
                         });
                     }
                 });
-                value = $node.val();
+                value = $field.val();
                 if (value) {
                     // already some data. We try to validate.
-                    validateSpeciesField($node, speciesType);
+                    validateSpeciesField($field, speciesType);
                 }
             });
         }
