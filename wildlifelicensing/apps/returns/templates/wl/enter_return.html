@@ -19,6 +19,10 @@
 {% block requirements %}
     require(["{% static 'wl/js/return_table.js' %}"], function (returnTable) {
         returnTable.initTables();
+        // disable form submit by 'enter' key
+        $(document).on("keypress", "form", function(event) {
+             return event.keyCode != 13;
+        });
     });
 {% endblock %}
 
