@@ -18,7 +18,11 @@
 
 {% block requirements %}
     require(["{% static 'wl/js/return_table.js' %}"], function (returnTable) {
-    returnTable.initTables();
+        returnTable.initTables();
+        // disable form submit by 'enter' key
+        $(document).on("keypress", "form", function(event) {
+             return event.keyCode != 13;
+        });
     });
 {% endblock %}
 
@@ -120,7 +124,11 @@
                                                     {% with value=row|get_item:header.title|get_item:'value' error=row|get_item:header.title|get_item:'error' %}
                                                         <td>
                                                             <input name="{{ table.name }}::{{ header.title }}"
-                                                                   value="{{ value|default_if_none:"" }}"/>
+                                                                   value="{{ value|default_if_none:"" }}"
+                                                                   {%  if header.species %}
+                                                                       data-species="{{ header.species }}"
+                                                                   {% endif %}
+                                                            />
                                                             {% if error %}
                                                                 <div><span class="text-danger">{{ error }}</span></div>
                                                             {% endif %}
@@ -134,7 +142,11 @@
                                             <tr>
                                                 {% for header in table.headers %}
                                                     <td>
-                                                        <input name="{{ table.name }}::{{ header.title }}"/>
+                                                        <input name="{{ table.name }}::{{ header.title }}"
+                                                               {%  if header.species %}
+                                                                   data-species="{{ header.species }}"
+                                                               {% endif %}
+                                                        />
                                                     </td>
                                                 {% endfor %}
                                             </tr>
