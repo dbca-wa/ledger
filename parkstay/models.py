@@ -5,11 +5,21 @@ from django.contrib.postgres.fields import JSONField
 
 # Create your models here.
 
+class CustomerContact(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    phone_number = models.CharField(max_length=50, null=True, blank=True)
+    email = models.EmailField(max_length=255)
+    description = models.TextField()
+    opening_hours = models.TextField()
+    other_services = models.TextField()
+
+
 class Park(models.Model):
     name = models.CharField(max_length=255)
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
-    
+    entry_fee_required = models.BooleanField(default=True)
+
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
 
@@ -46,12 +56,13 @@ class Campground(models.Model):
     address = JSONField(null=True)
     features = models.ManyToManyField('CampgroundFeature')
     description = models.TextField(blank=True, null=True)
-    rules = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
     driving_directions = models.TextField(blank=True, null=True)
     fees = models.TextField(blank=True, null=True)
     othertransport = models.TextField(blank=True, null=True)
     key = models.CharField(max_length=255, blank=True, null=True)
+    customer_contact = models.ForeignKey('CustomerContact', null=True, on_delete=models.PROTECT)
+    
     is_published = models.BooleanField(default=False)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     metakeywords = models.TextField(blank=True, null=True)
