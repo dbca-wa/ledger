@@ -10,6 +10,12 @@ from wildlifelicensing.apps.returns.api.mixins import APIUserRequiredMixin
 from wildlifelicensing.apps.returns.models import ReturnType, ReturnRow
 from wildlifelicensing.apps.returns.utils_schema import Schema
 
+API_SESSION_TIMEOUT = 100 * 24 * 3600  # 100 days
+
+
+def set_session_timeout(request):
+    request.session.set_expiry(API_SESSION_TIMEOUT)
+
 
 class ExplorerView(APIUserRequiredMixin, View):
     """
@@ -40,7 +46,11 @@ class ExplorerView(APIUserRequiredMixin, View):
                 resource_obj['data'] = url
                 sessionid = self.request.session.session_key
                 resource_obj['sessionid'] = sessionid
-                resource_obj['script'] = "requests.get('{0}', cookies={{'sessionid':'{1}'}}).content".format(
+                resource_obj['python'] = "requests.get('{0}', cookies={{'sessionid':'{1}'}}).content".format(
+                    url,
+                    sessionid
+                )
+                resource_obj['shell'] = "curl {0} --cookie 'sessionid={1}'".format(
                     url,
                     sessionid
                 )
@@ -49,8 +59,9 @@ class ExplorerView(APIUserRequiredMixin, View):
 
             return_obj['resources'] = resources
             results.append(return_obj)
-
-        return JsonResponse(results, safe=False)
+        # for API purpose, increase the session timeout
+        set_session_timeout(request)
+        return JsonResponse(results, json_dumps_params={'indent': 2}, safe=False)
 
 
 class ReturnsDataView(APIUserRequiredMixin, View):
@@ -84,4 +95,6 @@ class ReturnsDataView(APIUserRequiredMixin, View):
             for field in schema.field_names:
                 row.append(unicode(ret_row.data.get(field, '')))
             writer.writerow(row)
+        # for API purpose, increase the session timeout
+        set_session_timeout(request)
         return response
