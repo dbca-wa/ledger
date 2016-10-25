@@ -37,6 +37,7 @@ PAGE_WIDTH, PAGE_HEIGHT = A4
 
 DEFAULT_FONTNAME = 'Helvetica'
 BOLD_FONTNAME = 'Helvetica-Bold'
+ITALIC_FONTNAME = 'Helvetica-Oblique'
 BOLD_ITALIC_FONTNAME = 'Helvetica-BoldOblique'
 
 VERY_LARGE_FONTSIZE = 14
@@ -79,6 +80,8 @@ styles.add(ParagraphStyle(name='InfoTitleLargeRight', fontName=BOLD_FONTNAME, fo
                           rightIndent=PAGE_WIDTH / 10))
 styles.add(ParagraphStyle(name='BoldLeft', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='BoldRight', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_RIGHT))
+styles.add(ParagraphStyle(name='ItalicLeft', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
+styles.add(ParagraphStyle(name='ItalifRight', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_RIGHT))
 styles.add(ParagraphStyle(name='Center', alignment=enums.TA_CENTER))
 styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
@@ -264,6 +267,11 @@ def _layout_extracted_fields(extracted_fields):
                 elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
                 elements.append(Paragraph(field['label'], styles['BoldLeft']))
 
+                if field['help_text']:
+                    elements.append(Paragraph(field['help_text'], styles['ItalicLeft']))
+
+                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
                 if field['type'] in ['text', 'text_area']:
                     elements += _layout_paragraphs(field['data'])
                 elif field['type'] in ['radiobuttons', 'select']:
@@ -276,12 +284,21 @@ def _layout_extracted_fields(extracted_fields):
                 if any([option.get('data', 'off') == 'on' for option in field['options']]):
                     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
                     elements.append(Paragraph(field['label'], styles['BoldLeft']))
+
+                    if field['help_text']:
+                        elements.append(Paragraph(field['help_text'], styles['ItalicLeft']))
+
+                    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
                     elements.append(Paragraph(', '.join([option['label'] for option in field['options']
                                                         if option.get('data', 'off') == 'on']),
                                     styles['Left']))
         else:
             elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
             elements.append(Paragraph(field['label'], styles['BoldLeft']))
+
+            if field['help_text']:
+                elements.append(Paragraph(field['help_text'], styles['ItalicLeft']))
 
             table_data = []
             for index, group in enumerate(field['children']):
