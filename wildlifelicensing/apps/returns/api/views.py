@@ -13,7 +13,7 @@ from wildlifelicensing.apps.returns.utils_schema import Schema
 API_SESSION_TIMEOUT = 100 * 24 * 3600  # 100 days
 
 
-def set_session_timeout(request):
+def set_api_session_timeout(request):
     request.session.set_expiry(API_SESSION_TIMEOUT)
 
 
@@ -60,7 +60,7 @@ class ExplorerView(APIUserRequiredMixin, View):
             return_obj['resources'] = resources
             results.append(return_obj)
         # for API purpose, increase the session timeout
-        set_session_timeout(request)
+        set_api_session_timeout(request)
         return JsonResponse(results, json_dumps_params={'indent': 2}, safe=False)
 
 
@@ -96,5 +96,5 @@ class ReturnsDataView(APIUserRequiredMixin, View):
                 row.append(unicode(ret_row.data.get(field, '')))
             writer.writerow(row)
         # for API purpose, increase the session timeout
-        set_session_timeout(request)
+        set_api_session_timeout(request)
         return response
