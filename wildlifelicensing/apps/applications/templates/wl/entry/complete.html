@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/applications_base.html' %}
 
 {% load static %}
 
@@ -27,7 +27,7 @@
         {{ licence_type.name }} {% if is_renewal %}(Renewal) {% endif %} {% if is_amendment %}(Amendment) {% endif %}
     </h4> 
     {% if customer %}
-            <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
+        <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
     {% endif %}
     {% if variants %}
         <h4>

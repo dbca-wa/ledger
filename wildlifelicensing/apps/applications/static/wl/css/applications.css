@@ -32,6 +32,7 @@ a {
 }intro
 
 /* enter details / preview */
+{% load bootstrap3 %}
 
 #sectionList > ul > .active {
     font-weight: bold;
@@ -200,6 +201,12 @@ th.action-status {
 
 .application-sections-heading {
     padding-left: 15px;
+}
+
+.application-intro {
+    background-color: #e6f2ff;
+    border-top: 2px solid #000080;
+    border-bottom: 2px solid #000080;
 }
 
 .application-intro h3 {

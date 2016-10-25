@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/applications_base.html' %}
 
 {% load static %}
 
@@ -14,7 +14,7 @@
         rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css"
         rel="stylesheet"/>
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+    {{ block.super }}
 {% endblock %}
 
 {% block requirements %}
@@ -54,19 +54,21 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}
+    {% if application.licence %}
+        <h3>Reissue Licence</h3>
+    {% else %}
+        <h3>Issue Licence</h3>
+    {% endif %}
+{% endblock %}
+{% block intro_subtitle %}
+    <h4 class="inline">
+        {{ application.licence_type.name }}
+    </h4> 
+{% endblock %}
+
 {% block content %}
     <div class="container bottom-buffer">
-        <div class="row">
-            <div class="col-md-12">
-                {% if application.licence %}
-                    <h2>Reissue Licence</h2>
-                {% else %}
-                    <h2>Issue Licence</h2>
-                {% endif %}
-                <h3>{{ application.licence_type.name }}</h3>
-                <hr>
-            </div>
-        </div>
         <div class="row">
             <div class="col-md-3">
                 <div class="row">
