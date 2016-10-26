@@ -35,7 +35,7 @@ def generate_product_code_variants(licence_type):
             return
 
         for variant in variant_group.variants.all():
-            variant_code = '{}_{}'.format(product_code, variant.product_code)
+            variant_code = '{} {}'.format(product_code, variant.product_code)
 
             __append_variant_codes(variant_code, variant_group.child, variant_codes)
 
@@ -50,8 +50,9 @@ def generate_product_code(application):
     product_code = application.licence_type.product_code
 
     if application.variants.exists():
-        product_code += '_' + '_'.join(application.variants.through.objects.filter(application=application).
-                                       order_by('order').values_list('variant__product_code', flat=True))
+        product_code = '{} {}'.format(product_code,
+                                      ' '.join(application.variants.through.objects.filter(application=application).
+                                               order_by('order').values_list('variant__product_code', flat=True)))
 
     return product_code
 
