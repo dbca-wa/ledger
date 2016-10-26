@@ -98,7 +98,9 @@ class PaymentsReportView(View):
             data = {
                 'system': PAYMENT_SYSTEM_ID,
                 'start': start,
-                'end': end
+                'end': end,
+                'banked_start': start,
+                'banked_end': end
             }
             if 'items' in request.GET:
                 data['items'] = True

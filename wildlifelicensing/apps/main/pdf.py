@@ -415,7 +415,7 @@ def _create_letter_signature():
     signature_elements = []
     signature_elements.append(Paragraph('Yours sincerely', styles['LetterLeft']))
     signature_elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 4))
-    signature_elements.append(Paragraph('from Jim Sharp', styles['LetterLeft']))
+    signature_elements.append(Paragraph('for Jim Sharp', styles['LetterLeft']))
     signature_elements.append(Paragraph('DIRECTOR GENERAL', styles['LetterLeft']))
     signature_elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
