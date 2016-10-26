@@ -126,7 +126,7 @@ def get_or_create_default_officer():
 def get_or_create_api_user():
     user, created = get_or_create_user(TestData.DEFAULT_API_USER['email'], TestData.DEFAULT_API_USER)
     if created:
-        add_to_group(user, 'Officers')
+        add_to_group(user, 'API')
     return user
 
 
