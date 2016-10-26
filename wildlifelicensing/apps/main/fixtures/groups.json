@@ -10,5 +10,11 @@
         "fields": {
             "name": "Assessors"
         }
+    },
+        {
+        "model": "auth.Group",
+        "fields": {
+            "name": "API"
+        }
     }
 ]
