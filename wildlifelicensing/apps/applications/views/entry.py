@@ -196,6 +196,8 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
 
             application.licence_type = WildlifeLicenceType.objects.get(id=self.args[0])
 
+            application.data = None
+
             application.variants.clear()
 
             for index, variant_id in enumerate(request.GET.getlist('variants', [])):

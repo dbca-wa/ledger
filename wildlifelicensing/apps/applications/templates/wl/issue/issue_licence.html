@@ -158,9 +158,15 @@
                                             <div class="form-group">
                                                 <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
                                                 {% include 'wl/issue/extracted_field.html' with field=item %}
+                                                {% if item.help_text %}
+                                                    <p class="help-block">{{ item.help_text }}</p>
+                                                {% endif %}
                                             </div>
                                         {% else %}
                                             <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
+                                            {% if item.help_text %}
+                                                <p class="help-block">{{ item.help_text }}</p>
+                                            {% endif %}
                                             {% for item_group in item.children %}
                                                 <div class="row">
                                                     {% with width=item_group|length|derive_col_width %}

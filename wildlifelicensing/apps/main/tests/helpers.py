@@ -8,9 +8,9 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 from django.utils.encoding import smart_text
-from django_dynamic_fixture import get as get_ddf
+from django_dynamic_fixture import G
 
-from ledger.accounts.models import EmailUser, Profile, Address
+from ledger.accounts.models import EmailUser, Profile, Address, Country
 from wildlifelicensing.apps.main import helpers as accounts_helpers
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence, AssessorGroup
 
@@ -48,6 +48,12 @@ class TestData(object):
         'name': 'ass group',
         'email': 'assessor@test.com',
     }
+    DEFAULT_API_USER = {
+        'email': 'apir@test.com',
+        'first_name': 'api',
+        'last_name': 'user',
+        'dob': '1979-12-13',
+    }
 
 
 class SocialClient(Client):
@@ -68,6 +74,10 @@ class SocialClient(Client):
 
     def logout(self):
         self.get(reverse('accounts:logout'))
+
+
+def create_default_country():
+    return G(Country, iso_3166_1_a2='AU')
 
 
 def is_client_authenticated(client):
@@ -92,7 +102,7 @@ def get_or_create_user(email, defaults):
 
 
 def create_random_user():
-    return get_ddf(EmailUser, dob='1970-01-01')
+    return G(EmailUser, dob='1970-01-01')
 
 
 def create_random_customer():
@@ -114,6 +124,13 @@ def get_or_create_default_officer():
     user, created = get_or_create_user(TestData.DEFAULT_OFFICER['email'], TestData.DEFAULT_OFFICER)
     if created:
         add_to_group(user, 'Officers')
+    return user
+
+
+def get_or_create_api_user():
+    user, created = get_or_create_user(TestData.DEFAULT_API_USER['email'], TestData.DEFAULT_API_USER)
+    if created:
+        add_to_group(user, 'API')
     return user
 
 
