@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
+from django.utils import timezone
 
 from wildlifelicensing.apps.returns.api.mixins import APIUserRequiredMixin
 from wildlifelicensing.apps.returns.models import ReturnType, ReturnRow
@@ -26,7 +27,15 @@ class ExplorerView(APIUserRequiredMixin, View):
 
     def get(self, request):
         queryset = ReturnType.objects.all()
-        results = []
+        # for API purpose, increase the session timeout
+        set_api_session_timeout(request)
+        sessionid = self.request.session.session_key
+        payload = OrderedDict()
+        payload['auth'] = {
+            "sessionId": sessionid,
+            "expires": timezone.localtime(self.request.session.get_expiry_date())
+        }
+        data = []
         for rt in queryset:
             return_obj = OrderedDict({'id': rt.id})
             licence_type = {
@@ -44,8 +53,6 @@ class ExplorerView(APIUserRequiredMixin, View):
                 resource_obj = OrderedDict()
                 resource_obj['name'] = resource.get('name', '')
                 resource_obj['data'] = url
-                sessionid = self.request.session.session_key
-                resource_obj['sessionid'] = sessionid
                 resource_obj['python'] = "requests.get('{0}', cookies={{'sessionid':'{1}'}}).content".format(
                     url,
                     sessionid
@@ -58,10 +65,9 @@ class ExplorerView(APIUserRequiredMixin, View):
                 resources.append(resource_obj)
 
             return_obj['resources'] = resources
-            results.append(return_obj)
-        # for API purpose, increase the session timeout
-        set_api_session_timeout(request)
-        return JsonResponse(results, json_dumps_params={'indent': 2}, safe=False)
+            data.append(return_obj)
+        payload['data'] = data
+        return JsonResponse(payload, json_dumps_params={'indent': 2}, safe=False)
 
 
 class ReturnsDataView(APIUserRequiredMixin, View):
@@ -71,6 +77,8 @@ class ReturnsDataView(APIUserRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         return_type = get_object_or_404(ReturnType, pk=kwargs.get('return_type_pk'))
+        # for API purpose, increase the session timeout
+        set_api_session_timeout(request)
         resource_number = kwargs.get('resource_number')
         if not resource_number:
             resource_number = 0
@@ -95,6 +103,4 @@ class ReturnsDataView(APIUserRequiredMixin, View):
             for field in schema.field_names:
                 row.append(unicode(ret_row.data.get(field, '')))
             writer.writerow(row)
-        # for API purpose, increase the session timeout
-        set_api_session_timeout(request)
         return response
