@@ -230,7 +230,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                     variant_dict['href'] = '{}?{}'.format(reverse('wl_applications:select_licence_type',
                                                                   args=(licence_type.id,)), encoded_params)
 
-                    prod_code = '{}_{}'.format(licence_type.product_code, '_'.join([v.product_code for v in params]))
+                    prod_code = '{} {}'.format(licence_type.product_code, ' '.join([v.product_code for v in params]))
                     variant_dict['price'] = get_licence_price(prod_code)
 
                 variant_dict['help_text'] = variant.help_text

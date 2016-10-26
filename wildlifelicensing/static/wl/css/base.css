@@ -97,30 +97,29 @@
 
 .intro {
     padding: 10px;
+    border-radius: 3px;
 }
 
 .intro h3 {
     margin-top: 0px;
-    font-style: italic;
 }
 
 .intro h4 {
     margin-top: 0px;
     margin-bottom: 0px;
-    padding-bottom: 10px;
 }
 
 .applications {
-    color: #fff !important;
-    background-color: #7d9acc!important;
+    color: #ffffff !important;
+    background-color: #7d9acc !important;
 }
 
 .licences {
-    color: #fff !important;
-    background-color: #ead47c!important;
+    color: #ffffff !important;
+    background-color: #ead47c !important;
 }
 
 .returns {
-    color: #fff !important;
-    background-color: #b30000!important;
+    color: #ffffff !important;
+    background-color: #d86565!important;
 }
