@@ -19,6 +19,7 @@ class ApplicationEntryTestCase(TestCase):
     fixtures = ['licences.json', 'catalogue.json', 'partner.json']
 
     def setUp(self):
+        helpers.create_default_country()
         self.customer = get_or_create_default_customer()
 
         self.client = SocialClient()
