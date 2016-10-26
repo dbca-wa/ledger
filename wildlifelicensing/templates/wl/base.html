@@ -9,6 +9,8 @@
     <head>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        {# Next line is to disable phone dection in Edge/W11.#}
+        {# Without that some application/licence numbers are detected as phone number and highligthed as link in Edge/W11  #}
         <meta name="format-detection" content="telephone=no"/>
             {% bootstrap_css %}
                 <link type="text/css" href="{% static 'wl/css/base.css' %}" rel="stylesheet">
