@@ -8,11 +8,21 @@ from taggit.managers import TaggableManager
 
 # Create your models here.
 
+class CustomerContact(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    phone_number = models.CharField(max_length=50, null=True, blank=True)
+    email = models.EmailField(max_length=255)
+    description = models.TextField()
+    opening_hours = models.TextField()
+    other_services = models.TextField()
+
+
 class Park(models.Model):
     name = models.CharField(max_length=255)
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
-    
+    entry_fee_required = models.BooleanField(default=True)
+
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
 
@@ -57,20 +67,18 @@ class Campground(models.Model):
     address = JSONField(null=True)
     features = models.ManyToManyField('Feature')
     description = models.TextField(blank=True, null=True)
-    regulations = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
     # Tags for communications methods available and access type
     tags = TaggableManager()
     driving_directions = models.TextField(blank=True, null=True)
+    fees = models.TextField(blank=True, null=True)
+    othertransport = models.TextField(blank=True, null=True)
+    key = models.CharField(max_length=255, blank=True, null=True)
+    customer_contact = models.ForeignKey('CustomerContact', null=True, on_delete=models.PROTECT)
+    
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     bookable_per_site = models.BooleanField(default=False)
-    #campfires_allowed = models.BooleanField(default=False)
     dog_permitted = models.BooleanField(default=False)
-    # Minimum and Maximum days that a booking can be made before arrival
-    min_dba = models.SmallIntegerField(default=0)
-    max_dba = models.SmallIntegerField(default=180)
-    no_booking_start = models.DateTimeField(blank=True, null=True)
-    no_booking_end = models.DateTimeField(blank=True, null=True)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
 
@@ -79,7 +87,8 @@ class Campground(models.Model):
 
     class Meta:
         unique_together = (('name', 'park'),)
-    
+
+
     @property
     def region(self):
         return self.park.district.region.name
@@ -93,14 +102,36 @@ class Campground(models.Model):
                 return False
         return True
 
+class BookingRange(models.Model):
+    BOOKING_RANGE_CHOICES = (
+        (0, 'Open'),
+        (1, 'Closed due to natural disaster'),
+        (2, 'Closed for maintenance'),
+    )
+
+    campground = models.ForeignKey('Campground', on_delete=models.PROTECT)
+
+    # minimum/maximum consecutive days allowed for a booking
+    min_days = models.SmallIntegerField(default=1)
+    max_days = models.SmallIntegerField(default=28)
+    # minimum/maximum number of campsites allowed for a booking
+    min_sites = models.SmallIntegerField(default=1)
+    max_sites = models.SmallIntegerField(default=12)
+    # Minimum and Maximum days that a booking can be made before arrival
+    min_dba = models.SmallIntegerField(default=0)
+    max_dba = models.SmallIntegerField(default=180)
+    
+    status = models.SmallIntegerField(choices=BOOKING_RANGE_CHOICES, default=0)
+    details = models.TextField()
+    range_start = models.DateTimeField(blank=True, null=True)
+    range_end = models.DateTimeField(blank=True, null=True)
+
+
 class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
-    min_days = models.SmallIntegerField(default=1)
-    max_days = models.SmallIntegerField(default=28)
-    allow_generator = models.BooleanField(default=False)
     features = models.ManyToManyField('Feature')
 
     def __str__(self):
@@ -156,11 +187,10 @@ class CampsiteClass(models.Model):
     name = models.CharField(max_length=255, unique=True)
     camp_unit_suitability = TaggableManager()
     tents = models.SmallIntegerField(default=0)
-    parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default='0')
-    number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default='0')
+    parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default=0)
+    number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default=0)
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
-    hard_surface = models.BooleanField(default=False)
     dimensions = models.CharField(max_length=12, default='6x4')
 
     def __str__(self):
@@ -234,5 +264,4 @@ class Booking(models.Model):
     departure = models.DateField()
     details = JSONField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    campsite_rate = models.ForeignKey(CampsiteRate, db_index=True, on_delete=models.PROTECT)
     campground = models.ForeignKey('Campground', null=True)
