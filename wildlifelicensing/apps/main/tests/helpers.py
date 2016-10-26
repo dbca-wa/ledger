@@ -48,6 +48,12 @@ class TestData(object):
         'name': 'ass group',
         'email': 'assessor@test.com',
     }
+    DEFAULT_API_USER = {
+        'email': 'apir@test.com',
+        'first_name': 'api',
+        'last_name': 'user',
+        'dob': '1979-12-13',
+    }
 
 
 class SocialClient(Client):
@@ -114,6 +120,13 @@ def get_or_create_default_officer():
     user, created = get_or_create_user(TestData.DEFAULT_OFFICER['email'], TestData.DEFAULT_OFFICER)
     if created:
         add_to_group(user, 'Officers')
+    return user
+
+
+def get_or_create_api_user():
+    user, created = get_or_create_user(TestData.DEFAULT_API_USER['email'], TestData.DEFAULT_API_USER)
+    if created:
+        add_to_group(user, 'API')
     return user
 
 
