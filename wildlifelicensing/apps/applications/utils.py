@@ -84,12 +84,7 @@ def _extract_licence_fields_from_item(item, data, licence_fields):
         if 'children' not in item:
             # label / checkbox types are extracted differently so skip here
             if item['type'] not in ('label', 'checkbox'):
-                licence_field = {
-                    'name': item['name'],
-                    'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
-                    'type': item['type'],
-                    'readonly': item.get('isLicenceFieldReadonly', False)
-                }
+                licence_field = _create_licence_field(item)
 
                 if 'options' in item:
                     licence_field['options'] = item['options']
@@ -99,13 +94,8 @@ def _extract_licence_fields_from_item(item, data, licence_fields):
 
                 licence_fields.append(licence_field)
         else:
-            licence_field = {
-                'name': item['name'],
-                'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
-                'type': item['type'],
-                'readonly': item.get('isLicenceFieldReadonly', False),
-                'children': []
-            }
+            licence_field = _create_licence_field(item)
+            licence_field['children'] = []
 
             child_data = _extract_item_data(item['name'], data)
 
@@ -139,13 +129,8 @@ def _extract_licence_fields_from_item(item, data, licence_fields):
 
 
 def _extract_label_and_checkboxes(current_item, items, data, licence_fields):
-    licence_field = {
-        'name': current_item['name'],
-        'label': current_item['licenceFieldLabel'] if 'licenceFieldLabel' in current_item else current_item['label'],
-        'type': current_item['type'],
-        'readonly': current_item.get('isLicenceFieldReadonly', False),
-        'options': []
-    }
+    licence_field = _create_licence_field(current_item)
+    licence_field['options'] = []
 
     # find index of first checkbox after checkbox label within current item list
     checkbox_index = 0
@@ -168,6 +153,16 @@ def _extract_label_and_checkboxes(current_item, items, data, licence_fields):
         checkbox_index += 1
 
     licence_fields.append(licence_field)
+
+
+def _create_licence_field(item):
+    return {
+        'name': item['name'],
+        'type': item['type'],
+        'label': item['licenceFieldLabel'] if 'licenceFieldLabel' in item else item['label'],
+        'help_text': item.get('licenceFieldHelpText', ''),
+        'readonly': item.get('isLicenceFieldReadonly', False)
+    }
 
 
 def _extract_item_data(name, data):

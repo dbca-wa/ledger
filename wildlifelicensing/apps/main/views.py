@@ -197,8 +197,6 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
             if is_name_changed:
                 messages.warning(request, "Please upload new identification after you changed your name.")
                 return redirect(self.identification_url)
-            elif not emailuser.identification:
-                messages.warning(request, "Please upload your identification.")
             else:
                 messages.success(request, "User account was saved.")
 
