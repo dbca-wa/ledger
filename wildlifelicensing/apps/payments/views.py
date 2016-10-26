@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from wildlifelicensing.apps.applications.models import Application
 
-from wildlifelicensing.apps.payments.utils import generate_product_code, get_product, to_json
+from wildlifelicensing.apps.payments.utils import generate_product_code, get_product
 from wildlifelicensing.apps.payments.forms import PaymentsReportForm
 from wildlifelicensing.apps.main.helpers import is_officer
 

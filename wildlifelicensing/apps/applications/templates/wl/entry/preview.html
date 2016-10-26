@@ -65,12 +65,17 @@
 {% block intro_text %}
     <p>
         Please review the answers you provided to ensure their correctness before lodging your application. If you need to change any answers, click the
-        Edit Application Details button at the bottom-left. When you are satisfied with your answers, check the disclaimer checkboxes and click the Lodge
-        Application button at the bottom-right.
+        Edit Application Details button at the bottom-left.
+        {% if is_payment_required %}
+            When you are satisfied with your answers, check the disclaimer checkboxes and click the Proceed to Payment button at the bottom-right.
+        {% else %}
+            When you are satisfied with your answers, check the disclaimer checkboxes and click the Lodge
+            Application button at the bottom-right.
+        {% endif %}
     </p>
     <p>
         Note that once you have lodged the application, you will not be able to alter it unless a Wildlife Licensing officer requests
-        amendments be made. Should amendments be required, you will be notified via email (using the email address for the profile selected) whereby
+        amendments be made. Should amendments be required, you will be notified via email (using the email address of the selected profile) whereby
         you will need to alter the application according to the amendments requested.
     </p>
 {% endblock %}

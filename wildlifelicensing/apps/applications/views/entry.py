@@ -23,7 +23,7 @@ from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCu
 from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
 from django.core.urlresolvers import reverse
 from wildlifelicensing.apps.applications.utils import delete_session_application
-from wildlifelicensing.apps.payments.utils import is_licence_free,\
+from wildlifelicensing.apps.payments.utils import is_licence_free, get_licence_price, \
     generate_product_code
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -218,13 +218,18 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
             for variant in variant_group.variants.all():
                 variant_dict = {'text': variant.name}
 
+                params = current_params + [variant]
+
                 if variant_group.child is not None:
-                    variant_dict['nodes'] = __get_variants(variant_group.child, licence_type, current_params + [variant.id])
+                    variant_dict['nodes'] = __get_variants(variant_group.child, licence_type, params)
                 else:
-                    params = urlencode({'variants': current_params + [variant.id]}, doseq=True)
+                    encoded_params = urlencode({'variants': [v.id for v in params]}, doseq=True)
 
                     variant_dict['href'] = '{}?{}'.format(reverse('wl_applications:select_licence_type',
-                                                                  args=(licence_type.id,)), params)
+                                                                  args=(licence_type.id,)), encoded_params)
+
+                    prod_code = '{}_{}'.format(licence_type.product_code, '_'.join([v.product_code for v in params]))
+                    variant_dict['price'] = get_licence_price(prod_code)
 
                 variant_dict['help_text'] = variant.help_text
 
@@ -241,6 +246,8 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                 else:
                     licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
                                                         args=(licence_type.id,))
+
+                    licence_type_dict['price'] = get_licence_price(licence_type.product_code)
 
                 category_dict['licence_types'].append(licence_type_dict)
 
