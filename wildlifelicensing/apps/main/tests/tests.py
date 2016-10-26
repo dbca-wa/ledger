@@ -7,13 +7,14 @@ from django.test import TestCase
 
 from ledger.accounts.models import EmailUser, Profile
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
-    get_or_create_default_officer, TestData, upload_id
+    get_or_create_default_officer, TestData, upload_id, create_default_country
 
 TEST_ID_PATH = TestData.TEST_ID_PATH
 
 
 class AccountsTestCase(TestCase):
     def setUp(self):
+        create_default_country()
         self.customer = get_or_create_default_customer()
 
         self.officer = get_or_create_default_officer()
