@@ -2,7 +2,8 @@ from __future__ import unicode_literals
 
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
-from datetime import date, time
+from django.utils import timezone
+from datetime import date, time, datetime
 from taggit.managers import TaggableManager
 
 # Create your models here.
@@ -63,6 +64,7 @@ class Campground(models.Model):
     driving_directions = models.TextField(blank=True, null=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     bookable_per_site = models.BooleanField(default=False)
+    #campfires_allowed = models.BooleanField(default=False)
     dog_permitted = models.BooleanField(default=False)
     # Minimum and Maximum days that a booking can be made before arrival
     min_dba = models.SmallIntegerField(default=0)
@@ -78,6 +80,18 @@ class Campground(models.Model):
     class Meta:
         unique_together = (('name', 'park'),)
     
+    @property
+    def region(self):
+        return self.park.district.region.name
+
+    @property
+    def active(self):
+        if (self.no_booking_start and not self.no_booking_end) and self.no_booking_start <= timezone.now():
+            return False
+        else: 
+            if (self.no_booking_end and self.no_booking_start <= timezone.now() <= self.no_booking_end):
+                return False
+        return True
 
 class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT)
