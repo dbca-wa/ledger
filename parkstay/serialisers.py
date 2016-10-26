@@ -22,6 +22,35 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     campground_type = serializers.SerializerMethodField()
     class Meta:
         model = Campground
+        fields = (
+            'url',
+            'id',
+            'site_type',
+            'campground_type',
+            'name',
+            'address',
+            'contact',
+            'park',
+            'region',
+            'wkb_geometry',
+            'description',
+            'promo_area',
+            'ratis_id',
+            'regulations',
+            'area_activities',
+            'features',
+            'driving_directions',
+            'bookable_per_site',
+            'active',
+            #'campfires_allowed',
+            'dog_permitted',
+            'check_in',
+            'check_out',
+            'no_booking_start',
+            'no_booking_end',
+            'min_dba',
+            'max_dba'
+        )
 
     def get_site_type(self, obj):
         return dict(Campground.SITE_TYPE_CHOICES).get(obj.site_type)
