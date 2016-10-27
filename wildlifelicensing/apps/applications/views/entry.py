@@ -18,7 +18,7 @@ from wildlifelicensing.apps.applications.models import Application, AmendmentReq
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin,\
-    UserCanViewApplicationMixin
+    UserCanViewApplicationMixin, UserCanRenewApplicationMixin, UserCanAmendApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
 from django.core.urlresolvers import reverse
@@ -100,7 +100,7 @@ class DeleteApplicationView(View, UserCanViewApplicationMixin):
         return redirect('wl_dashboard:home')
 
 
-class RenewLicenceView(View):  # TODO: need a UserCanRenewLicence type mixin
+class RenewLicenceView(UserCanRenewApplicationMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
@@ -122,7 +122,7 @@ class RenewLicenceView(View):  # TODO: need a UserCanRenewLicence type mixin
         return redirect('wl_applications:enter_details')
 
 
-class AmendLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
+class AmendLicenceView(UserCanAmendApplicationMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 

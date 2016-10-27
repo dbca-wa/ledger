@@ -44,6 +44,17 @@ def licence_issued_callback(sender, **kwargs):
 
         Return.objects.bulk_create(returns)
 
+        # if this is a licence amendment, need to delete future current/returns of previous licence
+        try:
+            previous_licence = WildlifeLicence.objects.get(replaced_by=licence)
+        except WildlifeLicence.DoesNotExist:
+            pass
+        else:
+            previous_licence_returns = Return.objects.filter(licence=previous_licence)
+
+            # delete previous licence returns that haven't been edited
+            previous_licence_returns.filter(status__in=['current', 'future']).delete()
+
 
 @receiver(post_save, sender=WildlifeLicenceType)
 def create_return_type_for_superceding_licence_type(sender, **kwargs):

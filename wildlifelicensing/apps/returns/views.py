@@ -56,7 +56,7 @@ def _get_table_rows_from_post(table_name, post_data):
     by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if
                       key.startswith(table_namespace)])
     # by_column is of format {'col_header':[row1_val, row2_val,...],...}
-    num_rows = len(list(by_column.values())[0])
+    num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
     rows = []
     for row_num in range(num_rows):
         row_data = {}
@@ -172,7 +172,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
                     for table in context['tables']:
                         worksheet = excel.get_sheet(workbook, table.get('title')) \
-                                    or excel.get_sheet(workbook, table.get('name'))
+                            or excel.get_sheet(workbook, table.get('name'))
                         if worksheet is not None:
                             table_data = excel.TableData(worksheet)
                             schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
@@ -255,6 +255,12 @@ class CurateReturnView(EnterReturnView):
                 ret.save()
 
                 messages.success(request, 'Return was accepted.')
+                return redirect('home')
+            elif ret.nil_return:
+                ret.status = 'accepted'
+                ret.save()
+
+                messages.success(request, 'Nil return was accepted.')
                 return redirect('home')
             else:
                 for table in context['tables']:

@@ -6,6 +6,8 @@
 
 {% load dict_helpers %}
 
+{% load users %}
+
 {% block extra_css %}
     <link rel="stylesheet"
           href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css">
@@ -52,9 +54,6 @@
      <h4 class="inline">
          {{ return.licence.licence_type.name }}
      </h4>
-     {% if request.user|is_officer %}
-         <h4 class="pull-right">Customer: {{ return.licence.holder.get_full_name }}</h4>
-     {% endif %}
 {% endblock %}
 
 {% block content %}

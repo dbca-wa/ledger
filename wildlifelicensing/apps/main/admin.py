@@ -81,6 +81,7 @@ class WildlifeLicenceTypeAdminForm(forms.ModelForm):
 
         return schema
 
+
 @admin.register(WildlifeLicenceType)
 class WildlifeLicenceTypeAdmin(VersionAdmin):
     list_display = ('name', 'display_name', 'version', 'code')

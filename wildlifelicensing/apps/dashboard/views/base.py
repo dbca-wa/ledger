@@ -18,6 +18,7 @@ from django.utils.http import urlencode
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.applications.utils import remove_temp_applications_for_user
 from wildlifelicensing.apps.dashboard.forms import LoginForm
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, render_user_name
 
@@ -192,7 +193,7 @@ class TablesBaseView(TemplateView):
     #########################
     # Applications
     #########################
-    
+
     @property
     def applications_columns(self):
         return []
@@ -340,7 +341,6 @@ class TablesBaseView(TemplateView):
                 self.update_with_session_data(result, session_data)
         return result
 
-
     @staticmethod
     def set_data_url(table_config, url):
         table_config['ajax'].update({
@@ -439,6 +439,8 @@ class TablesBaseView(TemplateView):
         return self.request.GET.dict()
 
     def get_context_data(self, **kwargs):
+        remove_temp_applications_for_user(self.request.user)
+
         if 'dataJSON' not in kwargs:
             data = {
                 'applications': self.get_applications_context_data() or None,

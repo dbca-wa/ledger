@@ -553,6 +553,11 @@ class TablesLicencesOfficerView(OfficerRequiredMixin, base.TablesBaseView):
                 'orderable': False
             },
             {
+                'title': 'Status',
+                'searchable': False,
+                'orderable': False
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -608,6 +613,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         'licence',
         'cover_letter',
         'renewal_letter',
+        'status',
         'action']
     order_columns = [
         'licence_number',
@@ -646,6 +652,9 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         },
         'renewal_letter': {
             'render': lambda self, instance: self._render_renewal_letter(instance)
+        },
+        'status': {
+            'render': lambda self, instance: self._render_status(instance)
         },
         'action': {
             'render': lambda self, instance: self._render_action(instance)
@@ -711,7 +720,35 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             return 'Not renewable'
 
     @staticmethod
+    def _render_status(instance):
+        try:
+            application = Application.objects.get(licence=instance)
+            replacing_application = Application.objects.get(previous_application=application)
+
+            if replacing_application.is_licence_amendment:
+                return 'Amended'
+            else:
+                return 'Renewed'
+        except Application.DoesNotExist:
+            pass
+
+        expiry_days = (instance.end_date - datetime.date.today()).days
+        if instance.end_date < datetime.date.today():
+            return '<span class="label label-danger">Expired</span>'
+        elif expiry_days <= 30 and instance.is_renewable:
+            return '<span class="label label-warning">Due for renewal</span>'
+        else:
+            return 'Current'
+
+    @staticmethod
     def _render_action(instance):
+        try:
+            application = Application.objects.get(licence=instance)
+            if Application.objects.filter(previous_application=application).exists():
+                return 'N/A'
+        except Application.DoesNotExist:
+            pass
+
         reissue_url = reverse('wl_applications:reissue_licence', args=(instance.pk,))
         expiry_days = (instance.end_date - datetime.date.today()).days
 
@@ -862,7 +899,8 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             else:
                 return 'Current'
         else:
-            return dict(Return.STATUS_CHOICES)[status]
+            suffix = ' (Nil)' if status == 'submitted' and instance.nil_return else ''
+            return dict(Return.STATUS_CHOICES)[status] + suffix
 
     @staticmethod
     def _render_action(instance):
@@ -874,8 +912,6 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
             return '<a href="{0}">Edit Return</a>'.format(url)
         elif instance.status == 'submitted':
             text = 'Curate Return'
-            if instance.nil_return:
-                text = 'Nil Return'
             url = reverse('wl_returns:curate_return', args=(instance.pk,))
             return '<a href="{0}">{1}</a>'.format(url, text)
         else:

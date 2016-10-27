@@ -76,10 +76,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             return redirect(request.get_full_path())
 
-        # do credit card payment if required
-        if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
-                payment_utils.invoke_credit_card_payment(application)
-
         original_issue_date = None
         if application.licence is not None:
             issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES)
@@ -157,6 +153,10 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(licence),
                 request
             )
+
+            # do credit card payment if required
+            if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+                payment_utils.invoke_credit_card_payment(application)
 
             # The licence should be emailed to the customer if they applied for it online. If an officer entered
             # the application on their behalf, the licence needs to be posted to the user.
