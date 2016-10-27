@@ -8,9 +8,9 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 from django.utils.encoding import smart_text
-from django_dynamic_fixture import get as get_ddf
+from django_dynamic_fixture import G
 
-from ledger.accounts.models import EmailUser, Profile, Address
+from ledger.accounts.models import EmailUser, Profile, Address, Country
 from wildlifelicensing.apps.main import helpers as accounts_helpers
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence, AssessorGroup
 
@@ -76,6 +76,10 @@ class SocialClient(Client):
         self.get(reverse('accounts:logout'))
 
 
+def create_default_country():
+    return G(Country, iso_3166_1_a2='AU')
+
+
 def is_client_authenticated(client):
     return '_auth_user_id' in client.session
 
@@ -98,7 +102,7 @@ def get_or_create_user(email, defaults):
 
 
 def create_random_user():
-    return get_ddf(EmailUser, dob='1970-01-01')
+    return G(EmailUser, dob='1970-01-01')
 
 
 def create_random_customer():
