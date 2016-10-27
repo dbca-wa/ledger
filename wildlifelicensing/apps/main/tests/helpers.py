@@ -209,6 +209,15 @@ def clear_all_id_files():
         clear_id_file(user)
 
 
+def get_user_home_url(user):
+    if accounts_helpers.is_officer(user):
+        return '/dashboard/officer'
+    elif accounts_helpers.is_assessor(user):
+        return '/dashboard/tables/assessor'
+
+    return '/dashboard/tables/customer'
+
+
 class HelpersTest(TestCase):
     def setUp(self):
         self.client = SocialClient()
