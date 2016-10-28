@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/applications_base.html' %}
 
 {% load static %}
 
@@ -7,10 +7,6 @@
 {% load jsonify %}
 
 {% load users %}
-
-{% block extra_css %}
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
-{% endblock %}
 
 {% block breadcrumbs %}
     <div class="container">
@@ -25,22 +21,34 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}<h3>Application Complete</h3>{% endblock %}
+{% block intro_subtitle %}
+    <h4 class="inline">
+        {{ licence_type.name }} {% if is_renewal %}(Renewal) {% endif %} {% if is_amendment %}(Amendment) {% endif %}
+    </h4> 
+    {% if customer %}
+        <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
+    {% endif %}
+    {% if variants %}
+        <h4>
+            <em>({{ variants }})</em>
+        </h4>
+    {% endif %}
+{% endblock %}
+{% block intro_text %}
+    <div class="info">
+        <p>
+            The application process is now complete and your application is now under review. Please allow up to 20 working days for processing. You can see the status of the application
+            on the dashboard and view a read-only version of the application details. You may receive requests for amendments to the application, at which
+            point you will be able to modify the content and resubmit.
+        </p>
+    </div>
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                {% with heading='Application Complete' %}
-                    {% include 'wl/entry/header.html' %}
-                {% endwith %}
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-                <p>
-                    The application process is now complete and your application is now under review. Please allow up to 20 working days for processing. You can see the status of the application
-                    on the dashboard and view a read-only version of the application details. You may receive requests for amendments to the application, at which
-                    point you will be able to modify the content and resubmit.
-                </p>
                 {% if show_invoice %}
                     <p>
                         Note that if your licence requires payment, the invoice must be paid before the licence can be issued. You can download the invoice from the links below.

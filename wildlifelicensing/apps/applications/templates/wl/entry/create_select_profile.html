@@ -1,14 +1,10 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/applications_base.html' %}
 
 {% load static %}
 
 {% load bootstrap3 %}
 
 {% load users %}
-
-{% block extra_css %}
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
-{% endblock %}
 
 {% block requirements %}
     require(['js/entry/navigation'], function(navigation) {
@@ -36,18 +32,32 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}<h3>Select Profile</h3>{% endblock %}
+{% block intro_subtitle %}
+    <h4 class="inline">
+        {{ licence_type.name }} {% if is_renewal %}(Renewal) {% endif %} {% if is_amendment %}(Amendment) {% endif %}
+    </h4> 
+    {% if customer %}
+            <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
+    {% endif %}
+    {% if variants %}
+        <h4>
+            <em>({{ variants }})</em>
+        </h4>
+    {% endif %}
+{% endblock %}
+{% block intro_text %}
+    <p>
+        The Wildlife Licensing system utilises the concept of profiles to allow users to apply for a licence under different circumstances, such holding a licence
+        for personal, commercial or research purposes. Please select an existing profile or alternatively create a new profile for this licence application.
+    </p>
+{% endblock %}
+
 {% block content %}
     <div class="container bottom-buffer">
         {% if profile_selection_form %}
             <div class="row">
                 <div class="col-md-12">
-                    {% with heading='Select Profile' %}
-                        {% include 'wl/entry/header.html' %}
-                    {% endwith %}
-                    <p>
-                        The Wildlife Licensing system utilises the concept of profiles to allow users to apply for a licence under different circumstances, such holding a licence
-                        for personal, commercial or research purposes. Please select an existing profile or alternatively create a new profile for this licence application.
-                    </p>
                     <form method="post">
                         {% csrf_token %}
                         {% bootstrap_form profile_selection_form %}

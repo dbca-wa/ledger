@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/applications_base.html' %}
 
 {% load static %}
 
@@ -11,7 +11,7 @@
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
           rel="stylesheet"/>
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+    {{ block.super }}
 {% endblock %}
 
 
@@ -48,15 +48,15 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}<h3>Enter Licence Conditions</h3>{% endblock %}
+{% block intro_subtitle %}
+    <h4 class="inline">
+        {{ application.licence_type.name }}
+    </h4> 
+{% endblock %}
+
 {% block content %}
     <div class="container bottom-buffer">
-        <div class="row">
-            <div class="col-md-12">
-                <h2>Enter Licence Conditions</h2>
-                <h3>{{ application.licence_type.name }}</h3>
-                <hr>
-            </div>
-        </div>
         <div class="row">
             <div class="col-md-3">
                 <div class="row">

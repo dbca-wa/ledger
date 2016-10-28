@@ -79,6 +79,19 @@ def is_licence_free(product_code):
     return purchase_info.price.effective_price == 0
 
 
+def get_licence_price(product_code):
+    product = get_product(product_code)
+
+    if product is None:
+        return 0.00
+
+    selector = Selector()
+    strategy = selector.strategy()
+    purchase_info = strategy.fetch_for_product(product=product)
+
+    return purchase_info.price.effective_price
+
+
 def get_application_payment_status(application):
     """
     :param application:

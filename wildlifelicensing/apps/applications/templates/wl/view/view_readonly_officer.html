@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/applications_base.html' %}
 
 {% load static %}
 
@@ -10,7 +10,7 @@
 
 {% block extra_css %}
     <link href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css" rel="stylesheet" />
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+    {{ block.super }}
 {% endblock %}
 
 {% block requirements %}
@@ -51,17 +51,17 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}
+    <h3>Application (read-only)</h3>
+{% endblock %}
+{% block intro_subtitle %}
+    <h4 class="inline">
+        {{ application.licence_type.name }}
+    </h4> 
+{% endblock %}
+
 {% block content %}
     <div id="mainContainer" class="container hidden">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="top-buffer">
-                    <h2 class="inline">{{ application.licence_type.name }}</h2>
-                    <h3>Application (read-only)</h3>
-                    <hr>
-                </div>
-            </div>
-        </div>
         <div class="row">
             <div class="col-md-3">
                <div class="row">
