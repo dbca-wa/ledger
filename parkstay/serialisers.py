@@ -1,4 +1,4 @@
-from parkstay.models import CampsiteBooking, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate
+from parkstay.models import CampsiteBooking, BookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
 from rest_framework import serializers
 
 class ParkSerializer(serializers.HyperlinkedModelSerializer):
@@ -17,9 +17,32 @@ class CampgroundCampsiteFilterSerializer(serializers.Serializer):
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
 
+class BookingRangeSerializer(serializers.ModelSerializer):
+    min_days = serializers.IntegerField(required=False,default=1)
+    max_days = serializers.IntegerField(required=False,default=28)
+    # minimum/maximum number of campsites allowed for a booking
+    min_sites = serializers.IntegerField(required=False,default=1)
+    max_sites = serializers.IntegerField(required=False,default=12)
+    # Minimum and Maximum days that a booking can be made before arrival
+    min_dba = serializers.IntegerField(required=False,default=0)
+    max_dba = serializers.IntegerField(required=False,default=180)
+
+    status = serializers.ChoiceField(choices=BookingRange.BOOKING_RANGE_CHOICES, default=0)
+    details = serializers.CharField()
+    range_start = serializers.DateTimeField()
+    range_end = serializers.DateTimeField() 
+    class Meta:
+        model = BookingRange
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = ('name','phone_number')
+
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     site_type = serializers.SerializerMethodField()
     campground_type = serializers.SerializerMethodField()
+    contact = ContactSerializer()
     class Meta:
         model = Campground
         fields = (
@@ -36,7 +59,6 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'description',
             'promo_area',
             'ratis_id',
-            'regulations',
             'area_activities',
             'features',
             'driving_directions',
@@ -46,10 +68,6 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'dog_permitted',
             'check_in',
             'check_out',
-            'no_booking_start',
-            'no_booking_end',
-            'min_dba',
-            'max_dba'
         )
 
     def get_site_type(self, obj):
