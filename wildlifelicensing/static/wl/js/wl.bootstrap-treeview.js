@@ -615,6 +615,14 @@ define(['jQuery'], function ($) {
                 });
             }
 
+            if (node.price !== undefined && node.price !== null) {
+                if(node.price == 0) {
+                    treeItem.append($('<span>').text('Free').addClass('label').addClass('label-primary').addClass('pull-right'));
+                } else {
+                    treeItem.append($('<span>').text('$' + node.price).addClass('label').addClass('label-warning').addClass('pull-right'));
+                }
+            }
+
             if (node.help_text) {
                 var width = level * HELP_TEXT_INDENT + HELP_TEXT_INDENT_BUFFER;
                 treeItem.append($('<div>').text(node.help_text).css('color', 'black').css('margin-left', width).

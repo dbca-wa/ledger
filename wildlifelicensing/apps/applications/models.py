@@ -127,8 +127,8 @@ class Application(RevisionedMixin):
     @property
     def is_senior_offer_applicable(self):
         return self.licence_type.senior_applicable and \
-               self.applicant.is_senior and \
-               bool(self.applicant.senior_card)
+            self.applicant.is_senior and \
+            bool(self.applicant.senior_card)
 
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)

@@ -314,10 +314,10 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             pass
 
         expiry_days = (instance.end_date - datetime.date.today()).days
-        if expiry_days <= 30 and instance.is_renewable:
+        if instance.end_date < datetime.date.today():
+            return '<span class="label label-danger">Expired</span>'
+        elif expiry_days <= 30 and instance.is_renewable:
             return '<span class="label label-warning">Due for renewal</span>'
-        elif instance.end_date < datetime.date.today():
-            return 'Expired'
         else:
             return 'Current'
 
@@ -426,7 +426,8 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
             else:
                 return 'Current'
         else:
-            return dict(Return.STATUS_CHOICES)[status]
+            suffix = ' (Nil)' if status == 'submitted' and instance.nil_return else ''
+            return dict(Return.STATUS_CHOICES)[status] + suffix
 
     @staticmethod
     def _search_licence_number(search):

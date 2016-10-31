@@ -29,9 +29,10 @@ hr {
 
 a {
     cursor: pointer;
-}
+}intro
 
 /* enter details / preview */
+{% load bootstrap3 %}
 
 #sectionList > ul > .active {
     font-weight: bold;

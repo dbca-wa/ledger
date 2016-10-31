@@ -47,7 +47,7 @@ class WildlifeLicenceCategory(models.Model):
 
 
 class WildlifeLicenceType(LicenceType):
-    product_code = models.SlugField(max_length=64, unique=True)
+    product_code = models.CharField(max_length=64, unique=True)
     identification_required = models.BooleanField(default=False)
     senior_applicable = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
@@ -153,7 +153,7 @@ class CommunicationsLogEntry(models.Model):
 @python_2_unicode_compatible
 class Variant(models.Model):
     name = models.CharField(max_length=200)
-    product_code = models.SlugField(max_length=64, unique=True)
+    product_code = models.CharField(max_length=64, unique=True)
     help_text = models.TextField(blank=True)
 
     def __str__(self):

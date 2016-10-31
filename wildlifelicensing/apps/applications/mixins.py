@@ -1,3 +1,5 @@
+import datetime
+
 from django.core.urlresolvers import reverse_lazy
 from django.contrib.auth.mixins import UserPassesTestMixin
 
@@ -9,7 +11,7 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
     """
     CBV mixin that check that the user is the applicant and that the status of the application is
     in editable mode.
-    This mixin assume that the url contains the pk of the application on 2nd position.
+
     If the user is not logged-in it redirects to the login page, else it throws a 403
     Officers can edit an application
     """
@@ -25,7 +27,7 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
 
     def test_func(self):
         """
-        implementation of the UserPassesTestMixin test_func
+        implementation of the UserCanEditApplicationMixin test_func
         """
         user = self.request.user
         if not user.is_authenticated():
@@ -39,6 +41,83 @@ class UserCanEditApplicationMixin(UserPassesTestMixin):
             return application.applicant == user and application.can_user_edit
         else:
             return True
+
+
+class UserCanRenewApplicationMixin(UserPassesTestMixin):
+    """
+    CBV mixin that check that the user is the applicant and that the application is renewable.
+
+    If the user is not logged-in it redirects to the login page, else it throws a 403
+    Officers can edit an application
+    """
+    login_url = reverse_lazy('home')
+    permission_denied_message = "You don't have the permission to access this resource."
+    raise_exception = True
+
+    def get_application(self):
+        if self.args:
+            return Application.objects.filter(licence=self.args[0]).first()
+        else:
+            return None
+
+    def test_func(self):
+        """
+        implementation of the UserCanRenewApplicationMixin test_func
+        """
+        user = self.request.user
+        if not user.is_authenticated():
+            self.raise_exception = False
+            return False
+        if is_officer(user):
+            return True
+        self.raise_exception = True
+        application = self.get_application()
+        if application is not None:
+            if application.applicant != user:
+                return False
+
+            expiry_days = (application.licence.end_date - datetime.date.today()).days
+            return expiry_days <= 30 and application.licence.is_renewable
+        else:
+            return False
+
+
+class UserCanAmendApplicationMixin(UserPassesTestMixin):
+    """
+    CBV mixin that check that the user is the applicant and that the application is amendable.
+
+    If the user is not logged-in it redirects to the login page, else it throws a 403
+    Officers can edit an application
+    """
+    login_url = reverse_lazy('home')
+    permission_denied_message = "You don't have the permission to access this resource."
+    raise_exception = True
+
+    def get_application(self):
+        if self.args:
+            return Application.objects.filter(licence=self.args[0]).first()
+        else:
+            return None
+
+    def test_func(self):
+        """
+        implementation of the UserCanAmendApplicationMixin test_func
+        """
+        user = self.request.user
+        if not user.is_authenticated():
+            self.raise_exception = False
+            return False
+        if is_officer(user):
+            return True
+        self.raise_exception = True
+        application = self.get_application()
+        if application is not None:
+            if application.applicant != user:
+                return False
+
+            return application.licence.end_date >= datetime.date.today()
+        else:
+            return False
 
 
 class CanPerformAssessmentMixin(UserPassesTestMixin):
@@ -74,7 +153,7 @@ class CanPerformAssessmentMixin(UserPassesTestMixin):
 
 class UserCanViewApplicationMixin(UserPassesTestMixin):
     """
-    CBV mixin that check that the user is the applicant or an officer and that the status of the 
+    CBV mixin that check that the user is the applicant or an officer and that the status of the
     application is in approved mode.
     If the user is not logged-in it redirects to the login page, else it throws a 403
     """

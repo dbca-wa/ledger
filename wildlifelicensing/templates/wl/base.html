@@ -8,7 +8,10 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        {# Next line is to disable phone dection in Edge/W11.#}
+        {# Without that some application/licence numbers are detected as phone number and highligthed as link in Edge/W11  #}
+        <meta name="format-detection" content="telephone=no"/>
             {% bootstrap_css %}
                 <link type="text/css" href="{% static 'wl/css/base.css' %}" rel="stylesheet">
             {% block extra_css %}
@@ -49,20 +52,21 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            <a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Dashboard</div></a>
+                            <a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Home</div></a>
                         </div>
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
                                     {% if request.user|is_customer %}
-                                        <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
+                                        <li><a href="{% url 'wl_main:contact_us' %}">Contact Us</a></li>
+                                        <li><a href="{% url 'wl_main:further_information' %}">Further Information</a></li>
                                     {% elif request.user|is_officer %}
-                                        <li><a href="{% url 'wl_applications:new_application' %}">New Licence Application</a></li>
                                         <li><a href="{% url 'wl_dashboard:tables_applications_officer' %}">Applications</a></li>
                                         <li><a href="{% url 'wl_dashboard:tables_licences_officer' %}">Licences</a></li>
                                         <li><a href="{% url 'wl_dashboard:tables_returns_officer' %}">Returns</a></li>
                                         <li><a href="{% url 'wl_customer_management:customer_lookup' %}">Customers</a></li>
                                         <li><a href="{% url 'wl_reports:reports' %}">Reports</a></li>
+                                        <li><a href="{% url 'wl_dashboard:tables_officer_onbehalf' %}">Proxy Applications / Returns</a></li>
                                     {% else %}
                                         <li><a href="{% url 'wl_dashboard:tables_assessor' %}">Applications</a></li>
                                     {% endif %}
@@ -98,6 +102,7 @@
                                             {% endif %}
                                             {% if request.user.is_staff %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                <li><a href="{% url 'dashboard:index' %}">Product Dashboard</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
                                             <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
@@ -127,6 +132,8 @@
                     </div>
                 </div>
             </div>
+        {% endblock %}
+        {% block intro %}
         {% endblock %}
         {% block content %}
         {% endblock %}
