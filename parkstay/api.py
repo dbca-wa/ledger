@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from datetime import datetime, timedelta
@@ -28,6 +28,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     RegionSerializer,
                                     CampsiteClassSerializer,
                                     BookingSerializer,
+                                    BookingRangeSerializer,
                                     CampsiteRateSerializer
                                     )
 
@@ -45,30 +46,33 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     serializer_class = CampgroundSerializer
 
     @detail_route(methods=['post'])
-    def open(self, request, format='json'):
+    def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
             # parse and validate data
-            serializer = BookingRangeSerializer(data=request.data)
+            serializer = BookingRangeSerializer(data=request.data, method="post")
+            serializer.initial_data['campground'] = self.get_object().id
             serializer.is_valid(raise_exception=True)
-            
             serializer.save()
 
             # return object
             ground = self.get_object()
-            res = CampgroundSerializer(ground)
+            res = CampgroundSerializer(ground, context={'request':request})
 
             return Response(res.data)
-            
         except serializers.ValidationError:
             raise
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'])
-    def close(self, request, format='json'):
+    @detail_route(methods=['get'])
+    def status_history(self, request, format='json', pk=None):
         try:
-            pass
+            http_status = status.HTTP_200_OK
+            serializer = BookingRangeSerializer(self.get_object().booking_ranges,many=True)
+            res = serializer.data 
+
+            return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
         except Exception as e:
