@@ -1,20 +1,26 @@
 {% extends 'ps/dash/dash_tables.html' %}
 {% block campgrounds_filters %}
+    {% verbatim %}
     <form class="form" id="campgrounds-filter-form">
         <div class="col-md-8">
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="campgrounds-filter-status">Status: </label>
-                    <select class="form-control" name="status"
-                            id="applications-filter-status">
+                    <select class="form-control" name="status" id="campgrounds-filter-status">
+                        <option value="All">All</option>
+                        <option value="Open">Open</option>
+                        <option value="Temporarily Closed">Temporarily Closed</option>
                     </select>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="applications-filter-region">Region: </label>
-                    <select class="form-control" name="region"
-                            id="applications-filter-region">
+                    <select class="form-control" name="region"id="campgrounds-filter-region">
+                        <option value="All">All</option>
+                        <template v-for="r in regions">
+                            <option value={{r.name}}>{{r.name}}</option>
+                        </template>
                     </select>
                 </div>
             </div>
@@ -25,9 +31,9 @@
             </div>
         </div>
     </form>
+    {% endverbatim %}
 {% endblock %}
 {% block campgrounds_table %}
-    {% verbatim %}
       <div id="groundsList">
           <table class="hover table table-striped table-bordered" id="groundsTable">
                 <thead>
@@ -46,7 +52,6 @@
             </table>
     </div>
 
-    {% endverbatim %}
 {% endblock %}
 {% block campsite_types %}
 {%  endblock %}
@@ -81,7 +86,62 @@
                 }
             }
 
-            //var groundsTable = $('#groundsTable').DataTable();
+           $.fn.dataTable.ext.search.push(
+                function( settings, data, dataIndex ) {
+                    var _stat = $('#campgrounds-filter-status').val();
+                    var status = data[2]; // use data for the status column
+                    if ( _stat === status || 
+                        _stat === "All" )
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            ); 
+           $.fn.dataTable.ext.search.push(
+                function( settings, data, dataIndex ) {
+                    var _reg = $('#campgrounds-filter-region').val();
+                    var region = data[3]; // use data for the region column
+                    if ( _reg === region || 
+                        _reg === "All" )
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            ); 
+            $('#campgrounds-filter-status').change(function(){
+                campgrounds.dtGrounds.draw();
+            });
+            $('#campgrounds-filter-region').change(function(){
+                campgrounds.dtGrounds.draw();
+            });
+             var regionList= new Vue({
+                el: '#campgrounds-filter-form',
+                data: {
+                    regions: []
+                },
+                methods: {
+                    update: function() {
+                        var vm = this;
+                        debounce(function() {
+                            var url = '/api/regions.json';
+                            console.log('AJAX '+url)
+                            $.ajax({
+                                url: url,
+                                dataType: 'json',
+                                success: function(data, stat, xhr) {
+                                    console.log(data);
+                                    vm.regions = data;
+                                }
+                            });
+                        }, 500)();
+                    }
+                },
+                ready: function () {
+                    this.update();
+                }
+            });    
              var campgrounds= new Vue({
                 el: '#groundsList',
                 data: {
@@ -101,33 +161,29 @@
                             row.push(g.name);
                             // Status
                             status = g.active;
-                            status ? row.push('Active') : row.push('Temporarily Closed');
+                            status ? row.push('Open') : row.push('Temporarily Closed');
                             row.push(g.region);
                             row.push(vm.flagFormat(g.dog_permitted));
                             row.push('No');
                             // Action
                             let action = '<a href={{ground.id}}>Edit Campground Details</a><br/>';
                             status ? row.push(action + '<a href="">(Temporarily) Close Campground</a>') :  row.push(action + '<a href="">Open Campground</a>')
-
                             vm.rows.push(row);
-
                         });
                         vm.dtGrounds.clear();
                         vm.dtGrounds.rows.add(vm.rows);
                         vm.dtGrounds.draw();
+                        vm.dtGrounds.processing = false;
                     }
                 },
                 methods: {
-             /*       getDateString: function (date, offset) {
-                        return moment(date).add(offset, 'days').format('ddd MMM D');
-                    },*/
                     flagFormat: function(flag){
                         return flag ? 'Yes' : 'No'
                     },
                     update: function() {
                         var vm = this;
+                        vm.dtGrounds.processing = true;
                         debounce(function() {
-                            //var url = '{% url 'campground-list' %}';
                             var url = '/api/campgrounds.json';
                             console.log('AJAX '+url)
                             $.ajax({
@@ -142,8 +198,13 @@
                     }
                 },
                 ready: function () {
+                    this.dtGrounds = $('#groundsTable').DataTable({
+                        language: {
+                            processing: "<i class='fa fa-4x fa-spinner'></i>"
+                        },
+                        processing: true
+                    });
                     this.update();
-                    this.dtGrounds = $('#groundsTable').DataTable();
                 }
             });    
         </script>
