@@ -27,12 +27,26 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     min_dba = serializers.IntegerField(required=False,default=0)
     max_dba = serializers.IntegerField(required=False,default=180)
 
-    status = serializers.ChoiceField(choices=BookingRange.BOOKING_RANGE_CHOICES, default=0)
     details = serializers.CharField()
     range_start = serializers.DateTimeField()
     range_end = serializers.DateTimeField() 
     class Meta:
         model = BookingRange
+
+    def get_status(self, obj):
+        return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop("method")
+        except:
+            method = 'get'
+        super(BookingRangeSerializer, self).__init__(*args, **kwargs)
+        if method == 'post':
+            self.fields['status'] = serializers.ChoiceField(choices=BookingRange.BOOKING_RANGE_CHOICES)
+        else:
+            self.fields['status'] = serializers.SerializerMethodField()
+
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
