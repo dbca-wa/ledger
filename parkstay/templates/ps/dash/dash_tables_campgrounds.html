@@ -1,4 +1,5 @@
 {% extends 'ps/dash/dash_tables.html' %}
+{% load static %}
 {% block campgrounds_filters %}
     {% verbatim %}
     <form class="form" id="campgrounds-filter-form">
@@ -34,23 +35,9 @@
     {% endverbatim %}
 {% endblock %}
 {% block campgrounds_table %}
-      <div id="groundsList">
-          <table class="hover table table-striped table-bordered" id="groundsTable">
-                <thead>
-                    <tr>
-                        <th class="id">Campground ID</th>
-                        <th class="name">Campground Name</th>
-                        <th class="status">Status</th>
-                        <th class="region">Region</th>
-                        <th class="dogs_allowed">Dogs Allowed</th>
-                        <th class="campfires_allowed">Campfires Allowed</th>
-                        <th class="action">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-    </div>
+      <div id="app">
+           <router-view></router-view>
+      </div>
 
 {% endblock %}
 {% block campsite_types %}
@@ -60,152 +47,7 @@
 {%  endblock %}
 {% block custom_js %}
 
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
-        <script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
-        <script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/dataTables.bootstrap.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/vue/1.0.9/vue.min.js"></script>
-        <script type="text/javascript">
-            var debounce = function (func, wait, immediate) {
-                // Returns a function, that, as long as it continues to be invoked, will not
-                // be triggered. The function will be called after it stops being called for
-                // N milliseconds. If `immediate` is passed, trigger the function on the
-                // leading edge, instead of the trailing.
-                'use strict';
-                var timeout;
-                return function () {
-                    var context = this;
-                    var args = arguments;
-                    var later = function () {
-                        timeout = null;
-                        if (!immediate) func.apply(context, args);
-                    };
-                    var callNow = immediate && !timeout;
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                    if (callNow) func.apply(context, args);
-                }
-            }
+        <script type="text/javascript" src="{% static 'ps/js/build.js' %}"></script>
 
-           $.fn.dataTable.ext.search.push(
-                function( settings, data, dataIndex ) {
-                    var _stat = $('#campgrounds-filter-status').val();
-                    var status = data[2]; // use data for the status column
-                    if ( _stat === status || 
-                        _stat === "All" )
-                    {
-                        return true;
-                    }
-                    return false;
-                }
-            ); 
-           $.fn.dataTable.ext.search.push(
-                function( settings, data, dataIndex ) {
-                    var _reg = $('#campgrounds-filter-region').val();
-                    var region = data[3]; // use data for the region column
-                    if ( _reg === region || 
-                        _reg === "All" )
-                    {
-                        return true;
-                    }
-                    return false;
-                }
-            ); 
-            $('#campgrounds-filter-status').change(function(){
-                campgrounds.dtGrounds.draw();
-            });
-            $('#campgrounds-filter-region').change(function(){
-                campgrounds.dtGrounds.draw();
-            });
-             var regionList= new Vue({
-                el: '#campgrounds-filter-form',
-                data: {
-                    regions: []
-                },
-                methods: {
-                    update: function() {
-                        var vm = this;
-                        debounce(function() {
-                            var url = '/api/regions.json';
-                            console.log('AJAX '+url)
-                            $.ajax({
-                                url: url,
-                                dataType: 'json',
-                                success: function(data, stat, xhr) {
-                                    console.log(data);
-                                    vm.regions = data;
-                                }
-                            });
-                        }, 500)();
-                    }
-                },
-                ready: function () {
-                    this.update();
-                }
-            });    
-             var campgrounds= new Vue({
-                el: '#groundsList',
-                data: {
-                    grounds: [],
-                    rows: [],
-                    dtGrounds: null 
-                },
-                watch: {
-                    grounds: function(){
-                        let vm = this;
 
-                        vm.grounds.forEach(function (g) {
-                            let row = [];
-                            let status = false;
-
-                            row.push(g.id);
-                            row.push(g.name);
-                            // Status
-                            status = g.active;
-                            status ? row.push('Open') : row.push('Temporarily Closed');
-                            row.push(g.region);
-                            row.push(vm.flagFormat(g.dog_permitted));
-                            row.push('No');
-                            // Action
-                            let action = '<a href={{ground.id}}>Edit Campground Details</a><br/>';
-                            status ? row.push(action + '<a href="">(Temporarily) Close Campground</a>') :  row.push(action + '<a href="">Open Campground</a>')
-                            vm.rows.push(row);
-                        });
-                        vm.dtGrounds.clear();
-                        vm.dtGrounds.rows.add(vm.rows);
-                        vm.dtGrounds.draw();
-                        vm.dtGrounds.processing = false;
-                    }
-                },
-                methods: {
-                    flagFormat: function(flag){
-                        return flag ? 'Yes' : 'No'
-                    },
-                    update: function() {
-                        var vm = this;
-                        vm.dtGrounds.processing = true;
-                        debounce(function() {
-                            var url = '/api/campgrounds.json';
-                            console.log('AJAX '+url)
-                            $.ajax({
-                                url: url,
-                                dataType: 'json',
-                                success: function(data, stat, xhr) {
-                                    console.log(data);
-                                    vm.grounds = data;
-                                }
-                            });
-                        }, 500)();
-                    }
-                },
-                ready: function () {
-                    this.dtGrounds = $('#groundsTable').DataTable({
-                        language: {
-                            processing: "<i class='fa fa-4x fa-spinner'></i>"
-                        },
-                        processing: true
-                    });
-                    this.update();
-                }
-            });    
-        </script>
 {% endblock %}
