@@ -5,6 +5,8 @@ from django.contrib.postgres.fields import JSONField
 from django.utils import timezone
 from datetime import date, time, datetime
 from taggit.managers import TaggableManager
+from django.dispatch import receiver
+from django.db.models.signals import post_delete, pre_save, post_save
 
 # Create your models here.
 
@@ -88,19 +90,28 @@ class Campground(models.Model):
     class Meta:
         unique_together = (('name', 'park'),)
 
-
+    # Properties
+    # =======================================
     @property
     def region(self):
         return self.park.district.region.name
 
     @property
     def active(self):
-        if (self.no_booking_start and not self.no_booking_end) and self.no_booking_start <= timezone.now():
-            return False
-        else: 
-            if (self.no_booking_end and self.no_booking_start <= timezone.now() <= self.no_booking_end):
-                return False
-        return True
+        return self._is_open(timezone.now())
+
+    # Methods
+    # =======================================
+    def _is_open(self,period):
+        '''Check if the campground is open on a specified datetime
+        '''
+        # Get all booking ranges
+        open_ranges = self.booking_ranges.filter(status=0,range_start__lte=period,range_end__gte=period)
+        closed_ranges = self.booking_ranges.filter(range_start__lte=period,range_end__gte=period).exclude(status=0)
+
+        if open_ranges and not closed_ranges:
+            return True
+        return False
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
@@ -109,7 +120,7 @@ class BookingRange(models.Model):
         (2, 'Closed for maintenance'),
     )
 
-    campground = models.ForeignKey('Campground', on_delete=models.PROTECT)
+    campground = models.ForeignKey('Campground', on_delete=models.PROTECT,related_name='booking_ranges')
 
     # minimum/maximum consecutive days allowed for a booking
     min_days = models.SmallIntegerField(default=1)
@@ -125,7 +136,6 @@ class BookingRange(models.Model):
     details = models.TextField()
     range_start = models.DateTimeField(blank=True, null=True)
     range_end = models.DateTimeField(blank=True, null=True)
-
 
 class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT)
@@ -265,3 +275,29 @@ class Booking(models.Model):
     details = JSONField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
+
+# LISTENERS
+# ======================================
+class BookingRangeListener(object):
+    """
+    Event listener for BookingRange
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=BookingRange)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = BookingRange.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+
+    @staticmethod
+    @receiver(post_save, sender=BookingRange)
+    def _post_save(sender, instance, **kwargs):
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        if not original_instance:
+            ranges = BookingRange.objects.filter(range_start__lte=instance.range_start,range_end__gte=instance.range_start).exclude(pk=instance.pk).first()
+            if ranges:
+                ranges.range_end = instance.range_start
+                ranges.save()
