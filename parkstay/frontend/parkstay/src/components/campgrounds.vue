@@ -28,7 +28,7 @@
             </div>
         </div>
     </form>
-    <table class="hover table table-striped table-bordered" id="groundsTable">
+    <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%" id="groundsTable">
           <thead>
               <tr>
                   <th class="id">Campground ID</th>
@@ -46,32 +46,11 @@
 </div>
 
 </template>
-
 <script>
 var $ = require( 'jquery' );
 var DataTable = require( 'datatables.net' )();
 var DataTableBs = require( 'datatables.net-bs' )();
-
-var debounce = function (func, wait, immediate) {
-    // Returns a function, that, as long as it continues to be invoked, will not
-    // be triggered. The function will be called after it stops being called for
-    // N milliseconds. If `immediate` is passed, trigger the function on the
-    // leading edge, instead of the trailing.
-    'use strict';
-    var timeout;
-    return function () {
-        var context = this;
-        var args = arguments;
-        var later = function () {
-            timeout = null;
-            if (!immediate) func.apply(context, args);
-        };
-        var callNow = immediate && !timeout;
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-        if (callNow) func.apply(context, args);
-    }
-};
+var DataTableRes = require( 'datatables.net-responsive-bs' )();
 
 module.exports = {
    name: 'groundsList',
@@ -123,7 +102,14 @@ module.exports = {
        }
    },
    mounted: function () {
-       this.dtGrounds = $('#groundsTable').DataTable({
+      var table =$('#groundsTable');
+      let vm = this;
+       this.dtGrounds = $(table).DataTable({
+         responsive: true,
+          columnDefs: [
+            { responsivePriority: 1, targets: 1 },
+            { responsivePriority: 2, targets: 2 }
+           ],
            language: {
                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
            },
@@ -150,19 +136,15 @@ module.exports = {
                "data":"dog_permitted",
                "mRender": function (data, type, full)
                {
-                   var permitted = (data == true) ? 'Yes' : 'No';
-                   var column = "<td >__Perm__</td>";
-                   return column.replace('__Perm__', permitted);
+                   return vm.flagFormat(data);
                }
              },
              {
                "data":"dog_permitted", //TODO replace with campfire"data":"campfire",
                "mRender": function (data, type, full)
                 {
-                   var permitted = (data == true) ? 'Yes' : 'No';
-                   var column = "<td >__Perm__</td>";
-                   return column.replace('__Perm__', permitted);
-                 }
+                    return vm.flagFormat(data);
+                }
              },
              {
 
