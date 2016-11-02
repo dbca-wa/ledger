@@ -5,7 +5,7 @@
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="campgrounds-filter-status">Status: </label>
-                    <select class="form-control" name="status" id="campgrounds-filter-status">
+                    <select @change="updateTable()" v-model="status" class="form-control" name="status" id="campgrounds-filter-status">
                         <option value="All">All</option>
                         <option value="Open">Open</option>
                         <option value="Temporarily Closed">Temporarily Closed</option>
@@ -15,9 +15,9 @@
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="applications-filter-region">Region: </label>
-                    <select class="form-control" v-model="selected_region" >
+                    <select @change="updateTable()" class="form-control" v-model="selected_region" id="campgrounds-filter-region">
                         <option value="All" selected="true">All</option>
-                        <option v-for="region in regions" value="{{ region.name }}"> {{ region.name }}</option>
+                        <option v-for="region in regions" v-bind:value=region.name>{{ region.name }}</option>
                     </select>
                 </div>
             </div>
@@ -73,6 +73,30 @@ var debounce = function (func, wait, immediate) {
     }
 };
 
+$.fn.dataTable.ext.search.push(
+     function( settings, data, dataIndex ) {
+         var _stat = $('#campgrounds-filter-status').val();
+         var status = data[2]; // use data for the status column
+         if ( _stat === status || 
+             _stat === "All" )
+         {
+             return true;
+         }
+         return false;
+     }
+ ); 
+$.fn.dataTable.ext.search.push(
+     function( settings, data, dataIndex ) {
+         var _reg = $('#campgrounds-filter-region').val();
+         var region = data[3]; // use data for the region column
+         if ( _reg === region || 
+             _reg === "All" )
+         {
+             return true;
+         }
+         return false;
+     }
+ );
 module.exports = {
    name: 'groundsList',
    data: function() {
@@ -81,13 +105,9 @@ module.exports = {
        rows: [],
        dtGrounds: null,
        regions: [],
-       selected_region: 
+       status: 'All',
+       selected_region: 'All' 
      }
-   },
-   watch: {
-       grounds: function(){
-           let vm = this;
-       }
    },
    methods: {
        flagFormat: function(flag){
@@ -105,10 +125,13 @@ module.exports = {
                   vm.regions = data;
               }
           });
-       }
+       },
+        updateTable: function(){
+            var vm = this;
+            vm.dtGrounds.draw();
+        }
    },
    mounted: function () {
-     console.log('hello');
        this.dtGrounds = $('#groundsTable').DataTable({
            language: {
                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -127,7 +150,7 @@ module.exports = {
                "mRender": function (data, type, full)
                {
                    var status = (data == true) ? "Open" : "Temporarily Closed";
-                   var column = "<td > __Status__</td>";
+                   var column = "<td >__Status__</td>";
                    return column.replace('__Status__', status);
                }
              },
