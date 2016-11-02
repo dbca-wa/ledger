@@ -5,7 +5,6 @@
 </template>
 
 <script>
-import Hello from './components/Hello.vue'
 import campgrounds from './components/campgrounds.vue'
 
 module.exports = {

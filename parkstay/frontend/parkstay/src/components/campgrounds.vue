@@ -1,20 +1,48 @@
 <template>
   <div id="groundsList">
-      <table class="hover table table-striped table-bordered" id="groundsTable">
-            <thead>
-                <tr>
-                    <th class="id">Campground ID</th>
-                    <th class="name">Campground Name</th>
-                    <th class="status">Status</th>
-                    <th class="region">Region</th>
-                    <th class="dogs_allowed">Dogs Allowed</th>
-                    <th class="campfires_allowed">Campfires Allowed</th>
-                    <th class="action">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+    <form class="form" id="campgrounds-filter-form">
+        <div class="col-md-8">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="campgrounds-filter-status">Status: </label>
+                    <select class="form-control" name="status" id="campgrounds-filter-status">
+                        <option value="All">All</option>
+                        <option value="Open">Open</option>
+                        <option value="Temporarily Closed">Temporarily Closed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="applications-filter-region">Region: </label>
+                    <select class="form-control" v-model="selected_region" >
+                        <option value="All" selected="true">All</option>
+                        <option v-for="region in regions" value="{{ region.name }}"> {{ region.name }}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group pull-right">
+                <a style="margin-top: 20px;"class="btn btn-primary ">Add Campground</a>
+            </div>
+        </div>
+    </form>
+    <table class="hover table table-striped table-bordered" id="groundsTable">
+          <thead>
+              <tr>
+                  <th class="id">Campground ID</th>
+                  <th class="name">Campground Name</th>
+                  <th class="status">Status</th>
+                  <th class="region">Region</th>
+                  <th class="dogs_allowed">Dogs Allowed</th>
+                  <th class="campfires_allowed">Campfires Allowed</th>
+                  <th class="action">Action</th>
+              </tr>
+          </thead>
+          <tbody>
+          </tbody>
+      </table>
 </div>
 
 </template>
@@ -51,36 +79,14 @@ module.exports = {
      return{
        grounds: [],
        rows: [],
-       dtGrounds: null
+       dtGrounds: null,
+       regions: [],
+       selected_region: 
      }
    },
    watch: {
        grounds: function(){
            let vm = this;
-           /*
-           vm.grounds.forEach(function (g) {
-               let row = [];
-               let status = false;
-
-               row.push(g.id);
-               row.push(g.name);
-               // Status
-               status = g.active;
-               status ? row.push('Open') : row.push('Temporarily Closed');
-               row.push(g.region);
-               row.push(vm.flagFormat(g.dog_permitted));
-               row.push('No');
-               // Action
-               let action = '<a href={{ground.id}}>Edit Campground Details</a><br/>';
-               status ? row.push(action + '<a href="">(Temporarily) Close Campground</a>') :  row.push(action + '<a href="">Open Campground</a>')
-               vm.rows.push(row);
-           });
-           console.log(vm.dtGrounds);
-           vm.dtGrounds.clear();
-           vm.dtGrounds.rows.add(vm.rows);
-           vm.dtGrounds.draw();
-           vm.dtGrounds.processing = false;
-           */
        }
    },
    methods: {
@@ -88,22 +94,17 @@ module.exports = {
            return flag ? 'Yes' : 'No'
        },
        update: function() {
-           var vm = this;
-           /*
-           vm.dtGrounds.processing = true;
-           debounce(function() {
-               var url = 'http://0.0.0.0:8888/api/campgrounds.json';
-               //console.log('AJAX '+url)
-               $.ajax({
-                   url: url,
-                   dataType: 'json',
-                   success: function(data, stat, xhr) {
-                       console.log(data);
-                       vm.grounds = data;
-                   }
-               });
-           }, 500)();
-           */
+         var vm = this;
+         var url = '/api/regions.json';
+          console.log('AJAX '+url)
+          $.ajax({
+              url: url,
+              dataType: 'json',
+              success: function(data, stat, xhr) {
+                  console.log(data);
+                  vm.regions = data;
+              }
+          });
        }
    },
    mounted: function () {
@@ -113,52 +114,50 @@ module.exports = {
                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
            },
            ajax:{
-             "url":"http://0.0.0.0:8888/api/campgrounds.json",
+             "url":"/api/campgrounds.json",
              "dataSrc": ''
            },
            columns:[
              {
                "data":"id",
              },
-            { "data":"name"},
-            {
-              "data": "active",
-              "mRender": function (data, type, full)
+             { "data":"name"},
+             {
+               "data": "active",
+               "mRender": function (data, type, full)
                {
                    var status = (data == true) ? "Open" : "Temporarily Closed";
                    var column = "<td > __Status__</td>";
                    return column.replace('__Status__', status);
                }
-            },
-            { "data":"region"},
-            {
-              "data":"dog_permitted",
-              "mRender": function (data, type, full)
+             },
+             { "data":"region"},
+             {
+               "data":"dog_permitted",
+               "mRender": function (data, type, full)
                {
                    var permitted = (data == true) ? 'Yes' : 'No';
                    var column = "<td >__Perm__</td>";
                    return column.replace('__Perm__', permitted);
                }
-            },
-            {
-              "data":"dog_permitted", //TODO replace with campfire"data":"campfire",
-              "mRender": function (data, type, full)
-               {
+             },
+             {
+               "data":"dog_permitted", //TODO replace with campfire"data":"campfire",
+               "mRender": function (data, type, full)
+                {
                    var permitted = (data == true) ? 'Yes' : 'No';
                    var column = "<td >__Perm__</td>";
                    return column.replace('__Perm__', permitted);
-               }
-            },
-            {
+                 }
+             },
+             {
 
               "mRender": function (data, type, full)
                {
                    var id = full.id;
                    return '<a href="#">Edit Campground Details</a>';
                }
-            },
-
-
+             },
           ],
            processing: true
        });
