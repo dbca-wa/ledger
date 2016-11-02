@@ -91,11 +91,18 @@ module.exports = {
        },
        selected_region: function () {
          let vm = this;
-         console.log(vm.selected_region);
          if(vm.selected_region != 'All'){
            vm.dtGrounds.columns(3).search(vm.selected_region).draw();
          }else{
            vm.dtGrounds.columns(3).search('').draw();
+         }
+       },
+       selected_status: function () {
+         let vm = this;
+         if(vm.selected_status != 'All'){
+           vm.dtGrounds.columns(2).search(vm.selected_status).draw();
+         }else{
+           vm.dtGrounds.columns(2).search('').draw();
          }
        }
    },
@@ -106,19 +113,16 @@ module.exports = {
        update: function() {
          var vm = this;
          var url = '/api/regions.json';
-          console.log('AJAX '+url)
           $.ajax({
               url: url,
               dataType: 'json',
               success: function(data, stat, xhr) {
-                  console.log(data);
                   vm.regions = data;
               }
           });
        }
    },
    mounted: function () {
-     console.log('hello');
        this.dtGrounds = $('#groundsTable').DataTable({
            language: {
                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
