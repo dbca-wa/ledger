@@ -92,7 +92,11 @@ module.exports = {
        selected_region: function () {
          let vm = this;
          console.log(vm.selected_region);
-         vm.dtGrounds.columns(3).search(vm.selected_region).draw();
+         if(vm.selected_region != 'All'){
+           vm.dtGrounds.columns(3).search(vm.selected_region).draw();
+         }else{
+           vm.dtGrounds.columns(3).search('').draw();
+         }
        }
    },
    methods: {
