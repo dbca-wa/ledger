@@ -5,7 +5,7 @@
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="campgrounds-filter-status">Status: </label>
-                    <select class="form-control" name="status" id="campgrounds-filter-status">
+                    <select class="form-control" v-model="selected_status">
                         <option value="All">All</option>
                         <option value="Open">Open</option>
                         <option value="Temporarily Closed">Temporarily Closed</option>
@@ -17,7 +17,7 @@
                     <label for="applications-filter-region">Region: </label>
                     <select class="form-control" v-model="selected_region" >
                         <option value="All" selected="true">All</option>
-                        <option v-for="region in regions" value="{{ region.name }}"> {{ region.name }}</option>
+                        <option v-for="region in regions" :value="region.name"> {{ region.name }}</option>
                     </select>
                 </div>
             </div>
@@ -81,12 +81,18 @@ module.exports = {
        rows: [],
        dtGrounds: null,
        regions: [],
-       selected_region: 
+       selected_region: "All",
+       selected_status: "All"
      }
    },
    watch: {
        grounds: function(){
            let vm = this;
+       },
+       selected_region: function () {
+         let vm = this;
+         console.log(vm.selected_region);
+         vm.dtGrounds.columns(3).search(vm.selected_region).draw();
        }
    },
    methods: {
