@@ -78,6 +78,19 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['get'])
+    def campsites(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer = CampsiteSerialiser(self.get_object().campsites,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['get']) 
     def campsite_bookings(self, request, pk=None, format=None):
         """Fetch campsite availability for a campground."""

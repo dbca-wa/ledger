@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
 from django.utils import timezone
@@ -137,8 +138,26 @@ class BookingRange(models.Model):
     range_start = models.DateTimeField(blank=True, null=True)
     range_end = models.DateTimeField(blank=True, null=True)
 
+    # Properties
+    # ====================================
+    @property
+    def editable(self):
+        return True if self.range_end > timezone.now() else False
+ 
+    # Methods
+    # =====================================
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super(BookingRange, self).save(*args, **kwargs)
+
+    def clean(self, *args, **kwargs):
+        if not self.editable:
+            raise ValidationError('This Booking Rnage is not editable')
+        if self.range_start < timezone.now():
+            raise ValidationError('The start date can\'t be in the past')
+
 class Campsite(models.Model):
-    campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT)
+    campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT, related_name='campsites')
     name = models.CharField(max_length=255)
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)

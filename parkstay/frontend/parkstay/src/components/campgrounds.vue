@@ -15,7 +15,7 @@
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="applications-filter-region">Region: </label>
-                    <select class="form-control" v-model="selected_region" >
+                    <select @change="updateTable()" class="form-control" v-model="selected_region" id="campgrounds-filter-region">
                         <option value="All" selected="true">All</option>
                         <option v-for="region in regions" :value="region.name"> {{ region.name }}</option>
                     </select>
@@ -52,27 +52,31 @@ var DataTable = require( 'datatables.net' )();
 var DataTableBs = require( 'datatables.net-bs' )();
 var DataTableRes = require( 'datatables.net-responsive-bs' )();
 
-var debounce = function (func, wait, immediate) {
-    // Returns a function, that, as long as it continues to be invoked, will not
-    // be triggered. The function will be called after it stops being called for
-    // N milliseconds. If `immediate` is passed, trigger the function on the
-    // leading edge, instead of the trailing.
-    'use strict';
-    var timeout;
-    return function () {
-        var context = this;
-        var args = arguments;
-        var later = function () {
-            timeout = null;
-            if (!immediate) func.apply(context, args);
-        };
-        var callNow = immediate && !timeout;
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-        if (callNow) func.apply(context, args);
-    }
-};
 
+$.fn.dataTable.ext.search.push(
+     function( settings, data, dataIndex ) {
+         var _stat = $('#campgrounds-filter-status').val();
+         var status = data[2]; // use data for the status column
+         if ( _stat === status || 
+             _stat === "All" )
+         {
+             return true;
+         }
+         return false;
+     }
+ ); 
+$.fn.dataTable.ext.search.push(
+     function( settings, data, dataIndex ) {
+         var _reg = $('#campgrounds-filter-region').val();
+         var region = data[3]; // use data for the region column
+         if ( _reg === region || 
+             _reg === "All" )
+         {
+             return true;
+         }
+         return false;
+     }
+ );
 module.exports = {
    name: 'groundsList',
    data: function() {
@@ -120,7 +124,11 @@ module.exports = {
                   vm.regions = data;
               }
           });
-       }
+       },
+        updateTable: function(){
+            var vm = this;
+            vm.dtGrounds.draw();
+        }
    },
    mounted: function () {
       var table =$('#groundsTable');
@@ -148,7 +156,7 @@ module.exports = {
                "mRender": function (data, type, full)
                {
                    var status = (data == true) ? "Open" : "Temporarily Closed";
-                   var column = "<td > __Status__</td>";
+                   var column = "<td >__Status__</td>";
                    return column.replace('__Status__', status);
                }
              },
@@ -157,19 +165,15 @@ module.exports = {
                "data":"dog_permitted",
                "mRender": function (data, type, full)
                {
-                   var permitted = (data == true) ? 'Yes' : 'No';
-                   var column = "<td >__Perm__</td>";
-                   return column.replace('__Perm__', permitted);
+                   return vm.flagFormat(data);
                }
              },
              {
                "data":"dog_permitted", //TODO replace with campfire"data":"campfire",
                "mRender": function (data, type, full)
                 {
-                   var permitted = (data == true) ? 'Yes' : 'No';
-                   var column = "<td >__Perm__</td>";
-                   return column.replace('__Perm__', permitted);
-                 }
+                    return vm.flagFormat(data);
+                }
              },
              {
 
@@ -182,7 +186,7 @@ module.exports = {
           ],
            processing: true
        });
-       this.update();
+       vm.update();
    }
 };
 
