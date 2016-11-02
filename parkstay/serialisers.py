@@ -1,18 +1,125 @@
-from parkstay.models import CampsiteBooking, Campsite, Campground, Park
+from parkstay.models import CampsiteBooking, BookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
 from rest_framework import serializers
 
-class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
+class ParkSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = CampsiteBooking
-        fields = ('campsite', 'date', 'booking_type')
+        model = Park
+
+class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+            model = PromoArea
+
+class CampgroundCampsiteFilterSerializer(serializers.Serializer):
+    arrival = serializers.DateField(input_formats=['%Y/%m/%d'])
+    departure = serializers.DateField(input_formats=['%Y/%m/%d'])
+    num_adult = serializers.IntegerField(default=0)
+    num_concession = serializers.IntegerField(default=0)
+    num_child = serializers.IntegerField(default=0)
+    num_infant = serializers.IntegerField(default=0)
+
+class BookingRangeSerializer(serializers.ModelSerializer):
+    min_days = serializers.IntegerField(required=False,default=1)
+    max_days = serializers.IntegerField(required=False,default=28)
+    # minimum/maximum number of campsites allowed for a booking
+    min_sites = serializers.IntegerField(required=False,default=1)
+    max_sites = serializers.IntegerField(required=False,default=12)
+    # Minimum and Maximum days that a booking can be made before arrival
+    min_dba = serializers.IntegerField(required=False,default=0)
+    max_dba = serializers.IntegerField(required=False,default=180)
+
+    details = serializers.CharField()
+    range_start = serializers.DateTimeField()
+    range_end = serializers.DateTimeField() 
+    class Meta:
+        model = BookingRange
+
+    def get_status(self, obj):
+        return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop("method")
+        except:
+            method = 'get'
+        super(BookingRangeSerializer, self).__init__(*args, **kwargs)
+        if method == 'post':
+            self.fields['status'] = serializers.ChoiceField(choices=BookingRange.BOOKING_RANGE_CHOICES)
+        else:
+            self.fields['status'] = serializers.SerializerMethodField()
+
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = ('name','phone_number')
+
+class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
+    site_type = serializers.SerializerMethodField()
+    campground_type = serializers.SerializerMethodField()
+    contact = ContactSerializer()
+    class Meta:
+        model = Campground
+        fields = (
+            'url',
+            'id',
+            'site_type',
+            'campground_type',
+            'name',
+            'address',
+            'contact',
+            'park',
+            'region',
+            'wkb_geometry',
+            'description',
+            'promo_area',
+            'ratis_id',
+            'area_activities',
+            'features',
+            'driving_directions',
+            'bookable_per_site',
+            'active',
+            #'campfires_allowed',
+            'dog_permitted',
+            'check_in',
+            'check_out',
+        )
+
+    def get_site_type(self, obj):
+        return dict(Campground.SITE_TYPE_CHOICES).get(obj.site_type)
+
+    def get_campground_type(self, obj):
+        return dict(Campground.CAMPGROUND_TYPE_CHOICES).get(obj.campground_type)
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
         fields = ('campground', 'name', 'campsite_class', 'features', 'max_people')
-"""
-class CampgroundSerialiser((Serializer.HyperlinkedModelSerializer)
+
+class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = Campground
-        fields = ('', '', '', '', '')
-"""
+        model = Feature
+
+class RegionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Region
+
+class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = CampsiteClass
+
+class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
+    booking_type = serializers.SerializerMethodField()
+    class Meta:
+        model = CampsiteBooking
+        fields = ('campsite', 'date', 'booking_type')
+
+    def get_booking_type(self, obj):
+        return dict(CampsiteBooking.BOOKING_TYPE_CHOICES).get(obj.booking_type)
+
+class BookingSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Booking
+
+class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = CampsiteRate

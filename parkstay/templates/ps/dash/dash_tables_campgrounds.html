@@ -1,0 +1,53 @@
+{% extends 'ps/dash/dash_tables.html' %}
+{% load static %}
+{% block campgrounds_filters %}
+    {% verbatim %}
+    <form class="form" id="campgrounds-filter-form">
+        <div class="col-md-8">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="campgrounds-filter-status">Status: </label>
+                    <select class="form-control" name="status" id="campgrounds-filter-status">
+                        <option value="All">All</option>
+                        <option value="Open">Open</option>
+                        <option value="Temporarily Closed">Temporarily Closed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="applications-filter-region">Region: </label>
+                    <select class="form-control" name="region"id="campgrounds-filter-region">
+                        <option value="All">All</option>
+                        <template v-for="r in regions">
+                            <option value={{r.name}}>{{r.name}}</option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group pull-right">
+                <a style="margin-top: 20px;"class="btn btn-primary ">Add Campground</a>
+            </div>
+        </div>
+    </form>
+    {% endverbatim %}
+{% endblock %}
+{% block campgrounds_table %}
+      <div id="app">
+           <router-view></router-view>
+      </div>
+
+{% endblock %}
+{% block campsite_types %}
+{%  endblock %}
+
+{% block bulk_pricing %}
+{%  endblock %}
+{% block custom_js %}
+
+        <script type="text/javascript" src="{% static 'ps/js/build.js' %}"></script>
+
+
+{% endblock %}
