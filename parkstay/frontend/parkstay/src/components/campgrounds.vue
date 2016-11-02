@@ -28,7 +28,7 @@
             </div>
         </div>
     </form>
-    <table class="hover table table-striped table-bordered" id="groundsTable">
+    <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%" id="groundsTable">
           <thead>
               <tr>
                   <th class="id">Campground ID</th>
@@ -46,11 +46,11 @@
 </div>
 
 </template>
-
 <script>
 var $ = require( 'jquery' );
 var DataTable = require( 'datatables.net' )();
 var DataTableBs = require( 'datatables.net-bs' )();
+var DataTableRes = require( 'datatables.net-responsive-bs' )();
 
 var debounce = function (func, wait, immediate) {
     // Returns a function, that, as long as it continues to be invoked, will not
@@ -123,7 +123,14 @@ module.exports = {
        }
    },
    mounted: function () {
-       this.dtGrounds = $('#groundsTable').DataTable({
+      var table =$('#groundsTable');
+
+       this.dtGrounds = $(table).DataTable({
+         responsive: true,
+          columnDefs: [
+            { responsivePriority: 1, targets: 1 },
+            { responsivePriority: 2, targets: 2 }
+           ],
            language: {
                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
            },
