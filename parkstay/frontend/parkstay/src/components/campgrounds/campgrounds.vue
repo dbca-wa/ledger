@@ -5,7 +5,7 @@
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="campgrounds-filter-status">Status: </label>
-                    <select class="form-control" v-model="selected_status">
+                    <select @change="updateTable()" v-model="status" class="form-control" name="status" id="campgrounds-filter-status">
                         <option value="All">All</option>
                         <option value="Open">Open</option>
                         <option value="Temporarily Closed">Temporarily Closed</option>
@@ -15,9 +15,9 @@
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="applications-filter-region">Region: </label>
-                    <select class="form-control" v-model="selected_region" >
+                    <select @change="updateTable()" class="form-control" v-model="selected_region" id="campgrounds-filter-region">
                         <option value="All" selected="true">All</option>
-                        <option v-for="region in regions" :value="region.name"> {{ region.name }}</option>
+                        <option v-for="region in regions" v-bind:value=region.name>{{ region.name }}</option>
                     </select>
                 </div>
             </div>
@@ -28,7 +28,7 @@
             </div>
         </div>
     </form>
-    <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%" id="groundsTable">
+    <table class="hover table table-striped table-bordered" id="groundsTable">
           <thead>
               <tr>
                   <th class="id">Campground ID</th>
@@ -46,6 +46,7 @@
 </div>
 
 </template>
+
 <script>
 import {$, DataTable, DataTableBs} from '../../hooks'
 
@@ -81,30 +82,9 @@ module.exports = {
        rows: [],
        dtGrounds: null,
        regions: [],
-       selected_region: "All",
-       selected_status: "All"
+       status: 'All',
+       selected_region: 'All' 
      }
-   },
-   watch: {
-       grounds: function(){
-           let vm = this;
-       },
-       selected_region: function () {
-         let vm = this;
-         if(vm.selected_region != 'All'){
-           vm.dtGrounds.columns(3).search(vm.selected_region).draw();
-         }else{
-           vm.dtGrounds.columns(3).search('').draw();
-         }
-       },
-       selected_status: function () {
-         let vm = this;
-         if(vm.selected_status != 'All'){
-           vm.dtGrounds.columns(2).search(vm.selected_status).draw();
-         }else{
-           vm.dtGrounds.columns(2).search('').draw();
-         }
-       }
    },
    methods: {
        flagFormat: function(flag){
@@ -113,24 +93,24 @@ module.exports = {
        update: function() {
          var vm = this;
          var url = '/api/regions.json';
+          console.log('AJAX '+url)
           $.ajax({
               url: url,
               dataType: 'json',
               success: function(data, stat, xhr) {
+                  console.log(data);
                   vm.regions = data;
               }
           });
-       }
+       },
+        updateTable: function(){
+            var vm = this;
+            vm.dtGrounds.draw();
+        }
    },
    mounted: function () {
-      var table =$('#groundsTable');
-      let vm = this;
-       this.dtGrounds = $(table).DataTable({
-         responsive: true,
-          columnDefs: [
-            { responsivePriority: 1, targets: 1 },
-            { responsivePriority: 2, targets: 2 }
-           ],
+       var vm = this;
+       vm.dtGrounds = $('#groundsTable').DataTable({
            language: {
                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
            },
@@ -148,7 +128,7 @@ module.exports = {
                "mRender": function (data, type, full)
                {
                    var status = (data == true) ? "Open" : "Temporarily Closed";
-                   var column = "<td > __Status__</td>";
+                   var column = "<td >__Status__</td>";
                    return column.replace('__Status__', status);
                }
              },
@@ -178,7 +158,7 @@ module.exports = {
           ],
            processing: true
        });
-       this.update();
+       vm.update();
    }
 };
 
