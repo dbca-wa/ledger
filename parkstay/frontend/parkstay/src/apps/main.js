@@ -38,7 +38,18 @@ const routes = [
             render (c) { return c('router-view') }
         },
         children: [
-            {path:'dashboard',component: Campgrounds}
+            {
+                path:'dashboard',
+                component: {
+                    render (c) { return c('router-view') } 
+                },
+                children: [
+                    {
+                        path:'campgrounds',
+                        component: Campgrounds
+                    }
+                ]
+            }
         ]
     }
 ];
