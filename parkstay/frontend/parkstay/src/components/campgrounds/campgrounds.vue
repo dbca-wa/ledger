@@ -48,10 +48,8 @@
 </template>
 
 <script>
-var $ = require( 'jquery' );
-var DataTable = require( 'datatables.net' )();
-var DataTableBs = require( 'datatables.net-bs' )();
-
+import {$, DataTable, DataTableBs} from '../../hooks'
+console.log($);
 
 $.fn.dataTable.ext.search.push(
      function( settings, data, dataIndex ) {
