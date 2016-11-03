@@ -42,6 +42,7 @@
 
 <script>
 import datatable from './datatable.vue'
+import {$,Moment} from '../../hooks.js'
 export default {
    name:'campground',
    components:{
@@ -58,8 +59,20 @@ export default {
                dataSrc:''
             },
             columns:[
-               {data:'range_start'},
-               {data: 'range_end'},
+               {
+                  data:'range_start',
+                  mRender:function (data,type,full) {
+                     return Moment(data).format('MMMM Do, YYYY');
+                  }
+
+               },
+               {
+                  data:'range_end',
+                  mRender:function (data,type,full) {
+                     return Moment(data).format('MMMM Do, YYYY');
+                  }
+
+               },
                {data: 'details'},
                {
                   mRender:function (data,type,full) {
