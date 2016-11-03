@@ -49,6 +49,7 @@
 
 <script>
 import {$, DataTable, DataTableBs} from '../../hooks'
+//import openclose from 'openclose'
 
 $.fn.dataTable.ext.search.push(
      function( settings, data, dataIndex ) {
@@ -75,88 +76,87 @@ $.fn.dataTable.ext.search.push(
      }
  );
 module.exports = {
-   name: 'groundsList',
-   data: function() {
-     return{
-       grounds: [],
-       rows: [],
-       dtGrounds: null,
-       regions: [],
-       status: 'All',
-       selected_region: 'All' 
-     }
-   },
-   methods: {
-       flagFormat: function(flag){
-           return flag ? 'Yes' : 'No'
-       },
-       update: function() {
-         var vm = this;
-         var url = '/api/regions.json';
-          console.log('AJAX '+url)
-          $.ajax({
-              url: url,
-              dataType: 'json',
-              success: function(data, stat, xhr) {
-                  console.log(data);
-                  vm.regions = data;
-              }
-          });
-       },
+    name: 'groundsList',
+    data: function() {
+        return{
+            grounds: [],
+            rows: [],
+            dtGrounds: null,
+            regions: [],
+            status: 'All',
+            selected_region: 'All' 
+        }
+    },
+    methods: {
+        flagFormat: function(flag){
+            return flag ? 'Yes' : 'No'
+        },
+        update: function() {
+            var vm = this;
+            var url = '/api/regions.json';
+            console.log('AJAX '+url)
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    console.log(data);
+                    vm.regions = data;
+                }
+            });
+        },
         updateTable: function(){
             var vm = this;
             vm.dtGrounds.draw();
         }
-   },
-   mounted: function () {
-       var vm = this;
-       vm.dtGrounds = $('#groundsTable').DataTable({
-           language: {
-               processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-           },
-           ajax:{
-             "url":"/api/campgrounds.json",
-             "dataSrc": ''
-           },
-           columns:[
-             {
-               "data":"id",
-             },
-             { "data":"name"},
-             {
-               "data": "active",
-               "mRender": function (data, type, full)
-               {
-                   var status = (data == true) ? "Open" : "Temporarily Closed";
-                   var column = "<td >__Status__</td>";
-                   return column.replace('__Status__', status);
-               }
-             },
-             { "data":"region"},
-             {
-               "data":"dog_permitted",
-               "mRender": function (data, type, full)
-               {
-                   return vm.flagFormat(data);
-               }
-             },
-             {
-               "data":"dog_permitted", //TODO replace with campfire"data":"campfire",
-               "mRender": function (data, type, full)
+    },
+    mounted: function () {
+        var vm = this;
+        vm.dtGrounds = $('#groundsTable').DataTable({
+            language: {
+                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+            },
+            ajax:{
+                "url":"/api/campgrounds.json",
+                "dataSrc": ''
+            },
+            columns:[
+            {
+                "data":"id",
+            },
+            { "data":"name"},
+            {
+                "data": "active",
+                "mRender": function (data, type, full)
+                {
+                    var status = (data == true) ? "Open" : "Temporarily Closed";
+                    var column = "<td >__Status__</td>";
+                    return column.replace('__Status__', status);
+                }
+            },
+            { "data":"region"},
+            {
+                "data":"dog_permitted",
+                "mRender": function (data, type, full)
                 {
                     return vm.flagFormat(data);
                 }
-             },
-             {
-
-              "mRender": function (data, type, full)
-               {
-                   var id = full.id;
-                   return '<a href="#">Edit Campground Details</a>';
-               }
-             },
+            },
+            {
+                "data":"dog_permitted", //TODO replace with campfire"data":"campfire",
+                "mRender": function (data, type, full)
+                {
+                    return vm.flagFormat(data);
+                }
+            },
+            {
+                "mRender": function (data, type, full)
+                {
+                    var id = full.id;
+                    return '<a href="#">Edit Campground Details</a>';
+                }
+            },
           ],
-           processing: true
+            processing: true
        });
        vm.update();
    }
