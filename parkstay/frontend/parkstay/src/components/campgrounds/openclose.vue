@@ -1,8 +1,8 @@
 <template>
    <transition name="modal">
-    <div class="modal-mask">
+    <div class="modal-mask" @click="close()" v-show="show">
       <div class="modal-wrapper">
-        <div class="modal-container">
+        <div class="modal-container" @click.stop>
 
           <div class="modal-header">
             <slot name="header">
@@ -31,7 +31,19 @@
 </template>
 
 <script>
-    
+module.exports = {
+    name: 'openclose',
+    data: function() {
+        return{
+            showModal: false
+        }
+    },
+    methods: {    
+        close: function (){
+            this.show = false;
+        }
+    },
+};
 </script>
 
 <style>
