@@ -43,6 +43,7 @@ module.exports = {
       let vm = this;
       var table =$('#table');
       vm.vmDataTable = $(table).DataTable(vm.dtOptions);
+      vm.vmDataTable.search('').draw();
    }
 };
 </script>

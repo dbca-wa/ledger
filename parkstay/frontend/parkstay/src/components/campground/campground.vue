@@ -52,7 +52,11 @@ export default {
          options : {
             responsive:true,
             processing:true,
-            ajax:'/api/campgrounds/1/status_history.json',
+            deferRender: true,
+            ajax:{
+               url:'/api/campgrounds/1/status_history.json',
+               dataSrc:''
+            },
             columns:[
                {data:'range_start'},
                {data: 'range_end'},

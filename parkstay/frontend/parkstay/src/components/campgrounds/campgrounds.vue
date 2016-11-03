@@ -19,7 +19,7 @@
                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="campgrounds-filter-status">Status: </label>
-                                    <select @change="updateTable()" v-model="status" class="form-control" name="status" id="campgrounds-filter-status">
+                                    <select v-model="selected_status" class="form-control" name="status" id="campgrounds-filter-status">
                                         <option value="All">All</option>
                                         <option value="Open">Open</option>
                                         <option value="Temporarily Closed">Temporarily Closed</option>
@@ -29,7 +29,7 @@
                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="applications-filter-region">Region: </label>
-                                    <select @change="updateTable()" class="form-control" v-model="selected_region" id="campgrounds-filter-region">
+                                    <select class="form-control" v-model="selected_region" id="campgrounds-filter-region">
                                         <option value="All" selected="true">All</option>
                                         <option v-for="region in regions" v-bind:value=region.name>{{ region.name }}</option>
                                     </select>
@@ -42,7 +42,7 @@
                            </div>
                         </div>
                     </form>
-                    <table class="hover table table-striped table-bordered" id="groundsTable">
+                    <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%" id="groundsTable">
                           <thead>
                               <tr>
                                   <th class="id">Campground ID</th>
@@ -68,33 +68,7 @@
 </template>
 
 <script>
-import {$, DataTable, DataTableBs} from '../../hooks'
-//import openclose from 'openclose'
-
-$.fn.dataTable.ext.search.push(
-     function( settings, data, dataIndex ) {
-         var _stat = $('#campgrounds-filter-status').val();
-         var status = data[2]; // use data for the status column
-         if ( _stat === status ||
-             _stat === "All" )
-         {
-             return true;
-         }
-         return false;
-     }
- );
-$.fn.dataTable.ext.search.push(
-     function( settings, data, dataIndex ) {
-         var _reg = $('#campgrounds-filter-region').val();
-         var region = data[3]; // use data for the region column
-         if ( _reg === region ||
-             _reg === "All" )
-         {
-             return true;
-         }
-         return false;
-     }
- );
+import {$, DataTable, DataTableBs,DataTableRes} from '../../hooks'
 module.exports = {
     name: 'groundsList',
     data: function() {
@@ -103,11 +77,29 @@ module.exports = {
             rows: [],
             dtGrounds: null,
             regions: [],
-            status: 'All',
+            selected_status: 'All',
             selected_region: 'All',
             title: 'Campgrounds'
         }
     },
+    watch:{
+      selected_region: function () {
+         let vm = this;
+         if(vm.selected_region != 'All'){
+           vm.dtGrounds.columns(3).search(vm.selected_region).draw();
+         }else{
+           vm.dtGrounds.columns(3).search('').draw();
+         }
+       },
+       selected_status: function () {
+         let vm = this;
+         if(vm.selected_status != 'All'){
+           vm.dtGrounds.columns(2).search(vm.selected_status).draw();
+         }else{
+           vm.dtGrounds.columns(2).search('').draw();
+         }
+       }
+   },
     methods: {
         flagFormat: function(flag){
             return flag ? 'Yes' : 'No'
@@ -124,10 +116,6 @@ module.exports = {
                     vm.regions = data;
                 }
             });
-        },
-        updateTable: function(){
-            var vm = this;
-            vm.dtGrounds.draw();
         }
     },
     mounted: function () {
@@ -136,6 +124,11 @@ module.exports = {
             language: {
                 processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
             },
+            responsive:true,
+            columnDefs: [
+               { responsivePriority: 1, targets: 1 },
+               { responsivePriority: 2, targets: 2 }
+            ],
             ajax:{
                 "url":"/api/campgrounds.json",
                 "dataSrc": ''
