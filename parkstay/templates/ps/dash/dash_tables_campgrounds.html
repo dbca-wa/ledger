@@ -1,15 +1,11 @@
 {% extends 'ps/dash/dash_tables.html' %}
 {% load static %}
-{% block campgrounds_table %}
+{% block vue-component %}
   <div id="app">
        <router-view></router-view>
   </div>
 {% endblock %}
-{% block campsite_types %}
-{%  endblock %}
 
-{% block bulk_pricing %}
-{%  endblock %}
 {% block custom_js %}
   <script type="text/javascript" src="{% static 'ps/js/build.js' %}"></script>
 {% endblock %}
