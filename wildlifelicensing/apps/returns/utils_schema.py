@@ -227,6 +227,10 @@ class SchemaField:
             self.cast(value)
         except Exception as e:
             error = e.message
+            # Override the default enum exception message to include all possible values
+            if error.find('enum array') and self.constraints.enum:
+                values = [str(v) for v in self.constraints.enum]
+                error = "The value must be one the following: {}".format(values)
         return error
 
     def __str__(self):
@@ -251,6 +255,10 @@ class SchemaConstraints:
     @property
     def required(self):
         return self.get('required', False)
+
+    @property
+    def enum(self):
+        return self.get('enum')
 
 
 class Schema:
@@ -293,9 +301,12 @@ class Schema:
     def field_names(self):
         return [f.name for f in self.fields]
 
-    def get_field_by_mame(self, name):
+    def get_field_by_mame(self, name, icase=False):
+        if icase and name:
+            name = name.lower()
         for f in self.fields:
-            if f.name == name:
+            field_name = f.name.lower() if icase else f.name
+            if field_name == name:
                 return f
         return None
 
@@ -310,6 +321,56 @@ class Schema:
     def is_field_valid(self, field_name, value):
         return self.field_validation_error(field_name, value) is None
 
+    def is_lat_long_easting_northing_schema(self):
+        """
+        True if there is a latitude, longitude, easting, northing, and zone field
+        :return:
+        """
+        field_names = [name.lower() for name in self.field_names]
+        return all([
+            'latitude' in field_names,
+            'longitude' in field_names,
+            'easting' in field_names,
+            'northing' in field_names,
+            'zone' in field_names
+        ])
+
+    def post_validate_lat_long_easting_northing(self, field_validation):
+        """
+        We want conditional requirements: either lat/long or northing/easting.
+        The goal is to remove the requirements on lat/long if we have east/north and vice versa.
+        Rules:
+        If lat and no northing remove northing error and zone error
+        If northing and no latitude remove latitude error.
+        If long and no easting remove easting error and zone error
+        If easting and no longitude remove longitude error.
+        :param field_validation: We expect that the data has been validated at the field level and the argument should be
+        the result of this validation (see validate_row()).
+        Expected format:
+        {field_name: { 'value': value, 'error': None|msg}}
+        :return:
+        """
+        if not self.is_lat_long_easting_northing_schema():
+            return field_validation
+        lat_validation = field_validation.get(self.get_field_by_mame('latitude', icase=True).name, {})
+        north_validation = field_validation.get(self.get_field_by_mame('northing', icase=True).name, {})
+        long_validation = field_validation.get(self.get_field_by_mame('longitude', icase=True).name, {})
+        east_validation = field_validation.get(self.get_field_by_mame('easting', icase=True).name, {})
+        zone_validation = field_validation.get(self.get_field_by_mame('zone', icase=True).name, {})
+        if lat_validation.get('value') and long_validation.get('value'):
+            if not north_validation.get('value'):
+                north_validation['error'] = None
+                zone_validation['error'] = None
+            if not east_validation.get('value'):
+                east_validation['error'] = None
+                zone_validation['error'] = None
+        if east_validation.get('value') and north_validation.get('value'):
+            if not lat_validation.get('value'):
+                lat_validation['error'] = None
+            if not long_validation.get('value'):
+                long_validation['error'] = None
+        return field_validation
+
     def validate_row(self, row):
         """
         The row must be a dictionary or a list of key value
@@ -323,12 +384,16 @@ class Schema:
         """
         row = dict(row)
         result = {}
+        # field validation
         for field_name, value in row.items():
             error = self.field_validation_error(field_name, value)
             result[field_name] = {
                 'value': value,
                 'error': error
             }
+        # Special case for lat/long easting/northing
+        if self.is_lat_long_easting_northing_schema():
+            result = self.post_validate_lat_long_easting_northing(result)
         return result
 
     def rows_validator(self, rows):

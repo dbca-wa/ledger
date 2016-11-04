@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import datetime
 
 from django.utils import six
@@ -159,6 +160,18 @@ class TestSchemaFieldCast(TestCase):
         value = '30 Nov 14'
         self.assertEqual(field.cast(value), datetime.date(2014, 11, 30))
 
+        format_ = 'fmt:%d/%m/%Y'
+        descriptor = {
+            'name': 'Date with fmt',
+            'type': 'date',
+            'format': format_
+        }
+        field = SchemaField(descriptor)
+        value = '12/07/2016'
+        value = field.cast(value)
+        self.assertEqual(type(value), datetime.date)
+        self.assertEqual(value, datetime.date(2016, 07, 12))
+
     def test_string(self):
         # test that a blank string '' is not accepted when the field is required
         null_values = ['null', 'none', 'nil', 'nan', '-', '']
@@ -207,8 +220,39 @@ class TestSchemaFieldCast(TestCase):
                 f.cast(v)
 
 
-class TestSpeciesField(TestCase):
+class TestSchemaFieldValidation(TestCase):
 
+    def test_enums(self):
+        """
+        Test that if a field has an enum constraint and if the data doesn't fit the error message should give the list
+        of the possible values.
+        :return:
+        """
+        descriptor = {
+            "name": "Enum",
+            "tile": "Test Enum message",
+            "type": "string",
+            "format": "default",
+            "constraints": {
+                "required": False,
+                "enum": ["val1", "val2", "val3"]
+            }
+        }
+        f = SchemaField(descriptor)
+        valid_values = ['val1', 'val2', 'val3', '']  # non required should accept blank
+        for v in valid_values:
+            self.assertIsNone(f.validation_error(v))
+
+        wrong_values = ['xxx']
+        for v in wrong_values:
+            msg = f.validation_error(v)
+            self.assertTrue(msg)
+            # test that the error message contains each of the enum values.
+            for vv in f.constraints['enum']:
+                self.assertTrue(msg.find(vv) >= 0)
+
+
+class TestSpeciesField(TestCase):
     def test_no_species(self):
         descriptor = clone(helpers.GENERIC_SCHEMA)
         sch = Schema(descriptor)
@@ -248,3 +292,240 @@ class TestSpeciesField(TestCase):
         sch = Schema(descriptor)
         self.assertEqual(1, len(sch.species_fields))
         self.assertEquals(field['name'], sch.species_fields[0].name)
+
+
+class TestLatLongEastingNorthingCase(TestCase):
+    """
+    Test the conditional requirement between long/lat and easting/northing.
+    One or the other must be required.
+    """
+
+    def setUp(self):
+        self.schema_descriptor = {
+            "fields": [
+                {
+                    "type": "string",
+                    "name": "DATUM",
+                    "constraints": {
+                        "required": True,
+                        "enum": ["GDA94", "WGS84", "AGD84", "AGD66"]
+                    },
+                },
+                {
+                    "type": "number",
+                    "name": "LATITUDE",
+                    "constraints": {
+                        "minimum": -60.0,
+                        "maximum": 0,
+                        "required": True
+                    }
+                },
+                {
+                    "type": "number",
+                    "name": "LONGITUDE",
+                    "constraints": {
+                        "minimum": 80.0,
+                        "maximum": 170.0,
+                        "required": True
+                    }
+                },
+                {
+                    "type": "number",
+                    "name": "ZONE",
+                    "constraints": {
+                        "required": True,
+                        "enum": [49, 50, 51, 52]
+                    }
+                },
+                {
+                    "type": "number",
+                    "name": "EASTING",
+                    "constraints": {
+                        "required": True,
+                    }
+                },
+                {
+                    "type": "number",
+                    "name": "NORTHING",
+                    "constraints": {
+                        "required": True,
+                    }
+                },
+            ]
+        }
+        self.schema = Schema(self.schema_descriptor)
+        self.assertTrue(self.schema.is_lat_long_easting_northing_schema())
+
+    def test_lat_long_only(self):
+        """
+        Lat/Long + datum should not generate an error
+        :return:
+        """
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": -32,
+            "LONGITUDE": 116,
+            "EASTING": None,
+            "NORTHING": None,
+            "ZONE": None
+        }
+        self.assertTrue(self.schema.is_row_valid(data))
+
+        # datum always required
+        data = {
+            "DATUM": None,
+            "LATITUDE": -32,
+            "LONGITUDE": 116,
+            "EASTING": None,
+            "NORTHING": None,
+            "ZONE": None
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        errors = self.schema.get_error_fields(data)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual('DATUM', errors[0][0])
+
+    def test_east_north_only(self):
+        """
+        Northing/Easting + Datum + Zone should be valid
+        :return:
+        """
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": None,
+            "LONGITUDE": None,
+            "EASTING": 123456,
+            "NORTHING": 654321,
+            "ZONE": 50
+        }
+        self.assertTrue(self.schema.is_row_valid(data))
+
+        # datum always required
+        data = {
+            "DATUM": None,
+            "LATITUDE": None,
+            "LONGITUDE": None,
+            "EASTING": 123456,
+            "NORTHING": 654321,
+            "ZONE": 50
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        errors = self.schema.get_error_fields(data)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual('DATUM', errors[0][0])
+
+        # ZONE always required
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": None,
+            "LONGITUDE": None,
+            "EASTING": 123456,
+            "NORTHING": 654321,
+            "ZONE": ''
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        errors = self.schema.get_error_fields(data)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual('ZONE', errors[0][0])
+
+    def test_no_lat_long_and_no_east_north(self):
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": '',
+            "LONGITUDE": '',
+            "EASTING": None,
+            "NORTHING": None,
+            "ZONE": 50
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        error_fields = [e[0] for e in self.schema.get_error_fields(data)]
+        self.assertTrue('LATITUDE' in error_fields)
+        self.assertTrue('LONGITUDE' in error_fields)
+        self.assertTrue('EASTING' in error_fields)
+        self.assertTrue('NORTHING' in error_fields)
+
+    def test_half_baked_data(self):
+        """
+        Missing either lat or long ot east or north
+        :return:
+        """
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": -32,
+            "LONGITUDE": None,
+            "EASTING": None,
+            "NORTHING": None,
+            "ZONE": 50
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        error_fields = [e[0] for e in self.schema.get_error_fields(data)]
+        self.assertFalse('LATITUDE' in error_fields)
+        self.assertTrue('NORTHING' in error_fields)
+        self.assertTrue('LONGITUDE' in error_fields)
+        self.assertTrue('EASTING' in error_fields)
+
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": None,
+            "LONGITUDE": 115,
+            "EASTING": None,
+            "NORTHING": None,
+            "ZONE": 50
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        error_fields = [e[0] for e in self.schema.get_error_fields(data)]
+        self.assertFalse('LONGITUDE' in error_fields)
+        self.assertTrue('EASTING' in error_fields)
+        self.assertTrue('LATITUDE' in error_fields)
+        self.assertTrue('NORTHING' in error_fields)
+
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": None,
+            "LONGITUDE": None,
+            "EASTING": 123456,
+            "NORTHING": None,
+            "ZONE": 50
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        error_fields = [e[0] for e in self.schema.get_error_fields(data)]
+        self.assertTrue('LONGITUDE' in error_fields)
+        self.assertFalse('EASTING' in error_fields)
+        self.assertTrue('LATITUDE' in error_fields)
+        self.assertTrue('NORTHING' in error_fields)
+
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": None,
+            "LONGITUDE": None,
+            "EASTING": None,
+            "NORTHING": 645321,
+            "ZONE": 50
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        error_fields = [e[0] for e in self.schema.get_error_fields(data)]
+        self.assertFalse('NORTHING' in error_fields)
+        self.assertTrue('LATITUDE' in error_fields)
+        self.assertTrue('LONGITUDE' in error_fields)
+        self.assertTrue('EASTING' in error_fields)
+
+    def test_mixed_data(self):
+        """
+        Test that data that mixed lat/long and noth/east are not valid
+        E.g provide lat but not long and provide easting but not northing
+        :return:
+        """
+        data = {
+            "DATUM": "WGS84",
+            "LATITUDE": -32,
+            "LONGITUDE": None,
+            "EASTING": 12345,
+            "NORTHING": None,
+            "ZONE": 50
+        }
+        self.assertFalse(self.schema.is_row_valid(data))
+        error_fields = [e[0] for e in self.schema.get_error_fields(data)]
+        self.assertFalse('LATITUDE' in error_fields)
+        self.assertFalse('EASTING' in error_fields)
+        self.assertTrue('LONGITUDE' in error_fields)
+        self.assertTrue('NORTHING' in error_fields)

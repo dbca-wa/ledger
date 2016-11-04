@@ -1,8 +1,8 @@
 import os
 import shutil
 import tempfile
-
-from datetime import date
+import datetime
+# from datetime import date
 
 from django.views.generic.base import TemplateView, View
 from django.shortcuts import render, get_object_or_404, redirect
@@ -92,7 +92,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         ret.lodgement_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
                                           str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
-        ret.lodgement_date = date.today()
+        ret.lodgement_date = datetime.date.today()
 
         if is_officer(self.request.user):
             ret.proxy_customer = self.request.user
@@ -150,7 +150,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
             kwargs['tables'].append(table)
 
-        kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
+        if 'upload_spreadsheet_form' not in kwargs:
+            kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
         kwargs['nil_return_form'] = NilReturnForm()
 
         return super(EnterReturnView, self).get_context_data(**kwargs)
@@ -176,12 +177,22 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                         if worksheet is not None:
                             table_data = excel.TableData(worksheet)
                             schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
-                            validated_rows = list(schema.rows_validator(table_data.rows_by_col_header_it()))
+                            excel_rows = list(table_data.rows_by_col_header_it())
+                            validated_rows = list(schema.rows_validator(excel_rows))
+                            # We want to stringify the datetime/date that might have been created by the excel parser
+                            for vr in validated_rows:
+                                for col, validation in vr.items():
+                                    value = validation.get('value')
+                                    if isinstance(value, datetime.datetime) or isinstance(value, datetime.date):
+                                        validation['value'] = value.strftime(DATE_FORMAT)
                             table['data'] = validated_rows
                         else:
                             messages.warning(request, 'Missing worksheet ' + table.get('name'))
                 finally:
                     shutil.rmtree(temp_file_dir)
+            else:
+                context['upload_spreadsheet_form'] = form
+
         elif 'draft' in request.POST or 'draft_continue' in request.POST:
             _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
