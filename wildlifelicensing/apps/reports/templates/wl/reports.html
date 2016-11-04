@@ -114,11 +114,17 @@
                 <form method="get" id="payments-form" action="{{ actions.payments }}">
                     {% csrf_token %}
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             {% bootstrap_field payments_form.start %}
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             {% bootstrap_field payments_form.end %}
+                        </div>
+                        <div class="col-md-3">
+                            {% bootstrap_field payments_form.banked_start %}
+                        </div>
+                        <div class="col-md-3">
+                            {% bootstrap_field payments_form.banked_end %}
                         </div>
                     </div>
                     <div class="row">

@@ -89,9 +89,14 @@ class PaymentsReportView(View):
         if form.is_valid():
             start = form.cleaned_data.get('start')
             end = form.cleaned_data.get('end')
+            banked_start = form.cleaned_data.get('banked_start')
+            banked_end = form.cleaned_data.get('banked_end')
             # here start and end should be timezone aware (with the settings.TIME_ZONE
             start = timezone.make_aware(start) if not timezone.is_aware(start) else start
             end = timezone.make_aware(end) if not timezone.is_aware(end) else end
+            banked_start = timezone.make_aware(banked_start) if not timezone.is_aware(banked_start) else banked_start
+            banked_end = timezone.make_aware(banked_end) if not timezone.is_aware(banked_end) else banked_end
+
             url = request.build_absolute_uri(
                 reverse('payments:ledger-report')
             )
@@ -99,8 +104,8 @@ class PaymentsReportView(View):
                 'system': PAYMENT_SYSTEM_ID,
                 'start': start,
                 'end': end,
-                'banked_start': start,
-                'banked_end': end
+                'banked_start': banked_start,
+                'banked_end': banked_end
             }
             if 'items' in request.GET:
                 data['items'] = True
