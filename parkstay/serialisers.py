@@ -27,9 +27,9 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     min_dba = serializers.IntegerField(required=False,default=0)
     max_dba = serializers.IntegerField(required=False,default=180)
 
-    details = serializers.CharField()
+    details = serializers.CharField(required=False)
     range_start = serializers.DateTimeField()
-    range_end = serializers.DateTimeField() 
+    range_end = serializers.DateTimeField(required=False) 
     
     class Meta:
         model = BookingRange
