@@ -16,77 +16,9 @@
 
 {% block content %}
     <div class="container" id="dashboard-table-container">
-        {% block campgrounds %}
-            <div class="panel-group" id="applications-accordion" role="tablist" aria-multiselectable="true">
-                <div class="panel panel-default" id="applications">
-                    <div class="panel-heading" role="tab" id="applications-heading">
-                        <h4 class="panel-title">
-                            <a role="button" data-toggle="collapse" href="#applications-collapse"
-                               aria-expanded="true" aria-controls="collapseOne">
-                                <h3>{% block campgrounds_title %}Campgrounds{% endblock %}</h3>
-                            </a>
-                        </h4>
-                    </div>
-                    <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel"
-                         aria-labelledby="applications-heading">
-                        <div class="panel-body">
-                            {% block campgrounds_table %}{% endblock %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        {% block vue-component %}
+
         {% endblock %}
-        {% block campsite_types %}
-            <div class="panel-group" id="licences-accordion" role="tablist" aria-multiselectable="true">
-                <div class="panel panel-default" id="licences">
-                    <div class="panel-heading" role="tab" id="licences-heading">
-                        <h4 class="panel-title">
-                            <a role="button" data-toggle="collapse" href="#licences-collapse"
-                               aria-expanded="true" aria-controls="collapseOne">
-                                <h3>{%  block licences_title %}Licences{% endblock %}</h3>
-                            </a>
-                        </h4>
-                    </div>
-                    <div id="licences-collapse" class="panel-collapse collapse in" role="tabpanel"
-                         aria-labelledby="licences-heading">
-                        <div class="panel-body">
-                            <div class="row filter-panel pad-bottom-md pad-top-s">
-                                <div id="licences-filter-panel">
-                                    {% block licences_filters %}
-                                    {% endblock %}
-                                </div>
-                            </div>
-                            <table id="licences-table" class="table table-striped table-bordered dataTable"></table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endblock %}
-        {% block bulk_pricing %}
-            <div class="panel-group" id="returns-accordion" role="tablist" aria-multiselectable="true">
-                <div class="panel panel-default" id="returns">
-                    <div class="panel-heading" role="tab" id="returns-heading">
-                        <h4 class="panel-title">
-                            <a role="button" data-toggle="collapse" href="#returns-collapse"
-                               aria-expanded="true" aria-controls="collapseOne">
-                                <h3>{%  block returns_title %}Returns{% endblock %}</h3>
-                            </a>
-                        </h4>
-                    </div>
-                    <div id="returns-collapse" class="panel-collapse collapse in" role="tabpanel"
-                         aria-labelledby="returns-heading">
-                        <div class="panel-body">
-                            <div class="row filter-panel pad-bottom-md pad-top-s">
-                                <div id="returns-filter-panel">
-                                    {% block returns_filters %}
-                                    {% endblock %}
-                                </div>
-                            </div>
-                            <table id="returns-table" class="table table-striped table-bordered dataTable"></table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endblock %}
+        
     </div>
 {% endblock %}

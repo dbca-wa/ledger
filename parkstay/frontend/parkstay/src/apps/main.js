@@ -2,11 +2,13 @@
 // so you don't have to do: import Vue from 'vue/dist/vue'
 // This is done with the browser options. For the config, see package.json
 import Vue from 'vue'
-import Campgrounds from './components/campgrounds.vue'
+import Campgrounds from '../components/campgrounds/campgrounds.vue'
+import Campground from '../components/campgrounds/campground.vue'
 import Router from 'vue-router'
-
+import $ from '../hooks'
 Vue.use(Router);
 
+// Define global variables
 global.debounce = function (func, wait, immediate) {
     // Returns a function, that, as long as it continues to be invoked, will not
     // be triggered. The function will be called after it stops being called for
@@ -28,6 +30,8 @@ global.debounce = function (func, wait, immediate) {
     }
 };
 
+global.$ = $
+
 const routes = [
     {
         path: '/',
@@ -35,7 +39,23 @@ const routes = [
             render (c) { return c('router-view') }
         },
         children: [
-            {path:'dashboard',component: Campgrounds}
+            {
+                path:'dashboard',
+                component: {
+                    render (c) { return c('router-view') }
+                },
+                children: [
+                    {
+                        path:'campgrounds',
+                        component: Campgrounds
+                    },
+                    {
+                        path:'campgrounds/:id',
+                        name:'cg_detail',
+                        component: Campground
+                    }
+                ]
+            }
         ]
     }
 ];

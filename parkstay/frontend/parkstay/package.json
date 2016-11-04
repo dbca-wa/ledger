@@ -9,16 +9,40 @@
     "dev": "npm-run-all --parallel watchify serve",
     "lint": "eslint --ext .js,.vue src test/unit",
     "test": "karma start karma.conf.js",
-    "build": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -e src/main.js | uglifyjs -c warnings=false -m > ../../static/ps/js/build.js"
+    "build": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -e src/apps/main.js | uglifyjs -c warnings=false -m > ../../static/ps/js/build.js"
   },
   "browserify": {
     "transform": [
-      "babelify",
-      "vueify"
+      [
+        "vueify",
+        {
+          "babel": {
+            "presets": [
+              "es2015"
+            ],
+            "plugins": []
+          }
+        }
+      ],
+      [
+        "babelify",
+        {
+          "presets": [
+            "es2015"
+          ],
+          "plugins": [],
+          "only": "src"
+        }
+      ],
+      "browserify-shim"
     ]
   },
   "browser": {
+    "jquery": "./node_modules/jquery/dist/jquery.js",
     "vue": "vue/dist/vue"
+  },
+  "browserify-shim": {
+    "jquery": "$"
   },
   "dependencies": {
     "datatables.net": "^1.10.12",
@@ -26,6 +50,7 @@
     "datatables.net-responsive": "^2.1.0",
     "datatables.net-responsive-bs": "^2.1.0",
     "jquery": "^3.1.1",
+    "moment": "^2.15.2",
     "vue": "^2.0.1",
     "vue-router": "^2.0.1"
   },
@@ -58,6 +83,7 @@
     "proxyquireify": "^3.0.1",
     "uglify-js": "^2.5.0",
     "vueify": "^9.0.0",
-    "watchify": "^3.4.0"
+    "watchify": "^3.4.0",
+    "browserify-shim": "~3.8.12"
   }
 }
