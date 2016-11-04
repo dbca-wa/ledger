@@ -1,5 +1,9 @@
 {% extends 'ps/dash/dash_tables.html' %}
 {% load static %}
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'ps/css/build.css' %}"> 
+{% endblock %}
 {% block campgrounds_table %}
   <div id="app">
        <router-view></router-view>

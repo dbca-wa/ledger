@@ -1,5 +1,7 @@
 <template>
   <div id="groundsList">
+    <pkCgStatus ></pkCgStatus>
+    <pkCgAdd></pkCgAdd>
     <form class="form" id="campgrounds-filter-form">
         <div class="col-md-8">
             <div class="col-md-3">
@@ -24,7 +26,7 @@
         </div>
         <div class="col-md-4">
             <div class="form-group pull-right">
-                <a style="margin-top: 20px;"class="btn btn-primary ">Add Campground</a>
+                <a style="margin-top: 20px;"class="btn btn-primary" @click="showAddCampground()">Add Campground</a>
             </div>
         </div>
     </form>
@@ -49,7 +51,8 @@
 
 <script>
 import {$, DataTable, DataTableBs} from '../../hooks'
-//import openclose from 'openclose'
+import pkCgStatus from './openclose.vue'
+import pkCgAdd from './addCampground.vue'
 
 $.fn.dataTable.ext.search.push(
      function( settings, data, dataIndex ) {
@@ -76,7 +79,7 @@ $.fn.dataTable.ext.search.push(
      }
  );
 module.exports = {
-    name: 'groundsList',
+    name: 'pk-campgrounds',
     data: function() {
         return{
             grounds: [],
@@ -84,9 +87,12 @@ module.exports = {
             dtGrounds: null,
             regions: [],
             status: 'All',
-            selected_region: 'All' 
+            selected_region: 'All',
+            isOpenAddCampground: false,
+            isOpenStatus: false
         }
     },
+    components:{ pkCgStatus, pkCgAdd },
     methods: {
         flagFormat: function(flag){
             return flag ? 'Yes' : 'No'
@@ -107,6 +113,9 @@ module.exports = {
         updateTable: function(){
             var vm = this;
             vm.dtGrounds.draw();
+        },
+        showAddCampground: function(){
+            this.isOpenAddCampground = true;
         }
     },
     mounted: function () {
