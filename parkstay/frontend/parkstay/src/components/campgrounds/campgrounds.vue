@@ -1,6 +1,8 @@
 <template>
-
-   <div class="panel-group" id="returns-accordion" role="tablist" aria-multiselectable="true">
+   <div id="groundsList">
+      <pkCgStatus ></pkCgStatus>
+      <pkCgAdd></pkCgAdd>
+      <div class="panel-group" id="returns-accordion" role="tablist" aria-multiselectable="true">
       <div class="panel panel-default" id="returns">
            <div class="panel-heading" role="tab" id="returns-heading">
                <h4 class="panel-title">
@@ -38,7 +40,7 @@
                         </div>
                         <div class="col-md-4">
                            <div class="form-group pull-right">
-                                <a style="margin-top: 20px;"class="btn btn-primary ">Add Campground</a>
+                               <a style="margin-top: 20px;"class="btn btn-primary" @click="showAddCampground()">Add Campground</a>
                            </div>
                         </div>
                     </form>
@@ -62,26 +64,30 @@
            </div>
       </div>
    </div>
-
-
+   </div>
 
 </template>
 
 <script>
 import {$, DataTable, DataTableBs,DataTableRes} from '../../hooks'
+import pkCgStatus from './openclose.vue'
+import pkCgAdd from './addCampground.vue'
 module.exports = {
-    name: 'groundsList',
+    name: 'pk-campgrounds',
     data: function() {
         return{
             grounds: [],
             rows: [],
             dtGrounds: null,
             regions: [],
+            title: 'Campgrounds',
             selected_status: 'All',
             selected_region: 'All',
-            title: 'Campgrounds'
+            isOpenAddCampground: false,
+            isOpenStatus: false
         }
     },
+    components:{ pkCgStatus, pkCgAdd },
     watch:{
       selected_region: function () {
          let vm = this;
@@ -116,6 +122,16 @@ module.exports = {
                     vm.regions = data;
                 }
             });
+        },
+        updateTable: function(){
+            var vm = this;
+            vm.dtGrounds.draw();
+        },
+        showAddCampground: function(){
+            this.isOpenAddCampground = true;
+        },
+        openDetail: function (cg_id) {
+           this.$router.push({name:'cg_detail',params:{id:cg_id}});
         }
     },
     mounted: function () {
@@ -127,7 +143,7 @@ module.exports = {
             responsive:true,
             columnDefs: [
                { responsivePriority: 1, targets: 1 },
-               { responsivePriority: 2, targets: 2 }
+               { responsivePriority: 2, targets: 6 }
             ],
             ajax:{
                 "url":"/api/campgrounds.json",
@@ -166,14 +182,26 @@ module.exports = {
                 "mRender": function (data, type, full)
                 {
                     var id = full.id;
-                    return '<a href="#">Edit Campground Details</a>';
+                    var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a></td>";
+                    return column.replace('__ID__', id);
                 }
             },
           ],
             processing: true
        });
        vm.update();
+       vm.dtGrounds.on('click','a[data-campground]', function(e){
+          e.preventDefault();
+          var id = $(this).attr('data-campground');
+          vm.openDetail(id);
+       });
+
    }
 };
+$('a[data-campgroud]').on('click',function(event){
+   event.preventDefault();
+   var id = $(this).attr('data-campgroud');
+   console.log(id);
+});
 
 </script>

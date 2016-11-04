@@ -1,1 +1,2 @@
 .well{background-color:#fff}
+.modal[data-v-6]{display:block}.modal-body[data-v-6],.modal-footer[data-v-6],.modal-header[data-v-6]{background-color:#f5f5f5;color:#333}.modal-transition[data-v-6]{transition:all .6s ease}.modal-leave[data-v-6]{border-radius:1px!important}.modal-transition .modal-backdrop[data-v-6],.modal-transition .modal-dialog[data-v-6]{transition:all .5s ease}.modal-enter .modal-dialog[data-v-6],.modal-leave .modal-dialog[data-v-6]{opacity:0;transform:translateY(-30%)}.modal-enter .modal-backdrop[data-v-6],.modal-leave .modal-backdrop[data-v-6]{opacity:0}

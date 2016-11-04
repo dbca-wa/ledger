@@ -3,7 +3,7 @@
 // This is done with the browser options. For the config, see package.json
 import Vue from 'vue'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
-import Campground from '../components/campground/campground.vue'
+import Campground from '../components/campgrounds/campground.vue'
 import Router from 'vue-router'
 import $ from '../hooks'
 Vue.use(Router);
@@ -51,6 +51,7 @@ const routes = [
                     },
                     {
                         path:'campgrounds/:id',
+                        name:'cg_detail',
                         component: Campground
                     }
                 ]
