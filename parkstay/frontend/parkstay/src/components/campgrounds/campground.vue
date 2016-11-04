@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import datatable from './datatable.vue'
+import datatable from '../utils/datatable.vue'
 import {$,Moment} from '../../hooks.js'
 export default {
    name:'campground',
