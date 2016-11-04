@@ -170,7 +170,7 @@ class TestSchemaFieldCast(TestCase):
         value = '12/07/2016'
         value = field.cast(value)
         self.assertEqual(type(value), datetime.date)
-        self.assertEqual(value, datetime.date(2016, 07, 12))
+        self.assertEqual(value, datetime.date(2016, 7, 12))
 
     def test_string(self):
         # test that a blank string '' is not accepted when the field is required
