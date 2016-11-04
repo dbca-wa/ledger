@@ -121,3 +121,60 @@ processing a licence. There can be as many default conditions as required. To en
 an order number, which dictates the order in which they appear on the enter conditions page and on the licence PDF.
 
 When all mandatory fields have been entered, click the blue `Save` button at the bottom-right.
+
+#### Application Schema
+
+The application schema describes the fields that will be shown in the application questionaire, under the "Enter
+Details" heading. This is in the JSON format and must, at the highest level, contain a list of sections, each with
+their own set of fields. These can be further nested into groups of fields if required.
+
+```json
+[
+  {
+    section 1
+    [
+      field 1,
+      field 2,
+    ]
+  },
+  {
+     section 2,
+     [
+      field 3,
+      field 4
+     ]
+  }
+]
+```
+
+##### Mandatory Attributes
+
+All fields, including sections and groups, must at minimum contain three attributes: `type`, `name`, and `label`.
+
+`type` is generally for html input types, except in a few cases, such as `section`, `group`, and `label`. The available
+types are:
+
+* `section` - base section for grouping fields
+* `group` - nested group of fields within section or other groups
+* `text` - standard text input
+* `text_area` - large text input
+* `number` - number input
+* `date` - date input
+* `select` - combo box input
+* `radiobuttons` - radio button group input
+* `checkbox` - single checkbox input
+* `label` - just text-based label (usually goes before series of checkboxes)
+* `file`- file input
+* `declaration` - checkbox with declaration text next to it.
+* `species` - special species lookup input
+
+`name` is a field for identifying each field in the system. **Note: every field must have a totally unique name**. This
+means no two fields anywhere in one application schema can have have the same name. Also note that the name cannot
+contain spaces or special characters such as question marks, full stops, etc.
+
+`label` is the piece of text proceeding an input and is usually the question to be answered in the input.
+
+##### Field-specific Attributes
+
+With several fields there are extra attributes required.
+
