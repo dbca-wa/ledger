@@ -47,7 +47,7 @@ class WildlifeLicenceCategory(models.Model):
 
 
 class WildlifeLicenceType(LicenceType):
-    product_code = models.CharField(max_length=64, unique=True)
+    product_title = models.CharField(max_length=64, unique=True)
     identification_required = models.BooleanField(default=False)
     senior_applicable = models.BooleanField(default=False)
     default_conditions = models.ManyToManyField(Condition, through='DefaultCondition', blank=True)
@@ -63,7 +63,7 @@ class WildlifeLicenceType(LicenceType):
         - Check for senior voucher if applicable.
         :return: raise an exception if error
         """
-        variant_codes = payment_utils.generate_product_code_variants(self)
+        variant_codes = payment_utils.generate_product_title_variants(self)
 
         missing_product_variants = []
 
@@ -153,7 +153,7 @@ class CommunicationsLogEntry(models.Model):
 @python_2_unicode_compatible
 class Variant(models.Model):
     name = models.CharField(max_length=200)
-    product_code = models.CharField(max_length=64, unique=True)
+    product_title = models.CharField(max_length=64, unique=True)
     help_text = models.TextField(blank=True)
 
     def __str__(self):

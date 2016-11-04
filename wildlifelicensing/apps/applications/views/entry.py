@@ -24,7 +24,7 @@ from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
 from django.core.urlresolvers import reverse
 from wildlifelicensing.apps.applications.utils import delete_session_application
 from wildlifelicensing.apps.payments.utils import is_licence_free, get_licence_price, \
-    generate_product_code
+    generate_product_title
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -230,7 +230,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                     variant_dict['href'] = '{}?{}'.format(reverse('wl_applications:select_licence_type',
                                                                   args=(licence_type.id,)), encoded_params)
 
-                    prod_code = '{} {}'.format(licence_type.product_code, ' '.join([v.product_code for v in params]))
+                    prod_code = '{} {}'.format(licence_type.product_title, ' '.join([v.product_title for v in params]))
                     variant_dict['price'] = get_licence_price(prod_code)
 
                 variant_dict['help_text'] = variant.help_text
@@ -249,7 +249,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
                     licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
                                                         args=(licence_type.id,))
 
-                    licence_type_dict['price'] = get_licence_price(licence_type.product_code)
+                    licence_type_dict['price'] = get_licence_price(licence_type.product_title)
 
                 category_dict['licence_types'].append(licence_type_dict)
 
@@ -514,7 +514,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.error(self.request, e.message)
             return redirect('wl_applications:new_application')
 
-        kwargs['is_payment_required'] = not is_licence_free(generate_product_code(application)) and \
+        kwargs['is_payment_required'] = not is_licence_free(generate_product_title(application)) and \
             not application.invoice_reference and is_customer(self.request.user)
 
         if application.data:
@@ -590,7 +590,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
 
         context['application'] = application
 
-        context['show_invoice'] = not is_licence_free(generate_product_code(application)) and \
+        context['show_invoice'] = not is_licence_free(generate_product_title(application)) and \
             not application.is_licence_amendment
 
         delete_session_application(request.session)

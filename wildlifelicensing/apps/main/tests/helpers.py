@@ -134,12 +134,12 @@ def get_or_create_api_user():
     return user
 
 
-def get_or_create_licence_type(product_code='regulation-17'):
-    return WildlifeLicenceType.objects.get_or_create(product_code=product_code)[0]
+def get_or_create_licence_type(product_title='regulation-17'):
+    return WildlifeLicenceType.objects.get_or_create(product_title=product_title)[0]
 
 
-def create_licence(holder, issuer, product_code='regulation-17'):
-    licence_type = get_or_create_licence_type(product_code)
+def create_licence(holder, issuer, product_title='regulation-17'):
+    licence_type = get_or_create_licence_type(product_title)
     return WildlifeLicence.objects.create(licence_type=licence_type, holder=holder, issuer=issuer,
                                           profile=holder.profiles.first())
 
