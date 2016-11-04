@@ -2,7 +2,6 @@ import os
 import shutil
 import tempfile
 import datetime
-# from datetime import date
 
 from django.views.generic.base import TemplateView, View
 from django.shortcuts import render, get_object_or_404, redirect
