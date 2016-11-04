@@ -3,6 +3,7 @@
 // This is done with the browser options. For the config, see package.json
 import Vue from 'vue'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
+import Campground from '../components/campground/campground.vue'
 import Router from 'vue-router'
 import $ from '../hooks'
 Vue.use(Router);
@@ -41,12 +42,16 @@ const routes = [
             {
                 path:'dashboard',
                 component: {
-                    render (c) { return c('router-view') } 
+                    render (c) { return c('router-view') }
                 },
                 children: [
                     {
                         path:'campgrounds',
                         component: Campgrounds
+                    },
+                    {
+                        path:'campgrounds/:id',
+                        component: Campground
                     }
                 ]
             }
