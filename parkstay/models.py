@@ -134,7 +134,7 @@ class BookingRange(models.Model):
     max_dba = models.SmallIntegerField(default=180)
     
     status = models.SmallIntegerField(choices=BOOKING_RANGE_CHOICES, default=0)
-    details = models.TextField()
+    details = models.TextField(blank=True,null=True)
     range_start = models.DateTimeField(blank=True, null=True)
     range_end = models.DateTimeField(blank=True, null=True)
 
