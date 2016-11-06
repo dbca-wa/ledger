@@ -126,7 +126,8 @@ When all mandatory fields have been entered, click the blue `Save` button at the
 
 The application schema describes the fields that will be shown in the application questionaire, under the "Enter
 Details" heading. This is in the JSON format and must, at the highest level, contain a list of sections, each with
-their own set of fields. These can be further nested into groups of fields if required.
+their own set of fields (although a section is a type of field itself in this paradigm). These can be further nested
+into groups of fields if required.
 
 ```json
 [
@@ -174,7 +175,46 @@ contain spaces or special characters such as question marks, full stops, etc.
 
 `label` is the piece of text proceeding an input and is usually the question to be answered in the input.
 
+##### Mandatory Attributes
+
+There are several non-mandatory fields that can go with each field.
+
+* `help_text` - Text that will appear under each field, usually an explanation or example answer to a question.
+
+
 ##### Field-specific Attributes
+With several fields there are extra attributes required which are detailed below.
 
-With several fields there are extra attributes required.
+###### Groups / Sections
+Sections and groups both require a `children` attribute, which is a list of fields are listed within.
 
+Groups can also have a field called `isRepeatable` for when the whole group needs be be repeated on the questionaire
+to allow certain data multiple times, such as a list of people's various details.
+
+###### Select / Radiobuttons
+
+These fields require an `options` attribute, which is the list of options for either the combo box or set of
+radiobuttons. This is a list of objects with each object requiring a `value` and `label` attribute. `value` is the
+actual value that will be stored in the database and `label` is the verbose version of the value (or whatever is
+required).
+
+###### Checkboxes
+
+Checkboxes differ slightly from other fields in that while they are often grouped together, they exist as separate
+fields. In the case of checkbox fields, the label will appear next to the checkbox, rather than above, such that when
+there is a sequence of checkbox fields they appear grouped together. As a result, a label field is usually required
+before the sequence of checkbox fields. This should not be confused with the label attribute of a field - it is a field
+in its own right, and should have a label attribute within.
+
+##### Conditions
+There may be cases where a field or set of fields should only be shown if a particular answer is given for an earlier
+field. To accomplish this, the `condition` attribute can be added to most field types, with the exception of
+`section`, `group`, `label` and `file`. In practice, however, generally conditions would only be applied to
+`select`, `radiobutton` and `checkbox` fields. A condition attribute should itself be a object, where each
+attribute name is the answer that will yield further fields and the value of each attribute is the actual list of such
+fields.
+
+##### Licence Fields
+
+There may be cases where some answers to particular questions need to appear on the actual licence, which are termed
+*licence fields*.
