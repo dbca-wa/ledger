@@ -21,12 +21,13 @@
 
 <script>
 import bootstrapModal from '../utils/bootstrap-modal.vue'
-
+import {bus} from '../utils/eventBus.js'
 module.exports = {
     name: 'pkCgStatus',
     data: function() {
         return {
             status: '',
+            id:'',
             //isModalOpen: false
         }
     },
@@ -46,6 +47,13 @@ module.exports = {
         postAdd: function() {
             this.close();
         }
+    },
+    mounted: function() {
+        var vm = this;
+        bus.$on('openclose', function(data){
+            vm.status = data.status;
+            vm.id = data.id;
+        });
     }
 };
 </script>
