@@ -190,15 +190,9 @@ module.exports = {
                 "mRender": function(data, type, full) {
                     var id = full.id;
                     if (full.active) {
-                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>
-                        <br/>
-                        <a href='#' data-campground=\"__ID__\" >(Temporarily) Close Campground </a>
-                        </td>";
+                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' data-campground=\"__ID__\" >(Temporarily) Close Campground </a></td>";
                     } else {
-                        var column = "<td ><a href='#' data-campground=\"__ID__\" >Edit Campground Details</a>
-                        <br/>
-                        <a href='#' class='detailRoute' data-campground=\"__ID__\" >Open Campground </a>
-                        </td>";
+                        var column = "<td ><a href='#' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='detailRoute' data-campground=\"__ID__\" >Open Campground </a></td>";
                     }
 
                     return column.replace('__ID__', id);
