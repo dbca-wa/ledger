@@ -54,7 +54,7 @@ export default {
             processing:true,
             deferRender: true,
             ajax:{
-               url:'/api/campgrounds/'+this.$route.params.id+'/status_history.json',
+               url:'/api/campgrounds/'+this.$route.params.id+'/status_history.json?closures=True',
                dataSrc:''
             },
             columns:[
