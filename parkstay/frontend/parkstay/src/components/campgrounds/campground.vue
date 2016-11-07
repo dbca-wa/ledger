@@ -54,7 +54,7 @@ export default {
             processing:true,
             deferRender: true,
             ajax:{
-               url:'/api/campgrounds/'+this.$route.params.id+'/status_history.json',
+               url:'/api/campgrounds/'+this.$route.params.id+'/status_history.json?closures=True',
                dataSrc:''
             },
             columns:[
@@ -74,8 +74,12 @@ export default {
                },
                {data: 'details'},
                {
+                  data:'editable',
                   mRender:function (data,type,full) {
-                     return "<a href=#'>Edit</a>";
+                     if (data){
+                        return "<a href=#'>Edit</a>";
+                     }
+                     else{ return "" }
                   }
                }
             ],

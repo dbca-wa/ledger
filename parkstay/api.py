@@ -1,8 +1,10 @@
+from django.db.models import Q
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from datetime import datetime, timedelta
 from collections import OrderedDict
+from django_filters import rest_framework as filters
 
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -31,6 +33,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     BookingRangeSerializer,
                                     CampsiteRateSerializer
                                     )
+from parkstay.filters import BookingRangeFilter
 
 # API Views
 class CampsiteBookingViewSet(viewsets.ModelViewSet):
@@ -69,7 +72,12 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def status_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            serializer = BookingRangeSerializer(self.get_object().booking_ranges,many=True)
+            # Check what status is required
+            closures = bool(request.GET.get("closures", False))
+            if closures:
+                serializer = BookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+            else:
+                serializer = BookingRangeSerializer(self.get_object().booking_ranges,many=True)
             res = serializer.data 
 
             return Response(res,status=http_status)
