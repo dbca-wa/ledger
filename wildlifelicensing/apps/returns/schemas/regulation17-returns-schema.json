@@ -1,150 +1,177 @@
 {
   "name": "reg-17",
-  "title": "Returns for regulation 17",
   "resources": [
     {
-      "name": "regulation-17",
-      "title": "Regulation 17",
       "path": "",
       "schema": {
         "fields": [
           {
+            "type": "string",
             "name": "LOCATION",
-            "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
+            "type": "string",
             "name": "SITE",
-            "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "DATUM",
-            "type": "string",
             "default": "GDA94",
             "constraints": {
+              "required": true,
+              "enum": [
+                "GDA94",
+                "WGS84",
+                "AGD84",
+                "AGD66"
+              ]
+            },
+            "type": "string",
+            "name": "DATUM"
+          },
+          {
+            "type": "number",
+            "name": "LATITUDE",
+            "constraints": {
+              "minimum": -60.0,
+              "maximum": 0,
               "required": true
             }
           },
           {
-            "name": "LATITUDE",
             "type": "number",
+            "name": "LONGITUDE",
+            "constraints": {
+              "minimum": 80.0,
+              "maximum": 170.0,
+              "required": true
+            }
+          },
+          {
+            "type": "number",
+            "name": "ZONE",
             "constraints": {
               "required": true,
-              "minimum": -90.0,
-              "maximum": 90.0
+              "enum": [
+                49,
+                50,
+                51,
+                52
+              ]
             }
           },
           {
-            "name": "LONGITUDE",
             "type": "number",
-            "constraints": {
-              "minimum": -180.0,
-              "maximum": 180.0
-            }
-          },
-          {
-            "name": "ZONE",
-            "type": "string"
-          },
-          {
             "name": "EASTING",
-            "type": "number"
-          },
-          {
-            "name": "NORTHING",
-            "type": "number"
-          },
-          {
-            "name": "ACCURACY",
-            "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "DATE",
-            "type": "string",
-            "constraints": {
-              "required": true
-            }
-          },
-          {
-            "name": "NAME_ID",
-            "type": "string",
-            "constraints": {
-              "required": true
-            }
-          },
-          {
-            "name": "SPECIES_NAME",
-            "type": "string",
-            "constraints": {
-              "required": true
-            }
-          },
-          {
-            "name": "COMMON_NAME",
-            "type": "string"
-          },
-          {
-            "name": "SPECIES_GROUP",
-            "type": "string",
-            "constraints": {
-              "required": true
-            }
-          },
-          {
-            "name": "COUNT",
             "type": "number",
+            "name": "NORTHING",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "IDENTIFIER",
-            "type": "string"
+            "type": "number",
+            "name": "ACCURACY",
+            "constraints": {
+              "required": true
+            }
           },
           {
-            "name": "CERTAINTY",
-            "type": "string"
+            "type": "date",
+            "name": "DATE",
+            "format": "fmt:%d/%m/%Y",
+            "constraints": {
+              "required": true
+            }
           },
           {
+            "type": "number",
+            "name": "NAME_ID",
+            "constraints": {
+              "required": false
+            }
+          },
+          {
+            "type": "string",
+            "name": "SPECIES_NAME",
+            "constraints": {
+              "required": true
+            },
+            "wl": {
+              "type": "species",
+              "speciesType": "fauna"
+            }
+          },
+          {
+            "type": "string",
+            "name": "COMMON_NAME"
+          },
+          {
+            "type": "string",
+            "name": "SPECIES_GROUP",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "type": "number",
+            "name": "COUNT",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "type": "string",
+            "name": "IDENTIFIER"
+          },
+          {
+            "type": "string",
+            "name": "CERTAINTY"
+          },
+          {
+            "type": "string",
             "name": "METHOD",
-            "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
+            "type": "string",
             "name": "FATE",
-            "type": "string",
             "constraints": {
               "required": true
             }
           },
           {
-            "name": "SAMPLES",
-            "type": "string"
+            "type": "string",
+            "name": "SAMPLES"
           },
           {
-            "name": "MARKING",
-            "type": "string"
+            "type": "string",
+            "name": "MARKING"
           },
           {
-            "name": "TRANSMITTER",
-            "type": "string"
+            "type": "string",
+            "name": "TRANSMITTER"
           },
           {
-            "name": "VOUCHER_REF",
-            "type": "string"
+            "type": "string",
+            "name": "VOUCHER_REF"
           }
         ]
-      }
+      },
+      "name": "regulation-17",
+      "title": "Regulation 17"
     }
-  ]
+  ],
+  "title": "Returns for regulation 17"
 }
