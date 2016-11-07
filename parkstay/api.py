@@ -4,7 +4,6 @@ from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from datetime import datetime, timedelta
 from collections import OrderedDict
-from django_filters import rest_framework as filters
 
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -33,7 +32,6 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     BookingRangeSerializer,
                                     CampsiteRateSerializer
                                     )
-from parkstay.filters import BookingRangeFilter
 
 # API Views
 class CampsiteBookingViewSet(viewsets.ModelViewSet):
