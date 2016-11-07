@@ -75,6 +75,7 @@ import {
 } from '../../hooks'
 import pkCgStatus from './openclose.vue'
 import pkCgAdd from './addCampground.vue'
+import {bus} from '../utils/eventBus.js'
 module.exports = {
     name: 'pk-campgrounds',
     data: function() {
@@ -136,6 +137,9 @@ module.exports = {
         showAddCampground: function() {
             this.isOpenAddCampground = true;
         },
+        showOpenClose: function() {
+            this.isOpenStatus = true;
+        },
         openDetail: function(cg_id) {
             this.$router.push({
                 name: 'cg_detail',
@@ -190,34 +194,34 @@ module.exports = {
                 "mRender": function(data, type, full) {
                     var id = full.id;
                     if (full.active) {
-                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>
-                        <br/>
-                        <a href='#' data-campground=\"__ID__\" >(Temporarily) Close Campground </a>
-                        </td>";
+                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" >(Temporarily) Close Campground </a></td>";
                     } else {
-                        var column = "<td ><a href='#' data-campground=\"__ID__\" >Edit Campground Details</a>
-                        <br/>
-                        <a href='#' class='detailRoute' data-campground=\"__ID__\" >Open Campground </a>
-                        </td>";
+                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" >Open Campground </a></td>";
                     }
 
-                    return column.replace('__ID__', id);
+                    return column.replace(/__ID__/g, id);
                 }
             }, ],
             processing: true
         });
         vm.update();
-        vm.dtGrounds.on('click', 'a[data-campground]', function(e) {
+        vm.dtGrounds.on('click', '.detailRoute', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-campground');
             vm.openDetail(id);
         });
+        vm.dtGrounds.on('click', '.statusCG', function(e) {
+            e.preventDefault();
+            var id = $(this).attr('data-campground');
+            var status = $(this).attr('data-status');
+            var data = {
+                'status': status,
+                'id': id
+            }
+            bus.$emit('openclose', data);
+            vm.showOpenClose();
+        });
 
     }
 };
-$('a[data-campgroud]').on('click', function(event) {
-    event.preventDefault();
-    var id = $(this).attr('data-campgroud');
-    console.log(id);
-});
 </script>
