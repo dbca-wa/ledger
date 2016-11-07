@@ -74,8 +74,12 @@ export default {
                },
                {data: 'details'},
                {
+                  data:'editable',
                   mRender:function (data,type,full) {
-                     return "<a href=#'>Edit</a>";
+                     if (data){
+                        return "<a href=#'>Edit</a>";
+                     }
+                     else{ return "" }
                   }
                }
             ],
