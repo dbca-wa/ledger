@@ -47,24 +47,24 @@
 
 <script>
 export default {
-   name:'cg_attr',
-   data:function () {
-      return{
-         selected_price_set:this.priceSet[0]
-      }
-   },
-   props:{
-      priceSet:{
-         default:function () {
-            return ['Campsite level','Campground level'];
-         }
-      }
-   },
-   methods:{
-      create:function () {
-         this.$emit('create')
-      }
-   }
+    name: 'cg_attr',
+    data: function() {
+        return {
+            selected_price_set: this.priceSet[0]
+        }
+    },
+    props: {
+        priceSet: {
+            default: function() {
+                return ['Campsite level', 'Campground level'];
+            }
+        }
+    },
+    methods: {
+        create: function() {
+            this.$emit('create')
+        }
+    }
 }
 </script>
 
