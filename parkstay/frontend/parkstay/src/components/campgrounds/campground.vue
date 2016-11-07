@@ -40,63 +40,65 @@
 <script>
 import datatable from '../utils/datatable.vue'
 import campgroundAttr from './campground-attr.vue'
-import {$,Moment} from '../../hooks.js'
+import {
+    $,
+    Moment
+} from '../../hooks.js'
 
 export default {
-   name:'campground',
-   components:{
-      datatable,campgroundAttr
-   },
-   data:function () {
-      return {
-         options : {
-            responsive:true,
-            processing:true,
-            deferRender: true,
-            ajax:{
-               url:'/api/campgrounds/'+this.$route.params.id+'/status_history.json?closures=True',
-               dataSrc:''
-            },
-            columns:[
-               {
-                  data:'range_start',
-                  mRender:function (data,type,full) {
-                     return Moment(data).format('MMMM Do, YYYY');
-                  }
+    name: 'campground',
+    components: {
+        datatable,
+        campgroundAttr
+    },
+    data: function() {
+        return {
+            options: {
+                responsive: true,
+                processing: true,
+                deferRender: true,
+                ajax: {
+                    url: '/api/campgrounds/' + this.$route.params.id + '/status_history.json?closures=True',
+                    dataSrc: ''
+                },
+                columns: [{
+                    data: 'range_start',
+                    mRender: function(data, type, full) {
+                        return Moment(data).format('MMMM Do, YYYY');
+                    }
 
-               },
-               {
-                  data:'range_end',
-                  mRender:function (data,type,full) {
-                     return Moment(data).format('MMMM Do, YYYY');
-                  }
+                }, {
+                    data: 'range_end',
+                    mRender: function(data, type, full) {
+                        return Moment(data).format('MMMM Do, YYYY');
+                    }
 
-               },
-               {data: 'details'},
-               {
-                  data:'editable',
-                  mRender:function (data,type,full) {
-                     if (data){
-                        return "<a href=#'>Edit</a>";
-                     }
-                     else{ return "" }
-                  }
-               }
-            ],
-            language: {
-                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                }, {
+                    data: 'details'
+                }, {
+                    data: 'editable',
+                    mRender: function(data, type, full) {
+                        if (data) {
+                            return "<a href=#'>Edit</a>";
+                        } else {
+                            return ""
+                        }
+                    }
+                }],
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
             },
-         },
-         headers:['Closure Start','Reopen', 'Closure Reason', 'Action'],
-         title: 'Campground'
-      }
-   },
-   methods:{
-      create:function () {
-         console.log('create in Campground');
-         alert('Create was clicked')
-      }
-   }
+            headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Action'],
+            title: 'Campground'
+        }
+    },
+    methods: {
+        create: function() {
+            console.log('create in Campground');
+            alert('Create was clicked')
+        }
+    }
 }
 </script>
 
