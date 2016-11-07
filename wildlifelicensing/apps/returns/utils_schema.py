@@ -226,7 +226,7 @@ class SchemaField:
         try:
             self.cast(value)
         except Exception as e:
-            error = e.message
+            error = "{}".format(e)
             # Override the default enum exception message to include all possible values
             if error.find('enum array') and self.constraints.enum:
                 values = [str(v) for v in self.constraints.enum]

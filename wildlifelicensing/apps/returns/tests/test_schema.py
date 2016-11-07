@@ -230,7 +230,7 @@ class TestSchemaFieldValidation(TestCase):
         """
         descriptor = {
             "name": "Enum",
-            "tile": "Test Enum message",
+            "title": "Test Enum message",
             "type": "string",
             "format": "default",
             "constraints": {
