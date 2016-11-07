@@ -13,22 +13,14 @@
                 <link type="text/css" href="{% static 'ps/css/base.css' %}" rel="stylesheet">
             {% block extra_css %}
             {% endblock %}
+            {% block extra_js %}
+            {% endblock %}
             <title>
                 {% block title %}
-                    Wildlife Licensing - Department of Parks and Wildlife
+                    Parkstay - Department of Parks and Wildlife
                 {% endblock %}
             </title>
 
-            <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/require.js/2.1.9/require.min.js"></script>
-            <script type="text/javascript">
-                require(["{% static 'wl/js/config.js' %}"], function (config) {
-                    require(['js/base']);
-                    {% block requirements %}
-                    {% endblock %}
-                });
-            </script>
-            {% block extra_js %}
-            {% endblock %}
         </meta>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
@@ -131,6 +123,8 @@
         {% block content %}
         {% endblock %}
         {% block modals %}
+        {% endblock %}
+        {% block custom_js %}
         {% endblock %}
     </body>
 </html>
