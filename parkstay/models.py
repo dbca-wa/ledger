@@ -101,6 +101,15 @@ class Campground(models.Model):
     def active(self):
         return self._is_open(timezone.now())
 
+    @property
+    def current_closure(self):
+        closure_period = ""
+        period = timezone.now()
+        if not self.active:
+            closure = self.booking_ranges.filter(range_start__lte=period,range_end__gte=period).exclude(status=0).last()
+            closure_period = 'Start: {} End:'.format(closure.range_start.strftime('%d/%m/%Y'),closure.range_end.strftime('%d/%m/%Y'))
+        return closure_period
+
     # Methods
     # =======================================
     def _is_open(self,period):
@@ -135,8 +144,8 @@ class BookingRange(models.Model):
     
     status = models.SmallIntegerField(choices=BOOKING_RANGE_CHOICES, default=0)
     details = models.TextField(blank=True,null=True)
-    range_start = models.DateTimeField(blank=True, null=True)
-    range_end = models.DateTimeField(blank=True, null=True)
+    range_start = models.DateField(blank=True, null=True)
+    range_end = models.DateField(blank=True, null=True)
 
     # Properties
     # ====================================

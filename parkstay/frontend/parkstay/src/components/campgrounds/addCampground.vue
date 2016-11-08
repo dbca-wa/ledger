@@ -1,5 +1,5 @@
 <template id="pkCgAdd">
-<bootstrapModal title="Add Campground" large=true ok="Add">
+<bootstrapModal title="Add Campground" :large=true ok="Add">
     <slot name="title">
         <h3>Add Campground</h3>
     </slot>

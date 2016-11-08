@@ -1,6 +1,7 @@
 <template>
 <div id="groundsList">
-    <pkCgStatus></pkCgStatus>
+    <pkCgClose></pkCgClose>
+    <pkCgOpen></pkCgOpen>
     <pkCgAdd></pkCgAdd>
     <div class="panel-group" id="returns-accordion" role="tablist" aria-multiselectable="true">
         <div class="panel panel-default" id="returns">
@@ -73,7 +74,8 @@ import {
     DataTableBs,
     DataTableRes
 } from '../../hooks'
-import pkCgStatus from './openclose.vue'
+import pkCgClose from './closeCampground.vue'
+import pkCgOpen from './openCampground.vue'
 import pkCgAdd from './addCampground.vue'
 import {bus} from '../utils/eventBus.js'
 module.exports = {
@@ -88,11 +90,13 @@ module.exports = {
             selected_status: 'All',
             selected_region: 'All',
             isOpenAddCampground: false,
-            isOpenStatus: false
+            isOpenOpenCG: false,
+            isOpenCloseCG: false
         }
     },
     components: {
-        pkCgStatus,
+        pkCgClose,
+        pkCgOpen,
         pkCgAdd
     },
     watch: {
@@ -137,8 +141,11 @@ module.exports = {
         showAddCampground: function() {
             this.isOpenAddCampground = true;
         },
-        showOpenClose: function() {
-            this.isOpenStatus = true;
+        showOpenCloseCG: function() {
+            this.isOpenCloseCG = true;
+        },
+        showOpenOpenCG: function() {
+            this.isOpenOpenCG = true;
         },
         openDetail: function(cg_id) {
             this.$router.push({
@@ -219,7 +226,11 @@ module.exports = {
                 'id': id
             }
             bus.$emit('openclose', data);
-            vm.showOpenClose();
+            if (status === 'open'){
+                vm.showOpenOpenCG();
+            }else if (status === 'close'){
+                vm.showOpenCloseCG();
+            }
         });
 
     }

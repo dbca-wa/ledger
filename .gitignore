@@ -87,3 +87,5 @@ media/
 #parkstay import ignores
 import/
 importo.py
+build.js
+build.css
