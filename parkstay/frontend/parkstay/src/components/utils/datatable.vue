@@ -1,6 +1,6 @@
 <template lang="html">
    <div id="DataTable">
-      <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%"  id="table">
+      <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%" :id="id">
             <thead>
                 <tr>
                     <th v-for="header in dtHeaders"> {{ header}}</th>
@@ -26,11 +26,14 @@ module.exports = {
       dtOptions: {
          type:Object,
          required:true
-      }
+     },
+     id:{
+         required:true
+     }
    },
    data : function () {
       return {
-         vmDataTable: null
+         vmDataTable: null,
       }
    },
    watch:{
@@ -41,9 +44,8 @@ module.exports = {
    },
    mounted:function () {
       let vm = this;
-      var table =$('#table');
+      var table =$('#'+vm.id);
       vm.vmDataTable = $(table).DataTable(vm.dtOptions);
-      vm.vmDataTable.search('').draw();
    }
 };
 </script>

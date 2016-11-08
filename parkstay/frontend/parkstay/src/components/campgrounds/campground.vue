@@ -5,7 +5,7 @@
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#applications-collapse"
-                   aria-expanded="true" aria-controls="collapseOne">
+                   aria-expanded="false" aria-controls="applications-collapse">
                     <h3>{{title}}</h3>
                 </a>
             </h4>
@@ -26,13 +26,35 @@
                   </div>
                   <div class="row">
                      <div class="well">
-                        <datatable :dtHeaders ="headers" :dtOptions="options"/>
+                        <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
                      </div>
                   </div>
                </div>
             </div>
          </div>
       </div>
+      <div class="panel panel-default" id="applications">
+        <div class="panel-heading" role="tab" id="applications-heading">
+            <h4 class="panel-title">
+                <a role="button" data-toggle="collapse" href="#campsites"
+                   aria-expanded="false" aria-controls="collapseOne">
+                    <h3>Campsites</h3>
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" role="tabpanel"
+             aria-labelledby="applications-heading" id="campsites">
+            <div class="panel-body">
+               <div class="col-lg-12">
+                  <div class="row">
+                     <div class="well">
+                        <datatable :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
+                     </div>
+                  </div>
+               </div>
+            </div>
+        </div>
+    </div>
    </div>
 
 </template>
@@ -42,7 +64,8 @@ import datatable from '../utils/datatable.vue'
 import campgroundAttr from './campground-attr.vue'
 import {
     $,
-    Moment
+    Moment,
+    BS
 } from '../../hooks.js'
 
 export default {
@@ -53,7 +76,7 @@ export default {
     },
     data: function() {
         return {
-            options: {
+            ch_options: {
                 responsive: true,
                 processing: true,
                 deferRender: true,
@@ -89,8 +112,54 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Action'],
-            title: 'Campground'
+            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Action'],
+            title: 'Campground',
+            cs_options:{
+                responsive: true,
+                processing: true,
+                deferRender: true,
+                ajax: {
+                    url: '/api/campgrounds/' + this.$route.params.id + '/status_history.json?closures=True',
+                    dataSrc: ''
+                },
+                columns: [{
+                    data: 'range_start',
+                    mRender: function(data, type, full) {
+                        return Moment(data).format('MMMM Do, YYYY');
+                    }
+
+                }, {
+                    data: 'range_end',
+                    mRender: function(data, type, full) {
+                        return Moment(data).format('MMMM Do, YYYY');
+                    }
+
+                }, {
+                    data: 'details'
+                }, {
+                    data: 'editable',
+                    mRender: function(data, type, full) {
+                        if (data) {
+                            return "<a href=#'>Edit</a>";
+                        } else {
+                            return ""
+                        }
+                    }
+                },{
+                    mRender: function(data, type, full) {
+                        if (data) {
+                            return "<a href=#'>Edit Campsite Details</a>";
+                        } else {
+                            return ""
+                        }
+                    }
+                }],
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+            }
+            ,
+            cs_headers: ['Campsite Id', 'Type', 'Status', 'Price','Action'],
         }
     },
     methods: {
