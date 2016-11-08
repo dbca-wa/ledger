@@ -86,6 +86,7 @@ module.exports = {
             this.status = '';
         },
         postAdd: function() {
+            let vm = this;
             var data = this.formdata;
             var url = '';
             data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
@@ -95,15 +96,10 @@ module.exports = {
                 url: url,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    vm.days = data.days;
-                    vm.classes = data.classes;
-                    data.sites.forEach(function(el) {
-                        el.showBreakdown = false;
-                    });
-                    vm.sites = data.sites;
+                    vm.close();
                 }
             });
-            this.close();
+
         }
     },
     mounted: function() {

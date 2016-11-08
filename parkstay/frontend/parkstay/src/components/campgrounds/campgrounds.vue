@@ -72,7 +72,8 @@ import {
     $,
     DataTable,
     DataTableBs,
-    DataTableRes
+    DataTableRes,
+    api_endpoints
 } from '../../hooks'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
@@ -123,7 +124,7 @@ module.exports = {
         },
         update: function() {
             var vm = this;
-            var url = '/api/regions.json';
+            var url =  api_endpoints.regions;
             console.log('AJAX ' + url)
             $.ajax({
                 url: url,
@@ -171,7 +172,7 @@ module.exports = {
                 targets: 6
             }],
             ajax: {
-                "url": "/api/campgrounds.json",
+                "url": api_endpoints.campgrounds,
                 "dataSrc": ''
             },
             columns: [{
