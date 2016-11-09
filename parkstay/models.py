@@ -166,7 +166,7 @@ class BookingRange(models.Model):
                 raise ValidationError('This Booking Rnage is not editable')
 
         # Preventing ranges within other ranges
-        within = BookingRange.objects.filter(Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
+        within = BookingRange.objects.filter(Q(campground=self.campground),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
         if within:
             raise ValidationError('This Booking Range is within the range of another one')
         if self.range_start < datetime.now().date():
