@@ -53,7 +53,7 @@
 <script>
 import bootstrapModal from '../utils/bootstrap-modal.vue'
 import {bus} from '../utils/eventBus.js'
-import { $, datetimepicker } from '../../hooks'
+import { $, datetimepicker,api_endpoints } from '../../hooks'
 module.exports = {
     name: 'pkCgOpen',
     data: function() {
@@ -88,15 +88,20 @@ module.exports = {
         postAdd: function() {
             let vm = this;
             var data = this.formdata;
-            var url = '';
             data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
             data.status = 0;
             console.log(data);
             $.ajax({
-                url: url,
+                url: api_endpoints.opencloseCG(vm.id),
+                method: 'POST',
+                xhrFields: { withCredentials:true },
+                data: data,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.close();
+                },
+                error:function (data){
+                    console.log(data);
                 }
             });
 
@@ -111,6 +116,10 @@ module.exports = {
         vm.picker = $('#open_cg_range_start');
         vm.picker.datetimepicker({
             format: 'DD/MM/YYYY'
+        });
+        vm.picker.on('dp.change', function(e){
+            vm.formdata.range_start = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            console.log(vm.formdata.range_start);
         });
     }
 };
