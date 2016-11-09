@@ -36,21 +36,38 @@
          <div class="col-sm-4">
             <div class="col-sm-12">
                <div class="form-group pull-right">
-                  <a href="#" class="btn btn-primary" @click="create">Create</a>
+                  <a href="#" class="btn btn-primary" @click="showAlert">Create</a>
                   <a href="#" class="btn btn-default">Cancel</a>
                </div>
             </div>
          </div>
       </div>
+      <confirmBox :options="alertOptions" id="alert1" ></confirmBox>
    </div>
 </template>
 
 <script>
+import confirmBox from '../utils/confirmbox.vue'
+import {bus} from '../utils/eventBus.js'
 export default {
     name: 'cg_attr',
+    components:{
+        confirmBox
+    },
     data: function() {
         return {
-            selected_price_set: this.priceSet[0]
+            selected_price_set: this.priceSet[0],
+            alertOptions:{
+                icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
+                message:"Are you sure you want to Delete!!!" /*,
+                buttons:[
+                    {
+                      text:"Delete",
+                      onClick: "deleteBudget("+id+")",
+                      bsColor:"btn-danger",
+                    }
+                ]*/
+            }
         }
     },
     props: {
@@ -63,6 +80,9 @@ export default {
     methods: {
         create: function() {
             this.$emit('create')
+        },
+        showAlert:function () {
+            bus.$emit('showAlert','alert1');
         }
     }
 }
