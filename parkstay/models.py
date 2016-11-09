@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
 from django.utils import timezone
@@ -99,14 +100,14 @@ class Campground(models.Model):
 
     @property
     def active(self):
-        return self._is_open(timezone.now())
+        return self._is_open(datetime.now().date())
 
     @property
     def current_closure(self):
         closure_period = ""
-        period = timezone.now()
+        period = datetime.now().date()
         if not self.active:
-            closure = self.booking_ranges.filter(range_start__lte=period,range_end__gte=period).exclude(status=0).last()
+            closure = self.booking_ranges.get(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period))
             closure_period = 'Start: {} End:'.format(closure.range_start.strftime('%d/%m/%Y'),closure.range_end.strftime('%d/%m/%Y'))
         return closure_period
 
@@ -116,8 +117,8 @@ class Campground(models.Model):
         '''Check if the campground is open on a specified datetime
         '''
         # Get all booking ranges
-        open_ranges = self.booking_ranges.filter(status=0,range_start__lte=period,range_end__gte=period)
-        closed_ranges = self.booking_ranges.filter(range_start__lte=period,range_end__gte=period).exclude(status=0)
+        open_ranges = self.booking_ranges.filter(Q(status=0),Q(range_start__lte=period), Q(range_end__gte=period) | Q(range_end__isnull=True) )
+        closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) | Q(range_end__isnull=True) )
 
         if open_ranges and not closed_ranges:
             return True
@@ -151,7 +152,7 @@ class BookingRange(models.Model):
     # ====================================
     @property
     def editable(self):
-        return True if self.range_end > timezone.now() else False
+        return True if ((self.range_start >= datetime.now().date() and not self.range_end) or ( self.range_start >= datetime.now().date() <= self.range_end) ) and  self.status != 0 else False
  
     # Methods
     # =====================================
@@ -160,9 +161,15 @@ class BookingRange(models.Model):
         super(BookingRange, self).save(*args, **kwargs)
 
     def clean(self, *args, **kwargs):
-        if not self.editable:
-            raise ValidationError('This Booking Rnage is not editable')
-        if self.range_start < timezone.now():
+        if self.pk:
+            if not self.editable:
+                raise ValidationError('This Booking Rnage is not editable')
+
+        # Preventing ranges within other ranges
+        within = BookingRange.objects.filter(Q(campground=self.campground),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
+        if within:
+            raise ValidationError('This Booking Range is within the range of another one')
+        if self.range_start < datetime.now().date():
             raise ValidationError('The start date can\'t be in the past')
 
 class Campsite(models.Model):
@@ -178,6 +185,20 @@ class Campsite(models.Model):
     class Meta:
         unique_together = (('campground', 'name'),)
 
+    # Properties
+    # ==============================
+    @property
+    def type(self):
+        return self.campsite_class.name
+
+    @property
+    def status(self):
+        return False
+
+    @property
+    def price(self):
+        current_price = 0
+        return current_price
 
 class Feature(models.Model):
     name = models.CharField(max_length=255, unique=True)

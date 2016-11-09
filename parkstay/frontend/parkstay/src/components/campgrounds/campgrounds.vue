@@ -233,7 +233,10 @@ module.exports = {
                 vm.showOpenCloseCG();
             }
         });
-
+         bus.$on('refreshCGTable', function(){
+            console.log('gotcha');
+            vm.dtGrounds.ajax.reload();
+        });
     }
 };
 </script>

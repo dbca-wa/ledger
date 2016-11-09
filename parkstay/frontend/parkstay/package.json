@@ -4,7 +4,7 @@
   "author": "tawanda <tawanda.nyakudjga@gmail.com>",
   "private": true,
   "scripts": {
-    "watchify": "watchify -vd -p browserify-hmr -t browserify-css src/apps/main.js -e src/apps/main.js -o ../../static/ps/js/build.js",
+    "watchify": "watchify -vd -p [browserify-hmr -h 0.0.0.0 -u http://$(my-local-ip):3123] -t browserify-css src/apps/main.js -e src/apps/main.js -o ../../static/ps/js/build.js",
     "serve": "http-server -o -c 1 -a localhost",
     "dev": "npm-run-all --parallel watchify",
     "lint": "eslint --ext .js,.vue src test/unit",
@@ -97,6 +97,7 @@
     "karma-jasmine": "^1.0.2",
     "karma-phantomjs-launcher": "^1.0.0",
     "karma-spec-reporter": "0.0.26",
+    "my-local-ip": "^1.0.0",
     "npm-run-all": "^2.3.0",
     "phantomjs-prebuilt": "^2.1.3",
     "proxyquireify": "^3.0.1",

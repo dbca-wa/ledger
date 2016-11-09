@@ -28,8 +28,8 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     max_dba = serializers.IntegerField(required=False,default=180)
 
     details = serializers.CharField(required=False)
-    range_start = serializers.DateTimeField()
-    range_end = serializers.DateTimeField(required=False) 
+    range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
+    range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
     
     class Meta:
         model = BookingRange
@@ -44,7 +44,11 @@ class BookingRangeSerializer(serializers.ModelSerializer):
             'min_sites',
             'max_sites',
             'min_dba',
-            'max_dba'
+            'max_dba',
+            'campground'
+        )
+        write_only_fields = (
+            'campground'
         )
     def get_status(self, obj):
         return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
@@ -107,7 +111,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
-        fields = ('campground', 'name', 'campsite_class', 'features', 'wkb_geometry')
+        fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry')
 
 class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

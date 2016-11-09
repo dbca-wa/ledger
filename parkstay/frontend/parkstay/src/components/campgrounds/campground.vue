@@ -93,16 +93,22 @@ export default {
                 }, {
                     data: 'range_end',
                     mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
+                        if (data){
+                            return Moment(data).format('MMMM Do, YYYY');
+                        } else {
+                            return '';
+                        }
                     }
 
                 }, {
-                    data: 'details'
+                    data: 'status'
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return "<a href=#'>Edit</a>";
+                            var id = full.id;
+                            var column = "<td ><a href='#' class='editRange' data-range=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-range=\"__ID__\" >Delete</a></td>";
+                            return column.replace(/__ID__/g, id);
                         } else {
                             return ""
                         }
@@ -119,39 +125,30 @@ export default {
                 processing: true,
                 deferRender: true,
                 ajax: {
-                    url: api_endpoints.status_history(this.$route.params.id),
+                    url: api_endpoints.campgroundCampsites(this.$route.params.id),
                     dataSrc: ''
                 },
                 columns: [{
-                    data: 'range_start',
-                    mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
-                    }
-
+                    data: 'name'
                 }, {
-                    data: 'range_end',
-                    mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
-                    }
-
+                    data: 'type'
                 }, {
-                    data: 'details'
-                }, {
-                    data: 'editable',
+                    data: 'status',
                     mRender: function(data, type, full) {
-                        if (data) {
-                            return "<a href=#'>Edit</a>";
-                        } else {
-                            return ""
-                        }
+                         return data ? 'Open' : 'Closed'
                     }
                 },{
-                    mRender: function(data, type, full) {
-                        if (data) {
-                            return "<a href=#'>Edit Campsite Details</a>";
+                    data: 'price'
+                }, {
+                   "mRender": function(data, type, full) {
+                        var id = full.id;
+                        if (full.status){
+                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
                         } else {
-                            return ""
+                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" >Open Campsite </a></td>";
                         }
+
+                        return column.replace(/__ID__/g, id);
                     }
                 }],
                 language: {
@@ -166,7 +163,7 @@ export default {
         create: function() {
             console.log('create in Campground');
             alert('Create was clicked')
-        }
+        },
     }
 }
 </script>
