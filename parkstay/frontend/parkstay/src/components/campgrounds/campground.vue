@@ -93,16 +93,22 @@ export default {
                 }, {
                     data: 'range_end',
                     mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
+                        if (data){
+                            return Moment(data).format('MMMM Do, YYYY');
+                        } else {
+                            return '';
+                        }
                     }
 
                 }, {
-                    data: 'details'
+                    data: 'status'
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return "<a href=#'>Edit</a>";
+                            var id = full.id;
+                            var column = "<td ><a href='#' class='editRange' data-range=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-range=\"__ID__\" >Delete</a></td>";
+                            return column.replace(/__ID__/g, id);
                         } else {
                             return ""
                         }
