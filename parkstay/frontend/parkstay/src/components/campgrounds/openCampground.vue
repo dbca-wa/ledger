@@ -99,6 +99,7 @@ module.exports = {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.close();
+                    bus.$emit('refreshCGTable');
                 },
                 error:function (data){
                     console.log(data);
