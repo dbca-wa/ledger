@@ -40,9 +40,8 @@
                     </div>
                     <div class="col-md-4">
                         <select v-model="formdata.reason" class="form-control" id="open_cg_reason">
-                            <option value="1">Reason 1</option>
-                            <option value="2">Reason 2</option>
-                            <option value="3">Reason 3</option>
+                            <option value="1">Closed due to natural disaster</option>
+                            <option value="2">Closed for maintenance</option>
                             <option value="other">Other</option>
                         </select>
                     </div>
@@ -101,7 +100,25 @@ module.exports = {
             this.status = '';
         },
         postAdd: function() {
-            this.close();
+            let vm = this;
+            var data = this.formdata;
+            //data.range_start = this.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            //data.range_end = this.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            data.status = vm.formdata.reason;
+            console.log(data);
+            $.ajax({
+                url: api_endpoints.opencloseCG(vm.id),
+                method: 'POST',
+                xhrFields: { withCredentials:true },
+                data: data,
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.close();
+                },
+                error:function (data){
+                    console.log(data);
+                }
+            });
         }
     },
     mounted: function() {
@@ -120,6 +137,9 @@ module.exports = {
         });
         vm.closeStartPicker.on('dp.change', function(e){
             vm.formdata.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+        });
+        vm.closeEndPicker.on('dp.change', function(e){
+            vm.formdata.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
     }
 };
