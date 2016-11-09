@@ -65,7 +65,7 @@ import campgroundAttr from './campground-attr.vue'
 import {
     $,
     Moment,
-    BS
+    api_endpoints
 } from '../../hooks.js'
 
 export default {
@@ -81,7 +81,7 @@ export default {
                 processing: true,
                 deferRender: true,
                 ajax: {
-                    url: '/api/campgrounds/' + this.$route.params.id + '/status_history.json?closures=True',
+                    url: api_endpoints.status_history(this.$route.params.id),
                     dataSrc: ''
                 },
                 columns: [{
@@ -119,7 +119,7 @@ export default {
                 processing: true,
                 deferRender: true,
                 ajax: {
-                    url: '/api/campgrounds/' + this.$route.params.id + '/status_history.json?closures=True',
+                    url: api_endpoints.status_history(this.$route.params.id),
                     dataSrc: ''
                 },
                 columns: [{
