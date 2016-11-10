@@ -55,6 +55,7 @@ export default {
         confirmBox
     },
     data: function() {
+        let vm = this;
         return {
             selected_price_set: this.priceSet[0],
             alertOptions:{
@@ -66,9 +67,10 @@ export default {
                       event: "delete",
                       bsColor:"btn-danger",
                       handler:function(e) {
-                          console.log('delete event fired');
+                         console.log(vm);
+                         vm.showAlert();
                       },
-                      autoclose:false
+                      autoclose:true
                     }
                 ]
             }
