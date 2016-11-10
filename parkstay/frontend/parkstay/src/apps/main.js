@@ -6,6 +6,7 @@ import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
 import Router from 'vue-router'
 import $ from '../hooks'
+var css = require('../hooks-css.css');
 Vue.use(Router);
 
 // Define global variables

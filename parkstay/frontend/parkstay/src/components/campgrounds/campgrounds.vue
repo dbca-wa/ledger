@@ -1,6 +1,7 @@
 <template>
 <div id="groundsList">
-    <pkCgStatus></pkCgStatus>
+    <pkCgClose></pkCgClose>
+    <pkCgOpen></pkCgOpen>
     <pkCgAdd></pkCgAdd>
     <div class="panel-group" id="returns-accordion" role="tablist" aria-multiselectable="true">
         <div class="panel panel-default" id="returns">
@@ -71,9 +72,11 @@ import {
     $,
     DataTable,
     DataTableBs,
-    DataTableRes
+    DataTableRes,
+    api_endpoints
 } from '../../hooks'
-import pkCgStatus from './openclose.vue'
+import pkCgClose from './closeCampground.vue'
+import pkCgOpen from './openCampground.vue'
 import pkCgAdd from './addCampground.vue'
 import {bus} from '../utils/eventBus.js'
 module.exports = {
@@ -88,11 +91,13 @@ module.exports = {
             selected_status: 'All',
             selected_region: 'All',
             isOpenAddCampground: false,
-            isOpenStatus: false
+            isOpenOpenCG: false,
+            isOpenCloseCG: false
         }
     },
     components: {
-        pkCgStatus,
+        pkCgClose,
+        pkCgOpen,
         pkCgAdd
     },
     watch: {
@@ -119,7 +124,7 @@ module.exports = {
         },
         update: function() {
             var vm = this;
-            var url = '/api/regions.json';
+            var url =  api_endpoints.regions;
             console.log('AJAX ' + url)
             $.ajax({
                 url: url,
@@ -137,8 +142,11 @@ module.exports = {
         showAddCampground: function() {
             this.isOpenAddCampground = true;
         },
-        showOpenClose: function() {
-            this.isOpenStatus = true;
+        showOpenCloseCG: function() {
+            this.isOpenCloseCG = true;
+        },
+        showOpenOpenCG: function() {
+            this.isOpenOpenCG = true;
         },
         openDetail: function(cg_id) {
             this.$router.push({
@@ -164,7 +172,7 @@ module.exports = {
                 targets: 6
             }],
             ajax: {
-                "url": "/api/campgrounds.json",
+                "url": api_endpoints.campgrounds,
                 "dataSrc": ''
             },
             columns: [{
@@ -196,9 +204,9 @@ module.exports = {
                     if (full.active) {
                         var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" >(Temporarily) Close Campground </a></td>";
                     } else {
-                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" >Open Campground </a></td>";
+                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open Campground</a></td>";
                     }
-
+                    column = column.replace(/__Current_Closure__/,full.current_closure);
                     return column.replace(/__ID__/g, id);
                 }
             }, ],
@@ -214,14 +222,23 @@ module.exports = {
             e.preventDefault();
             var id = $(this).attr('data-campground');
             var status = $(this).attr('data-status');
+            var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
             var data = {
                 'status': status,
-                'id': id
+                'id': id,
+                'closure': current_closure
             }
             bus.$emit('openclose', data);
-            vm.showOpenClose();
+            if (status === 'open'){
+                vm.showOpenOpenCG();
+            }else if (status === 'close'){
+                vm.showOpenCloseCG();
+            }
         });
-
+         bus.$on('refreshCGTable', function(){
+            console.log('gotcha');
+            vm.dtGrounds.ajax.reload();
+        });
     }
 };
 </script>

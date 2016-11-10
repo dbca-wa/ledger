@@ -1,3 +1,4 @@
+import traceback
 from django.db.models import Q
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
@@ -46,15 +47,22 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
 
-    @detail_route(methods=['post'])
+    @detail_route(methods=['post'],authentication_classes=[])
     def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
             # parse and validate data
+            mutable = request.POST._mutable
+            request.POST._mutable = True
+            request.POST['campground'] = self.get_object().id
+            request.POST._mutable = mutable
             serializer = BookingRangeSerializer(data=request.data, method="post")
-            serializer.initial_data['campground'] = self.get_object().id
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            if serializer.validated_data.get('status') == 0:
+                self.get_object().open(dict(serializer.validated_data))
+            else:
+                self.get_object().close(dict(serializer.validated_data))
+            #serializer.save()
 
             # return object
             ground = self.get_object()
@@ -80,8 +88,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
+            print traceback.print_exc()
             raise
         except Exception as e:
+            print traceback.print_exc()
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
