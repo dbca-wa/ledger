@@ -25,15 +25,18 @@
 <script>
 import {$} from '../../hooks.js'
 import {bus} from './eventBus.js'
-export default {
+import mix from './mixins.js'
+var confirmModal = module.exports = {
     data:function () {
         return {
             confirmModal: 'confirmModal'+this._uid,
             icon: 'modalIcon'+this._uid,
             text: 'modalText'+this._uid,
             buttons: 'modalButtons'+this._uid,
+            eventHandler: Array()
         }
     },
+    mixins:[mix],
     props:{
         options:{
             required:true,
@@ -51,6 +54,7 @@ export default {
             var icon = $("#"+vm.icon);
             var text = $("#"+vm.text);
             var buttons = ("#"+vm.buttons);
+            var autoclose = (typeof Obj.autoclose != "undefined")? true: Obj.autoclose;
             $(icon).html(Obj.icon);
             $(text).html(Obj.message);
             $(buttons).html("");
@@ -58,11 +62,24 @@ export default {
             {
                $.each(Obj.buttons, function (i, btn)
                {
-                   var eventHandler = (typeof btn.eventHandler != "undefined") ? btn.eventHandler : "onclick";
-                   $(buttons).append("<button type=\"button\" data-dismiss=\"modal\""+ eventHandler +"=" + btn.onClick + " class=\"btn " + btn.bsColor + "\">" + btn.text + "</button>");
+                   var eventHandler = (typeof btn.eventHandler != "undefined") ? btn.eventHandler : "@click";
+                   mix.methods[btn.event] = btn.handler;
+                   console.log(vm.delete);
+                   $(buttons).append("<button type=\"button\" data-click="+btn.event+"\" class=\"btn " + btn.bsColor + "\">" + btn.text + "</button>");
+                   $(function () {
+                       $('button[data-click]').on('click',function () {
+                           btn.handler();
+                           if(autoclose){
+                               $(confirmModal).hide();
+                           }
+                       });
+                   })
                });
             }
             $(buttons).append("<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-default\">Cancel</button>");
+        },
+        eventHandler:function(run){
+            run();
         }
    },
    mounted:function () {
@@ -73,8 +90,11 @@ export default {
               $("#"+vm.confirmModal).modal('show');
           }
       });
+
+
    }
 }
+
 </script>
 
 <style lang="css">

@@ -59,14 +59,18 @@ export default {
             selected_price_set: this.priceSet[0],
             alertOptions:{
                 icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message:"Are you sure you want to Delete!!!" /*,
+                message:"Are you sure you want to Delete!!!" ,
                 buttons:[
                     {
                       text:"Delete",
-                      onClick: "deleteBudget("+id+")",
+                      event: "delete",
                       bsColor:"btn-danger",
+                      handler:function(e) {
+                          console.log('delete event fired');
+                      },
+                      autoclose:false
                     }
-                ]*/
+                ]
             }
         }
     },
