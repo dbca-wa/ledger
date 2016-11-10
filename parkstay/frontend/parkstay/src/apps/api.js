@@ -11,4 +11,7 @@ module.exports = {
     opencloseCG: function(id){
         return "/api/campgrounds/" + id + "/open_close.json"
     },
+    deleteBookingRange: function (id) {
+        return "/api/booking_ranges/" + id + ".json"
+    }
 };

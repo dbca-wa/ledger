@@ -55,6 +55,7 @@
             </div>
         </div>
     </div>
+    <confirmbox id="deleteRange" :options="deletePrompt"></confirmbox>
    </div>
 
 </template>
@@ -62,6 +63,7 @@
 <script>
 import datatable from '../utils/datatable.vue'
 import campgroundAttr from './campground-attr.vue'
+import confirmbox from '../utils/confirmbox.vue'
 import {
     $,
     Moment,
@@ -72,7 +74,8 @@ export default {
     name: 'campground',
     components: {
         datatable,
-        campgroundAttr
+        campgroundAttr,
+        confirmbox
     },
     data: function() {
         return {
@@ -157,6 +160,22 @@ export default {
             }
             ,
             cs_headers: ['Campsite Id', 'Type', 'Status', 'Price','Action'],
+            deletePrompt : {
+                icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
+                message:"Are you sure you want to Delete!!!" ,
+                buttons:[
+                    {
+                      text:"Delete",
+                      event: "delete",
+                      bsColor:"btn-danger",
+                      handler:function () {
+
+                      },
+                      autoclose:true
+                    }
+                ]
+            },
+
         }
     },
     methods: {
@@ -164,6 +183,25 @@ export default {
             console.log('create in Campground');
             alert('Create was clicked')
         },
+        deleteBookingRange:function (id) {
+            var url = api_endpoints.deleteBookingRange(id);
+            $.ajax({
+              method: "DELETE",
+              url: url,
+            }).done(function( msg ) {
+                vm.$children[1].vmDataTable.ajax.reload();
+            });
+        },
+
+    },
+    mounted:function () {
+        var vm = this;
+        vm.$children[1].vmDataTable.on('click','.deleteRange',function (e) {
+            e.preventDefault();
+            var id = this.attr('data-range');
+            vm.deletePrompt.buttons[0].handler = vm.deleteBookingRange(id)
+            bus.$emit('showAlert','deleteRange');
+        });
     }
 }
 </script>

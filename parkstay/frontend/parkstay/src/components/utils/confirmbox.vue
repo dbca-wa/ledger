@@ -77,7 +77,7 @@ var confirmModal = module.exports = {
             var confirmModal = $("#"+vm.confirmModal);
             var icon = $("#"+vm.icon);
             var text = $("#"+vm.text);
-            var buttons = ("#"+vm.buttons);console.log(Obj);
+            var buttons = ("#"+vm.buttons);
             var autoclose =(typeof Obj.autoclose != "undefined")? Obj.autoclose: true;
             $(icon).html(Obj.icon);
             $(text).html(Obj.message);
