@@ -132,12 +132,15 @@ module.exports = {
         vm.closeEndPicker = $('#close_cg_range_end');
         vm.closeStartPicker.datetimepicker({
             format: 'DD/MM/YYYY',
+            minDate: new Date()
         });
         vm.closeEndPicker.datetimepicker({
             format: 'DD/MM/YYYY',
+            useCurrent: false
         });
         vm.closeStartPicker.on('dp.change', function(e){
             vm.formdata.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
         });
         vm.closeEndPicker.on('dp.change', function(e){
             vm.formdata.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');

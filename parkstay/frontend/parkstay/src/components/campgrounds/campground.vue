@@ -94,7 +94,7 @@ export default {
                     data: 'range_end',
                     mRender: function(data, type, full) {
                         if (data){
-                            return Moment(data).format('MMMM Do, YYYY');
+                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
                         } else {
                             return '';
                         }

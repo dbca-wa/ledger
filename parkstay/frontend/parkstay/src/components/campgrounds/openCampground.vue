@@ -3,7 +3,16 @@
 
     <div class="modal-body">
         <form class="form-horizontal">
-            <p>Current Closure Period: </p>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label for="open_cg_current_closure">Current Closure: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input id='open_cg_current_closure' v-model="current_closure" disabled type='text' class="form-control" />
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -60,6 +69,7 @@ module.exports = {
         return {
             status: '',
             id:'',
+            current_closure: '',
             formdata: {
                 range_start: '',
                 reason:'other',
@@ -113,6 +123,7 @@ module.exports = {
         bus.$on('openclose', function(data){
             vm.status = data.status;
             vm.id = data.id;
+            vm.current_closure = data.closure;
         });
         vm.picker = $('#open_cg_range_start');
         vm.picker.datetimepicker({

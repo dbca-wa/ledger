@@ -58,7 +58,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             request.POST._mutable = mutable
             serializer = BookingRangeSerializer(data=request.data, method="post")
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            if serializer.validated_data.get('status') == 0:
+                self.get_object().open(dict(serializer.validated_data))
+            else:
+                self.get_object().close(dict(serializer.validated_data))
+            #serializer.save()
 
             # return object
             ground = self.get_object()
