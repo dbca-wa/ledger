@@ -204,9 +204,9 @@ module.exports = {
                     if (full.active) {
                         var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" >(Temporarily) Close Campground </a></td>";
                     } else {
-                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" >Open Campground </a></td>";
+                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open Campground</a></td>";
                     }
-
+                    column = column.replace(/__Current_Closure__/,full.current_closure);
                     return column.replace(/__ID__/g, id);
                 }
             }, ],
@@ -222,9 +222,11 @@ module.exports = {
             e.preventDefault();
             var id = $(this).attr('data-campground');
             var status = $(this).attr('data-status');
+            var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
             var data = {
                 'status': status,
-                'id': id
+                'id': id,
+                'closure': current_closure
             }
             bus.$emit('openclose', data);
             if (status === 'open'){
