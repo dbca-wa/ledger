@@ -1,24 +1,105 @@
 <template lang="html">
-   <div class="well" id="cg_attr">
-      <div class="col-sm-12">
+   <div  id="cg_attr">
+      <div v-if="!createCampground" class="col-sm-12">
        <div class="col-sm-4">
           <slot name="cg_img">
-             <a href="#">
                <img class="img-responsive" src="//placehold.it/150x150/333333" alt="...">
-             </a>
          </slot>
        </div>
        <div class="col-sm-8">
           <slot name="cg_name">
-              <h3>CampGround Name</h3>
+              <h3>{{campground.name}}</h3>
           </slot>
           <slot name="cg_description">
-             <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-             </p>
+              <div v-html="campground.description"></div>
          </slot>
          <slot></slot>
        </div>
+      </div>
+      <div class="col-sm-12" v-else>
+          <form >
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group ">
+                    <label class="control-label" >Campground Name</label>
+                    <input type="text" class="form-control" v-model="campground.name" />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group ">
+                    <label class="control-label" >Region</label>
+                    <select class="form-control" v-model="selected_region">
+                        <option value="All">All</option>
+                        <option v-for="region in regions" :value="region.name">{{ region.name }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group ">
+                    <label class="control-label" >Campground Type</label>
+                    <select class="form-control"  v-model="campground.campground_type">
+                        <option value="0">Campground: no bookings</option>
+                        <option value="1">Campground: book online</option>
+                        <option value="2">Campground: book by phone</option>
+                        <option value="3">Other accommodation</option>
+                        <option value="4">Not Published</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group ">
+                    <label class="control-label" >Site Type</label>
+                    <select class="form-control">
+                        <option value="0">Unnumbered Site</option>
+                        <option value="1">Numbered Site</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group ">
+                    <label class="control-label" >Dogs Permitted</label>
+                    <input type="checkbox" v-model="campground.dog_permitted">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label for="">Street</label>
+                    <input type="text" class="form-control" v-model="campground.address.street"  placeholder="">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                      <label for="">email</label>
+                      <input type="email" class="form-control"v-model="campground.address.email" placeholder="">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label for="">telephone</label>
+                    <input type="text" class="form-control" v-model="campground.address.telephone" placeholder="">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                      <label for="">postcode</label>
+                      <input type="text" class="form-control" v-model="campground.address.postcode" placeholder="">
+                    </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                      <label class="control-label" >Description</label>
+                      <div id="editor" class="form-control">
+                      </div>
+                    </div>
+                </div>
+              </div>
+          </form>
       </div>
       <div class="row" style="margin-top: 40px;">
          <div class="col-sm-8">
@@ -43,43 +124,38 @@
             </div>
          </div>
       </div>
-      <confirmBox :options="alertOptions" id="alert1" ></confirmBox>
+      <div id="text">
+
+      </div>
    </div>
 </template>
 
 <script>
-import confirmBox from '../utils/confirmbox.vue'
-import {bus} from '../utils/eventBus.js'
+import {
+    $,
+    api_endpoints
+}
+from '../../hooks.js'
+import {
+    bus
+}
+from '../utils/eventBus.js';
+import Editor from 'quill';
+import Render from 'quill-render';
 export default {
     name: 'cg_attr',
-    components:{
-        confirmBox
-    },
+    components: {},
     data: function() {
         let vm = this;
-        return { 
+        return {
             selected_price_set: this.priceSet[0],
-            alertOptions:{
-                icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message:"Are you sure you want to Delete!!!" ,
-                buttons:[
-                    {
-                      text:"Delete",
-                      event: "delete",
-                      bsColor:"btn-danger",
-                      handler:function(e) {
-                         console.log(vm);
-                         vm.showAlert();
-                      },
-                      autoclose:true
-                    }
-                ]
-            }
+            regions: '',
+            selected_region: ''
         }
     },
     props: {
         createCampground: {
-            default: function(){
+            default: function() {
                 return true;
             }
         },
@@ -87,18 +163,65 @@ export default {
             default: function() {
                 return ['Campsite level', 'Campground level'];
             }
+        },
+        campground: {
+            default: function() {
+                return {
+                    address: {}
+                };
+            },
+            type: Object
         }
     },
     methods: {
         create: function() {
-            this.$emit('create')
+            this.$emit('create');
         },
-        showAlert:function () {
-            bus.$emit('showAlert','alert1');
+        update: function() {
+            this.$emit('update');
+        },
+        showAlert: function() {
+            bus.$emit('showAlert', 'alert1');
+        },
+        loadRegions: function() {
+            var vm = this;
+            var url = api_endpoints.regions;
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.regions = data;
+                }
+            });
+        },
+    },
+    watch: {
+
+    },
+    mounted: function() {
+        let vm = this;
+        vm.loadRegions();
+        if (this.createCampground) {
+            var editor = new Editor('#editor', {
+                modules: {
+                    toolbar: true
+                },
+                theme: 'snow'
+            });
+            editor.on('text-change', function(delta, oldDelta, source) {
+
+                var text = $('#editor >.ql-editor').html();
+                vm.campground.description = text;
+                console.log(vm.campground);
+            });
         }
     }
 }
+
 </script>
 
 <style lang="css">
+    #editor{
+        height: 200px;
+    }
 </style>
