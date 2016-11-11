@@ -1,3 +1,24 @@
+/**
+* confirmBox components
+* author: Tawanda Nyakudjga
+* date: 9/10/2016
+* alertOptions:{
+    icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
+    message:"Are you sure you want to Delete!!!" ,
+    buttons:[
+        {
+          text:"Delete",
+          event: "delete",
+          bsColor:"btn-danger",
+          handler:function(e) {
+             console.log(vm);
+             vm.showAlert();
+          },
+          autoclose:true
+        }
+    ]
+    }
+**/
 <template lang="html" id="confirmbox">
     <div :id="confirmModal" class="modal fade">
       <div class="modal-dialog modal-sm">
@@ -14,8 +35,12 @@
           </div>
           </div>
           <!-- dialog buttons -->
-          <div :id="buttons" class="modal-footer">
-              <!--buttons-->
+          <div  class="modal-footer">
+              <div class="row">
+                  <div class="col-lg-12" :id="buttons">
+                      <!--buttons-->
+                  </div>
+              </div>
           </div>
       </div>
       </div>
@@ -25,13 +50,15 @@
 <script>
 import {$} from '../../hooks.js'
 import {bus} from './eventBus.js'
-export default {
+
+var confirmModal = module.exports = {
     data:function () {
         return {
             confirmModal: 'confirmModal'+this._uid,
             icon: 'modalIcon'+this._uid,
             text: 'modalText'+this._uid,
             buttons: 'modalButtons'+this._uid,
+            eventHandler: Array()
         }
     },
     props:{
@@ -51,6 +78,7 @@ export default {
             var icon = $("#"+vm.icon);
             var text = $("#"+vm.text);
             var buttons = ("#"+vm.buttons);
+            var autoclose =(typeof Obj.autoclose != "undefined")? Obj.autoclose: true;
             $(icon).html(Obj.icon);
             $(text).html(Obj.message);
             $(buttons).html("");
@@ -58,8 +86,16 @@ export default {
             {
                $.each(Obj.buttons, function (i, btn)
                {
-                   var eventHandler = (typeof btn.eventHandler != "undefined") ? btn.eventHandler : "onclick";
-                   $(buttons).append("<button type=\"button\" data-dismiss=\"modal\""+ eventHandler +"=" + btn.onClick + " class=\"btn " + btn.bsColor + "\">" + btn.text + "</button>");
+                   var eventHandler = (typeof btn.eventHandler != "undefined") ? btn.eventHandler : "@click";
+                   $(buttons).append("<button type=\"button\" data-click="+btn.event+"\" class=\"btn " + btn.bsColor + "\">" + btn.text + "</button>");
+                   $(function () {
+                       $('button[data-click]').on('click',function () {
+                           btn.handler();
+                           if(autoclose){
+                               $(confirmModal).modal('hide');
+                           }
+                       });
+                   })
                });
             }
             $(buttons).append("<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-default\">Cancel</button>");
@@ -73,13 +109,20 @@ export default {
               $("#"+vm.confirmModal).modal('show');
           }
       });
+
+
    }
 }
+
 </script>
 
 <style lang="css">
-.modal-body,.modal-footer {
-    background-color: #fff;
-    color: #333;
+    .modal-body,.modal-footer {
+        background-color: #fff;
+        color: #333;
+    }
+    .modal-footer .btn+.btn {
+        margin-bottom: 10px;
+        margin-left: 5px;
     }
 </style>
