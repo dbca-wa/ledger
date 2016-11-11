@@ -6,7 +6,7 @@
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#applications-collapse"
                    aria-expanded="false" aria-controls="applications-collapse">
-                    <h3>{{title}}</h3>
+                    <h3>Add Campground</h3>
                 </a>
             </h4>
         </div>
@@ -42,6 +42,22 @@ export default {
     },
     data: function() {
         return {
+            campground:{
+                name:'',
+                campground_type:'',
+                address: {
+                    telephone: "",
+                    street: "",
+                    email: "info@kimberleywilderness.com.au, campgrounds@dpaw.wa.gov.au",
+                    postcode: "6770"
+                },
+                contact: null,
+                description:'',
+                dog_permitted: '',
+                check_in: '',
+                check_out: '',
+            },
+            title:''
         }
     },
     methods: {
@@ -49,6 +65,9 @@ export default {
             console.log('create in Campground');
             alert('Create was clicked')
         },
+    },
+    mounted:function () {
+
     }
 }
 </script>
