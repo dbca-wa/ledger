@@ -34,6 +34,7 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingRange
         fields = (
+            'id',
             'status',
             'range_start',
             'range_end',

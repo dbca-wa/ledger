@@ -2,7 +2,6 @@
 <div id="groundsList">
     <pkCgClose></pkCgClose>
     <pkCgOpen></pkCgOpen>
-    <pkCgAdd></pkCgAdd>
     <div class="panel-group" id="returns-accordion" role="tablist" aria-multiselectable="true">
         <div class="panel panel-default" id="returns">
             <div class="panel-heading" role="tab" id="returns-heading">
@@ -40,7 +39,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group pull-right">
-                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showAddCampground()">Add Campground</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Campground</a>
                                 </div>
                             </div>
                         </form>
@@ -77,7 +76,6 @@ import {
 } from '../../hooks'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
-import pkCgAdd from './addCampground.vue'
 import {bus} from '../utils/eventBus.js'
 module.exports = {
     name: 'pk-campgrounds',
@@ -98,7 +96,6 @@ module.exports = {
     components: {
         pkCgClose,
         pkCgOpen,
-        pkCgAdd
     },
     watch: {
         selected_region: function() {
@@ -139,9 +136,6 @@ module.exports = {
             var vm = this;
             vm.dtGrounds.draw();
         },
-        showAddCampground: function() {
-            this.isOpenAddCampground = true;
-        },
         showOpenCloseCG: function() {
             this.isOpenCloseCG = true;
         },
@@ -154,6 +148,11 @@ module.exports = {
                 params: {
                     id: cg_id
                 }
+            });
+        },
+        addCampground: function(cg_id) {
+            this.$router.push({
+                name: 'cg_add',
             });
         }
     },

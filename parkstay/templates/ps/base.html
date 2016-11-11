@@ -41,7 +41,7 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            <a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Dashboard</div></a>
+                            <a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Dashboard</div></a>
                         </div>
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
@@ -56,7 +56,7 @@
                                         <li><a href="">Customers</a></li>
                                         <li><a href="">Reports</a></li>
                                     {% else %}
-                                        <li><a href="">Applications</a></li>
+                                        <li><a href="{% url 'dash-campgrounds'%}">Campgrounds</a></li>
                                     {% endif %}
                                 {% endblock %}
                             </ul>

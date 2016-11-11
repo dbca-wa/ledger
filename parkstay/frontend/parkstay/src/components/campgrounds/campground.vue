@@ -15,7 +15,7 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                     <campgroundAttr @create="create" >
+                     <campgroundAttr @create="update" :createCampground=false>
                         <h1 slot="cg_name">My Slot</h1>
                      </campgroundAttr>
                   </div>
@@ -26,6 +26,7 @@
                   </div>
                   <div class="row">
                      <div class="well">
+                        <h1>Closure History</h1>
                         <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
                      </div>
                   </div>
@@ -64,6 +65,7 @@
 import datatable from '../utils/datatable.vue'
 import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
+import {bus} from '../utils/eventBus.js'
 import {
     $,
     Moment,
@@ -78,7 +80,9 @@ export default {
         confirmbox
     },
     data: function() {
+        let vm = this;
         return {
+            deleteRange: null,
             ch_options: {
                 responsive: true,
                 processing: true,
@@ -106,6 +110,8 @@ export default {
                 }, {
                     data: 'status'
                 }, {
+                    data: 'details'
+                }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
@@ -121,7 +127,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Action'],
+            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason','Details', 'Action'],
             title: 'Campground',
             cs_options:{
                 responsive: true,
@@ -169,7 +175,8 @@ export default {
                       event: "delete",
                       bsColor:"btn-danger",
                       handler:function () {
-
+                        vm.deleteBookingRange(vm.deleteRange);
+                        vm.deleteRange = null;
                       },
                       autoclose:true
                     }
@@ -179,11 +186,12 @@ export default {
         }
     },
     methods: {
-        create: function() {
+        update: function() {
             console.log('create in Campground');
-            alert('Create was clicked')
+            alert('Update was clicked')
         },
         deleteBookingRange:function (id) {
+            var vm = this;
             var url = api_endpoints.deleteBookingRange(id);
             $.ajax({
               method: "DELETE",
@@ -198,8 +206,9 @@ export default {
         var vm = this;
         vm.$children[1].vmDataTable.on('click','.deleteRange',function (e) {
             e.preventDefault();
-            var id = this.attr('data-range');
-            vm.deletePrompt.buttons[0].handler = vm.deleteBookingRange(id)
+            console.log(this);
+            var id = $(this).attr('data-range');
+            vm.deleteRange = id;
             bus.$emit('showAlert','deleteRange');
         });
     }

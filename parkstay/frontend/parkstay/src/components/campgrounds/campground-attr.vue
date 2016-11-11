@@ -36,7 +36,8 @@
          <div class="col-sm-4">
             <div class="col-sm-12">
                <div class="form-group pull-right">
-                  <a href="#" class="btn btn-primary" @click="showAlert">Create</a>
+                  <a href="#" v-if="createCampground" class="btn btn-primary" @click="showAlert">Create</a>
+                  <a href="#" v-else class="btn btn-primary" @click="showAlert">Update</a>
                   <a href="#" class="btn btn-default">Cancel</a>
                </div>
             </div>
@@ -56,7 +57,7 @@ export default {
     },
     data: function() {
         let vm = this;
-        return {
+        return { 
             selected_price_set: this.priceSet[0],
             alertOptions:{
                 icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
@@ -77,6 +78,11 @@ export default {
         }
     },
     props: {
+        createCampground: {
+            default: function(){
+                return true;
+            }
+        },
         priceSet: {
             default: function() {
                 return ['Campsite level', 'Campground level'];

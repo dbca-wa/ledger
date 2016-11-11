@@ -357,5 +357,5 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
     serializer_class = CampsiteRateSerializer
 
 class BookingRangeViewset(viewsets.ModelViewSet):
-        queryset = BookingRange.objects.all()
-        serializer_class = BookingRangeSerializer
+    queryset = BookingRange.objects.all()
+    serializer_class = BookingRangeSerializer
