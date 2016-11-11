@@ -113,6 +113,7 @@ class Campground(models.Model):
     def _is_open(self,period):
         '''Check if the campground is open on a specified datetime
         '''
+        open_ranges, closed_ranges = None, None
         # Get all booking ranges
         try:
             open_ranges = self.booking_ranges.filter(Q(status=0),Q(range_start__lte=period), Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
