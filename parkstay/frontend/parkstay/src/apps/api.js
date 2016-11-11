@@ -5,6 +5,9 @@ module.exports = {
     },
     regions:"/api/regions.json",
     campgrounds:"/api/campgrounds.json",
+    campground:function (id) {
+        return "/api/campgrounds/"+id+".json";
+    },
     campgroundCampsites: function(id){
         return "/api/campgrounds/" + id + "/campsites.json"
     },
