@@ -9,6 +9,7 @@ from datetime import date, time, datetime, timedelta
 from taggit.managers import TaggableManager
 from django.dispatch import receiver
 from django.db.models.signals import post_delete, pre_save, post_save
+from parkstay.exceptions import BookingRangeWithinException
 
 # Create your models here.
 
@@ -113,11 +114,19 @@ class Campground(models.Model):
         '''Check if the campground is open on a specified datetime
         '''
         # Get all booking ranges
-        open_ranges = self.booking_ranges.filter(Q(status=0),Q(range_start__lte=period), Q(range_end__gte=period) | Q(range_end__isnull=True) )
-        closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) | Q(range_end__isnull=True) )
+        try:
+            open_ranges = self.booking_ranges.filter(Q(status=0),Q(range_start__lte=period), Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+        except BookingRange.DoesNotExist:
+            pass
+        try:
+            closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+        except BookingRange.DoesNotExist:
+            return True if open_ranges else False
 
-        if open_ranges and not closed_ranges:
-            return True
+        #if open_ranges and not closed_ranges:
+        #    return True
+        if open_ranges.updated_on > closed_ranges.updated_on:
+            return True 
         return False
 
     def __get_current_closure(self):
@@ -132,15 +141,29 @@ class Campground(models.Model):
         if self.active:
             raise ValidationError('This campground is already open.')
         b = BookingRange(**data)
-        if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
-            self.__get_current_closure().delete()
-        else:
+        try:
+            within = BookingRange.objects.filter(Q(campground=b.campground),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
+            if within:
+                within.updated_on = timezone.now()
+                within.save()
+        except BookingRange.DoesNotExist:
+        #if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
+        #    self.__get_current_closure().delete()
             b.save()
 
     def close(self, data):
         if not self.active:
             raise ValidationError('This campground is already closed.')
-        BookingRange.objects.create(**data)
+        b = BookingRange(**data)
+        try:
+            within = BookingRange.objects.filter(Q(campground=b.campground),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
+            print 'here'
+            if within:
+                within.updated_on = timezone.now()
+                within.save()
+        except BookingRange.DoesNotExist:
+            print 'there'
+            b.save()
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
@@ -151,7 +174,7 @@ class BookingRange(models.Model):
     )
     created = models.DateTimeField(auto_now_add=True)
     campground = models.ForeignKey('Campground', on_delete=models.PROTECT,related_name='booking_ranges')
-
+    updated_on = models.DateTimeField(auto_now_add=True,help_text='Used to check if the start and end dated were changed')
     # minimum/maximum consecutive days allowed for a booking
     min_days = models.SmallIntegerField(default=1)
     max_days = models.SmallIntegerField(default=28)
@@ -179,8 +202,16 @@ class BookingRange(models.Model):
  
     # Methods
     # =====================================
+    def _is_same(self,other):
+        if not isinstance(other, BookingRange) and self.id != other.id:
+            return False
+        if self.range_start == other.range_start and self.range_end == other.range_end:
+            return True
+        return False
+
     def save(self, *args, **kwargs):
         self.full_clean()
+                
         super(BookingRange, self).save(*args, **kwargs)
 
     def clean(self, *args, **kwargs):
@@ -193,7 +224,7 @@ class BookingRange(models.Model):
         # Preventing ranges within other ranges
         within = BookingRange.objects.filter(Q(campground=self.campground),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
         if within:
-            raise ValidationError('This Booking Range is within the range of another one')
+            raise BookingRangeWithinException('This Booking Range is within the range of another one')
         if self.range_start < datetime.now().date() and original.range_start != self.range_start:
             raise ValidationError('The start date can\'t be in the past')
 
@@ -363,6 +394,9 @@ class BookingRangeListener(object):
         if instance.pk:
             original_instance = BookingRange.objects.get(pk=instance.pk)
             setattr(instance, "_original_instance", original_instance)
+            
+            if not instance._is_same(original_instance):
+                instance.updated_on = timezone.now()
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
@@ -372,10 +406,12 @@ class BookingRangeListener(object):
                 within.save()
             except BookingRange.DoesNotExist:
                 pass
-            #ranges = BookingRange.objects.filter(campground=instance.campground,range_start__lte=instance.range_start,range_end__gte=instance.range_start)
-            #if ranges:
-            #    ranges.range_end = instance.range_start
-            #    ranges.save()
+        if instance.status == 0 and not instance.range_end:
+            try:
+                another_open = BookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(days=1),status=0).latest('updated_on')
+                instance.range_end = instance.range_start
+            except BookingRange.DoesNotExist:
+                pass
 
     @staticmethod
     @receiver(post_delete, sender=BookingRange)
@@ -398,8 +434,10 @@ class BookingRangeListener(object):
         if instance.status != 0 and instance.range_end:
             another_open = BookingRange.objects.filter(campground=instance.campground,range_start=datetime.now().date()+timedelta(days=1),status=0)
             if not another_open:
-                BookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(days=1),status=0)
-
+                try:
+                    BookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(days=1),status=0)
+                except BookingRangeWithinException as e:
+                    pass
 class CampgroundListener(object):
     """
     Event listener for Campgrounds
@@ -409,7 +447,7 @@ class CampgroundListener(object):
     @receiver(pre_save, sender=Campground)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = BookingRange.objects.get(pk=instance.pk)
+            original_instance = Campground.objects.get(pk=instance.pk)
             setattr(instance, "_original_instance", original_instance)
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
