@@ -147,6 +147,7 @@ class BookingRange(models.Model):
         (0, 'Open'),
         (1, 'Closed due to natural disaster'),
         (2, 'Closed for maintenance'),
+        (3, 'Other'),
     )
     created = models.DateTimeField(auto_now_add=True)
     campground = models.ForeignKey('Campground', on_delete=models.PROTECT,related_name='booking_ranges')

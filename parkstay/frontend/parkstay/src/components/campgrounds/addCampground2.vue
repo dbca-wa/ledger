@@ -15,7 +15,7 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                     <campgroundAttr @create="update" :createCampground=false>
+                     <campgroundAttr @create="create" >
                         <h1 slot="cg_name">My Slot</h1>
                      </campgroundAttr>
                   </div>
@@ -26,7 +26,6 @@
                   </div>
                   <div class="row">
                      <div class="well">
-                        <h1>Closure History</h1>
                         <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
                      </div>
                   </div>
@@ -56,7 +55,6 @@
             </div>
         </div>
     </div>
-    <confirmbox id="deleteRange" :options="deletePrompt"></confirmbox>
    </div>
 
 </template>
@@ -64,8 +62,6 @@
 <script>
 import datatable from '../utils/datatable.vue'
 import campgroundAttr from './campground-attr.vue'
-import confirmbox from '../utils/confirmbox.vue'
-import {bus} from '../utils/eventBus.js'
 import {
     $,
     Moment,
@@ -73,16 +69,13 @@ import {
 } from '../../hooks.js'
 
 export default {
-    name: 'campground',
+    name: 'addCampground',
     components: {
         datatable,
-        campgroundAttr,
-        confirmbox
+        campgroundAttr
     },
     data: function() {
-        let vm = this;
         return {
-            deleteRange: null,
             ch_options: {
                 responsive: true,
                 processing: true,
@@ -110,8 +103,6 @@ export default {
                 }, {
                     data: 'status'
                 }, {
-                    data: 'details'
-                }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
@@ -127,7 +118,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason','Details', 'Action'],
+            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Action'],
             title: 'Campground',
             cs_options:{
                 responsive: true,
@@ -166,51 +157,13 @@ export default {
             }
             ,
             cs_headers: ['Campsite Id', 'Type', 'Status', 'Price','Action'],
-            deletePrompt : {
-                icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message:"Are you sure you want to Delete!!!" ,
-                buttons:[
-                    {
-                      text:"Delete",
-                      event: "delete",
-                      bsColor:"btn-danger",
-                      handler:function () {
-                        vm.deleteBookingRange(vm.deleteRange);
-                        vm.deleteRange = null;
-                      },
-                      autoclose:true
-                    }
-                ]
-            },
-
         }
     },
     methods: {
-        update: function() {
+        create: function() {
             console.log('create in Campground');
-            alert('Update was clicked')
+            alert('Create was clicked')
         },
-        deleteBookingRange:function (id) {
-            var vm = this;
-            var url = api_endpoints.deleteBookingRange(id);
-            $.ajax({
-              method: "DELETE",
-              url: url,
-            }).done(function( msg ) {
-                vm.$children[1].vmDataTable.ajax.reload();
-            });
-        },
-
-    },
-    mounted:function () {
-        var vm = this;
-        vm.$children[1].vmDataTable.on('click','.deleteRange',function (e) {
-            e.preventDefault();
-            console.log(this);
-            var id = $(this).attr('data-range');
-            vm.deleteRange = id;
-            bus.$emit('showAlert','deleteRange');
-        });
     }
 }
 </script>

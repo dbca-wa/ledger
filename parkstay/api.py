@@ -11,6 +11,7 @@ from parkstay.models import (Campground,
                                 Campsite,
                                 CampsiteRate,
                                 Booking,
+                                BookingRange,
                                 PromoArea,
                                 Park,
                                 Feature,
@@ -84,7 +85,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 serializer = BookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
             else:
                 serializer = BookingRangeSerializer(self.get_object().booking_ranges,many=True)
-            res = serializer.data 
+            res = serializer.data
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
@@ -107,7 +108,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['get']) 
+    @detail_route(methods=['get'])
     def campsite_bookings(self, request, pk=None, format=None):
         """Fetch campsite availability for a campground."""
         # convert GET parameters to objects
@@ -135,11 +136,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         if length > settings.PS_MAX_BOOKING_LENGTH:
             length = settings.PS_MAX_BOOKING_LENGTH
             end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
-        
+
         # fetch all of the single-day CampsiteBooking objects within the date range for the campground
         bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__campground=ground, 
-                            date__gte=start_date, 
+                            campsite__campground=ground,
+                            date__gte=start_date,
                             date__lt=end_date
                         ).order_by('date', 'campsite__name')
         # fetch all the campsites and applicable rates for the campground
@@ -179,7 +180,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             bookings_map[k] = site
             if v[1].pk not in result['classes']:
                 result['classes'][v[1].pk] = v[1].name
-        
+
         # strike out existing bookings
         for b in bookings_qs:
             offset = (b.date-start_date).days
@@ -193,7 +194,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def campsite_class_bookings(self, request, pk=None, format=None):
         """Fetch campsite availability for a campground, grouped by campsite class."""
         # convert GET parameters to objects
-        ground = self.get_object() 
+        ground = self.get_object()
         # Validate parameters
         data = {
             "arrival" : request.GET.get('arrival'),
@@ -218,11 +219,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         if length > settings.PS_MAX_BOOKING_LENGTH:
             length = settings.PS_MAX_BOOKING_LENGTH
             end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
-        
+
         # fetch all of the single-day CampsiteBooking objects within the date range for the campground
         bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__campground=ground, 
-                            date__gte=start_date, 
+                            campsite__campground=ground,
+                            date__gte=start_date,
                             date__lt=end_date
                         ).order_by('date', 'campsite__name')
         # fetch all the campsites and applicable rates for the campground
@@ -231,10 +232,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
         # make a map of campsite class to cost
         rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
-        
+
         # from our campsite queryset, generate a distinct list of campsite classes
         classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name')]
-        
+
         classes_map = {}
         bookings_map = {}
 
@@ -277,7 +278,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         # store number of campsites in each class
         class_sizes = {k: len(v) for k, v in class_sites_map.items()}
 
-        
+
 
         # strike out existing bookings
         for b in bookings_qs:
@@ -303,7 +304,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 classes_map[key]['availability'][offset][1] = 'Partially Booked'
             else:
                 classes_map[key]['availability'][offset][1] = 'Partially Closed'
-            
+
             # tentatively flag campsite class as unavailable
             classes_map[key]['availability'][offset][0] = False
             classes_map[key]['price'] = False
@@ -355,3 +356,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
 
+class BookingRangeViewset(viewsets.ModelViewSet):
+    queryset = BookingRange.objects.all()
+    serializer_class = BookingRangeSerializer

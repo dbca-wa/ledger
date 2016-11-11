@@ -4,6 +4,7 @@
 import Vue from 'vue'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
+import AddCampground from '../components/campgrounds/addCampground2.vue'
 import Router from 'vue-router'
 import $ from '../hooks'
 var css = require('../hooks-css.css');
@@ -54,6 +55,11 @@ const routes = [
                         path:'campgrounds/:id',
                         name:'cg_detail',
                         component: Campground
+                    },
+                    {
+                        path:'campgrounds/addCampground',
+                        name:'cg_add',
+                        component: AddCampground
                     }
                 ]
             }

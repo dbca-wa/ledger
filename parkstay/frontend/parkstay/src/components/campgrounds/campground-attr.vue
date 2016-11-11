@@ -36,7 +36,8 @@
          <div class="col-sm-4">
             <div class="col-sm-12">
                <div class="form-group pull-right">
-                  <a href="#" class="btn btn-primary" @click="showAlert">Create</a>
+                  <a href="#" v-if="createCampground" class="btn btn-primary" @click="showAlert">Create</a>
+                  <a href="#" v-else class="btn btn-primary" @click="showAlert">Update</a>
                   <a href="#" class="btn btn-default">Cancel</a>
                </div>
             </div>
@@ -55,22 +56,33 @@ export default {
         confirmBox
     },
     data: function() {
-        return {
+        let vm = this;
+        return { 
             selected_price_set: this.priceSet[0],
             alertOptions:{
                 icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message:"Are you sure you want to Delete!!!" /*,
+                message:"Are you sure you want to Delete!!!" ,
                 buttons:[
                     {
                       text:"Delete",
-                      onClick: "deleteBudget("+id+")",
+                      event: "delete",
                       bsColor:"btn-danger",
+                      handler:function(e) {
+                         console.log(vm);
+                         vm.showAlert();
+                      },
+                      autoclose:true
                     }
-                ]*/
+                ]
             }
         }
     },
     props: {
+        createCampground: {
+            default: function(){
+                return true;
+            }
+        },
         priceSet: {
             default: function() {
                 return ['Campsite level', 'Campground level'];

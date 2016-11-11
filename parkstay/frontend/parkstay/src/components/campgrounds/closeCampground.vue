@@ -42,7 +42,7 @@
                         <select v-model="formdata.reason" class="form-control" id="open_cg_reason">
                             <option value="1">Closed due to natural disaster</option>
                             <option value="2">Closed for maintenance</option>
-                            <option value="other">Other</option>
+                            <option value="3">Other</option>
                         </select>
                     </div>
                 </div>
@@ -76,7 +76,7 @@ module.exports = {
             formdata: {
                 range_start: '',
                 range_end: '',
-                reason:'other',
+                reason:'',
                 details: ''
             },
             closeStartPicker: '',
@@ -88,7 +88,7 @@ module.exports = {
             return this.$parent.isOpenCloseCG;
         },
         requireDetails: function () {
-            return (this.formdata.reason === 'other')? true: false;
+            return (this.formdata.reason === '3')? true: false;
         }
     },
     components: {
@@ -102,8 +102,6 @@ module.exports = {
         postAdd: function() {
             let vm = this;
             var data = this.formdata;
-            //data.range_start = this.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            //data.range_end = this.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
             data.status = vm.formdata.reason;
             console.log(data);
             $.ajax({
