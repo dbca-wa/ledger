@@ -16,7 +16,7 @@ router.register(r'campground_feature',api.FeatureViewSet)
 router.register(r'regions',api.RegionViewSet)
 router.register(r'campsite_classes',api.CampsiteClassViewSet)
 router.register(r'booking',api.BookingViewSet)
-router.register(r'booking_ranges',api.BookingRangeViewSet)
+router.register(r'booking_ranges',api.BookingRangeViewset)
 router.register(r'campsite_rate',api.CampsiteRateViewSet)
 
 api_patterns = [
@@ -32,4 +32,5 @@ urlpatterns = [
     url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),
     url(r'^dashboard/campgrounds$', views.DashboardView.as_view(), name='dash-campgrounds'),
     url(r'^dashboard/campgrounds/(?P<ground_id>[0-9]+)$', views.DashboardView.as_view(), name='dash-campground-detail'),
+    url(r'^dashboard/campgrounds/addCampground$', views.DashboardView.as_view(), name='dash-addCampground'),
 ] + ledger_patterns
