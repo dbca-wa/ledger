@@ -127,24 +127,49 @@ When all mandatory fields have been entered, click the blue `Save` button at the
 The application schema describes the fields that will be shown in the application questionaire, under the "Enter
 Details" heading. This is in the JSON format and must, at the highest level, contain a list of sections, each with
 their own set of fields (although a section is a type of field itself in this paradigm). These can be further nested
-into groups of fields if required.
+into groups of fields if required. A very simple example is shown below.
 
-```json
+```
 [
-  {
-    section 1
-    [
-      field 1,
-      field 2,
-    ]
-  },
-  {
-     section 2,
-     [
-      field 3,
-      field 4
-     ]
-  }
+    {
+        "type": "section", 
+        "name": "section_1", 
+        "label": "Section 1"
+        "children": [
+            {
+                "type": "text", 
+                "name": "name", 
+                "label": "Provide you name"
+            }, 
+            {
+                "type": "file", 
+                "name": "qualification_attachments", 
+                "label": "Qualification Attachment(s)"
+            }, 
+            {
+                "type": "declaration", 
+                "name": "acknowledgement", 
+                "label": "I acknowledge that all this information is true"
+            } 
+        ]
+    },
+    {
+        "type": "section", 
+        "name": "section_2", 
+        "label": "Section 2"
+        "children": [
+            {
+                "type": "text", 
+                "name": "additional_info", 
+                "label": "Provide relevant additional information"
+            },
+            {
+                "type": "declaration", 
+                "name": "acknowledgement", 
+                "label": "I acknowledge that all this information is true"
+            } 
+        ]
+    }
 ]
 ```
 
@@ -181,7 +206,6 @@ There are several non-mandatory fields that can go with each field.
 
 * `help_text` - Text that will appear under each field, usually an explanation or example answer to a question.
 
-
 ##### Field-specific Attributes
 With several fields there are extra attributes required which are detailed below.
 
@@ -189,22 +213,105 @@ With several fields there are extra attributes required which are detailed below
 Sections and groups both require a `children` attribute, which is a list of fields are listed within.
 
 Groups can also have a field called `isRepeatable` for when the whole group needs be be repeated on the questionaire
-to allow certain data multiple times, such as a list of people's various details.
+to allow certain data multiple times, such as a list of people's various details. An example group field is shown
+below.
+
+```
+{
+    "type": "group", 
+    "name": "authorised_persons", 
+    "label": "Authorised Person",
+    "isRepeatable": true, 
+    "children": [
+        {
+            "type": "text", 
+            "name": "ap_surname", 
+            "label": "Surname"
+        },
+        {
+            "type": "checkbox", 
+            "name": "ap_given_names", 
+            "label": "Given name(s)"
+        }, 
+        {
+            "type": "date", 
+            "name": "ap_dob", 
+            "label": "Date of birth"
+        } 
+    ]
+}
+```
 
 ###### Select / Radiobuttons
 
 These fields require an `options` attribute, which is the list of options for either the combo box or set of
 radiobuttons. This is a list of objects with each object requiring a `value` and `label` attribute. `value` is the
 actual value that will be stored in the database and `label` is the verbose version of the value (or whatever is
-required).
+required). An optional field `defaultBlank` can be set to true if the initial chosen option in the combo box should
+be *Please Choose* for `select` fields or no radiobuttons selected for `radiobuttons` fields. If `defaultBlank` is
+not set or false, the first option will be selected as default.
+
+```
+{
+    "type": "select", 
+    "name": "ap_association", 
+    "label": "Association to applicant",
+    "options": [
+        {
+            "value": "volunteer", 
+            "label": "Volunteer"
+        }, 
+        {
+            "value": "contractor", 
+            "label": "Contractor"
+        }, 
+        {
+            "value": "staff", 
+            "label": "Staff / Employee"
+        }, 
+        {
+            "value": "student", 
+            "label": "Student"
+        }, 
+        {
+            "value": "other", 
+            "label": "Other - Please provide details"
+        }
+    ], 
+    "defaultBlank": true
+}
+```
 
 ###### Checkboxes
 
 Checkboxes differ slightly from other fields in that while they are often grouped together, they exist as separate
 fields. In the case of checkbox fields, the label will appear next to the checkbox, rather than above, such that when
 there is a sequence of checkbox fields they appear grouped together. As a result, a label field is usually required
-before the sequence of checkbox fields. This should not be confused with the label attribute of a field - it is a field
-in its own right, and should have a label attribute within.
+before the sequence of checkbox fields, which will contain the question. This should not be confused with the label
+attribute of a field - it is a field in its own right, and should have a label attribute within.
+
+```
+{
+    "type": "label", 
+    "name": "ap_handler_type", 
+    "label": "Handler Type"
+}, 
+{
+    "type": "checkbox", 
+    "name": "ap_basic", 
+    "label": "Basic handling, trap clearing and animal measurements"
+}, 
+{
+    "type": "checkbox", 
+    "name": "ap_biopsy", 
+    "label": "Biopsy/tissue samples"
+}, 
+{
+    "type": "checkbox", 
+    "name": "ap_chipping", 
+    "label": "Microchipping/tagging"
+}
+```
 
 ##### Conditions
 There may be cases where a field or set of fields should only be shown if a particular answer is given for an earlier
@@ -212,9 +319,117 @@ field. To accomplish this, the `condition` attribute can be added to most field 
 `section`, `group`, `label` and `file`. In practice, however, generally conditions would only be applied to
 `select`, `radiobutton` and `checkbox` fields. A condition attribute should itself be a object, where each
 attribute name is the answer that will yield further fields and the value of each attribute is the actual list of such
-fields.
+fields. Note: not all options require an entry in `conditions`, only the values that require further fields.
+
+```
+{
+    "type": "radiobuttons", 
+    "name": "how_project_funded", 
+    "label": "How is your project funded?",
+    "options": [
+        {
+            "value": "grant", 
+            "label": "Grant / Sponsored"
+        }, 
+        {
+            "value": "contract", 
+            "label": "Contract / Consulting"
+        }, 
+        {
+            "value": "other", 
+            "label": "Other - Please provide details"
+        }
+    ], 
+    "conditions": {
+        "grant": [
+            {
+                "type": "text_area", 
+                "name": "grant_details", 
+                "label": "Provide details of the grant or sponsorship"
+            }
+        ],
+        "contract": [
+            {
+                "type": "text", 
+                "name": "contract_client_name", 
+                "label": "Provide the client name."
+            },
+            {
+                "type": "text_area", 
+                "name": "contract_client_address", 
+                "label": "Provide the client address."
+            }
+        ],
+        "other": [
+            {
+                "type": "text_area", 
+                "name": "financial_details_other", 
+                "label": "Provide details of who is funding the project or how the project is being funded"
+            }
+        ]
+    }
+}
+```
 
 ##### Licence Fields
 
-There may be cases where some answers to particular questions need to appear on the actual licence, which are termed
-*licence fields*.
+There may be cases where particular questions/answers need to appear on the actual licence(namly the PDF), which are
+termed *licence fields*. These licence fields will be available to be adjusted by officers just before the licence is
+issued. To declare a field as being a licence field, specify the attribute `isLicenceField: true`. There are a number
+of optional fields that also relate to licence fields, which are:
+
+* `licenceFieldLabel` - Text to replace the default label text on the actual licence.
+* `licenceFieldHelpText` - Additional help text to show with each licence field. Note that by default, no help text
+will be shown on licences (i.e. the normal `helpText` for the field won't show, only the `licenceFieldHelpText`
+text.
+* `isLicenceFieldReadonly` - If true, officers cannot adjust the content of the licence field answer before issuing
+the licence. 
+
+```
+{
+    "type": "text", 
+    "name": "applicant_surname", 
+    "label": "Surname",
+    "isLicenceField": true,
+    "licenceFieldLabel": "The surname of the applicant",
+    "licenceFieldHelpText": "This would be the last name of the person who is applying for the licence"
+}
+```
+
+In the case of groups, the group field itself must be a declared a licence field along with any children fields within
+the group that should appear on the actual licence. These fields will then be grouped together within the licence.
+Note that this only goes one level in, i.e. children of chilren within a group would not appear grouped with the parent
+group. In the example below, the species that can be taken within the licence period will be grouped together on the
+licence, as the group is repeatable. Only the species name and count will appear though, as only these have been
+specified as licence fields.
+
+```
+{
+    "type": "group", 
+    "name": "species_taken", 
+    "label": "Species that are taken",
+    "isRepeatable": true,
+    "isLicenceField": true,
+    "licenceFieldLabel": "Species taken within the study",
+    "licenceFieldHelpText": "All species that may be taken are taken for study throughout the licence period"
+    "children": [
+        {
+            "type": "text", 
+            "name": "species_scientific_name", 
+            "label": "Species Scientific Name",
+            "isLicenceField": true
+        },
+        {
+            "type": "text", 
+            "name": "species_common_name", 
+            "label": "Species common name"
+        }, 
+        {
+            "type": "number", 
+            "name": "species_count", 
+            "label": "Species Count",
+            "isLicenceField": true
+        } 
+    ]
+}
+```
