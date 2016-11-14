@@ -285,7 +285,7 @@ class Campsite(models.Model):
     def _is_open(self,period):
         '''Check if the campsite is open on a specified datetime
         '''
-        if self.__is_campground_open:
+        if self.__is_campground_open():
             open_ranges, closed_ranges = None, None
             # Get all booking ranges
             try:
@@ -304,7 +304,7 @@ class Campsite(models.Model):
         return False
 
     def __get_current_closure(self):
-        if self.__is_campground_open:
+        if self.__is_campground_open():
             closure_period = None
             period = datetime.now().date()
             if not self.active:
