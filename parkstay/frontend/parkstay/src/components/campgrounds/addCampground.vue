@@ -15,7 +15,7 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                     <campgroundAttr @create="create" >
+                     <campgroundAttr @create="create" :campground.sync="campground" >
                         <h1 slot="cg_name">My Slot</h1>
                      </campgroundAttr>
                   </div>
@@ -48,8 +48,8 @@ export default {
                 address: {
                     telephone: "",
                     street: "",
-                    email: "info@kimberleywilderness.com.au, campgrounds@dpaw.wa.gov.au",
-                    postcode: "6770"
+                    email: "",
+                    postcode: ""
                 },
                 contact: null,
                 description:'',
@@ -62,12 +62,28 @@ export default {
     },
     methods: {
         create: function() {
-            console.log('create in Campground');
-            alert('Create was clicked')
+            let vm = this;
+            $.ajax({
+                url: api_endpoints.campgrounds,
+                method: 'POST',
+                xhrFields: { withCredentials:true },
+                data: vm.campground,
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.$router.push({
+                        name: 'cg_detail',
+                        params: {
+                            id: data.id
+                        }
+                    });
+                },
+                error:function (data){
+                    console.log(data);
+                }
+            });
         },
     },
     mounted:function () {
-
     }
 }
 </script>
