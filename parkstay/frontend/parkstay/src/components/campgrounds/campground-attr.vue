@@ -108,7 +108,7 @@
                         <h3 class="panel-title">Selected Feautures</h3>
                       </div>
                       <div class="panel-body">
-                          <a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
+                          <a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
                       </div>
                     </div>
                   </div>
@@ -176,6 +176,7 @@ export default {
             editor_updated:false,
             features:null,
             selected_features:Array(),
+            selected_features_loaded :false
         }
     },
     props: {
@@ -201,6 +202,15 @@ export default {
                 };
             },
             type: Object
+        }
+    },
+    watch:{
+        campground: {
+            handler:function () {
+                this.loadSelectedFeatures();
+            },
+            deep:true
+
         }
     },
     methods: {
@@ -249,9 +259,17 @@ export default {
         },
         loadSelectedFeatures:function () {
             let vm =this;
-            if(vm.$route.params.id){
-                vm.selected_features = vm.campground.features;
-            }
+            vm.selected_features = vm.campground.features;
+            $.each(vm.campground.features,function (i,cgfeature) {
+                $.each(vm.features,function (j,feat) {
+                    if(feat != null){
+                        if(cgfeature.id == feat.id){
+                            vm.features.splice(j,1);
+                        }
+                    }
+                })
+            });
+
         }
     },
     mounted: function() {
