@@ -259,16 +259,18 @@ export default {
         },
         loadSelectedFeatures:function () {
             let vm =this;
-            vm.selected_features = vm.campground.features;
-            $.each(vm.campground.features,function (i,cgfeature) {
-                $.each(vm.features,function (j,feat) {
-                    if(feat != null){
-                        if(cgfeature.id == feat.id){
-                            vm.features.splice(j,1);
+            if (vm.campground.features){
+                vm.selected_features = vm.campground.features;
+                $.each(vm.campground.features,function (i,cgfeature) {
+                    $.each(vm.features,function (j,feat) {
+                        if(feat != null){
+                            if(cgfeature.id == feat.id){
+                                vm.features.splice(j,1);
+                            }
                         }
-                    }
-                })
-            });
+                    })
+                });
+            }
 
         }
     },
