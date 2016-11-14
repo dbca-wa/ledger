@@ -15,10 +15,8 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                      <div class="well well-sm">
-                          <campgroundAttr @create="update" :createCampground=false :campground="campground">
-                          </campgroundAttr>
-                      </div>
+                      <campgroundAttr @create="update" :createCampground=false :campground="campground">
+                      </campgroundAttr>
                   </div>
                   <div class="row">
                      <div class="well">
