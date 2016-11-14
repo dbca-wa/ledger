@@ -129,7 +129,7 @@ export default {
                             return column.replace(/__ID__/g, id);
                         }
                         else {
-                            return ""
+                            return "";
                         }
                     }
                 }],

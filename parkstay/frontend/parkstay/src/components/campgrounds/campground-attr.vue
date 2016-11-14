@@ -35,7 +35,7 @@
                 <div class="col-md-6">
                   <div class="form-group ">
                     <label class="control-label" >Site Type</label>
-                    <select class="form-control">
+                    <select class="form-control"  v-model="campground.site_type">
                         <option value="0">Unnumbered Site</option>
                         <option value="1">Numbered Site</option>
                     </select>
@@ -128,7 +128,7 @@ export default {
         return {
             selected_price_set: this.priceSet[0],
             parks: '',
-            selected_park: ''
+            selected_park: '',
             editor:null,
             editor_updated:false,
         }
@@ -178,7 +178,7 @@ export default {
     },
     mounted: function() {
         let vm = this;
-        vm.loadRegions();
+        vm.loadParks();
         vm.editor = new Editor('#editor', {
             modules: {
                 toolbar: true
@@ -190,7 +190,6 @@ export default {
 
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;
-            console.log(vm.campground);
         });
     },
     updated:function () {
