@@ -432,7 +432,7 @@ class Booking(models.Model):
 # ======================================
 class CampgroundBookingRangeListener(object):
     """
-    Event listener for BookingRange
+    Event listener for CampgroundBookingRange
     """
 
     @staticmethod
@@ -466,12 +466,12 @@ class CampgroundBookingRangeListener(object):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         if original_instance:
             if original_instance.status != 0 and original_instance.range_end:
-                linked_open = BookingRange.objects.get(range_start=original_instance.range_end + timedelta(days=1), status=0)
+                linked_open = CampgroundBookingRange.objects.get(range_start=original_instance.range_end + timedelta(days=1), status=0)
                 linked_open.range_start = original_instance.range_start
                 linked_open.save()
 
     @staticmethod
-    @receiver(post_save, sender=BookingRange)
+    @receiver(post_save, sender=CampgroundBookingRange)
     def _post_save(sender, instance, **kwargs):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         if not original_instance:
@@ -485,6 +485,7 @@ class CampgroundBookingRangeListener(object):
                     CampgroundBookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(days=1),status=0)
                 except BookingRangeWithinException as e:
                     pass
+
 class CampgroundListener(object):
     """
     Event listener for Campgrounds
@@ -505,4 +506,82 @@ class CampgroundListener(object):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         if not original_instance:
             # Create an opening booking range on creation of Campground
-             BookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
+             CampgroundBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
+
+class CampsiteBookingRangeListener(object):
+    """
+    Event listener for CampsiteBookingRange
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=CampsiteBookingRange)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = CampsiteBookingRange.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+            
+            if not instance._is_same(original_instance):
+                instance.updated_on = timezone.now()
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                within = CampsiteBookingRange.objects.get(Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within.range_end = instance.range_start
+                within.save()
+            except CampsiteBookingRange.DoesNotExist:
+                pass
+        if instance.status == 0 and not instance.range_end:
+            try:
+                another_open = CampsiteBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(days=1),status=0).latest('updated_on')
+                instance.range_end = instance.range_start
+            except CampsiteBookingRange.DoesNotExist:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=CampsiteBookingRange)
+    def _post_delete(sender, instance, **kwargs):
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        if original_instance:
+            if original_instance.status != 0 and original_instance.range_end:
+                linked_open = CampsiteBookingRange.objects.get(range_start=original_instance.range_end + timedelta(days=1), status=0)
+                linked_open.range_start = original_instance.range_start
+                linked_open.save()
+
+    @staticmethod
+    @receiver(post_save, sender=CampsiteBookingRange)
+    def _post_save(sender, instance, **kwargs):
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        if not original_instance:
+            pass
+
+        # Check if its a closure and has an end date to create new opening range
+        if instance.status != 0 and instance.range_end:
+            another_open = CampsiteBookingRange.objects.filter(campground=instance.campground,range_start=datetime.now().date()+timedelta(days=1),status=0)
+            if not another_open:
+                try:
+                    CampsiteBookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(days=1),status=0)
+                except BookingRangeWithinException as e:
+                    pass
+
+class CampsiteListener(object):
+    """
+    Event listener for Campsites
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=Campsite)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = Campsite.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+
+    @staticmethod
+    @receiver(post_save, sender=Campsite)
+    def _post_save(sender, instance, **kwargs):
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        if not original_instance:
+            # Create an opening booking range on creation of Campground
+             CampsiteBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
