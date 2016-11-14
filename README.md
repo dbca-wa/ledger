@@ -32,7 +32,7 @@ This section contains information specific to the Wildlife Licensing projects.
 Each wildlife licence type, whether free or paid, needs an equivalent product in the Django Oscar payments system. These
 are linked by the `Product Title` attribute of the Wildlife licence types.
 
-** Note: you must create a the product in Oscar before creating the licence type. **
+**Note: you must create a the product in Oscar before creating the licence type.**
 
 ### Creating a Product in Oscar
 
