@@ -17,5 +17,6 @@ module.exports = {
     },
     deleteBookingRange: function (id) {
         return "/api/booking_ranges/" + id + ".json"
-    }
+    },
+    features:"/api/features.json"
 };

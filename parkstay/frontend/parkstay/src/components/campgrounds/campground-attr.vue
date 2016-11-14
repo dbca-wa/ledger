@@ -3,77 +3,121 @@
       <div class="col-sm-12">
           <form >
               <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group ">
-                    <label class="control-label" >Campground Name</label>
-                    <input type="text" class="form-control" v-model="campground.name" />
+                  <div class="col-lg-12">
+                      <div class="panel panel-primary">
+                        <div class="panel-heading">
+                          <h3 class="panel-title">Campground Details</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group ">
+                                  <label class="control-label" >Campground Name</label>
+                                  <input type="text" class="form-control" v-model="campground.name" />
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group ">
+                                  <label class="control-label" >Park</label>
+                                  <select class="form-control" v-model="campground.park">
+                                      <option value="All">All</option>
+                                      <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                  <div class="form-group ">
+                                    <label class="control-label" >Campground Type</label>
+                                    <select class="form-control"  v-model="campground.campground_type">
+                                        <option value="0">Campground: no bookings</option>
+                                        <option value="1">Campground: book online</option>
+                                        <option value="2">Campground: book by phone</option>
+                                        <option value="3">Other accommodation</option>
+                                        <option value="4">Not Published</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="col-md-6">
+                                  <div class="form-group ">
+                                    <label class="control-label" >Site Type</label>
+                                    <select class="form-control"  v-model="campground.site_type">
+                                        <option value="0">Unnumbered Site</option>
+                                        <option value="1">Numbered Site</option>
+                                    </select>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
+                      </div>
                   </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group ">
-                    <label class="control-label" >Park</label>
-                    <select class="form-control" v-model="campground.park">
-                        <option value="All">All</option>
-                        <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
-                    </select>
-                  </div>
-                </div>
               </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group ">
-                    <label class="control-label" >Campground Type</label>
-                    <select class="form-control"  v-model="campground.campground_type">
-                        <option value="0">Campground: no bookings</option>
-                        <option value="1">Campground: book online</option>
-                        <option value="2">Campground: book by phone</option>
-                        <option value="3">Other accommodation</option>
-                        <option value="4">Not Published</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group ">
-                    <label class="control-label" >Site Type</label>
-                    <select class="form-control"  v-model="campground.site_type">
-                        <option value="0">Unnumbered Site</option>
-                        <option value="1">Numbered Site</option>
-                    </select>
-                  </div>
-                </div>
+              <div class="row" style="margin-top: 40px;">
+                 <div class="col-lg-12">
+                     <div class="panel panel-primary">
+                       <div class="panel-heading">
+                         <h3 class="panel-title">Address</h3>
+                       </div>
+                       <div class="panel-body">
+                           <div class="col-md-3">
+                             <div class="form-group">
+                               <label for="">Street</label>
+                               <input type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
+                             </div>
+                           </div>
+                           <div class="col-md-3">
+                               <div class="form-group">
+                                 <label for="">email</label>
+                                 <input type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
+                               </div>
+                           </div>
+                           <div class="col-md-3">
+                             <div class="form-group">
+                               <label for="">telephone</label>
+                               <input type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
+                             </div>
+                           </div>
+                           <div class="col-md-3">
+                               <div class="form-group">
+                                 <label for="">postcode</label>
+                                 <input type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
+                               </div>
+                           </div>
+                       </div>
+                     </div>
+                 </div>
               </div>
-              <div class="row">
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label for="">Street</label>
-                    <input type="text" class="form-control" v-model="campground.address.street"  placeholder="">
-                  </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                      <label for="">email</label>
-                      <input type="email" class="form-control"v-model="campground.address.email" placeholder="">
+              <div class="row" style="margin-top: 40px;">
+                  <div class="col-sm-6 features">
+                    <div class="panel panel-primary">
+                      <div class="panel-heading">
+                        <h3 class="panel-title">Features</h3>
+                      </div>
+                      <div class="panel-body">
+                          <ul class="list-group">
+                              <a href="" v-for="feature,key in features"  @click.prevent="addSelectedFeature(feature,key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
+                          </ul>
+                      </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label for="">telephone</label>
-                    <input type="text" class="form-control" v-model="campground.address.telephone" placeholder="">
                   </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                      <label for="">postcode</label>
-                      <input type="text" class="form-control" v-model="campground.address.postcode" placeholder="">
+
+                  <div class="col-sm-6 features">
+                    <div class="panel panel-primary">
+                      <div class="panel-heading">
+                        <h3 class="panel-title">Selected Feautures</h3>
+                      </div>
+                      <div class="panel-body">
+                          <a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
+                      </div>
                     </div>
-                </div>
+                  </div>
               </div>
-              <div class="row">
+              <div class="row" style="margin-top: 40px;">
                 <div class="col-md-12">
                     <div class="form-group">
-                      <label class="control-label" >Description</label>
-                      <div id="editor" class="form-control">
-                      </div>
+                        <label class="control-label" >Description</label>
+                        <div id="editor" class="form-control"></div>
                     </div>
                 </div>
               </div>
@@ -130,6 +174,8 @@ export default {
             parks: '',
             editor:null,
             editor_updated:false,
+            features:null,
+            selected_features:Array(),
         }
     },
     props: {
@@ -178,10 +224,40 @@ export default {
                 }
             });
         },
+        loadFeatures: function() {
+            var vm = this;
+            var url = api_endpoints.features;
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.features = data;
+                }
+            });
+        },
+        addSelectedFeature:function (feature,key) {
+            let vm = this;
+            vm.selected_features.push(feature);
+            vm.features.splice(key,1);
+            vm.selected_features.sort(function(a,b){ return parseInt(a.id) - parseInt(b.id)});
+        },
+        removeSelectedFeature:function (feature,key) {
+            let vm = this;
+            vm.features.push(feature);
+            vm.selected_features.splice(key,1);
+            vm.features.sort(function(a,b){ return parseInt(a.id) - parseInt(b.id)});
+        },
+        loadSelectedFeatures:function () {
+            let vm =this;
+            if(vm.$route.params.id){
+                vm.selected_features = vm.campground.features;
+            }
+        }
     },
     mounted: function() {
         let vm = this;
         vm.loadParks();
+        vm.loadFeatures();
         vm.editor = new Editor('#editor', {
             modules: {
                 toolbar: true
@@ -209,5 +285,20 @@ export default {
 <style lang="css">
     #editor{
         height: 200px;
+    }
+    .features >.panel>.panel-body{
+        padding:0;
+        max-height: 300px;
+        overflow: auto;
+    }
+    .features .list-group{
+        margin-bottom: 0;
+    }
+    .features .list-group-item{
+        border-radius: 0;
+    }
+    .list-group-item:last-child{
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
     }
 </style>
