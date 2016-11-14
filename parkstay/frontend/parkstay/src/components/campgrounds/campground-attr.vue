@@ -86,8 +86,8 @@
                   <label style="line-height: 2.5;">Price set at: </label>
                </div>
                <div class="col-sm-8 col-md-9 col-lg-10">
-                  <select class="form-control" v-model="selected_price_set">
-                     <option v-for="level in priceSet" :value="level">{{ level }}</option>
+                  <select class="form-control" v-model="campground.price_level">
+                     <option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
                   </select>
                </div>
             </div>
@@ -140,7 +140,11 @@ export default {
         },
         priceSet: {
             default: function() {
-                return ['Campsite level','Campsite class level', 'Campground level'];
+                return [
+                    {'val':0, name:'Campground level'},
+                    {'val':1, name:'Campsite class level'},
+                    {'val':2, name:'Campsite level'}
+                    ];
             }
         },
         campground: {
