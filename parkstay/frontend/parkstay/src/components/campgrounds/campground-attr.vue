@@ -95,8 +95,8 @@
          <div class="col-sm-4">
             <div class="col-sm-12">
                <div class="form-group pull-right">
-                  <a href="#" v-if="createCampground" class="btn btn-primary" @click="showAlert">Create</a>
-                  <a href="#" v-else class="btn btn-primary" @click="showAlert">Update</a>
+                  <a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
+                  <a href="#" v-else class="btn btn-primary" @click.prevent="update">Update</a>
                   <a href="#" class="btn btn-default">Cancel</a>
                </div>
             </div>
