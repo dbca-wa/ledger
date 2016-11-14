@@ -1,17 +1,6 @@
 <template lang="html">
    <div  id="cg_attr">
-      <div v-if="!createCampground" class="col-sm-12">
-       <div class="col-sm-8 col-sm-offset-2">
-          <slot name="cg_name">
-              <h3>{{campground.name}}</h3>
-          </slot>
-          <slot name="cg_description">
-              <div v-html="campground.description"></div>
-         </slot>
-         <slot></slot>
-       </div>
-      </div>
-      <div class="col-sm-12" v-else>
+      <div class="col-sm-12">
           <form >
               <div class="row">
                 <div class="col-md-6">
@@ -31,7 +20,7 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="form-group ">
                     <label class="control-label" >Campground Type</label>
                     <select class="form-control"  v-model="campground.campground_type">
@@ -43,19 +32,13 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="form-group ">
                     <label class="control-label" >Site Type</label>
                     <select class="form-control">
                         <option value="0">Unnumbered Site</option>
                         <option value="1">Numbered Site</option>
                     </select>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group ">
-                    <label class="control-label" >Dogs Permitted</label>
-                    <input type="checkbox" v-model="campground.dog_permitted">
                   </div>
                 </div>
               </div>
@@ -145,7 +128,9 @@ export default {
         return {
             selected_price_set: this.priceSet[0],
             regions: '',
-            selected_region: ''
+            selected_region: '',
+            editor:null,
+            editor_updated:false,
         }
     },
     props: {
@@ -156,13 +141,14 @@ export default {
         },
         priceSet: {
             default: function() {
-                return ['Campsite level', 'Campground level'];
+                return ['Campsite level','Campsite class level', 'Campground level'];
             }
         },
         campground: {
             default: function() {
                 return {
-                    address: {}
+                    address: {
+                    }
                 };
             },
             type: Object
@@ -190,25 +176,28 @@ export default {
             });
         },
     },
-    watch: {
-
-    },
     mounted: function() {
         let vm = this;
         vm.loadRegions();
-        if (this.createCampground) {
-            var editor = new Editor('#editor', {
-                modules: {
-                    toolbar: true
-                },
-                theme: 'snow'
-            });
-            editor.on('text-change', function(delta, oldDelta, source) {
+        vm.editor = new Editor('#editor', {
+            modules: {
+                toolbar: true
+            },
+            theme: 'snow'
+        });
+        vm.editor.clipboard.dangerouslyPasteHTML(0,vm.campground.description, 'api');
+        vm.editor.on('text-change', function(delta, oldDelta, source) {
 
-                var text = $('#editor >.ql-editor').html();
-                vm.campground.description = text;
-                console.log(vm.campground);
-            });
+            var text = $('#editor >.ql-editor').html();
+            vm.campground.description = text;
+            console.log(vm.campground);
+        });
+    },
+    updated:function () {
+        let vm =this;
+        if(vm.campground.description != null && vm.editor_updated ==false){
+            vm.editor.clipboard.dangerouslyPasteHTML(0,vm.campground.description, 'api');
+            vm.editor_updated =true;
         }
     }
 }

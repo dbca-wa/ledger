@@ -154,6 +154,7 @@ class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
 class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Feature
+        fields = ('url','id','name','description','image')
 
 class RegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
