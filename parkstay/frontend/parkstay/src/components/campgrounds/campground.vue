@@ -87,7 +87,9 @@ export default {
     data: function() {
         let vm = this;
         return {
-            campground: {},
+            campground: {
+                address:{}
+            },
             deleteRange: null,
             ch_options: {
                 responsive: true,
