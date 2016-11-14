@@ -11,7 +11,8 @@ from parkstay.models import (Campground,
                                 Campsite,
                                 CampsiteRate,
                                 Booking,
-                                BookingRange,
+                                CampgroundBookingRange,
+                                CampsiteBookingRange,
                                 PromoArea,
                                 Park,
                                 Feature,
@@ -31,7 +32,8 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     RegionSerializer,
                                     CampsiteClassSerializer,
                                     BookingSerializer,
-                                    BookingRangeSerializer,
+                                    CampgroundBookingRangeSerializer,
+                                    CampsiteBookingRangeSerializer,
                                     CampsiteRateSerializer
                                     )
 
@@ -57,7 +59,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             request.POST._mutable = True
             request.POST['campground'] = self.get_object().id
             request.POST._mutable = mutable
-            serializer = BookingRangeSerializer(data=request.data, method="post")
+            serializer = CampgroundBookingRangeSerializer(data=request.data, method="post")
             serializer.is_valid(raise_exception=True)
             if serializer.validated_data.get('status') == 0:
                 self.get_object().open(dict(serializer.validated_data))
@@ -82,9 +84,9 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             # Check what status is required
             closures = bool(request.GET.get("closures", False))
             if closures:
-                serializer = BookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+                serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
             else:
-                serializer = BookingRangeSerializer(self.get_object().booking_ranges,many=True)
+                serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges,many=True)
             res = serializer.data
 
             return Response(res,status=http_status)
@@ -356,6 +358,10 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
 
-class BookingRangeViewset(viewsets.ModelViewSet):
-    queryset = BookingRange.objects.all()
-    serializer_class = BookingRangeSerializer
+class CampgroundBookingRangeViewset(viewsets.ModelViewSet):
+    queryset = CampgroundBookingRange.objects.all()
+    serializer_class = CampgroundBookingRangeSerializer
+
+class CampsiteBookingRangeViewset(viewsets.ModelViewSet):
+    queryset = CampsiteBookingRange.objects.all()
+    serializer_class = CampsiteBookingRangeSerializer

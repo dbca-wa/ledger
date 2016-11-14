@@ -1,4 +1,4 @@
-from parkstay.models import CampsiteBooking, BookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
+from parkstay.models import CampsiteBooking,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
 from rest_framework import serializers
 
 class ParkSerializer(serializers.HyperlinkedModelSerializer):
@@ -20,9 +20,6 @@ class CampgroundCampsiteFilterSerializer(serializers.Serializer):
 class BookingRangeSerializer(serializers.ModelSerializer):
     min_days = serializers.IntegerField(required=False,default=1)
     max_days = serializers.IntegerField(required=False,default=28)
-    # minimum/maximum number of campsites allowed for a booking
-    min_sites = serializers.IntegerField(required=False,default=1)
-    max_sites = serializers.IntegerField(required=False,default=12)
     # Minimum and Maximum days that a booking can be made before arrival
     min_dba = serializers.IntegerField(required=False,default=0)
     max_dba = serializers.IntegerField(required=False,default=180)
@@ -31,8 +28,14 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
     range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
     
+
+class CampgroundBookingRangeSerializer(BookingRangeSerializer):
+    # minimum/maximum number of campsites allowed for a booking
+    min_sites = serializers.IntegerField(required=False,default=1)
+    max_sites = serializers.IntegerField(required=False,default=12)
+    
     class Meta:
-        model = BookingRange
+        model = CampgroundBookingRange
         fields = (
             'id',
             'status',
@@ -52,19 +55,53 @@ class BookingRangeSerializer(serializers.ModelSerializer):
             'campground'
         )
     def get_status(self, obj):
-        return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
+        return dict(CampgroundBookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
 
     def __init__(self, *args, **kwargs):
         try:
             method = kwargs.pop("method")
         except:
             method = 'get'
-        super(BookingRangeSerializer, self).__init__(*args, **kwargs)
+        super(CampgroundBookingRangeSerializer, self).__init__(*args, **kwargs)
         if method == 'post':
-            self.fields['status'] = serializers.ChoiceField(choices=BookingRange.BOOKING_RANGE_CHOICES)
+            self.fields['status'] = serializers.ChoiceField(choices=CampgroundBookingRange.BOOKING_RANGE_CHOICES)
         else:
             self.fields['status'] = serializers.SerializerMethodField()
 
+
+class CampsiteBookingRangeSerializer(BookingRangeSerializer):
+    
+    class Meta:
+        model = CampgroundBookingRange
+        fields = (
+            'id',
+            'status',
+            'range_start',
+            'range_end',
+            'details',
+            'editable',
+            'min_days',
+            'max_days',
+            'min_dba',
+            'max_dba',
+            'campsite'
+        )
+        write_only_fields = (
+            'campsite'
+        )
+    def get_status(self, obj):
+        return dict(CampsiteBookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop("method")
+        except:
+            method = 'get'
+        super(CampgsiteBookingRangeSerializer, self).__init__(*args, **kwargs)
+        if method == 'post':
+            self.fields['status'] = serializers.ChoiceField(choices=CampsiteBookingRange.BOOKING_RANGE_CHOICES)
+        else:
+            self.fields['status'] = serializers.SerializerMethodField()
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -112,7 +149,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry')
+        fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry','active', 'current_closure')
 
 class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
