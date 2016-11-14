@@ -113,6 +113,11 @@ class ContactSerializer(serializers.ModelSerializer):
         model = Contact
         fields = ('name','phone_number')
 
+class FeatureSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Feature
+        fields = ('url','id','name','description','image')
+
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     contact = ContactSerializer(required=False)
     class Meta:
@@ -158,21 +163,22 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             formatted = bool(kwargs.pop('formatted'))
         except:
             formatted = False
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
         super(CampgroundSerializer, self).__init__(*args, **kwargs)
         if formatted:
             self.fields['site_type'] = serializers.SerializerMethodField()
             self.fields['campground_type'] = serializers.SerializerMethodField()
             self.fields['price_level'] = serializers.SerializerMethodField()
+        if method == 'get':
+            self.fields['features'] = FeatureSerializer(many=True)
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
         fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure')
-
-class FeatureSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Feature
-        fields = ('url','id','name','description','image')
 
 class RegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
