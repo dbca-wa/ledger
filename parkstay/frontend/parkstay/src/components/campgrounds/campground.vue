@@ -87,7 +87,9 @@ export default {
     data: function() {
         let vm = this;
         return {
-            campground: {},
+            campground: {
+                address:{}
+            },
             deleteRange: null,
             ch_options: {
                 responsive: true,
@@ -127,7 +129,7 @@ export default {
                             return column.replace(/__ID__/g, id);
                         }
                         else {
-                            return ""
+                            return "";
                         }
                     }
                 }],
