@@ -22,10 +22,10 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group ">
-                    <label class="control-label" >Region</label>
-                    <select class="form-control" v-model="selected_region">
+                    <label class="control-label" >Park</label>
+                    <select class="form-control" v-model="selected_park">
                         <option value="All">All</option>
-                        <option v-for="region in regions" :value="region.name">{{ region.name }}</option>
+                        <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
                     </select>
                   </div>
                 </div>
@@ -144,8 +144,8 @@ export default {
         let vm = this;
         return {
             selected_price_set: this.priceSet[0],
-            regions: '',
-            selected_region: ''
+            parks: '',
+            selected_park: ''
         }
     },
     props: {
@@ -178,14 +178,14 @@ export default {
         showAlert: function() {
             bus.$emit('showAlert', 'alert1');
         },
-        loadRegions: function() {
+        loadParks: function() {
             var vm = this;
-            var url = api_endpoints.regions;
+            var url = api_endpoints.parks;
             $.ajax({
                 url: url,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    vm.regions = data;
+                    vm.parks = data;
                 }
             });
         },
@@ -195,7 +195,7 @@ export default {
     },
     mounted: function() {
         let vm = this;
-        vm.loadRegions();
+        vm.loadParks();
         if (this.createCampground) {
             var editor = new Editor('#editor', {
                 modules: {
