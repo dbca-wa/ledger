@@ -108,6 +108,15 @@ class Campground(models.Model):
         closure = self._get_current_closure()
         if closure:
             return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
+
+    @property
+    def dog_permitted(self):
+        try:
+            self.features.get(name='NO DOGS')
+            return False
+        except Feature.DoesNotExist:
+            return True
+
     # Methods
     # =======================================
     def _is_open(self,period):
