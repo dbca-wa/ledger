@@ -42,24 +42,24 @@ Product` which should be clicked to begin creating a new product.
 
 #### Product Details
 
-`Title` is what will be used to link the product to the wildlife licence type. It will also be visible on the invoice 
+`Title`: What will be used to link the product to the wildlife licence type. It will also be visible on the invoice 
 so should be succinct but meaningful.
 
-`Oracle Code` - TODO
+`Oracle Code`: The account code in Oracle Finance where the revenue should be booked to.
 
-`Is discountable` - If the product will be discountable for seniors, check this checkbox.
+`Is discountable`: If the product will be discountable for seniors, check this checkbox.
 
 #### Stock and pricing
 
 Click `Stock and pricing` on the left-side menu to get to this section. You must fill in all fields. 
 
-`Partner` - select the only option available TODO (find out what this is).
+`Partner`: select the only option available which should be Wildlife Licensing.
 
-`SKU` - TODO find out what this is.
+`SKU`: Stock Keeping Unit - this field is not used by requires a value, so any random unique is acceptable.
 
-`Currency` - enter AUD
+`Currency`: Enter AUD
 
-`Cost price`, `Price (excl tax)`, `Retail price` - these should all be the same, which is the cost of licence. Enter 
+`Cost price`, `Price (excl tax)`, `Retail price`: These should all be the same, which is the cost of licence. Enter 
 0.00 if the licence is free.
 
 Once you've entered these details, click the blue `Save` button on the bottom right.
