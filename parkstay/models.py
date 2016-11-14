@@ -56,7 +56,11 @@ class Campground(models.Model):
         (3, 'Other accomodation'),
         (4, 'Not Published')
     )
-
+    CAMPGROUND_PRICE_LEVEL_CHOICES = (
+        (0, 'Campground level'),
+        (1, 'Campsite Class level'),
+        (2, 'Campsite level'),
+    )
     SITE_TYPE_CHOICES = (
         (0, 'Unnumbered Site'),
         (1, 'Numbered site')
@@ -79,6 +83,7 @@ class Campground(models.Model):
     fees = models.TextField(blank=True, null=True)
     othertransport = models.TextField(blank=True, null=True)
     key = models.CharField(max_length=255, blank=True, null=True)
+    price_level = models.SmallIntegerField(choices=CAMPGROUND_PRICE_LEVEL_CHOICES, default=0)
     customer_contact = models.ForeignKey('CustomerContact', null=True, on_delete=models.PROTECT)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
@@ -113,6 +118,14 @@ class Campground(models.Model):
     def dog_permitted(self):
         try:
             self.features.get(name='NO DOGS')
+            return False
+        except Feature.DoesNotExist:
+            return True
+
+    @property
+    def campfires_allowed(self):
+        try:
+            self.features.get(name='NO CAMPFIRES')
             return False
         except Feature.DoesNotExist:
             return True
@@ -282,6 +295,10 @@ class Campsite(models.Model):
         return self._is_open(datetime.now().date())
 
     @property
+    def campground_open(self):
+        return self.__is_campground_open()
+
+    @property
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
@@ -324,6 +341,8 @@ class Campsite(models.Model):
             return self.campground._get_current_closure()
 
     def open(self, data):
+        if not self.campground_open:
+            raise ValidationError('You can\'t open this campsite until the campground is open')
         if self.active:
             raise ValidationError('This campground is already open.')
         b = CampsiteBookingRange(**data)

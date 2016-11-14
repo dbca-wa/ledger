@@ -130,8 +130,8 @@
                   <label style="line-height: 2.5;">Price set at: </label>
                </div>
                <div class="col-sm-8 col-md-9 col-lg-10">
-                  <select class="form-control" v-model="selected_price_set">
-                     <option v-for="level in priceSet" :value="level">{{ level }}</option>
+                  <select class="form-control" v-model="campground.price_level">
+                     <option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
                   </select>
                </div>
             </div>
@@ -139,8 +139,8 @@
          <div class="col-sm-4">
             <div class="col-sm-12">
                <div class="form-group pull-right">
-                  <a href="#" v-if="createCampground" class="btn btn-primary" @click="showAlert">Create</a>
-                  <a href="#" v-else class="btn btn-primary" @click="showAlert">Update</a>
+                  <a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
+                  <a href="#" v-else class="btn btn-primary" @click.prevent="update">Update</a>
                   <a href="#" class="btn btn-default">Cancel</a>
                </div>
             </div>
@@ -172,7 +172,6 @@ export default {
         return {
             selected_price_set: this.priceSet[0],
             parks: '',
-            selected_park: '',
             editor:null,
             editor_updated:false,
             features:null,
@@ -187,7 +186,11 @@ export default {
         },
         priceSet: {
             default: function() {
-                return ['Campsite level','Campsite class level', 'Campground level'];
+                return [
+                    {'val':0, name:'Campground level'},
+                    {'val':1, name:'Campsite class level'},
+                    {'val':2, name:'Campsite level'}
+                    ];
             }
         },
         campground: {

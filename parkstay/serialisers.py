@@ -102,7 +102,7 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
             method = kwargs.pop("method")
         except:
             method = 'get'
-        super(CampgsiteBookingRangeSerializer, self).__init__(*args, **kwargs)
+        super(CampsiteBookingRangeSerializer, self).__init__(*args, **kwargs)
         if method == 'post':
             self.fields['status'] = serializers.ChoiceField(choices=CampsiteBookingRange.BOOKING_RANGE_CHOICES)
         else:
@@ -113,9 +113,12 @@ class ContactSerializer(serializers.ModelSerializer):
         model = Contact
         fields = ('name','phone_number')
 
+class FeatureSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Feature
+        fields = ('url','id','name','description','image')
+
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
-    site_type = serializers.SerializerMethodField()
-    campground_type = serializers.SerializerMethodField()
     contact = ContactSerializer(required=False)
     class Meta:
         model = Campground
@@ -130,6 +133,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'park',
             'region',
             'wkb_geometry',
+            'price_level',
             'description',
             'promo_area',
             'ratis_id',
@@ -139,7 +143,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'bookable_per_site',
             'active',
             'current_closure',
-            #'campfires_allowed',
+            'campfires_allowed',
             'dog_permitted',
             'check_in',
             'check_out',
@@ -148,18 +152,33 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     def get_site_type(self, obj):
         return dict(Campground.SITE_TYPE_CHOICES).get(obj.site_type)
 
+    def get_price_level(self, obj):
+        return dict(Campground.CAMPGROUND_PRICE_LEVEL_CHOICES).get(obj.price_level)
+
     def get_campground_type(self, obj):
         return dict(Campground.CAMPGROUND_TYPE_CHOICES).get(obj.campground_type)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            formatted = bool(kwargs.pop('formatted'))
+        except:
+            formatted = False
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        super(CampgroundSerializer, self).__init__(*args, **kwargs)
+        if formatted:
+            self.fields['site_type'] = serializers.SerializerMethodField()
+            self.fields['campground_type'] = serializers.SerializerMethodField()
+            self.fields['price_level'] = serializers.SerializerMethodField()
+        if method == 'get':
+            self.fields['features'] = FeatureSerializer(many=True)
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry','active', 'current_closure')
-
-class FeatureSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Feature
-        fields = ('url','id','name','description','image')
+        fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure')
 
 class RegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

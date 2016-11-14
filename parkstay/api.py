@@ -50,6 +50,18 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
 
+    def list(self, request, format=None):
+        queryset = self.get_queryset()
+        formatted = bool(request.GET.get("formatted", False))
+        serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        formatted = bool(request.GET.get("formatted", False))
+        serializer = self.get_serializer(instance, formatted=formatted, method='get')
+        return Response(serializer.data)
+
     @detail_route(methods=['post'],authentication_classes=[])
     def open_close(self, request, format='json', pk=None):
         try:
