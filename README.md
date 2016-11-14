@@ -32,13 +32,13 @@ This section contains information specific to the Wildlife Licensing projects.
 Each wildlife licence type, whether free or paid, needs an equivalent product in the Django Oscar payments system. These
 are linked by the `Product Title` attribute of the Wildlife licence types.
 
-**Note: you must create a the product in Oscar before creating the licence type.**
+**Note: you must create the product in Oscar before creating the licence type.**
 
 ### Creating a Product in Oscar
 
 To access the Oscar dashboard, select `Oscar Dashboard` under the Options menu (must be a *staff* user). From there, 
 select `Products` under the `Cataloge` menu. You will then see the existing products and also a blue button with `+ New
-Product` which should be pressed to begin creating a new product.
+Product` which should be clicked to begin creating a new product.
 
 #### Product Details
 
@@ -70,7 +70,7 @@ To create a new wildlife licence type, go to admin (*staff* users only) under th
 At the bottom of the admin section, under the WL MAIN section, click the add button next to Wildlife licence types. From
 there, enter the fields as follows (only bold fields are mandatory).
 
-`Effective to: This field is currently not in use and can be left blank.
+`Effective to`: This field is currently not in use and can be left blank.
 
 `Name`: The full title of the licence type, e.g. *Licence to take fauna for scientfic purposes*
 
@@ -200,9 +200,9 @@ contain spaces or special characters such as question marks, full stops, etc.
 
 `label` is the piece of text proceeding an input and is usually the question to be answered in the input.
 
-##### Mandatory Attributes
+##### Non-mandatory Attributes
 
-There are several non-mandatory fields that can go with each field.
+There is also a non-mandatory attribute that can go with each field.
 
 * `help_text` - Text that will appear under each field, usually an explanation or example answer to a question.
 
@@ -213,8 +213,7 @@ With several fields there are extra attributes required which are detailed below
 Sections and groups both require a `children` attribute, which is a list of fields are listed within.
 
 Groups can also have a field called `isRepeatable` for when the whole group needs be be repeated on the questionaire
-to allow certain data multiple times, such as a list of people's various details. An example group field is shown
-below.
+to allow repeated entries of teh same type of certain data, such as a list of people's various details. An example group field is shown below.
 
 ```
 {
@@ -246,16 +245,14 @@ below.
 
 These fields require an `options` attribute, which is the list of options for either the combo box or set of
 radiobuttons. This is a list of objects with each object requiring a `value` and `label` attribute. `value` is the
-actual value that will be stored in the database and `label` is the verbose version of the value (or whatever is
-required). An optional field `defaultBlank` can be set to true if the initial chosen option in the combo box should
-be *Please Choose* for `select` fields or no radiobuttons selected for `radiobuttons` fields. If `defaultBlank` is
-not set or false, the first option will be selected as default.
+actual value that will be stored in the database and `label` is the verbose version of the value. An optional field `defaultBlank` can be set to true if the initial chosen option in the combo box should be blank for `select` fields or no radiobuttons selected for `radiobuttons` fields. If `defaultBlank` is not set or false, the first option will be selected as default.
 
 ```
 {
     "type": "select", 
     "name": "ap_association", 
-    "label": "Association to applicant",
+    "label": "Association to applicant", 
+    "defaultBlank": true
     "options": [
         {
             "value": "volunteer", 
@@ -277,8 +274,7 @@ not set or false, the first option will be selected as default.
             "value": "other", 
             "label": "Other - Please provide details"
         }
-    ], 
-    "defaultBlank": true
+    ]
 }
 ```
 
