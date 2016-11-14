@@ -282,6 +282,10 @@ class Campsite(models.Model):
         return self._is_open(datetime.now().date())
 
     @property
+    def campground_open(self):
+        return self.__is_campground_open()
+
+    @property
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
