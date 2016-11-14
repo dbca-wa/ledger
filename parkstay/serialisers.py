@@ -149,7 +149,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry')
+        fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry','active', 'current_closure')
 
 class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
