@@ -1,12 +1,7 @@
 <template lang="html">
    <div  id="cg_attr">
       <div v-if="!createCampground" class="col-sm-12">
-       <div class="col-sm-4">
-          <slot name="cg_img">
-               <img class="img-responsive" src="//placehold.it/150x150/333333" alt="...">
-         </slot>
-       </div>
-       <div class="col-sm-8">
+       <div class="col-sm-8 col-sm-offset-2">
           <slot name="cg_name">
               <h3>{{campground.name}}</h3>
           </slot>
