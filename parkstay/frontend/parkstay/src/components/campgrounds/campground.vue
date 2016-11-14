@@ -150,7 +150,7 @@ export default {
                 }, {
                     data: 'type'
                 }, {
-                    data: 'status',
+                    data: 'active',
                     mRender: function(data, type, full) {
                         return data ? 'Open' : 'Closed'
                     }
