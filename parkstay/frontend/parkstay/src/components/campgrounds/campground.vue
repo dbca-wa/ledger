@@ -145,6 +145,19 @@ export default {
                     url: api_endpoints.campgroundCampsites(this.$route.params.id),
                     dataSrc: ''
                 },
+                columnDefs: [{
+                    responsivePriority: 1,
+                    targets: 0
+                }, {
+                    responsivePriority: 2,
+                    targets: 4
+                }, {
+                    responsivePriority: 3,
+                    targets: 2
+                }, {
+                    responsivePriority: 4,
+                    targets: 3
+                }],
                 columns: [{
                     data: 'name'
                 }, {
@@ -160,11 +173,13 @@ export default {
                     "mRender": function(data, type, full) {
                         var id = full.id;
                         if (full.status) {
-                            var column =
-                                "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
+                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
                         }
                         else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" >Open Campsite </a></td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/>";
+                            if ( full.campground_open ){
+                                column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
+                            }
                         }
 
                         return column.replace(/__ID__/g, id);
