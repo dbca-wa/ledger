@@ -152,6 +152,11 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     def get_site_type(self, obj):
         return dict(Campground.SITE_TYPE_CHOICES).get(obj.site_type)
 
+    def get_address(self, obj):
+        if not obj.address:
+            return {}
+        return obj.address
+
     def get_price_level(self, obj):
         return dict(Campground.CAMPGROUND_PRICE_LEVEL_CHOICES).get(obj.price_level)
 
@@ -168,6 +173,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
         except:
             method = 'post'
         super(CampgroundSerializer, self).__init__(*args, **kwargs)
+        self.fields['address'] = serializers.SerializerMethodField()
         if formatted:
             self.fields['site_type'] = serializers.SerializerMethodField()
             self.fields['campground_type'] = serializers.SerializerMethodField()
