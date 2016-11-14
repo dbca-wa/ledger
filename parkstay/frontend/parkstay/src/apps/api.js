@@ -4,6 +4,7 @@ module.exports = {
         return "/api/campgrounds/" + id + "/status_history.json?closures=True"
     },
     regions:"/api/regions.json",
+    parks:"/api/parks.json",
     campgrounds:"/api/campgrounds.json",
     campground:function (id) {
         return "/api/campgrounds/"+id+".json";
