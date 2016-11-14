@@ -19,7 +19,7 @@
                               <div class="col-md-6">
                                 <div class="form-group ">
                                   <label class="control-label" >Park</label>
-                                  <select class="form-control" v-model="selected_park">
+                                  <select class="form-control" v-model="campground.park">
                                       <option value="All">All</option>
                                       <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
                                   </select>
