@@ -340,7 +340,7 @@ class ParkViewSet(viewsets.ModelViewSet):
 
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
-    serializer_class = CampgroundSerializer
+    serializer_class = FeatureSerializer
 
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all()
