@@ -341,6 +341,8 @@ class Campsite(models.Model):
             return self.campground._get_current_closure()
 
     def open(self, data):
+        if not self.campground_open:
+            raise ValidationError('You can\'t open this campsite until the campground is open')
         if self.active:
             raise ValidationError('This campground is already open.')
         b = CampsiteBookingRange(**data)
