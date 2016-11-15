@@ -31,9 +31,9 @@
                                     <div class="form-group">
                                         <label for="applications-filter-region">Region: </label>
                                         <select class="form-control" v-model="selected_region">
-                                        <option value="All">All</option>
-                                        <option v-for="region in regions" :value="region.name">{{ region.name }}</option>
-                                    </select>
+                                            <option value="All">All</option>
+                                            <option v-for="region in regions" :value="region.name">{{ region.name }}</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>

@@ -15,9 +15,8 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                     <campgroundAttr @create="update" :createCampground=false>
-                        <h1 slot="cg_name">My Slot</h1>
-                     </campgroundAttr>
+                      <campgroundAttr :createCampground=false :campground="campground">
+                      </campgroundAttr>
                   </div>
                   <div class="row">
                      <div class="well">
@@ -65,12 +64,16 @@
 import datatable from '../utils/datatable.vue'
 import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
-import {bus} from '../utils/eventBus.js'
+import {
+    bus
+}
+from '../utils/eventBus.js'
 import {
     $,
     Moment,
     api_endpoints
-} from '../../hooks.js'
+}
+from '../../hooks.js'
 
 export default {
     name: 'campground',
@@ -82,6 +85,9 @@ export default {
     data: function() {
         let vm = this;
         return {
+            campground: {
+                address:{}
+            },
             deleteRange: null,
             ch_options: {
                 responsive: true,
@@ -100,9 +106,10 @@ export default {
                 }, {
                     data: 'range_end',
                     mRender: function(data, type, full) {
-                        if (data){
+                        if (data) {
                             return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
-                        } else {
+                        }
+                        else {
                             return '';
                         }
                     }
@@ -118,8 +125,9 @@ export default {
                             var id = full.id;
                             var column = "<td ><a href='#' class='editRange' data-range=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-range=\"__ID__\" >Delete</a></td>";
                             return column.replace(/__ID__/g, id);
-                        } else {
-                            return ""
+                        }
+                        else {
+                            return "";
                         }
                     }
                 }],
@@ -127,9 +135,9 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason','Details', 'Action'],
+            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],
             title: 'Campground',
-            cs_options:{
+            cs_options: {
                 responsive: true,
                 processing: true,
                 deferRender: true,
@@ -137,24 +145,41 @@ export default {
                     url: api_endpoints.campgroundCampsites(this.$route.params.id),
                     dataSrc: ''
                 },
+                columnDefs: [{
+                    responsivePriority: 1,
+                    targets: 0
+                }, {
+                    responsivePriority: 2,
+                    targets: 4
+                }, {
+                    responsivePriority: 3,
+                    targets: 2
+                }, {
+                    responsivePriority: 4,
+                    targets: 3
+                }],
                 columns: [{
                     data: 'name'
                 }, {
                     data: 'type'
                 }, {
-                    data: 'status',
+                    data: 'active',
                     mRender: function(data, type, full) {
-                         return data ? 'Open' : 'Closed'
+                        return data ? 'Open' : 'Closed'
                     }
-                },{
+                }, {
                     data: 'price'
                 }, {
-                   "mRender": function(data, type, full) {
+                    "mRender": function(data, type, full) {
                         var id = full.id;
-                        if (full.status){
-                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
-                        } else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" >Open Campsite </a></td>";
+                        if (full.status) {
+                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
+                        }
+                        else {
+                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/>";
+                            if ( full.campground_open ){
+                                column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
+                            }
                         }
 
                         return column.replace(/__ID__/g, id);
@@ -163,56 +188,60 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-            }
-            ,
-            cs_headers: ['Campsite Id', 'Type', 'Status', 'Price','Action'],
-            deletePrompt : {
-                icon:"<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message:"Are you sure you want to Delete!!!" ,
-                buttons:[
-                    {
-                      text:"Delete",
-                      event: "delete",
-                      bsColor:"btn-danger",
-                      handler:function () {
+            },
+            cs_headers: ['Campsite Id', 'Type', 'Status', 'Price', 'Action'],
+            deletePrompt: {
+                icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
+                message: "Are you sure you want to Delete!!!",
+                buttons: [{
+                    text: "Delete",
+                    event: "delete",
+                    bsColor: "btn-danger",
+                    handler: function() {
                         vm.deleteBookingRange(vm.deleteRange);
                         vm.deleteRange = null;
-                      },
-                      autoclose:true
-                    }
-                ]
+                    },
+                    autoclose: true
+                }]
             },
 
         }
     },
     methods: {
-        update: function() {
-            console.log('create in Campground');
-            alert('Update was clicked')
-        },
-        deleteBookingRange:function (id) {
+        deleteBookingRange: function(id) {
             var vm = this;
             var url = api_endpoints.deleteBookingRange(id);
             $.ajax({
-              method: "DELETE",
-              url: url,
-            }).done(function( msg ) {
+                method: "DELETE",
+                url: url,
+            }).done(function(msg) {
                 vm.$children[1].vmDataTable.ajax.reload();
             });
         },
+        fetchCampground:function () {
+            let vm =this;
+            $.ajax({
+                url: api_endpoints.campground(vm.$route.params.id),
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.campground = data;
+                }
+            });
+        }
 
     },
-    mounted:function () {
+    mounted: function() {
         var vm = this;
-        vm.$children[1].vmDataTable.on('click','.deleteRange',function (e) {
+        vm.$children[1].vmDataTable.on('click', '.deleteRange', function(e) {
             e.preventDefault();
-            console.log(this);
             var id = $(this).attr('data-range');
             vm.deleteRange = id;
-            bus.$emit('showAlert','deleteRange');
+            bus.$emit('showAlert', 'deleteRange');
         });
+        vm.fetchCampground();
     }
 }
+
 </script>
 
 <style lang="css">

@@ -46,18 +46,7 @@
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
-                                    {% if request.user|is_customer %}
-                                        <li><a href=""New Licence Application</a></li>
-                                    {% elif request.user|is_officer %}
-                                        <li><a href="">New Licence Application</a></li>
-                                        <li><a href="">Applications</a></li>
-                                        <li><a href="">Licences</a></li>
-                                        <li><a href="">Returns</a></li>
-                                        <li><a href="">Customers</a></li>
-                                        <li><a href="">Reports</a></li>
-                                    {% else %}
-                                        <li><a href="{% url 'dash-campgrounds'%}">Campgrounds</a></li>
-                                    {% endif %}
+                                    <li><a href="{% url 'dash-campgrounds'%}">Campgrounds</a></li>
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">

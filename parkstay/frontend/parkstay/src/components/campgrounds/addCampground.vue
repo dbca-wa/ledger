@@ -6,7 +6,7 @@
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#applications-collapse"
                    aria-expanded="false" aria-controls="applications-collapse">
-                    <h3>{{title}}</h3>
+                    <h3>Add Campground</h3>
                 </a>
             </h4>
         </div>
@@ -15,7 +15,9 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                     <campgroundAttr @create="create" >
+                    <div class="col-sm-12">
+                    </div>
+                     <campgroundAttr :campground.sync="campground" >
                         <h1 slot="cg_name">My Slot</h1>
                      </campgroundAttr>
                   </div>
@@ -32,23 +34,31 @@ import campgroundAttr from './campground-attr.vue'
 import {
     $,
     Moment,
-    api_endpoints
+    api_endpoints,
+    helpers,
+    validate
 } from '../../hooks.js'
-
+import alert from '../utils/alert.vue'
 export default {
     name: 'addCampground',
     components: {
-        campgroundAttr
+        campgroundAttr,
+        alert
     },
     data: function() {
         return {
+            campground:{
+                address: {
+                },
+            },
+            title:'',
+            errors:false,
+            errorString: '',
         }
     },
     methods: {
-        create: function() {
-            console.log('create in Campground');
-            alert('Create was clicked')
-        },
+    },
+    mounted:function () {
     }
 }
 </script>
