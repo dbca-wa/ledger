@@ -247,14 +247,16 @@ export default {
             let vm = this;
             var featuresURL = new Array();
             var temp_features = vm.selected_features; 
+            if (vm.createCampground){
+                vm.campground.features = vm.selected_features;
+            }
             vm.campground.features.forEach(function(f){
                 featuresURL.push(f.url);
             });
             vm.campground.features = featuresURL;
-            if (vm.campground.contact == null){
+            if (vm.campground.contact == null && !vm.createCampground){
                 delete vm.campground.contact;
             }
-            vm.isLoading = true;
             $.ajax({
                 beforeSend: function(xhrObj){
                   xhrObj.setRequestHeader("Content-Type","application/json");
