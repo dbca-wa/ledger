@@ -247,7 +247,6 @@ export default {
             let vm = this;
             var featuresURL = new Array();
             var temp_features = vm.selected_features; 
-            console.log(vm.selected_features);
             vm.campground.features.forEach(function(f){
                 featuresURL.push(f.url);
             });
