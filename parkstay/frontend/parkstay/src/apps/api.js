@@ -16,7 +16,7 @@ module.exports = {
         return "/api/campgrounds/" + id + "/open_close.json"
     },
     deleteBookingRange: function (id) {
-        return "/api/booking_ranges/" + id + ".json"
+        return "/api/campground_booking_ranges/" + id + ".json"
     },
     features:"/api/features.json"
 };
