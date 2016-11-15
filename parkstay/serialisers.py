@@ -119,6 +119,7 @@ class FeatureSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url','id','name','description','image')
 
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
+    address = serializers.JSONField()
     contact = ContactSerializer(required=False)
     class Meta:
         model = Campground
@@ -173,13 +174,13 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
         except:
             method = 'post'
         super(CampgroundSerializer, self).__init__(*args, **kwargs)
-        self.fields['address'] = serializers.SerializerMethodField()
         if formatted:
             self.fields['site_type'] = serializers.SerializerMethodField()
             self.fields['campground_type'] = serializers.SerializerMethodField()
             self.fields['price_level'] = serializers.SerializerMethodField()
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
+            self.fields['address'] = serializers.SerializerMethodField()
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
