@@ -15,6 +15,11 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
+                    <div class="col-sm-12">
+                        <alert :show.sync="showError" type="danger">
+                            <p>{{errorString}}<p/>
+                        </alert>
+                    </div>
                      <campgroundAttr @create="create" :campground.sync="campground" >
                         <h1 slot="cg_name">My Slot</h1>
                      </campgroundAttr>
@@ -32,13 +37,15 @@ import campgroundAttr from './campground-attr.vue'
 import {
     $,
     Moment,
-    api_endpoints
+    api_endpoints,
+    helpers
 } from '../../hooks.js'
-
+import alert from '../utils/alert.vue'
 export default {
     name: 'addCampground',
     components: {
-        campgroundAttr
+        campgroundAttr,
+        alert
     },
     data: function() {
         return {
@@ -53,21 +60,36 @@ export default {
                 },
                 contact: null,
                 description:'',
-                dog_permitted: '',
+                features: [],
                 check_in: '',
                 check_out: '',
+                price_level:''
             },
-            title:''
+            title:'',
+            errors:false,
+            errorString: ''
+        }
+    },
+    computed: {
+        showError: function(){
+            var vm = this;
+            return vm.errors;
         }
     },
     methods: {
         create: function() {
             let vm = this;
+            var featuresURL = new Array();
+            vm.campground.features.forEach(function(f){
+                featuresURL.push(f.url);
+            });
+            vm.campground.features = featuresURL;
             $.ajax({
                 url: api_endpoints.campgrounds,
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: vm.campground,
+                traditional: true,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$router.push({
@@ -77,8 +99,9 @@ export default {
                         }
                     });
                 },
-                error:function (data){
-                    console.log(data);
+                error:function (resp){
+                    vm.errors = true;
+                    vm.errorString = helpers.apiError(resp); 
                 }
             });
         },
