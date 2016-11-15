@@ -1,7 +1,7 @@
 <template lang="html">
    <div  id="cg_attr">
         <div class="col-sm-12">
-            <alert :show.sync="showUpdate" type="success" :duration="3000">
+            <alert :show.sync="showUpdate" type="success" :duration="7000">
                 <p>Campground successfully updated</p>
             </alert>
             <alert :show.sync="showError" type="danger">
