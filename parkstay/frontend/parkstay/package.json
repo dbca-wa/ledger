@@ -41,6 +41,7 @@
     "jquery": "./node_modules/jquery/dist/jquery.js",
     "moment": "./node_modules/moment/moment.js",
     "datetimepicker": "./node_modules/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js",
+    "jquery-validation":"./node_modules/jquery-validation/dist/jquery.validate.js", 
     "bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
     "vue": "vue/dist/vue"
   },
@@ -58,6 +59,12 @@
         "bootstrap: bootstrap"
       ],
       "exports": "$.fn.datetimepicker"
+    },
+    "jquery-validation": {
+      "depends": [
+        "jquery: jQuery"
+      ],
+      "exports": "$.fn.validate"
     }
   },
   "dependencies": {
@@ -68,6 +75,7 @@
     "datatables.net-responsive-bs": "^2.1.0",
     "eonasdan-bootstrap-datetimepicker": "^4.17.43",
     "jquery": "^3.1.1",
+    "jquery-validation": "^1.15.1",
     "moment": "^2.15.2",
     "quill": "^1.1.5",
     "quill-render": "^1.0.5",
