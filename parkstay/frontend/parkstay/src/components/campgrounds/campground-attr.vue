@@ -1,6 +1,6 @@
 <template lang="html">
    <div  id="cg_attr">
-      <div class="col-sm-12">
+        <div class="col-sm-12">
           <form >
               <div class="row">
                   <div class="col-lg-12">
@@ -11,9 +11,9 @@
                         <div class="panel-body">
                             <div class="row">
                               <div class="col-md-6">
-                                <div class="form-group ">
+                                <div class="form-group">
                                   <label class="control-label" >Campground Name</label>
-                                  <input type="text" class="form-control" v-model="campground.name" />
+                                  <input type="text" class="form-control" v-model="campground.name"/>
                                 </div>
                               </div>
                               <div class="col-md-6">
@@ -260,11 +260,13 @@ export default {
         loadSelectedFeatures:function () {
             let vm =this;
             if (vm.campground.features){
-                vm.selected_features = vm.campground.features;
+                if (!vm.createCampground){
+                    vm.selected_features = vm.campground.features;
+                }
                 $.each(vm.campground.features,function (i,cgfeature) {
                     $.each(vm.features,function (j,feat) {
                         if(feat != null){
-                            if(cgfeature.id == feat.id){
+                            if(cgfeature.id == feat.id ){
                                 vm.features.splice(j,1);
                             }
                         }
