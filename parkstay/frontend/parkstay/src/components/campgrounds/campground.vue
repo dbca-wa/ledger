@@ -15,7 +15,7 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                      <campgroundAttr @create="update" :createCampground=false :campground="campground">
+                      <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
                   <div class="row">
@@ -208,10 +208,6 @@ export default {
         }
     },
     methods: {
-        update: function() {
-            console.log('create in Campground');
-            alert('Update was clicked')
-        },
         deleteBookingRange: function(id) {
             var vm = this;
             var url = api_endpoints.deleteBookingRange(id);

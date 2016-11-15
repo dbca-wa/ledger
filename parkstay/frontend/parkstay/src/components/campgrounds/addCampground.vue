@@ -16,11 +16,8 @@
                <div class="col-lg-12">
                   <div class="row">
                     <div class="col-sm-12">
-                        <alert :show.sync="showError" type="danger">
-                            <p>{{errorString}}<p/>
-                        </alert>
                     </div>
-                     <campgroundAttr @create="create" :campground.sync="campground" >
+                     <campgroundAttr :campground.sync="campground" >
                         <h1 slot="cg_name">My Slot</h1>
                      </campgroundAttr>
                   </div>
@@ -38,7 +35,8 @@ import {
     $,
     Moment,
     api_endpoints,
-    helpers
+    helpers,
+    validate
 } from '../../hooks.js'
 import alert from '../utils/alert.vue'
 export default {
@@ -50,61 +48,15 @@ export default {
     data: function() {
         return {
             campground:{
-                name:'',
-                campground_type:'',
                 address: {
-                    telephone: "",
-                    street: "",
-                    email: "",
-                    postcode: ""
                 },
-                contact: null,
-                description:'',
-                features: [],
-                check_in: '',
-                check_out: '',
-                price_level:''
             },
             title:'',
             errors:false,
-            errorString: ''
-        }
-    },
-    computed: {
-        showError: function(){
-            var vm = this;
-            return vm.errors;
+            errorString: '',
         }
     },
     methods: {
-        create: function() {
-            let vm = this;
-            var featuresURL = new Array();
-            vm.campground.features.forEach(function(f){
-                featuresURL.push(f.url);
-            });
-            vm.campground.features = featuresURL;
-            $.ajax({
-                url: api_endpoints.campgrounds,
-                method: 'POST',
-                xhrFields: { withCredentials:true },
-                data: vm.campground,
-                traditional: true,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.$router.push({
-                        name: 'cg_detail',
-                        params: {
-                            id: data.id
-                        }
-                    });
-                },
-                error:function (resp){
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(resp); 
-                }
-            });
-        },
     },
     mounted:function () {
     }
