@@ -126,7 +126,7 @@ class VariantGroupAdminForm(forms.ModelForm):
             missing_product_variants = []
 
             for licence_type in WildlifeLicenceType.objects.filter(variant_group__in=related_variant_groups):
-                variant_codes = payment_utils.generate_product_code_variants(licence_type)
+                variant_codes = payment_utils.generate_product_title_variants(licence_type)
 
                 for variant_code in variant_codes:
                     if payment_utils.get_product(variant_code) is None:

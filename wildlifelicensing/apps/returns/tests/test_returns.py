@@ -45,7 +45,7 @@ class ReturnsTestCase(TestCase):
 
         self.client = SocialClient()
 
-        self.licence = create_licence(self.customer, self.officer, product_code='regulation-17')
+        self.licence = create_licence(self.customer, self.officer, product_title='regulation-17')
         self.ret = create_return(self.licence)
 
     def tearDown(self):

@@ -24,7 +24,7 @@ class ApplicationEntryTestCase(TestCase):
 
         self.client = SocialClient()
 
-        self.licence_type = WildlifeLicenceType.objects.get(product_code='regulation-17')
+        self.licence_type = WildlifeLicenceType.objects.get(product_title='regulation-17')
         self.licence_type.identification_required = True
         self.licence_type.save()
 
