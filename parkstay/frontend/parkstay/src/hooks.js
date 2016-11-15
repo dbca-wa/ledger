@@ -6,6 +6,7 @@ var DataTableBs = require( 'datatables.net-bs' )();
 var DataTableRes = require( 'datatables.net-responsive-bs' )();
 var Moment = require('moment');
 var datetimepicker = require('datetimepicker');
+var validate = require('jquery-validation');
 import api_endpoints from './apps/api.js';
 import helpers from './components/utils/helpers.js'
 export {
@@ -16,5 +17,6 @@ export {
     Moment,
     datetimepicker,
     api_endpoints,
-    helpers
+    helpers,
+    validate
 }
