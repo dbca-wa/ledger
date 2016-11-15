@@ -198,7 +198,7 @@ types are:
 means no two fields anywhere in one application schema can have have the same name. Also note that the name cannot
 contain spaces or special characters such as question marks, full stops, etc.
 
-`label` is the piece of text proceeding an input and is usually the question to be answered in the input.
+`label` is the piece of text preceding an input and is usually the question to be answered in the input.
 
 ##### Non-mandatory Attributes
 
@@ -213,7 +213,7 @@ With several fields there are extra attributes required which are detailed below
 Sections and groups both require a `children` attribute, which is a list of fields are listed within.
 
 Groups can also have a field called `isRepeatable` for when the whole group needs be be repeated on the questionaire
-to allow repeated entries of teh same type of certain data, such as a list of people's various details. An example group field is shown below.
+to allow repeated entries of the same type of certain data, such as a list of people's various details. An example group field is shown below.
 
 ```
 {
@@ -392,7 +392,7 @@ the licence.
 }
 ```
 
-In the case of groups, the group field itself must be a declared a licence field along with any children fields within
+In the case of groups, the group field itself must be a declared licence field along with any children fields within
 the group that should appear on the actual licence. These fields will then be grouped together within the licence.
 Note that this only goes one level in, i.e. children of chilren within a group would not appear grouped with the parent
 group. In the example below, the species that can be taken within the licence period will be grouped together on the
