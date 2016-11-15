@@ -99,7 +99,10 @@
                       <div class="panel-heading">
                         <h3 class="panel-title">Features</h3>
                       </div>
-                      <div class="panel-body">
+                      <div class="panel-body" v-bind:class="{ 'empty-features': allFeaturesSelected }">
+                          <p v-show="allFeaturesSelected">
+                              All features selected
+                          </p>
                           <ul class="list-group">
                               <a href="" v-for="feature,key in features"  @click.prevent="addSelectedFeature(feature,key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
                           </ul>
@@ -112,8 +115,13 @@
                       <div class="panel-heading">
                         <h3 class="panel-title">Selected Feautures</h3>
                       </div>
-                      <div class="panel-body">
-                          <a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
+                      <div class="panel-body"  v-bind:class="{ 'empty-features': !hasSelectedFeatures }">
+                          <p v-show="!hasSelectedFeatures">
+                              No features selected
+                          </p>
+                          <ul class="list-group">
+                              <a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
+                          </ul>
                       </div>
                     </div>
                   </div>
@@ -183,7 +191,7 @@ export default {
             parks: '',
             editor:null,
             editor_updated:false,
-            features:null,
+            features:[],
             selected_features_loaded :false,
             selected_features: Array(),
             form: null,
@@ -221,6 +229,12 @@ export default {
         showError: function(){
             var vm = this;
             return vm.errors;
+        },
+        hasSelectedFeatures:function () {
+            return this.selected_features.length > 0;
+        },
+        allFeaturesSelected:function () {
+            return this.features.length < 1;
         }
     },
     watch:{
@@ -234,19 +248,19 @@ export default {
     },
     methods: {
         create: function() {
-            if (this.form.valid()){ 
+            if (this.form.valid()){
                 this.sendData(api_endpoints.campgrounds,'POST');
             }
         },
         update: function() {
-            if (this.form.valid()){ 
+            if (this.form.valid()){
                 this.sendData(api_endpoints.campground(this.campground.id),'PUT');
             }
         },
         sendData: function(url,method) {
             let vm = this;
             var featuresURL = new Array();
-            var temp_features = vm.selected_features; 
+            var temp_features = vm.selected_features;
             if (vm.createCampground){
                 vm.campground.features = vm.selected_features;
             }
@@ -282,7 +296,7 @@ export default {
                 },
                 error:function (resp){
                     vm.errors = true;
-                    vm.errorString = helpers.apiError(resp); 
+                    vm.errorString = helpers.apiError(resp);
                 }
             });
         },
@@ -349,19 +363,19 @@ export default {
                     price_level: "Select a price level from the options"
                 },
                 showErrors: function (errorMap, errorList) {
-                                        
+
                     $.each(this.validElements(), function (index, element) {
                         var $element = $(element);
                         $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
                     });
-                    
-                    // destroy tooltips on valid elements                              
-                    $("." + this.settings.validClass).tooltip("destroy");       
-                      
-                    // add or update tooltips 
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
                     for (var i = 0; i < errorList.length; i++) {
                         var error = errorList[i];
-                                            
+
                         $("#" + error.element.id)
                             .tooltip({ trigger: "focus" })
                             .attr("data-original-title", error.message)
@@ -427,6 +441,7 @@ export default {
     .features >.panel>.panel-body{
         padding:0;
         max-height: 300px;
+        min-height: 300px;
         overflow: auto;
     }
     .features .list-group{
@@ -438,5 +453,13 @@ export default {
     .list-group-item:last-child{
         border-bottom-left-radius: 5px;
         border-bottom-right-radius: 5px;
+    }
+    .empty-features{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 300px;
+        color: #ccc;
+        font-size: 2em;
     }
 </style>
