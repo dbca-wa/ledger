@@ -1,7 +1,13 @@
 <template lang="html">
    <div  id="cg_attr">
-      <div class="col-sm-12">
-          <form >
+        <div class="col-sm-12">
+            <alert :show.sync="showUpdate" type="success" :duration="7000">
+                <p>Campground successfully updated</p>
+            </alert>
+            <alert :show.sync="showError" type="danger">
+                <p>{{errorString}}<p/>
+            </alert>
+          <form id="attForm">
               <div class="row">
                   <div class="col-lg-12">
                       <div class="panel panel-primary">
@@ -11,16 +17,15 @@
                         <div class="panel-body">
                             <div class="row">
                               <div class="col-md-6">
-                                <div class="form-group ">
+                                <div class="form-group">
                                   <label class="control-label" >Campground Name</label>
-                                  <input type="text" class="form-control" v-model="campground.name" />
+                                  <input type="text" name="name" id="name" class="form-control" v-model="campground.name" required/>
                                 </div>
                               </div>
                               <div class="col-md-6">
                                 <div class="form-group ">
                                   <label class="control-label" >Park</label>
-                                  <select class="form-control" v-model="campground.park">
-                                      <option value="All">All</option>
+                                  <select id="park" name="park" class="form-control" v-model="campground.park">
                                       <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
                                   </select>
                                 </div>
@@ -30,7 +35,7 @@
                                 <div class="col-md-6">
                                   <div class="form-group ">
                                     <label class="control-label" >Campground Type</label>
-                                    <select class="form-control"  v-model="campground.campground_type">
+                                    <select id="campground_type" name="campground_type" class="form-control"  v-model="campground.campground_type">
                                         <option value="0">Campground: no bookings</option>
                                         <option value="1">Campground: book online</option>
                                         <option value="2">Campground: book by phone</option>
@@ -42,7 +47,7 @@
                                 <div class="col-md-6">
                                   <div class="form-group ">
                                     <label class="control-label" >Site Type</label>
-                                    <select class="form-control"  v-model="campground.site_type">
+                                    <select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
                                         <option value="0">Unnumbered Site</option>
                                         <option value="1">Numbered Site</option>
                                     </select>
@@ -63,25 +68,25 @@
                            <div class="col-md-3">
                              <div class="form-group">
                                <label for="">Street</label>
-                               <input type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
+                               <input id="street" name="street" type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
                              </div>
                            </div>
                            <div class="col-md-3">
                                <div class="form-group">
                                  <label for="">email</label>
-                                 <input type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
+                                 <input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
                                </div>
                            </div>
                            <div class="col-md-3">
                              <div class="form-group">
                                <label for="">telephone</label>
-                               <input type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
+                               <input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
                              </div>
                            </div>
                            <div class="col-md-3">
                                <div class="form-group">
                                  <label for="">postcode</label>
-                                 <input type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
+                                 <input id="postcode" name="postcode" type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
                                </div>
                            </div>
                        </div>
@@ -117,7 +122,7 @@
                 <div class="col-md-12">
                     <div class="form-group">
                         <label class="control-label" >Description</label>
-                        <div id="editor" class="form-control"></div>
+                        <div name="editor" id="editor" class="form-control"></div>
                     </div>
                 </div>
               </div>
@@ -130,7 +135,7 @@
                   <label style="line-height: 2.5;">Price set at: </label>
                </div>
                <div class="col-sm-8 col-md-9 col-lg-10">
-                  <select class="form-control" v-model="campground.price_level">
+                  <select id="price_level" name="price_level" class="form-control" v-model="campground.price_level">
                      <option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
                   </select>
                </div>
@@ -155,7 +160,9 @@
 <script>
 import {
     $,
-    api_endpoints
+    api_endpoints,
+    helpers,
+    validate
 }
 from '../../hooks.js'
 import {
@@ -164,9 +171,11 @@ import {
 from '../utils/eventBus.js';
 import Editor from 'quill';
 import Render from 'quill-render';
+import loader from '../utils/loader.vue'
+import alert from '../utils/alert.vue'
 export default {
     name: 'cg_attr',
-    components: {},
+    components: {alert, loader},
     data: function() {
         let vm = this;
         return {
@@ -175,8 +184,12 @@ export default {
             editor:null,
             editor_updated:false,
             features:null,
-            selected_features:Array(),
-            selected_features_loaded :false
+            selected_features_loaded :false,
+            selected_features: Array(),
+            form: null,
+            errors: false,
+            errorString:'',
+            showUpdate: false
         }
     },
     props: {
@@ -197,11 +210,17 @@ export default {
         campground: {
             default: function() {
                 return {
-                    address: {
-                    }
+                    address: {},
+                    contact: {}
                 };
             },
             type: Object
+        },
+    },
+    computed: {
+        showError: function(){
+            var vm = this;
+            return vm.errors;
         }
     },
     watch:{
@@ -215,10 +234,57 @@ export default {
     },
     methods: {
         create: function() {
-            this.$emit('create');
+            if (this.form.valid()){ 
+                this.sendData(api_endpoints.campgrounds,'POST');
+            }
         },
         update: function() {
-            this.$emit('update');
+            if (this.form.valid()){ 
+                this.sendData(api_endpoints.campground(this.campground.id),'PUT');
+            }
+        },
+        sendData: function(url,method) {
+            let vm = this;
+            var featuresURL = new Array();
+            var temp_features = vm.selected_features; 
+            if (vm.createCampground){
+                vm.campground.features = vm.selected_features;
+            }
+            vm.campground.features.forEach(function(f){
+                featuresURL.push(f.url);
+            });
+            vm.campground.features = featuresURL;
+            if (vm.campground.contact == null && !vm.createCampground){
+                delete vm.campground.contact;
+            }
+            $.ajax({
+                beforeSend: function(xhrObj){
+                  xhrObj.setRequestHeader("Content-Type","application/json");
+                  xhrObj.setRequestHeader("Accept","application/json");
+                },
+                url: url,
+                method: method,
+                xhrFields: { withCredentials:true },
+                data: JSON.stringify(vm.campground),
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    if (method == 'POST'){
+                        vm.$router.push({
+                            name: 'cg_detail',
+                            params: {
+                                id: data.id
+                            }
+                        });
+                    }else if (method == 'PUT'){
+                        vm.campground.features = temp_features;
+                        vm.showUpdate = true;
+                    }
+                },
+                error:function (resp){
+                    vm.errors = true;
+                    vm.errorString = helpers.apiError(resp); 
+                }
+            });
         },
         showAlert: function() {
             bus.$emit('showAlert', 'alert1');
@@ -257,18 +323,69 @@ export default {
             vm.selected_features.splice(key,1);
             vm.features.sort(function(a,b){ return parseInt(a.id) - parseInt(b.id)});
         },
+        addFormValidations: function(){
+            this.form.validate({
+                rules: {
+                    name: "required",
+                    park: "required",
+                    campground_type: "required",
+                    site_type: "required",
+                    street: "required",
+                    email: {
+                        required: true,
+                        email: true
+                    },
+                    telephone: "required",
+                    postcode: "required",
+                    editor: "required",
+                    price_level: "required"
+                },
+                messages: {
+                    name: "Enter a campground name",
+                    park: "Select a park from the options",
+                    campground_type: "Select a campground type from the options",
+                    site_type: "Select a site type from the options",
+                    editor: "required",
+                    price_level: "Select a price level from the options"
+                },
+                showErrors: function (errorMap, errorList) {
+                                        
+                    $.each(this.validElements(), function (index, element) {
+                        var $element = $(element);
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+                    
+                    // destroy tooltips on valid elements                              
+                    $("." + this.settings.validClass).tooltip("destroy");       
+                      
+                    // add or update tooltips 
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                                            
+                        $("#" + error.element.id)
+                            .tooltip({ trigger: "focus" })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+        },
         loadSelectedFeatures:function () {
             let vm =this;
-            vm.selected_features = vm.campground.features;
-            $.each(vm.campground.features,function (i,cgfeature) {
-                $.each(vm.features,function (j,feat) {
-                    if(feat != null){
-                        if(cgfeature.id == feat.id){
-                            vm.features.splice(j,1);
+            if (vm.campground.features){
+                if (!vm.createCampground){
+                    vm.selected_features = vm.campground.features;
+                }
+                $.each(vm.campground.features,function (i,cgfeature) {
+                    $.each(vm.features,function (j,feat) {
+                        if(feat != null){
+                            if(cgfeature.id == feat.id ){
+                                vm.features.splice(j,1);
+                            }
                         }
-                    }
-                })
-            });
+                    })
+                });
+            }
 
         }
     },
@@ -288,6 +405,9 @@ export default {
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;
         });
+
+        vm.form = $('#attForm');
+        vm.addFormValidations();
     },
     updated:function () {
         let vm =this;

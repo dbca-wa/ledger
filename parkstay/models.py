@@ -71,20 +71,20 @@ class Campground(models.Model):
     ratis_id = models.IntegerField(default=-1)
     contact = models.ForeignKey('Contact', on_delete=models.PROTECT, blank=True, null=True)
     campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=0)
-    promo_area = models.ForeignKey('PromoArea', on_delete=models.PROTECT, null=True)
+    promo_area = models.ForeignKey('PromoArea', on_delete=models.PROTECT,blank=True, null=True)
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
     address = JSONField(null=True)
     features = models.ManyToManyField('Feature')
     description = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
     # Tags for communications methods available and access type
-    tags = TaggableManager()
+    tags = TaggableManager(blank=True)
     driving_directions = models.TextField(blank=True, null=True)
     fees = models.TextField(blank=True, null=True)
     othertransport = models.TextField(blank=True, null=True)
     key = models.CharField(max_length=255, blank=True, null=True)
     price_level = models.SmallIntegerField(choices=CAMPGROUND_PRICE_LEVEL_CHOICES, default=0)
-    customer_contact = models.ForeignKey('CustomerContact', null=True, on_delete=models.PROTECT)
+    customer_contact = models.ForeignKey('CustomerContact', blank=True, null=True, on_delete=models.PROTECT)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     bookable_per_site = models.BooleanField(default=False)
@@ -235,7 +235,7 @@ class BookingRange(models.Model):
         super(BookingRange, self).save(*args, **kwargs)
 
 class CampgroundBookingRange(BookingRange):
-    campground = models.ForeignKey('Campground', on_delete=models.PROTECT,related_name='booking_ranges')
+    campground = models.ForeignKey('Campground', on_delete=models.CASCADE,related_name='booking_ranges')
     # minimum/maximum number of campsites allowed for a booking
     min_sites = models.SmallIntegerField(default=1)
     max_sites = models.SmallIntegerField(default=12)

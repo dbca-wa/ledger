@@ -15,7 +15,9 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                     <campgroundAttr @create="create" :campground.sync="campground" >
+                    <div class="col-sm-12">
+                    </div>
+                     <campgroundAttr :campground.sync="campground" >
                         <h1 slot="cg_name">My Slot</h1>
                      </campgroundAttr>
                   </div>
@@ -32,56 +34,29 @@ import campgroundAttr from './campground-attr.vue'
 import {
     $,
     Moment,
-    api_endpoints
+    api_endpoints,
+    helpers,
+    validate
 } from '../../hooks.js'
-
+import alert from '../utils/alert.vue'
 export default {
     name: 'addCampground',
     components: {
-        campgroundAttr
+        campgroundAttr,
+        alert
     },
     data: function() {
         return {
             campground:{
-                name:'',
-                campground_type:'',
                 address: {
-                    telephone: "",
-                    street: "",
-                    email: "",
-                    postcode: ""
                 },
-                contact: null,
-                description:'',
-                dog_permitted: '',
-                check_in: '',
-                check_out: '',
             },
-            title:''
+            title:'',
+            errors:false,
+            errorString: '',
         }
     },
     methods: {
-        create: function() {
-            let vm = this;
-            $.ajax({
-                url: api_endpoints.campgrounds,
-                method: 'POST',
-                xhrFields: { withCredentials:true },
-                data: vm.campground,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.$router.push({
-                        name: 'cg_detail',
-                        params: {
-                            id: data.id
-                        }
-                    });
-                },
-                error:function (data){
-                    console.log(data);
-                }
-            });
-        },
     },
     mounted:function () {
     }

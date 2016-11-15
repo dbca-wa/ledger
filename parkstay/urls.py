@@ -17,8 +17,8 @@ router.register(r'campground_feature',api.FeatureViewSet)
 router.register(r'regions',api.RegionViewSet)
 router.register(r'campsite_classes',api.CampsiteClassViewSet)
 router.register(r'booking',api.BookingViewSet)
-router.register(r'booking_ranges',api.CampgroundBookingRangeViewset)
-router.register(r'booking_ranges',api.CampsiteBookingRangeViewset)
+router.register(r'campground_booking_ranges',api.CampgroundBookingRangeViewset)
+router.register(r'campsite_booking_ranges',api.CampsiteBookingRangeViewset)
 router.register(r'campsite_rate',api.CampsiteRateViewSet)
 
 api_patterns = [

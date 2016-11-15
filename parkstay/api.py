@@ -49,6 +49,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
+    authentication_classes=[]
 
     def list(self, request, format=None):
         queryset = self.get_queryset()
