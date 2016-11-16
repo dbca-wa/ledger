@@ -1,5 +1,5 @@
-<template id="pkCgClose">
-<bootstrapModal title="(Temporarily) close campground" :large=true @ok="addClosure()">
+<template id="pkCsClose">
+<bootstrapModal title="(Temporarily) close campsite" :large=true @ok="addClosure()">
 
     <div class="modal-body">
         <form id="closeCGForm" class="form-horizontal">
@@ -70,7 +70,7 @@ import {bus} from '../utils/eventBus.js'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
 import alert from '../utils/alert.vue'
 module.exports = {
-    name: 'pkCgClose',
+    name: 'pkCsClose',
     data: function() {
         return {
             status: '',
@@ -94,7 +94,7 @@ module.exports = {
             return vm.errors;
         },
         isModalOpen: function() {
-            return this.$parent.isOpenCloseCG;
+            return this.$parent.isOpenCloseCS;
         },
         requireDetails: function () {
             return (this.formdata.reason === '3')? true: false;
@@ -106,7 +106,7 @@ module.exports = {
     },
     methods: {
         close: function() {
-            this.$parent.isOpenCloseCG = false;
+            this.$parent.isOpenCloseCS = false;
             this.status = '';
         },
         addClosure: function() {
@@ -118,18 +118,17 @@ module.exports = {
             let vm = this;
             var data = this.formdata;
             data.status = vm.formdata.reason;
-            console.log(data);
             $.ajax({
-                url: api_endpoints.opencloseCG(vm.id),
+                url: api_endpoints.opencloseCS(vm.id),
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: data,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.close();
-                    bus.$emit('refreshCGTable');
+                    bus.$emit('refreshCSTable');
                 },
-                error:function (data){
+                error:function (resp){
                     vm.errors = true;
                     vm.errorString = helpers.apiError(resp);
                 }
@@ -180,7 +179,7 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('openclose', function(data){
+        bus.$on('opencloseCS', function(data){
             vm.status = data.status;
             vm.id = data.id;
         });

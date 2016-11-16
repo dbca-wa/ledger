@@ -65,7 +65,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 
             # return object
             ground = self.get_object()
-            res = CampsiteSerializer(ground, context={'request':request})
+            res = CampsiteSerialiser(ground, context={'request':request})
 
             return Response(res.data)
         except serializers.ValidationError:

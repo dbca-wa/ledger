@@ -1,6 +1,7 @@
 <template lang="html">
-
    <div class="panel-group" id="applications-accordion" role="tablist" aria-multiselectable="true">
+        <pkCsClose></pkCsClose>
+        <pkCsOpen></pkCsOpen>
       <div class="panel panel-default" id="applications">
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
@@ -26,7 +27,7 @@
                   <div class="row">
                      <div class="well">
                         <h1>Closure History</h1>
-                        <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
+                        <datatable ref="cg_closure_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
                      </div>
                   </div>
                </div>
@@ -48,7 +49,7 @@
                <div class="col-lg-12">
                   <div class="row">
                      <div class="well">
-                        <datatable :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
+                        <datatable ref="cg_campsites_dt" :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
                      </div>
                   </div>
                </div>
@@ -64,6 +65,8 @@
 import datatable from '../utils/datatable.vue'
 import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
+import pkCsClose from '../campsites/closeCampsite.vue'
+import pkCsOpen from '../campsites/openCampsite.vue'
 import {
     bus
 }
@@ -80,7 +83,9 @@ export default {
     components: {
         datatable,
         campgroundAttr,
-        confirmbox
+        confirmbox,
+        pkCsClose,
+        pkCsOpen
     },
     data: function() {
         let vm = this;
@@ -88,6 +93,8 @@ export default {
             campground: {
                 address:{}
             },
+            isOpenOpenCS: false,
+            isOpenCloseCS: false,
             deleteRange: null,
             ch_options: {
                 responsive: true,
@@ -172,13 +179,16 @@ export default {
                 }, {
                     "mRender": function(data, type, full) {
                         var id = full.id;
-                        if (full.status) {
-                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/><a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
+                        if (full.active) {
+                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/>";
+                            if ( full.campground_open ){
+                                column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
+                            }
                         }
                         else {
                             var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/>";
                             if ( full.campground_open ){
-                                column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
+                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" >Open Campsite </a></td>";
                             }
                         }
 
@@ -215,8 +225,14 @@ export default {
                 method: "DELETE",
                 url: url,
             }).done(function(msg) {
-                vm.$children[1].vmDataTable.ajax.reload();
+                vm.$refs.cg_closure_dt.vmDataTable.ajax.reload();
             });
+        },
+        showOpenCloseCS: function() {
+            this.isOpenCloseCS = true;
+        },
+        showOpenOpenCS: function() {
+            this.isOpenOpenCS = true;
         },
         fetchCampground:function () {
             let vm =this;
@@ -232,12 +248,48 @@ export default {
     },
     mounted: function() {
         var vm = this;
-        vm.$children[1].vmDataTable.on('click', '.deleteRange', function(e) {
+        vm.$refs.cg_closure_dt.vmDataTable.on('click', '.deleteRange', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-range');
             vm.deleteRange = id;
             bus.$emit('showAlert', 'deleteRange');
         });
+        vm.$refs.cg_campsites_dt.vmDataTable.on('click', '.detailRoute', function(e) {
+            e.preventDefault();
+            var id = $(this).attr('data-campsite');
+            vm.$router.push({
+                name: 'view_campsite',
+                params: {
+                    id: vm.campground.id,
+                    campsite_id: id
+                }
+            });
+        });
+        vm.$refs.cg_campsites_dt.vmDataTable.on('click', '.statusCS', function(e) {
+            e.preventDefault();
+            var id = $(this).attr('data-campsite');
+            console.log(id);
+            var status = $(this).attr('data-status');
+            var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
+            var data = {
+                'status': status,
+                'id': id,
+                'closure': current_closure
+            }
+            bus.$emit('opencloseCS', data);
+            if (status === 'open'){
+                vm.showOpenOpenCS();
+            }else if (status === 'close'){
+                vm.showOpenCloseCS();
+            }
+        });
+         bus.$on('refreshCGTable', function(){
+            vm.dtGrounds.ajax.reload();
+        });
+         bus.$on('refreshCSTable', function(){
+            vm.$refs.cg_campsites_dt.vmDataTable.ajax.reload();
+        });
+
         vm.fetchCampground();
     }
 }

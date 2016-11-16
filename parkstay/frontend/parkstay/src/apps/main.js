@@ -49,10 +49,6 @@ const routes = [
                 },
                 children: [
                     {
-                        path:'campgrounds',
-                        component: Campgrounds
-                    },
-                    {
                         path:'campgrounds/addCampground',
                         name:'cg_add',
                         component: AddCampground
@@ -64,32 +60,27 @@ const routes = [
                         },
                         children:[
                             {
+                                path: '/',
+                                name: 'cg_main',
+                                component: Campgrounds,        
+                            },
+                            {
                                 path:':id',
                                 name:'cg_detail',
                                 component: Campground,
                             },
                             {
                                 path:':id/campsites/add',
-                                name:'view_campsite',
+                                name:'add_campsite',
                                 component:Campsite
                             },
                             {
-                                path:':id/campsites/:id',
+                                path:':id/campsites/:campsite_id',
                                 name:'view_campsite',
                                 component:Campsite
                             },
                         ]
                     },
-                    {
-                        path:'campsites/add',
-                        name:'view_campsite',
-                        component:Campsite
-                    },
-                    {
-                        path:'campsites/:id',
-                        name:'view_campsite',
-                        component:Campsite
-                    }
                 ]
             }
         ]

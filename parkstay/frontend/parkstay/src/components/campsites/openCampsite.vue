@@ -1,32 +1,27 @@
-<template id="pkCgClose">
-<bootstrapModal title="(Temporarily) close campground" :large=true @ok="addClosure()">
+<template id="pkCsOpen">
+<bootstrapModal title="Open campsite" :large=true @ok="addOpen()">
 
     <div class="modal-body">
-        <form id="closeCGForm" class="form-horizontal">
+        <form id="openCGForm" class="form-horizontal">
             <div class="row">
 			    <alert :show.sync="showError" type="danger"></alert>
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Closure start: </label>
+                        <label for="open_cg_current_closure">Current Closure: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' id='close_cg_range_start'>
-                            <input  name="closure_start" v-model="formdata.range_start" type='text' class="form-control" />
-                            <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                            </span>
-                        </div>
+                        <input id='open_cg_current_closure' v-model="current_closure" disabled type='text' class="form-control" />
                     </div>
                 </div>
             </div>
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Closure end: </label>
+                        <label for="open_cg_range_start">Open per: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' id='close_cg_range_end'>
-                            <input name="closure_end" v-model="formdata.range_end" type='text' class="form-control" />
+                        <div class='input-group date' id='open_cg_range_start'>
+                            <input name="open_start" v-model="formdata.range_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -40,10 +35,11 @@
                         <label for="open_cg_reason">Reason: </label>
                     </div>
                     <div class="col-md-4">
-                        <select name="closure_reason" v-model="formdata.reason" class="form-control" id="close_cg_reason">
-                            <option value="1">Closed due to natural disaster</option>
-                            <option value="2">Closed for maintenance</option>
-                            <option value="3">Other</option>
+                        <select name="open_reason" v-model="formdata.reason" class="form-control" id="open_cg_reason">
+                            <option value="1">Reason 1</option>
+                            <option value="2">Reason 2</option>
+                            <option value="3">Reason 3</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                 </div>
@@ -54,7 +50,7 @@
                         <label for="open_cg_details">Details: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea name="closure_details" v-model="formdata.details" class="form-control" id="close_cg_details"></textarea>
+                        <textarea name="open_details" v-model="formdata.details" class="form-control" id="open_cg_details"></textarea>
                     </div>
                 </div>
             </div>
@@ -70,19 +66,18 @@ import {bus} from '../utils/eventBus.js'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
 import alert from '../utils/alert.vue'
 module.exports = {
-    name: 'pkCgClose',
+    name: 'pkCsOpen',
     data: function() {
         return {
             status: '',
             id:'',
+            current_closure: '',
             formdata: {
                 range_start: '',
-                range_end: '',
                 reason:'',
                 details: ''
             },
-            closeStartPicker: '',
-            closeEndPicker: '',
+            picker: '',
             errors: false,
             errorString: '',
             form: ''
@@ -94,10 +89,10 @@ module.exports = {
             return vm.errors;
         },
         isModalOpen: function() {
-            return this.$parent.isOpenCloseCG;
+            return this.$parent.isOpenOpenCS;
         },
         requireDetails: function () {
-            return (this.formdata.reason === '3')? true: false;
+            return (this.formdata.reason === 'other')? true: false;
         }
     },
     components: {
@@ -106,10 +101,10 @@ module.exports = {
     },
     methods: {
         close: function() {
-            this.$parent.isOpenCloseCG = false;
+            this.$parent.isOpenOpenCS = false;
             this.status = '';
         },
-        addClosure: function() {
+        addOpen: function() {
             if (this.form.valid()){
                 this.sendData();
             }
@@ -117,42 +112,43 @@ module.exports = {
         sendData: function() {
             let vm = this;
             var data = this.formdata;
-            data.status = vm.formdata.reason;
-            console.log(data);
+            data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            data.status = 0;
             $.ajax({
-                url: api_endpoints.opencloseCG(vm.id),
+                url: api_endpoints.opencloseCS(vm.id),
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: data,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.close();
-                    bus.$emit('refreshCGTable');
+                    bus.$emit('refreshCSTable');
                 },
                 error:function (data){
                     vm.errors = true;
                     vm.errorString = helpers.apiError(resp);
                 }
             });
+
         },
         addFormValidations: function() {
             let vm = this;
             this.form.validate({
                 rules: {
-                    closure_start: "required",
-                    closure_reason: "required",
-                    closure_details: {
+                    open_start: "required",
+                    open_reason: "required",
+                    open_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === '3';
+                                return vm.formdata.reason === 'other';
                             }
                         }
                     }
                 },
                 messages: {
-                    closure_start: "Enter a start date",
-                    closure_reason: "Select a closure reason from the options",
-                    closure_details: "Details required if Other reason is selected"
+                    open_start: "Enter a start date",
+                    open_reason: "Select an open reason from the options",
+                    open_details: "Details required if Other reason is selected"
                 },
                 showErrors: function(errorMap, errorList) {
 
@@ -180,28 +176,19 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('openclose', function(data){
+        bus.$on('opencloseCS', function(data){
             vm.status = data.status;
             vm.id = data.id;
+            vm.current_closure = data.closure;
         });
-        vm.closeStartPicker = $('#close_cg_range_start');
-        vm.closeEndPicker = $('#close_cg_range_end');
-        vm.closeStartPicker.datetimepicker({
-            format: 'DD/MM/YYYY',
-            minDate: new Date()
+        vm.picker = $('#open_cg_range_start');
+        vm.picker.datetimepicker({
+            format: 'DD/MM/YYYY'
         });
-        vm.closeEndPicker.datetimepicker({
-            format: 'DD/MM/YYYY',
-            useCurrent: false
+        vm.picker.on('dp.change', function(e){
+            vm.formdata.range_start = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
-        vm.closeStartPicker.on('dp.change', function(e){
-            vm.formdata.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
-        });
-        vm.closeEndPicker.on('dp.change', function(e){
-            vm.formdata.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
-        });
-        vm.form = $('#closeCGForm');
+        vm.form = $('#openCGForm');
         vm.addFormValidations();
     }
 };

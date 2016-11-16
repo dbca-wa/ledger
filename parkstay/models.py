@@ -146,8 +146,8 @@ class Campground(models.Model):
         except CampgroundBookingRange.DoesNotExist:
             return True if open_ranges else False
 
-        #if open_ranges and not closed_ranges:
-        #    return True
+        if not open_ranges:
+            return False
         if open_ranges.updated_on > closed_ranges.updated_on:
             return True
         return False
@@ -352,8 +352,8 @@ class Campsite(models.Model):
             except CampsiteBookingRange.DoesNotExist:
                 return True if open_ranges else False
 
-            #if open_ranges and not closed_ranges:
-            #    return True
+            if not open_ranges:
+                return False
             if open_ranges.updated_on > closed_ranges.updated_on:
                 return True
         return False
