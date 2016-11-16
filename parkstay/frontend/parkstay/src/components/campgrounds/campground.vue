@@ -215,7 +215,7 @@ export default {
                 method: "DELETE",
                 url: url,
             }).done(function(msg) {
-                vm.$children[1].vmDataTable.ajax.reload();
+                vm.$refs.cg_closure_dt.vmDataTable.ajax.reload();
             });
         },
         fetchCampground:function () {
