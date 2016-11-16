@@ -29,9 +29,6 @@ module.exports = {
      },
      id:{
          required:true
-     },
-     table:{
-         type:Object
      }
    },
    data : function () {
@@ -39,14 +36,8 @@ module.exports = {
          vmDataTable: null,
       }
    },
-   watch:{
+   computed:{
 
-       vmDataTable:{
-           handler: () => {
-               this.table = this.vmDataTable;
-           },
-           deep: true
-       }
    },
    methods:{
 
@@ -55,6 +46,7 @@ module.exports = {
       let vm = this;
       var table =$('#'+vm.id);
       vm.vmDataTable = $(table).DataTable(vm.dtOptions);
+
    }
 };
 </script>
