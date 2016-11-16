@@ -195,12 +195,6 @@ class BookingRange(models.Model):
     )
     created = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now_add=True,help_text='Used to check if the start and end dated were changed')
-    # minimum/maximum consecutive days allowed for a booking
-    min_days = models.SmallIntegerField(default=1)
-    max_days = models.SmallIntegerField(default=28)
-    # Minimum and Maximum days that a booking can be made before arrival
-    min_dba = models.SmallIntegerField(default=0)
-    max_dba = models.SmallIntegerField(default=180)
 
     status = models.SmallIntegerField(choices=BOOKING_RANGE_CHOICES, default=0)
     details = models.TextField(blank=True,null=True)
@@ -233,6 +227,41 @@ class BookingRange(models.Model):
         self.full_clean()
 
         super(BookingRange, self).save(*args, **kwargs)
+
+class StayHistory(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    # minimum/maximum consecutive days allowed for a booking
+    min_days = models.SmallIntegerField(default=1)
+    max_days = models.SmallIntegerField(default=28)
+    # Minimum and Maximum days that a booking can be made before arrival
+    min_dba = models.SmallIntegerField(default=0)
+    max_dba = models.SmallIntegerField(default=180)
+
+    details = models.TextField(blank=True,null=True)
+    range_start = models.DateField(blank=True, null=True)
+    range_end = models.DateField(blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+    # Properties
+    # ====================================
+    @property
+    def editable(self):
+        now = datetime.now().date()
+        if (self.range_start <= now and not self.range_end) or ( self.range_start <= now <= self.range_end):
+            return True
+        elif (self.range_start >= now() and not self.range_end) or ( self.range_start >= now <= self.range_end):
+            return True
+        return False
+
+    # Methods
+    # =====================================
+    def clean(self, *args, **kwargs):
+        if self.min_days < 1:
+            raise ValidationError('The minimum days should be greater than 0.')
+        if self.max_days > 28:
+            raise ValidationError('The maximum days should not be grater than 28.')
 
 class CampgroundBookingRange(BookingRange):
     campground = models.ForeignKey('Campground', on_delete=models.CASCADE,related_name='booking_ranges')
@@ -396,6 +425,10 @@ class CampsiteBookingRange(BookingRange):
             raise BookingRangeWithinException('This Booking Range is within the range of another one')
         if self.range_start < datetime.now().date() and original.range_start != self.range_start:
             raise ValidationError('The start date can\'t be in the past')
+
+class CampsiteStayHistory(StayHistory):
+    campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT,related_name='stay_history')
+
 
 class Feature(models.Model):
     name = models.CharField(max_length=255, unique=True)
