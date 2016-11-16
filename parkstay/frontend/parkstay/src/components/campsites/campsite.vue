@@ -5,7 +5,7 @@
              <h4 class="panel-title">
                  <a role="button" data-toggle="collapse" href="#applications-collapse"
                     aria-expanded="false" aria-controls="applications-collapse">
-                     <h3>{{title}}</h3>
+                     <h3>Campsite</h3>
                  </a>
              </h4>
          </div>
@@ -15,25 +15,25 @@
                 <div class="col-lg-12">
                    <div class="row">
                        <div class="well">
-                           <campsiteAttr :createCampsite="createCampsite" :campsite.sync="campsite"></campsiteAttr>
+                           <!--campsiteAttr :createCampsite="createCampsite" :campsite.sync="campsite"></campsiteAttr-->
                        </div>
                    </div>
                    <div class="row">
                       <div class="well">
                          <h1>Maximum Stay History</h1>
-                         <datatable :dtHeaders ="msh_headers" :dtOptions="msh_options" id="msh_table"></datatable>
+                         <datatable :dtHeaders ="msh_headers" :dtOptions="msh_options" :table.sync="msh_table" id="stay_history"></datatable>
                       </div>
                    </div>
                    <div class="row">
                       <div class="well">
                          <h1>Price History</h1>
-                         <datatable :dtHeaders ="ph_headers" :dtOptions="ph_options" id="ph_table"></datatable>
+                         <datatable :dtHeaders ="ph_headers" :dtOptions="ph_options" :table.sync="ph_table" id="price_history"></datatable>
                       </div>
                    </div>
                    <div class="row">
                       <div class="well">
                          <h1>Closure History</h1>
-                         <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
+                         <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" :table.sync="ch_table" id="closure_history"></datatable>
                       </div>
                    </div>
                 </div>
@@ -47,9 +47,12 @@
 import {
     $
 } from '../../hooks.js';
-
+import datatable from '../utils/datatable.vue'
 export default {
     name:'campsite',
+    components:{
+        datatable
+    },
     data:()=>{
         return{
             createCampsite:true,
@@ -68,26 +71,30 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            msh_options:()=>{
-                let vm =this;
-                return $.extend({},{
-
-                },vm.default_dtOptions);
+            msh_options:{
+                responsive: true,
+                processing: true,
+                deferRender: true,
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
             },
-            ph_options:()=>{
-                let vm =this;
-                return $.extend({},{
-
-                },vm.default_dtOptions);
+            ph_options:{
+                responsive: true,
+                processing: true,
+                deferRender: true,
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
             },
-            ch_options:()=>{
-                let vm =this;
-                return $.extend({},{
-
-                },vm.default_dtOptions);
+            ch_options:{
+                responsive: true,
+                processing: true,
+                deferRender: true,
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
             }
-
-
 
         }
     }
