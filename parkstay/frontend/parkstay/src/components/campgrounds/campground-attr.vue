@@ -25,7 +25,10 @@
                               <div class="col-md-6">
                                 <div class="form-group ">
                                   <label class="control-label" >Park</label>
-                                  <select id="park" name="park" class="form-control" v-model="campground.park">
+                                  <select name="park" v-show="!parks.length > 0" class="form-control" >
+                                      <option >Loading...</option>
+                                  </select>
+                                  <select name="park" v-if="parks.length > 0" class="form-control" v-model="campground.park">
                                       <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
                                   </select>
                                 </div>
@@ -188,7 +191,7 @@ export default {
         let vm = this;
         return {
             selected_price_set: this.priceSet[0],
-            parks: '',
+            parks: [],
             editor:null,
             editor_updated:false,
             features:[],
@@ -313,6 +316,7 @@ export default {
                     vm.parks = data;
                 }
             });
+
         },
         loadFeatures: function() {
             var vm = this;
@@ -375,8 +379,7 @@ export default {
                     // add or update tooltips
                     for (var i = 0; i < errorList.length; i++) {
                         var error = errorList[i];
-
-                        $("#" + error.element.id)
+                        $(error.element)
                             .tooltip({ trigger: "focus" })
                             .attr("data-original-title", error.message)
                             .parents('.form-group').addClass('has-error');
