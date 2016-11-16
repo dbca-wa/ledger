@@ -49,10 +49,6 @@ const routes = [
                 },
                 children: [
                     {
-                        path:'campgrounds',
-                        component: Campgrounds
-                    },
-                    {
                         path:'campgrounds/addCampground',
                         name:'cg_add',
                         component: AddCampground
@@ -63,6 +59,11 @@ const routes = [
                             render (c) { return c('router-view') }
                         },
                         children:[
+                            {
+                                path: '/',
+                                name: 'cg_main',
+                                component: Campgrounds,        
+                            },
                             {
                                 path:':id',
                                 name:'cg_detail',
