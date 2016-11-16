@@ -1,4 +1,4 @@
-from parkstay.models import District, CampsiteBooking,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
+from parkstay.models import CampsiteStayHistory,District, CampsiteBooking,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
 from rest_framework import serializers
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -23,11 +23,6 @@ class CampgroundCampsiteFilterSerializer(serializers.Serializer):
     num_infant = serializers.IntegerField(default=0)
 
 class BookingRangeSerializer(serializers.ModelSerializer):
-    min_days = serializers.IntegerField(required=False,default=1)
-    max_days = serializers.IntegerField(required=False,default=28)
-    # Minimum and Maximum days that a booking can be made before arrival
-    min_dba = serializers.IntegerField(required=False,default=0)
-    max_dba = serializers.IntegerField(required=False,default=180)
 
     details = serializers.CharField(required=False)
     range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
@@ -35,9 +30,6 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     
 
 class CampgroundBookingRangeSerializer(BookingRangeSerializer):
-    # minimum/maximum number of campsites allowed for a booking
-    min_sites = serializers.IntegerField(required=False,default=1)
-    max_sites = serializers.IntegerField(required=False,default=12)
     
     class Meta:
         model = CampgroundBookingRange
@@ -48,12 +40,6 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             'range_end',
             'details',
             'editable',
-            'min_days',
-            'max_days',
-            'min_sites',
-            'max_sites',
-            'min_dba',
-            'max_dba',
             'campground'
         )
         write_only_fields = (
@@ -77,7 +63,7 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
     
     class Meta:
-        model = CampgroundBookingRange
+        model = CampsiteBookingRange
         fields = (
             'id',
             'status',
@@ -85,10 +71,6 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
             'range_end',
             'details',
             'editable',
-            'min_days',
-            'max_days',
-            'min_dba',
-            'max_dba',
             'campsite'
         )
         write_only_fields = (
@@ -181,6 +163,10 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
             self.fields['address'] = serializers.SerializerMethodField()
+
+class CampsiteStayHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CampsiteStayHistory
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:

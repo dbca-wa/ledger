@@ -8,7 +8,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'campgrounds', api.CampgroundViewSet)
-#router.register(r'campsites', views.CampsiteViewSet)
+router.register(r'campsites', api.CampsiteViewSet)
 router.register(r'campsite_bookings', api.CampsiteBookingViewSet)
 router.register(r'promo_areas',api.PromoAreaViewSet)
 router.register(r'parks',api.ParkViewSet)
