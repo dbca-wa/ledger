@@ -5,7 +5,7 @@
 			<alert :show.sync="showUpdate" type="success" :duration="7000">
 				<p>Campground successfully updated</p>
 			</alert>
-			<alert :show.sync="showError" type="danger">
+			<alert :show.sync="showError" type="danger"></alert>
 				<p>{{errorString}}
 					<p/>
 				</alert>
