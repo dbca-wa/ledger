@@ -70,26 +70,16 @@ const routes = [
                             },
                             {
                                 path:':id/campsites/add',
-                                name:'view_campsite',
+                                name:'add_campsite',
                                 component:Campsite
                             },
                             {
-                                path:':id/campsites/:id',
+                                path:':id/campsites/:campsite_id',
                                 name:'view_campsite',
                                 component:Campsite
                             },
                         ]
                     },
-                    {
-                        path:'campsites/add',
-                        name:'view_campsite',
-                        component:Campsite
-                    },
-                    {
-                        path:'campsites/:id',
-                        name:'view_campsite',
-                        component:Campsite
-                    }
                 ]
             }
         ]
