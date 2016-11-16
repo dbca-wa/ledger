@@ -5,6 +5,7 @@ import Vue from 'vue'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
 import AddCampground from '../components/campgrounds/addCampground.vue'
+import Campsite from '../components/campsites/campsite.vue'
 import Router from 'vue-router'
 import $ from '../hooks'
 var css = require('../hooks-css.css');
@@ -57,10 +58,38 @@ const routes = [
                         component: AddCampground
                     },
                     {
-                        path:'campgrounds/:id',
-                        name:'cg_detail',
-                        component: Campground
+                        path:'campgrounds',
+                        component: {
+                            render (c) { return c('router-view') }
+                        },
+                        children:[
+                            {
+                                path:':id',
+                                name:'cg_detail',
+                                component: Campground,
+                            },
+                            {
+                                path:':id/campsites/add',
+                                name:'view_campsite',
+                                component:Campsite
+                            },
+                            {
+                                path:':id/campsites/:id',
+                                name:'view_campsite',
+                                component:Campsite
+                            },
+                        ]
                     },
+                    {
+                        path:'campsites/add',
+                        name:'view_campsite',
+                        component:Campsite
+                    },
+                    {
+                        path:'campsites/:id',
+                        name:'view_campsite',
+                        component:Campsite
+                    }
                 ]
             }
         ]
