@@ -26,7 +26,7 @@
                   <div class="row">
                      <div class="well">
                         <h1>Closure History</h1>
-                        <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
+                        <datatable ref="cg_closure_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
                      </div>
                   </div>
                </div>
@@ -232,7 +232,7 @@ export default {
     },
     mounted: function() {
         var vm = this;
-        vm.$children[1].vmDataTable.on('click', '.deleteRange', function(e) {
+        vm.$refs.cg_closure_dt.vmDataTable.on('click', '.deleteRange', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-range');
             vm.deleteRange = id;
