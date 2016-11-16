@@ -1,171 +1,171 @@
 <template lang="html">
-   <div  id="cg_attr">
-        <div class="col-sm-12">
-            <alert :show.sync="showUpdate" type="success" :duration="7000">
-                <p>Campground successfully updated</p>
-            </alert>
-            <alert :show.sync="showError" type="danger">
-                <p>{{errorString}}<p/>
-            </alert>
-          <form id="attForm">
-              <div class="row">
-                  <div class="col-lg-12">
-                      <div class="panel panel-primary">
-                        <div class="panel-heading">
-                          <h3 class="panel-title">Campground Details</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div class="row">
-                              <div class="col-md-6">
-                                <div class="form-group">
-                                  <label class="control-label" >Campground Name</label>
-                                  <input type="text" name="name" id="name" class="form-control" v-model="campground.name" required/>
-                                </div>
-                              </div>
-                              <div class="col-md-6">
-                                <div class="form-group ">
-                                  <label class="control-label" >Park</label>
-                                  <select name="park" v-show="!parks.length > 0" class="form-control" >
-                                      <option >Loading...</option>
-                                  </select>
-                                  <select name="park" v-if="parks.length > 0" class="form-control" v-model="campground.park">
-                                      <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
-                                  </select>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                  <div class="form-group ">
-                                    <label class="control-label" >Campground Type</label>
-                                    <select id="campground_type" name="campground_type" class="form-control"  v-model="campground.campground_type">
-                                        <option value="0">Campground: no bookings</option>
-                                        <option value="1">Campground: book online</option>
-                                        <option value="2">Campground: book by phone</option>
-                                        <option value="3">Other accommodation</option>
-                                        <option value="4">Not Published</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <div class="col-md-6">
-                                  <div class="form-group ">
-                                    <label class="control-label" >Site Type</label>
-                                    <select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
-                                        <option value="0">Unnumbered Site</option>
-                                        <option value="1">Numbered Site</option>
-                                    </select>
-                                  </div>
-                                </div>
-                            </div>
-                        </div>
-                      </div>
-                  </div>
-              </div>
-              <div class="row" style="margin-top: 40px;">
-                 <div class="col-lg-12">
-                     <div class="panel panel-primary">
-                       <div class="panel-heading">
-                         <h3 class="panel-title">Address</h3>
-                       </div>
-                       <div class="panel-body">
-                           <div class="col-md-3">
-                             <div class="form-group">
-                               <label for="">Street</label>
-                               <input id="street" name="street" type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
-                             </div>
-                           </div>
-                           <div class="col-md-3">
-                               <div class="form-group">
-                                 <label for="">email</label>
-                                 <input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
-                               </div>
-                           </div>
-                           <div class="col-md-3">
-                             <div class="form-group">
-                               <label for="">telephone</label>
-                               <input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
-                             </div>
-                           </div>
-                           <div class="col-md-3">
-                               <div class="form-group">
-                                 <label for="">postcode</label>
-                                 <input id="postcode" name="postcode" type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
-                               </div>
-                           </div>
-                       </div>
-                     </div>
-                 </div>
-              </div>
-              <div class="row" style="margin-top: 40px;">
-                  <div class="col-sm-6 features">
-                    <div class="panel panel-primary">
-                      <div class="panel-heading">
-                        <h3 class="panel-title">Features</h3>
-                      </div>
-                      <div class="panel-body" v-bind:class="{ 'empty-features': allFeaturesSelected }">
-                          <p v-show="allFeaturesSelected">
-                              All features selected
-                          </p>
-                          <ul class="list-group">
-                              <a href="" v-for="feature,key in features"  @click.prevent="addSelectedFeature(feature,key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
-                          </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="col-sm-6 features">
-                    <div class="panel panel-primary">
-                      <div class="panel-heading">
-                        <h3 class="panel-title">Selected Feautures</h3>
-                      </div>
-                      <div class="panel-body"  v-bind:class="{ 'empty-features': !hasSelectedFeatures }">
-                          <p v-show="!hasSelectedFeatures">
-                              No features selected
-                          </p>
-                          <ul class="list-group">
-                              <a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
-                          </ul>
-                      </div>
-                    </div>
-                  </div>
-              </div>
-              <div class="row" style="margin-top: 40px;">
-                <div class="col-md-12">
-                    <div class="form-group">
-                        <label class="control-label" >Description</label>
-                        <div name="editor" id="editor" class="form-control"></div>
-                    </div>
-                </div>
-              </div>
-          </form>
-      </div>
-      <div class="row" style="margin-top: 40px;">
-         <div class="col-sm-8">
-            <div class="form-group">
-               <div class="col-sm-4 col-md-3 col-lg-2">
-                  <label style="line-height: 2.5;">Price set at: </label>
-               </div>
-               <div class="col-sm-8 col-md-9 col-lg-10">
-                  <select id="price_level" name="price_level" class="form-control" v-model="campground.price_level">
-                     <option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
-                  </select>
-               </div>
-            </div>
-         </div>
-         <div class="col-sm-4">
-            <div class="col-sm-12">
-               <div class="form-group pull-right">
-                  <a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
-                  <a href="#" v-else class="btn btn-primary" @click.prevent="update">Update</a>
-                  <a href="#" class="btn btn-default">Cancel</a>
-               </div>
-            </div>
-         </div>
-      </div>
-      <div id="text">
-
-      </div>
-   </div>
+<div  id="cg_attr" >
+	<div v-show="!isLoading">
+		<div class="col-sm-12">
+			<alert :show.sync="showUpdate" type="success" :duration="7000">
+				<p>Campground successfully updated</p>
+			</alert>
+			<alert :show.sync="showError" type="danger">
+				<p>{{errorString}}
+					<p/>
+				</alert>
+				<form id="attForm">
+					<div class="row">
+						<div class="col-lg-12">
+							<div class="panel panel-primary">
+								<div class="panel-heading">
+									<h3 class="panel-title">Campground Details</h3>
+								</div>
+								<div class="panel-body">
+									<div class="row">
+										<div class="col-md-6">
+											<div class="form-group">
+												<label class="control-label" >Campground Name</label>
+												<input type="text" name="name" id="name" class="form-control" v-model="campground.name" required/>
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="form-group ">
+												<label class="control-label" >Park</label>
+												<select name="park" v-show="!parks.length > 0" class="form-control" >
+													<option >Loading...</option>
+												</select>
+												<select name="park" v-if="parks.length > 0" class="form-control" v-model="campground.park">
+													<option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-6">
+											<div class="form-group ">
+												<label class="control-label" >Campground Type</label>
+												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.campground_type">
+													<option value="0">Campground: no bookings</option>
+													<option value="1">Campground: book online</option>
+													<option value="2">Campground: book by phone</option>
+													<option value="3">Other accommodation</option>
+													<option value="4">Not Published</option>
+												</select>
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="form-group ">
+												<label class="control-label" >Site Type</label>
+												<select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
+													<option value="0">Unnumbered Site</option>
+													<option value="1">Numbered Site</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row" style="margin-top: 40px;">
+						<div class="col-lg-12">
+							<div class="panel panel-primary">
+								<div class="panel-heading">
+									<h3 class="panel-title">Address</h3>
+								</div>
+								<div class="panel-body">
+									<div class="col-md-3">
+										<div class="form-group">
+											<label for="">Street</label>
+											<input id="street" name="street" type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
+										</div>
+									</div>
+									<div class="col-md-3">
+										<div class="form-group">
+											<label for="">email</label>
+											<input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
+										</div>
+									</div>
+									<div class="col-md-3">
+										<div class="form-group">
+											<label for="">telephone</label>
+											<input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
+										</div>
+									</div>
+									<div class="col-md-3">
+										<div class="form-group">
+											<label for="">postcode</label>
+											<input id="postcode" name="postcode" type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row" style="margin-top: 40px;">
+						<div class="col-sm-6 features">
+							<div class="panel panel-primary">
+								<div class="panel-heading">
+									<h3 class="panel-title">Features</h3>
+								</div>
+								<div class="panel-body" v-bind:class="{ 'empty-features': allFeaturesSelected }">
+									<p v-show="allFeaturesSelected">
+                             All features selected
+                         </p>
+									<ul class="list-group">
+										<a href="" v-for="feature,key in features"  @click.prevent="addSelectedFeature(feature,key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
+									</ul>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-6 features">
+							<div class="panel panel-primary">
+								<div class="panel-heading">
+									<h3 class="panel-title">Selected Feautures</h3>
+								</div>
+								<div class="panel-body"  v-bind:class="{ 'empty-features': !hasSelectedFeatures }">
+									<p v-show="!hasSelectedFeatures">
+                             No features selected
+                         </p>
+									<ul class="list-group">
+										<a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row" style="margin-top: 40px;">
+						<div class="col-md-12">
+							<div class="form-group">
+								<label class="control-label" >Description</label>
+								<div name="editor" id="editor" class="form-control"></div>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="row" style="margin-top: 40px;">
+				<div class="col-sm-8">
+					<div class="form-group">
+						<div class="col-sm-4 col-md-3 col-lg-2">
+							<label style="line-height: 2.5;">Price set at: </label>
+						</div>
+						<div class="col-sm-8 col-md-9 col-lg-10">
+							<select id="price_level" name="price_level" class="form-control" v-model="campground.price_level">
+								<option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="col-sm-12">
+						<div class="form-group pull-right">
+							<a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
+							<a href="#" v-else class="btn btn-primary" @click.prevent="update">Update</a>
+							<a href="#" class="btn btn-default">Cancel</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<loader :isLoading.sync="isLoading">Loading...</loader>
+	</div>
 </template>
 
 <script>
@@ -186,21 +186,25 @@ import loader from '../utils/loader.vue'
 import alert from '../utils/alert.vue'
 export default {
     name: 'cg_attr',
-    components: {alert, loader},
+    components: {
+        alert,
+        loader
+    },
     data: function() {
         let vm = this;
         return {
             selected_price_set: this.priceSet[0],
             parks: [],
-            editor:null,
-            editor_updated:false,
-            features:[],
-            selected_features_loaded :false,
+            editor: null,
+            editor_updated: false,
+            features: [],
+            selected_features_loaded: false,
             selected_features: Array(),
             form: null,
             errors: false,
-            errorString:'',
-            showUpdate: false
+            errorString: '',
+            showUpdate: false,
+            isLoading: false
         }
     },
     props: {
@@ -211,11 +215,16 @@ export default {
         },
         priceSet: {
             default: function() {
-                return [
-                    {'val':0, name:'Campground level'},
-                    {'val':1, name:'Campsite class level'},
-                    {'val':2, name:'Campsite level'}
-                    ];
+                return [{
+                    'val': 0,
+                    name: 'Campground level'
+                }, {
+                    'val': 1,
+                    name: 'Campsite class level'
+                }, {
+                    'val': 2,
+                    name: 'Campsite level'
+                }];
             }
         },
         campground: {
@@ -229,77 +238,84 @@ export default {
         },
     },
     computed: {
-        showError: function(){
+        showError: function() {
             var vm = this;
             return vm.errors;
         },
-        hasSelectedFeatures:function () {
+        hasSelectedFeatures: function() {
             return this.selected_features.length > 0;
         },
-        allFeaturesSelected:function () {
+        allFeaturesSelected: function() {
             return this.features.length < 1;
         }
     },
-    watch:{
+    watch: {
         campground: {
-            handler:function () {
+            handler: function() {
                 this.loadSelectedFeatures();
             },
-            deep:true
+            deep: true
 
         }
     },
     methods: {
         create: function() {
-            if (this.form.valid()){
-                this.sendData(api_endpoints.campgrounds,'POST');
+            if (this.form.valid()) {
+                this.sendData(api_endpoints.campgrounds, 'POST');
             }
         },
         update: function() {
-            if (this.form.valid()){
-                this.sendData(api_endpoints.campground(this.campground.id),'PUT');
+            if (this.form.valid()) {
+                this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
             }
         },
-        sendData: function(url,method) {
+        sendData: function(url, method) {
             let vm = this;
+            vm.isLoading =true;
             var featuresURL = new Array();
             var temp_features = vm.selected_features;
-            if (vm.createCampground){
+            if (vm.createCampground) {
                 vm.campground.features = vm.selected_features;
             }
-            vm.campground.features.forEach(function(f){
+            vm.campground.features.forEach(function(f) {
                 featuresURL.push(f.url);
             });
             vm.campground.features = featuresURL;
-            if (vm.campground.contact == null && !vm.createCampground){
+            if (vm.campground.contact == null && !vm.createCampground) {
                 delete vm.campground.contact;
             }
             $.ajax({
-                beforeSend: function(xhrObj){
-                  xhrObj.setRequestHeader("Content-Type","application/json");
-                  xhrObj.setRequestHeader("Accept","application/json");
+                beforeSend: function(xhrObj) {
+                    xhrObj.setRequestHeader("Content-Type", "application/json");
+                    xhrObj.setRequestHeader("Accept", "application/json");
                 },
                 url: url,
                 method: method,
-                xhrFields: { withCredentials:true },
+                xhrFields: {
+                    withCredentials: true
+                },
                 data: JSON.stringify(vm.campground),
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    if (method == 'POST'){
+                    if (method == 'POST') {
                         vm.$router.push({
                             name: 'cg_detail',
                             params: {
                                 id: data.id
                             }
                         });
-                    }else if (method == 'PUT'){
+                        vm.isLoading = false;
+                    }
+                    else if (method == 'PUT') {
                         vm.campground.features = temp_features;
                         vm.showUpdate = true;
+                        vm.isLoading = false
                     }
                 },
-                error:function (resp){
+                error: function(resp) {
                     vm.errors = true;
                     vm.errorString = helpers.apiError(resp);
+                    vm.isLoading = false
                 }
             });
         },
@@ -329,19 +345,23 @@ export default {
                 }
             });
         },
-        addSelectedFeature:function (feature,key) {
+        addSelectedFeature: function(feature, key) {
             let vm = this;
             vm.selected_features.push(feature);
-            vm.features.splice(key,1);
-            vm.selected_features.sort(function(a,b){ return parseInt(a.id) - parseInt(b.id)});
+            vm.features.splice(key, 1);
+            vm.selected_features.sort(function(a, b) {
+                return parseInt(a.id) - parseInt(b.id)
+            });
         },
-        removeSelectedFeature:function (feature,key) {
+        removeSelectedFeature: function(feature, key) {
             let vm = this;
             vm.features.push(feature);
-            vm.selected_features.splice(key,1);
-            vm.features.sort(function(a,b){ return parseInt(a.id) - parseInt(b.id)});
+            vm.selected_features.splice(key, 1);
+            vm.features.sort(function(a, b) {
+                return parseInt(a.id) - parseInt(b.id)
+            });
         },
-        addFormValidations: function(){
+        addFormValidations: function() {
             this.form.validate({
                 rules: {
                     name: "required",
@@ -366,9 +386,9 @@ export default {
                     editor: "required",
                     price_level: "Select a price level from the options"
                 },
-                showErrors: function (errorMap, errorList) {
+                showErrors: function(errorMap, errorList) {
 
-                    $.each(this.validElements(), function (index, element) {
+                    $.each(this.validElements(), function(index, element) {
                         var $element = $(element);
                         $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
                     });
@@ -380,24 +400,26 @@ export default {
                     for (var i = 0; i < errorList.length; i++) {
                         var error = errorList[i];
                         $(error.element)
-                            .tooltip({ trigger: "focus" })
+                            .tooltip({
+                                trigger: "focus"
+                            })
                             .attr("data-original-title", error.message)
                             .parents('.form-group').addClass('has-error');
                     }
                 }
             });
         },
-        loadSelectedFeatures:function () {
-            let vm =this;
-            if (vm.campground.features){
-                if (!vm.createCampground){
+        loadSelectedFeatures: function() {
+            let vm = this;
+            if (vm.campground.features) {
+                if (!vm.createCampground) {
                     vm.selected_features = vm.campground.features;
                 }
-                $.each(vm.campground.features,function (i,cgfeature) {
-                    $.each(vm.features,function (j,feat) {
-                        if(feat != null){
-                            if(cgfeature.id == feat.id ){
-                                vm.features.splice(j,1);
+                $.each(vm.campground.features, function(i, cgfeature) {
+                    $.each(vm.features, function(j, feat) {
+                        if (feat != null) {
+                            if (cgfeature.id == feat.id) {
+                                vm.features.splice(j, 1);
                             }
                         }
                     })
@@ -416,7 +438,7 @@ export default {
             },
             theme: 'snow'
         });
-        vm.editor.clipboard.dangerouslyPasteHTML(0,vm.campground.description, 'api');
+        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
         vm.editor.on('text-change', function(delta, oldDelta, source) {
 
             var text = $('#editor >.ql-editor').html();
@@ -426,11 +448,11 @@ export default {
         vm.form = $('#attForm');
         vm.addFormValidations();
     },
-    updated:function () {
-        let vm =this;
-        if(vm.campground.description != null && vm.editor_updated ==false){
-            vm.editor.clipboard.dangerouslyPasteHTML(0,vm.campground.description, 'api');
-            vm.editor_updated =true;
+    updated: function() {
+        let vm = this;
+        if (vm.campground.description != null && vm.editor_updated == false) {
+            vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
+            vm.editor_updated = true;
         }
     }
 }
