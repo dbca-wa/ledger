@@ -40,7 +40,7 @@
                         <label for="open_cg_reason">Reason: </label>
                     </div>
                     <div class="col-md-4">
-                        <select name="closure_reason" v-model="formdata.reason" class="form-control" id="open_cg_reason">
+                        <select name="closure_reason" v-model="formdata.reason" class="form-control" id="close_cg_reason">
                             <option value="1">Closed due to natural disaster</option>
                             <option value="2">Closed for maintenance</option>
                             <option value="3">Other</option>
@@ -54,7 +54,7 @@
                         <label for="open_cg_details">Details: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea v-model="formdata.details" class="form-control" id="open_cg_details"></textarea>
+                        <textarea name="closure_details" v-model="formdata.details" class="form-control" id="close_cg_details"></textarea>
                     </div>
                 </div>
             </div>
@@ -136,14 +136,23 @@ module.exports = {
             });
         },
         addFormValidations: function() {
+            let vm = this;
             this.form.validate({
                 rules: {
                     closure_start: "required",
                     closure_reason: "required",
+                    closure_details: {
+                        required: {
+                            depends: function(el){
+                                return vm.formdata.reason === '3';
+                            }
+                        }
+                    }
                 },
                 messages: {
                     closure_start: "Enter a start date",
                     closure_reason: "Select a closure reason from the options",
+                    closure_details: "Details required if Other reason is selected"
                 },
                 showErrors: function(errorMap, errorList) {
 
