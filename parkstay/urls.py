@@ -35,4 +35,6 @@ urlpatterns = [
     url(r'^dashboard/campgrounds$', views.DashboardView.as_view(), name='dash-campgrounds'),
     url(r'^dashboard/campgrounds/(?P<ground_id>[0-9]+)$', views.DashboardView.as_view(), name='dash-campground-detail'),
     url(r'^dashboard/campgrounds/addCampground$', views.DashboardView.as_view(), name='dash-addCampground'),
+    url(r'^dashboard/campgrounds/(?P<ground_id>[0-9]+)/campsites/add$', views.DashboardView.as_view(), name='dash-campsite-add'),
+    url(r'^dashboard/campgrounds/(?P<ground_id>[0-9]+)/campsites/(?P<campsite_id>[0-9]+)$', views.DashboardView.as_view(), name='dash-campsite-detail'),
 ] + ledger_patterns

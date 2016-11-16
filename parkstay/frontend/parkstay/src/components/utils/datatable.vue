@@ -29,6 +29,9 @@ module.exports = {
      },
      id:{
          required:true
+     },
+     table:{
+         type:Object
      }
    },
    data : function () {
@@ -38,6 +41,12 @@ module.exports = {
    },
    watch:{
 
+       vmDataTable:{
+           handler: () => {
+               this.table = this.vmDataTable;
+           },
+           deep: true
+       }
    },
    methods:{
 
