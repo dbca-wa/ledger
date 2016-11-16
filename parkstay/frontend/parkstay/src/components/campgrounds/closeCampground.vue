@@ -1,16 +1,17 @@
 <template id="pkCgClose">
-<bootstrapModal title="(Temporarily) close campground" :large=true @ok="postAdd()">
+<bootstrapModal title="(Temporarily) close campground" :large=true @ok="addClosure()">
 
     <div class="modal-body">
-        <form class="form-horizontal">
+        <form id="closeCGForm" class="form-horizontal">
             <div class="row">
+			    <alert :show.sync="showError" type="danger"></alert>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label for="open_cg_range_start">Closure start: </label>
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date' id='close_cg_range_start'>
-                            <input v-model="formdata.range_start" type='text' class="form-control" />
+                            <input  name="closure_start" v-model="formdata.range_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -25,7 +26,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date' id='close_cg_range_end'>
-                            <input v-model="formdata.range_end" type='text' class="form-control" />
+                            <input name="closure_end" v-model="formdata.range_end" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -39,7 +40,7 @@
                         <label for="open_cg_reason">Reason: </label>
                     </div>
                     <div class="col-md-4">
-                        <select v-model="formdata.reason" class="form-control" id="open_cg_reason">
+                        <select name="closure_reason" v-model="formdata.reason" class="form-control" id="open_cg_reason">
                             <option value="1">Closed due to natural disaster</option>
                             <option value="2">Closed for maintenance</option>
                             <option value="3">Other</option>
@@ -66,7 +67,8 @@
 <script>
 import bootstrapModal from '../utils/bootstrap-modal.vue'
 import {bus} from '../utils/eventBus.js'
-import { $, datetimepicker,api_endpoints } from '../../hooks'
+import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
+import alert from '../utils/alert.vue'
 module.exports = {
     name: 'pkCgClose',
     data: function() {
@@ -80,10 +82,17 @@ module.exports = {
                 details: ''
             },
             closeStartPicker: '',
-            closeEndPicker: ''
+            closeEndPicker: '',
+            errors: false,
+            errorString: '',
+            form: ''
         }
     },
     computed: {
+        showError: function() {
+            var vm = this;
+            return vm.errors;
+        },
         isModalOpen: function() {
             return this.$parent.isOpenCloseCG;
         },
@@ -92,14 +101,20 @@ module.exports = {
         }
     },
     components: {
-        bootstrapModal
+        bootstrapModal,
+        alert
     },
     methods: {
         close: function() {
             this.$parent.isOpenCloseCG = false;
             this.status = '';
         },
-        postAdd: function() {
+        addClosure: function() {
+            if (this.form.valid()){
+                this.sendData();
+            }
+        },
+        sendData: function() {
             let vm = this;
             var data = this.formdata;
             data.status = vm.formdata.reason;
@@ -115,10 +130,44 @@ module.exports = {
                     bus.$emit('refreshCGTable');
                 },
                 error:function (data){
-                    console.log(data);
+                    vm.errors = true;
+                    vm.errorString = helpers.apiError(resp);
                 }
             });
-        }
+        },
+        addFormValidations: function() {
+            this.form.validate({
+                rules: {
+                    closure_start: "required",
+                    closure_reason: "required",
+                },
+                messages: {
+                    closure_start: "Enter a start date",
+                    closure_reason: "Select a closure reason from the options",
+                },
+                showErrors: function(errorMap, errorList) {
+
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+       }
     },
     mounted: function() {
         var vm = this;
@@ -143,6 +192,8 @@ module.exports = {
         vm.closeEndPicker.on('dp.change', function(e){
             vm.formdata.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
+        vm.form = $('#closeCGForm');
+        vm.addFormValidations();
     }
 };
 </script>
