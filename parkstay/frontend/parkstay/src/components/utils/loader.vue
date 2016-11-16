@@ -16,10 +16,12 @@
 <script>
 export default {
   name:'spinnerLoader',
-  computed:{
-    isLoading:function () {
-      return this.$parent.isLoading;
-    }
+  props:{
+      isLoading:{
+          default:function () {
+              return false;
+          }
+      }
   }
 }
 </script>
