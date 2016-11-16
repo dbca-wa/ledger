@@ -48,7 +48,7 @@
                <div class="col-lg-12">
                   <div class="row">
                      <div class="well">
-                        <datatable :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
+                        <datatable ref="cg_campsites_dt" :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
                      </div>
                   </div>
                </div>
@@ -237,6 +237,17 @@ export default {
             var id = $(this).attr('data-range');
             vm.deleteRange = id;
             bus.$emit('showAlert', 'deleteRange');
+        });
+        vm.$refs.cg_campsites_dt.vmDataTable.on('click', '.detailRoute', function(e) {
+            e.preventDefault();
+            var id = $(this).attr('data-campsite');
+            vm.$router.push({
+                name: 'view_campsite',
+                params: {
+                    id: vm.campground.id,
+                    campsite_id: id
+                }
+            });
         });
         vm.fetchCampground();
     }
