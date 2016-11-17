@@ -60,7 +60,8 @@
 
 <script>
 import {
-    $
+    $,
+    api_endpoints
 } from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
 export default {
@@ -68,7 +69,8 @@ export default {
     components:{
         datatable
     },
-    data:()=>{
+    data:function (){
+        let vm = this;
         return{
             createCampsite:true,
             campsite:{},
@@ -86,6 +88,10 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
+            //TODO
+            /**
+            *replace all with actual values
+            */
             msh_options:{
                 responsive: true,
                 processing: true,
@@ -93,6 +99,38 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
+                ajax:{
+                    //TODO
+                    /*
+                    * change end point to closure history
+                    */
+                    url:api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
+                    dataSrc:''
+                },
+                columns:[
+                    {
+                        "data": "id"
+                    },
+                    {
+                        "data":"closure_start"
+                    },
+                    {
+                        "data":"closure_end"
+                    },
+                    {
+                        "data":"closure_reason"
+                    },
+                    {
+                        "data":"reopen_reason"
+                    },
+                    {
+                        "mRender": function(data, type, full) {
+                            var id = full.id;
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>";
+                            return column.replace('__ID__', id);
+                        }
+                    }
+                ]
             },
             ph_options:{
                 responsive: true,
@@ -101,6 +139,38 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
+                ajax:{
+                    //TODO
+                    /*
+                    * change end point to closure history
+                    */
+                    url:api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
+                    dataSrc:''
+                },
+                columns:[
+                    {
+                        "data": "id"
+                    },
+                    {
+                        "data":"closure_start"
+                    },
+                    {
+                        "data":"closure_end"
+                    },
+                    {
+                        "data":"closure_reason"
+                    },
+                    {
+                        "data":"reopen_reason"
+                    },
+                    {
+                        "mRender": function(data, type, full) {
+                            var id = full.id;
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>";
+                            return column.replace('__ID__', id);
+                        }
+                    }
+                ]
             },
             ch_options:{
                 responsive: true,
@@ -109,6 +179,38 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
+                ajax:{
+                    //TODO
+                    /*
+                    * change end point to closure history
+                    */
+                    url:api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
+                    dataSrc:''
+                },
+                columns:[
+                    {
+                        "data": "id"
+                    },
+                    {
+                        "data":"closure_start"
+                    },
+                    {
+                        "data":"closure_end"
+                    },
+                    {
+                        "data":"closure_reason"
+                    },
+                    {
+                        "data":"reopen_reason"
+                    },
+                    {
+                        "mRender": function(data, type, full) {
+                            var id = full.id;
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>";
+                            return column.replace('__ID__', id);
+                        }
+                    }
+                ]
             }
 
         }
