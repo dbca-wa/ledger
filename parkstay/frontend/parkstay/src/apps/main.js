@@ -6,6 +6,7 @@ import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
 import AddCampground from '../components/campgrounds/addCampground.vue'
 import Campsite from '../components/campsites/campsite.vue'
+import page_404 from '../components/utils/404.vue'
 import Router from 'vue-router'
 import $ from '../hooks'
 var css = require('../hooks-css.css');
@@ -84,6 +85,11 @@ const routes = [
                 ]
             }
         ]
+    },
+    {
+        path: '/404',
+        name: '404',
+        component: page_404
     }
 ];
 
