@@ -89,17 +89,20 @@
 <script>
 import {
     $,
-    api_endpoints
+    api_endpoints,
+    helpers
 } from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
 import addMaxStayCS from './addMaximumStayPeriod.vue'
 import select_panel from '../utils/select-panel.vue'
+import alert from '../utils/alert.vue'
 export default {
     name:'campsite',
     components:{
         datatable,
         addMaxStayCS,
         "select-panel":select_panel,
+        alert
     },
     data:function (){
         let vm = this;
@@ -274,9 +277,13 @@ export default {
                 success: function(data, stat, xhr) {
                     vm.campsite = data;
                 },
-                error:function (data){
+                error:function (resp){
                     vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+                    if (resp.status == 404){
+                        vm.$router.push({
+                            name: '404'
+                        });
+                    }
                 }
             });
         },
@@ -287,7 +294,6 @@ export default {
     mounted: function() {
         let vm = this;
         if (vm.$route.params.campsite_id){
-            console.log('hi');
             vm.createCampiste = false;
             vm.fetchCampsite();
         }
