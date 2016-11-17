@@ -65,8 +65,8 @@
 import datatable from '../utils/datatable.vue'
 import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
-import pkCsClose from '../campsites/closeCampsite.vue'
-import pkCsOpen from '../campsites/openCampsite.vue'
+import pkCsClose from '../campsites/closureHistory/closeCampsite.vue'
+import pkCsOpen from '../campsites/closureHistory/openCampsite.vue'
 import {
     bus
 }
