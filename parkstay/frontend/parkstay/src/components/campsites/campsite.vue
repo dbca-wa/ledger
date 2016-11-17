@@ -24,9 +24,9 @@
                             <h1>Maximum Stay History</h1>
                         </div>
                         <div class="col-sm-4">
-                         <button class="btn btn-primary pull-right table_btn">Add Max Stay Period</button>
+                         <button @click="showAddStay()" class="btn btn-primary pull-right table_btn">Add Max Stay Period</button>
                         </div>
-                         <datatable :dtHeaders ="msh_headers" :dtOptions="msh_options" :table.sync="msh_table" id="stay_history"></datatable>
+                         <datatable ref="addMaxStayModal" :dtHeaders ="msh_headers" :dtOptions="msh_options" :table.sync="msh_table" id="stay_history"></datatable>
                       </div>
                    </div>
                    <div class="row">
