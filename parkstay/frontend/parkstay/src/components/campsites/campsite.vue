@@ -1,5 +1,6 @@
 <template lang="html">
     <div id="campsite">
+        <addMaxStayCS :campsite.sync="campsite" ref="addMaxStayModal"></addMaxStayCS>
        <div class="panel panel-default" id="applications">
          <div class="panel-heading" role="tab" id="applications-heading">
              <h4 class="panel-title">
@@ -51,9 +52,9 @@
                             <h1>Maximum Stay History</h1>
                         </div>
                         <div class="col-sm-4">
-                         <button class="btn btn-primary pull-right table_btn">Add Max Stay Period</button>
+                         <button @click="showAddStay()" class="btn btn-primary pull-right table_btn">Add Max Stay Period</button>
                         </div>
-                         <datatable :dtHeaders ="msh_headers" :dtOptions="msh_options" :table.sync="msh_table" id="stay_history"></datatable>
+                         <datatable ref="addMaxStayDT" :dtHeaders ="msh_headers" :dtOptions="msh_options" :table.sync="msh_table" id="stay_history"></datatable>
                       </div>
                    </div>
                    <div class="row">
@@ -88,15 +89,20 @@
 <script>
 import {
     $,
-    api_endpoints
+    api_endpoints,
+    helpers
 } from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
+import addMaxStayCS from './addMaximumStayPeriod.vue'
 import select_panel from '../utils/select-panel.vue'
+import alert from '../utils/alert.vue'
 export default {
     name:'campsite',
     components:{
         datatable,
+        addMaxStayCS,
         "select-panel":select_panel,
+        alert
     },
     data:function (){
         let vm = this;
@@ -107,7 +113,7 @@ export default {
             campsite:{},
             msh_headers:['ID','Period Start', 'Period End','Maximum Stay(Nights)', 'Comment', 'Action'],
             ph_headers:['ID','Period Start','Period End','Adult Price','Concession Price','Child Price','Comment','Action'],
-            ch_headers:['ID','Closure Start','Reopen','Closure Reason','Reopen Reason','Action'],
+            ch_headers:['ID','Closure Start','Reopen','Closure Reason','Details','Action'],
             msh_table:{},
             ph_table:{},
             ch_table:{},
@@ -143,16 +149,16 @@ export default {
                         "data": "id"
                     },
                     {
-                        "data":"closure_start"
+                        "data":"range_start"
                     },
                     {
-                        "data":"closure_end"
+                        "data":"range_end"
                     },
                     {
-                        "data":"closure_reason"
+                        "data":"max_days"
                     },
                     {
-                        "data":"reopen_reason"
+                        "data":"details"
                     },
                     {
                         "mRender": function(data, type, full) {
@@ -215,7 +221,7 @@ export default {
                     /*
                     * change end point to closure history
                     */
-                    url:api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
+                    url:api_endpoints.campsites_status_history(vm.$route.params.campsite_id),
                     dataSrc:''
                 },
                 columns:[
@@ -223,16 +229,16 @@ export default {
                         "data": "id"
                     },
                     {
-                        "data":"closure_start"
+                        "data":"range_start"
                     },
                     {
-                        "data":"closure_end"
+                        "data":"range_end"
                     },
                     {
-                        "data":"closure_reason"
+                        "data":"status"
                     },
                     {
-                        "data":"reopen_reason"
+                        "data":"details"
                     },
                     {
                         "mRender": function(data, type, full) {
@@ -246,7 +252,10 @@ export default {
 
         }
     },
-    methods:{
+    methods: {
+        showAddStay: function(){
+            this.$refs.addMaxStayModal.isOpen = true;
+        },
         loadFeatures: function() {
             var vm = this;
             var url = api_endpoints.features;
@@ -258,9 +267,38 @@ export default {
                 }
             });
         },
+        fetchCampsite: function() {
+            let vm = this;
+             $.ajax({
+                url: api_endpoints.campsite(vm.$route.params.campsite_id),
+                method: 'GET',
+                xhrFields: { withCredentials:true },
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.campsite = data;
+                },
+                error:function (resp){
+                    vm.errors = true;
+                    if (resp.status == 404){
+                        vm.$router.push({
+                            name: '404'
+                        });
+                    }
+                }
+            });
+        },
+        refreshMaxStayTable: function() {
+            this.$refs.addMaxStayDT.vmDataTable.ajax.reload();
+        }
     },
-    mounted:function () {
-        this.loadFeatures();
+    mounted: function() {
+        let vm = this;
+        if (vm.$route.params.campsite_id){
+            vm.createCampiste = false;
+            vm.fetchCampsite();
+        }
+        vm.loadFeatures();
+
     }
 }
 </script>

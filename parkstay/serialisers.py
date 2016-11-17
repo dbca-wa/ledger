@@ -165,6 +165,9 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             self.fields['address'] = serializers.SerializerMethodField()
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
+    details = serializers.CharField(required=False)
+    range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
+    range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
     class Meta:
         model = CampsiteStayHistory
 

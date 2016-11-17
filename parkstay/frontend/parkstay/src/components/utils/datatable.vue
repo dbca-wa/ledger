@@ -45,8 +45,8 @@ module.exports = {
    mounted:function () {
       let vm = this;
       var table =$('#'+vm.id);
+        $.fn.dataTable.ext.errMode = 'throw';
       vm.vmDataTable = $(table).DataTable(vm.dtOptions);
-
    }
 };
 </script>
