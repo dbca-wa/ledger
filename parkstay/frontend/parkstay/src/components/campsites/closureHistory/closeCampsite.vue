@@ -4,7 +4,7 @@
     <div class="modal-body">
         <form id="closeCGForm" class="form-horizontal">
             <div class="row">
-			    <alert :show.sync="showError" type="danger"></alert>
+			    <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label for="open_cg_range_start">Closure start: </label>
@@ -75,6 +75,7 @@ module.exports = {
         return {
             status: '',
             id:'',
+            current_closure: '',
             formdata: {
                 range_start: '',
                 range_end: '',
@@ -85,7 +86,8 @@ module.exports = {
             closeEndPicker: '',
             errors: false,
             errorString: '',
-            form: ''
+            form: '',
+            isOpen: false
         }
     },
     computed: {
@@ -94,7 +96,7 @@ module.exports = {
             return vm.errors;
         },
         isModalOpen: function() {
-            return this.$parent.isOpenCloseCS;
+            return this.isOpen;
         },
         requireDetails: function () {
             return (this.formdata.reason === '3')? true: false;
@@ -106,33 +108,13 @@ module.exports = {
     },
     methods: {
         close: function() {
-            this.$parent.isOpenCloseCS = false;
+            this.isOpen = false;
             this.status = '';
         },
         addClosure: function() {
             if (this.form.valid()){
-                this.sendData();
+                this.$emit('closeCampsite');
             }
-        },
-        sendData: function() {
-            let vm = this;
-            var data = this.formdata;
-            data.status = vm.formdata.reason;
-            $.ajax({
-                url: api_endpoints.opencloseCS(vm.id),
-                method: 'POST',
-                xhrFields: { withCredentials:true },
-                data: data,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.close();
-                    bus.$emit('refreshCSTable');
-                },
-                error:function (resp){
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
-                }
-            });
         },
         addFormValidations: function() {
             let vm = this;
@@ -179,10 +161,6 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('opencloseCS', function(data){
-            vm.status = data.status;
-            vm.id = data.id;
-        });
         vm.closeStartPicker = $('#close_cg_range_start');
         vm.closeEndPicker = $('#close_cg_range_end');
         vm.closeStartPicker.datetimepicker({

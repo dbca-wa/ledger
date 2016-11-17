@@ -1,6 +1,6 @@
 <template lang="html">
    <div class="panel-group" id="applications-accordion" role="tablist" aria-multiselectable="true">
-        <pkCsClose></pkCsClose>
+        <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
         <pkCsOpen></pkCsOpen>
       <div class="panel panel-default" id="applications">
         <div class="panel-heading" role="tab" id="applications-heading">
@@ -74,7 +74,8 @@ from '../utils/eventBus.js'
 import {
     $,
     Moment,
-    api_endpoints
+    api_endpoints,
+    helpers
 }
 from '../../hooks.js'
 
@@ -229,7 +230,30 @@ export default {
             });
         },
         showOpenCloseCS: function() {
-            this.isOpenCloseCS = true;
+            this.$refs.closeCampsite.isOpen = true;
+        },
+        closeCampsite: function() {
+            let vm = this;
+            var data = vm.$refs.closeCampsite.formdata;
+            data.status = vm.$refs.closeCampsite.formdata.reason;
+            $.ajax({
+                url: api_endpoints.opencloseCS(vm.$refs.closeCampsite.id),
+                method: 'POST',
+                xhrFields: { withCredentials:true },
+                data: data,
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.$refs.closeCampsite.close();
+                    vm.refreshCampsiteClosures();
+                },
+                error:function (resp){
+                    vm.$refs.closeCampsite.errors = true;
+                    vm.$refs.closeCampsite.errorString = helpers.apiError(resp);
+                }
+            });
+        },
+        refreshCampsiteClosures: function(dt) {
+            this.$refs.cg_campsites_dt.vmDataTable.ajax.reload();
         },
         showOpenOpenCS: function() {
             this.isOpenOpenCS = true;
@@ -268,15 +292,12 @@ export default {
         vm.$refs.cg_campsites_dt.vmDataTable.on('click', '.statusCS', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-campsite');
-            console.log(id);
             var status = $(this).attr('data-status');
             var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
-            var data = {
-                'status': status,
-                'id': id,
-                'closure': current_closure
-            }
-            bus.$emit('opencloseCS', data);
+            // Update close modal attributes
+            vm.$refs.closeCampsite.status = status;
+            vm.$refs.closeCampsite.id = id;
+            vm.$refs.closeCampsite.current_closure = current_closure;
             if (status === 'open'){
                 vm.showOpenOpenCS();
             }else if (status === 'close'){
@@ -285,9 +306,6 @@ export default {
         });
          bus.$on('refreshCGTable', function(){
             vm.dtGrounds.ajax.reload();
-        });
-         bus.$on('refreshCSTable', function(){
-            vm.$refs.cg_campsites_dt.vmDataTable.ajax.reload();
         });
 
         vm.fetchCampground();

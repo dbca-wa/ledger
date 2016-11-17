@@ -1,5 +1,6 @@
 <template lang="html">
     <div id="campsite">
+        <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
         <addMaxStayCS :campsite.sync="campsite" ref="addMaxStayModal"></addMaxStayCS>
        <div class="panel panel-default" id="applications">
          <div class="panel-heading" role="tab" id="applications-heading">
@@ -74,9 +75,9 @@
                             <h1>Closure History</h1>
                         </div>
                         <div class="col-sm-4">
-                         <button class="btn btn-primary pull-right table_btn">Add Closure Period</button>
+                         <button @click="showCloseCS()" class="btn btn-primary pull-right table_btn">Add Closure Period</button>
                         </div>
-                         <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" :table.sync="ch_table" id="closure_history"></datatable>
+                         <datatable ref="closureHistDT" :dtHeaders ="ch_headers" :dtOptions="ch_options" :table.sync="ch_table" id="closure_history"></datatable>
                       </div>
                    </div>
                 </div>
@@ -93,16 +94,18 @@ import {
     helpers
 } from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
-import addMaxStayCS from './addMaximumStayPeriod.vue'
+import addMaxStayCS from './stayHistory/addMaximumStayPeriod.vue'
 import select_panel from '../utils/select-panel.vue'
 import alert from '../utils/alert.vue'
+import pkCsClose from './closureHistory/closeCampsite.vue'
 export default {
     name:'campsite',
     components:{
         datatable,
         addMaxStayCS,
         "select-panel":select_panel,
-        alert
+        alert,
+        pkCsClose
     },
     data:function (){
         let vm = this;
@@ -163,8 +166,11 @@ export default {
                     {
                         "mRender": function(data, type, full) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>";
-                            return column.replace('__ID__', id);
+                            if (full.editable){
+                                var column = "<td ><a href='#' class='editStay' data-stay_period=\"__ID__\" >Edit</a>";
+                                return column.replace('__ID__', id);
+                            }
+                            return '';
                         }
                     }
                 ]
@@ -256,6 +262,12 @@ export default {
         showAddStay: function(){
             this.$refs.addMaxStayModal.isOpen = true;
         },
+        showCloseCS: function() {
+            var id = this.campsite.id;
+            // Update close modal attributes
+            this.$refs.closeCampsite.id = id;
+            this.$refs.closeCampsite.isOpen = true;
+        },
         loadFeatures: function() {
             var vm = this;
             var url = api_endpoints.features;
@@ -264,6 +276,26 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.features = data;
+                }
+            });
+        },
+        closeCampsite: function() {
+            let vm = this;
+            var data = vm.$refs.closeCampsite.formdata;
+            data.status = vm.$refs.closeCampsite.formdata.reason;
+            $.ajax({
+                url: api_endpoints.opencloseCS(vm.$refs.closeCampsite.id),
+                method: 'POST',
+                xhrFields: { withCredentials:true },
+                data: data,
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.$refs.closeCampsite.close();
+                    vm.$refs.closureHistDT.vmDataTable.ajax.reload();
+                },
+                error:function (resp){
+                    vm.$refs.closeCampsite.errors = true;
+                    vm.$refs.closeCampsite.errorString = helpers.apiError(resp);
                 }
             });
         },
@@ -289,6 +321,12 @@ export default {
         },
         refreshMaxStayTable: function() {
             this.$refs.addMaxStayDT.vmDataTable.ajax.reload();
+        },
+        attachEventListenersMaxStayDT: function() {
+            let vm = this;
+            vm.$refs.addMaxStayDT.vmDataTable.on('click','.editStay', function(e){
+                e.preventDefault();
+            });
         }
     },
     mounted: function() {
