@@ -21,6 +21,9 @@ module.exports = {
     },
     // Campsites
     campsites:"/api/campsites.json",
+    campsites_status_history:function(id){
+        return "/api/campsites/" + id + "/status_history.json?closures=True"
+    },
     campsite:function (id) {
         return "/api/campsites/"+id+".json";
     },

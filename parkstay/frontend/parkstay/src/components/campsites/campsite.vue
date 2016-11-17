@@ -20,19 +20,34 @@
                    </div>
                    <div class="row">
                       <div class="well">
-                         <h1>Maximum Stay History</h1>
+                        <div class="col-sm-8">
+                            <h1>Maximum Stay History</h1>
+                        </div>
+                        <div class="col-sm-4">
+                         <button class="btn btn-primary pull-right table_btn">Add Max Stay Period</button>
+                        </div>
                          <datatable :dtHeaders ="msh_headers" :dtOptions="msh_options" :table.sync="msh_table" id="stay_history"></datatable>
                       </div>
                    </div>
                    <div class="row">
                       <div class="well">
-                         <h1>Price History</h1>
+                        <div class="col-sm-8">
+                            <h1>Price History</h1>
+                        </div>
+                        <div class="col-sm-4">
+                         <button class="btn btn-primary pull-right table_btn">Add Price Period</button>
+                        </div>
                          <datatable :dtHeaders ="ph_headers" :dtOptions="ph_options" :table.sync="ph_table" id="price_history"></datatable>
                       </div>
                    </div>
                    <div class="row">
                       <div class="well">
-                         <h1>Closure History</h1>
+                        <div class="col-sm-8">
+                            <h1>Closure History</h1>
+                        </div>
+                        <div class="col-sm-4">
+                         <button class="btn btn-primary pull-right table_btn">Add Closure Period</button>
+                        </div>
                          <datatable :dtHeaders ="ch_headers" :dtOptions="ch_options" :table.sync="ch_table" id="closure_history"></datatable>
                       </div>
                    </div>
@@ -204,4 +219,8 @@ export default {
 </script>
 
 <style lang="css">
+    .table_btn {
+        margin-top: 25px;
+        margin-right: -14px;
+    }
 </style>
