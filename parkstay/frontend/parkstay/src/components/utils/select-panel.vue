@@ -42,26 +42,26 @@ export default {
         options:{
             type:Array,
             required:true,
-            default:()=> {
-                return {};
+            default:function () {
+                return [];
             }
         },
         selected:{
             type:Array,
             required:true,
-            default:()=> {
-                return {};
+            default:function () {
+                return [];
             }
         }
     },
     computed : {
-        allOptionsSelected:() => {
-            this.options.length < 1;
+        allOptionsSelected:function () {
+            return !this.options.length > 0;
         },
-        hasSelectedOptions: () => {
+        hasSelectedOptions:function  () {
             return this.selected.length > 0;
         }
-    }
+    },
     methods:{
         addSelected: function(option, key) {
             let vm = this;

@@ -15,9 +15,36 @@
              <div class="panel-body">
                 <div class="col-lg-12">
                    <div class="row">
-                       <div class="well">
-                           <!--campsiteAttr :createCampsite="createCampsite" :campsite.sync="campsite"></campsiteAttr-->
-                       </div>
+                       <form>
+                           <div class="panel panel-primary">
+    							<div class="panel-heading">
+    								<h3 class="panel-title">Campsite Details</h3>
+    							</div>
+    							<div class="panel-body">
+    								<div class="row">
+    									<div class="col-md-6">
+    										<div class="form-group">
+    											<label class="control-label" >Campsite Name</label>
+    											<input type="text" name="name" class="form-control"  required/>
+    										</div>
+    									</div>
+    									<div class="col-md-6">
+    										<div class="form-group ">
+    											<label class="control-label" >Class</label>
+    											<select name="park" class="form-control" >
+    												<option >Class...</option>
+    											</select>
+    										</div>
+    									</div>
+    								</div>
+    								<div class="row">
+    									<div class="col-sm-12">
+                                        <select-panel :options="features" :selected="selected_features" id="select-features" refs="select-features"></select-panel>
+    									</div>
+    								</div>
+    							</div>
+    						</div>
+                       </form>
                    </div>
                    <div class="row">
                       <div class="well">
@@ -66,15 +93,19 @@ import {
 } from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
 import addMaxStayCS from './addMaximumStayPeriod.vue'
+import select_panel from '../utils/select-panel.vue'
 export default {
     name:'campsite',
     components:{
         datatable,
         addMaxStayCS
+        "select-panel":select_panel,
     },
     data:function (){
         let vm = this;
         return{
+            features:[],
+            selected_features:[],
             createCampsite:true,
             campsite:{},
             msh_headers:['ID','Period Start', 'Period End','Maximum Stay(Nights)', 'Comment', 'Action'],
@@ -222,6 +253,17 @@ export default {
         showAddStay: function(){
             this.$refs.addMaxStayModal.isOpen = true;
         },
+        loadFeatures: function() {
+            var vm = this;
+            var url = api_endpoints.features;
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.features = data;
+                }
+            });
+        },
         fetchCampsite: function() {
             let vm = this;
              $.ajax({
@@ -244,6 +286,7 @@ export default {
     },
     mounted: function() {
         let vm = this;
+        vm.loadFeatures();
 
         if (!vm.createCampsite){
             vm.fetchCampsite();
