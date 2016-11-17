@@ -56,7 +56,7 @@ export default {
     },
     computed : {
         allOptionsSelected:function () {
-            this.options.length < 1;
+            return !this.options.length > 0;
         },
         hasSelectedOptions:function  () {
             return this.selected.length > 0;
