@@ -373,7 +373,7 @@ class Campsite(models.Model):
         if not self.campground_open:
             raise ValidationError('You can\'t open this campsite until the campground is open')
         if self.active:
-            raise ValidationError('This campground is already open.')
+            raise ValidationError('This campsite is already open.')
         b = CampsiteBookingRange(**data)
         try:
             within = CampsiteBookingRange.objects.filter(Q(campsite=b.campsite),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
@@ -387,7 +387,7 @@ class Campsite(models.Model):
 
     def close(self, data):
         if not self.active:
-            raise ValidationError('This campground is already closed.')
+            raise ValidationError('This campsite is already closed.')
         b = CampsiteBookingRange(**data)
         try:
             within = CampsiteBookingRange.objects.filter(Q(campsite=b.campsite),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
