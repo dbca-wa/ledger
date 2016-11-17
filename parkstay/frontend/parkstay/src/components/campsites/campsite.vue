@@ -98,7 +98,7 @@ export default {
     name:'campsite',
     components:{
         datatable,
-        addMaxStayCS
+        addMaxStayCS,
         "select-panel":select_panel,
     },
     data:function (){
@@ -286,11 +286,13 @@ export default {
     },
     mounted: function() {
         let vm = this;
-        vm.loadFeatures();
-
-        if (!vm.createCampsite){
+        if (vm.$route.params.campsite_id){
+            console.log('hi');
+            vm.createCampiste = false;
             vm.fetchCampsite();
         }
+        vm.loadFeatures();
+
     }
 }
 </script>
