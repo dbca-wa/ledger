@@ -22,7 +22,7 @@
                     <div class="modal-footer">
                         <slot name="footer">
                             <button type="button" :class="cancelClass" @click="cancel">{{cancelText}}</button>
-                            <button type="button" :class="okClass" @click="ok">{{okText}}</button>
+                            <button id="okBtn" type="button" :class="okClass" @click="ok">{{okText}}</button>
                         </slot>
                     </div>
                 </div>
@@ -74,11 +74,11 @@
             },
             okClass: {
                 type: String,
-                default: 'btn blue'
+                default: 'btn btn-primary'
             },
             cancelClass: {
                 type: String,
-                default: 'btn red btn-outline'
+                default: 'btn btn-danger'
             },
             closeWhenOK: {
                 type: Boolean,
@@ -170,5 +170,12 @@
     }
     .modal-enter .modal-backdrop, .modal-leave .modal-backdrop {
         opacity: 0;
+    }
+    .close {
+        color: #d9534f;
+        opacity: 1;
+    }
+    #okBtn {
+        margin-bottom: 0px;
     }
 </style>
