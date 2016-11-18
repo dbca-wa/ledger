@@ -166,8 +166,8 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
-    range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
-    range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
+    range_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
+    range_end = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
     class Meta:
         model = CampsiteStayHistory
         fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','details','campsite','editable')
