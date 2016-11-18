@@ -10,6 +10,7 @@
         </div>
         <datatable ref="closure_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
      </div>
+    <confirmbox id="deleteClosure" :options="deleteClosurePrompt"></confirmbox>
 </div>
 </template>
 
@@ -18,6 +19,7 @@ import datatable from './datatable.vue'
 import confirmbox from './confirmbox.vue'
 import Close from './closureHistory/close.vue'
 import Open from './closureHistory/open.vue'
+import {bus} from './eventBus.js'
 import {
     $,
     Moment,
@@ -62,6 +64,21 @@ export default {
             campground: {},
             campsite:{},
             closure: {},
+            deleteClosure: null,
+            deleteClosurePrompt: {
+                icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
+                message: "Are you sure you want to Delete this closure Period",
+                buttons: [{
+                    text: "Delete",
+                    event: "delete",
+                    bsColor: "btn-danger",
+                    handler: function() {
+                        vm.deleteClosureRecord(vm.deleteClosure);
+                        vm.deleteClosure = null;
+                    },
+                    autoclose: true
+                }]
+            },
             ch_options: {
                 responsive: true,
                 processing: true,
@@ -114,6 +131,16 @@ export default {
     methods: {
         showClose: function(){
             this.$refs.closeModal.isOpen = true;
+        },
+        deleteClosureRecord: function(id) {
+            var vm = this;
+            var url = vm.closureURL(id);
+            $.ajax({
+                method: "DELETE",
+                url: url,
+            }).done(function(msg) {
+                vm.$refs.closure_dt.vmDataTable.ajax.reload();
+            });
         },
         getAddURL: function() {
             if (this.closeCampground){
@@ -181,6 +208,12 @@ export default {
                 e.preventDefault();
                 var id = $(this).data('range');
                 vm.editClosure(id);
+            });
+            vm.$refs.closure_dt.vmDataTable.on('click','.deleteRange', function(e) {
+                e.preventDefault();
+                var id = $(this).data('range');
+                vm.deleteClosure = id;
+                bus.$emit('showAlert', 'deleteClosure');
             });
         },
     },
