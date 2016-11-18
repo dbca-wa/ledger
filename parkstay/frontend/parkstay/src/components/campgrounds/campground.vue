@@ -203,7 +203,7 @@ export default {
             cs_headers: ['Campsite Id', 'Type', 'Status', 'Price', 'Action'],
             deletePrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message: "Are you sure you want to Delete!!!",
+                message: "Are you sure you want to Delete ?",
                 buttons: [{
                     text: "Delete",
                     event: "delete",
