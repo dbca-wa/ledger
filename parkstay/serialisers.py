@@ -53,11 +53,19 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             method = kwargs.pop("method")
         except:
             method = 'get'
+        try:
+            original = kwargs.pop("original")
+        except:
+            original = False;
         super(CampgroundBookingRangeSerializer, self).__init__(*args, **kwargs)
         if method == 'post':
             self.fields['status'] = serializers.ChoiceField(choices=CampgroundBookingRange.BOOKING_RANGE_CHOICES)
-        else:
-            self.fields['status'] = serializers.SerializerMethodField()
+        elif method == 'get':
+            if not original:
+                self.fields['status'] = serializers.SerializerMethodField()
+            else:
+                self.fields['range_start'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
+                self.fields['range_end'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
 
 
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
