@@ -1,7 +1,7 @@
 <template lang="html">
     <div id="campsite">
         <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
-        <addMaxStayCS :campsite.sync="campsite" ref="addMaxStayModal"></addMaxStayCS>
+        <addMaxStayCS :stay.sync="stay" :campsite.sync="campsite" ref="addMaxStayModal"></addMaxStayCS>
        <div class="panel panel-default" id="applications">
          <div class="panel-heading" role="tab" id="applications-heading">
              <h4 class="panel-title">
@@ -49,6 +49,7 @@
                    </div>
                    <div class="row">
                       <div class="well">
+                        <alert ref="retrieveStayAlert" :show.sync="retrieve_stay.error" type="danger" :duration="retrieve_stay.timeout">{{retrieve_stay.errorString}}</alert>
                         <div class="col-sm-8">
                             <h1>Maximum Stay History</h1>
                         </div>
@@ -84,6 +85,7 @@
              </div>
           </div>
        </div>
+    <confirmbox id="deleteStay" :options="deleteStayPrompt"></confirmbox>
    </div>
 </template>
 
@@ -98,6 +100,8 @@ import addMaxStayCS from './stayHistory/addMaximumStayPeriod.vue'
 import select_panel from '../utils/select-panel.vue'
 import alert from '../utils/alert.vue'
 import pkCsClose from './closureHistory/closeCampsite.vue'
+import confirmbox from '../utils/confirmbox.vue'
+import {bus} from '../utils/eventBus.js'
 export default {
     name:'campsite',
     components:{
@@ -105,7 +109,8 @@ export default {
         addMaxStayCS,
         "select-panel":select_panel,
         alert,
-        pkCsClose
+        pkCsClose,
+        confirmbox
     },
     data:function (){
         let vm = this;
@@ -114,6 +119,27 @@ export default {
             selected_features:[],
             createCampsite:true,
             campsite:{},
+            stay: {},
+            deleteStay: null,
+            deleteStayPrompt: {
+                icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
+                message: "Are you sure you want to Delete this stay Period",
+                buttons: [{
+                    text: "Delete",
+                    event: "delete",
+                    bsColor: "btn-danger",
+                    handler: function() {
+                        vm.deleteStayRecord(vm.deleteStay);
+                        vm.deleteStay = null;
+                    },
+                    autoclose: true
+                }]
+            },
+            retrieve_stay: {
+                error: false,
+                timeout: 5000,
+                errorString: ''
+            },
             msh_headers:['ID','Period Start', 'Period End','Maximum Stay(Nights)', 'Comment', 'Action'],
             ph_headers:['ID','Period Start','Period End','Adult Price','Concession Price','Child Price','Comment','Action'],
             ch_headers:['ID','Closure Start','Reopen','Closure Reason','Details','Action'],
@@ -168,7 +194,8 @@ export default {
                             var id = full.id;
                             if (full.editable){
                                 var column = "<td ><a href='#' class='editStay' data-stay_period=\"__ID__\" >Edit</a>";
-                                return column.replace('__ID__', id);
+                                column += "<br/><a href='#' class='deleteStay' data-stay_period=\"__ID__\" >Delete</a></td>";
+                                return column.replace(/__ID__/g, id);
                             }
                             return '';
                         }
@@ -249,7 +276,7 @@ export default {
                     {
                         "mRender": function(data, type, full) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit</a>";
                             return column.replace('__ID__', id);
                         }
                     }
@@ -259,8 +286,10 @@ export default {
         }
     },
     methods: {
-        showAddStay: function(){
+        showAddStay: function(create){
+            create = typeof create !== 'undefined' ? create : true;
             this.$refs.addMaxStayModal.isOpen = true;
+            this.$refs.addMaxStayModal.create = create;
         },
         showCloseCS: function() {
             var id = this.campsite.id;
@@ -299,6 +328,24 @@ export default {
                 }
             });
         },
+        fetchStay: function(id) {
+            let vm = this;
+             $.ajax({
+                url: api_endpoints.campsites_stay_history_detail(id),
+                method: 'GET',
+                xhrFields: { withCredentials:true },
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.stay = data;
+                    vm.showAddStay(false);
+                },
+                error:function (resp){
+                    vm.retrieve_stay.error = true;
+                    vm.retrieve_stay.errorString = 'There was a problem trying to retrive this stay period';
+                    setTimeout(function(){ vm.retrieve_stay.error = false; }, vm.retrieve_stay.timeout);
+                }
+            });
+        },
         fetchCampsite: function() {
             let vm = this;
              $.ajax({
@@ -310,7 +357,6 @@ export default {
                     vm.campsite = data;
                 },
                 error:function (resp){
-                    vm.errors = true;
                     if (resp.status == 404){
                         vm.$router.push({
                             name: '404'
@@ -322,10 +368,28 @@ export default {
         refreshMaxStayTable: function() {
             this.$refs.addMaxStayDT.vmDataTable.ajax.reload();
         },
+        deleteStayRecord: function(id) {
+            var vm = this;
+            var url = api_endpoints.campsites_stay_history_detail(id);
+            $.ajax({
+                method: "DELETE",
+                url: url,
+            }).done(function(msg) {
+                vm.refreshMaxStayTable();
+            });
+        },
         attachEventListenersMaxStayDT: function() {
             let vm = this;
             vm.$refs.addMaxStayDT.vmDataTable.on('click','.editStay', function(e){
                 e.preventDefault();
+                var id = $(this).attr('data-stay_period');
+                vm.fetchStay(id);
+            });
+            vm.$refs.addMaxStayDT.vmDataTable.on('click','.deleteStay', function(e){
+                e.preventDefault();
+                var id = $(this).attr('data-stay_period');
+                vm.deleteStay = id;
+                bus.$emit('showAlert', 'deleteStay');
             });
         }
     },
@@ -336,7 +400,7 @@ export default {
             vm.fetchCampsite();
         }
         vm.loadFeatures();
-
+        vm.attachEventListenersMaxStayDT();
     }
 }
 </script>

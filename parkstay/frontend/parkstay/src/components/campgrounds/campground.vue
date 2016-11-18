@@ -24,12 +24,7 @@
                         <h1>Price History</h1>
                      </div>
                   </div>
-                  <div class="row">
-                     <div class="well">
-                        <h1>Closure History</h1>
-                        <datatable ref="cg_closure_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
-                     </div>
-                  </div>
+                <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
          </div>
@@ -63,6 +58,7 @@
 
 <script>
 import datatable from '../utils/datatable.vue'
+import closureHistory from '../utils/closureHistory.vue'
 import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import pkCsClose from '../campsites/closureHistory/closeCampsite.vue'
@@ -86,7 +82,16 @@ export default {
         campgroundAttr,
         confirmbox,
         pkCsClose,
-        pkCsOpen
+        pkCsOpen,
+        closureHistory
+    },
+    computed: {
+        closureHistoryURL: function() {
+            return api_endpoints.status_history(this.$route.params.id);
+        },
+        myID: function(){
+            return parseInt(this.$route.params.id);
+        }
     },
     data: function() {
         let vm = this;
@@ -203,7 +208,7 @@ export default {
             cs_headers: ['Campsite Id', 'Type', 'Status', 'Price', 'Action'],
             deletePrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message: "Are you sure you want to Delete!!!",
+                message: "Are you sure you want to Delete ?",
                 buttons: [{
                     text: "Delete",
                     event: "delete",
@@ -272,12 +277,12 @@ export default {
     },
     mounted: function() {
         var vm = this;
-        vm.$refs.cg_closure_dt.vmDataTable.on('click', '.deleteRange', function(e) {
+        /*vm.$refs.cg_closure_dt.vmDataTable.on('click', '.deleteRange', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-range');
             vm.deleteRange = id;
             bus.$emit('showAlert', 'deleteRange');
-        });
+        });*/
         vm.$refs.cg_campsites_dt.vmDataTable.on('click', '.detailRoute', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-campsite');
