@@ -1,16 +1,16 @@
 <template id="addMaxStayCS">
-<bootstrapModal title="Add New Maximum Stay Period" :large=true @ok="addMaxStay()" okText="Add">
+<bootstrapModal ref="modal" :title="getTitle" :large=true @ok="addMaxStay()" okText="Add">
 
     <div class="modal-body">
         <form id="addMaxStayForm" class="form-horizontal">
             <div class="row">
-			    <alert :show.sync="showError" type="danger"></alert>
+			    <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label for="stay_maximum">Maximum Stay: </label>
                     </div>
                     <div class="col-md-4">
-                        <input placeholder="Default = 28" id='stay_maximum' v-model="formdata.max_days" type='text' class="form-control" />
+                        <input placeholder="Default = 28" id='stay_maximum' v-model="stay.max_days" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -21,7 +21,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date' id="stay_start_picker">
-                            <input name="stay_start" v-model="formdata.range_start" type='text' class="form-control" />
+                            <input name="stay_start" v-model="stay.range_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -36,7 +36,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date' id='stay_end_picker'>
-                            <input name="stay_end" v-model="formdata.range_end" type='text' class="form-control" />
+                            <input name="stay_end" v-model="stay.range_end" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -50,7 +50,7 @@
                         <label for="stay_reason">Reason: </label>
                     </div>
                     <div class="col-md-4">
-                        <select name="stay_reason" v-model="formdata.reason" class="form-control" id="stay_reason">
+                        <select name="stay_reason" v-model="stay.reason" class="form-control" id="stay_reason">
                             <option value="1">Reason 1</option>
                             <option value="2">Reason 2</option>
                             <option value="3">Reason 3</option>
@@ -65,7 +65,7 @@
                         <label for="stay_details">Details: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea name="stay_details" v-model="formdata.details" class="form-control" id="stay_details"></textarea>
+                        <textarea name="stay_details" v-model="stay.details" class="form-control" id="stay_details"></textarea>
                     </div>
                 </div>
             </div>
@@ -86,23 +86,20 @@ module.exports = {
         campsite: {
             type: Object,
             required: true
+        },
+        stay: {
+            type: Object
         }
     },
     data: function() {
         return {
-            formdata: {
-                max_days: '',
-                range_start: '',
-                range_end: '',
-                reason:'',
-                details: ''
-            },
             start_picker: '',
             end_picker: '',
             errors: false,
             errorString: '',
             form: '',
-            isOpen: false
+            isOpen: false,
+            create: true
         }
     },
     computed: {
@@ -113,8 +110,11 @@ module.exports = {
         isModalOpen: function() {
             return this.isOpen;
         },
+        getTitle: function() {
+            return this.create ? 'Add New Maximum Stay Period' : 'Edit Maximum Stay Period';
+        },
         requireDetails: function () {
-            return (this.formdata.reason === 'other')? true: false;
+            return (this.stay.reason === 'other')? true: false;
         }
     },
     components: {
@@ -123,21 +123,26 @@ module.exports = {
     },
     methods: {
         close: function() {
+            this.stay= {};
             this.isOpen = false;
+            this.errors = false;
+            this.errorString = '';
             this.status = '';
         },
         addMaxStay: function() {
             if (this.form.valid()){
-                this.sendData();
+                this.create ? this.sendData(api_endpoints.campsites_stay_history, 'POST'): this.sendData(api_endpoints.campsites_stay_history_detail(this.stay.id),'PUT');
             }
         },
-        sendData: function() {
+        sendData: function(url, method) {
             let vm = this;
-            var data = this.formdata;
-            data.campsite = vm.campsite.id;
+            var data = this.stay;
+            if (method == 'POST'){
+                data.campsite = vm.campsite.id;
+            }
             $.ajax({
-                url: api_endpoints.campsites_stay_history,
-                method: 'POST',
+                url: url,
+                method: method,
                 xhrFields: { withCredentials:true },
                 data: data,
                 dataType: 'json',
@@ -161,7 +166,7 @@ module.exports = {
                     stay_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === 'other';
+                                return vm.stay.reason === 'other';
                             }
                         }
                     }
@@ -197,6 +202,9 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
+        if (!vm.create){
+            vm.$refs.modal.title = 'Edit Maximum Stay Period';
+        }
         vm.start_picker = $('#stay_start_picker');
         vm.end_picker = $('#stay_end_picker');
         vm.start_picker.datetimepicker({
@@ -206,10 +214,10 @@ module.exports = {
             format: 'DD/MM/YYYY'
         });
         vm.start_picker.on('dp.change', function(e){
-            vm.formdata.range_start = vm.start_picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.stay.range_start = vm.start_picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
         vm.end_picker.on('dp.change', function(e){
-            vm.formdata.range_end = vm.end_picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.stay.range_end = vm.end_picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
         vm.form = $('#addMaxStayForm');
         vm.addFormValidations();
