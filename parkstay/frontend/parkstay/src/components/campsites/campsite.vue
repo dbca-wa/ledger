@@ -70,17 +70,7 @@
                          <datatable :dtHeaders ="ph_headers" :dtOptions="ph_options" :table.sync="ph_table" id="price_history"></datatable>
                       </div>
                    </div>
-                   <div class="row">
-                      <div class="well">
-                        <div class="col-sm-8">
-                            <h1>Closure History</h1>
-                        </div>
-                        <div class="col-sm-4">
-                         <button @click="showCloseCS()" class="btn btn-primary pull-right table_btn">Add Closure Period</button>
-                        </div>
-                         <datatable ref="closureHistDT" :dtHeaders ="ch_headers" :dtOptions="ch_options" :table.sync="ch_table" id="closure_history"></datatable>
-                      </div>
-                   </div>
+                    <closureHistory ref="cg_closure_dt" :closeCampground=false :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                 </div>
              </div>
           </div>
@@ -102,6 +92,7 @@ import alert from '../utils/alert.vue'
 import pkCsClose from './closureHistory/closeCampsite.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import {bus} from '../utils/eventBus.js'
+import closureHistory from '../utils/closureHistory.vue'
 export default {
     name:'campsite',
     components:{
@@ -110,7 +101,16 @@ export default {
         "select-panel":select_panel,
         alert,
         pkCsClose,
-        confirmbox
+        confirmbox,
+        closureHistory
+    },
+    computed: {
+        closureHistoryURL: function() {
+            return api_endpoints.campsites_status_history(this.$route.params.campsite_id);
+        },
+        myID: function(){
+            return parseInt(this.$route.params.campsite_id);
+        }
     },
     data:function (){
         let vm = this;
