@@ -452,9 +452,7 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
 
-class CampgroundBookingRangeViewset(viewsets.ModelViewSet):
-    queryset = CampgroundBookingRange.objects.all()
-    serializer_class = CampgroundBookingRangeSerializer
+class BookingRangeViewset(viewsets.ModelViewSet):
     authentication_classes=[]
 
     def retrieve(self, request, *args, **kwargs):
@@ -478,6 +476,11 @@ class CampgroundBookingRangeViewset(viewsets.ModelViewSet):
             raise
         except Exception as e:
             raise serializers.ValidationError(str(e))
-class CampsiteBookingRangeViewset(viewsets.ModelViewSet):
+
+class CampgroundBookingRangeViewset(BookingRangeViewset):
+    queryset = CampgroundBookingRange.objects.all()
+    serializer_class = CampgroundBookingRangeSerializer
+
+class CampsiteBookingRangeViewset(BookingRangeViewset):
     queryset = CampsiteBookingRange.objects.all()
     serializer_class = CampsiteBookingRangeSerializer
