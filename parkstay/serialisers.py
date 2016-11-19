@@ -1,4 +1,4 @@
-from parkstay.models import CampsiteStayHistory,District, CampsiteBooking,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
+from parkstay.models import CampsiteStayHistory,District, CampsiteBooking,BookingRange,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
 from rest_framework import serializers
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -28,9 +28,30 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
     range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
     
+    def get_status(self, obj):
+        return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop("method")
+        except:
+            method = 'get'
+        try:
+            original = kwargs.pop("original")
+        except:
+            original = False;
+        super(BookingRangeSerializer, self).__init__(*args, **kwargs)
+        if method == 'post':
+            self.fields['status'] = serializers.ChoiceField(choices=BookingRange.BOOKING_RANGE_CHOICES)
+        elif method == 'get':
+            if not original:
+                self.fields['status'] = serializers.SerializerMethodField()
+            else:
+                self.fields['range_start'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
+                self.fields['range_end'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
 
 class CampgroundBookingRangeSerializer(BookingRangeSerializer):
-    
+
     class Meta:
         model = CampgroundBookingRange
         fields = (
@@ -45,28 +66,6 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
         write_only_fields = (
             'campground'
         )
-    def get_status(self, obj):
-        return dict(CampgroundBookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
-
-    def __init__(self, *args, **kwargs):
-        try:
-            method = kwargs.pop("method")
-        except:
-            method = 'get'
-        try:
-            original = kwargs.pop("original")
-        except:
-            original = False;
-        super(CampgroundBookingRangeSerializer, self).__init__(*args, **kwargs)
-        if method == 'post':
-            self.fields['status'] = serializers.ChoiceField(choices=CampgroundBookingRange.BOOKING_RANGE_CHOICES)
-        elif method == 'get':
-            if not original:
-                self.fields['status'] = serializers.SerializerMethodField()
-            else:
-                self.fields['range_start'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
-                self.fields['range_end'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
-
 
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
     
@@ -84,19 +83,6 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
         write_only_fields = (
             'campsite'
         )
-    def get_status(self, obj):
-        return dict(CampsiteBookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
-
-    def __init__(self, *args, **kwargs):
-        try:
-            method = kwargs.pop("method")
-        except:
-            method = 'get'
-        super(CampsiteBookingRangeSerializer, self).__init__(*args, **kwargs)
-        if method == 'post':
-            self.fields['status'] = serializers.ChoiceField(choices=CampsiteBookingRange.BOOKING_RANGE_CHOICES)
-        else:
-            self.fields['status'] = serializers.SerializerMethodField()
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
