@@ -277,12 +277,6 @@ export default {
     },
     mounted: function() {
         var vm = this;
-        /*vm.$refs.cg_closure_dt.vmDataTable.on('click', '.deleteRange', function(e) {
-            e.preventDefault();
-            var id = $(this).attr('data-range');
-            vm.deleteRange = id;
-            bus.$emit('showAlert', 'deleteRange');
-        });*/
         vm.$refs.cg_campsites_dt.vmDataTable.on('click', '.detailRoute', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-campsite');
