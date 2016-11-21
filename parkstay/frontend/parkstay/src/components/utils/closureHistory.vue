@@ -76,8 +76,9 @@ export default {
                         vm.deleteClosureRecord(vm.deleteClosure);
                         vm.deleteClosure = null;
                     },
-                    autoclose: true
-                }]
+                    autoclose: true,
+                }],
+                id: 'deleteClosure'
             },
             ch_options: {
                 responsive: true,
