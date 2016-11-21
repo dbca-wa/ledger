@@ -19,7 +19,7 @@
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <priceHistory ref="price_dt" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
+                <priceHistory ref="price_dt" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
                 <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
