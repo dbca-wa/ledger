@@ -12,7 +12,7 @@
                     <div class="col-md-4">
                         <select name="rate" v-model="selected_rate" class="form-control">
                             <option value=""></option>
-                            <option v-for="r in rates":value="r.id">{{r.name}}</option>
+                            <option v-for="r in rates":value="r.url">{{r.name}}</option>
                         </select>
                     </div>
                 </div>
@@ -181,7 +181,7 @@ module.exports = {
         fetchRates: function() {
             let vm = this;
             $.get(api_endpoints.rates,function(data){
-                vm.rates = data;    
+                vm.rates = data;
             });
         },
         addFormValidations: function() {

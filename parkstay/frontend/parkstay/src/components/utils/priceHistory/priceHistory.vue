@@ -1,6 +1,6 @@
 <template id="priceHistory">
 <div class="row">
-    <PriceHistoryDetail ref="historyModal" @addHistory="addHistory()" @updateHistory="updateHistory()" :title="getTitle" :priceHistory="price"></PriceHistoryDetail>
+    <PriceHistoryDetail ref="historyModal" @addPriceHistory="addHistory()" @updatePriceHistory="updateHistory()" :title="getTitle" :priceHistory="price"></PriceHistoryDetail>
     <div class="well">
         <div class="col-sm-8">
             <h1>Price History</h1>
@@ -84,7 +84,7 @@ export default {
                 processing: true,
                 deferRender: true,
                 ajax: {
-                    url: vm.datatableURL, 
+                    url: vm.datatableURL,
                     dataSrc: ''
                 },
                 columns: [{
@@ -129,7 +129,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'],            
+            ch_headers: ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'],
         }
     },
     methods: {
@@ -172,24 +172,23 @@ export default {
                     vm.showHistory();
                 },
                 error:function (resp){
-                    
                 }
             });
         },
         addHistory: function() {
-            this.sendData(this.getAddURL(),'POST');   
+            this.sendData(this.getAddURL(),'POST');
         },
         updateHistory: function() {
-            this.sendData(this.closureURL(this.$refs.historyModal.closure_id),'PUT'); 
+            this.sendData(this.closureURL(this.$refs.historyModal.closure_id),'PUT');
         },
         sendData: function(url,method) {
             let vm = this;
-            var data = vm.$refs.historyModal.statusHistory;
+            var data = vm.price;
             $.ajax({
                 url: url,
                 method: method,
                 xhrFields: { withCredentials:true },
-                data: data,
+                data:JSON.stringify(data),
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.historyModal.close();
