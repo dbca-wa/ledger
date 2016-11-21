@@ -1,16 +1,29 @@
 <template id="PriceHistoryDetail">
-<bootstrapModal :title="title" :large=true @ok="addClosure()">
+<bootstrapModal :title="title" :large=true @ok="addHistory()">
 
     <div class="modal-body">
-        <form name="closeForm" class="form-horizontal">
+        <form name="priceForm" class="form-horizontal">
+			<alert :show.sync="showError" type="danger">{{errorString}}</alert>
             <div class="row">
-			    <alert :show.sync="showError" type="danger">{{errorString}}</alert>
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Select Rate: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="rate" v-model="selected_rate" class="form-control">
+                            <option value=""></option>
+                            <option v-for="r in rates":value="r.url">{{r.name}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Adult Price: </label>
                     </div>
                     <div class="col-md-4">
-                        <input  name="adult_price"  v-model="priceHistory.adult_price" type='text' class="form-control" />
+                        <input :readonly="selected_rate != ''" name="adult"  v-model="priceHistory.adult" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -20,7 +33,7 @@
                         <label>Concession Price: </label>
                     </div>
                     <div class="col-md-4">
-                        <input  name="concession_price"  v-model="priceHistory.concession_price" type='text' class="form-control" />
+                        <input :readonly="selected_rate != ''" name="concession"  v-model="priceHistory.concession" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -30,7 +43,7 @@
                         <label>Child Price: </label>
                     </div>
                     <div class="col-md-4">
-                        <input  name="child_price"  v-model="priceHistory.child_price" type='text' class="form-control" />
+                        <input :readonly="selected_rate != ''" name="child"  v-model="priceHistory.child" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -41,7 +54,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date'>
-                            <input  name="closure_start"  v-model="priceHistory.period_start" type='text' class="form-control" />
+                            <input  name="period_start"  v-model="priceHistory.period_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -55,7 +68,7 @@
                         <label>Reason: </label>
                     </div>
                     <div class="col-md-4">
-                        <select v-on:change="requireDetails()" name="closure_status" v-model="priceHistory.reason" class="form-control" id="close_cg_reason">
+                        <select v-on:change="requireDetails()" name="reason" v-model="priceHistory.reason" class="form-control" id="close_cg_reason">
                             <option value="1">Closed due to natural disaster</option>
                             <option value="2">Closed for maintenance</option>
                             <option value="3">Other</option>
@@ -69,7 +82,7 @@
                         <label>Details: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea name="closure_details" v-model="priceHistory.details" class="form-control"></textarea>
+                        <textarea name="details" v-model="priceHistory.details" class="form-control"></textarea>
                     </div>
                 </div>
             </div>
@@ -99,6 +112,8 @@ module.exports = {
         let vm = this;
         return {
             id:'',
+            selected_rate: '',
+            rates: [],
             current_closure: '',
             closeStartPicker: '',
             showDetails: false,
@@ -107,8 +122,6 @@ module.exports = {
             errorString: '',
             form: '',
             isOpen: false,
-            close_cg_range_start: 'close_cg_range_start'+vm._uid,
-            close_cg_range_end: 'close_cg_range_end'+vm._uid,
         }
     },
     computed: {
@@ -121,6 +134,25 @@ module.exports = {
         },
         closure_id: function() {
             return this.priceHistory.id ? this.priceHistory.id : '';
+        }
+    },
+    watch: {
+        selected_rate: function() {
+            let vm = this;
+            if (vm.selected_rate != ''){
+                $.each(vm.rates, function(i, rate) {
+                    if (rate.url == vm.selected_rate){
+                        vm.priceHistory.adult = rate.adult;
+                        vm.priceHistory.concession = rate.concession;
+                        vm.priceHistory.child = rate.child;
+                    }
+                });
+            }
+            else{
+                vm.priceHistory.adult = '';
+                vm.priceHistory.concession = '';
+                vm.priceHistory.child = '';
+            }
         }
     },
     components: {
@@ -137,33 +169,43 @@ module.exports = {
             this.errorString = '';
             this.isOpen = false;
         },
-        addClosure: function() {
-            if (this.form.valid()){
-                if (!this.closure_id){
-                    this.$emit('closeRange');
+        addHistory: function() {
+            if ($(this.form).valid()){
+                if (!this.priceHistory.id){
+                    this.$emit('addPriceHistory');
                 }else {
-                    this.$emit('updateRange');
+                    this.$emit('updatePriceHistory');
                 }
             }
         },
+        fetchRates: function() {
+            let vm = this;
+            $.get(api_endpoints.rates,function(data){
+                vm.rates = data;    
+            });
+        },
         addFormValidations: function() {
             let vm = this;
-            vm.form.validate({
+            $(vm.form).validate({
                 rules: {
-                    closure_start: "required",
-                    closure_status: "required",
-                    closure_details: {
+                    adult: "required",
+                    concession: "required",
+                    child: "required",
+                    period_start: "required",
+                    details: {
                         required: {
                             depends: function(el){
-                                return vm.priceHistory.status === '3';
+                                return vm.priceHistory.reason=== '3';
                             }
                         }
                     }
                 },
                 messages: {
-                    closure_start: "Enter a start date",
-                    closure_status: "Select a closure reason from the options",
-                    closure_details: "Details required if Other reason is selected"
+                    adult: "Enter an adult rate",
+                    concession: "Enter a concession rate",
+                    child: "Enter a child rate",
+                    period_start: "Enter a start date",
+                    details: "Details required if Other reason is selected"
                 },
                 showErrors: function(errorMap, errorList) {
 
@@ -191,24 +233,17 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        vm.closeEndPicker = $('#'+vm.close_cg_range_end);
-        vm.closeStartPicker = $('#'+vm.close_cg_range_start).datetimepicker({
+        vm.form = document.forms.priceForm;
+        var picker = $(vm.form.period_start).closest('.date');
+        picker.datetimepicker({
             format: 'DD/MM/YYYY',
             minDate: new Date()
         });
-        vm.closeEndPicker.datetimepicker({
-            format: 'DD/MM/YYYY',
-            useCurrent: false
+        picker.on('dp.change', function(e){
+            vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
-        vm.closeStartPicker.on('dp.change', function(e){
-            vm.priceHistory.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
-        });
-        vm.closeEndPicker.on('dp.change', function(e){
-            vm.priceHistory.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
-        });
-        vm.form = $(document.forms.closeForm);
         vm.addFormValidations();
+        vm.fetchRates();
     }
 };
 </script>
