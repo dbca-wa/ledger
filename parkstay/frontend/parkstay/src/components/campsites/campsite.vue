@@ -40,7 +40,7 @@
     								</div>
     								<div class="row">
     									<div class="col-sm-12">
-                                        <select-panel :options="features" :selected="selected_features" id="select-features" refs="select-features"></select-panel>
+                                        <select-panel :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
     									</div>
     								</div>
                                     <div class="row">
@@ -49,8 +49,8 @@
                                       </div>
                                       <div class="col-sm-6">
                                           <div class="pull-right">
-                                              <button type="button" v-show="!createCampsite" class="btn btn-primary">Update</button>
-                                              <button type="button" v-show="createCampsite"class="btn btn-primary">Create</button>
+                                              <button type="button" v-show="!createCampsite" @click="updateCampsite" class="btn btn-primary">Update</button>
+                                              <button type="button" v-show="createCampsite" class="btn btn-primary">Create</button>
                                               <button type="button" class="btn btn-default" @click="goBack">Cancel</button>
                                           </div>
                                       </div>
@@ -298,7 +298,11 @@ export default {
     watch:{
         selected_features:{
             handler:function () {
-                this.campsite.features = this.selected_features;
+                let vm = this;
+                this.campsite.features = [];
+                $.each(vm.selected_features,function (i,feature) {
+                    vm.campsite.features.push(feature.url);
+                });
             },
             deep:true
         }
@@ -373,6 +377,9 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.campsite = data;
+                    
+                    vm.$refs.select_features.loadSelectedFeatures(data.features);
+                    //vm.selected_features = ;
                 },
                 error:function (resp){
                     if (resp.status == 404){
@@ -418,6 +425,23 @@ export default {
         },
         goBack:function () {
             this.$route.go(window.history.back());
+        },
+        updateCampsite:function () {
+            let vm = this;
+            $.ajax({
+                beforeSend: function(xhrObj) {
+                    xhrObj.setRequestHeader("Content-Type", "application/json");
+                    xhrObj.setRequestHeader("Accept", "application/json");
+                },
+                xhrFields: { withCredentials:true },
+                url:api_endpoints.campsite(vm.$route.params.campsite_id),
+                method:'PUT',
+                data:JSON.stringify(vm.campsite),
+                success:function (data) {
+
+                    vm.campsite = data;
+                }
+            })
         }
     },
     mounted: function() {

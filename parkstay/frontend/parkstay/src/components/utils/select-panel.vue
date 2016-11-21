@@ -36,6 +36,8 @@
 </template>
 
 <script>
+import $ from 'jquery'
+
 export default {
     name:'select-panel',
     props:{
@@ -79,6 +81,20 @@ export default {
                 return parseInt(a.id) - parseInt(b.id)
             });
         },
+        loadSelectedFeatures: function(passed_features) {
+            let vm = this;
+            $.each(passed_features, function(i, cgfeature) {
+                $.each(vm.options, function(j, feat) {
+                    if (feat != null) {
+                        if (cgfeature.id == feat.id) {
+                            vm.options.splice(j, 1);
+                            vm.selected.push(cgfeature);
+                        }
+                    }
+                })
+            });
+
+        }
     }
 }
 </script>
