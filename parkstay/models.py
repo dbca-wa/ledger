@@ -186,6 +186,12 @@ class Campground(models.Model):
         except CampgroundBookingRange.DoesNotExist:
             b.save()
 
+    def createCampsitePriceHistory(self,data):
+        # Get all campsites
+        for c in self.campsites:
+            cr = CampsiteRate(**data)
+            cr.campsite = c
+
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),
@@ -516,6 +522,12 @@ class Rate(models.Model):
 
     class Meta:
         unique_together = (('adult', 'concession', 'child', 'infant'),)
+
+    # Properties
+    # =================================
+    @property
+    def name(self):
+        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
 
 class CampsiteRate(models.Model):
     RATE_TYPE_CHOICES = (
