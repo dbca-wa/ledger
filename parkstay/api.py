@@ -13,6 +13,7 @@ from parkstay.models import (Campground,
                                 Booking,
                                 CampgroundBookingRange,
                                 CampsiteBookingRange,
+                                CampsiteStayHistory,
                                 PromoArea,
                                 Park,
                                 Feature,
@@ -34,7 +35,8 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     BookingSerializer,
                                     CampgroundBookingRangeSerializer,
                                     CampsiteBookingRangeSerializer,
-                                    CampsiteRateSerializer
+                                    CampsiteRateSerializer,
+                                    CampsiteStayHistorySerializer
                                     )
 
 # API Views
@@ -45,6 +47,86 @@ class CampsiteBookingViewSet(viewsets.ModelViewSet):
 class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
     serializer_class = CampsiteSerialiser
+
+    @detail_route(methods=['post'],authentication_classes=[])
+    def open_close(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            # parse and validate data
+            mutable = request.POST._mutable
+            request.POST._mutable = True
+            request.POST['campsite'] = self.get_object().id
+            request.POST._mutable = mutable
+            serializer = CampsiteBookingRangeSerializer(data=request.data, method="post")
+            serializer.is_valid(raise_exception=True)
+            if serializer.validated_data.get('status') == 0:
+                self.get_object().open(dict(serializer.validated_data))
+            else:
+                self.get_object().close(dict(serializer.validated_data))
+
+            # return object
+            ground = self.get_object()
+            res = CampsiteSerialiser(ground, context={'request':request})
+
+            return Response(res.data)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def status_history(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            # Check what status is required
+            closures = bool(request.GET.get("closures", False))
+            if closures:
+                serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+            else:
+                serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges,many=True)
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            print traceback.print_exc()
+            raise
+        except Exception as e:
+            print traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def stay_history(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer = CampsiteStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
+    queryset = CampsiteStayHistory.objects.all()
+    serializer_class = CampsiteStayHistorySerializer
+    authentication_classes=[]
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance,data=request.data,partial=partial)
+            serializer.is_valid(raise_exception=True)
+            if instance.range_end and not serializer.validated_data.get('range_end'):
+                instance.range_end = None
+            self.perform_update(serializer)
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
 
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
@@ -78,7 +160,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 self.get_object().open(dict(serializer.validated_data))
             else:
                 self.get_object().close(dict(serializer.validated_data))
-            #serializer.save()
 
             # return object
             ground = self.get_object()
@@ -371,10 +452,35 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
 
-class CampgroundBookingRangeViewset(viewsets.ModelViewSet):
+class BookingRangeViewset(viewsets.ModelViewSet):
+    authentication_classes=[]
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        original = bool(request.GET.get("original", False))
+        serializer = self.get_serializer(instance, original=original, method='get')
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance,data=request.data,partial=partial)
+            serializer.is_valid(raise_exception=True)
+            if instance.range_end and not serializer.validated_data.get('range_end'):
+                instance.range_end = None
+            self.perform_update(serializer)
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+class CampgroundBookingRangeViewset(BookingRangeViewset):
     queryset = CampgroundBookingRange.objects.all()
     serializer_class = CampgroundBookingRangeSerializer
 
-class CampsiteBookingRangeViewset(viewsets.ModelViewSet):
+class CampsiteBookingRangeViewset(BookingRangeViewset):
     queryset = CampsiteBookingRange.objects.all()
     serializer_class = CampsiteBookingRangeSerializer

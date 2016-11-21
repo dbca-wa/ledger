@@ -5,6 +5,8 @@ import Vue from 'vue'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
 import AddCampground from '../components/campgrounds/addCampground.vue'
+import Campsite from '../components/campsites/campsite.vue'
+import page_404 from '../components/utils/404.vue'
 import Router from 'vue-router'
 import $ from '../hooks'
 var css = require('../hooks-css.css');
@@ -48,22 +50,46 @@ const routes = [
                 },
                 children: [
                     {
-                        path:'campgrounds',
-                        component: Campgrounds
-                    },
-                    {
                         path:'campgrounds/addCampground',
                         name:'cg_add',
                         component: AddCampground
                     },
                     {
-                        path:'campgrounds/:id',
-                        name:'cg_detail',
-                        component: Campground
+                        path:'campgrounds',
+                        component: {
+                            render (c) { return c('router-view') }
+                        },
+                        children:[
+                            {
+                                path: '/',
+                                name: 'cg_main',
+                                component: Campgrounds,        
+                            },
+                            {
+                                path:':id',
+                                name:'cg_detail',
+                                component: Campground,
+                            },
+                            {
+                                path:':id/campsites/add',
+                                name:'add_campsite',
+                                component:Campsite
+                            },
+                            {
+                                path:':id/campsites/:campsite_id',
+                                name:'view_campsite',
+                                component:Campsite
+                            },
+                        ]
                     },
                 ]
             }
         ]
+    },
+    {
+        path: '/404',
+        name: '404',
+        component: page_404
     }
 ];
 

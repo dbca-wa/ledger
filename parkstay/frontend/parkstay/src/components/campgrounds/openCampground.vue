@@ -1,9 +1,10 @@
 <template id="pkCgOpen">
-<bootstrapModal title="Open campground" :large=true @ok="postAdd()">
+<bootstrapModal title="Open campground" :large=true @ok="addOpen()">
 
     <div class="modal-body">
-        <form class="form-horizontal">
+        <form id="openCGForm" class="form-horizontal">
             <div class="row">
+			    <alert :show.sync="showError" type="danger"></alert>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label for="open_cg_current_closure">Current Closure: </label>
@@ -20,7 +21,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date' id='open_cg_range_start'>
-                            <input v-model="formdata.range_start" type='text' class="form-control" />
+                            <input name="open_start" v-model="formdata.range_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -34,7 +35,7 @@
                         <label for="open_cg_reason">Reason: </label>
                     </div>
                     <div class="col-md-4">
-                        <select v-model="formdata.reason" class="form-control" id="open_cg_reason">
+                        <select name="open_reason" v-model="formdata.reason" class="form-control" id="open_cg_reason">
                             <option value="1">Reason 1</option>
                             <option value="2">Reason 2</option>
                             <option value="3">Reason 3</option>
@@ -49,7 +50,7 @@
                         <label for="open_cg_details">Details: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea v-model="formdata.details" class="form-control" id="open_cg_details"></textarea>
+                        <textarea name="open_details" v-model="formdata.details" class="form-control" id="open_cg_details"></textarea>
                     </div>
                 </div>
             </div>
@@ -62,7 +63,8 @@
 <script>
 import bootstrapModal from '../utils/bootstrap-modal.vue'
 import {bus} from '../utils/eventBus.js'
-import { $, datetimepicker,api_endpoints } from '../../hooks'
+import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
+import alert from '../utils/alert.vue'
 module.exports = {
     name: 'pkCgOpen',
     data: function() {
@@ -72,14 +74,20 @@ module.exports = {
             current_closure: '',
             formdata: {
                 range_start: '',
-                reason:'other',
+                reason:'',
                 details: ''
             },
-            picker: ''
-            //isModalOpen: false
+            picker: '',
+            errors: false,
+            errorString: '',
+            form: ''
         }
     },
     computed: {
+        showError: function() {
+            var vm = this;
+            return vm.errors;
+        },
         isModalOpen: function() {
             return this.$parent.isOpenOpenCG;
         },
@@ -89,13 +97,19 @@ module.exports = {
     },
     components: {
         bootstrapModal,
+        alert
     },
     methods: {
         close: function() {
             this.$parent.isOpenOpenCG = false;
             this.status = '';
         },
-        postAdd: function() {
+        addOpen: function() {
+            if (this.form.valid()){
+                this.sendData();
+            }
+        },
+        sendData: function() {
             let vm = this;
             var data = this.formdata;
             data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
@@ -112,11 +126,54 @@ module.exports = {
                     bus.$emit('refreshCGTable');
                 },
                 error:function (data){
-                    console.log(data);
+                    vm.errors = true;
+                    vm.errorString = helpers.apiError(resp);
                 }
             });
 
-        }
+        },
+        addFormValidations: function() {
+            let vm = this;
+            this.form.validate({
+                rules: {
+                    open_start: "required",
+                    open_reason: "required",
+                    open_details: {
+                        required: {
+                            depends: function(el){
+                                return vm.formdata.reason === 'other';
+                            }
+                        }
+                    }
+                },
+                messages: {
+                    open_start: "Enter a start date",
+                    open_reason: "Select an open reason from the options",
+                    open_details: "Details required if Other reason is selected"
+                },
+                showErrors: function(errorMap, errorList) {
+
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+       }
     },
     mounted: function() {
         var vm = this;
@@ -133,6 +190,8 @@ module.exports = {
             vm.formdata.range_start = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
             console.log(vm.formdata.range_start);
         });
+        vm.form = $('#openCGForm');
+        vm.addFormValidations();
     }
 };
 </script>

@@ -1,17 +1,17 @@
-<template id="pkCgClose">
-<bootstrapModal title="(Temporarily) close campground" :large=true @ok="addClosure()">
+<template id="PriceHistoryDetail">
+<bootstrapModal :title="title" :large=true @ok="addClosure()">
 
     <div class="modal-body">
-        <form id="closeCGForm" class="form-horizontal">
+        <form name="closeForm" class="form-horizontal">
             <div class="row">
-			    <alert :show.sync="showError" type="danger"></alert>
+			    <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label for="open_cg_range_start">Closure start: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' id='close_cg_range_start'>
-                            <input  name="closure_start" v-model="formdata.range_start" type='text' class="form-control" />
+                        <div class='input-group date' :id='close_cg_range_start'>
+                            <input  name="closure_start"  v-model="priceHistory.range_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -25,8 +25,8 @@
                         <label for="open_cg_range_start">Closure end: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' id='close_cg_range_end'>
-                            <input name="closure_end" v-model="formdata.range_end" type='text' class="form-control" />
+                        <div class='input-group date' :id='close_cg_range_end'>
+                            <input name="closure_end" v-model="priceHistory.range_end" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -40,7 +40,7 @@
                         <label for="open_cg_reason">Reason: </label>
                     </div>
                     <div class="col-md-4">
-                        <select name="closure_reason" v-model="formdata.reason" class="form-control" id="close_cg_reason">
+                        <select v-on:change="requireDetails()" name="closure_status" v-model="priceHistory.status" class="form-control" id="close_cg_reason">
                             <option value="1">Closed due to natural disaster</option>
                             <option value="2">Closed for maintenance</option>
                             <option value="3">Other</option>
@@ -48,13 +48,13 @@
                     </div>
                 </div>
             </div>
-            <div v-show="requireDetails" class="row">
+            <div v-show="showDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_details">Details: </label>
+                        <label>Details: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea name="closure_details" v-model="formdata.details" class="form-control" id="close_cg_details"></textarea>
+                        <textarea name="closure_details" v-model="priceHistory.details" class="form-control" id="close_cg_details"></textarea>
                     </div>
                 </div>
             </div>
@@ -65,27 +65,35 @@
 </template>
 
 <script>
-import bootstrapModal from '../utils/bootstrap-modal.vue'
-import {bus} from '../utils/eventBus.js'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
-import alert from '../utils/alert.vue'
+import bootstrapModal from '../bootstrap-modal.vue'
+import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
+import alert from '../alert.vue'
 module.exports = {
-    name: 'pkCgClose',
+    name: 'PriceHistoryDetail',
+    props: {
+        priceHistory: {
+            type: Object,
+            required: true
+        },
+        title: {
+            type: String,
+            required: true
+        }
+    },
     data: function() {
+        let vm = this;
         return {
-            status: '',
             id:'',
-            formdata: {
-                range_start: '',
-                range_end: '',
-                reason:'',
-                details: ''
-            },
+            current_closure: '',
             closeStartPicker: '',
+            showDetails: false,
             closeEndPicker: '',
             errors: false,
             errorString: '',
-            form: ''
+            form: '',
+            isOpen: false,
+            close_cg_range_start: 'close_cg_range_start'+vm._uid,
+            close_cg_range_end: 'close_cg_range_end'+vm._uid,
         }
     },
     computed: {
@@ -94,10 +102,10 @@ module.exports = {
             return vm.errors;
         },
         isModalOpen: function() {
-            return this.$parent.isOpenCloseCG;
+            return this.isOpen;
         },
-        requireDetails: function () {
-            return (this.formdata.reason === '3')? true: false;
+        closure_id: function() {
+            return this.priceHistory.id ? this.priceHistory.id : '';
         }
     },
     components: {
@@ -105,53 +113,41 @@ module.exports = {
         alert
     },
     methods: {
+        requireDetails: function() {
+            this.showDetails =  this.priceHistory.status == 3;
+        },
         close: function() {
-            this.$parent.isOpenCloseCG = false;
-            this.status = '';
+            //this.priceHistory = {};
+            this.errors = false;
+            this.errorString = '';
+            this.isOpen = false;
         },
         addClosure: function() {
             if (this.form.valid()){
-                this.sendData();
-            }
-        },
-        sendData: function() {
-            let vm = this;
-            var data = this.formdata;
-            data.status = vm.formdata.reason;
-            console.log(data);
-            $.ajax({
-                url: api_endpoints.opencloseCG(vm.id),
-                method: 'POST',
-                xhrFields: { withCredentials:true },
-                data: data,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.close();
-                    bus.$emit('refreshCGTable');
-                },
-                error:function (data){
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+                if (!this.closure_id){
+                    this.$emit('closeRange');
+                }else {
+                    this.$emit('updateRange');
                 }
-            });
+            }
         },
         addFormValidations: function() {
             let vm = this;
-            this.form.validate({
+            vm.form.validate({
                 rules: {
                     closure_start: "required",
-                    closure_reason: "required",
+                    closure_status: "required",
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === '3';
+                                return vm.priceHistory.status === '3';
                             }
                         }
                     }
                 },
                 messages: {
                     closure_start: "Enter a start date",
-                    closure_reason: "Select a closure reason from the options",
+                    closure_status: "Select a closure reason from the options",
                     closure_details: "Details required if Other reason is selected"
                 },
                 showErrors: function(errorMap, errorList) {
@@ -180,13 +176,8 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('openclose', function(data){
-            vm.status = data.status;
-            vm.id = data.id;
-        });
-        vm.closeStartPicker = $('#close_cg_range_start');
-        vm.closeEndPicker = $('#close_cg_range_end');
-        vm.closeStartPicker.datetimepicker({
+        vm.closeEndPicker = $('#'+vm.close_cg_range_end);
+        vm.closeStartPicker = $('#'+vm.close_cg_range_start).datetimepicker({
             format: 'DD/MM/YYYY',
             minDate: new Date()
         });
@@ -195,13 +186,13 @@ module.exports = {
             useCurrent: false
         });
         vm.closeStartPicker.on('dp.change', function(e){
-            vm.formdata.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.priceHistory.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
             vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
         });
         vm.closeEndPicker.on('dp.change', function(e){
-            vm.formdata.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.priceHistory.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
-        vm.form = $('#closeCGForm');
+        vm.form = $(document.forms.closeForm);
         vm.addFormValidations();
     }
 };

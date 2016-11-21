@@ -1,10 +1,10 @@
-<template id="pkCgClose">
-<bootstrapModal title="(Temporarily) close campground" :large=true @ok="addClosure()">
+<template id="pkCsClose">
+<bootstrapModal title="(Temporarily) close campsite" :large=true @ok="addClosure()">
 
     <div class="modal-body">
         <form id="closeCGForm" class="form-horizontal">
             <div class="row">
-			    <alert :show.sync="showError" type="danger"></alert>
+			    <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label for="open_cg_range_start">Closure start: </label>
@@ -65,16 +65,17 @@
 </template>
 
 <script>
-import bootstrapModal from '../utils/bootstrap-modal.vue'
-import {bus} from '../utils/eventBus.js'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
-import alert from '../utils/alert.vue'
+import bootstrapModal from '../../utils/bootstrap-modal.vue'
+import {bus} from '../../utils/eventBus.js'
+import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
+import alert from '../../utils/alert.vue'
 module.exports = {
-    name: 'pkCgClose',
+    name: 'pkCsClose',
     data: function() {
         return {
             status: '',
             id:'',
+            current_closure: '',
             formdata: {
                 range_start: '',
                 range_end: '',
@@ -85,7 +86,8 @@ module.exports = {
             closeEndPicker: '',
             errors: false,
             errorString: '',
-            form: ''
+            form: '',
+            isOpen: false
         }
     },
     computed: {
@@ -94,7 +96,7 @@ module.exports = {
             return vm.errors;
         },
         isModalOpen: function() {
-            return this.$parent.isOpenCloseCG;
+            return this.isOpen;
         },
         requireDetails: function () {
             return (this.formdata.reason === '3')? true: false;
@@ -106,34 +108,13 @@ module.exports = {
     },
     methods: {
         close: function() {
-            this.$parent.isOpenCloseCG = false;
+            this.isOpen = false;
             this.status = '';
         },
         addClosure: function() {
             if (this.form.valid()){
-                this.sendData();
+                this.$emit('closeCampsite');
             }
-        },
-        sendData: function() {
-            let vm = this;
-            var data = this.formdata;
-            data.status = vm.formdata.reason;
-            console.log(data);
-            $.ajax({
-                url: api_endpoints.opencloseCG(vm.id),
-                method: 'POST',
-                xhrFields: { withCredentials:true },
-                data: data,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.close();
-                    bus.$emit('refreshCGTable');
-                },
-                error:function (data){
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
-                }
-            });
         },
         addFormValidations: function() {
             let vm = this;
@@ -180,10 +161,6 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('openclose', function(data){
-            vm.status = data.status;
-            vm.id = data.id;
-        });
         vm.closeStartPicker = $('#close_cg_range_start');
         vm.closeEndPicker = $('#close_cg_range_end');
         vm.closeStartPicker.datetimepicker({
