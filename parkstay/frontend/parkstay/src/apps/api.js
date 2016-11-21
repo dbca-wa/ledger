@@ -13,6 +13,9 @@ module.exports = {
     campground_price_history: function(id){
         return "/api/campgrounds/"+ id +"/price_history.json";
     },
+    addPrice: function(id){
+        return "/api/campgrounds/"+ id +"/addPrice.json";
+    },
     campgroundCampsites: function(id){
         return "/api/campgrounds/" + id + "/campsites.json"
     },
@@ -53,6 +56,7 @@ module.exports = {
         return "/api/campsite_booking_ranges/"+ id +".json?original=true";
     },
     features:"/api/features.json",
+    rates:"/api/rates.json",
     campsite_classes:"/api/campsite_classes.json",
     campsite_class:function (id) {
         return "/api/campsite_classes/"+id+".json"

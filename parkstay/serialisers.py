@@ -1,4 +1,4 @@
-from parkstay.models import CampsiteStayHistory,District, CampsiteBooking,BookingRange,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
+from parkstay.models import Rate,CampsiteStayHistory,District, CampsiteBooking,BookingRange,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
 from rest_framework import serializers
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -204,6 +204,22 @@ class BookingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Booking
 
+class RateSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Rate
+        fields = ('url','id','adult','concession','child','infant','name')
+
 class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteRate
+
+class RateDetailSerializer(serializer.Serializer):
+    '''Used to validate rates from the frontend
+    '''
+    rate = serializers.URLField()
+    adult = serializers.DecimalField(max_digits=5, decimal_places=2)
+    concession = serializers.DecimalField(max_digits=5, decimal_places=2)
+    child = serializers.DecimalField(max_digits=5, decimal_places=2)
+    period_start = serializers.DateField(formatt='%d/%m/%Y')
+    reason = serializers.IntegerField()
+    details = serializers.TextField(required=False)

@@ -21,6 +21,7 @@ router.register(r'campground_booking_ranges',api.CampgroundBookingRangeViewset)
 router.register(r'campsite_booking_ranges',api.CampsiteBookingRangeViewset)
 router.register(r'campsite_rate',api.CampsiteRateViewSet)
 router.register(r'campsites_stay_history',api.CampsiteStayHistoryViewSet)
+router.register(r'rates',api.RateViewset)
 
 api_patterns = [
     url(r'api/',include(router.urls))

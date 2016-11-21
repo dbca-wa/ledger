@@ -51,9 +51,9 @@ export default {
     computed: {
         getTitle: function() {
             if (this.addPriceHistory){
-                return '(Temporarily) Close Campground';
+                return 'Add Price History';
             }else{
-                return '(Temporarily) Close Campsite';
+                return 'Update Price History';
             }
         }
     },
