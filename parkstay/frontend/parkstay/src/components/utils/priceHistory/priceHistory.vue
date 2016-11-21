@@ -1,41 +1,40 @@
-<template id="closureHistory">
+<template id="priceHistory">
 <div class="row">
-    <Close ref="closeModal" @closeRange="addClosure()" @updateRange="updateClosure()" :title="getTitle" :statusHistory="closure"></Close>
+    <PriceHistoryDetail ref="historyModal" @addHistory="addHistory()" @updateHistory="updateHistory()" :title="getTitle" :priceHistory="price"></PriceHistoryDetail>
     <div class="well">
         <div class="col-sm-8">
-            <h1>Closure History</h1>
+            <h1>Price History</h1>
         </div>
         <div class="col-sm-4">
-            <button @click="showClose()" class="btn btn-primary pull-right table_btn">Add Closure Period</button>
+            <button @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
         </div>
-        <datatable ref="closure_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
+        <datatable ref="history_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="ph_table"></datatable>
      </div>
-    <confirmbox id="deleteClosure" :options="deleteClosurePrompt"></confirmbox>
+    <confirmbox id="deleteHistory" :options="deleteHistoryPrompt"></confirmbox>
 </div>
 </template>
 
 <script>
-import datatable from './datatable.vue'
-import confirmbox from './confirmbox.vue'
-import Close from './closureHistory/close.vue'
-import Open from './closureHistory/open.vue'
-import {bus} from './eventBus.js'
+import datatable from '../datatable.vue'
+import confirmbox from '../confirmbox.vue'
+import PriceHistoryDetail from './priceHistoryDetail.vue'
+import {bus} from '../eventBus.js'
 import {
     $,
     Moment,
     api_endpoints,
     helpers
 }
-from '../../hooks.js'
+from '../../../hooks.js'
 
 export default {
-    name: 'closureHistory',
+    name: 'priceHistory',
     props: {
         datatableURL: {
             type: String,
             required: true
         },
-        closeCampground: {
+        addPriceHistory: {
             type: Boolean,
             default: true
         },
@@ -47,11 +46,11 @@ export default {
     components: {
         datatable,
         confirmbox,
-        Close,
+        PriceHistoryDetail
     },
     computed: {
         getTitle: function() {
-            if (this.closeCampground){
+            if (this.addPriceHistory){
                 return '(Temporarily) Close Campground';
             }else{
                 return '(Temporarily) Close Campsite';
@@ -63,9 +62,9 @@ export default {
         return {
             campground: {},
             campsite:{},
-            closure: {},
-            deleteClosure: null,
-            deleteClosurePrompt: {
+            price: {},
+            deleteHistory: null,
+            deleteHistoryPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
                 message: "Are you sure you want to Delete this closure Period",
                 buttons: [{
@@ -73,12 +72,12 @@ export default {
                     event: "delete",
                     bsColor: "btn-danger",
                     handler: function() {
-                        vm.deleteClosureRecord(vm.deleteClosure);
-                        vm.deleteClosure = null;
+                        vm.deleteHistoryRecord(vm.deleteHistory);
+                        vm.deleteHistory = null;
                     },
                     autoclose: true,
                 }],
-                id: 'deleteClosure'
+                id: 'deleteHistory'
             },
             ch_options: {
                 responsive: true,
@@ -110,11 +109,15 @@ export default {
                 }, {
                     data: 'details'
                 }, {
+                    data: 'status'
+                }, {
+                    data: 'details'
+                }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editRange' data-range=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-range=\"__ID__\" >Delete</a></td>";
+                            var column = "<td ><a href='#' class='editRange' data-priceHistory=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-priceHistory=\"__ID__\" >Delete</a></td>";
                             return column.replace(/__ID__/g, id);
                         }
                         else {
@@ -126,41 +129,38 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],            
+            ch_headers: ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'],            
         }
     },
     methods: {
-        showClose: function(){
-            this.$refs.closeModal.isOpen = true;
+        showHistory: function(){
+            this.$refs.historyModal.isOpen = true;
         },
-        deleteClosureRecord: function(id) {
+        deleteHistoryRecord: function(id) {
             var vm = this;
             var url = vm.closureURL(id);
             $.ajax({
                 method: "DELETE",
                 url: url,
             }).done(function(msg) {
-                vm.$refs.closure_dt.vmDataTable.ajax.reload();
+                vm.$refs.history_dt.vmDataTable.ajax.reload();
             });
         },
         getAddURL: function() {
-            if (this.closeCampground){
+            if (this.addPriceHistory){
                 return api_endpoints.opencloseCG(this.object_id);
             }else{
                 return api_endpoints.opencloseCS(this.object_id);
             }
         },
-        closeRange: function () {
-            this.sendData();
-        },
-        closureURL: function(id) {
-            if (this.closeCampground){
+        historyURL: function(id) {
+            if (this.addPriceHistory){
                 return api_endpoints.campground_status_history_detail(id);
             }else{
                 return api_endpoints.campsite_status_history_detail(id);
             }
         },
-        editClosure: function (id){
+        editHistory: function (id){
             let vm = this;
             $.ajax({
                 url: vm.closureURL(id),
@@ -169,22 +169,22 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.closure = data;
-                    vm.showClose();
+                    vm.showHistory();
                 },
                 error:function (resp){
                     console.log(resp);
                 }
             });
         },
-        addClosure: function() {
+        addHistory: function() {
             this.sendData(this.getAddURL(),'POST');   
         },
-        updateClosure: function() {
-            this.sendData(this.closureURL(this.$refs.closeModal.closure_id),'PUT'); 
+        updateHistory: function() {
+            this.sendData(this.closureURL(this.$refs.historyModal.closure_id),'PUT'); 
         },
         sendData: function(url,method) {
             let vm = this;
-            var data = vm.$refs.closeModal.statusHistory;
+            var data = vm.$refs.historyModal.statusHistory;
             $.ajax({
                 url: url,
                 method: method,
@@ -192,29 +192,29 @@ export default {
                 data: data,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    vm.$refs.closeModal.close();
-                    vm.$refs.closure_dt.vmDataTable.ajax.reload();
+                    vm.$refs.historyModal.close();
+                    vm.$refs.history_dt.vmDataTable.ajax.reload();
                 },
                 error:function (resp){
                     var msg = helpers.apiError(resp);
-                    vm.$refs.closeModal.errorString = msg;
-                    vm.$refs.closeModal.errors = true;
+                    vm.$refs.historyModal.errorString = msg;
+                    vm.$refs.historyModal.errors = true;
                 }
             });
 
         },
         addTableListeners: function() {
             let vm = this;
-            vm.$refs.closure_dt.vmDataTable.on('click','.editRange', function(e) {
+            vm.$refs.history_dt.vmDataTable.on('click','.editHistory', function(e) {
                 e.preventDefault();
-                var id = $(this).data('range');
-                vm.editClosure(id);
+                var id = $(this).data('priceHistory');
+                vm.editHistory(id);
             });
-            vm.$refs.closure_dt.vmDataTable.on('click','.deleteRange', function(e) {
+            vm.$refs.history_dt.vmDataTable.on('click','.deletHistory', function(e) {
                 e.preventDefault();
-                var id = $(this).data('range');
-                vm.deleteClosure = id;
-                bus.$emit('showAlert', 'deleteClosure');
+                var id = $(this).data('priceHistory');
+                vm.deleteHistory = id;
+                bus.$emit('showAlert', 'deleteHistory');
             });
         },
     },

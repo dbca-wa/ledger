@@ -590,12 +590,25 @@ class CampgroundBookingRangeListener(object):
     @staticmethod
     @receiver(post_delete, sender=CampgroundBookingRange)
     def _post_delete(sender, instance, **kwargs):
-        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
-        if original_instance:
-            if original_instance.status != 0 and original_instance.range_end:
-                linked_open = CampgroundBookingRange.objects.get(range_start=original_instance.range_end + timedelta(days=1), status=0)
-                linked_open.range_start = original_instance.range_start
+        today = datetime.now().date()
+        if instance.status != 0 and instance.range_end:
+            try:
+                linked_open = CampgroundBookingRange.objects.get(range_start=instance.range_end + timedelta(days=1), status=0)
+                if instance.range_start >= today:
+                    linked_open.range_start = instance.range_start
+                else:
+                     linked_open.range_start = today
                 linked_open.save()
+            except CampgroundBookingRange.DoesNotExist:
+                pass
+        elif instance.status != 0 and not instance.range_end:
+            try:
+                if instance.range_start >= today:
+                    CampgroundBookingRange.objects.create(campground=instance.campground,range_start=instance.range_start,status=0)
+                else:
+                    CampgroundBookingRange.objects.create(campsite=instance.campground,range_start=today,status=0)
+            except:
+                pass
 
     @staticmethod
     @receiver(post_save, sender=CampgroundBookingRange)
@@ -668,12 +681,25 @@ class CampsiteBookingRangeListener(object):
     @staticmethod
     @receiver(post_delete, sender=CampsiteBookingRange)
     def _post_delete(sender, instance, **kwargs):
-        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
-        if original_instance:
-            if original_instance.status != 0 and original_instance.range_end:
-                linked_open = CampsiteBookingRange.objects.get(range_start=original_instance.range_end + timedelta(days=1), status=0)
-                linked_open.range_start = original_instance.range_start
+        today = datetime.now().date()
+        if instance.status != 0 and instance.range_end:
+            try:
+                linked_open = CampsiteBookingRange.objects.get(range_start=instance.range_end + timedelta(days=1), status=0)
+                if instance.range_start >= today:
+                    linked_open.range_start = instance.range_start
+                else:
+                     linked_open.range_start = today
                 linked_open.save()
+            except CampsiteBookingRange.DoesNotExist:
+                pass
+        elif instance.status != 0 and not instance.range_end:
+            try:
+                if instance.range_start >= today:
+                    CampsiteBookingRange.objects.create(campsite=instance.campsite,range_start=instance.range_start,status=0)
+                else:
+                    CampsiteBookingRange.objects.create(campsite=instance.campsite,range_start=today,status=0)
+            except:
+                pass
 
     @staticmethod
     @receiver(post_save, sender=CampsiteBookingRange)
