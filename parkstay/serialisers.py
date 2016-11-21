@@ -213,13 +213,13 @@ class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteRate
 
-class RateDetailSerializer(serializer.Serializer):
+class RateDetailSerializer(serializers.Serializer):
     '''Used to validate rates from the frontend
     '''
     rate = serializers.URLField()
     adult = serializers.DecimalField(max_digits=5, decimal_places=2)
     concession = serializers.DecimalField(max_digits=5, decimal_places=2)
     child = serializers.DecimalField(max_digits=5, decimal_places=2)
-    period_start = serializers.DateField(formatt='%d/%m/%Y')
+    period_start = serializers.DateField(format='%d/%m/%Y')
     reason = serializers.IntegerField()
-    details = serializers.TextField(required=False)
+    details = serializers.CharField(required=False)
