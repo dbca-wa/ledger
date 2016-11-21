@@ -601,7 +601,7 @@ class CampgroundBookingRangeListener(object):
                 linked_open.save()
             except CampgroundBookingRange.DoesNotExist:
                 pass
-         elif instance.status != 0 and not instance.range_end:
+        elif instance.status != 0 and not instance.range_end:
             try:
                 if instance.range_start >= today:
                     CampgroundBookingRange.objects.create(campground=instance.campground,range_start=instance.range_start,status=0)
