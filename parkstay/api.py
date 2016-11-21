@@ -39,6 +39,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteRateSerializer,
                                     CampsiteStayHistorySerializer,
                                     RateSerializer
+                                    RateDetailSerializer
                                     )
 
 # API Views
@@ -187,6 +188,30 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['post'],authentication_classes=[])
+    def addPrice(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            rate = None
+            serializer = RateDetailSerializer(request.data) 
+            serializer.is_valid(raise_exception=True)
+            rate_id = serializer.validated_data['rate']
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExisti as e :
+                    raise serializers.ValidationError('The selected rate does not exist') 
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[1] 
+            if rate:
+                serializer.validated_data['rate']= rate
+                self.get_object.createCampsitePriceHistory(serializer.validated_data)
+
+            return Response(res.data)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
         try:
