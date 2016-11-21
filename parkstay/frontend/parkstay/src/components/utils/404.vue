@@ -1,7 +1,7 @@
 <template lang="html" id="error-404">
   <div class="wrapper">
       <div>
-          <h1>Opps 404 not found</h1>
+          <h1>Oops 404 not found</h1>
           <p>
               The page you are looking for could not be found.<br/>
               Check the address bar to ensure your URL is spelled correctly.
