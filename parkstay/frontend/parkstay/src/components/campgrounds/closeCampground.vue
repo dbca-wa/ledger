@@ -118,7 +118,6 @@ module.exports = {
             let vm = this;
             var data = this.formdata;
             data.status = vm.formdata.reason;
-            console.log(data);
             $.ajax({
                 url: api_endpoints.opencloseCG(vm.id),
                 method: 'POST',

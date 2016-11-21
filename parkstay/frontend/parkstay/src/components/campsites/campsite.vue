@@ -26,23 +26,35 @@
     									<div class="col-md-6">
     										<div class="form-group">
     											<label class="control-label" >Campsite Name</label>
-    											<input type="text" name="name" class="form-control"  required/>
+    											<input type="text" name="name" class="form-control"  v-model="campsite.name"required/>
     										</div>
     									</div>
     									<div class="col-md-6">
     										<div class="form-group ">
     											<label class="control-label" >Class</label>
-    											<select name="park" class="form-control" >
-    												<option >Class...</option>
+    											<select name="park" class="form-control" v-model="campsite.campsite_class" >
+    												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
     											</select>
     										</div>
     									</div>
     								</div>
     								<div class="row">
     									<div class="col-sm-12">
-                                        <select-panel :options="features" :selected="selected_features" id="select-features" refs="select-features"></select-panel>
+                                        <select-panel :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
     									</div>
     								</div>
+                                    <div class="row">
+                                      <div class="col-sm-6">
+
+                                      </div>
+                                      <div class="col-sm-6">
+                                          <div class="pull-right">
+                                              <button type="button" v-show="!createCampsite" @click="updateCampsite" class="btn btn-primary">Update</button>
+                                              <button type="button" v-show="createCampsite" class="btn btn-primary">Create</button>
+                                              <button type="button" class="btn btn-default" @click="goBack">Cancel</button>
+                                          </div>
+                                      </div>
+                                    </div>
     							</div>
     						</div>
                        </form>
@@ -114,7 +126,9 @@ export default {
             selected_features:[],
             createCampsite:true,
             campsite:{},
+            campsite_classes:[],
             stay: {},
+            createCampiste:true,
             deleteStay: null,
             deleteStayPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
@@ -281,6 +295,18 @@ export default {
 
         }
     },
+    watch:{
+        selected_features:{
+            handler:function () {
+                let vm = this;
+                this.campsite.features = [];
+                $.each(vm.selected_features,function (i,feature) {
+                    vm.campsite.features.push(feature.url);
+                });
+            },
+            deep:true
+        }
+    },
     methods: {
         showAddStay: function(create){
             create = typeof create !== 'undefined' ? create : true;
@@ -351,6 +377,9 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.campsite = data;
+                    
+                    vm.$refs.select_features.loadSelectedFeatures(data.features);
+                    //vm.selected_features = ;
                 },
                 error:function (resp){
                     if (resp.status == 404){
@@ -387,16 +416,43 @@ export default {
                 vm.deleteStay = id;
                 bus.$emit('showAlert', 'deleteStay');
             });
+        },
+        fetchCampsiteClasses:function () {
+            let vm =this;
+            $.get(api_endpoints.campsite_classes,function (data) {
+                vm.campsite_classes = data;
+            })
+        },
+        goBack:function () {
+            this.$route.go(window.history.back());
+        },
+        updateCampsite:function () {
+            let vm = this;
+            $.ajax({
+                beforeSend: function(xhrObj) {
+                    xhrObj.setRequestHeader("Content-Type", "application/json");
+                    xhrObj.setRequestHeader("Accept", "application/json");
+                },
+                xhrFields: { withCredentials:true },
+                url:api_endpoints.campsite(vm.$route.params.campsite_id),
+                method:'PUT',
+                data:JSON.stringify(vm.campsite),
+                success:function (data) {
+
+                    vm.campsite = data;
+                }
+            })
         }
     },
     mounted: function() {
         let vm = this;
         if (vm.$route.params.campsite_id){
-            vm.createCampiste = false;
+            vm.createCampsite = false;
             vm.fetchCampsite();
         }
         vm.loadFeatures();
         vm.attachEventListenersMaxStayDT();
+        vm.fetchCampsiteClasses();
     }
 }
 </script>
