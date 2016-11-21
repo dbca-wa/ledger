@@ -27,7 +27,7 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
     range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
-    
+
     def get_status(self, obj):
         return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
 
@@ -68,7 +68,7 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
         )
 
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
-    
+
     class Meta:
         model = CampsiteBookingRange
         fields = (
@@ -170,6 +170,18 @@ class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
         fields = ('id','campground', 'name', 'type','campsite_class','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure')
+    def __init__(self, *args, **kwargs):
+        try:
+            formatted = bool(kwargs.pop('formatted'))
+        except:
+            formatted = False
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        super(CampsiteSerialiser, self).__init__(*args, **kwargs)
+        if method == 'get':
+            self.fields['features'] = FeatureSerializer(many=True)
 
 class RegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
