@@ -169,7 +169,7 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure')
+        fields = ('id','campground', 'name', 'type','campsite_class','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure')
 
 class RegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
