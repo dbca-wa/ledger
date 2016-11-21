@@ -7,11 +7,41 @@
 			    <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Closure start: </label>
+                        <label>Adult Price: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' :id='close_cg_range_start'>
-                            <input  name="closure_start"  v-model="priceHistory.range_start" type='text' class="form-control" />
+                        <input  name="adult_price"  v-model="priceHistory.adult_price" type='text' class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Concession Price: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input  name="concession_price"  v-model="priceHistory.concession_price" type='text' class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Child Price: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input  name="child_price"  v-model="priceHistory.child_price" type='text' class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Period start: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <div class='input-group date'>
+                            <input  name="closure_start"  v-model="priceHistory.period_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -22,25 +52,10 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Closure end: </label>
+                        <label>Reason: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' :id='close_cg_range_end'>
-                            <input name="closure_end" v-model="priceHistory.range_end" type='text' class="form-control" />
-                            <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label for="open_cg_reason">Reason: </label>
-                    </div>
-                    <div class="col-md-4">
-                        <select v-on:change="requireDetails()" name="closure_status" v-model="priceHistory.status" class="form-control" id="close_cg_reason">
+                        <select v-on:change="requireDetails()" name="closure_status" v-model="priceHistory.reason" class="form-control" id="close_cg_reason">
                             <option value="1">Closed due to natural disaster</option>
                             <option value="2">Closed for maintenance</option>
                             <option value="3">Other</option>
@@ -54,7 +69,7 @@
                         <label>Details: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea name="closure_details" v-model="priceHistory.details" class="form-control" id="close_cg_details"></textarea>
+                        <textarea name="closure_details" v-model="priceHistory.details" class="form-control"></textarea>
                     </div>
                 </div>
             </div>
@@ -114,7 +129,7 @@ module.exports = {
     },
     methods: {
         requireDetails: function() {
-            this.showDetails =  this.priceHistory.status == 3;
+            this.showDetails =  this.priceHistory.reason == 3;
         },
         close: function() {
             //this.priceHistory = {};
