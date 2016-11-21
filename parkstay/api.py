@@ -38,7 +38,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteBookingRangeSerializer,
                                     CampsiteRateSerializer,
                                     CampsiteStayHistorySerializer,
-                                    RateSerializer
+                                    RateSerializer,
                                     RateDetailSerializer
                                     )
 
@@ -52,7 +52,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
     serializer_class = CampsiteSerialiser
     authentication_classes = []
-    
+
     def list(self, request, format=None):
         queryset = self.get_queryset()
         formatted = bool(request.GET.get("formatted", False))
@@ -193,16 +193,16 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             rate = None
-            serializer = RateDetailSerializer(request.data) 
+            serializer = RateDetailSerializer(request.data)
             serializer.is_valid(raise_exception=True)
             rate_id = serializer.validated_data['rate']
             if rate_id:
                 try:
                     rate = Rate.objects.get(id=rate_id)
                 except Rate.DoesNotExisti as e :
-                    raise serializers.ValidationError('The selected rate does not exist') 
+                    raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[1] 
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[1]
             if rate:
                 serializer.validated_data['rate']= rate
                 self.get_object.createCampsitePriceHistory(serializer.validated_data)
