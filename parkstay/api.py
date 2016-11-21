@@ -88,10 +88,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
@@ -185,10 +185,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
