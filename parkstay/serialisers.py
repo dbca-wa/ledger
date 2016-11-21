@@ -207,7 +207,7 @@ class BookingSerializer(serializers.HyperlinkedModelSerializer):
 class RateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Rate
-        fields = ('__all__')
+        fields = ('url','adult','concession','child','infant','name')
 
 class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
