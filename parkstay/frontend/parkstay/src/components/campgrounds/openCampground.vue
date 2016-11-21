@@ -114,7 +114,6 @@ module.exports = {
             var data = this.formdata;
             data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
             data.status = 0;
-            console.log(data);
             $.ajax({
                 url: api_endpoints.opencloseCG(vm.id),
                 method: 'POST',
@@ -188,7 +187,6 @@ module.exports = {
         });
         vm.picker.on('dp.change', function(e){
             vm.formdata.range_start = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            console.log(vm.formdata.range_start);
         });
         vm.form = $('#openCGForm');
         vm.addFormValidations();

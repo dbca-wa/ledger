@@ -172,7 +172,7 @@ export default {
                     vm.showHistory();
                 },
                 error:function (resp){
-                    console.log(resp);
+                    
                 }
             });
         },
