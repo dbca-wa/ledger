@@ -59,17 +59,7 @@
                          <datatable ref="addMaxStayDT" :dtHeaders ="msh_headers" :dtOptions="msh_options" :table.sync="msh_table" id="stay_history"></datatable>
                       </div>
                    </div>
-                   <div class="row">
-                      <div class="well">
-                        <div class="col-sm-8">
-                            <h1>Price History</h1>
-                        </div>
-                        <div class="col-sm-4">
-                         <button class="btn btn-primary pull-right table_btn">Add Price Period</button>
-                        </div>
-                         <datatable :dtHeaders ="ph_headers" :dtOptions="ph_options" :table.sync="ph_table" id="price_history"></datatable>
-                      </div>
-                   </div>
+                    <priceHistory ref="price_dt" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
                     <closureHistory ref="cg_closure_dt" :closeCampground=false :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                 </div>
              </div>
@@ -93,6 +83,7 @@ import pkCsClose from './closureHistory/closeCampsite.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import {bus} from '../utils/eventBus.js'
 import closureHistory from '../utils/closureHistory.vue'
+import priceHistory from '../utils/priceHistory/priceHistory.vue'
 export default {
     name:'campsite',
     components:{
@@ -102,11 +93,15 @@ export default {
         alert,
         pkCsClose,
         confirmbox,
-        closureHistory
+        closureHistory,
+        priceHistory
     },
     computed: {
         closureHistoryURL: function() {
             return api_endpoints.campsites_status_history(this.$route.params.campsite_id);
+        },
+        priceHistoryURL: function() {
+            return api_endpoints.campsites_price_history(this.$route.params.campsite_id);
         },
         myID: function(){
             return parseInt(this.$route.params.campsite_id);
@@ -132,8 +127,9 @@ export default {
                         vm.deleteStayRecord(vm.deleteStay);
                         vm.deleteStay = null;
                     },
-                    autoclose: true
-                }]
+                    autoclose: true,
+                }],
+                id: 'deleteStay'
             },
             retrieve_stay: {
                 error: false,

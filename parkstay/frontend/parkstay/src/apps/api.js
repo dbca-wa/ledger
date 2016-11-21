@@ -10,6 +10,9 @@ module.exports = {
     campground:function (id) {
         return "/api/campgrounds/"+id+".json";
     },
+    campground_price_history: function(id){
+        return "/api/campgrounds/"+ id +"/price_history.json";
+    },
     campgroundCampsites: function(id){
         return "/api/campgrounds/" + id + "/campsites.json"
     },
@@ -27,6 +30,9 @@ module.exports = {
     campsites_stay_history: "/api/campsites_stay_history.json",
     campsites_stay_history_detail: function(id){
         return "/api/campsites_stay_history/"+ id +".json";
+    },
+    campsites_price_history: function(id){
+        return "/api/campsites/"+ id +"/price_history.json";
     },
     campsites_status_history:function(id){
         return "/api/campsites/" + id + "/status_history.json?closures=True"

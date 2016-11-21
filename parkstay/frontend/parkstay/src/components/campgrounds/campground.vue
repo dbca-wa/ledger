@@ -19,11 +19,7 @@
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                  <div class="row">
-                     <div class="well">
-                        <h1>Price History</h1>
-                     </div>
-                  </div>
+                <priceHistory ref="price_dt" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
                 <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
@@ -59,6 +55,7 @@
 <script>
 import datatable from '../utils/datatable.vue'
 import closureHistory from '../utils/closureHistory.vue'
+import priceHistory from '../utils/priceHistory/priceHistory.vue'
 import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import pkCsClose from '../campsites/closureHistory/closeCampsite.vue'
@@ -83,11 +80,15 @@ export default {
         confirmbox,
         pkCsClose,
         pkCsOpen,
-        closureHistory
+        closureHistory,
+        priceHistory
     },
     computed: {
         closureHistoryURL: function() {
             return api_endpoints.status_history(this.$route.params.id);
+        },
+        priceHistoryURL: function() {
+            return api_endpoints.campground_price_history(this.$route.params.id);
         },
         myID: function(){
             return parseInt(this.$route.params.id);
