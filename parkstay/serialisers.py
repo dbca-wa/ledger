@@ -1,4 +1,4 @@
-from parkstay.models import CampsiteStayHistory,District, CampsiteBooking,BookingRange,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
+from parkstay.models import Rate,CampsiteStayHistory,District, CampsiteBooking,BookingRange,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
 from rest_framework import serializers
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -191,6 +191,11 @@ class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
 class BookingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Booking
+
+class RateSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Rate
+        fields = ('__all__')
 
 class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
