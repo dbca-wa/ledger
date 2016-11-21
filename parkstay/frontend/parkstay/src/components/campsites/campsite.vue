@@ -26,14 +26,14 @@
     									<div class="col-md-6">
     										<div class="form-group">
     											<label class="control-label" >Campsite Name</label>
-    											<input type="text" name="name" class="form-control"  required/>
+    											<input type="text" name="name" class="form-control"  v-model="campsite.name"required/>
     										</div>
     									</div>
     									<div class="col-md-6">
     										<div class="form-group ">
     											<label class="control-label" >Class</label>
-    											<select name="park" class="form-control" >
-    												<option >Class...</option>
+    											<select name="park" class="form-control" v-model="campsite.campsite_class" >
+    												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
     											</select>
     										</div>
     									</div>
@@ -43,6 +43,18 @@
                                         <select-panel :options="features" :selected="selected_features" id="select-features" refs="select-features"></select-panel>
     									</div>
     								</div>
+                                    <div class="row">
+                                      <div class="col-sm-6">
+
+                                      </div>
+                                      <div class="col-sm-6">
+                                          <div class="pull-right">
+                                              <button type="button" v-show="!createCampsite" class="btn btn-primary">Update</button>
+                                              <button type="button" v-show="createCampsite"class="btn btn-primary">Create</button>
+                                              <button type="button" class="btn btn-default" @click="goBack">Cancel</button>
+                                          </div>
+                                      </div>
+                                    </div>
     							</div>
     						</div>
                        </form>
@@ -114,7 +126,9 @@ export default {
             selected_features:[],
             createCampsite:true,
             campsite:{},
+            campsite_classes:[],
             stay: {},
+            createCampiste:true,
             deleteStay: null,
             deleteStayPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
@@ -281,6 +295,14 @@ export default {
 
         }
     },
+    watch:{
+        selected_features:{
+            handler:function () {
+                this.campsite.features = this.selected_features;
+            },
+            deep:true
+        }
+    },
     methods: {
         showAddStay: function(create){
             create = typeof create !== 'undefined' ? create : true;
@@ -387,16 +409,26 @@ export default {
                 vm.deleteStay = id;
                 bus.$emit('showAlert', 'deleteStay');
             });
+        },
+        fetchCampsiteClasses:function () {
+            let vm =this;
+            $.get(api_endpoints.campsite_classes,function (data) {
+                vm.campsite_classes = data;
+            })
+        },
+        goBack:function () {
+            this.$route.go(window.history.back());
         }
     },
     mounted: function() {
         let vm = this;
         if (vm.$route.params.campsite_id){
-            vm.createCampiste = false;
+            vm.createCampsite = false;
             vm.fetchCampsite();
         }
         vm.loadFeatures();
         vm.attachEventListenersMaxStayDT();
+        vm.fetchCampsiteClasses();
     }
 }
 </script>

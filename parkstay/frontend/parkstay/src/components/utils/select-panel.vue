@@ -19,7 +19,7 @@
             <div class="col-sm-6 options">
                 <div class="panel panel-primary">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Selected Feautures</h3>
+                        <h3 class="panel-title">Selected Features</h3>
                     </div>
                     <div class="panel-body"  v-bind:class="{ 'empty-options': !hasSelectedOptions }">
                         <p v-show="!hasSelectedOptions">
