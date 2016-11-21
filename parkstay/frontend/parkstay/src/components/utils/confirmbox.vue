@@ -58,7 +58,7 @@ var confirmModal = module.exports = {
             icon: 'modalIcon'+this._uid,
             text: 'modalText'+this._uid,
             buttons: 'modalButtons'+this._uid,
-            eventHandler: Array()
+            eventHandler: Array(),
         }
     },
     props:{
@@ -78,6 +78,7 @@ var confirmModal = module.exports = {
             var icon = $("#"+vm.icon);
             var text = $("#"+vm.text);
             var buttons = ("#"+vm.buttons);
+            var passed_id = Obj.id;
             var autoclose =(typeof Obj.autoclose != "undefined")? Obj.autoclose: true;
             $(icon).html(Obj.icon);
             $(text).html(Obj.message);
@@ -89,12 +90,14 @@ var confirmModal = module.exports = {
                    var eventHandler = (typeof btn.eventHandler != "undefined") ? btn.eventHandler : "@click";
                    $(buttons).append("<button type=\"button\" data-click="+btn.event+"\" class=\"btn " + btn.bsColor + "\">" + btn.text + "</button>");
                    $(function () {
-                       $('button[data-click]').on('click',function () {
-                           btn.handler();
-                           if(autoclose){
-                               $(confirmModal).modal('hide');
-                           }
-                       });
+                          if(passed_id === vm.id){
+                               $('button[data-click]').on('click',function () {
+                                   btn.handler();
+                                   if(autoclose){
+                                       $(confirmModal).modal('hide');
+                                   }
+                               });
+                          }
                    })
                });
             }
