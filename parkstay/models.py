@@ -523,6 +523,11 @@ class CampsiteRate(models.Model):
         (1, 'Discounted'),
     )
 
+    UPDATE_LEVEL_CHOICES = (
+        (0, 'Campground level'),
+        (1, 'Campsite Class level'),
+        (2, 'Campsite level'),
+    )
     PRICE_MODEL_CHOICES = (
         (0, 'Price per Person'),
         (1, 'Fixed Price'),
@@ -534,6 +539,7 @@ class CampsiteRate(models.Model):
     date_end = models.DateField(null=True, blank=True)
     rate_type = models.SmallIntegerField(choices=RATE_TYPE_CHOICES, default=0)
     price_model = models.SmallIntegerField(choices=PRICE_MODEL_CHOICES, default=0)
+    update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
 
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
         return self.rate.adult*num_adult + self.rate.concession*num_concession + \
