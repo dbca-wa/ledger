@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
+from django.db import IntegrityError, transaction, connection
 from django.utils import timezone
 from datetime import date, time, datetime, timedelta
 from taggit.managers import TaggableManager
@@ -187,10 +188,16 @@ class Campground(models.Model):
             b.save()
 
     def createCampsitePriceHistory(self,data):
-        # Get all campsites
-        for c in self.campsites:
-            cr = CampsiteRate(**data)
-            cr.campsite = c
+        '''Create Multiple campsite rates
+        '''
+        try:
+            with transaction.atomic():
+                for c in self.campsites.all():
+                    cr = CampsiteRate(**data)
+                    cr.campsite = c
+                    cr.save()
+        except Exception as e:
+            raise
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
@@ -573,6 +580,31 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
 
+# VIEWS
+# =====================================
+class CampgroundPriceHistory(models.Model):
+    id = models.IntegerField(primary_key=True)
+    date_start = models.DateField()
+    date_end = models.DateField()
+    rate_id = models.IntegerField()
+    adult = models.DecimalField(max_digits=8, decimal_places=2)
+    concession = models.DecimalField(max_digits=8, decimal_places=2)
+    child = models.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        managed = False
+        db_table = 'parkstay_campground_pricehistory_v'
+
+    # Properties
+    # ====================================
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
+            return True
+        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+            return True
+        return False
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
@@ -756,3 +788,31 @@ class CampsiteListener(object):
         if not original_instance:
             # Create an opening booking range on creation of Campground
              CampsiteBookingRange.objects.create(campsite=instance,range_start=datetime.now().date(),status=0)
+
+class CampsiteRateListener(object):
+    """
+    Event listener for Campsite Rate
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=Campsite)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = CampsiteRate.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+
+    @staticmethod
+    @receiver(post_save, sender=Campsite)
+    def _post_save(sender, instance, **kwargs):
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        try:
+            cursor = connection.cursor()
+            sql =   'CREATE OR REPLACE VIEW parkstay_campground_pricehistory_v AS \
+                SELECT distinct camps.campground_id as id,cr.date_start,cr.date_end, r.id as rate_id, r.adult, r.concession, r.child from parkstay_campsiterate cr INNER JOIN parkstay_rate r on r.id= cr.rate_id  INNER JOIN \
+                (SELECT cg.id AS campground_id,cs.name AS name,cs.id AS campsite_id from  parkstay_campsite cs, parkstay_campground cg WHERE cs.campground_id = cg.id and cg.id = cs.campground_id) camps ON cr.campsite_id = camps.campsite_id'
+            cursor.execute(sql)
+        except Exception as e:
+            raise ValidationError(e)
+        
