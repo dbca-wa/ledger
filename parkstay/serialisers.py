@@ -253,4 +253,4 @@ class RateDetailSerializer(serializers.Serializer):
 class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = CampgroundPriceHistory
-        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable')
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
