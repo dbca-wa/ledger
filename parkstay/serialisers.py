@@ -1,4 +1,22 @@
-from parkstay.models import Rate,CampsiteStayHistory,District, CampsiteBooking,BookingRange,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
+from parkstay.models import (   CampgroundPriceHistory,
+                                Rate,
+                                CampsiteStayHistory,
+                                District,
+                                CampsiteBooking,
+                                BookingRange,
+                                CampsiteBookingRange,
+                                CampgroundBookingRange,
+                                Campsite,
+                                Campground,
+                                Park,
+                                PromoArea,
+                                Feature,
+                                Region,
+                                CampsiteClass,
+                                Booking,
+                                CampsiteRate,
+                                Contact
+                            )
 from rest_framework import serializers
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -216,10 +234,23 @@ class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
 class RateDetailSerializer(serializers.Serializer):
     '''Used to validate rates from the frontend
     '''
-    rate = serializers.URLField()
+    rate = serializers.IntegerField()
     adult = serializers.DecimalField(max_digits=5, decimal_places=2)
     concession = serializers.DecimalField(max_digits=5, decimal_places=2)
     child = serializers.DecimalField(max_digits=5, decimal_places=2)
-    period_start = serializers.DateField(format='%d/%m/%Y')
+    period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False)
+
+
+    def validate_rate(self, value):
+        try:
+            Rate.objects.get(id=value)
+        except Rate.DoesNotExist:
+            raise serializers.ValidationError('This rate does not exist')
+        return value
+
+class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CampgroundPriceHistory
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable')
