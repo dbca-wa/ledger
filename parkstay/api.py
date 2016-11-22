@@ -209,13 +209,16 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 serializer.validated_data['rate']= rate
                 data = {
                     'rate': rate,
-                    'period_start': serializer.validated_data['period_start'],
-                    'reason': serializer.validated_data['reason'],
+                    'date_start': serializer.validated_data['period_start'],
+                    #'reason': serializer.validated_data['reason'],
                     'update_level': 0
                 }
                 self.get_object().createCampsitePriceHistory(data)
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            res = serializer.data
 
-            return Response(res.data)
+            return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
         except Exception as e:
