@@ -15,13 +15,13 @@
               aria-labelledby="applications-heading">
              <div class="panel-body">
                 <div class="col-lg-12">
-                   <div class="row">
-                       <form>
+                   <div class="row" >
+                       <form >
                            <div class="panel panel-primary">
     							<div class="panel-heading">
     								<h3 class="panel-title">Campsite Details</h3>
     							</div>
-    							<div class="panel-body">
+    							<div class="panel-body" v-show="!isLoading">
     								<div class="row">
     									<div class="col-md-6">
     										<div class="form-group">
@@ -58,7 +58,9 @@
     							</div>
     						</div>
                        </form>
+                       <loader :isLoading="isLoading">Saving Campsite Data...</loader>
                    </div>
+
                    <div class="row">
                       <div class="well">
                         <alert ref="retrieveStayAlert" :show.sync="retrieve_stay.error" type="danger" :duration="retrieve_stay.timeout">{{retrieve_stay.errorString}}</alert>
@@ -86,27 +88,33 @@ import {
     $,
     api_endpoints,
     helpers
-} from '../../hooks.js';
+}
+from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
 import addMaxStayCS from './stayHistory/addMaximumStayPeriod.vue'
 import select_panel from '../utils/select-panel.vue'
 import alert from '../utils/alert.vue'
 import pkCsClose from './closureHistory/closeCampsite.vue'
 import confirmbox from '../utils/confirmbox.vue'
-import {bus} from '../utils/eventBus.js'
+import loader from '../utils/loader.vue'
+import {
+    bus
+}
+from '../utils/eventBus.js'
 import closureHistory from '../utils/closureHistory.vue'
 import priceHistory from '../utils/priceHistory/priceHistory.vue'
 export default {
-    name:'campsite',
-    components:{
+    name: 'campsite',
+    components: {
         datatable,
         addMaxStayCS,
-        "select-panel":select_panel,
+        "select-panel": select_panel,
         alert,
         pkCsClose,
         confirmbox,
         closureHistory,
-        priceHistory
+        priceHistory,
+        loader
     },
     computed: {
         closureHistoryURL: function() {
@@ -115,20 +123,21 @@ export default {
         priceHistoryURL: function() {
             return api_endpoints.campsites_price_history(this.$route.params.campsite_id);
         },
-        myID: function(){
+        myID: function() {
             return parseInt(this.$route.params.campsite_id);
         }
     },
-    data:function (){
+    data: function() {
         let vm = this;
-        return{
-            features:[],
-            selected_features:[],
-            createCampsite:true,
-            campsite:{},
-            campsite_classes:[],
+        return {
+            isLoading: false,
+            features: [],
+            selected_features: [],
+            createCampsite: true,
+            campsite: {},
+            campsite_classes: [],
             stay: {},
-            createCampiste:true,
+            createCampiste: true,
             deleteStay: null,
             deleteStayPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
@@ -150,13 +159,13 @@ export default {
                 timeout: 5000,
                 errorString: ''
             },
-            msh_headers:['ID','Period Start', 'Period End','Maximum Stay(Nights)', 'Comment', 'Action'],
-            ph_headers:['ID','Period Start','Period End','Adult Price','Concession Price','Child Price','Comment','Action'],
-            ch_headers:['ID','Closure Start','Reopen','Closure Reason','Details','Action'],
-            msh_table:{},
-            ph_table:{},
-            ch_table:{},
-            default_dtOptions:{
+            msh_headers: ['ID', 'Period Start', 'Period End', 'Maximum Stay(Nights)', 'Comment', 'Action'],
+            ph_headers: ['ID', 'Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'],
+            ch_headers: ['ID', 'Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],
+            msh_table: {},
+            ph_table: {},
+            ch_table: {},
+            default_dtOptions: {
                 responsive: true,
                 processing: true,
                 deferRender: true,
@@ -166,149 +175,128 @@ export default {
             },
             //TODO
             /**
-            *replace all with actual values
-            */
-            msh_options:{
+             *replace all with actual values
+             */
+            msh_options: {
                 responsive: true,
                 processing: true,
                 deferRender: true,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                ajax:{
+                ajax: {
                     //TODO
                     /*
-                    * change end point to closure history
-                    */
-                    url:api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
-                    dataSrc:''
+                     * change end point to closure history
+                     */
+                    url: api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
+                    dataSrc: ''
                 },
-                columns:[
-                    {
-                        "data": "id"
-                    },
-                    {
-                        "data":"range_start"
-                    },
-                    {
-                        "data":"range_end"
-                    },
-                    {
-                        "data":"max_days"
-                    },
-                    {
-                        "data":"details"
-                    },
-                    {
-                        "mRender": function(data, type, full) {
-                            var id = full.id;
-                            if (full.editable){
-                                var column = "<td ><a href='#' class='editStay' data-stay_period=\"__ID__\" >Edit</a>";
-                                column += "<br/><a href='#' class='deleteStay' data-stay_period=\"__ID__\" >Delete</a></td>";
-                                return column.replace(/__ID__/g, id);
-                            }
-                            return '';
+                columns: [{
+                    "data": "id"
+                }, {
+                    "data": "range_start"
+                }, {
+                    "data": "range_end"
+                }, {
+                    "data": "max_days"
+                }, {
+                    "data": "details"
+                }, {
+                    "mRender": function(data, type, full) {
+                        var id = full.id;
+                        if (full.editable) {
+                            var column = "<td ><a href='#' class='editStay' data-stay_period=\"__ID__\" >Edit</a>";
+                            column += "<br/><a href='#' class='deleteStay' data-stay_period=\"__ID__\" >Delete</a></td>";
+                            return column.replace(/__ID__/g, id);
                         }
+                        return '';
                     }
-                ]
+                }]
             },
-            ph_options:{
+            ph_options: {
                 responsive: true,
                 processing: true,
                 deferRender: true,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                ajax:{
+                ajax: {
                     //TODO
                     /*
-                    * change end point to closure history
-                    */
-                    url:api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
-                    dataSrc:''
+                     * change end point to closure history
+                     */
+                    url: api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
+                    dataSrc: ''
                 },
-                columns:[
-                    {
-                        "data": "id"
-                    },
-                    {
-                        "data":"closure_start"
-                    },
-                    {
-                        "data":"closure_end"
-                    },
-                    {
-                        "data":"closure_reason"
-                    },
-                    {
-                        "data":"reopen_reason"
-                    },
-                    {
-                        "mRender": function(data, type, full) {
-                            var id = full.id;
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>";
-                            return column.replace('__ID__', id);
-                        }
+                columns: [{
+                    "data": "id"
+                }, {
+                    "data": "closure_start"
+                }, {
+                    "data": "closure_end"
+                }, {
+                    "data": "closure_reason"
+                }, {
+                    "data": "reopen_reason"
+                }, {
+                    "mRender": function(data, type, full) {
+                        var id = full.id;
+                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a>";
+                        return column.replace('__ID__', id);
                     }
-                ]
+                }]
             },
-            ch_options:{
+            ch_options: {
                 responsive: true,
                 processing: true,
                 deferRender: true,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                ajax:{
+                ajax: {
                     //TODO
                     /*
-                    * change end point to closure history
-                    */
-                    url:api_endpoints.campsites_status_history(vm.$route.params.campsite_id),
-                    dataSrc:''
+                     * change end point to closure history
+                     */
+                    url: api_endpoints.campsites_status_history(vm.$route.params.campsite_id),
+                    dataSrc: ''
                 },
-                columns:[
-                    {
-                        "data": "id"
-                    },
-                    {
-                        "data":"range_start"
-                    },
-                    {
-                        "data":"range_end"
-                    },
-                    {
-                        "data":"status"
-                    },
-                    {
-                        "data":"details"
-                    },
-                    {
-                        "mRender": function(data, type, full) {
-                            var id = full.id;
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit</a>";
-                            return column.replace('__ID__', id);
-                        }
+                columns: [{
+                    "data": "id"
+                }, {
+                    "data": "range_start"
+                }, {
+                    "data": "range_end"
+                }, {
+                    "data": "status"
+                }, {
+                    "data": "details"
+                }, {
+                    "mRender": function(data, type, full) {
+                        var id = full.id;
+                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit</a>";
+                        return column.replace('__ID__', id);
                     }
-                ]
+                }]
             }
 
         }
     },
-    watch:{
-        selected_features:{
-            handler:function () {
+    watch: {
+        selected_features: {
+            handler: function() {
                 let vm = this;
                 this.campsite.features = [];
-                $.each(vm.selected_features,function (i,feature) {
+                $.each(vm.selected_features, function(i, feature) {
                     vm.campsite.features.push(feature.url);
                 });
             },
-            deep:true
+            deep: true
         }
     },
     methods: {
-        showAddStay: function(create){
+        showAddStay: function(create) {
             create = typeof create !== 'undefined' ? create : true;
             this.$refs.addMaxStayModal.isOpen = true;
             this.$refs.addMaxStayModal.create = create;
@@ -337,14 +325,16 @@ export default {
             $.ajax({
                 url: api_endpoints.opencloseCS(vm.$refs.closeCampsite.id),
                 method: 'POST',
-                xhrFields: { withCredentials:true },
+                xhrFields: {
+                    withCredentials: true
+                },
                 data: data,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.closeCampsite.close();
                     vm.$refs.closureHistDT.vmDataTable.ajax.reload();
                 },
-                error:function (resp){
+                error: function(resp) {
                     vm.$refs.closeCampsite.errors = true;
                     vm.$refs.closeCampsite.errorString = helpers.apiError(resp);
                 }
@@ -352,37 +342,43 @@ export default {
         },
         fetchStay: function(id) {
             let vm = this;
-             $.ajax({
+            $.ajax({
                 url: api_endpoints.campsites_stay_history_detail(id),
                 method: 'GET',
-                xhrFields: { withCredentials:true },
+                xhrFields: {
+                    withCredentials: true
+                },
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.stay = data;
                     vm.showAddStay(false);
                 },
-                error:function (resp){
+                error: function(resp) {
                     vm.retrieve_stay.error = true;
                     vm.retrieve_stay.errorString = 'There was a problem trying to retrive this stay period';
-                    setTimeout(function(){ vm.retrieve_stay.error = false; }, vm.retrieve_stay.timeout);
+                    setTimeout(function() {
+                        vm.retrieve_stay.error = false;
+                    }, vm.retrieve_stay.timeout);
                 }
             });
         },
         fetchCampsite: function() {
             let vm = this;
-             $.ajax({
+            $.ajax({
                 url: api_endpoints.campsite(vm.$route.params.campsite_id),
                 method: 'GET',
-                xhrFields: { withCredentials:true },
+                xhrFields: {
+                    withCredentials: true
+                },
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.campsite = data;
-                    
+
                     vm.$refs.select_features.loadSelectedFeatures(data.features);
                     //vm.selected_features = ;
                 },
-                error:function (resp){
-                    if (resp.status == 404){
+                error: function(resp) {
+                    if (resp.status == 404) {
                         vm.$router.push({
                             name: '404'
                         });
@@ -405,48 +401,55 @@ export default {
         },
         attachEventListenersMaxStayDT: function() {
             let vm = this;
-            vm.$refs.addMaxStayDT.vmDataTable.on('click','.editStay', function(e){
+            vm.$refs.addMaxStayDT.vmDataTable.on('click', '.editStay', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-stay_period');
                 vm.fetchStay(id);
             });
-            vm.$refs.addMaxStayDT.vmDataTable.on('click','.deleteStay', function(e){
+            vm.$refs.addMaxStayDT.vmDataTable.on('click', '.deleteStay', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-stay_period');
                 vm.deleteStay = id;
                 bus.$emit('showAlert', 'deleteStay');
             });
         },
-        fetchCampsiteClasses:function () {
-            let vm =this;
-            $.get(api_endpoints.campsite_classes,function (data) {
+        fetchCampsiteClasses: function() {
+            let vm = this;
+            $.get(api_endpoints.campsite_classes, function(data) {
                 vm.campsite_classes = data;
             })
         },
-        goBack:function () {
+        goBack: function() {
             this.$route.go(window.history.back());
         },
-        updateCampsite:function () {
+        updateCampsite: function() {
             let vm = this;
+            vm.isLoading = true;
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
                     xhrObj.setRequestHeader("Accept", "application/json");
                 },
-                xhrFields: { withCredentials:true },
-                url:api_endpoints.campsite(vm.$route.params.campsite_id),
-                method:'PUT',
-                data:JSON.stringify(vm.campsite),
-                success:function (data) {
+                xhrFields: {
+                    withCredentials: true
+                },
+                url: api_endpoints.campsite(vm.$route.params.campsite_id),
+                method: 'PUT',
+                data: JSON.stringify(vm.campsite),
+                success: function(data) {
 
                     vm.campsite = data;
+                    setTimeout(function () {
+                        vm.isLoading = false;
+                    },500);
+
                 }
             })
         }
     },
     mounted: function() {
         let vm = this;
-        if (vm.$route.params.campsite_id){
+        if (vm.$route.params.campsite_id) {
             vm.createCampsite = false;
             vm.fetchCampsite();
         }
@@ -455,6 +458,7 @@ export default {
         vm.fetchCampsiteClasses();
     }
 }
+
 </script>
 
 <style lang="css">
