@@ -53,7 +53,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
     serializer_class = CampsiteSerialiser
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -115,7 +115,6 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
     queryset = CampsiteStayHistory.objects.all()
     serializer_class = CampsiteStayHistorySerializer
-    authentication_classes=[]
 
     def update(self, request, *args, **kwargs):
         try:
@@ -136,7 +135,6 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
-    authentication_classes=[]
 
     def list(self, request, format=None):
         queryset = self.get_queryset()
@@ -150,7 +148,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -458,7 +456,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
     serializer_class = CampsiteRateSerializer
 
 class BookingRangeViewset(viewsets.ModelViewSet):
-    authentication_classes=[]
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
