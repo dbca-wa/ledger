@@ -568,7 +568,7 @@ class CampsiteRate(models.Model):
         return '{} - ({})'.format(self.campsite, self.rate)
 
     class Meta:
-        unique_together = (('campsite', 'rate'),)
+        unique_together = (('campsite', 'rate', 'date_start','date_end'),)
 
 
 class Booking(models.Model):
@@ -597,6 +597,12 @@ class CampgroundPriceHistory(models.Model):
 
     # Properties
     # ====================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
     @property
     def editable(self):
         today = datetime.now().date()
@@ -795,16 +801,23 @@ class CampsiteRateListener(object):
     """
 
     @staticmethod
-    @receiver(pre_save, sender=Campsite)
+    @receiver(pre_save, sender=CampsiteRate)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
             original_instance = CampsiteRate.objects.get(pk=instance.pk)
             setattr(instance, "_original_instance", original_instance)
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
+        else:
+            try:
+                within = CampsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
+                within.date_end = instance.date_start - timedelta(days=2)
+                within.save()
+            except CampsiteRate.DoesNotExist:
+                pass
 
     @staticmethod
-    @receiver(post_save, sender=Campsite)
+    @receiver(post_save, sender=CampsiteRate)
     def _post_save(sender, instance, **kwargs):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         try:
