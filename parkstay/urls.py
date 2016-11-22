@@ -30,6 +30,8 @@ api_patterns = [
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'', include(api_patterns)),
+    url(r'^$', views.ParkstayRoutingView.as_view(), name='ps_home'),
+    url(r'^my_bookings/$', views.MyBookingsView.as_view(), name='my-bookings'),
     url(r'^campsites/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^campsite_classes/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),

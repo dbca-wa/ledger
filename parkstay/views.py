@@ -1,8 +1,9 @@
 
 from django.http import Http404, HttpResponse, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic.base import View, TemplateView
 from django.conf import settings
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -19,6 +20,9 @@ from parkstay.models import (Campground,
                                 )
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
+
+from parkstay.helpers import is_officer
+from parkstay.forms import LoginForm
 
 class CampsiteBookingSelector(TemplateView):
     template_name = 'ps/campsite_booking_selector.html'
@@ -59,5 +63,24 @@ class CampgroundFeed(ICalFeed):
             x[0] for x in item.campsitebooking_set.values_list('campsite__name').distinct()
         ] )) 
 
-class DashboardView(TemplateView):
+class DashboardView(UserPassesTestMixin, TemplateView):
     template_name = 'ps/dash/dash_tables_campgrounds.html'
+
+    def test_func(self):
+        return is_officer(self.request.user)
+
+    
+class MyBookingsView(LoginRequiredMixin, TemplateView):
+    template_name = 'ps/my_bookings.html'
+    
+
+class ParkstayRoutingView(TemplateView):
+    template_name = 'ps/index.html'
+
+    def get(self, *args, **kwargs):
+        if self.request.user.is_authenticated():
+            if is_officer(self.request.user):
+                return redirect('dash-campgrounds')
+            return redirect('my-bookings')
+        kwargs['form'] = LoginForm
+        return super(ParkstayRoutingView, self).get(*args, **kwargs)

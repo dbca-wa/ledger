@@ -3,6 +3,7 @@ from django.db.models import Q
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from datetime import datetime, timedelta
 from collections import OrderedDict
 
@@ -38,6 +39,10 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteRateSerializer,
                                     CampsiteStayHistorySerializer
                                     )
+from parkstay.helpers import is_officer, is_customer
+
+
+
 
 # API Views
 class CampsiteBookingViewSet(viewsets.ModelViewSet):
