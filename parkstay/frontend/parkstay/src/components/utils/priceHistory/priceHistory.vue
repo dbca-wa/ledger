@@ -88,13 +88,13 @@ export default {
                     dataSrc: ''
                 },
                 columns: [{
-                    data: 'range_start',
+                    data: 'date_start',
                     mRender: function(data, type, full) {
                         return Moment(data).format('MMMM Do, YYYY');
                     }
 
                 }, {
-                    data: 'range_end',
+                    data: 'date_end',
                     mRender: function(data, type, full) {
                         if (data) {
                             return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
@@ -105,13 +105,19 @@ export default {
                     }
 
                 }, {
-                    data: 'status'
+                    data: 'adult'
                 }, {
-                    data: 'details'
+                    data: 'concession'
                 }, {
-                    data: 'status'
+                    data: 'child'
                 }, {
-                    data: 'details'
+                    data: 'details',
+                    mRender: function(data, type, full) {
+                        if (data){
+                            return data;
+                        }
+                        return '';
+                    }
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
@@ -148,7 +154,7 @@ export default {
         },
         getAddURL: function() {
             if (this.addPriceHistory){
-                return api_endpoints.opencloseCG(this.object_id);
+                return api_endpoints.addPrice(this.object_id);
             }else{
                 return api_endpoints.opencloseCS(this.object_id);
             }
@@ -185,6 +191,10 @@ export default {
             let vm = this;
             var data = vm.price;
             $.ajax({
+                beforeSend: function(xhrObj) {
+                    xhrObj.setRequestHeader("Content-Type", "application/json");
+                    xhrObj.setRequestHeader("Accept", "application/json");
+                },
                 url: url,
                 method: method,
                 xhrFields: { withCredentials:true },
