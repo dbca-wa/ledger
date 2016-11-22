@@ -123,7 +123,10 @@ export default {
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editRange' data-priceHistory=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-priceHistory=\"__ID__\" >Delete</a></td>";
+                            var column = "<td ><a href='#' class='editRange' data-priceHistory=\"__ID__\" >Edit</a><br/>"
+                            if (full.deletable){
+                                column += "<a href='#' class='deleteRange' data-priceHistory=\"__ID__\" >Delete</a></td>";
+                            }
                             return column.replace(/__ID__/g, id);
                         }
                         else {
