@@ -242,6 +242,7 @@ module.exports = {
         var tomorrow = new Date(today);
         picker.datetimepicker({
             format: 'DD/MM/YYYY',
+            useCurrent: false,
             minDate: tomorrow
         });
         picker.on('dp.change', function(e){
