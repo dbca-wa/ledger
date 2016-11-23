@@ -42,6 +42,10 @@ export default {
             type: Boolean,
             default: true
         },
+        historyDeleteURL: {
+            type: String,
+            required: true
+        },
         object_id: {
             type: Number,
             required: true
@@ -70,7 +74,7 @@ export default {
             deleteHistory: null,
             deleteHistoryPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message: "Are you sure you want to Delete this closure Period",
+                message: "Are you sure you want to Delete this Price History Record",
                 buttons: [{
                     text: "Delete",
                     event: "delete",
@@ -127,11 +131,14 @@ export default {
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editRange' data-priceHistory=\"__ID__\" >Edit</a><br/>"
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
                             if (full.deletable){
-                                column += "<a href='#' class='deleteRange' data-priceHistory=\"__ID__\" >Delete</a></td>";
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
                             }
-                            return column.replace(/__ID__/g, id);
+                            column = column.replace(/__START__/g, full.date_start)
+                            column = column.replace(/__END__/g, full.date_end)
+                            column = column.replace(/__RATE__/g, full.rate_id)
+                            return column
                         }
                         else {
                             return "";
@@ -149,12 +156,18 @@ export default {
         showHistory: function(){
             this.$refs.historyModal.isOpen = true;
         },
-        deleteHistoryRecord: function(id) {
+        deleteHistoryRecord: function(data) {
             var vm = this;
-            var url = vm.closureURL(id);
+            var url = vm.historyDeleteURL;
             $.ajax({
-                method: "DELETE",
+                 beforeSend: function(xhrObj) {
+                    xhrObj.setRequestHeader("Content-Type", "application/json");
+                    xhrObj.setRequestHeader("Accept", "application/json");
+                },
+                method: "POST",
                 url: url,
+                xhrFields: { withCredentials:true },
+                data: JSON.stringify(data),
             }).done(function(msg) {
                 vm.$refs.history_dt.vmDataTable.ajax.reload();
             });
@@ -221,15 +234,21 @@ export default {
         },
         addTableListeners: function() {
             let vm = this;
-            vm.$refs.history_dt.vmDataTable.on('click','.editHistory', function(e) {
+            vm.$refs.history_dt.vmDataTable.on('click','.editPrice', function(e) {
                 e.preventDefault();
                 var id = $(this).data('priceHistory');
                 vm.editHistory(id);
             });
-            vm.$refs.history_dt.vmDataTable.on('click','.deletHistory', function(e) {
+            vm.$refs.history_dt.vmDataTable.on('click','.deletePrice', function(e) {
                 e.preventDefault();
-                var id = $(this).data('priceHistory');
-                vm.deleteHistory = id;
+                let btn = this;
+                var data = {
+                    'date_start':$(btn).data('date_start'),
+                    'rate_id':$(btn).data('rate'),
+                };
+                $(btn).data('date_end') != null ? data.date_end = $(btn).data('date_end'): '';
+                vm.deleteHistory = data;
+        
                 bus.$emit('showAlert', 'deleteHistory');
             });
         },
