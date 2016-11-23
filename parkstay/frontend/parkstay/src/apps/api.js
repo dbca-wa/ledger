@@ -28,6 +28,9 @@ module.exports = {
     campground_status_history_detail: function(id){
         return "/api/campground_booking_ranges/"+ id +".json?original=true";
     },
+    delete_campground_price: function(id){
+        return "/api/campgrounds/" + id + "/deletePrice.json";
+    },
     // Campsites
     campsites:"/api/campsites.json",
     campsites_stay_history: "/api/campsites_stay_history.json",
