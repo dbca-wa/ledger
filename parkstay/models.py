@@ -204,9 +204,11 @@ class Campground(models.Model):
         '''
         try:
             rates = CampsiteRate.objects.filter(**data)
+            campsites = self.campsites.all()
             with transaction.atomic():
                 for r in rates:
-                    r.delete()
+                    if r.campsite in campsites and r.update_level == 0:
+                        r.delete()
         except Exception as e:
             raise
 
@@ -833,11 +835,16 @@ class CampsiteRateListener(object):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         try:
             cursor = connection.cursor()
-            if insance.campsite.campground.price_level == 0:
+            if instance.campsite.campground.price_level == 0:
                 sql =   'CREATE OR REPLACE VIEW parkstay_campground_pricehistory_v AS \
                 SELECT distinct camps.campground_id as id,cr.date_start,cr.date_end, r.id as rate_id, r.adult, r.concession, r.child from parkstay_campsiterate cr INNER JOIN parkstay_rate r on r.id= cr.rate_id  INNER JOIN \
                 (SELECT cg.id AS campground_id,cs.name AS name,cs.id AS campsite_id from  parkstay_campsite cs, parkstay_campground cg WHERE cs.campground_id = cg.id and cg.id = cs.campground_id and cg.price_level = 0) camps ON cr.campsite_id = camps.campsite_id'
             cursor.execute(sql)
         except Exception as e:
             raise ValidationError(e)
-        
+
+    @staticmethod
+    @receiver(post_delete, sender=CampsiteRate)
+    def _post_delete(sender, instance, **kwargs): 
+        if not instance.date_end:
+            CampsiteRate.objects.filter(date_end=instance.date_start- timedelta(days=2),campsite=instance.campsite).update(date_end=None)
