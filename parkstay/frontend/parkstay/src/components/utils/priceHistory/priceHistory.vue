@@ -1,6 +1,6 @@
 <template id="priceHistory">
 <div class="row">
-    <PriceHistoryDetail ref="historyModal" @addPriceHistory="addHistory()" @updatePriceHistory="updateHistory()" :title="getTitle" :priceHistory="price"></PriceHistoryDetail>
+    <PriceHistoryDetail ref="historyModal" @addPriceHistory="addHistory()" @updatePriceHistory="updateHistory()" :priceHistory="price"></PriceHistoryDetail>
     <div class="well">
         <div class="col-sm-8">
             <h1>Price History</h1>
@@ -42,6 +42,13 @@ export default {
             type: Boolean,
             default: true
         },
+        level: {
+            validator: function (value){
+                var levels = ['campground','campsite_class','campsite'];
+                return $.inArray(value,levels) > -1;   
+            },
+            required: true
+        },
         historyDeleteURL: {
             type: String,
             required: true
@@ -57,13 +64,6 @@ export default {
         PriceHistoryDetail
     },
     computed: {
-        getTitle: function() {
-            if (this.addPriceHistory){
-                return 'Add Price History';
-            }else{
-                return 'Update Price History';
-            }
-        }
     },
     data: function() {
         let vm = this;
@@ -91,6 +91,9 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
+                order: [
+                    [0,'desc']
+                ],
                 ajax: {
                     url: vm.datatableURL,
                     dataSrc: ''
@@ -153,7 +156,15 @@ export default {
         }
     },
     methods: {
+        getTitle: function() {
+            if (!this.price.original){
+                return 'Add Price History';
+            }else{
+                return 'Update Price History';
+            }
+        },
         showHistory: function(){
+            this.$refs.historyModal.title = this.getTitle();
             this.$refs.historyModal.isOpen = true;
         },
         deleteHistoryRecord: function(data) {
@@ -173,21 +184,21 @@ export default {
             });
         },
         getAddURL: function() {
-            if (this.addPriceHistory){
+            if (this.level == 'campground'){
                 return api_endpoints.addPrice(this.object_id);
             }else{
                 return api_endpoints.opencloseCS(this.object_id);
             }
         },
         getEditURL: function() {
-            if (this.addPriceHistory){
+            if (this.level == 'campground'){
                 return api_endpoints.editPrice(this.object_id);
             }else{
                 return api_endpoints.opencloseCS(this.object_id);
             }
         },
         historyURL: function(id) {
-            if (this.addPriceHistory){
+            if (this.level == 'campground'){
                 return api_endpoints.campground_status_history_detail(id);
             }else{
                 return api_endpoints.campsite_status_history_detail(id);

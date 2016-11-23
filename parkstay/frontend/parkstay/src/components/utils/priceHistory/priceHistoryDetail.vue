@@ -1,5 +1,5 @@
 <template id="PriceHistoryDetail">
-<bootstrapModal :title="title" :large=true @ok="addHistory()">
+<bootstrapModal :title="title" :large=true @ok="addHistory()" @close="close()">
 
     <div class="modal-body">
         <form name="priceForm" class="form-horizontal">
@@ -103,16 +103,13 @@ module.exports = {
             type: Object,
             required: true
         },
-        title: {
-            type: String,
-            required: true
-        }
     },
     data: function() {
         let vm = this;
         return {
             id:'',
             selected_rate: '',
+            title: '',
             rates: [],
             current_closure: '',
             closeStartPicker: '',
@@ -166,8 +163,12 @@ module.exports = {
             this.showDetails =  this.priceHistory.reason == 3;
         },
         close: function() {
-            //this.priceHistory = {};
+            delete this.priceHistory.original;
             this.errors = false;
+            this.selected_rate = '';
+            this.priceHistory.period_start= '';
+            this.priceHistory.details= '';
+            
             this.errorString = '';
             this.isOpen = false;
         },
@@ -242,6 +243,7 @@ module.exports = {
         var tomorrow = new Date(today);
         picker.datetimepicker({
             format: 'DD/MM/YYYY',
+            useCurrent: false,
             minDate: tomorrow
         });
         picker.on('dp.change', function(e){

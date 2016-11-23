@@ -184,11 +184,10 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
+                order: [
+                    [0,'desc']
+                ],
                 ajax: {
-                    //TODO
-                    /*
-                     * change end point to closure history
-                     */
                     url: api_endpoints.campsiteStayHistory(vm.$route.params.campsite_id),
                     dataSrc: ''
                 },
