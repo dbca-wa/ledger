@@ -224,6 +224,43 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['post'],authentication_classes=[])
+    def updatePrice(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+
+
+
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'],authentication_classes=[])
+    def deletePrice(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer = CampgroundPriceHistorySerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            self.get_object().deletePriceHistory(serializer.validated_data)
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            print traceback.print_exc()
+            raise
+        except Exception as e:
+            print traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
         try:
@@ -558,3 +595,4 @@ class CampsiteBookingRangeViewset(BookingRangeViewset):
 class RateViewset(viewsets.ModelViewSet):
     queryset = Rate.objects.all()
     serializer_class = RateSerializer
+
