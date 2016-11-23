@@ -626,6 +626,7 @@ class CampgroundPriceHistory(models.Model):
     class Meta:
         managed = False
         db_table = 'parkstay_campground_pricehistory_v'
+        ordering = ['-date_start',]
 
     # Properties
     # ====================================

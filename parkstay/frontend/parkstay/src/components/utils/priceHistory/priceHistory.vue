@@ -91,6 +91,9 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
+                order: [
+                    [0,'desc']
+                ],
                 ajax: {
                     url: vm.datatableURL,
                     dataSrc: ''
