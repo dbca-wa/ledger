@@ -12,7 +12,7 @@
                     <div class="col-md-4">
                         <select name="rate" v-model="selected_rate" class="form-control">
                             <option value=""></option>
-                            <option v-for="r in rates":value="r.url">{{r.name}}</option>
+                            <option v-for="r in rates":value="r.id">{{r.name}}</option>
                         </select>
                     </div>
                 </div>
@@ -141,7 +141,8 @@ module.exports = {
             let vm = this;
             if (vm.selected_rate != ''){
                 $.each(vm.rates, function(i, rate) {
-                    if (rate.url == vm.selected_rate){
+                    if (rate.id== vm.selected_rate){
+                        vm.priceHistory.rate = rate.id;
                         vm.priceHistory.adult = rate.adult;
                         vm.priceHistory.concession = rate.concession;
                         vm.priceHistory.child = rate.child;
@@ -149,6 +150,7 @@ module.exports = {
                 });
             }
             else{
+                delete vm.priceHistory.rate;
                 vm.priceHistory.adult = '';
                 vm.priceHistory.concession = '';
                 vm.priceHistory.child = '';
@@ -171,7 +173,7 @@ module.exports = {
         },
         addHistory: function() {
             if ($(this.form).valid()){
-                if (!this.priceHistory.id){
+                if (!this.priceHistory.original){
                     this.$emit('addPriceHistory');
                 }else {
                     this.$emit('updatePriceHistory');

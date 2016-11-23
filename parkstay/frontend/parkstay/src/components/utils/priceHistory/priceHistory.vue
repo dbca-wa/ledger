@@ -6,7 +6,7 @@
             <h1>Price History</h1>
         </div>
         <div class="col-sm-4">
-            <button @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
+            <button v-show="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
         </div>
         <datatable ref="history_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="ph_table"></datatable>
      </div>
@@ -34,9 +34,17 @@ export default {
             type: String,
             required: true
         },
+        showAddBtn: {
+            type: Boolean,
+            default: true
+        },
         addPriceHistory: {
             type: Boolean,
             default: true
+        },
+        historyDeleteURL: {
+            type: String,
+            required: true
         },
         object_id: {
             type: Number,
@@ -66,7 +74,7 @@ export default {
             deleteHistory: null,
             deleteHistoryPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
-                message: "Are you sure you want to Delete this closure Period",
+                message: "Are you sure you want to Delete this Price History Record",
                 buttons: [{
                     text: "Delete",
                     event: "delete",
@@ -88,13 +96,13 @@ export default {
                     dataSrc: ''
                 },
                 columns: [{
-                    data: 'range_start',
+                    data: 'date_start',
                     mRender: function(data, type, full) {
                         return Moment(data).format('MMMM Do, YYYY');
                     }
 
                 }, {
-                    data: 'range_end',
+                    data: 'date_end',
                     mRender: function(data, type, full) {
                         if (data) {
                             return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
@@ -105,20 +113,32 @@ export default {
                     }
 
                 }, {
-                    data: 'status'
+                    data: 'adult'
                 }, {
-                    data: 'details'
+                    data: 'concession'
                 }, {
-                    data: 'status'
+                    data: 'child'
                 }, {
-                    data: 'details'
+                    data: 'details',
+                    mRender: function(data, type, full) {
+                        if (data){
+                            return data;
+                        }
+                        return '';
+                    }
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editRange' data-priceHistory=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-priceHistory=\"__ID__\" >Delete</a></td>";
-                            return column.replace(/__ID__/g, id);
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
+                            if (full.deletable){
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
+                            }
+                            column = column.replace(/__START__/g, full.date_start)
+                            column = column.replace(/__END__/g, full.date_end)
+                            column = column.replace(/__RATE__/g, full.rate_id)
+                            return column
                         }
                         else {
                             return "";
@@ -136,19 +156,32 @@ export default {
         showHistory: function(){
             this.$refs.historyModal.isOpen = true;
         },
-        deleteHistoryRecord: function(id) {
+        deleteHistoryRecord: function(data) {
             var vm = this;
-            var url = vm.closureURL(id);
+            var url = vm.historyDeleteURL;
             $.ajax({
-                method: "DELETE",
+                 beforeSend: function(xhrObj) {
+                    xhrObj.setRequestHeader("Content-Type", "application/json");
+                    xhrObj.setRequestHeader("Accept", "application/json");
+                },
+                method: "POST",
                 url: url,
+                xhrFields: { withCredentials:true },
+                data: JSON.stringify(data),
             }).done(function(msg) {
                 vm.$refs.history_dt.vmDataTable.ajax.reload();
             });
         },
         getAddURL: function() {
             if (this.addPriceHistory){
-                return api_endpoints.opencloseCG(this.object_id);
+                return api_endpoints.addPrice(this.object_id);
+            }else{
+                return api_endpoints.opencloseCS(this.object_id);
+            }
+        },
+        getEditURL: function() {
+            if (this.addPriceHistory){
+                return api_endpoints.editPrice(this.object_id);
             }else{
                 return api_endpoints.opencloseCS(this.object_id);
             }
@@ -160,31 +193,20 @@ export default {
                 return api_endpoints.campsite_status_history_detail(id);
             }
         },
-        editHistory: function (id){
-            let vm = this;
-            $.ajax({
-                url: vm.closureURL(id),
-                method: 'GET',
-                xhrFields: { withCredentials:true },
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.closure = data;
-                    vm.showHistory();
-                },
-                error:function (resp){
-                }
-            });
-        },
         addHistory: function() {
             this.sendData(this.getAddURL(),'POST');
         },
         updateHistory: function() {
-            this.sendData(this.closureURL(this.$refs.historyModal.closure_id),'PUT');
+            this.sendData(this.getEditURL(),'POST');
         },
         sendData: function(url,method) {
             let vm = this;
             var data = vm.price;
             $.ajax({
+                beforeSend: function(xhrObj) {
+                    xhrObj.setRequestHeader("Content-Type", "application/json");
+                    xhrObj.setRequestHeader("Accept", "application/json");
+                },
                 url: url,
                 method: method,
                 xhrFields: { withCredentials:true },
@@ -192,6 +214,7 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.historyModal.close();
+                    vm.price = {};
                     vm.$refs.history_dt.vmDataTable.ajax.reload();
                 },
                 error:function (resp){
@@ -204,15 +227,30 @@ export default {
         },
         addTableListeners: function() {
             let vm = this;
-            vm.$refs.history_dt.vmDataTable.on('click','.editHistory', function(e) {
+            vm.$refs.history_dt.vmDataTable.on('click','.editPrice', function(e) {
                 e.preventDefault();
-                var id = $(this).data('priceHistory');
-                vm.editHistory(id);
+                var rate = $(this).data('rate');
+                var start = $(this).data('date_start');
+                var end = $(this).data('date_end');
+                vm.$refs.historyModal.selected_rate= rate;
+                vm.price.period_start = Moment(start).format('D/MM/YYYY');
+                vm.price.original = {
+                    'date_start': start,
+                    'rate_id': rate 
+                };
+                end != null ? vm.price.date_end : '';
+                vm.showHistory();
             });
-            vm.$refs.history_dt.vmDataTable.on('click','.deletHistory', function(e) {
+            vm.$refs.history_dt.vmDataTable.on('click','.deletePrice', function(e) {
                 e.preventDefault();
-                var id = $(this).data('priceHistory');
-                vm.deleteHistory = id;
+                let btn = this;
+                var data = {
+                    'date_start':$(btn).data('date_start'),
+                    'rate_id':$(btn).data('rate'),
+                };
+                $(btn).data('date_end') != null ? data.date_end = $(btn).data('date_end'): '';
+                vm.deleteHistory = data;
+        
                 bus.$emit('showAlert', 'deleteHistory');
             });
         },
