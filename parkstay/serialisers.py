@@ -251,6 +251,9 @@ class RateDetailSerializer(serializers.Serializer):
         return value
 
 class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
+    date_end = serializers.DateField(required=False)
     class Meta:
         model = CampgroundPriceHistory
         fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
+        read_only_fields = ('id','editable','deletable','id','adult','concession','child')
+
