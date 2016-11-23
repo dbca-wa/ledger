@@ -19,7 +19,7 @@
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <priceHistory ref="price_dt" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
+                <priceHistory ref="price_dt" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
                 <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
@@ -40,6 +40,9 @@
                <div class="col-lg-12">
                   <div class="row">
                      <div class="well">
+                        <div class="col-sm-offset-8 col-sm-4">
+                            <router-link :to="{name:'add_campsite',params:{id:campground_id}}" class="btn btn-primary pull-right table_btn">Add Campsite</router-link>
+                        </div>
                         <datatable ref="cg_campsites_dt" :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
                      </div>
                   </div>
@@ -92,6 +95,12 @@ export default {
         },
         myID: function(){
             return parseInt(this.$route.params.id);
+        },
+        hasCampsites: function() {
+            return this.campsites.length > 0;
+        },
+        campground_id: function (){
+            return this.campground.id ? this.campground.id : 0;
         }
     },
     data: function() {
@@ -100,6 +109,7 @@ export default {
             campground: {
                 address:{}
             },
+            campsites: [],
             isOpenOpenCS: false,
             isOpenCloseCS: false,
             deleteRange: null,
@@ -264,6 +274,12 @@ export default {
         showOpenOpenCS: function() {
             this.isOpenOpenCS = true;
         },
+        fetchCampsites: function(){ 
+            let vm = this;
+            $.get(api_endpoints.campgroundCampsites(this.$route.params.id), function(data){
+                vm.campsites = data;
+            });
+        },
         fetchCampground:function () {
             let vm =this;
             $.ajax({
@@ -271,6 +287,7 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.campground = data;
+                    vm.fetchCampsites();
                 }
             });
         }
