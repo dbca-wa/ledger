@@ -6,7 +6,7 @@
             <h1>Price History</h1>
         </div>
         <div class="col-sm-4">
-            <button @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
+            <button v-show="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
         </div>
         <datatable ref="history_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="ph_table"></datatable>
      </div>
@@ -33,6 +33,10 @@ export default {
         datatableURL: {
             type: String,
             required: true
+        },
+        showAddBtn: {
+            type: Boolean,
+            default: true
         },
         addPriceHistory: {
             type: Boolean,
