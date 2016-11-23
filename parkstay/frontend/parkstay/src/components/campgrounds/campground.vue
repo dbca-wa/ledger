@@ -19,7 +19,7 @@
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <priceHistory ref="price_dt" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
+                <priceHistory ref="price_dt" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
                 <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
@@ -101,6 +101,9 @@ export default {
         },
         campground_id: function (){
             return this.campground.id ? this.campground.id : 0;
+        },
+        priceHistoryDeleteURL: function (){
+            return api_endpoints.delete_campground_price(this.myID);
         }
     },
     data: function() {
