@@ -237,9 +237,12 @@ module.exports = {
         var vm = this;
         vm.form = document.forms.priceForm;
         var picker = $(vm.form.period_start).closest('.date');
+        var today = new Date();
+        today.setDate(today.getDate()+1);
+        var tomorrow = new Date(today);
         picker.datetimepicker({
             format: 'DD/MM/YYYY',
-            minDate: new Date()
+            minDate: tomorrow
         });
         picker.on('dp.change', function(e){
             vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('DD/MM/YYYY');

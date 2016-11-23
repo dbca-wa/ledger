@@ -277,7 +277,7 @@ export default {
         showOpenOpenCS: function() {
             this.isOpenOpenCS = true;
         },
-        fetchCampsites: function(){ 
+        fetchCampsites: function(){
             let vm = this;
             $.get(api_endpoints.campgroundCampsites(this.$route.params.id), function(data){
                 vm.campsites = data;
@@ -324,10 +324,6 @@ export default {
                 vm.showOpenCloseCS();
             }
         });
-         bus.$on('refreshCGTable', function(){
-            vm.dtGrounds.ajax.reload();
-        });
-
         vm.fetchCampground();
     }
 }
