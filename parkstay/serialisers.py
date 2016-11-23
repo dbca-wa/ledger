@@ -234,7 +234,7 @@ class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
 class RateDetailSerializer(serializers.Serializer):
     '''Used to validate rates from the frontend
     '''
-    rate = serializers.IntegerField()
+    rate = serializers.IntegerField(required=False)
     adult = serializers.DecimalField(max_digits=5, decimal_places=2)
     concession = serializers.DecimalField(max_digits=5, decimal_places=2)
     child = serializers.DecimalField(max_digits=5, decimal_places=2)
@@ -244,10 +244,11 @@ class RateDetailSerializer(serializers.Serializer):
 
 
     def validate_rate(self, value):
-        try:
-            Rate.objects.get(id=value)
-        except Rate.DoesNotExist:
-            raise serializers.ValidationError('This rate does not exist')
+        if value:
+            try:
+                Rate.objects.get(id=value)
+            except Rate.DoesNotExist:
+                raise serializers.ValidationError('This rate does not exist')
         return value
 
 class CampgroundPriceHistorySerializer(serializers.ModelSerializer):

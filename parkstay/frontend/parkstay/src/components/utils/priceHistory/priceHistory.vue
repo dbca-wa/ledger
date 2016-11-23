@@ -179,6 +179,13 @@ export default {
                 return api_endpoints.opencloseCS(this.object_id);
             }
         },
+        getEditURL: function() {
+            if (this.addPriceHistory){
+                return api_endpoints.editPrice(this.object_id);
+            }else{
+                return api_endpoints.opencloseCS(this.object_id);
+            }
+        },
         historyURL: function(id) {
             if (this.addPriceHistory){
                 return api_endpoints.campground_status_history_detail(id);
@@ -186,26 +193,11 @@ export default {
                 return api_endpoints.campsite_status_history_detail(id);
             }
         },
-        editHistory: function (id){
-            let vm = this;
-            $.ajax({
-                url: vm.closureURL(id),
-                method: 'GET',
-                xhrFields: { withCredentials:true },
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.closure = data;
-                    vm.showHistory();
-                },
-                error:function (resp){
-                }
-            });
-        },
         addHistory: function() {
             this.sendData(this.getAddURL(),'POST');
         },
         updateHistory: function() {
-            this.sendData(this.closureURL(this.$refs.historyModal.closure_id),'PUT');
+            this.sendData(this.getEditURL(),'POST');
         },
         sendData: function(url,method) {
             let vm = this;
@@ -222,6 +214,7 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.historyModal.close();
+                    vm.price = {};
                     vm.$refs.history_dt.vmDataTable.ajax.reload();
                 },
                 error:function (resp){
@@ -236,8 +229,17 @@ export default {
             let vm = this;
             vm.$refs.history_dt.vmDataTable.on('click','.editPrice', function(e) {
                 e.preventDefault();
-                var id = $(this).data('priceHistory');
-                vm.editHistory(id);
+                var rate = $(this).data('rate');
+                var start = $(this).data('date_start');
+                var end = $(this).data('date_end');
+                vm.$refs.historyModal.selected_rate= rate;
+                vm.price.period_start = Moment(start).format('D/MM/YYYY');
+                vm.price.original = {
+                    'date_start': start,
+                    'rate_id': rate 
+                };
+                end != null ? vm.price.date_end : '';
+                vm.showHistory();
             });
             vm.$refs.history_dt.vmDataTable.on('click','.deletePrice', function(e) {
                 e.preventDefault();

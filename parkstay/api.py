@@ -197,14 +197,14 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             rate = None
             serializer = RateDetailSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            rate_id = serializer.validated_data['rate']
+            rate_id = serializer.validated_data.get('rate',None)
             if rate_id:
                 try:
                     rate = Rate.objects.get(id=rate_id)
                 except Rate.DoesNotExisti as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[1]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 data = {
@@ -228,17 +228,40 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def updatePrice(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
+            original_data = request.data.pop('original')
 
+            original_serializer = CampgroundPriceHistorySerializer(data=original_data)
+            original_serializer.is_valid(raise_exception=True)
 
-
+            serializer = RateDetailSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            rate_id = serializer.validated_data.get('rate',None)
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExisti as e :
+                    raise serializers.ValidationError('The selected rate does not exist')
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+            if rate:
+                serializer.validated_data['rate']= rate
+                new_data = {
+                    'rate': rate,
+                    'date_start': serializer.validated_data['period_start'],
+                    #'reason': serializer.validated_data['reason'],
+                    'update_level': 0
+                }
+                self.get_object().updatePriceHistory(dict(original_serializer.validated_data),new_data)
             price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
             serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
+            traceback.print_exc()
             raise
         except Exception as e:
+            traceback.print_exc()
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'],authentication_classes=[])

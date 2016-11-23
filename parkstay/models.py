@@ -199,6 +199,19 @@ class Campground(models.Model):
         except Exception as e:
             raise
 
+    def updatePriceHistory(self,original,_new):
+        '''Update Multiple campsite rates
+        '''
+        try:
+            rates = CampsiteRate.objects.filter(**original)
+            campsites = self.campsites.all()
+            with transaction.atomic():
+                for r in rates:
+                    if r.campsite in campsites and r.update_level == 0:
+                        r.update(_new)
+        except Exception as e:
+            raise
+
     def deletePriceHistory(self,data):
         '''Delete Multiple campsite rates
         '''
@@ -583,6 +596,12 @@ class CampsiteRate(models.Model):
     class Meta:
         unique_together = (('campsite', 'rate', 'date_start','date_end'),)
 
+    def update(self,data):
+        print 'here'
+        for attr, value in data.items():
+            print '{} {}'.format(attr, value)
+            setattr(self, attr, value)
+        self.save()
 
 class Booking(models.Model):
     legacy_id = models.IntegerField(unique=True)

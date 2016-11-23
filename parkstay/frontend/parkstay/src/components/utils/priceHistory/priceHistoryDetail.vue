@@ -150,7 +150,7 @@ module.exports = {
                 });
             }
             else{
-                vm.priceHistory.rate = '';
+                delete vm.priceHistory.rate;
                 vm.priceHistory.adult = '';
                 vm.priceHistory.concession = '';
                 vm.priceHistory.child = '';
@@ -173,7 +173,7 @@ module.exports = {
         },
         addHistory: function() {
             if ($(this.form).valid()){
-                if (!this.priceHistory.id){
+                if (!this.priceHistory.original){
                     this.$emit('addPriceHistory');
                 }else {
                     this.$emit('updatePriceHistory');

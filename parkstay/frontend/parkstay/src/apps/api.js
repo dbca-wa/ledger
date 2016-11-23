@@ -16,6 +16,9 @@ module.exports = {
     addPrice: function(id){
         return "/api/campgrounds/"+ id +"/addPrice.json";
     },
+    editPrice: function(id){
+        return "/api/campgrounds/"+ id +"/updatePrice.json";
+    },
     campgroundCampsites: function(id){
         return "/api/campgrounds/" + id + "/campsites.json"
     },
