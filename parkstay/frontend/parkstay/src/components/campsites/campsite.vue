@@ -61,7 +61,7 @@
                        <loader :isLoading="isLoading">Saving Campsite Data...</loader>
                    </div>
 
-                   <div class="row">
+                   <div v-if="!createCampsite" class="row">
                       <div class="well">
                         <alert ref="retrieveStayAlert" :show.sync="retrieve_stay.error" type="danger" :duration="retrieve_stay.timeout">{{retrieve_stay.errorString}}</alert>
                         <div class="col-sm-8">
@@ -73,8 +73,8 @@
                          <datatable ref="addMaxStayDT" :dtHeaders ="msh_headers" :dtOptions="msh_options" :table.sync="msh_table" id="stay_history"></datatable>
                       </div>
                    </div>
-                    <priceHistory ref="price_dt" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
-                    <closureHistory ref="cg_closure_dt" :closeCampground=false :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
+                    <priceHistory v-if="!createCampsite" ref="price_dt" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
+                    <closureHistory v-if="!createCampsite" ref="cg_closure_dt" :closeCampground=false :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                 </div>
              </div>
           </div>
@@ -454,7 +454,7 @@ export default {
             vm.fetchCampsite();
         }
         vm.loadFeatures();
-        vm.attachEventListenersMaxStayDT();
+        if ( !vm.createCampsite ){ vm.attachEventListenersMaxStayDT(); }
         vm.fetchCampsiteClasses();
     }
 }
