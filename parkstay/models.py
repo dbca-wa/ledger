@@ -199,6 +199,17 @@ class Campground(models.Model):
         except Exception as e:
             raise
 
+    def deletePriceHistory(self,data):
+        '''Delete Multiple campsite rates
+        '''
+        try:
+            rates = CampsiteRate.objects.filter(**data)
+            with transaction.atomic():
+                for r in rates:
+                    r.delete()
+        except Exception as e:
+            raise
+
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),
