@@ -290,7 +290,7 @@ class StayHistory(models.Model):
         now = datetime.now().date()
         if (self.range_start <= now and not self.range_end) or ( self.range_start <= now <= self.range_end):
             return True
-        elif (self.range_start >= now() and not self.range_end) or ( self.range_start >= now <= self.range_end):
+        elif (self.range_start >= now and not self.range_end) or ( self.range_start >= now <= self.range_end):
             return True
         return False
 
