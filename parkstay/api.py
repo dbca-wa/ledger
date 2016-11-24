@@ -596,6 +596,80 @@ class BookingViewSet(viewsets.ModelViewSet):
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
+    authentication_classes = []
+
+    def create(self, request, format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            rate = None
+            print request.data
+            rate_serializer = RateDetailSerializer(data=request.data)
+            rate_serializer.is_valid(raise_exception=True)
+            rate_id = rate_serializer.validated_data.get('rate',None)
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExisti as e :
+                    raise serializers.ValidationError('The selected rate does not exist')
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+            print rate_serializer.validated_data
+            if rate:
+                data = {
+                    'rate': rate.id,
+                    'date_start': rate_serializer.validated_data['period_start'],
+                    'campsite': rate_serializer.validated_data['campsite'],
+                    #'reason': serializer.validated_data['reason'],
+                    'update_level': 2
+                }
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            res = serializer.save()
+
+            serializer = CampsiteRateReadonlySerializer(res) 
+            return Response(serializer.data, status=http_status)
+             
+        except serializers.ValidationError:
+            print traceback.print_exc()
+            raise
+        except Exception as e:
+            print traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            rate = None
+            rate_serializer = RateDetailSerializer(data=request.data)
+            rate_serializer.is_valid(raise_exception=True)
+            rate_id = rate_serializer.validated_data.get('rate',None)
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExisti as e :
+                    raise serializers.ValidationError('The selected rate does not exist')
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+            if rate:
+                data = {
+                    'rate': rate.id,
+                    'date_start': rate_serializer.validated_data['period_start'],
+                    'campsite': rate_serializer.validated_data['campsite'],
+                    #'reason': serializer.validated_data['reason'],
+                    'update_level': 2
+                }
+            instance = self.get_object()
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance,data=data,partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
 
 class BookingRangeViewset(viewsets.ModelViewSet):
     authentication_classes=[]

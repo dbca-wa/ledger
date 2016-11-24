@@ -62,6 +62,10 @@ module.exports = {
         return "/api/campsite_booking_ranges/"+ id +".json?original=true";
     },
     features:"/api/features.json",
+    campsite_rate: "/api/campsite_rate.json",
+    campsiterate_detail:function (id) {
+        return "/api/campsite_rate/"+id+".json"
+    },
     rates:"/api/rates.json",
     campsite_classes:"/api/campsite_classes.json",
     campsite_class:function (id) {
