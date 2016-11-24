@@ -92,10 +92,10 @@ export default {
     },
     methods: {
         getTitle: function() {
-            if (!this.price.original){
-                return 'Add Price History';
-            }else{
+            if (this.price.id || this.price.original){
                 return 'Update Price History';
+            }else{
+                return 'Add Price History';
             }
         },
         showHistory: function(){
@@ -104,31 +104,56 @@ export default {
         },
         deleteHistoryRecord: function(data) {
             var vm = this;
-            var url = vm.historyDeleteURL;
-            $.ajax({
-                 beforeSend: function(xhrObj) {
-                    xhrObj.setRequestHeader("Content-Type", "application/json");
-                    xhrObj.setRequestHeader("Accept", "application/json");
-                },
-                method: "POST",
-                url: url,
-                xhrFields: { withCredentials:true },
-                data: JSON.stringify(data),
-            }).done(function(msg) {
-                vm.$refs.history_dt.vmDataTable.ajax.reload();
-            });
+            var url = null;
+            if (vm.level != 'campsite'){
+                url = vm.historyDeleteURL;
+                $.ajax({
+                     beforeSend: function(xhrObj) {
+                        xhrObj.setRequestHeader("Content-Type", "application/json");
+                        xhrObj.setRequestHeader("Accept", "application/json");
+                    },
+                    method: "POST",
+                    url: url,
+                    xhrFields: { withCredentials:true },
+                    data: JSON.stringify(data),
+                }).done(function(msg) {
+                    vm.$refs.history_dt.vmDataTable.ajax.reload();
+                });
+            }
+            else{
+                url = api_endpoints.campsiterate_detail(data);
+                $.ajax({
+                     beforeSend: function(xhrObj) {
+                        xhrObj.setRequestHeader("Content-Type", "application/json");
+                        xhrObj.setRequestHeader("Accept", "application/json");
+                    },
+                    method: "DELETE",
+                    url: url,
+                    xhrFields: { withCredentials:true },
+                }).done(function(msg) {
+                    vm.$refs.history_dt.vmDataTable.ajax.reload();
+                });
+            }
         },
         getAddURL: function() {
             if (this.level == 'campground'){
                 return api_endpoints.addPrice(this.object_id);
-            }else{
+            }
+            else if(this.level == 'campsite'){
+                return api_endpoints.campsite_rate;
+            }
+            else{
                 return api_endpoints.opencloseCS(this.object_id);
             }
         },
         getEditURL: function() {
             if (this.level == 'campground'){
                 return api_endpoints.editPrice(this.object_id);
-            }else{
+            }
+            else if (this.level == 'campsite'){
+                return api_endpoints.campsiterate_detail(this.price.id);
+            }
+            else{
                 return api_endpoints.opencloseCS(this.object_id);
             }
         },
@@ -140,10 +165,17 @@ export default {
             }
         },
         addHistory: function() {
+            if (this.level == 'campsite'){ this.price.campsite = this.object_id; }
             this.sendData(this.getAddURL(),'POST');
         },
         updateHistory: function() {
-            this.sendData(this.getEditURL(),'POST');
+            if (this.level == 'campsite'){ 
+                this.price.campsite = this.object_id; 
+                this.sendData(this.getEditURL(),'PUT');
+            }
+            else{
+                this.sendData(this.getEditURL(),'POST');
+            }
         },
         sendData: function(url,method) {
             let vm = this;
@@ -176,26 +208,39 @@ export default {
             vm.$refs.history_dt.vmDataTable.on('click','.editPrice', function(e) {
                 e.preventDefault();
                 var rate = $(this).data('rate');
-                var start = $(this).data('date_start');
-                var end = $(this).data('date_end');
-                vm.$refs.historyModal.selected_rate= rate;
-                vm.price.period_start = Moment(start).format('D/MM/YYYY');
-                vm.price.original = {
-                    'date_start': start,
-                    'rate_id': rate 
-                };
-                end != null ? vm.price.date_end : '';
-                vm.showHistory();
+                if (vm.level != 'campsite'){
+                    var start = $(this).data('date_start');
+                    var end = $(this).data('date_end');
+                    vm.$refs.historyModal.selected_rate= rate;
+                    vm.price.period_start = Moment(start).format('D/MM/YYYY');
+                    vm.price.original = {
+                        'date_start': start,
+                        'rate_id': rate 
+                    };
+                    end != null ? vm.price.date_end : '';
+                    vm.showHistory();
+                }
+                else{
+                   $.get(api_endpoints.campsiterate_detail(rate), function(data) {
+                        vm.price.period_start = data.date_start;
+                        vm.price.id = data.id;
+                        vm.$refs.historyModal.selected_rate = data.rate;
+                        vm.showHistory();
+                    }); 
+                }
             });
             vm.$refs.history_dt.vmDataTable.on('click','.deletePrice', function(e) {
                 e.preventDefault();
                 let btn = this;
-                var data = {
-                    'date_start':$(btn).data('date_start'),
-                    'rate_id':$(btn).data('rate'),
-                };
-                $(btn).data('date_end') != null ? data.date_end = $(btn).data('date_end'): '';
-                vm.deleteHistory = data;
+                if (vm.level != 'campsite'){
+                    var data = {
+                        'date_start':$(btn).data('date_start'),
+                        'rate_id':$(btn).data('rate'),
+                    };
+                    $(btn).data('date_end') != null ? data.date_end = $(btn).data('date_end'): '';
+                    vm.deleteHistory = data;
+                }
+                else{vm.deleteHistory = $(btn).data('rate');}
         
                 bus.$emit('showAlert', 'deleteHistory');
             });

@@ -174,10 +174,10 @@ module.exports = {
         },
         addHistory: function() {
             if ($(this.form).valid()){
-                if (!this.priceHistory.original){
-                    this.$emit('addPriceHistory');
-                }else {
+                if (this.priceHistory.id || this.priceHistory.original){
                     this.$emit('updatePriceHistory');
+                }else {
+                    this.$emit('addPriceHistory');
                 }
             }
         },

@@ -227,9 +227,11 @@ class RateSerializer(serializers.HyperlinkedModelSerializer):
         model = Rate
         fields = ('url','id','adult','concession','child','infant','name')
 
-class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
+class CampsiteRateSerializer(serializers.ModelSerializer):
+    date_start = serializers.DateField(format='%d/%m/%Y')
     class Meta:
         model = CampsiteRate
+        read_only_fields = ('date_end',)
 
 class CampsiteRateReadonlySerializer(serializers.ModelSerializer):
     adult = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.adult')
@@ -249,6 +251,7 @@ class RateDetailSerializer(serializers.Serializer):
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False)
+    campsite = serializers.IntegerField(required=False)
 
 
     def validate_rate(self, value):
