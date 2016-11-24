@@ -761,6 +761,12 @@ class CampgroundListener(object):
         if not original_instance:
             # Create an opening booking range on creation of Campground
              CampgroundBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
+        else:
+            if original_instance.price_level != instance.price_level:
+                # Get all campsites
+                campsites = instance.campsites.all().values_list('id', flat=True)
+                CampsiteRate.objects.filter(Q(date_end__isnull=True),campsite__in=campsites,update_level=original_instance.price_level).update(date_end=datetime.now().date())
+                   
 
 class CampsiteBookingRangeListener(object):
     """
