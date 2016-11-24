@@ -38,6 +38,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundBookingRangeSerializer,
                                     CampsiteBookingRangeSerializer,
                                     CampsiteRateSerializer,
+                                    CampsiteRateReadonlySerializer,
                                     CampsiteStayHistorySerializer,
                                     RateSerializer,
                                     RateDetailSerializer,
@@ -125,19 +126,16 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             raise
         except Exception as e:
             raise serializers.ValidationError(str(e))
-# TODO: replace with campsite details
+
     @detail_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
-            serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            price_history = self.get_object().rates.all()
+            serializer = CampsiteRateReadonlySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
 
             return Response(res,status=http_status)
-            return {
-                'message': 'hello'
-            }
         except serializers.ValidationError:
             raise
         except Exception as e:
