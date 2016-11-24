@@ -13,5 +13,8 @@ module.exports = {
             error_str = 'The resource you are looking for does not exist.';
         }
         return error_str;
+    },
+    goBack:function(vm){
+        vm.$router.go(window.history.back());
     }
 };
