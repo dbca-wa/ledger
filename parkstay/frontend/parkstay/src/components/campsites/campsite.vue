@@ -172,7 +172,7 @@ export default {
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
-                        if (data) {
+                        if (data && full.update_level == 2) {
                             var id = full.id;
                             var column = "<td ><a href='#' class='editPrice' data-rate=\"__ID__\" >Edit</a><br/>"
                             if (full.deletable){

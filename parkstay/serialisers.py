@@ -237,7 +237,7 @@ class CampsiteRateReadonlySerializer(serializers.ModelSerializer):
     child = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.child')
     class Meta:
         model = CampsiteRate
-        fields = ('id','adult','concession','child','date_start','date_end','rate','editable','deletable')
+        fields = ('id','adult','concession','child','date_start','date_end','rate','editable','deletable','update_level')
 
 class RateDetailSerializer(serializers.Serializer):
     '''Used to validate rates from the frontend
