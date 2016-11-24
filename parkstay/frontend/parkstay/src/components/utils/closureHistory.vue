@@ -153,9 +153,6 @@ export default {
                 return api_endpoints.opencloseCS(this.object_id);
             }
         },
-        closeRange: function () {
-            this.sendData();
-        },
         closureURL: function(id) {
             if (this.closeCampground){
                 return api_endpoints.campground_status_history_detail(id);
