@@ -8,7 +8,7 @@
         <div class="col-sm-4">
             <button v-show="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
         </div>
-        <datatable ref="history_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="ph_table"></datatable>
+        <datatable ref="history_dt" :dtHeaders ="ch_headers" :dtOptions="dt_options" id="ph_table"></datatable>
      </div>
     <confirmbox id="deleteHistory" :options="deleteHistoryPrompt"></confirmbox>
 </div>
@@ -30,10 +30,6 @@ from '../../../hooks.js'
 export default {
     name: 'priceHistory',
     props: {
-        datatableURL: {
-            type: String,
-            required: true
-        },
         showAddBtn: {
             type: Boolean,
             default: true
@@ -51,10 +47,14 @@ export default {
         },
         historyDeleteURL: {
             type: String,
-            required: true
+            //required: true
         },
         object_id: {
             type: Number,
+            required: true
+        },
+        dt_options: {
+            type: Object,
             required: true
         }
     },
@@ -86,71 +86,6 @@ export default {
                     autoclose: true,
                 }],
                 id: 'deleteHistory'
-            },
-            ch_options: {
-                responsive: true,
-                processing: true,
-                deferRender: true,
-                order: [
-                    [0,'desc']
-                ],
-                ajax: {
-                    url: vm.datatableURL,
-                    dataSrc: ''
-                },
-                columns: [{
-                    data: 'date_start',
-                    mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
-                    }
-
-                }, {
-                    data: 'date_end',
-                    mRender: function(data, type, full) {
-                        if (data) {
-                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
-                        }
-                        else {
-                            return '';
-                        }
-                    }
-
-                }, {
-                    data: 'adult'
-                }, {
-                    data: 'concession'
-                }, {
-                    data: 'child'
-                }, {
-                    data: 'details',
-                    mRender: function(data, type, full) {
-                        if (data){
-                            return data;
-                        }
-                        return '';
-                    }
-                }, {
-                    data: 'editable',
-                    mRender: function(data, type, full) {
-                        if (data) {
-                            var id = full.id;
-                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
-                            if (full.deletable){
-                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
-                            }
-                            column = column.replace(/__START__/g, full.date_start)
-                            column = column.replace(/__END__/g, full.date_end)
-                            column = column.replace(/__RATE__/g, full.rate_id)
-                            return column
-                        }
-                        else {
-                            return "";
-                        }
-                    }
-                }],
-                language: {
-                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-                },
             },
             ch_headers: ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'],
         }
