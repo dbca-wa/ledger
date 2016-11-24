@@ -19,7 +19,7 @@
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <priceHistory ref="price_dt" level="campground" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
+                <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
                 <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
@@ -116,22 +116,25 @@ export default {
             isOpenOpenCS: false,
             isOpenCloseCS: false,
             deleteRange: null,
-            ch_options: {
+            ph_options: {
                 responsive: true,
                 processing: true,
                 deferRender: true,
+                order: [
+                    [0,'desc']
+                ],
                 ajax: {
-                    url: api_endpoints.status_history(this.$route.params.id),
+                    url: api_endpoints.campground_price_history(this.$route.params.id),
                     dataSrc: ''
                 },
                 columns: [{
-                    data: 'range_start',
+                    data: 'date_start',
                     mRender: function(data, type, full) {
                         return Moment(data).format('MMMM Do, YYYY');
                     }
 
                 }, {
-                    data: 'range_end',
+                    data: 'date_end',
                     mRender: function(data, type, full) {
                         if (data) {
                             return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
@@ -142,16 +145,32 @@ export default {
                     }
 
                 }, {
-                    data: 'status'
+                    data: 'adult'
                 }, {
-                    data: 'details'
+                    data: 'concession'
+                }, {
+                    data: 'child'
+                }, {
+                    data: 'details',
+                    mRender: function(data, type, full) {
+                        if (data){
+                            return data;
+                        }
+                        return '';
+                    }
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editRange' data-range=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-range=\"__ID__\" >Delete</a></td>";
-                            return column.replace(/__ID__/g, id);
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
+                            if (full.deletable){
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
+                            }
+                            column = column.replace(/__START__/g, full.date_start)
+                            column = column.replace(/__END__/g, full.date_end)
+                            column = column.replace(/__RATE__/g, full.rate_id)
+                            return column
                         }
                         else {
                             return "";
@@ -162,7 +181,6 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],
             title: 'Campground',
             cs_options: {
                 responsive: true,
