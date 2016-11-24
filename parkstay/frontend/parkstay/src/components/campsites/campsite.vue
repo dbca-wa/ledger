@@ -21,6 +21,16 @@
     								<h3 class="panel-title">Campsite Details</h3>
     							</div>
     							<div class="panel-body" v-show="!isLoading">
+                                    <div class="row">
+    									<div class="col-md-6">
+    										<div class="form-group">
+    											<label class="control-label" >Campsite Type</label>
+    											<select class="form-control" name="type">
+    											    <option value="select">Select...</option>
+    											</select>
+    										</div>
+    									</div>
+    								</div>
     								<div class="row">
     									<div class="col-md-6">
     										<div class="form-group">
@@ -47,10 +57,25 @@
 
                                       </div>
                                       <div class="col-sm-6">
-                                          <div class="pull-right">
-                                              <button type="button" v-show="!createCampsite" @click="updateCampsite" class="btn btn-primary">Update</button>
-                                              <button type="button" v-show="createCampsite" class="btn btn-primary">Create</button>
-                                              <button type="button" class="btn btn-default" @click="goBack">Cancel</button>
+                                          <div class="row">
+
+                                              <div class="form-group">
+                                                  <div class="col-sm-6 col-xs-8">
+                                                      <button type="button" v-show="createCampsite" class="btn btn-primary btn-create">Create</button>
+                                                  </div>
+                                                  <div class="col-sm-2 col-xs-4  pull-right">
+                                                      <input type="number" v-show="createCampsite" class="form-control" name="name" value="">
+                                                  </div>
+                                              </div>
+                                          </div>
+                                          <div class="row" style="margin-top:10px;">
+                                              <div class="col-sm-6 pull-right">
+                                                  <div class="pull-right">
+                                                      <button type="button" v-show="!createCampsite" style="margin-right:5px" @click="updateCampsite" class="btn btn-primary">Update</button>
+                                                      <button type="button" class="btn btn-default pull-right" @click="goBack">Cancel</button>
+                                                  </div>
+
+                                              </div>
                                           </div>
                                       </div>
                                     </div>
@@ -297,5 +322,29 @@ export default {
     .table_btn {
         margin-top: 25px;
         margin-right: -14px;
+    }
+    @media(max-width: 768px) {
+        .btn-create{
+            position: absolute;
+            left: 13px;
+        }
+    }
+    @media(min-width: 768px) {
+        .btn-create{
+            position: absolute;
+            left: 220px;
+        }
+    }
+    @media(min-width: 992px) {
+        .btn-create{
+            position: absolute;
+            left: 300px;
+        }
+    }
+    @media(min-width: 1200px) {
+        .btn-create{
+            position: absolute;
+            left: 390px;
+        }
     }
 </style>
