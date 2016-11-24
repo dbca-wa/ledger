@@ -187,7 +187,7 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure')
+        fields = ('id','campground', 'name', 'type','campsite_class','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure','can_add_rate')
     def __init__(self, *args, **kwargs):
         try:
             formatted = bool(kwargs.pop('formatted'))
@@ -230,6 +230,14 @@ class RateSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteRate
+
+class CampsiteRateReadonlySerializer(serializers.ModelSerializer):
+    adult = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.adult')
+    concession = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.concession')
+    child = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.child')
+    class Meta:
+        model = CampsiteRate
+        fields = ('id','adult','concession','child','date_start','date_end','rate','editable','deletable','update_level')
 
 class RateDetailSerializer(serializers.Serializer):
     '''Used to validate rates from the frontend

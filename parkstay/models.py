@@ -359,6 +359,10 @@ class Campsite(models.Model):
         return current_price
 
     @property
+    def can_add_rate(self):
+        return self.campground.price_level == 2
+
+    @property
     def active(self):
         return self._is_open(datetime.now().date())
 
@@ -577,7 +581,7 @@ class CampsiteRate(models.Model):
         (0, 'Price per Person'),
         (1, 'Fixed Price'),
     )
-    campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT)
+    campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT, related_name='rates')
     rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
     allow_public_holidays = models.BooleanField(default=True)
     date_start = models.DateField(default=date.today)
@@ -596,6 +600,26 @@ class CampsiteRate(models.Model):
     class Meta:
         unique_together = (('campsite', 'rate', 'date_start','date_end'),)
 
+    # Properties
+    # =================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
+            return True
+        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+            return True
+        return False
+
+    # Methods
+    # =================================
     def update(self,data):
         print 'here'
         for attr, value in data.items():
@@ -636,6 +660,7 @@ class CampgroundPriceHistory(models.Model):
         if self.date_start >= today:
             return True
         return False
+
     @property
     def editable(self):
         today = datetime.now().date()
@@ -736,6 +761,12 @@ class CampgroundListener(object):
         if not original_instance:
             # Create an opening booking range on creation of Campground
              CampgroundBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
+        else:
+            if original_instance.price_level != instance.price_level:
+                # Get all campsites
+                campsites = instance.campsites.all().values_list('id', flat=True)
+                CampsiteRate.objects.filter(Q(date_end__isnull=True),campsite__in=campsites,update_level=original_instance.price_level).update(date_end=datetime.now().date())
+                   
 
 class CampsiteBookingRangeListener(object):
     """
