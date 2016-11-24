@@ -253,7 +253,7 @@ export default {
             })
         },
         goBack: function() {
-            this.$route.go(window.history.back());
+            helpers.goBack(this);
         },
         updateCampsite: function() {
             let vm = this;
