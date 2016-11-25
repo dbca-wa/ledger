@@ -34,8 +34,6 @@ urlpatterns = [
     url(r'^campsite_classes/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),
     url(r'^dashboard/campgrounds$', views.DashboardView.as_view(), name='dash-campgrounds'),
-    url(r'^dashboard/campgrounds/(?P<ground_id>[0-9]+)$', views.DashboardView.as_view(), name='dash-campground-detail'),
-    url(r'^dashboard/campgrounds/addCampground$', views.DashboardView.as_view(), name='dash-addCampground'),
-    url(r'^dashboard/campgrounds/(?P<ground_id>[0-9]+)/campsites/add$', views.DashboardView.as_view(), name='dash-campsite-add'),
-    url(r'^dashboard/campgrounds/(?P<ground_id>[0-9]+)/campsites/(?P<campsite_id>[0-9]+)$', views.DashboardView.as_view(), name='dash-campsite-detail'),
+    url(r'^dashboard/campsite_types$', views.DashboardView.as_view(), name='dash-campsite-types'),
+    url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
 ] + ledger_patterns
