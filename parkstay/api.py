@@ -276,10 +276,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'],authentication_classes=[])
@@ -296,10 +296,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
@@ -605,7 +605,7 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             rate = None
-            print request.data
+            print(request.data)
             rate_serializer = RateDetailSerializer(data=request.data)
             rate_serializer.is_valid(raise_exception=True)
             rate_id = rate_serializer.validated_data.get('rate',None)
@@ -616,7 +616,7 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
                 rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
-            print rate_serializer.validated_data
+            print(rate_serializer.validated_data)
             if rate:
                 data = {
                     'rate': rate.id,
@@ -633,10 +633,10 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=http_status)
              
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     def update(self, request, *args, **kwargs):

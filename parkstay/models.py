@@ -621,9 +621,9 @@ class CampsiteRate(models.Model):
     # Methods
     # =================================
     def update(self,data):
-        print 'here'
+        print('here')
         for attr, value in data.items():
-            print '{} {}'.format(attr, value)
+            print('{} {}'.format(attr, value))
             setattr(self, attr, value)
         self.save()
 
