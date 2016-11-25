@@ -83,10 +83,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 
             return Response(serializer.data)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
@@ -106,10 +106,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 
             return Response(res.data)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'])
