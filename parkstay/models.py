@@ -764,9 +764,11 @@ class CampgroundListener(object):
         else:
             if original_instance.price_level != instance.price_level:
                 # Get all campsites
+                today = datetime.now().date()
                 campsites = instance.campsites.all().values_list('id', flat=True)
-                CampsiteRate.objects.filter(Q(date_end__isnull=True),campsite__in=campsites,update_level=original_instance.price_level).update(date_end=datetime.now().date())
-                   
+                rates = CampsiteRate.objects.filter(campsite__in=campsites,update_level=original_instance.price_level)
+                current_rates = rates.filter(Q(date_end__isnull=True),Q(date_start__lte =  today)).update(date_end=today)
+                future_rates = rates.filter(date_start__gt = today).delete()
 
 class CampsiteBookingRangeListener(object):
     """
