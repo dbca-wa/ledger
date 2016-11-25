@@ -262,6 +262,7 @@ export default {
             $.ajax({
                 method: "DELETE",
                 url: url,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
             }).done(function(msg) {
                 vm.$refs.cg_closure_dt.vmDataTable.ajax.reload();
             });
@@ -278,6 +279,7 @@ export default {
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.closeCampsite.close();

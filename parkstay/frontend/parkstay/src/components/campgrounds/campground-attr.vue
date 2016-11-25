@@ -298,6 +298,7 @@ export default {
                     withCredentials: true
                 },
                 data: JSON.stringify(vm.campground),
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     if (method == 'POST') {

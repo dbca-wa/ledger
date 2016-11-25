@@ -119,6 +119,7 @@ module.exports = {
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.close();

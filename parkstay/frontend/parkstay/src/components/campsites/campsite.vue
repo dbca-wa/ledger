@@ -269,6 +269,7 @@ export default {
                 url: api_endpoints.campsite(vm.$route.params.campsite_id),
                 method: 'PUT',
                 data: JSON.stringify(vm.campsite),
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data) {
 
                     vm.campsite = data;

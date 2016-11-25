@@ -130,6 +130,7 @@ export default {
             $.ajax({
                 method: "DELETE",
                 url: url,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
             }).done(function(msg) {
                 vm.refreshMaxStayTable();
             });
@@ -170,6 +171,7 @@ export default {
                 method: method,
                 xhrFields: { withCredentials:true },
                 data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.addMaxStayModal.close();
