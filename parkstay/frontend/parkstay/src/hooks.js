@@ -9,6 +9,7 @@ var datetimepicker = require('datetimepicker');
 var validate = require('jquery-validation');
 import api_endpoints from './apps/api.js';
 import helpers from './components/utils/helpers.js'
+import {bus} from './components/utils/eventBus.js'
 export {
     $,
     DataTable,
@@ -18,5 +19,6 @@ export {
     datetimepicker,
     api_endpoints,
     helpers,
-    validate
+    validate,
+    bus
 }
