@@ -73,7 +73,6 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
