@@ -185,9 +185,11 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','details','campsite','editable')
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(default='')
     class Meta:
         model = Campsite
         fields = ('id','campground', 'name', 'type','campsite_class','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure','can_add_rate')
+
     def __init__(self, *args, **kwargs):
         try:
             formatted = bool(kwargs.pop('formatted'))
@@ -196,10 +198,14 @@ class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
         try:
             method = kwargs.pop('method')
         except:
-            method = 'post'
+            method = 'put'
         super(CampsiteSerialiser, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
+        elif method == 'post':
+            self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,read_only=True,required=False,view_name='features-detail')
+        elif method == 'put':
+            self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
 
 class RegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -229,6 +235,7 @@ class RateSerializer(serializers.HyperlinkedModelSerializer):
 
 class CampsiteRateSerializer(serializers.ModelSerializer):
     date_start = serializers.DateField(format='%d/%m/%Y')
+    details = serializers.CharField(required=False)
     class Meta:
         model = CampsiteRate
         read_only_fields = ('date_end',)
