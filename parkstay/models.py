@@ -439,6 +439,31 @@ class Campsite(models.Model):
                 within.save()
         except CampsiteBookingRange.DoesNotExist:
             b.save()
+    
+    @staticmethod
+    def bulk_create(number,data):
+        try:
+            created_campsites = []
+            with transaction.atomic():
+                campsites = []
+                latest = 0
+                current_campsites = Campsite.objects.filter(campground=data['campground'])
+                cs_numbers = [int(c.name) for c in current_campsites if c.name.isdigit()]
+                if cs_numbers:
+                    latest = max(cs_numbers)
+                for i in range(number):
+                    latest += 1
+                    c = Campsite(**data)
+                    name = str(latest)
+                    if len(name) == 1:
+                        name = '0{}'.format(name)
+                    c.name = name
+                    c.save()
+                    c.features = c.campsite_class.features.all()
+                    created_campsites.append(c)
+            return created_campsites
+        except Exception:
+            raise
 
 class CampsiteBookingRange(BookingRange):
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT,related_name='booking_ranges')
@@ -524,6 +549,7 @@ class CampsiteClass(models.Model):
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
     dimensions = models.CharField(max_length=12, default='6x4')
+    features = models.ManyToManyField('Feature')
 
     def __str__(self):
         return self.name
