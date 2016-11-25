@@ -9,7 +9,9 @@
     "dev": "npm-run-all --parallel watchify",
     "lint": "eslint --ext .js,.vue src test/unit",
     "test": "karma start karma.conf.js",
-    "build": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -t browserify-css src/apps/main.js -e src/apps/main.js | uglifyjs -c warnings=false -m > ../../static/ps/js/build.js"
+    "build": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -t browserify-css src/apps/main.js -e src/apps/main.js | uglifyjs -c warnings=false -m > ../../static/ps/js/build.js",
+    "build_dev": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -t browserify-css src/apps/main.js -e src/apps/main.js -o ../../static/ps/js/build.js"
+
   },
   "browserify": {
     "transform": [

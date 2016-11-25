@@ -116,6 +116,7 @@ export default {
                     url: url,
                     xhrFields: { withCredentials:true },
                     data: JSON.stringify(data),
+                    headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
                 }).done(function(msg) {
                     vm.$refs.history_dt.vmDataTable.ajax.reload();
                 });
@@ -130,6 +131,7 @@ export default {
                     method: "DELETE",
                     url: url,
                     xhrFields: { withCredentials:true },
+                    headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
                 }).done(function(msg) {
                     vm.$refs.history_dt.vmDataTable.ajax.reload();
                 });
@@ -188,7 +190,8 @@ export default {
                 url: url,
                 method: method,
                 xhrFields: { withCredentials:true },
-                data:JSON.stringify(data),
+                data: JSON.stringify(data),
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.historyModal.close();

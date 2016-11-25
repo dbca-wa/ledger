@@ -307,6 +307,7 @@ export default {
                 url: url,
                 method: method,
                 data: JSON.stringify(data),
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data) {
 
                     vm.campsite = data;

@@ -142,6 +142,7 @@ export default {
             $.ajax({
                 method: "DELETE",
                 url: url,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
             }).done(function(msg) {
                 vm.$refs.closure_dt.vmDataTable.ajax.reload();
             });
@@ -190,6 +191,7 @@ export default {
                 method: method,
                 xhrFields: { withCredentials:true },
                 data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.closeModal.close();
