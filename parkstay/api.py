@@ -74,6 +74,45 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance,data=request.data,partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print traceback.print_exc()
+            raise
+        except Exception as e:
+            print traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+
+    def create(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            number = request.data.pop('number')
+            serializer = self.get_serializer(data=request.data,method='post')
+            serializer.is_valid(raise_exception=True)
+
+            if number >  1:
+                data = dict(serializer.validated_data)
+                campsites = Campsite.bulk_create(number,data)
+                res = self.get_serializer(campsites,many=True)
+            else:
+                instance = serializer.save()
+                res = self.get_serializer(instance)
+
+            return Response(res.data)
+        except serializers.ValidationError:
+            print traceback.print_exc()
+            raise
+        except Exception as e:
+            print traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK

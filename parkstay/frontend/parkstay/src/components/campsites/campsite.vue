@@ -21,25 +21,28 @@
     								<h3 class="panel-title">Campsite Details</h3>
     							</div>
     							<div class="panel-body" v-show="!isLoading">
-    								<div class="row">
+                                    <div class="row">
     									<div class="col-md-6">
+    										<div class="form-group">
+    											<label class="control-label" >Campsite Type</label>
+    											<select class="form-control" v-show="!campsite_classes.length > 0" >
+    												<option>Loading...</option>
+    											</select>
+    											<select v-if="campsite_classes.length > 1" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
+    												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
+    											</select>
+    										</div>
+    									</div>
+    									<div v-show="showName" class="col-md-6">
     										<div class="form-group">
     											<label class="control-label" >Campsite Name</label>
     											<input type="text" name="name" class="form-control"  v-model="campsite.name"required/>
     										</div>
     									</div>
-    									<div class="col-md-6">
-    										<div class="form-group ">
-    											<label class="control-label" >Class</label>
-    											<select name="park" class="form-control" v-model="campsite.campsite_class" >
-    												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
-    											</select>
-    										</div>
-    									</div>
     								</div>
     								<div class="row">
     									<div class="col-sm-12">
-                                        <select-panel :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
+                                        <select-panel v-show="!createCampsite" :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
     									</div>
     								</div>
                                     <div class="row">
@@ -47,10 +50,25 @@
 
                                       </div>
                                       <div class="col-sm-6">
-                                          <div class="pull-right">
-                                              <button type="button" v-show="!createCampsite" @click="updateCampsite" class="btn btn-primary">Update</button>
-                                              <button type="button" v-show="createCampsite" class="btn btn-primary">Create</button>
-                                              <button type="button" class="btn btn-default" @click="goBack">Cancel</button>
+                                          <div class="row">
+
+                                              <div class="form-group">
+                                                  <div class="col-sm-6 col-xs-8">
+                                                      <button @click.prevent="addCampsite" type="button" v-show="createCampsite" class="btn btn-primary btn-create">Create</button>
+                                                  </div>
+                                                  <div class="col-sm-2 col-xs-4  pull-right">
+                                                      <input type="number" v-show="createCampsite" class="form-control" name="number" v-model="campsite.number" value="">
+                                                  </div>
+                                              </div>
+                                          </div>
+                                          <div class="row" style="margin-top:10px;">
+                                              <div class="col-sm-6 pull-right">
+                                                  <div class="pull-right">
+                                                      <button type="button" v-show="!createCampsite" style="margin-right:5px" @click="updateCampsite" class="btn btn-primary">Update</button>
+                                                      <button type="button" class="btn btn-default pull-right" @click="goBack">Cancel</button>
+                                                  </div>
+
+                                              </div>
                                           </div>
                                       </div>
                                     </div>
@@ -115,7 +133,10 @@ export default {
         },
         canAddRate: function (){
             return this.campsite.can_add_rate ? this.campsite.can_add_rate : false;
-        }
+        },
+        showName: function() {
+            return (this.createCampsite && this.campsite.number == 1) || !this.createCampsite;
+        },
     },
     data: function() {
         let vm = this;
@@ -124,7 +145,10 @@ export default {
             features: [],
             selected_features: [],
             createCampsite: true,
-            campsite: {},
+            campground: {},
+            campsite: {
+                number: 1,
+            },
             campsite_classes: [],
             createCampiste: true,
             ph_options: {
@@ -246,6 +270,13 @@ export default {
                 }
             });
         },
+        fetchCampground: function() {
+            let vm = this;
+            $.get(api_endpoints.campground(vm.$route.params.id), function(data) {
+                vm.campground = data;
+                vm.campsite.campground = data.url;
+            })
+        },
         fetchCampsiteClasses: function() {
             let vm = this;
             $.get(api_endpoints.campsite_classes, function(data) {
@@ -255,9 +286,16 @@ export default {
         goBack: function() {
             helpers.goBack(this);
         },
+        addCampsite: function() {
+            this.sendData(api_endpoints.campsites,'POST')
+        },
         updateCampsite: function() {
+            this.sendData(api_endpoints.campsite(this.campsite.id),'PUT')
+        },
+        sendData: function(url,method) {
             let vm = this;
             vm.isLoading = true;
+            var data = vm.campsite;
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
@@ -266,9 +304,9 @@ export default {
                 xhrFields: {
                     withCredentials: true
                 },
-                url: api_endpoints.campsite(vm.$route.params.campsite_id),
-                method: 'PUT',
-                data: JSON.stringify(vm.campsite),
+                url: url,
+                method: method,
+                data: JSON.stringify(data),
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data) {
 
@@ -289,6 +327,7 @@ export default {
         }
         vm.loadFeatures();
         vm.fetchCampsiteClasses();
+        vm.fetchCampground();
     }
 }
 
@@ -298,5 +337,29 @@ export default {
     .table_btn {
         margin-top: 25px;
         margin-right: -14px;
+    }
+    @media(max-width: 768px) {
+        .btn-create{
+            position: absolute;
+            left: 13px;
+        }
+    }
+    @media(min-width: 768px) {
+        .btn-create{
+            position: absolute;
+            left: 220px;
+        }
+    }
+    @media(min-width: 992px) {
+        .btn-create{
+            position: absolute;
+            left: 300px;
+        }
+    }
+    @media(min-width: 1200px) {
+        .btn-create{
+            position: absolute;
+            left: 390px;
+        }
     }
 </style>
