@@ -52,4 +52,28 @@ module.exports = {
 </script>
 
 <style lang="css">
+td > a{
+    border: none;
+    border-radius: 2px;
+    position: relative;
+    padding: 8px 10px;
+    margin: 10px 1px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    will-change: box-shadow, transform;
+    -webkit-transition: -webkit-box-shadow 0.2s cubic-bezier(0.4, 0, 1, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    -o-transition: box-shadow 0.2s cubic-bezier(0.4, 0, 1, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: box-shadow 0.2s cubic-bezier(0.4, 0, 1, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: 0;
+    cursor: pointer;
+    text-decoration: none;
+    background: transparent;
+    color: #03a9f4;
+}
+td > a:hover{
+    /*background-color: rgba(153, 153, 153, 0.2);
+    text-decoration: none !important;
+    margin: 30px 1px;*/
+}
 </style>
