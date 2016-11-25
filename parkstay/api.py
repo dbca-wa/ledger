@@ -3,6 +3,7 @@ from django.db.models import Q
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from datetime import datetime, timedelta
 from collections import OrderedDict
 
@@ -44,6 +45,10 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     RateDetailSerializer,
                                     CampgroundPriceHistorySerializer
                                     )
+from parkstay.helpers import is_officer, is_customer
+
+
+
 
 # API Views
 class CampsiteBookingViewSet(viewsets.ModelViewSet):
@@ -68,7 +73,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -108,10 +113,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
@@ -144,7 +149,6 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
     queryset = CampsiteStayHistory.objects.all()
     serializer_class = CampsiteStayHistorySerializer
-    authentication_classes=[]
 
     def update(self, request, *args, **kwargs):
         try:
@@ -165,7 +169,6 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
-    authentication_classes=[]
 
     def list(self, request, format=None):
         queryset = self.get_queryset()
@@ -179,7 +182,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -313,10 +316,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
@@ -672,7 +675,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 class BookingRangeViewset(viewsets.ModelViewSet):
-    authentication_classes=[]
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
