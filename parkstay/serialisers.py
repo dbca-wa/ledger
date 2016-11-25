@@ -229,6 +229,7 @@ class RateSerializer(serializers.HyperlinkedModelSerializer):
 
 class CampsiteRateSerializer(serializers.ModelSerializer):
     date_start = serializers.DateField(format='%d/%m/%Y')
+    details = serializers.CharField(required=False)
     class Meta:
         model = CampsiteRate
         read_only_fields = ('date_end',)
