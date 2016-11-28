@@ -54,12 +54,12 @@ from parkstay.helpers import is_officer, is_customer
 class CampsiteBookingViewSet(viewsets.ModelViewSet):
     queryset = CampsiteBooking.objects.all()
     serializer_class = CampsiteBookingSerialiser
-    authentication_classes = []
+
 
 class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
     serializer_class = CampsiteSerialiser
-    authentication_classes = []
+    
 
     def list(self, request, format=None):
         queryset = self.get_queryset()
@@ -246,7 +246,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'],)
     def addPrice(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -280,7 +280,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'],)
     def updatePrice(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -320,7 +320,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'],)
     def deletePrice(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -637,7 +637,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
-    authentication_classes = []
+
 
     def create(self, request, format=None):
         try:
@@ -667,9 +667,9 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             res = serializer.save()
 
-            serializer = CampsiteRateReadonlySerializer(res) 
+            serializer = CampsiteRateReadonlySerializer(res)
             return Response(serializer.data, status=http_status)
-             
+
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
