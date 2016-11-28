@@ -214,7 +214,7 @@ class RegionSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteClass
-        fields = '__all__'
+        fields = ('url','id','name','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','features','deleted')
 
     def __init__(self, *args, **kwargs):
         try:

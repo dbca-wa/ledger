@@ -93,10 +93,7 @@ export default {
                 },
                 columns: [
                     {
-                        "data": "url",
-                        mRender:function (data,type,full) {
-                            return '<td>'+data.substring(45,47)+'</td>';
-                        }
+                        "data": "id",
                     },
                     {
                         "data": "name",
@@ -108,9 +105,9 @@ export default {
                         }
                     },
                     {
-                        "data": "status",
+                        "data": "deleted",
                         "mRender": function(data, type, full) {
-                            var status = (data) ? "Active" : "Deleted";
+                            var status = (!data) ? "Active" : "Deleted";
                             var column = "<td >__Status__</td>";
                             return column.replace('__Status__', status);
                         }
