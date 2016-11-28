@@ -23,8 +23,8 @@ module.exports = {
             var cookies = document.cookie.split(';');
             for (var i = 0; i < cookies.length; i++) {
                 var cookie = cookies[i];
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    value = decodeURIComponent(cookie.substring(name.length + 1));
+                if (cookie.substring(0, name.length + 2).trim() === (name + '=')) {
+                    value = decodeURIComponent(cookie.substring(name.length + 2));
                     break;
                 }
             }
