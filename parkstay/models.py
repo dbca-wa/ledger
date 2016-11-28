@@ -550,9 +550,17 @@ class CampsiteClass(models.Model):
     max_people = models.SmallIntegerField(default=12)
     dimensions = models.CharField(max_length=12, default='6x4')
     features = models.ManyToManyField('Feature')
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
+
+    def delete(self, permanently=False,using=None):
+        if not permanently:
+            self.deleted = True
+            self.save()
+        else:
+            super(CampsiteClass, self).delete(using)
 
 
 class CampsiteBooking(models.Model):

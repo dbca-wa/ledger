@@ -28,7 +28,7 @@
                       </div>
                       <div class="col-md-4">
                           <div class="form-group pull-right">
-                              <router-link :to="{name:'campsite-type'}" style="margin-top: 20px;" class="btn btn-primary" >Add Campsite Type</router-link>
+                              <router-link :to="{name:'campsite-type'}" style="margin-top: 20px;" class="btn btn-primary table_btn" >Add Campsite Type</router-link>
                           </div>
                       </div>
                   </form>
@@ -93,10 +93,7 @@ export default {
                 },
                 columns: [
                     {
-                        "data": "url",
-                        mRender:function (data,type,full) {
-                            return '<td>'+data.substring(45,47)+'</td>';
-                        }
+                        "data": "id",
                     },
                     {
                         "data": "name",
@@ -108,9 +105,9 @@ export default {
                         }
                     },
                     {
-                        "data": "status",
+                        "data": "deleted",
                         "mRender": function(data, type, full) {
-                            var status = (data) ? "Active" : "Deleted";
+                            var status = (!data) ? "Active" : "Deleted";
                             var column = "<td >__Status__</td>";
                             return column.replace('__Status__', status);
                         }
@@ -118,7 +115,10 @@ export default {
                     {
                         "mRender": function(data, type, full) {
                             var id = full.id;
-                            var column = "<td ><a href='__URL__' data-id='__ID__'> Edit</a> </br> <a href='__URL__' data-id='__ID__'> Delete</a> </td>";
+                            var column = "<td ><a href='__URL__' data-id='__ID__'> Edit</a> </br> ";
+                            if (!full.deleted){
+                                column += "<a href='__URL__' data-id='__ID__'> Delete</a> </td>";
+                            }
                             return column.replace(/__URL__/g, full.url);
                         }
                     }

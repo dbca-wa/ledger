@@ -214,6 +214,18 @@ class RegionSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteClass
+        fields = ('url','id','name','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','features','deleted')
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        super(CampsiteClassSerializer, self).__init__(*args, **kwargs)
+        if method == 'get':
+            self.fields['features'] = FeatureSerializer(many=True)
+        elif method == 'post':
+            self.fields['features'] = serializers.HyperlinkedRelatedField(required=False,many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
 
 class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
     booking_type = serializers.SerializerMethodField()
