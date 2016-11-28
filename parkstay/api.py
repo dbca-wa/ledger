@@ -3,6 +3,7 @@ from django.db.models import Q
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from datetime import datetime, timedelta
 from collections import OrderedDict
 
@@ -44,6 +45,10 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     RateDetailSerializer,
                                     CampgroundPriceHistorySerializer
                                     )
+from parkstay.helpers import is_officer, is_customer
+
+
+
 
 # API Views
 class CampsiteBookingViewSet(viewsets.ModelViewSet):
@@ -77,10 +82,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 
             return Response(serializer.data)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
@@ -100,13 +105,13 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 
             return Response(res.data)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -146,10 +151,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
@@ -182,7 +187,6 @@ class CampsiteViewSet(viewsets.ModelViewSet):
 class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
     queryset = CampsiteStayHistory.objects.all()
     serializer_class = CampsiteStayHistorySerializer
-    authentication_classes=[]
 
     def update(self, request, *args, **kwargs):
         try:
@@ -203,7 +207,6 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
-    authentication_classes=[]
 
     def list(self, request, format=None):
         queryset = self.get_queryset()
@@ -217,7 +220,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
-    @detail_route(methods=['post'],authentication_classes=[])
+    @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -311,10 +314,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'],authentication_classes=[])
@@ -331,10 +334,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
@@ -351,10 +354,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
@@ -640,7 +643,7 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             rate = None
-            print request.data
+            print(request.data)
             rate_serializer = RateDetailSerializer(data=request.data)
             rate_serializer.is_valid(raise_exception=True)
             rate_id = rate_serializer.validated_data.get('rate',None)
@@ -651,7 +654,7 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
                 rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
-            print rate_serializer.validated_data
+            print(rate_serializer.validated_data)
             if rate:
                 data = {
                     'rate': rate.id,
@@ -668,10 +671,10 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=http_status)
              
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     def update(self, request, *args, **kwargs):
@@ -710,7 +713,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 class BookingRangeViewset(viewsets.ModelViewSet):
-    authentication_classes=[]
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
