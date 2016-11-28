@@ -28,7 +28,7 @@
                       </div>
                       <div class="col-md-4">
                           <div class="form-group pull-right">
-                              <router-link :to="{name:'campsite-type'}" style="margin-top: 20px;" class="btn btn-primary" >Add Campsite Type</router-link>
+                              <router-link :to="{name:'campsite-type'}" style="margin-top: 20px;" class="btn btn-primary table_btn" >Add Campsite Type</router-link>
                           </div>
                       </div>
                   </form>

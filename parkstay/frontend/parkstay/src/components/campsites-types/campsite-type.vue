@@ -80,7 +80,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <select-panel :options="features" :selected="selected_features" id="select-features"></select-panel>
+                                    <select-panel :ref="select_features" :options="features" :selected="selected_features" id="select-features"></select-panel>
                                     <div class="row">
                                       <div class="col-sm-6">
 
@@ -177,6 +177,29 @@ export default {
         updateCampsiteType: function() {
             this.sendData(api_endpoints.campsite_class(this.campsite_type.id),'PUT')
         },
+        fetchCampsiteType: function() {
+           let vm = this;
+            $.ajax({
+                url: api_endpoints.campsite_class(vm.$route.params.campsite_type_id),
+                method: 'GET',
+                xhrFields: {
+                    withCredentials: true
+                },
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.campsite_type = data;
+
+                    vm.$refs.select_features.loadSelectedFeatures(data.features);
+                },
+                error: function(resp) {
+                    if (resp.status == 404) {
+                        vm.$router.push({
+                            name: '404'
+                        });
+                    }
+                }
+            });  
+        },
         sendData: function(url,method) {
             let vm = this;
             vm.isLoading = true;
@@ -209,7 +232,7 @@ export default {
         vm.loadFeatures();
         if (vm.$route.params.campsite_type_id) {
             vm.createCampsiteType = false;
-            //vm.fetchCampsiteType();
+            vm.fetchCampsiteType();
         }
     }
 }
