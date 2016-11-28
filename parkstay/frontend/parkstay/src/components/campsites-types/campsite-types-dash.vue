@@ -115,7 +115,10 @@ export default {
                     {
                         "mRender": function(data, type, full) {
                             var id = full.id;
-                            var column = "<td ><a href='__URL__' data-id='__ID__'> Edit</a> </br> <a href='__URL__' data-id='__ID__'> Delete</a> </td>";
+                            var column = "<td ><a href='__URL__' data-id='__ID__'> Edit</a> </br> ";
+                            if (!full.deleted){
+                                column += "<a href='__URL__' data-id='__ID__'> Delete</a> </td>";
+                            }
                             return column.replace(/__URL__/g, full.url);
                         }
                     }
