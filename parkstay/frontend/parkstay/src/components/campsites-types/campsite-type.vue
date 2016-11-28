@@ -180,7 +180,7 @@ export default {
         sendData: function(url,method) {
             let vm = this;
             vm.isLoading = true;
-            var data = vm.campsite;
+            var data = vm.campsite_type;
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
