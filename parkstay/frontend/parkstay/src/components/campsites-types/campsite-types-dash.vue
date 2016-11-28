@@ -92,8 +92,21 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
-                    {"data": "url",},
-                    {"data": "name"},
+                    {
+                        "data": "url",
+                        mRender:function (data,type,full) {
+                            return '<td>'+data.substring(45,47)+'</td>';
+                        }
+                    },
+                    {
+                        "data": "name",
+                        mRender:function (data,type,full) {
+                            var max_length = 25;
+                            var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
+                            var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                            return column.replace('__NAME__', data);
+                        }
+                    },
                     {
                         "data": "status",
                         "mRender": function(data, type, full) {
@@ -127,10 +140,21 @@ export default {
         goBack: function() {
             helpers.goBack(this);
         },
+        namePopover:function () {
+            let vm = this;
+            vm.$refs.campsite_type_table.vmDataTable.on('mouseover','.name_popover',function (e) {
+                $(this).popover('show');
+                $(this).on('mouseout',function () {
+                    $(this).popover('hide');
+                })
+
+            });
+        }
 
     },
     mounted: function() {
         let vm = this;
+        vm.namePopover();
 
     }
 }
@@ -138,5 +162,8 @@ export default {
 </script>
 
 <style lang="css">
-
+    .name_popover{
+        padding: 10px;
+        cursor: pointer;
+    }
 </style>
