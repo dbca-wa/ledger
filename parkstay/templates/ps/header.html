@@ -1,19 +1,17 @@
 {% load bootstrap3 %}
 
 {% load static %}
-
-<div class="container-fluid">
-    <div class="ps-header">
-        <div class="container">
-            <div class="ps-banner">
-                <a href="{% url 'home' %}">
-                    <img src="{% static 'wl/img/dpaw_logo.png' %}" alt="DPaW Logo" />
-                    <div>
-                        <h1>Parkstay</h1>
+<div class="row">
+    <div class="container">     
+        <div class="masthead">     
+            <div class="row">    
+                <div class="col-lg-8">
+                    <div class="agency-freespace">
+                        <h1 id="site-title" class="site-logo"><a href="{%url 'home'%}">
+                        <img src="https://parkstay.dpaw.wa.gov.au/images/logos/logo-park-stay.gif" alt="Department of Parks and Wildlife - Park Stay" class="img-responsive"/></a></h1>
                     </div>
-                </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
