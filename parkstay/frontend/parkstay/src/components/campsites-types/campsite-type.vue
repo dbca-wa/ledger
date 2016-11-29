@@ -80,7 +80,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <select-panel :ref="select_features" :options="features" :selected="selected_features" id="select-features"></select-panel>
+                                    <select-panel ref="select_features" :options="features" :selected="selected_features" id="select-features"></select-panel>
                                     <div class="row">
                                       <div class="col-sm-6">
 
@@ -89,8 +89,8 @@
                                           <div class="row" style="margin-top:10px;">
                                               <div class="col-sm-6 pull-right">
                                                   <div class="pull-right">
-                                                      <button type="button" v-show="createCampsiteType" style="margin-right:5px" @click="createCampsiteType" class="btn btn-primary">Create</button>
-                                                      <button type="button" v-show="!createCampsiteType" style="margin-right:5px" @click="updateCampsiteType" class="btn btn-primary">Update</button>
+                                                      <button type="button" v-show="createCampsiteType" style="margin-right:5px" @click="addCampsiteType()" class="btn btn-primary">Create</button>
+                                                      <button type="button" v-show="!createCampsiteType" style="margin-right:5px" @click="updateCampsiteType()" class="btn btn-primary">Update</button>
                                                       <button type="button" class="btn btn-default pull-right" @click="goBack">Cancel</button>
                                                   </div>
 
@@ -166,16 +166,17 @@ export default {
             $.ajax({
                 url: url,
                 dataType: 'json',
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data, stat, xhr) {
                     vm.features = data;
                 }
             });
         },
-        createCampsiteType: function() {
-            this.sendData(api_endpoints.campsite_classes,'POST')
+        addCampsiteType: function() {
+            this.sendData(api_endpoints.campsite_classes,'POST');
         },
         updateCampsiteType: function() {
-            this.sendData(api_endpoints.campsite_class(this.campsite_type.id),'PUT')
+            this.sendData(api_endpoints.campsite_class(this.campsite_type.id),'PUT');
         },
         fetchCampsiteType: function() {
            let vm = this;
@@ -186,6 +187,7 @@ export default {
                     withCredentials: true
                 },
                 dataType: 'json',
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data, stat, xhr) {
                     vm.campsite_type = data;
 
@@ -213,6 +215,7 @@ export default {
                     withCredentials: true
                 },
                 url: url,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 method: method,
                 data: JSON.stringify(data),
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},

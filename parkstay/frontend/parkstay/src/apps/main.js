@@ -58,8 +58,21 @@ const routes = [
                     },
                     {
                         path:'campsite-type',
-                        name:'campsite-type',
-                        component: Campsite_type
+                        component: {
+                            render (c) { return c('router-view') }
+                        },
+                        children: [
+                            {
+                                path: '/',
+                                name: 'campsite-type',
+                                component: Campsite_type
+                            },
+                            { 
+                                path:':campsite_type_id',
+                                name:'campsite-type-detail',
+                                component: Campsite_type,
+                            }
+                        ]
                     },
                     {
                         path:'campgrounds/addCampground',

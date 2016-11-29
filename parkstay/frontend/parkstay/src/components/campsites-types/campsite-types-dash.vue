@@ -115,11 +115,11 @@ export default {
                     {
                         "mRender": function(data, type, full) {
                             var id = full.id;
-                            var column = "<td ><a href='__URL__' data-id='__ID__'> Edit</a> </br> ";
+                            var column = "<td ><a href='#' class=\"detailRoute\" data-campsite-type='__ID__'> Edit</a> </br> ";
                             if (!full.deleted){
-                                column += "<a href='__URL__' data-id='__ID__'> Delete</a> </td>";
+                                column += "<a href='#' data-campsite-type='__ID__'> Delete</a> </td>";
                             }
-                            return column.replace(/__URL__/g, full.url);
+                            return column.replace(/__ID__/g, full.id);
                         }
                     }
                 ]
@@ -149,13 +149,25 @@ export default {
                 })
 
             });
+        },
+        attachTableEventListeners: function() {
+            let vm = this;
+            vm.$refs.campsite_type_table.vmDataTable.on('click', '.detailRoute', function(e) {
+                e.preventDefault();
+                var id = $(this).data('campsite-type');
+                vm.$router.push({
+                    name: 'campsite-type-detail',
+                    params: {
+                        campsite_type_id: id
+                    }
+                });
+            });
         }
-
     },
     mounted: function() {
         let vm = this;
         vm.namePopover();
-
+        vm.attachTableEventListeners();
     }
 }
 
