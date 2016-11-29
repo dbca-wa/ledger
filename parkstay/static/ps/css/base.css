@@ -1,21 +1,7 @@
-.ps-header {
-    background: #529b6b;
-}
-
-.ps-banner {
-    height: 100px;
-    padding-top: 10px;
-    //background-image: url("/static/wl/img/banner.png");
-    background-repeat: no-repeat;
-}
-
-.ps-banner img {
-    vertical-align: top;
-}
-
-.ps-banner div {
-    margin-left: 10px;
-    display: inline-block;
+.topmast {
+    height: 115px;
+    padding-top: 0px;
+    background: #3580ca url(https://parkstay.dpaw.wa.gov.au/templates/dpaw01/images/top-bg-grasses.gif) repeat-x center bottom;
 }
 
 @media (max-width: 992px) {

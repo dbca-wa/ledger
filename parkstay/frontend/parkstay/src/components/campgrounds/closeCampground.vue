@@ -118,12 +118,12 @@ module.exports = {
             let vm = this;
             var data = this.formdata;
             data.status = vm.formdata.reason;
-            console.log(data);
             $.ajax({
                 url: api_endpoints.opencloseCG(vm.id),
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.close();

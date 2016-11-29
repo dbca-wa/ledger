@@ -19,7 +19,7 @@
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <priceHistory ref="price_dt" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
+                <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
                 <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
@@ -40,6 +40,9 @@
                <div class="col-lg-12">
                   <div class="row">
                      <div class="well">
+                        <div class="col-sm-offset-8 col-sm-4">
+                            <router-link :to="{name:'add_campsite',params:{id:campground_id}}" class="btn btn-primary pull-right table_btn">Add Campsite</router-link>
+                        </div>
                         <datatable ref="cg_campsites_dt" :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
                      </div>
                   </div>
@@ -92,6 +95,15 @@ export default {
         },
         myID: function(){
             return parseInt(this.$route.params.id);
+        },
+        hasCampsites: function() {
+            return this.campsites.length > 0;
+        },
+        campground_id: function (){
+            return this.campground.id ? this.campground.id : 0;
+        },
+        priceHistoryDeleteURL: function (){
+            return api_endpoints.delete_campground_price(this.myID);
         }
     },
     data: function() {
@@ -100,25 +112,29 @@ export default {
             campground: {
                 address:{}
             },
+            campsites: [],
             isOpenOpenCS: false,
             isOpenCloseCS: false,
             deleteRange: null,
-            ch_options: {
+            ph_options: {
                 responsive: true,
                 processing: true,
                 deferRender: true,
+                order: [
+                    [0,'desc']
+                ],
                 ajax: {
-                    url: api_endpoints.status_history(this.$route.params.id),
+                    url: api_endpoints.campground_price_history(this.$route.params.id),
                     dataSrc: ''
                 },
                 columns: [{
-                    data: 'range_start',
+                    data: 'date_start',
                     mRender: function(data, type, full) {
                         return Moment(data).format('MMMM Do, YYYY');
                     }
 
                 }, {
-                    data: 'range_end',
+                    data: 'date_end',
                     mRender: function(data, type, full) {
                         if (data) {
                             return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
@@ -129,16 +145,32 @@ export default {
                     }
 
                 }, {
-                    data: 'status'
+                    data: 'adult'
                 }, {
-                    data: 'details'
+                    data: 'concession'
+                }, {
+                    data: 'child'
+                }, {
+                    data: 'details',
+                    mRender: function(data, type, full) {
+                        if (data){
+                            return data;
+                        }
+                        return '';
+                    }
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editRange' data-range=\"__ID__\" >Edit</a><br/><a href='#' class='deleteRange' data-range=\"__ID__\" >Delete</a></td>";
-                            return column.replace(/__ID__/g, id);
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
+                            if (full.deletable){
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
+                            }
+                            column = column.replace(/__START__/g, full.date_start)
+                            column = column.replace(/__END__/g, full.date_end)
+                            column = column.replace(/__RATE__/g, full.rate_id)
+                            return column
                         }
                         else {
                             return "";
@@ -149,7 +181,6 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],
             title: 'Campground',
             cs_options: {
                 responsive: true,
@@ -231,6 +262,7 @@ export default {
             $.ajax({
                 method: "DELETE",
                 url: url,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
             }).done(function(msg) {
                 vm.$refs.cg_closure_dt.vmDataTable.ajax.reload();
             });
@@ -247,6 +279,7 @@ export default {
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.closeCampsite.close();
@@ -264,6 +297,12 @@ export default {
         showOpenOpenCS: function() {
             this.isOpenOpenCS = true;
         },
+        fetchCampsites: function(){
+            let vm = this;
+            $.get(api_endpoints.campgroundCampsites(this.$route.params.id), function(data){
+                vm.campsites = data;
+            });
+        },
         fetchCampground:function () {
             let vm =this;
             $.ajax({
@@ -271,6 +310,7 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.campground = data;
+                    vm.fetchCampsites();
                 }
             });
         }
@@ -304,10 +344,6 @@ export default {
                 vm.showOpenCloseCS();
             }
         });
-         bus.$on('refreshCGTable', function(){
-            vm.dtGrounds.ajax.reload();
-        });
-
         vm.fetchCampground();
     }
 }

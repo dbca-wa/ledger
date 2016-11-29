@@ -1,4 +1,22 @@
-from parkstay.models import CampsiteStayHistory,District, CampsiteBooking,BookingRange,CampsiteBookingRange,CampgroundBookingRange, Campsite, Campground, Park, PromoArea, Feature, Region, CampsiteClass, Booking, CampsiteRate, Contact
+from parkstay.models import (   CampgroundPriceHistory,
+                                Rate,
+                                CampsiteStayHistory,
+                                District,
+                                CampsiteBooking,
+                                BookingRange,
+                                CampsiteBookingRange,
+                                CampgroundBookingRange,
+                                Campsite,
+                                Campground,
+                                Park,
+                                PromoArea,
+                                Feature,
+                                Region,
+                                CampsiteClass,
+                                Booking,
+                                CampsiteRate,
+                                Contact
+                            )
 from rest_framework import serializers
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -27,7 +45,7 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
     range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
-    
+
     def get_status(self, obj):
         return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
 
@@ -68,7 +86,7 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
         )
 
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
-    
+
     class Meta:
         model = CampsiteBookingRange
         fields = (
@@ -167,9 +185,27 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','details','campsite','editable')
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(default='')
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure')
+        fields = ('id','campground', 'name', 'type','campsite_class','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure','can_add_rate')
+
+    def __init__(self, *args, **kwargs):
+        try:
+            formatted = bool(kwargs.pop('formatted'))
+        except:
+            formatted = False
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'put'
+        super(CampsiteSerialiser, self).__init__(*args, **kwargs)
+        if method == 'get':
+            self.fields['features'] = FeatureSerializer(many=True)
+        elif method == 'post':
+            self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,read_only=True,required=False,view_name='features-detail')
+        elif method == 'put':
+            self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
 
 class RegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -178,6 +214,18 @@ class RegionSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteClass
+        fields = ('url','id','name','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','features','deleted')
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        super(CampsiteClassSerializer, self).__init__(*args, **kwargs)
+        if method == 'get':
+            self.fields['features'] = FeatureSerializer(many=True)
+        elif method == 'post':
+            self.fields['features'] = serializers.HyperlinkedRelatedField(required=False,many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
 
 class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
     booking_type = serializers.SerializerMethodField()
@@ -192,6 +240,51 @@ class BookingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Booking
 
-class CampsiteRateSerializer(serializers.HyperlinkedModelSerializer):
+class RateSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Rate
+        fields = ('url','id','adult','concession','child','infant','name')
+
+class CampsiteRateSerializer(serializers.ModelSerializer):
+    date_start = serializers.DateField(format='%d/%m/%Y')
+    details = serializers.CharField(required=False)
     class Meta:
         model = CampsiteRate
+        read_only_fields = ('date_end',)
+
+class CampsiteRateReadonlySerializer(serializers.ModelSerializer):
+    adult = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.adult')
+    concession = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.concession')
+    child = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.child')
+    class Meta:
+        model = CampsiteRate
+        fields = ('id','adult','concession','child','date_start','date_end','rate','editable','deletable','update_level')
+
+class RateDetailSerializer(serializers.Serializer):
+    '''Used to validate rates from the frontend
+    '''
+    rate = serializers.IntegerField(required=False)
+    adult = serializers.DecimalField(max_digits=5, decimal_places=2)
+    concession = serializers.DecimalField(max_digits=5, decimal_places=2)
+    child = serializers.DecimalField(max_digits=5, decimal_places=2)
+    period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
+    reason = serializers.IntegerField()
+    details = serializers.CharField(required=False)
+    campsite = serializers.IntegerField(required=False)
+
+
+    def validate_rate(self, value):
+        if value:
+            try:
+                Rate.objects.get(id=value)
+            except Rate.DoesNotExist:
+                raise serializers.ValidationError('This rate does not exist')
+        return value
+
+class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
+    date_end = serializers.DateField(required=False)
+    class Meta:
+        model = CampgroundPriceHistory
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
+        read_only_fields = ('id','editable','deletable','id','adult','concession','child')
+

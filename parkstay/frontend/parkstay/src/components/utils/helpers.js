@@ -13,5 +13,22 @@ module.exports = {
             error_str = 'The resource you are looking for does not exist.';
         }
         return error_str;
+    },
+    goBack:function(vm){
+        vm.$router.go(window.history.back());
+    },
+    getCookie: function(name) {
+        var value = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i];
+                if (cookie.substring(0, name.length + 1).trim() === (name + '=')) {
+                    value = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return value;
     }
 };

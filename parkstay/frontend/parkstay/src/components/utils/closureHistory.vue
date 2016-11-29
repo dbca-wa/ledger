@@ -84,6 +84,9 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
+                order: [
+                    [0,'desc']
+                ],
                 ajax: {
                     url: vm.datatableURL, 
                     dataSrc: ''
@@ -139,6 +142,7 @@ export default {
             $.ajax({
                 method: "DELETE",
                 url: url,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
             }).done(function(msg) {
                 vm.$refs.closure_dt.vmDataTable.ajax.reload();
             });
@@ -149,9 +153,6 @@ export default {
             }else{
                 return api_endpoints.opencloseCS(this.object_id);
             }
-        },
-        closeRange: function () {
-            this.sendData();
         },
         closureURL: function(id) {
             if (this.closeCampground){
@@ -172,7 +173,7 @@ export default {
                     vm.showClose();
                 },
                 error:function (resp){
-                    console.log(resp);
+                    
                 }
             });
         },
@@ -190,6 +191,7 @@ export default {
                 method: method,
                 xhrFields: { withCredentials:true },
                 data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.$refs.closeModal.close();

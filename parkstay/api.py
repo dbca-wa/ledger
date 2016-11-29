@@ -21,7 +21,9 @@ from parkstay.models import (Campground,
                                 Region,
                                 CampsiteClass,
                                 Booking,
-                                CampsiteRate
+                                CampsiteRate,
+                                Rate,
+                                CampgroundPriceHistory
                                 )
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
@@ -37,7 +39,11 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundBookingRangeSerializer,
                                     CampsiteBookingRangeSerializer,
                                     CampsiteRateSerializer,
-                                    CampsiteStayHistorySerializer
+                                    CampsiteRateReadonlySerializer,
+                                    CampsiteStayHistorySerializer,
+                                    RateSerializer,
+                                    RateDetailSerializer,
+                                    CampgroundPriceHistorySerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 
@@ -49,9 +55,61 @@ class CampsiteBookingViewSet(viewsets.ModelViewSet):
     queryset = CampsiteBooking.objects.all()
     serializer_class = CampsiteBookingSerialiser
 
+
 class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
     serializer_class = CampsiteSerialiser
+    
+
+    def list(self, request, format=None):
+        queryset = self.get_queryset()
+        formatted = bool(request.GET.get("formatted", False))
+        serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        formatted = bool(request.GET.get("formatted", False))
+        serializer = self.get_serializer(instance, formatted=formatted, method='get')
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance,data=request.data,partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def create(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            number = request.data.pop('number')
+            serializer = self.get_serializer(data=request.data,method='post')
+            serializer.is_valid(raise_exception=True)
+
+            if number >  1:
+                data = dict(serializer.validated_data)
+                campsites = Campsite.bulk_create(number,data)
+                res = self.get_serializer(campsites,many=True)
+            else:
+                instance = serializer.save()
+                res = self.get_serializer(instance)
+
+            return Response(res.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
@@ -104,6 +162,20 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             serializer = CampsiteStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def price_history(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            price_history = self.get_object().rates.all()
+            serializer = CampsiteRateReadonlySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
 
             return Response(res,status=http_status)
@@ -174,6 +246,100 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['post'],)
+    def addPrice(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            rate = None
+            serializer = RateDetailSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            rate_id = serializer.validated_data.get('rate',None)
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExisti as e :
+                    raise serializers.ValidationError('The selected rate does not exist')
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+            if rate:
+                serializer.validated_data['rate']= rate
+                data = {
+                    'rate': rate,
+                    'date_start': serializer.validated_data['period_start'],
+                    #'reason': serializer.validated_data['reason'],
+                    'update_level': 0
+                }
+                self.get_object().createCampsitePriceHistory(data)
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'],)
+    def updatePrice(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            original_data = request.data.pop('original')
+
+            original_serializer = CampgroundPriceHistorySerializer(data=original_data)
+            original_serializer.is_valid(raise_exception=True)
+
+            serializer = RateDetailSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            rate_id = serializer.validated_data.get('rate',None)
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExisti as e :
+                    raise serializers.ValidationError('The selected rate does not exist')
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+            if rate:
+                serializer.validated_data['rate']= rate
+                new_data = {
+                    'rate': rate,
+                    'date_start': serializer.validated_data['period_start'],
+                    #'reason': serializer.validated_data['reason'],
+                    'update_level': 0
+                }
+                self.get_object().updatePriceHistory(dict(original_serializer.validated_data),new_data)
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'],)
+    def deletePrice(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer = CampgroundPriceHistorySerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            self.get_object().deletePriceHistory(serializer.validated_data)
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
         try:
@@ -202,6 +368,23 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             res = serializer.data
 
             return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def price_history(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+            return {
+                'message': 'hello'
+            }
         except serializers.ValidationError:
             raise
         except Exception as e:
@@ -455,6 +638,80 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
 
+
+    def create(self, request, format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            rate = None
+            print(request.data)
+            rate_serializer = RateDetailSerializer(data=request.data)
+            rate_serializer.is_valid(raise_exception=True)
+            rate_id = rate_serializer.validated_data.get('rate',None)
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExisti as e :
+                    raise serializers.ValidationError('The selected rate does not exist')
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+            print(rate_serializer.validated_data)
+            if rate:
+                data = {
+                    'rate': rate.id,
+                    'date_start': rate_serializer.validated_data['period_start'],
+                    'campsite': rate_serializer.validated_data['campsite'],
+                    #'reason': serializer.validated_data['reason'],
+                    'update_level': 2
+                }
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            res = serializer.save()
+
+            serializer = CampsiteRateReadonlySerializer(res)
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            rate = None
+            rate_serializer = RateDetailSerializer(data=request.data)
+            rate_serializer.is_valid(raise_exception=True)
+            rate_id = rate_serializer.validated_data.get('rate',None)
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExisti as e :
+                    raise serializers.ValidationError('The selected rate does not exist')
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+            if rate:
+                data = {
+                    'rate': rate.id,
+                    'date_start': rate_serializer.validated_data['period_start'],
+                    'campsite': rate_serializer.validated_data['campsite'],
+                    #'reason': serializer.validated_data['reason'],
+                    'update_level': 2
+                }
+            instance = self.get_object()
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance,data=data,partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
 class BookingRangeViewset(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
@@ -486,3 +743,7 @@ class CampgroundBookingRangeViewset(BookingRangeViewset):
 class CampsiteBookingRangeViewset(BookingRangeViewset):
     queryset = CampsiteBookingRange.objects.all()
     serializer_class = CampsiteBookingRangeSerializer
+
+class RateViewset(viewsets.ModelViewSet):
+    queryset = Rate.objects.all()
+    serializer_class = RateSerializer

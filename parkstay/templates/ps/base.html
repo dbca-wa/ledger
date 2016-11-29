@@ -25,12 +25,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
     <body>
-        <header>
+        <header class="topmast">
             {% block header %}
                 {% include 'ps/header.html' %}
             {% endblock %}
         </header>
         {% block menu %}
+        <div class="row">
             <div class="container-fluid">
                 <nav class="navbar navbar-default">
                     <div class="container">
@@ -47,6 +48,7 @@
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
                                     <li><a href="{% url 'dash-campgrounds'%}">Campgrounds</a></li>
+                                    <li><a href="{% url 'dash-campsite-types'%}">Campsite Types</a></li>
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">
@@ -92,6 +94,7 @@
                     </div>
                 </nav>
             </div>
+        </div>
         {% endblock %}
         {% block breadcrumbs %}
         {% endblock %}

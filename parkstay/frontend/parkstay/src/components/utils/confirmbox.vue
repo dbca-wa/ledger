@@ -11,7 +11,7 @@
           event: "delete",
           bsColor:"btn-danger",
           handler:function(e) {
-             console.log(vm);
+             
              vm.showAlert();
           },
           autoclose:true

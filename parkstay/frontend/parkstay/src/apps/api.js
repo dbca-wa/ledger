@@ -13,6 +13,12 @@ module.exports = {
     campground_price_history: function(id){
         return "/api/campgrounds/"+ id +"/price_history.json";
     },
+    addPrice: function(id){
+        return "/api/campgrounds/"+ id +"/addPrice.json";
+    },
+    editPrice: function(id){
+        return "/api/campgrounds/"+ id +"/updatePrice.json";
+    },
     campgroundCampsites: function(id){
         return "/api/campgrounds/" + id + "/campsites.json"
     },
@@ -24,6 +30,9 @@ module.exports = {
     },
     campground_status_history_detail: function(id){
         return "/api/campground_booking_ranges/"+ id +".json?original=true";
+    },
+    delete_campground_price: function(id){
+        return "/api/campgrounds/" + id + "/deletePrice.json";
     },
     // Campsites
     campsites:"/api/campsites.json",
@@ -52,5 +61,16 @@ module.exports = {
     campsite_status_history_detail: function(id){
         return "/api/campsite_booking_ranges/"+ id +".json?original=true";
     },
-    features:"/api/features.json"
+    features:"/api/features.json",
+    campsite_rate: "/api/campsite_rate.json",
+    campsiterate_detail:function (id) {
+        return "/api/campsite_rate/"+id+".json"
+    },
+    rates:"/api/rates.json",
+
+    // campsite types
+    campsite_classes:"/api/campsite_classes.json",
+    campsite_class:function (id) {
+        return "/api/campsite_classes/"+id+".json"
+    }
 };

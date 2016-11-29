@@ -122,12 +122,10 @@ module.exports = {
         update: function() {
             var vm = this;
             var url =  api_endpoints.regions;
-            console.log('AJAX ' + url)
             $.ajax({
                 url: url,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    console.log(data);
                     vm.regions = data;
                 }
             });
@@ -235,7 +233,6 @@ module.exports = {
             }
         });
          bus.$on('refreshCGTable', function(){
-            console.log('gotcha');
             vm.dtGrounds.ajax.reload();
         });
     }

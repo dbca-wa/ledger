@@ -123,39 +123,20 @@ module.exports = {
     },
     methods: {
         close: function() {
-            this.stay= {};
+            //this.stay= {};
             this.isOpen = false;
             this.errors = false;
             this.errorString = '';
             this.status = '';
         },
         addMaxStay: function() {
-            if (this.form.valid()){
-                this.create ? this.sendData(api_endpoints.campsites_stay_history, 'POST'): this.sendData(api_endpoints.campsites_stay_history_detail(this.stay.id),'PUT');
-            }
-        },
-        sendData: function(url, method) {
-            let vm = this;
-            var data = this.stay;
-            if (method == 'POST'){
-                data.campsite = vm.campsite.id;
-            }
-            $.ajax({
-                url: url,
-                method: method,
-                xhrFields: { withCredentials:true },
-                data: data,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.close();
-                    vm.$parent.refreshMaxStayTable();
-                },
-                error:function (resp){
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+            if ($(this.form).valid()){
+                if (!this.stay.id){
+                    this.$emit('addStayHistory');
+                }else {
+                    this.$emit('updateStayHistory');
                 }
-            });
-
+            }
         },
         addFormValidations: function() {
             let vm = this;

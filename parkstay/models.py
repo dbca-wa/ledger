@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
+from django.db import IntegrityError, transaction, connection
 from django.utils import timezone
 from datetime import date, time, datetime, timedelta
 from taggit.managers import TaggableManager
@@ -186,6 +187,44 @@ class Campground(models.Model):
         except CampgroundBookingRange.DoesNotExist:
             b.save()
 
+    def createCampsitePriceHistory(self,data):
+        '''Create Multiple campsite rates
+        '''
+        try:
+            with transaction.atomic():
+                for c in self.campsites.all():
+                    cr = CampsiteRate(**data)
+                    cr.campsite = c
+                    cr.save()
+        except Exception as e:
+            raise
+
+    def updatePriceHistory(self,original,_new):
+        '''Update Multiple campsite rates
+        '''
+        try:
+            rates = CampsiteRate.objects.filter(**original)
+            campsites = self.campsites.all()
+            with transaction.atomic():
+                for r in rates:
+                    if r.campsite in campsites and r.update_level == 0:
+                        r.update(_new)
+        except Exception as e:
+            raise
+
+    def deletePriceHistory(self,data):
+        '''Delete Multiple campsite rates
+        '''
+        try:
+            rates = CampsiteRate.objects.filter(**data)
+            campsites = self.campsites.all()
+            with transaction.atomic():
+                for r in rates:
+                    if r.campsite in campsites and r.update_level == 0:
+                        r.delete()
+        except Exception as e:
+            raise
+
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),
@@ -251,7 +290,7 @@ class StayHistory(models.Model):
         now = datetime.now().date()
         if (self.range_start <= now and not self.range_end) or ( self.range_start <= now <= self.range_end):
             return True
-        elif (self.range_start >= now() and not self.range_end) or ( self.range_start >= now <= self.range_end):
+        elif (self.range_start >= now and not self.range_end) or ( self.range_start >= now <= self.range_end):
             return True
         return False
 
@@ -318,6 +357,10 @@ class Campsite(models.Model):
     def price(self):
         current_price = 0
         return current_price
+
+    @property
+    def can_add_rate(self):
+        return self.campground.price_level == 2
 
     @property
     def active(self):
@@ -396,6 +439,31 @@ class Campsite(models.Model):
                 within.save()
         except CampsiteBookingRange.DoesNotExist:
             b.save()
+    
+    @staticmethod
+    def bulk_create(number,data):
+        try:
+            created_campsites = []
+            with transaction.atomic():
+                campsites = []
+                latest = 0
+                current_campsites = Campsite.objects.filter(campground=data['campground'])
+                cs_numbers = [int(c.name) for c in current_campsites if c.name.isdigit()]
+                if cs_numbers:
+                    latest = max(cs_numbers)
+                for i in range(number):
+                    latest += 1
+                    c = Campsite(**data)
+                    name = str(latest)
+                    if len(name) == 1:
+                        name = '0{}'.format(name)
+                    c.name = name
+                    c.save()
+                    c.features = c.campsite_class.features.all()
+                    created_campsites.append(c)
+            return created_campsites
+        except Exception:
+            raise
 
 class CampsiteBookingRange(BookingRange):
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT,related_name='booking_ranges')
@@ -481,9 +549,18 @@ class CampsiteClass(models.Model):
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
     dimensions = models.CharField(max_length=12, default='6x4')
+    features = models.ManyToManyField('Feature')
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
+
+    def delete(self, permanently=False,using=None):
+        if not permanently:
+            self.deleted = True
+            self.save()
+        else:
+            super(CampsiteClass, self).delete(using)
 
 
 class CampsiteBooking(models.Model):
@@ -517,23 +594,35 @@ class Rate(models.Model):
     class Meta:
         unique_together = (('adult', 'concession', 'child', 'infant'),)
 
+    # Properties
+    # =================================
+    @property
+    def name(self):
+        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
+
 class CampsiteRate(models.Model):
     RATE_TYPE_CHOICES = (
         (0, 'Standard'),
         (1, 'Discounted'),
     )
 
+    UPDATE_LEVEL_CHOICES = (
+        (0, 'Campground level'),
+        (1, 'Campsite Class level'),
+        (2, 'Campsite level'),
+    )
     PRICE_MODEL_CHOICES = (
         (0, 'Price per Person'),
         (1, 'Fixed Price'),
     )
-    campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT)
+    campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT, related_name='rates')
     rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
     allow_public_holidays = models.BooleanField(default=True)
     date_start = models.DateField(default=date.today)
     date_end = models.DateField(null=True, blank=True)
     rate_type = models.SmallIntegerField(choices=RATE_TYPE_CHOICES, default=0)
     price_model = models.SmallIntegerField(choices=PRICE_MODEL_CHOICES, default=0)
+    update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
 
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
         return self.rate.adult*num_adult + self.rate.concession*num_concession + \
@@ -543,8 +632,34 @@ class CampsiteRate(models.Model):
         return '{} - ({})'.format(self.campsite, self.rate)
 
     class Meta:
-        unique_together = (('campsite', 'rate'),)
+        unique_together = (('campsite', 'rate', 'date_start','date_end'),)
 
+    # Properties
+    # =================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
+            return True
+        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+            return True
+        return False
+
+    # Methods
+    # =================================
+    def update(self,data):
+        print('here')
+        for attr, value in data.items():
+            print('{} {}'.format(attr, value))
+            setattr(self, attr, value)
+        self.save()
 
 class Booking(models.Model):
     legacy_id = models.IntegerField(unique=True)
@@ -555,6 +670,39 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
 
+# VIEWS
+# =====================================
+class CampgroundPriceHistory(models.Model):
+    id = models.IntegerField(primary_key=True)
+    date_start = models.DateField()
+    date_end = models.DateField()
+    rate_id = models.IntegerField()
+    adult = models.DecimalField(max_digits=8, decimal_places=2)
+    concession = models.DecimalField(max_digits=8, decimal_places=2)
+    child = models.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        managed = False
+        db_table = 'parkstay_campground_pricehistory_v'
+        ordering = ['-date_start',]
+
+    # Properties
+    # ====================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
+            return True
+        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+            return True
+        return False
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
@@ -647,6 +795,14 @@ class CampgroundListener(object):
         if not original_instance:
             # Create an opening booking range on creation of Campground
              CampgroundBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
+        else:
+            if original_instance.price_level != instance.price_level:
+                # Get all campsites
+                today = datetime.now().date()
+                campsites = instance.campsites.all().values_list('id', flat=True)
+                rates = CampsiteRate.objects.filter(campsite__in=campsites,update_level=original_instance.price_level)
+                current_rates = rates.filter(Q(date_end__isnull=True),Q(date_start__lte =  today)).update(date_end=today)
+                future_rates = rates.filter(date_start__gt = today).delete()
 
 class CampsiteBookingRangeListener(object):
     """
@@ -738,3 +894,44 @@ class CampsiteListener(object):
         if not original_instance:
             # Create an opening booking range on creation of Campground
              CampsiteBookingRange.objects.create(campsite=instance,range_start=datetime.now().date(),status=0)
+
+class CampsiteRateListener(object):
+    """
+    Event listener for Campsite Rate
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=CampsiteRate)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = CampsiteRate.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                within = CampsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
+                within.date_end = instance.date_start - timedelta(days=2)
+                within.save()
+            except CampsiteRate.DoesNotExist:
+                pass
+
+    @staticmethod
+    @receiver(post_save, sender=CampsiteRate)
+    def _post_save(sender, instance, **kwargs):
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        try:
+            cursor = connection.cursor()
+            if instance.campsite.campground.price_level == 0:
+                sql =   'CREATE OR REPLACE VIEW parkstay_campground_pricehistory_v AS \
+                SELECT distinct camps.campground_id as id,cr.date_start,cr.date_end, r.id as rate_id, r.adult, r.concession, r.child from parkstay_campsiterate cr INNER JOIN parkstay_rate r on r.id= cr.rate_id  INNER JOIN \
+                (SELECT cg.id AS campground_id,cs.name AS name,cs.id AS campsite_id from  parkstay_campsite cs, parkstay_campground cg WHERE cs.campground_id = cg.id and cg.id = cs.campground_id and cg.price_level = 0) camps ON cr.campsite_id = camps.campsite_id'
+                cursor.execute(sql)
+        except Exception as e:
+            raise ValidationError(e)
+
+    @staticmethod
+    @receiver(post_delete, sender=CampsiteRate)
+    def _post_delete(sender, instance, **kwargs): 
+        if not instance.date_end:
+            CampsiteRate.objects.filter(date_end=instance.date_start- timedelta(days=2),campsite=instance.campsite).update(date_end=None)
