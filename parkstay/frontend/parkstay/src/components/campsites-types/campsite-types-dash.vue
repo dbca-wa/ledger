@@ -37,6 +37,7 @@
             </div>
           </div>
        </div>
+    <confirmbox id="deleteCampsiteType" :options="deleteCampsiteTypePrompt"></confirmbox>
    </div>
 </template>
 
@@ -57,7 +58,8 @@ import priceHistory from '../utils/priceHistory/priceHistory.vue'
 export default {
     name: 'campsite',
     components: {
-        datatable
+        datatable,
+        confirmbox,
     },
     computed: {
 
@@ -66,6 +68,22 @@ export default {
         let vm = this;
         return {
             selected_status:'All',
+            deleteCampsiteType: null,
+            deleteCampsiteTypePrompt: {
+                icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
+                message: "Are you sure you want to Delete this campsite type",
+                buttons: [{
+                    text: "Delete",
+                    event: "delete",
+                    bsColor: "btn-danger",
+                    handler: function() {
+                        vm.deleteCampsiteTypeRecord(vm.deleteCampsiteType);
+                        vm.deleteCampsiteType = null;
+                    },
+                    autoclose: true,
+                }],
+                id: 'deleteCampsiteType'
+            },
             dt_headers:["Campsite ID", "Campsite Type Name","Status","Action"],
             dt_options:{
                 language: {
@@ -117,7 +135,7 @@ export default {
                             var id = full.id;
                             var column = "<td ><a href='#' class=\"detailRoute\" data-campsite-type='__ID__'> Edit</a> </br> ";
                             if (!full.deleted){
-                                column += "<a href='#' data-campsite-type='__ID__'> Delete</a> </td>";
+                                column += "<a href='#' class=\"deleteCT\" data-campsite-type='__ID__'> Delete</a> </td>";
                             }
                             return column.replace(/__ID__/g, full.id);
                         }
@@ -137,6 +155,17 @@ export default {
         }
     },
     methods: {
+        deleteCampsiteTypeRecord: function(id) {
+            var vm = this;
+            var url = api_endpoints.campsite_class(id);
+            $.ajax({
+                method: "DELETE",
+                url: url,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
+            }).done(function(msg) {
+                vm.$refs.campsite_type_table.vmDataTable.ajax.reload();
+            });
+        },
         goBack: function() {
             helpers.goBack(this);
         },
@@ -161,6 +190,12 @@ export default {
                         campsite_type_id: id
                     }
                 });
+            });
+            vm.$refs.campsite_type_table.vmDataTable.on('click','.deleteCT', function(e) {
+                e.preventDefault();
+                var id = $(this).data('campsite-type');
+                vm.deleteCampsiteType = id;
+                bus.$emit('showAlert', 'deleteCampsiteType');
             });
         }
     },

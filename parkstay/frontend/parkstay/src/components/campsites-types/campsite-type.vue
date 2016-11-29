@@ -218,7 +218,6 @@ export default {
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 method: method,
                 data: JSON.stringify(data),
-                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data) {
 
                     vm.campsite = data;
