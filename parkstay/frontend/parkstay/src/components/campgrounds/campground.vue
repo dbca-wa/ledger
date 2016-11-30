@@ -195,17 +195,15 @@ export default {
                     targets: 0
                 }, {
                     responsivePriority: 2,
-                    targets: 4
+                    targets: 3
                 }, {
                     responsivePriority: 3,
-                    targets: 2
+                    targets: 1
                 }, {
                     responsivePriority: 4,
-                    targets: 3
+                    targets: 2
                 }],
                 columns: [{
-                    data: 'name'
-                }, {
                     data: 'type'
                 }, {
                     data: 'active',
@@ -237,7 +235,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            cs_headers: ['Campsite Id', 'Type', 'Status', 'Price', 'Action'],
+            cs_headers: [ 'Type', 'Status', 'Price', 'Action'],
             deletePrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
                 message: "Are you sure you want to Delete ?",
