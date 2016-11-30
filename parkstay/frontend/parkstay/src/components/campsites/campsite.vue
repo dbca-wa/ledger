@@ -282,7 +282,7 @@ export default {
     },
     methods: {
         selected_campsite_class_url:function () {
-            return this.campsite.campsite_class;
+            return (this.campsite.campsite_class != null) ? this.campsite.campsite_class :'';
         },
         onCampsiteClassChange:function () {
             let vm =this;
@@ -297,7 +297,6 @@ export default {
                         vm.campsite.max_people = sel_class.max_people;
                         vm.campsite.min_people= sel_class.min_people;
                         vm.campsite.parking_spaces= sel_class.parking_spaces;
-                        //if(!createCampiste) {vm.selected_features = sel_class.features};
                     }
 
                 });
@@ -308,7 +307,6 @@ export default {
                 vm.campsite.max_people = '';
                 vm.campsite.min_people= '';
                 vm.campsite.parking_spaces= '';
-                vm.selected_features = [];
             }
 
         },
@@ -379,7 +377,7 @@ export default {
             let vm = this;
             vm.isLoading = true;
             var data = vm.campsite;
-            if (selected_campsite_class_url() == ''){
+            if (vm.selected_campsite_class_url() == ''){
                 data.cs_tents = data.tents;
                 data.cs_parking_spaces = data.parking_spaces;
                 data.cs_number_vehicles = data.number_vehicles;
