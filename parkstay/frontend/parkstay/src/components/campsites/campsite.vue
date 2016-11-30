@@ -197,6 +197,7 @@ export default {
             features: [],
             selected_features: [],
             createCampsite: true,
+            temp_campsite: {},
             campground: {},
             campsite: {
                 number: 1,
@@ -301,12 +302,12 @@ export default {
 
                 });
             }else{
-                vm.campsite.tents = '';
-                vm.campsite.number_vehicles = '';
-                vm.campsite.dimensions = '';
-                vm.campsite.max_people = '';
-                vm.campsite.min_people= '';
-                vm.campsite.parking_spaces= '';
+                vm.campsite.tents = temp_campsite.tents;
+                vm.campsite.number_vehicles = temp_campsite.number_vehicles;
+                vm.campsite.dimensions = temp_campsite.dimensions;
+                vm.campsite.max_people = temp_campsite.max_people;
+                vm.campsite.min_people= temp_campsite.min_people;
+                vm.campsite.parking_spaces= temp_campsite.parking_spaces;
             }
 
         },
@@ -338,7 +339,7 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.campsite = data;
-
+                    vm.temp_campsite = JSON.parse(JSON.stringify(data));
                     vm.$refs.select_features.loadSelectedFeatures(data.features);
                     //vm.selected_features = ;
                 },
