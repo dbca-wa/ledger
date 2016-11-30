@@ -28,7 +28,7 @@
     											<select class="form-control" v-show="!campsite_classes.length > 0" >
     												<option>Loading...</option>
     											</select>
-    											<select v-if="campsite_classes.length > 1" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
+    											<select v-if="campsite_classes.length > 1" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
                                                     <option value=""></option>
     												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
     											</select>
@@ -280,9 +280,10 @@ export default {
                 });
             },
             deep: true
-        },
-
-        selected_campsite_class_url:function () {
+        }
+    },
+    methods: {
+        onCampsiteClassChange:function () {
             let vm =this;
             if(vm.selected_campsite_class_url){
                 $.ajax({
@@ -298,7 +299,7 @@ export default {
                         vm.selected_features = sel_class.features;
                     }
 
-                })
+                });
             }else{
                 vm.campsite.tents = '';
                 vm.campsite.number_vehicles = '';
@@ -308,9 +309,7 @@ export default {
                 vm.campsite.parking_spaces= '';
                 vm.selected_features = [];
             }
-        }
-    },
-    methods: {
+        },
         showCloseCS: function() {
             var id = this.campsite.id;
             // Update close modal attributes
