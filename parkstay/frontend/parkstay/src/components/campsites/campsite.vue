@@ -29,6 +29,7 @@
     												<option>Loading...</option>
     											</select>
     											<select v-if="campsite_classes.length > 1" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
+                                                    <option value=""></option>
     												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
     											</select>
     										</div>
@@ -40,6 +41,56 @@
     										</div>
     									</div>
     								</div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="control-label" >Tents</label>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.tents"required/>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="control-label" >Parking Spaces</label>
+    											<select name="parking_spaces" class="form-control" v-model="campsite.parking_spaces" >
+    												<option value="0" >Parking within site</option>
+    												<option value="1" >Parking for exclusive use of site occupiers next to site, but separated from tent space</option>
+    												<option value="2" >Parking for exclusive use of occupiers, short walk from tent space</option>
+    												<option value="3" >Shared parking (not allocated), short walk from tent space</option>
+    											</select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="control-label" >Number of Vehicles</label>
+    											<select name="parking_spaces" class="form-control" v-model="campsite.number_vehicles" >
+    												<option value="0" >One vehicle</option>
+    												<option value="1" >Two vehicles</option>
+    												<option value="2" >One vehicle + small trailer</option>
+    												<option value="3" >One vehicle + small trailer/large vehicle</option>
+    											</select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="control-label" >Minimum Number of People</label>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people"required/>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="control-label" >Maximum Number of People</label>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people"required/>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="control-label" >Dimensions</label>
+                                                <input type="text" name="name" class="form-control"  v-model="campsite.dimensions"required/>
+                                            </div>
+                                        </div>
+                                    </div>
     								<div class="row">
     									<div class="col-sm-12">
                                         <select-panel v-show="!createCampsite" :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
@@ -137,6 +188,9 @@ export default {
         showName: function() {
             return (this.createCampsite && this.campsite.number == 1) || !this.createCampsite;
         },
+        selected_campsite_class_url:function () {
+            return this.campsite.campsite_class;
+        }
     },
     data: function() {
         let vm = this;
@@ -226,6 +280,34 @@ export default {
                 });
             },
             deep: true
+        },
+
+        selected_campsite_class_url:function () {
+            let vm =this;
+            if(vm.selected_campsite_class_url){
+                $.ajax({
+                    url:vm.selected_campsite_class_url,
+                    dataType: 'json',
+                    success:function (sel_class) {
+                        vm.campsite.tents = sel_class.tents;
+                        vm.campsite.number_vehicles = sel_class.number_vehicles;
+                        vm.campsite.dimensions = sel_class.dimensions;
+                        vm.campsite.max_people = sel_class.max_people;
+                        vm.campsite.min_people= sel_class.min_people;
+                        vm.campsite.parking_spaces= sel_class.parking_spaces;
+                        vm.selected_features = sel_class.features;
+                    }
+
+                })
+            }else{
+                vm.campsite.tents = '';
+                vm.campsite.number_vehicles = '';
+                vm.campsite.dimensions = '';
+                vm.campsite.max_people = '';
+                vm.campsite.min_people= '';
+                vm.campsite.parking_spaces= '';
+                vm.selected_features = [];
+            }
         }
     },
     methods: {
