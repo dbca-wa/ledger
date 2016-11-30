@@ -76,4 +76,9 @@ td > a:hover{
     text-decoration: none !important;
     margin: 30px 1px;*/
 }
+table.table-bordered.dataTable tbody th, table.table-bordered.dataTable tbody td {
+    border-bottom-width: 0;
+    vertical-align: middle;
+    text-align: left;
+}
 </style>
