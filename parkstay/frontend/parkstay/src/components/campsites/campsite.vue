@@ -45,13 +45,13 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label class="control-label" >Tents</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.tents"required/>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.tents"required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label class="control-label" >Parking Spaces</label>
-    											<select name="parking_spaces" class="form-control" v-model="campsite.parking_spaces" >
+    											<select name="parking_spaces" class="form-control" v-model="campsite.parking_spaces" :disabled="selected_campsite_class_url() != ''" >
     												<option value="0" >Parking within site</option>
     												<option value="1" >Parking for exclusive use of site occupiers next to site, but separated from tent space</option>
     												<option value="2" >Parking for exclusive use of occupiers, short walk from tent space</option>
@@ -62,7 +62,7 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label class="control-label" >Number of Vehicles</label>
-    											<select name="parking_spaces" class="form-control" v-model="campsite.number_vehicles" >
+    											<select name="parking_spaces" class="form-control" v-model="campsite.number_vehicles" :disabled="selected_campsite_class_url() != ''" >
     												<option value="0" >One vehicle</option>
     												<option value="1" >Two vehicles</option>
     												<option value="2" >One vehicle + small trailer</option>
@@ -75,19 +75,19 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label class="control-label" >Minimum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people"required/>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people"required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label class="control-label" >Maximum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people"required/>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people"required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label class="control-label" >Dimensions</label>
-                                                <input type="text" name="name" class="form-control"  v-model="campsite.dimensions"required/>
+                                                <input type="text" name="name" class="form-control"  v-model="campsite.dimensions"required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
                                     </div>
@@ -188,9 +188,7 @@ export default {
         showName: function() {
             return (this.createCampsite && this.campsite.number == 1) || !this.createCampsite;
         },
-        selected_campsite_class_url:function () {
-            return this.campsite.campsite_class;
-        }
+
     },
     data: function() {
         let vm = this;
@@ -283,11 +281,14 @@ export default {
         }
     },
     methods: {
+        selected_campsite_class_url:function () {
+            return this.campsite.campsite_class;
+        },
         onCampsiteClassChange:function () {
             let vm =this;
-            if(vm.selected_campsite_class_url){
+            if(vm.selected_campsite_class_url()){
                 $.ajax({
-                    url:vm.selected_campsite_class_url,
+                    url:vm.selected_campsite_class_url(),
                     dataType: 'json',
                     success:function (sel_class) {
                         vm.campsite.tents = sel_class.tents;
@@ -296,7 +297,7 @@ export default {
                         vm.campsite.max_people = sel_class.max_people;
                         vm.campsite.min_people= sel_class.min_people;
                         vm.campsite.parking_spaces= sel_class.parking_spaces;
-                        vm.selected_features = sel_class.features;
+                        //if(!createCampiste) {vm.selected_features = sel_class.features};
                     }
 
                 });
@@ -309,6 +310,7 @@ export default {
                 vm.campsite.parking_spaces= '';
                 vm.selected_features = [];
             }
+
         },
         showCloseCS: function() {
             var id = this.campsite.id;
@@ -377,6 +379,14 @@ export default {
             let vm = this;
             vm.isLoading = true;
             var data = vm.campsite;
+            if (selected_campsite_class_url() == ''){
+                data.cs_tents = data.tents;
+                data.cs_parking_spaces = data.parking_spaces;
+                data.cs_number_vehicles = data.number_vehicles;
+                data.cs_min_people = data.min_people;
+                data.cs_max_people = data.max_people;
+                data.cs_dimensions = data.dimensions;
+            }
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
