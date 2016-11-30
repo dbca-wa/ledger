@@ -70,6 +70,7 @@ module.exports = {
 
     // campsite types
     campsite_classes:"/api/campsite_classes.json",
+    campsite_classes_active:"/api/campsite_classes.json?active_only=true",
     campsite_class:function (id) {
         return "/api/campsite_classes/"+id+".json"
     }
