@@ -188,7 +188,7 @@ class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(default='')
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price', 'features', 'wkb_geometry','campground_open','active', 'current_closure','can_add_rate')
+        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions')
 
     def __init__(self, *args, **kwargs):
         try:
