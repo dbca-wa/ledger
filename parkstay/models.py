@@ -14,6 +14,20 @@ from parkstay.exceptions import BookingRangeWithinException
 
 # Create your models here.
 
+PARKING_SPACE_CHOICES = (
+    (0, 'Parking within site.'),
+    (1, 'Parking for exclusive use of site occupiers next to site, but separated from tent space.'),
+    (2, 'Parking for exclusive use of occupiers, short walk from tent space.'),
+    (3, 'Shared parking (not allocated), short walk from tent space.')
+)
+
+NUMBER_VEHICLE_CHOICES = (
+    (0, 'One vehicle'),
+    (1, 'Two vehicles'),
+    (2, 'One vehicle + small trailer'),
+    (3, 'One vehicle + small trailer/large vehicle')
+)
+
 class CustomerContact(models.Model):
     name = models.CharField(max_length=255, unique=True)
     phone_number = models.CharField(max_length=50, null=True, blank=True)
@@ -337,9 +351,15 @@ class CampgroundBookingRange(BookingRange):
 class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT, related_name='campsites')
     name = models.CharField(max_length=255)
-    campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT)
+    campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT, null=True,blank=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     features = models.ManyToManyField('Feature')
+    cs_tents = models.SmallIntegerField(default=0)
+    cs_parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default=0)
+    cs_number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default=0)
+    cs_min_people = models.SmallIntegerField(default=1)
+    cs_max_people = models.SmallIntegerField(default=12)
+    cs_dimensions = models.CharField(max_length=12, default='6x4')
 
     def __str__(self):
         return '{} - {}'.format(self.campground, self.name)
@@ -349,14 +369,37 @@ class Campsite(models.Model):
 
     # Properties
     # ==============================
+    property
+    def tents(self):
+        return self.campsite_class.tents if self.campsite_class else self.cs_tents
+
+    property
+    def parking_spaces(self):
+        return self.campsite_class.parking_spaces if self.campsite_class else self.cs_parking_spaces
+
+    property
+    def number_vehicles(self):
+        return self.campsite_class.number_vehicles if self.campsite_class else self.cs_number_vehicles
+
+    property
+    def min_people(self):
+        return self.campsite_class.min_people if self.campsite_class else self.cs_min_people
+
+    property
+    def max_people(self):
+        return self.campsite_class.max_people if self.campsite_class else self.cs_max_people
+
+    property
+    def dimensions(self):
+        return self.campsite_class.dimensions if self.campsite_class else self.cs_dimensions
+
     @property
     def type(self):
         return self.campsite_class.name
 
     @property
     def price(self):
-        current_price = 0
-        return current_price
+        return 'Set at {}'.format(self.campground.get_price_level_display()) 
 
     @property
     def can_add_rate(self):
@@ -527,19 +570,6 @@ class District(models.Model):
 
 
 class CampsiteClass(models.Model):
-    PARKING_SPACE_CHOICES = (
-        (0, 'Parking within site.'),
-        (1, 'Parking for exclusive use of site occupiers next to site, but separated from tent space.'),
-        (2, 'Parking for exclusive use of occupiers, short walk from tent space.'),
-        (3, 'Shared parking (not allocated), short walk from tent space.')
-    )
-
-    NUMBER_VEHICLE_CHOICES = (
-        (0, 'One vehicle'),
-        (1, 'Two vehicles'),
-        (2, 'One vehicle + small trailer'),
-        (3, 'One vehicle + small trailer/large vehicle')
-    )
 
     name = models.CharField(max_length=255, unique=True)
     camp_unit_suitability = TaggableManager()

@@ -361,7 +361,7 @@ export default {
         },
         fetchCampsiteClasses: function() {
             let vm = this;
-            $.get(api_endpoints.campsite_classes, function(data) {
+            $.get(api_endpoints.campsite_classes_active, function(data) {
                 vm.campsite_classes = data;
             })
         },

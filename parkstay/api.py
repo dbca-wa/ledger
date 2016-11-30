@@ -630,6 +630,15 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
     queryset = CampsiteClass.objects.all()
     serializer_class = CampsiteClassSerializer
 
+    def list(self, request, *args, **kwargs):
+        active_only = bool(request.GET.get('active_only',False))
+        if active_only:
+            queryset = CampsiteClass.objects.filter(deleted=False)
+        else:
+            queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
