@@ -43,21 +43,7 @@
                                 </div>
                             </div>
                         </form>
-                        <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%" id="groundsTable">
-                            <thead>
-                                <tr>
-                                    <th class="id">Campground ID</th>
-                                    <th class="name">Campground Name</th>
-                                    <th class="status">Status</th>
-                                    <th class="region">Region</th>
-                                    <th class="dogs_allowed">Dogs Allowed</th>
-                                    <th class="campfires_allowed">Campfires Allowed</th>
-                                    <th class="action">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                        <datatable :dtHeaders="['Campground','Status','Region','Dogs Allowed','Campfires Allowed','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
                     </div>
                 </div>
             </div>
@@ -69,49 +55,100 @@
 <script>
 import {
     $,
-    DataTable,
-    DataTableBs,
-    DataTableRes,
     api_endpoints
 } from '../../hooks'
+import datatable from '../utils/datatable.vue'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
 import {bus} from '../utils/eventBus.js'
 module.exports = {
     name: 'pk-campgrounds',
     data: function() {
+        let vm =this;
         return {
             grounds: [],
             rows: [],
-            dtGrounds: null,
             regions: [],
             title: 'Campgrounds',
             selected_status: 'All',
             selected_region: 'All',
             isOpenAddCampground: false,
             isOpenOpenCG: false,
-            isOpenCloseCG: false
+            isOpenCloseCG: false,
+            dtoptions:{
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+
+                columnDefs: [{
+                    responsivePriority: 1,
+                    targets: 0
+                }, {
+                    responsivePriority: 2,
+                    targets: 5
+                }],
+                ajax: {
+                    "url": api_endpoints.campgrounds,
+                    "dataSrc": ''
+                },
+                columns: [{
+                    "data": "name"
+                }, {
+                    "data": "active",
+                    "mRender": function(data, type, full) {
+                        var status = (data == true) ? "Open" : "Temporarily Closed";
+                        var column = "<td >__Status__</td>";
+                        return column.replace('__Status__', status);
+                    }
+                }, {
+                    "data": "region"
+                }, {
+                    "data": "dog_permitted",
+                    "mRender": function(data, type, full) {
+                        return vm.flagFormat(data);
+                    }
+                }, {
+                    "data": "dog_permitted",
+                    "mRender": function(data, type, full) {
+                        return vm.flagFormat(data);
+                    }
+                }, {
+                    "mRender": function(data, type, full) {
+                        var id = full.id;
+                        if (full.active) {
+                            var column = "<td ><a href='#' class='detailRoute btn btn-info' data-campground=\"__ID__\" >Edit </a><a href='#' class='statusCG btn btn-info' data-status='close' data-campground=\"__ID__\" > Close </a></td>";
+                        } else {
+                            var column = "<td ><a href='#' class='detailRoute btn btn-info' data-campground=\"__ID__\" >Edit </a><a href='#' class='statusCG btn btn-info' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a></td>";
+                        }
+                        column = column.replace(/__Current_Closure__/,full.current_closure);
+                        return column.replace(/__ID__/g, id);
+                    }
+                }, ],
+                processing: true
+            }
         }
     },
     components: {
         pkCgClose,
         pkCgOpen,
+        datatable
     },
     watch: {
         selected_region: function() {
             let vm = this;
             if (vm.selected_region != 'All') {
-                vm.dtGrounds.columns(3).search(vm.selected_region).draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(2).search(vm.selected_region).draw();
             } else {
-                vm.dtGrounds.columns(3).search('').draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(2).search('').draw();
             }
         },
         selected_status: function() {
             let vm = this;
             if (vm.selected_status != 'All') {
-                vm.dtGrounds.columns(2).search(vm.selected_status).draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(2).search(vm.selected_status).draw();
             } else {
-                vm.dtGrounds.columns(2).search('').draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(2).search('').draw();
             }
         }
     },
@@ -132,7 +169,7 @@ module.exports = {
         },
         updateTable: function() {
             var vm = this;
-            vm.dtGrounds.draw();
+            vm.$refs.dtGrounds.vmDataTable.draw();
         },
         showOpenCloseCG: function() {
             this.isOpenCloseCG = true;
@@ -156,66 +193,12 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        vm.dtGrounds = $('#groundsTable').DataTable({
-            language: {
-                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-            },
-            responsive: true,
-            columnDefs: [{
-                responsivePriority: 1,
-                targets: 1
-            }, {
-                responsivePriority: 2,
-                targets: 6
-            }],
-            ajax: {
-                "url": api_endpoints.campgrounds,
-                "dataSrc": ''
-            },
-            columns: [{
-                "data": "id",
-            }, {
-                "data": "name"
-            }, {
-                "data": "active",
-                "mRender": function(data, type, full) {
-                    var status = (data == true) ? "Open" : "Temporarily Closed";
-                    var column = "<td >__Status__</td>";
-                    return column.replace('__Status__', status);
-                }
-            }, {
-                "data": "region"
-            }, {
-                "data": "dog_permitted",
-                "mRender": function(data, type, full) {
-                    return vm.flagFormat(data);
-                }
-            }, {
-                "data": "dog_permitted", //TODO replace with campfire"data":"campfire",
-                "mRender": function(data, type, full) {
-                    return vm.flagFormat(data);
-                }
-            }, {
-                "mRender": function(data, type, full) {
-                    var id = full.id;
-                    if (full.active) {
-                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" >(Temporarily) Close Campground </a></td>";
-                    } else {
-                        var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit Campground Details</a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open Campground</a></td>";
-                    }
-                    column = column.replace(/__Current_Closure__/,full.current_closure);
-                    return column.replace(/__ID__/g, id);
-                }
-            }, ],
-            processing: true
-        });
-        vm.update();
-        vm.dtGrounds.on('click', '.detailRoute', function(e) {
+        vm.$refs.dtGrounds.vmDataTable.on('click', '.detailRoute', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-campground');
             vm.openDetail(id);
         });
-        vm.dtGrounds.on('click', '.statusCG', function(e) {
+        vm.$refs.dtGrounds.vmDataTable.on('click', '.statusCG', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-campground');
             var status = $(this).attr('data-status');
@@ -233,7 +216,7 @@ module.exports = {
             }
         });
          bus.$on('refreshCGTable', function(){
-            vm.dtGrounds.ajax.reload();
+            vm.$refs.dtGrounds.vmDataTable.ajax.reload();
         });
     }
 };
