@@ -351,7 +351,7 @@ class CampgroundBookingRange(BookingRange):
 class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT, related_name='campsites')
     name = models.CharField(max_length=255)
-    campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT, null=True,blank=True)
+    campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT, null=True,blank=True, related_name='campsites')
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     features = models.ManyToManyField('Feature')
     cs_tents = models.SmallIntegerField(default=0)
