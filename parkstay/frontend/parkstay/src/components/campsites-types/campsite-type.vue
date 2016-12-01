@@ -102,7 +102,7 @@
                             </div>
                         </form>
                        <loader :isLoading="isLoading">Saving Campsite Type Data...</loader>
-                        <priceHistory v-if="!createCampsiteType" level="campsite_class" ref="price_dt" :object_id="myID" :dt_options="ph_options" :showAddBtn="true"></priceHistory>
+                        <priceHistory v-if="!createCampsiteType" level="campsite_class" :showAddBtn="canAddRate" ref="price_dt" :object_id="myID" :dt_options="ph_options"></priceHistory>
                     </div>
                 </div>
               </div>
@@ -136,6 +136,9 @@ export default {
     computed: {
         myID: function() {
             return parseInt(this.$route.params.campsite_type_id);
+        },
+        canAddRate: function (){
+            return this.campsite_type.can_add_rate ? this.campsite_type.can_add_rate : false;
         },
     },
     data: function() {
