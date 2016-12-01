@@ -102,6 +102,7 @@
                             </div>
                         </form>
                        <loader :isLoading="isLoading">Saving Campsite Type Data...</loader>
+                        <priceHistory v-if="!createCampsiteType" level="campsite_class" ref="price_dt" :object_id="myID" :dt_options="ph_options" :showAddBtn="true"></priceHistory>
                     </div>
                 </div>
               </div>
@@ -129,10 +130,13 @@ export default {
     name: 'campsite-type',
     components: {
         "select-panel": select_panel,
-        loader 
+        loader,
+        priceHistory
     },
     computed: {
-
+        myID: function() {
+            return parseInt(this.$route.params.campsite_type_id);
+        },
     },
     data: function() {
         let vm = this;
@@ -142,6 +146,69 @@ export default {
             features: [],
             selected_features: [],
             createCampsiteType: true,
+            ph_options: {
+                responsive: true,
+                processing: true,
+                deferRender: true,
+                order: [
+                    [0,'desc']
+                ],
+                ajax: {
+                    url: api_endpoints.campsites_price_history(this.$route.params.campsite_id),
+                    dataSrc: ''
+                },
+                columns: [{
+                    data: 'date_start',
+                    mRender: function(data, type, full) {
+                        return Moment(data).format('MMMM Do, YYYY');
+                    }
+
+                }, {
+                    data: 'date_end',
+                    mRender: function(data, type, full) {
+                        if (data) {
+                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
+                        }
+                        else {
+                            return '';
+                        }
+                    }
+
+                }, {
+                    data: 'adult'
+                }, {
+                    data: 'concession'
+                }, {
+                    data: 'child'
+                }, {
+                    data: 'details',
+                    mRender: function(data, type, full) {
+                        if (data){
+                            return data;
+                        }
+                        return '';
+                    }
+                }, {
+                    data: 'editable',
+                    mRender: function(data, type, full) {
+                        if (data && full.update_level == 2) {
+                            var id = full.id;
+                            var column = "<td ><a href='#' class='editPrice' data-rate=\"__ID__\" >Edit</a><br/>"
+                            if (full.deletable){
+                                column += "<a href='#' class='deletePrice' data-rate=\"__ID__\">Delete</a></td>";
+                            }
+                            column = column.replace(/__ID__/g, full.id)
+                            return column
+                        }
+                        else {
+                            return "";
+                        }
+                    }
+                }],
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+            },
         }
     },
     watch: {
