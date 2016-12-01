@@ -11,7 +11,7 @@
           event: "delete",
           bsColor:"btn-danger",
           handler:function(e) {
-             
+
              vm.showAlert();
           },
           autoclose:true
@@ -101,7 +101,7 @@ var confirmModal = module.exports = {
                    })
                });
             }
-            $(buttons).append("<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-default\">Cancel</button>");
+            $(buttons).append("<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-default\" style='margin-bottom:10px;'>Cancel</button>");
         }
    },
    mounted:function () {
@@ -119,7 +119,7 @@ var confirmModal = module.exports = {
 
 </script>
 
-<style lang="css">
+<style scoped>
     .modal-body,.modal-footer {
         background-color: #fff;
         color: #333;
