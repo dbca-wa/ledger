@@ -102,8 +102,10 @@
                             </div>
                         </form>
                        <loader :isLoading="isLoading">Saving Campsite Type Data...</loader>
-                        <priceHistory v-if="!createCampsiteType" level="campsite_class" :showAddBtn="canAddRate" ref="price_dt" :object_id="myID" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL"></priceHistory>
                     </div>
+                </div>
+                <div class="col-lg-12">
+                    <priceHistory v-if="!createCampsiteType" level="campsite_class" :showAddBtn="canAddRate" ref="price_dt" :object_id="myID" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL"></priceHistory>
                 </div>
               </div>
           </div>
@@ -275,7 +277,7 @@ export default {
                         });
                     }
                 }
-            });  
+            });
         },
         sendData: function(url,method) {
             let vm = this;
