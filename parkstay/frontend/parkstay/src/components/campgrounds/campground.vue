@@ -204,7 +204,15 @@ export default {
                     targets: 2
                 }],
                 columns: [{
-                    data: 'type'
+                    data:'name'
+                },{
+                    data: 'type',
+                    mRender:function (data,type,full) {
+                        var max_length = 25;
+                        var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
+                        var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                        return column.replace('__NAME__', data);
+                    }
                 }, {
                     data: 'active',
                     mRender: function(data, type, full) {
@@ -235,7 +243,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            cs_headers: [ 'Type', 'Status', 'Price', 'Action'],
+            cs_headers: [ 'Name','Type', 'Status', 'Price', 'Action'],
             deletePrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
                 message: "Are you sure you want to Delete ?",
@@ -342,6 +350,7 @@ export default {
                 vm.showOpenCloseCS();
             }
         });
+        helpers.namePopover($,vm.$refs.cg_campsites_dt.vmDataTable);
         vm.fetchCampground();
     }
 }

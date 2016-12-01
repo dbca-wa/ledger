@@ -30,5 +30,14 @@ module.exports = {
             }
         }
         return value;
+    },
+    namePopover:function ($,vmDataTable) {
+        vmDataTable.on('mouseover','.name_popover',function (e) {
+            $(this).popover('show');
+            $(this).on('mouseout',function () {
+                $(this).popover('hide');
+            })
+
+        });
     }
 };
