@@ -592,6 +592,16 @@ class CampsiteClass(models.Model):
         else:
             super(CampsiteClass, self).delete(using)
 
+    # Property
+    # ===========================
+    def can_add_rate(self):
+        can_add = False
+        campsites = self.campsites.all()
+        for c in campsites:
+            if c.campground.price_level == 1:
+                can_add = True
+                break
+        return can_add
 
 class CampsiteBooking(models.Model):
     BOOKING_TYPE_CHOICES = (

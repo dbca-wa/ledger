@@ -216,8 +216,8 @@ class RegionSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteClass
-        fields = ('url','id','name','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','features','deleted','campsites')
-        read_only_fields = ('campsites',)
+        fields = ('url','id','name','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','features','deleted','can_add_rate','campsites')
+        read_only_fields = ('campsites','can_add_rate',)
 
     def __init__(self, *args, **kwargs):
         try:
