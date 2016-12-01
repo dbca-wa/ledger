@@ -1,4 +1,5 @@
 from parkstay.models import (   CampgroundPriceHistory,
+                                CampsiteClassPriceHistory,
                                 Rate,
                                 CampsiteStayHistory,
                                 District,
@@ -216,7 +217,8 @@ class RegionSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteClass
-        fields = ('url','id','name','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','features','deleted')
+        fields = ('url','id','name','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','features','deleted','can_add_rate','campsites')
+        read_only_fields = ('campsites','can_add_rate',)
 
     def __init__(self, *args, **kwargs):
         try:
@@ -288,5 +290,11 @@ class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = CampgroundPriceHistory
         fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
-        read_only_fields = ('id','editable','deletable','id','adult','concession','child')
+        read_only_fields = ('id','editable','deletable','adult','concession','child')
 
+class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
+    date_end = serializers.DateField(required=False)
+    class Meta:
+        model = CampsiteClassPriceHistory
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
+        read_only_fields = ('id','editable','deletable','adult','concession','child')
