@@ -145,7 +145,7 @@ export default {
                 return api_endpoints.campsite_rate;
             }
             else{
-                return api_endpoints.opencloseCS(this.object_id);
+                return api_endpoints.addCampsiteClassPrice(this.object_id);
             }
         },
         getEditURL: function() {
@@ -156,14 +156,7 @@ export default {
                 return api_endpoints.campsiterate_detail(this.price.id);
             }
             else{
-                return api_endpoints.opencloseCS(this.object_id);
-            }
-        },
-        historyURL: function(id) {
-            if (this.level == 'campground'){
-                return api_endpoints.campground_status_history_detail(id);
-            }else{
-                return api_endpoints.campsite_status_history_detail(id);
+                return api_endpoints.editCampsiteClassPrice(this.object_id);
             }
         },
         addHistory: function() {

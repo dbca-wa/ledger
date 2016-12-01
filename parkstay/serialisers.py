@@ -1,4 +1,5 @@
 from parkstay.models import (   CampgroundPriceHistory,
+                                CampsiteClassPriceHistory,
                                 Rate,
                                 CampsiteStayHistory,
                                 District,
@@ -289,5 +290,11 @@ class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = CampgroundPriceHistory
         fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
-        read_only_fields = ('id','editable','deletable','id','adult','concession','child')
+        read_only_fields = ('id','editable','deletable','adult','concession','child')
 
+class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
+    date_end = serializers.DateField(required=False)
+    class Meta:
+        model = CampsiteClassPriceHistory
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
+        read_only_fields = ('id','editable','deletable','adult','concession','child')

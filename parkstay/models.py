@@ -603,6 +603,45 @@ class CampsiteClass(models.Model):
                 break
         return can_add
 
+    # Methods
+    # ===========================
+    def createCampsitePriceHistory(self,data):
+        '''Create Multiple campsite rates
+        '''
+        try:
+            with transaction.atomic():
+                for c in self.campsites.all():
+                    cr = CampsiteRate(**data)
+                    cr.campsite = c
+                    cr.save()
+        except Exception as e:
+            raise
+
+    def updatePriceHistory(self,original,_new):
+        '''Update Multiple campsite rates
+        '''
+        try:
+            rates = CampsiteRate.objects.filter(**original)
+            campsites = self.campsites.all()
+            with transaction.atomic():
+                for r in rates:
+                    if r.campsite in campsites and r.update_level == 1:
+                        r.update(_new)
+        except Exception as e:
+            raise
+
+    def deletePriceHistory(self,data):
+        '''Delete Multiple campsite rates
+        '''
+        try:
+            rates = CampsiteRate.objects.filter(**data)
+            campsites = self.campsites.all()
+            with transaction.atomic():
+                for r in rates:
+                    if r.campsite in campsites and r.update_level == 1:
+                        r.delete()
+        except Exception as e:
+            raise
 class CampsiteBooking(models.Model):
     BOOKING_TYPE_CHOICES = (
         (0, 'Reception booking'),
@@ -743,6 +782,37 @@ class CampgroundPriceHistory(models.Model):
         elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
             return True
         return False
+
+class CampsiteClassPriceHistory(models.Model):
+    id = models.IntegerField(primary_key=True)
+    date_start = models.DateField()
+    date_end = models.DateField()
+    rate_id = models.IntegerField()
+    adult = models.DecimalField(max_digits=8, decimal_places=2)
+    concession = models.DecimalField(max_digits=8, decimal_places=2)
+    child = models.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        managed = False
+        db_table = 'parkstay_campsiteclass_pricehistory_v'
+        ordering = ['-date_start',]
+
+    # Properties
+    # ====================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
+            return True
+        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+            return True
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
@@ -962,11 +1032,15 @@ class CampsiteRateListener(object):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         try:
             cursor = connection.cursor()
-            if instance.campsite.campground.price_level == 0:
+            if instance.update_level == 0:
                 sql =   'CREATE OR REPLACE VIEW parkstay_campground_pricehistory_v AS \
                 SELECT distinct camps.campground_id as id,cr.date_start,cr.date_end, r.id as rate_id, r.adult, r.concession, r.child from parkstay_campsiterate cr INNER JOIN parkstay_rate r on r.id= cr.rate_id  INNER JOIN \
                 (SELECT cg.id AS campground_id,cs.name AS name,cs.id AS campsite_id from  parkstay_campsite cs, parkstay_campground cg WHERE cs.campground_id = cg.id and cg.id = cs.campground_id and cg.price_level = 0) camps ON cr.campsite_id = camps.campsite_id'
-                cursor.execute(sql)
+            elif instance.update_level == 1:
+                sql = 'CREATE OR REPLACE VIEW parkstay_campsiteclass_pricehistory_v AS \
+                SELECT distinct classes.campsite_class_id AS id, classes.date_start,classes.date_end, r.id as rate_id, r.adult, r.concession, r.child  from parkstay_rate r  INNER JOIN \
+                (SELECT distinct cc.id AS campsite_class_id, cr.rate_id as campsite_rate_id, cr.date_start as date_start, cr.date_end as date_end from  parkstay_campsite cs, parkstay_campsiteclass cc, parkstay_campsiterate cr WHERE cs.campsite_class_id = cc.id and cr.campsite_id = cs.id and cr.update_level = 1)classes ON r.id = classes.campsite_rate_id '
+            cursor.execute(sql)
         except Exception as e:
             raise ValidationError(e)
 

@@ -102,7 +102,7 @@
                             </div>
                         </form>
                        <loader :isLoading="isLoading">Saving Campsite Type Data...</loader>
-                        <priceHistory v-if="!createCampsiteType" level="campsite_class" :showAddBtn="canAddRate" ref="price_dt" :object_id="myID" :dt_options="ph_options"></priceHistory>
+                        <priceHistory v-if="!createCampsiteType" level="campsite_class" :showAddBtn="canAddRate" ref="price_dt" :object_id="myID" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL"></priceHistory>
                     </div>
                 </div>
               </div>
@@ -140,6 +140,9 @@ export default {
         canAddRate: function (){
             return this.campsite_type.can_add_rate ? this.campsite_type.can_add_rate : false;
         },
+        priceHistoryDeleteURL: function (){
+            return api_endpoints.deleteCampsiteClassPrice(this.myID);
+        }
     },
     data: function() {
         let vm = this;
@@ -157,7 +160,7 @@ export default {
                     [0,'desc']
                 ],
                 ajax: {
-                    url: api_endpoints.campsites_price_history(this.$route.params.campsite_id),
+                    url: api_endpoints.campsiteclass_price_history(this.$route.params.campsite_type_id),
                     dataSrc: ''
                 },
                 columns: [{
@@ -194,13 +197,15 @@ export default {
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
-                        if (data && full.update_level == 2) {
+                        if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editPrice' data-rate=\"__ID__\" >Edit</a><br/>"
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
                             if (full.deletable){
-                                column += "<a href='#' class='deletePrice' data-rate=\"__ID__\">Delete</a></td>";
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
                             }
-                            column = column.replace(/__ID__/g, full.id)
+                            column = column.replace(/__START__/g, full.date_start)
+                            column = column.replace(/__END__/g, full.date_end)
+                            column = column.replace(/__RATE__/g, full.rate_id)
                             return column
                         }
                         else {
