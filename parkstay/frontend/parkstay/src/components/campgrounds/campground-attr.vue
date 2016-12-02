@@ -64,6 +64,7 @@
                                             </div>
                                         </div>
 									</div>
+                                    <imageEditor></imageEditor>
 								</div>
 							</div>
 						</div>
@@ -185,6 +186,7 @@ import {
     bus
 }
 from '../utils/eventBus.js';
+import imageEditor from '../utils/images/imageEditor.vue'
 import Editor from 'quill';
 import Render from 'quill-render';
 import loader from '../utils/loader.vue'
@@ -193,7 +195,8 @@ export default {
     name: 'cg_attr',
     components: {
         alert,
-        loader
+        loader,
+        imageEditor
     },
     data: function() {
         let vm = this;
