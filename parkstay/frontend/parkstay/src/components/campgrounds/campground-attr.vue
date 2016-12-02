@@ -220,7 +220,7 @@ export default {
                     name: 'Campground level'
                 }, {
                     'val': 1,
-                    name: 'Campsite class level'
+                    name: 'Campsite Type level'
                 }, {
                     'val': 2,
                     name: 'Campsite level'
