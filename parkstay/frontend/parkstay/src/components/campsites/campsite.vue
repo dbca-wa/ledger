@@ -201,6 +201,13 @@ export default {
             campground: {},
             campsite: {
                 number: 1,
+                campsite_class: '',
+                tent: '',
+                parking_spaces:'',
+                number_vehicles:'',
+                min_people: '',
+                max_people:'',
+                dimensions:'',
             },
             campsite_classes: [],
             createCampiste: true,
@@ -298,16 +305,19 @@ export default {
                         vm.campsite.max_people = sel_class.max_people;
                         vm.campsite.min_people= sel_class.min_people;
                         vm.campsite.parking_spaces= sel_class.parking_spaces;
+                        console.log(vm.campsite);
                     }
 
                 });
             }else{
-                vm.campsite.tents = temp_campsite.tents;
-                vm.campsite.number_vehicles = temp_campsite.number_vehicles;
-                vm.campsite.dimensions = temp_campsite.dimensions;
-                vm.campsite.max_people = temp_campsite.max_people;
-                vm.campsite.min_people= temp_campsite.min_people;
-                vm.campsite.parking_spaces= temp_campsite.parking_spaces;
+                if (!createCampsite){
+                    vm.campsite.tents = temp_campsite.tents;
+                    vm.campsite.number_vehicles = temp_campsite.number_vehicles;
+                    vm.campsite.dimensions = temp_campsite.dimensions;
+                    vm.campsite.max_people = temp_campsite.max_people;
+                    vm.campsite.min_people= temp_campsite.min_people;
+                    vm.campsite.parking_spaces= temp_campsite.parking_spaces;
+                }
             }
 
         },
