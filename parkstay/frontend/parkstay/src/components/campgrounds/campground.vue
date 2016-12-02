@@ -19,7 +19,7 @@
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID" :datatableURL="priceHistoryURL"></priceHistory>
+                <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID"></priceHistory>
                 <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
@@ -195,18 +195,24 @@ export default {
                     targets: 0
                 }, {
                     responsivePriority: 2,
-                    targets: 4
+                    targets: 3
                 }, {
                     responsivePriority: 3,
-                    targets: 2
+                    targets: 1
                 }, {
                     responsivePriority: 4,
-                    targets: 3
+                    targets: 2
                 }],
                 columns: [{
-                    data: 'name'
-                }, {
-                    data: 'type'
+                    data:'name'
+                },{
+                    data: 'type',
+                    mRender:function (data,type,full) {
+                        var max_length = 25;
+                        var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
+                        var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                        return column.replace('__NAME__', data);
+                    }
                 }, {
                     data: 'active',
                     mRender: function(data, type, full) {
@@ -218,15 +224,15 @@ export default {
                     "mRender": function(data, type, full) {
                         var id = full.id;
                         if (full.active) {
-                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/>";
+                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
-                                column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >(Temporarily) Close Campsite </a></td>";
+                                column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >Close</a></td>";
                             }
                         }
                         else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit Campsite Details</a><br/>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
-                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" >Open Campsite </a></td>";
+                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" >Open</a></td>";
                             }
                         }
 
@@ -237,7 +243,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            cs_headers: ['Campsite Id', 'Type', 'Status', 'Price', 'Action'],
+            cs_headers: [ 'Name','Type', 'Status', 'Price', 'Action'],
             deletePrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
                 message: "Are you sure you want to Delete ?",
@@ -344,6 +350,7 @@ export default {
                 vm.showOpenCloseCS();
             }
         });
+        helpers.namePopover($,vm.$refs.cg_campsites_dt.vmDataTable);
         vm.fetchCampground();
     }
 }

@@ -21,8 +21,8 @@
                     <!--Footer-->
                     <div class="modal-footer">
                         <slot name="footer">
-                            <button type="button" :class="cancelClass" @click="cancel">{{cancelText}}</button>
                             <button id="okBtn" type="button" :class="okClass" @click="ok">{{okText}}</button>
+                            <button type="button" :class="cancelClass" @click="cancel">{{cancelText}}</button>
                         </slot>
                     </div>
                 </div>
@@ -74,11 +74,11 @@
             },
             okClass: {
                 type: String,
-                default: 'btn btn-primary'
+                default: 'btn btn-default'
             },
             cancelClass: {
                 type: String,
-                default: 'btn btn-danger'
+                default: 'btn btn-default'
             },
             closeWhenOK: {
                 type: Boolean,
@@ -116,7 +116,7 @@
                     document.body.className += ' modal-open';
                 }
                 else {
-                    
+
                     window.setTimeout(() => {
                         document.body.className = document.body.className.replace(/\s?modal-open/, '');
                     }, this.duration || 0);

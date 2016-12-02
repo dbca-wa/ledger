@@ -70,7 +70,21 @@ module.exports = {
 
     // campsite types
     campsite_classes:"/api/campsite_classes.json",
+    campsite_classes_active:"/api/campsite_classes.json?active_only=true",
     campsite_class:function (id) {
         return "/api/campsite_classes/"+id+".json"
-    }
+    },
+    addCampsiteClassPrice: function(id){
+        return "/api/campsite_classes/"+id+"/addPrice.json"
+    },
+    editCampsiteClassPrice(id) {
+        return "/api/campsite_classes/"+id+"/updatePrice.json"
+    },
+    deleteCampsiteClassPrice(id) {
+        return "/api/campsite_classes/"+id+"/deletePrice.json"
+    },
+    campsiteclass_price_history: function(id){
+        return "/api/campsite_classes/"+ id +"/price_history.json";
+    },
+
 };

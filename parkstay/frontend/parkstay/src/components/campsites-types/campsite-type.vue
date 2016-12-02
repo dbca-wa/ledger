@@ -104,6 +104,9 @@
                        <loader :isLoading="isLoading">Saving Campsite Type Data...</loader>
                     </div>
                 </div>
+                <div class="col-lg-12">
+                    <priceHistory v-if="!createCampsiteType" level="campsite_class" :showAddBtn="canAddRate" ref="price_dt" :object_id="myID" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL"></priceHistory>
+                </div>
               </div>
           </div>
        </div>
@@ -129,10 +132,19 @@ export default {
     name: 'campsite-type',
     components: {
         "select-panel": select_panel,
-        loader 
+        loader,
+        priceHistory
     },
     computed: {
-
+        myID: function() {
+            return parseInt(this.$route.params.campsite_type_id);
+        },
+        canAddRate: function (){
+            return this.campsite_type.can_add_rate ? this.campsite_type.can_add_rate : false;
+        },
+        priceHistoryDeleteURL: function (){
+            return api_endpoints.deleteCampsiteClassPrice(this.myID);
+        }
     },
     data: function() {
         let vm = this;
@@ -142,6 +154,71 @@ export default {
             features: [],
             selected_features: [],
             createCampsiteType: true,
+            ph_options: {
+                responsive: true,
+                processing: true,
+                deferRender: true,
+                order: [
+                    [0,'desc']
+                ],
+                ajax: {
+                    url: api_endpoints.campsiteclass_price_history(this.$route.params.campsite_type_id),
+                    dataSrc: ''
+                },
+                columns: [{
+                    data: 'date_start',
+                    mRender: function(data, type, full) {
+                        return Moment(data).format('MMMM Do, YYYY');
+                    }
+
+                }, {
+                    data: 'date_end',
+                    mRender: function(data, type, full) {
+                        if (data) {
+                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
+                        }
+                        else {
+                            return '';
+                        }
+                    }
+
+                }, {
+                    data: 'adult'
+                }, {
+                    data: 'concession'
+                }, {
+                    data: 'child'
+                }, {
+                    data: 'details',
+                    mRender: function(data, type, full) {
+                        if (data){
+                            return data;
+                        }
+                        return '';
+                    }
+                }, {
+                    data: 'editable',
+                    mRender: function(data, type, full) {
+                        if (data) {
+                            var id = full.id;
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
+                            if (full.deletable){
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
+                            }
+                            column = column.replace(/__START__/g, full.date_start)
+                            column = column.replace(/__END__/g, full.date_end)
+                            column = column.replace(/__RATE__/g, full.rate_id)
+                            return column
+                        }
+                        else {
+                            return "";
+                        }
+                    }
+                }],
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+            },
         }
     },
     watch: {
@@ -200,7 +277,7 @@ export default {
                         });
                     }
                 }
-            });  
+            });
         },
         sendData: function(url,method) {
             let vm = this;
