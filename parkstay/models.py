@@ -924,6 +924,8 @@ class CampgroundListener(object):
                             cr.save()
                         except CampsiteClassPriceHistory.DoesNotExist:
                             pass 
+                        except Exception:
+                            pass 
 
 class CampsiteBookingRangeListener(object):
     """
