@@ -103,6 +103,7 @@ class Campground(models.Model):
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     bookable_per_site = models.BooleanField(default=False)
+    bookable_online = models.BooleanField(default=False)
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
@@ -909,10 +910,20 @@ class CampgroundListener(object):
             if original_instance.price_level != instance.price_level:
                 # Get all campsites
                 today = datetime.now().date()
-                campsites = instance.campsites.all().values_list('id', flat=True)
-                rates = CampsiteRate.objects.filter(campsite__in=campsites,update_level=original_instance.price_level)
+                campsites = instance.campsites.all()
+                campsite_list = campsites.values_list('id', flat=True)
+                rates = CampsiteRate.objects.filter(campsite__in=campsite_list,update_level=original_instance.price_level)
                 current_rates = rates.filter(Q(date_end__isnull=True),Q(date_start__lte =  today)).update(date_end=today)
                 future_rates = rates.filter(date_start__gt = today).delete()
+                if instance.price_level == 1:
+                    #Check if there are any existant campsite class rates
+                    for c in campsites:
+                        try:
+                            ch = CampsiteClassPriceHistory.objects.get(Q(date_end__isnull=True),id=c.campsite_class_id,date_start__lte = today)
+                            cr = CampsiteRate(campsite=c,rate_id=ch.rate_id,date_start=today + timedelta(days=1))
+                            cr.save()
+                        except CampsiteClassPriceHistory.DoesNotExist:
+                            pass 
 
 class CampsiteBookingRangeListener(object):
     """
