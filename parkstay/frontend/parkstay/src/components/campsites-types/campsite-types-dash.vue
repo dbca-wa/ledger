@@ -84,7 +84,7 @@ export default {
                 }],
                 id: 'deleteCampsiteType'
             },
-            dt_headers:["Campsite ID", "Campsite Type Name","Status","Action"],
+            dt_headers:["Name","Status","Action"],
             dt_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -94,15 +94,15 @@ export default {
                 columnDefs: [
                     {
                     responsivePriority: 1,
-                    targets: 1
+                    targets: 0
                     },
                     {
                     responsivePriority: 2,
-                    targets: 2
+                    targets: 1
                     },
                     {
                         responsivePriority: 3,
-                        targets: 3
+                        targets: 2
                     }
                 ],
                 ajax: {
@@ -110,9 +110,6 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
-                    {
-                        "data": "id",
-                    },
                     {
                         "data": "name",
                         mRender:function (data,type,full) {
@@ -169,16 +166,6 @@ export default {
         goBack: function() {
             helpers.goBack(this);
         },
-        namePopover:function () {
-            let vm = this;
-            vm.$refs.campsite_type_table.vmDataTable.on('mouseover','.name_popover',function (e) {
-                $(this).popover('show');
-                $(this).on('mouseout',function () {
-                    $(this).popover('hide');
-                })
-
-            });
-        },
         attachTableEventListeners: function() {
             let vm = this;
             vm.$refs.campsite_type_table.vmDataTable.on('click', '.detailRoute', function(e) {
@@ -201,7 +188,7 @@ export default {
     },
     mounted: function() {
         let vm = this;
-        vm.namePopover();
+        helpers.namePopover($,vm.$refs.campsite_type_table.vmDataTable);
         vm.attachTableEventListeners();
     }
 }

@@ -14,6 +14,20 @@ from parkstay.exceptions import BookingRangeWithinException
 
 # Create your models here.
 
+PARKING_SPACE_CHOICES = (
+    (0, 'Parking within site.'),
+    (1, 'Parking for exclusive use of site occupiers next to site, but separated from tent space.'),
+    (2, 'Parking for exclusive use of occupiers, short walk from tent space.'),
+    (3, 'Shared parking (not allocated), short walk from tent space.')
+)
+
+NUMBER_VEHICLE_CHOICES = (
+    (0, 'One vehicle'),
+    (1, 'Two vehicles'),
+    (2, 'One vehicle + small trailer'),
+    (3, 'One vehicle + small trailer/large vehicle')
+)
+
 class CustomerContact(models.Model):
     name = models.CharField(max_length=255, unique=True)
     phone_number = models.CharField(max_length=50, null=True, blank=True)
@@ -89,6 +103,7 @@ class Campground(models.Model):
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     bookable_per_site = models.BooleanField(default=False)
+    bookable_online = models.BooleanField(default=False)
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
@@ -337,9 +352,15 @@ class CampgroundBookingRange(BookingRange):
 class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT, related_name='campsites')
     name = models.CharField(max_length=255)
-    campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT)
+    campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT, null=True,blank=True, related_name='campsites')
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     features = models.ManyToManyField('Feature')
+    cs_tents = models.SmallIntegerField(default=0)
+    cs_parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default=0)
+    cs_number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default=0)
+    cs_min_people = models.SmallIntegerField(default=1)
+    cs_max_people = models.SmallIntegerField(default=12)
+    cs_dimensions = models.CharField(max_length=12, default='6x4')
 
     def __str__(self):
         return '{} - {}'.format(self.campground, self.name)
@@ -349,14 +370,37 @@ class Campsite(models.Model):
 
     # Properties
     # ==============================
+    property
+    def tents(self):
+        return self.campsite_class.tents if self.campsite_class else self.cs_tents
+
+    property
+    def parking_spaces(self):
+        return self.campsite_class.parking_spaces if self.campsite_class else self.cs_parking_spaces
+
+    property
+    def number_vehicles(self):
+        return self.campsite_class.number_vehicles if self.campsite_class else self.cs_number_vehicles
+
+    property
+    def min_people(self):
+        return self.campsite_class.min_people if self.campsite_class else self.cs_min_people
+
+    property
+    def max_people(self):
+        return self.campsite_class.max_people if self.campsite_class else self.cs_max_people
+
+    property
+    def dimensions(self):
+        return self.campsite_class.dimensions if self.campsite_class else self.cs_dimensions
+
     @property
     def type(self):
         return self.campsite_class.name
 
     @property
     def price(self):
-        current_price = 0
-        return current_price
+        return 'Set at {}'.format(self.campground.get_price_level_display()) 
 
     @property
     def can_add_rate(self):
@@ -527,19 +571,6 @@ class District(models.Model):
 
 
 class CampsiteClass(models.Model):
-    PARKING_SPACE_CHOICES = (
-        (0, 'Parking within site.'),
-        (1, 'Parking for exclusive use of site occupiers next to site, but separated from tent space.'),
-        (2, 'Parking for exclusive use of occupiers, short walk from tent space.'),
-        (3, 'Shared parking (not allocated), short walk from tent space.')
-    )
-
-    NUMBER_VEHICLE_CHOICES = (
-        (0, 'One vehicle'),
-        (1, 'Two vehicles'),
-        (2, 'One vehicle + small trailer'),
-        (3, 'One vehicle + small trailer/large vehicle')
-    )
 
     name = models.CharField(max_length=255, unique=True)
     camp_unit_suitability = TaggableManager()
@@ -562,7 +593,56 @@ class CampsiteClass(models.Model):
         else:
             super(CampsiteClass, self).delete(using)
 
+    # Property
+    # ===========================
+    def can_add_rate(self):
+        can_add = False
+        campsites = self.campsites.all()
+        for c in campsites:
+            if c.campground.price_level == 1:
+                can_add = True
+                break
+        return can_add
 
+    # Methods
+    # ===========================
+    def createCampsitePriceHistory(self,data):
+        '''Create Multiple campsite rates
+        '''
+        try:
+            with transaction.atomic():
+                for c in self.campsites.all():
+                    cr = CampsiteRate(**data)
+                    cr.campsite = c
+                    cr.save()
+        except Exception as e:
+            raise
+
+    def updatePriceHistory(self,original,_new):
+        '''Update Multiple campsite rates
+        '''
+        try:
+            rates = CampsiteRate.objects.filter(**original)
+            campsites = self.campsites.all()
+            with transaction.atomic():
+                for r in rates:
+                    if r.campsite in campsites and r.update_level == 1:
+                        r.update(_new)
+        except Exception as e:
+            raise
+
+    def deletePriceHistory(self,data):
+        '''Delete Multiple campsite rates
+        '''
+        try:
+            rates = CampsiteRate.objects.filter(**data)
+            campsites = self.campsites.all()
+            with transaction.atomic():
+                for r in rates:
+                    if r.campsite in campsites and r.update_level == 1:
+                        r.delete()
+        except Exception as e:
+            raise
 class CampsiteBooking(models.Model):
     BOOKING_TYPE_CHOICES = (
         (0, 'Reception booking'),
@@ -703,6 +783,37 @@ class CampgroundPriceHistory(models.Model):
         elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
             return True
         return False
+
+class CampsiteClassPriceHistory(models.Model):
+    id = models.IntegerField(primary_key=True)
+    date_start = models.DateField()
+    date_end = models.DateField()
+    rate_id = models.IntegerField()
+    adult = models.DecimalField(max_digits=8, decimal_places=2)
+    concession = models.DecimalField(max_digits=8, decimal_places=2)
+    child = models.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        managed = False
+        db_table = 'parkstay_campsiteclass_pricehistory_v'
+        ordering = ['-date_start',]
+
+    # Properties
+    # ====================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
+            return True
+        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+            return True
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
@@ -799,10 +910,22 @@ class CampgroundListener(object):
             if original_instance.price_level != instance.price_level:
                 # Get all campsites
                 today = datetime.now().date()
-                campsites = instance.campsites.all().values_list('id', flat=True)
-                rates = CampsiteRate.objects.filter(campsite__in=campsites,update_level=original_instance.price_level)
+                campsites = instance.campsites.all()
+                campsite_list = campsites.values_list('id', flat=True)
+                rates = CampsiteRate.objects.filter(campsite__in=campsite_list,update_level=original_instance.price_level)
                 current_rates = rates.filter(Q(date_end__isnull=True),Q(date_start__lte =  today)).update(date_end=today)
                 future_rates = rates.filter(date_start__gt = today).delete()
+                if instance.price_level == 1:
+                    #Check if there are any existant campsite class rates
+                    for c in campsites:
+                        try:
+                            ch = CampsiteClassPriceHistory.objects.get(Q(date_end__isnull=True),id=c.campsite_class_id,date_start__lte = today)
+                            cr = CampsiteRate(campsite=c,rate_id=ch.rate_id,date_start=today + timedelta(days=1))
+                            cr.save()
+                        except CampsiteClassPriceHistory.DoesNotExist:
+                            pass 
+                        except Exception:
+                            pass 
 
 class CampsiteBookingRangeListener(object):
     """
@@ -922,11 +1045,15 @@ class CampsiteRateListener(object):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         try:
             cursor = connection.cursor()
-            if instance.campsite.campground.price_level == 0:
+            if instance.update_level == 0:
                 sql =   'CREATE OR REPLACE VIEW parkstay_campground_pricehistory_v AS \
                 SELECT distinct camps.campground_id as id,cr.date_start,cr.date_end, r.id as rate_id, r.adult, r.concession, r.child from parkstay_campsiterate cr INNER JOIN parkstay_rate r on r.id= cr.rate_id  INNER JOIN \
                 (SELECT cg.id AS campground_id,cs.name AS name,cs.id AS campsite_id from  parkstay_campsite cs, parkstay_campground cg WHERE cs.campground_id = cg.id and cg.id = cs.campground_id and cg.price_level = 0) camps ON cr.campsite_id = camps.campsite_id'
-                cursor.execute(sql)
+            elif instance.update_level == 1:
+                sql = 'CREATE OR REPLACE VIEW parkstay_campsiteclass_pricehistory_v AS \
+                SELECT distinct classes.campsite_class_id AS id, classes.date_start,classes.date_end, r.id as rate_id, r.adult, r.concession, r.child  from parkstay_rate r  INNER JOIN \
+                (SELECT distinct cc.id AS campsite_class_id, cr.rate_id as campsite_rate_id, cr.date_start as date_start, cr.date_end as date_end from  parkstay_campsite cs, parkstay_campsiteclass cc, parkstay_campsiterate cr WHERE cs.campsite_class_id = cc.id and cr.campsite_id = cs.id and cr.update_level = 1)classes ON r.id = classes.campsite_rate_id '
+            cursor.execute(sql)
         except Exception as e:
             raise ValidationError(e)
 
