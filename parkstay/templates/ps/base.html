@@ -73,12 +73,6 @@
                                             <span class="caret"></span>
                                         </a>
                                         <ul class="dropdown-menu">
-                                            {% if request.user|is_customer %}
-                                                <li><a href="">Manage Account</a></li>
-                                                <li><a href="">Manage Profiles</a></li>
-                                                <li><a href="">Manage ID</a></li>
-                                                <li role="separator" class="divider"></li>
-                                            {% endif %}
                                             {% if request.user.is_staff %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 <li role="separator" class="divider"></li>

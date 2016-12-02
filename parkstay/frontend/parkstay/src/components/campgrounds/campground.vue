@@ -208,10 +208,13 @@ export default {
                 },{
                     data: 'type',
                     mRender:function (data,type,full) {
-                        var max_length = 25;
-                        var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
-                        var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
-                        return column.replace('__NAME__', data);
+                        if (data){
+                            var max_length = 25;
+                            var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
+                            var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                            return column.replace('__NAME__', data);
+                        }
+                        return '';
                     }
                 }, {
                     data: 'active',
