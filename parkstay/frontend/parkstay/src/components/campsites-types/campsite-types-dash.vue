@@ -130,11 +130,12 @@ export default {
                     {
                         "mRender": function(data, type, full) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class=\"detailRoute\" data-campsite-type='__ID__'> Edit</a> </br> ";
                             if (!full.deleted){
+                                var column = "<td ><a href='#' class=\"detailRoute\" data-campsite-type='__ID__'> Edit</a> </br> ";
                                 column += "<a href='#' class=\"deleteCT\" data-campsite-type='__ID__'> Delete</a> </td>";
+                                return column.replace(/__ID__/g, full.id);
                             }
-                            return column.replace(/__ID__/g, full.id);
+                            return '';
                         }
                     }
                 ]
@@ -145,9 +146,9 @@ export default {
         selected_status: function() {
             let vm = this;
             if (vm.selected_status != 'All') {
-                vm.$refs.campsite_type_table.vmDataTable.columns(2).search(vm.selected_status).draw();
+                vm.$refs.campsite_type_table.vmDataTable.columns(1).search(vm.selected_status).draw();
             } else {
-                vm.$refs.campsite_type_table.vmDataTable.columns(2).search('').draw();
+                vm.$refs.campsite_type_table.vmDataTable.columns(1).search('').draw();
             }
         }
     },
