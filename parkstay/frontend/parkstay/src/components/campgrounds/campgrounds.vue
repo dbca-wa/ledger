@@ -146,9 +146,9 @@ module.exports = {
         selected_status: function() {
             let vm = this;
             if (vm.selected_status != 'All') {
-                vm.$refs.dtGrounds.vmDataTable.columns(2).search(vm.selected_status).draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(1).search(vm.selected_status).draw();
             } else {
-                vm.$refs.dtGrounds.vmDataTable.columns(2).search('').draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(1).search('').draw();
             }
         }
     },
@@ -189,6 +189,12 @@ module.exports = {
             this.$router.push({
                 name: 'cg_add',
             });
+        },
+        fetchRegions: function() {
+            let vm = this;
+            $.get(api_endpoints.regions,function(data){
+                vm.regions = data;
+            });
         }
     },
     mounted: function() {
@@ -218,6 +224,7 @@ module.exports = {
          bus.$on('refreshCGTable', function(){
             vm.$refs.dtGrounds.vmDataTable.ajax.reload();
         });
+        vm.fetchRegions();
     }
 };
 </script>
