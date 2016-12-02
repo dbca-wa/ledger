@@ -1,19 +1,21 @@
-<template id="imageEditor">
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="form-group">
+<template >
+    <div class="row" imageEditor>
+        <div class="form-group">
+            <div class="col-sm-12">
+                <span class="btn btn-default btn-file">
+                    <i class="fa fa-fw fa-camera"></i><input multiple ref="imagePicker" type="file" name='img' @change="readURL()" />
+                </span>
+                <button class="btn btn-primary" @click.prevent="clearImages">Clear All</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-12">
                 <div class="col-sm-12">
-                    <span class="btn btn-default btn-file">
-                        <i class="fa fa-fw fa-camera"></i><input multiple ref="imagePicker" type="file" name='img' @change="readURL()" />
-                    </span>
-                    <button class="btn btn-primary">Clear All
-                    </button>
+                    <div class="upload">
+                    </div>
                 </div>
             </div>
-            <div class="form-group">
-                <div class="upload col-sm-12">
-                </div>
-            </div>
+
         </div>
     </div>
 </template>
@@ -22,9 +24,10 @@
 import {
     $,
     slick
-} from '../../../hooks'
+}
+from '../../../hooks'
 module.exports = {
-    name:'',
+    name: '',
     data: function() {
         let vm = this;
         return {
@@ -32,19 +35,22 @@ module.exports = {
             images: []
         }
     },
-    components: {
-    },
+    components: {},
     methods: {
-        slick_init: function()
-        {
+        clearImages:function () {
+            let vm = this;
+            for (var i = vm.slide; i >= 0 ;i-- ){
+                $('.upload').slick('slickRemove', i);
+            }
+        },
+        slick_init: function() {
             $('.upload').slick({
                 dots: true,
-                infinite:true,
+                infinite: true,
                 speed: 300,
                 slidesToShow: 4,
                 slidesToScroll: 4,
-                /*responsive: [
-                    {
+                responsive: [{
                         breakpoint: 1024,
                         settings: {
                             slidesToShow: 3,
@@ -52,25 +58,23 @@ module.exports = {
                             infinite: false,
                             dots: true
                         }
-                    },
-                    {
+                    }, {
                         breakpoint: 600,
                         settings: {
                             slidesToShow: 2,
                             slidesToScroll: 2
                         }
-                    },
-                    {
+                    }, {
                         breakpoint: 480,
                         settings: {
                             slidesToShow: 1,
                             slidesToScroll: 1
                         }
                     }
-                        // You can unslick at a given breakpoint now by adding:
-                        // settings: "unslick"
-                        // instead of a settings object
-                ]*/
+                    // You can unslick at a given breakpoint now by adding:
+                    // settings: "unslick"
+                    // instead of a settings object
+                ]
             });
         },
         readURL: function() {
@@ -78,33 +82,30 @@ module.exports = {
             var input = vm.$refs.imagePicker;
             console.log(input);
             if (input.files && input.files[0]) {
-                /*for (var i = vm.slide; i > 0 ;i-- ){
-                    $('.upload').slick('slickRemove', i);
-                }*/
                 for (var i = 0; i < input.files.length; i++) {
                     var reader = new FileReader();
-                    reader.onload = function (e)
-                    {
+                    reader.onload = function(e) {
                         vm.slide++
-                        $('.upload').slick('slickAdd', "<div><img src='" + e.target.result + "' class=\"img-thumbnail\" alt=\"Responsive image\"></div>");
+                            $('.upload').slick('slickAdd', "<div><img src='" + e.target.result + "' class=\"img-thumbnail\" alt=\"Responsive image\"></div>");
                     };
                     reader.readAsDataURL(input.files[i]);
                 }
             }
-            
+
         }
     },
     mounted: function() {
         let vm = this;
-        vm.slick_init(); 
+        vm.slick_init();
     }
 }
+
 </script>
 
 <style lang="css">
-.upload img{ 
-    height: 125px;
-    width:125px;
+.upload img{
+    height: 250px;
+    width:250px;
 }
 .btn-file {
     position: relative;
@@ -133,10 +134,10 @@ module.exports = {
     display: block;
 }
 .slick-prev {
-    left: -11px;
+    left: -25px;
 }
 .slick-next {
-    right: -11px;
+    right:-25px;
 }
 @charset 'UTF-8';
 /* Slider */
@@ -167,7 +168,7 @@ module.exports = {
     color: transparent;
     border: none;
     outline: none;
-    background: #A66BBE;
+    background: #337ab7;
 }
 .slick-prev:hover,
 .slick-prev:focus,
@@ -176,7 +177,7 @@ module.exports = {
 {
     color: transparent;
     outline: none;
-    background: #A66BBE;
+    background: #337ab7;
 }
 .slick-prev:hover:before,
 .slick-prev:focus:before,
@@ -194,7 +195,8 @@ module.exports = {
 .slick-prev:before,
 .slick-next:before
 {
-    font-family: 'slick';
+    font: normal normal normal 14px/1 FontAwesome;
+    text-rendering: auto;
     font-size: 20px;
     line-height: 1;
 
@@ -212,11 +214,11 @@ module.exports = {
 }
 .slick-prev:before
 {
-    content: '\276c';
+    content: '\f0a8';
 }
 [dir='rtl'] .slick-prev:before
 {
-    content: '\276c';
+    content: '\f0a8';
 }
 
 [dir='rtl'] .slick-next
@@ -226,11 +228,11 @@ module.exports = {
 }
 .slick-next:before
 {
-    content: '\276d';
+    content: '\f0a9';
 }
 [dir='rtl'] .slick-next:before
 {
-    content: '\276d';
+    content: '\f0a9';
 }
 
 /* Dots */
