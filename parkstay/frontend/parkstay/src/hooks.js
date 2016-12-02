@@ -7,6 +7,7 @@ var DataTableRes = require( 'datatables.net-responsive-bs' )();
 var Moment = require('moment');
 var datetimepicker = require('datetimepicker');
 var validate = require('jquery-validation');
+var slick = require('slick-carousel-browserify');
 import api_endpoints from './apps/api.js';
 import helpers from './components/utils/helpers.js'
 import {bus} from './components/utils/eventBus.js'
@@ -20,5 +21,6 @@ export {
     api_endpoints,
     helpers,
     validate,
-    bus
+    bus,
+    slick
 }

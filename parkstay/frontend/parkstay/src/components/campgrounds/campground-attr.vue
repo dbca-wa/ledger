@@ -37,7 +37,7 @@
 										</div>
 									</div>
 									<div class="row">
-										<div class="col-md-6">
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Campground Type</label>
 												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.campground_type">
@@ -49,7 +49,7 @@
 												</select>
 											</div>
 										</div>
-										<div class="col-md-6">
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Site Type</label>
 												<select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
@@ -58,7 +58,13 @@
 												</select>
 											</div>
 										</div>
+                                        <div class="col-md-4">
+                                            <div style="margin-top:10%;" class="checkbox">
+                                                <label><input type="checkbox" v-model="campground.bookable_per_site"/>Bookable Per Site</label>
+                                            </div>
+                                        </div>
 									</div>
+                                    <imageEditor></imageEditor>
 								</div>
 							</div>
 						</div>
@@ -180,6 +186,7 @@ import {
     bus
 }
 from '../utils/eventBus.js';
+import imageEditor from '../utils/images/imageEditor.vue'
 import Editor from 'quill';
 import Render from 'quill-render';
 import loader from '../utils/loader.vue'
@@ -188,7 +195,8 @@ export default {
     name: 'cg_attr',
     components: {
         alert,
-        loader
+        loader,
+        imageEditor
     },
     data: function() {
         let vm = this;
@@ -220,7 +228,7 @@ export default {
                     name: 'Campground level'
                 }, {
                     'val': 1,
-                    name: 'Campsite class level'
+                    name: 'Campsite Type level'
                 }, {
                     'val': 2,
                     name: 'Campsite level'
