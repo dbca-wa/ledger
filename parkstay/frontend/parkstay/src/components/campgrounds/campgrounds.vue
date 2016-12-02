@@ -117,9 +117,9 @@ module.exports = {
                     "mRender": function(data, type, full) {
                         var id = full.id;
                         if (full.active) {
-                            var column = "<td ><a href='#' class='detailRoute btn btn-info' data-campground=\"__ID__\" >Edit </a><a href='#' class='statusCG btn btn-info' data-status='close' data-campground=\"__ID__\" > Close </a></td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a></td>";
                         } else {
-                            var column = "<td ><a href='#' class='detailRoute btn btn-info' data-campground=\"__ID__\" >Edit </a><a href='#' class='statusCG btn btn-info' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a></td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a></td>";
                         }
                         column = column.replace(/__Current_Closure__/,full.current_closure);
                         return column.replace(/__ID__/g, id);
