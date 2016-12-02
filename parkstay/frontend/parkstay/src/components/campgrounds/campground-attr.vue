@@ -37,7 +37,7 @@
 										</div>
 									</div>
 									<div class="row">
-										<div class="col-md-6">
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Campground Type</label>
 												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.campground_type">
@@ -49,7 +49,7 @@
 												</select>
 											</div>
 										</div>
-										<div class="col-md-6">
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Site Type</label>
 												<select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
@@ -58,6 +58,11 @@
 												</select>
 											</div>
 										</div>
+                                        <div class="col-md-4">
+                                            <div style="margin-top:10%;" class="checkbox">
+                                                <label><input type="checkbox" v-model="campground.bookable_per_site"/>Bookable Per Site</label>
+                                            </div>
+                                        </div>
 									</div>
 								</div>
 							</div>
