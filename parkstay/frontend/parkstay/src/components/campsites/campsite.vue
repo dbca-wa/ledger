@@ -310,7 +310,7 @@ export default {
 
                 });
             }else{
-                if (!createCampsite){
+                if (!vm.createCampsite){
                     vm.campsite.tents = temp_campsite.tents;
                     vm.campsite.number_vehicles = temp_campsite.number_vehicles;
                     vm.campsite.dimensions = temp_campsite.dimensions;

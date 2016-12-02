@@ -503,7 +503,9 @@ class Campsite(models.Model):
                         name = '0{}'.format(name)
                     c.name = name
                     c.save()
-                    c.features = c.campsite_class.features.all()
+                    if c.campsite_class:
+                        c.features = c.campsite_class.features.all()
+                        c.save()
                     created_campsites.append(c)
             return created_campsites
         except Exception:
