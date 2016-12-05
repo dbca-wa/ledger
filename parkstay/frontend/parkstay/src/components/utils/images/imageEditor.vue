@@ -2,10 +2,11 @@
     <div class="row" imageEditor>
         <div class="form-group">
             <div class="col-sm-12">
-                <span class="btn btn-default btn-file">
+                <span class="btn btn-primary btn-file">
                     <i class="fa fa-fw fa-camera"></i><input multiple ref="imagePicker" type="file" name='img' @change="readURL()" />
+                Add Image
                 </span>
-                <button class="btn btn-primary" @click.prevent="clearImages">Clear All</button>
+                <button class="btn btn-danger" @click.prevent="clearImages">Clear All</button>
             </div>
         </div>
         <div class="form-group">
@@ -86,7 +87,7 @@ module.exports = {
                     var reader = new FileReader();
                     reader.onload = function(e) {
                         vm.slide++
-                            $('.upload').slick('slickAdd', "<div><img src='" + e.target.result + "' class=\"img-thumbnail\" alt=\"Responsive image\"></div>");
+                            $('.upload').slick('slickAdd', "<div><img src='" + e.target.result + "' class=\"img-thumbnail\" alt=\"Responsive image\"><input type=\"text\"/></div>");
                     };
                     reader.readAsDataURL(input.files[i]);
                 }
@@ -109,14 +110,15 @@ module.exports = {
 }
 .btn-file {
     position: relative;
+    width: 110px;
     overflow: hidden;
 }
 .btn-file-large{
     position: relative;
     overflow: hidden;
-    width:96px;
+    width:120px;
     height:96px;
-    font-size: 45px;
+    /*font-size: 45px;*/
 }
 .btn-file input[type=file] {
     position: absolute;
