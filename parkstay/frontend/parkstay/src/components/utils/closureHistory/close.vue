@@ -125,6 +125,9 @@ module.exports = {
             this.statusHistory.range_end= '';
             this.statusHistory.status= '';
             this.statusHistory.details= '';
+            var today = new Date();
+            this.closeEndPicker.data('DateTimePicker').date(today);
+            this.closeStartPicker.data('DateTimePicker').clear();
         },
         addClosure: function() {
             if (this.form.valid()){
@@ -198,6 +201,6 @@ module.exports = {
         });
         vm.form = $(document.forms.closeForm);
         vm.addFormValidations();
-    }
+    },
 };
 </script>
