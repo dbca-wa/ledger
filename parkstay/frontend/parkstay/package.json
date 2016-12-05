@@ -4,14 +4,13 @@
   "author": "tawanda <tawanda.nyakudjga@gmail.com>",
   "private": true,
   "scripts": {
-    "watchify": "watchify -vd -p [browserify-hmr -h 0.0.0.0 -u http://$(my-local-ip):3123] -t browserify-css src/apps/main.js -e src/apps/main.js -o ../../static/ps/js/build.js",
+    "watchify": "watchify -vd -p [browserify-hmr -h 0.0.0.0 -u http://$(my-local-ip):3123] -g browserify-css  src/apps/main.js -e src/apps/main.js -o ../../static/ps/js/build.js",
     "serve": "http-server -o -c 1 -a localhost",
     "dev": "npm-run-all --parallel watchify",
     "lint": "eslint --ext .js,.vue src test/unit",
     "test": "karma start karma.conf.js",
-    "build": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -t browserify-css src/apps/main.js -e src/apps/main.js | uglifyjs -c warnings=false -m > ../../static/ps/js/build.js",
-    "build_dev": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -t browserify-css src/apps/main.js -e src/apps/main.js -o ../../static/ps/js/build.js"
-
+    "build": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -g browserify-css src/apps/main.js -e src/apps/main.js | uglifyjs -c warnings=false -m > ../../static/ps/js/build.js",
+    "build_dev": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o ../../static/ps/css/build.css ] -g browserify-css src/apps/main.js -e src/apps/main.js -o ../../static/ps/js/build.js"
   },
   "browserify": {
     "transform": [
@@ -43,7 +42,7 @@
     "jquery": "./node_modules/jquery/dist/jquery.js",
     "moment": "./node_modules/moment/moment.js",
     "datetimepicker": "./node_modules/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js",
-    "jquery-validation":"./node_modules/jquery-validation/dist/jquery.validate.js", 
+    "jquery-validation": "./node_modules/jquery-validation/dist/jquery.validate.js",
     "bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
     "vue": "vue/dist/vue"
   },
@@ -81,6 +80,7 @@
     "moment": "^2.15.2",
     "quill": "^1.1.5",
     "quill-render": "^1.0.5",
+    "slick-carousel-browserify": "^1.6.12",
     "vue": "^2.0.1",
     "vue-router": "^2.0.1"
   },

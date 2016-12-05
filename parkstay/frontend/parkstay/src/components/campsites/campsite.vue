@@ -372,6 +372,9 @@ export default {
         fetchCampsiteClasses: function() {
             let vm = this;
             $.get(api_endpoints.campsite_classes_active, function(data) {
+                $.each(data,function(i,el){
+                    el.url = "//"+ el.url.split('://')[1]; 
+                });
                 vm.campsite_classes = data;
             })
         },

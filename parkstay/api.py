@@ -643,7 +643,22 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             price_history = CampsiteClassPriceHistory.objects.filter(id=self.get_object().id)
-            serializer = CampsiteClassPriceHistorySerializer(price_history,many=True,context={'request':request})
+            # Format list
+            open_ranges,formatted_list,fixed_list= [],[],[]
+            for p in price_history:
+                if p.date_end == None:
+                    open_ranges.append(p)
+                else:
+                    formatted_list.append(p)
+
+            for outer in open_ranges:
+                for inner in open_ranges:
+                    if inner.date_start > outer.date_start and inner.rate_id == outer.rate_id:
+                        open_ranges.remove(inner)
+
+            fixed_list = formatted_list + open_ranges
+            fixed_list.sort(key=lambda x: x.date_start)
+            serializer = CampsiteClassPriceHistorySerializer(fixed_list,many=True,context={'request':request})
             res = serializer.data
 
             return Response(res,status=http_status)
