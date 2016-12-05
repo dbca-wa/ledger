@@ -117,10 +117,14 @@ module.exports = {
             this.showDetails =  this.statusHistory.status == 3;
         },
         close: function() {
-            //this.statusHistory = {};
             this.errors = false;
             this.errorString = '';
             this.isOpen = false;
+            this.statusHistory.id = '';
+            this.statusHistory.range_start= '';
+            this.statusHistory.range_end= '';
+            this.statusHistory.status= '';
+            this.statusHistory.details= '';
         },
         addClosure: function() {
             if (this.form.valid()){
