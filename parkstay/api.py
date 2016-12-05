@@ -113,7 +113,6 @@ class CampsiteViewSet(viewsets.ModelViewSet):
                     else:
                         name = str(latest+1)
                     serializer.validated_data['name'] = name
-                    print serializer.validated_data
                 instance = serializer.save()
                 res = self.get_serializer(instance)
 
