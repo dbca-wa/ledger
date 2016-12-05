@@ -265,7 +265,7 @@ class BookingRange(models.Model):
         today = datetime.now().date()
         if self.status != 0 and((self.range_start > today and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end)):
             return True
-        elif self.status == 0 and (self.range_start <= today and not self.range_end):
+        elif self.status == 0 and ((self.range_start <= today and not self.range_end) or self.range_start > today):
             return True
         return False
 
