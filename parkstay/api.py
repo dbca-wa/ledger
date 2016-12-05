@@ -102,6 +102,18 @@ class CampsiteViewSet(viewsets.ModelViewSet):
                 campsites = Campsite.bulk_create(number,data)
                 res = self.get_serializer(campsites,many=True)
             else:
+                if number == 1 and serializer.validated_data['name'] == 'default':
+                    latest = 0
+                    current_campsites = Campsite.objects.filter(campground=serializer.validated_data.get('campground'))
+                    cs_numbers = [int(c.name) for c in current_campsites if c.name.isdigit()]
+                    if cs_numbers:
+                        latest = max(cs_numbers)
+                    if len(str(latest+1)) == 1:
+                        name = '0{}'.format(latest+1)
+                    else:
+                        name = str(latest+1)
+                    serializer.validated_data['name'] = name
+                    print serializer.validated_data
                 instance = serializer.save()
                 res = self.get_serializer(instance)
 

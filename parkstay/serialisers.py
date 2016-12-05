@@ -186,7 +186,7 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','details','campsite','editable')
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
-    name = serializers.CharField(default='')
+    name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
         fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','cs_tents','cs_parking_spaces','cs_number_vehicles','cs_min_people','cs_max_people','cs_dimensions')
