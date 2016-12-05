@@ -262,7 +262,10 @@ class BookingRange(models.Model):
     # ====================================
     @property
     def editable(self):
-        if (self.range_start > datetime.now().date() and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end):
+        today = datetime.now().date()
+        if self.status != 0 and((self.range_start > today and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end)):
+            return True
+        elif self.status == 0 and (self.range_start <= today and not self.range_end):
             return True
         return False
 
@@ -336,9 +339,9 @@ class CampgroundBookingRange(BookingRange):
     def clean(self, *args, **kwargs):
         original = None
         if self.pk:
-            if not self.editable:
-                raise ValidationError('This Booking Range is not editable')
             original = CampgroundBookingRange.objects.get(pk=self.pk)
+            if not original.editable:
+                raise ValidationError('This Booking Range is not editable')
 
         # Preventing ranges within other ranges
         within = CampgroundBookingRange.objects.filter(Q(campground=self.campground),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
@@ -527,9 +530,9 @@ class CampsiteBookingRange(BookingRange):
     def clean(self, *args, **kwargs):
         original = None
         if self.pk:
-            if not self.editable:
-                raise ValidationError('This Booking Range is not editable')
             original = CampsiteBookingRange.objects.get(pk=self.pk)
+            if not original.editable:
+                raise ValidationError('This Booking Range is not editable')
 
         # Preventing ranges within other ranges
         within = CampsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
@@ -829,7 +832,7 @@ class CampgroundBookingRangeListener(object):
             delattr(instance, "_original_instance")
         else:
             try:
-                within = CampgroundBookingRange.objects.get(Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within = CampgroundBookingRange.objects.get(~Q(id=instance.id),Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
                 within.range_end = instance.range_start
                 within.save()
             except CampgroundBookingRange.DoesNotExist:
