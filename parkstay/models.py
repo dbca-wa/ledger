@@ -262,9 +262,7 @@ class BookingRange(models.Model):
     # ====================================
     @property
     def editable(self):
-        if (self.range_start <= datetime.now().date() and not self.range_end) or ( self.range_start <= datetime.now().date() <= self.range_end):
-            return True
-        elif (self.range_start >= datetime.now().date() and not self.range_end) or ( self.range_start >= datetime.now().date() <= self.range_end):
+        if (self.range_start > datetime.now().date() and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end):
             return True
         return False
 
@@ -728,9 +726,7 @@ class CampsiteRate(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
-            return True
-        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
         return False
 
@@ -780,9 +776,7 @@ class CampgroundPriceHistory(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
-            return True
-        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
         return False
 
@@ -812,10 +806,9 @@ class CampsiteClassPriceHistory(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
-        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
-            return True
+        return False
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
