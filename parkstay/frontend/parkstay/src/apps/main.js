@@ -12,7 +12,7 @@ import Campsite_type_dash from '../components/campsites-types/campsite-types-das
 import Campsite_type from '../components/campsites-types/campsite-type.vue'
 import BulkPricing from '../components/BulkPricing/bulkpricing.vue'
 import $ from '../hooks'
-var css = require('../hooks-css.css');
+var css = require('../hooks-css.js');
 Vue.use(Router);
 
 // Define global variables

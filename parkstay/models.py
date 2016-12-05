@@ -262,9 +262,7 @@ class BookingRange(models.Model):
     # ====================================
     @property
     def editable(self):
-        if (self.range_start <= datetime.now().date() and not self.range_end) or ( self.range_start <= datetime.now().date() <= self.range_end):
-            return True
-        elif (self.range_start >= datetime.now().date() and not self.range_end) or ( self.range_start >= datetime.now().date() <= self.range_end):
+        if (self.range_start > datetime.now().date() and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end):
             return True
         return False
 
@@ -728,9 +726,7 @@ class CampsiteRate(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
-            return True
-        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
         return False
 
@@ -780,9 +776,7 @@ class CampgroundPriceHistory(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
-            return True
-        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
         return False
 
@@ -812,10 +806,9 @@ class CampsiteClassPriceHistory(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start <= today and not self.date_end) or ( self.date_start <= today  <= self.date_end):
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
-        elif (self.date_start >= today and not self.date_end) or ( self.date_start >= today <= self.date_end):
-            return True
+        return False
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
@@ -1040,24 +1033,6 @@ class CampsiteRateListener(object):
                 within.save()
             except CampsiteRate.DoesNotExist:
                 pass
-
-    @staticmethod
-    @receiver(post_save, sender=CampsiteRate)
-    def _post_save(sender, instance, **kwargs):
-        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
-        try:
-            cursor = connection.cursor()
-            if instance.update_level == 0:
-                sql =   'CREATE OR REPLACE VIEW parkstay_campground_pricehistory_v AS \
-                SELECT distinct camps.campground_id as id,cr.date_start,cr.date_end, r.id as rate_id, r.adult, r.concession, r.child from parkstay_campsiterate cr INNER JOIN parkstay_rate r on r.id= cr.rate_id  INNER JOIN \
-                (SELECT cg.id AS campground_id,cs.name AS name,cs.id AS campsite_id from  parkstay_campsite cs, parkstay_campground cg WHERE cs.campground_id = cg.id and cg.id = cs.campground_id and cg.price_level = 0) camps ON cr.campsite_id = camps.campsite_id'
-            elif instance.update_level == 1:
-                sql = 'CREATE OR REPLACE VIEW parkstay_campsiteclass_pricehistory_v AS \
-                SELECT distinct classes.campsite_class_id AS id, classes.date_start,classes.date_end, r.id as rate_id, r.adult, r.concession, r.child  from parkstay_rate r  INNER JOIN \
-                (SELECT distinct cc.id AS campsite_class_id, cr.rate_id as campsite_rate_id, cr.date_start as date_start, cr.date_end as date_end from  parkstay_campsite cs, parkstay_campsiteclass cc, parkstay_campsiterate cr WHERE cs.campsite_class_id = cc.id and cr.campsite_id = cs.id and cr.update_level = 1)classes ON r.id = classes.campsite_rate_id '
-            cursor.execute(sql)
-        except Exception as e:
-            raise ValidationError(e)
 
     @staticmethod
     @receiver(post_delete, sender=CampsiteRate)
