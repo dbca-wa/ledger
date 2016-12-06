@@ -142,7 +142,7 @@
             get re-submitted when the user confirms the order.
         {% endcomment %}
         <div style="display:none">
-            {% block hiddenforms %}{% endblock %}
+            {% block hiddenforms %}{{ bankcard_form.as_p }}{% endblock %}
         </div>
 
         <div class="form-group clearfix">
@@ -154,7 +154,3 @@
         </div>
     </form>
 {% endblock place_order %}
-
-{% block hiddenforms %}
-    {{ bankcard_form.as_p }}
-{% endblock %}
