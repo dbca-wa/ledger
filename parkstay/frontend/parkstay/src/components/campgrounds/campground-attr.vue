@@ -64,7 +64,7 @@
                                             </div>
                                         </div>
 									</div>
-                                    <imageEditor></imageEditor>
+                                    <imageEditor :images="campgroundImages"></imageEditor>
 								</div>
 							</div>
 						</div>
@@ -212,6 +212,7 @@ export default {
             errors: false,
             errorString: '',
             showUpdate: false,
+            campgroundImages:[],
             isLoading: false
         }
     },
