@@ -7,6 +7,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import IntegrityError, transaction, connection
 from django.utils import timezone
 from datetime import date, time, datetime, timedelta
+from django.conf import settings
 from taggit.managers import TaggableManager
 from django.dispatch import receiver
 from django.db.models.signals import post_delete, pre_save, post_save
@@ -240,6 +241,10 @@ class Campground(models.Model):
         except Exception as e:
             raise
 
+class CampgroundImage(models.Model):
+    image = models.ImageField(max_length=255,upload_to='{}/Parkstay/CampgroudImages'.format(settings.MEDIA_ROOT))
+    campground = models.ForeignKey(Campground, related_name='images')
+    
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),

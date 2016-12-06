@@ -110,7 +110,8 @@ export default {
         let vm = this;
         return {
             campground: {
-                address:{}
+                address:{},
+                images: []
             },
             campsites: [],
             isOpenOpenCS: false,

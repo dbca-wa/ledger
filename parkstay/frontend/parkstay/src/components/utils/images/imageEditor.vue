@@ -16,7 +16,7 @@
                     <div class="upload">
                         <div v-for="i in images" class="panel panel-default">
                             <div class="panel-body">
-                                <img :src="i.img" class="img-thumbnail" alt="Responsive image" />
+                                <img :src="i.image" class="img-thumbnail" alt="Responsive image" />
                                 <div v-show="showCaption" class="panel-footer">
                                     <div class="row">
                                         <div class="col-lg-12">
@@ -119,7 +119,7 @@ module.exports = {
                     reader.onload = function(e) {
                         vm.slide++
                             vm.images.push({
-                                img: e.target.result,
+                                image: e.target.result,
                                 caption: ''
                             });
                     };

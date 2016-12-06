@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.conf.urls import url, include
+from django.conf.urls.static import static
 from rest_framework import routers
 from parkstay import views, api
 from parkstay.admin import admin
@@ -39,3 +41,6 @@ urlpatterns = [
     url(r'^dashboard/campsite-types$', views.DashboardView.as_view(), name='dash-campsite-types'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
 ] + ledger_patterns
+
+if settings.DEBUG:  # Serve media locally in development.
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

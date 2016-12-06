@@ -48,8 +48,8 @@ export default {
     data: function() {
         return {
             campground:{
-                address: {
-                },
+                address: {},
+                images:[]
             },
             title:'',
             errors:false,

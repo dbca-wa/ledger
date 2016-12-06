@@ -16,7 +16,8 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClass,
                                 Booking,
                                 CampsiteRate,
-                                Contact
+                                Contact,
+                                CampgroundImage
                             )
 from rest_framework import serializers
 
@@ -113,9 +114,31 @@ class FeatureSerializer(serializers.HyperlinkedModelSerializer):
         model = Feature
         fields = ('url','id','name','description','image')
 
+class CampgroundImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(max_length=17)
+
+    def get_image(self, obj):
+        return obj.image.url
+
+    class Meta:
+        model = CampgroundImage
+        fields = ('id','image','campground')
+        read_only_fields = ('id',)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        super(CampgroundImageSerializer, self).__init__(*args, **kwargs)
+        if method == 'get':
+            self.image = serializers.SerializerMethodField()        
+
+
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     address = serializers.JSONField()
     contact = ContactSerializer(required=False)
+    images = CampgroundImageSerializer(many=True,required=False)
     class Meta:
         model = Campground
         fields = (
@@ -143,6 +166,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'dog_permitted',
             'check_in',
             'check_out',
+            'images'
         )
 
     def get_site_type(self, obj):
@@ -176,6 +200,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
             self.fields['address'] = serializers.SerializerMethodField()
+            self.fields['images'] = CampgroundImageSerializer(many=True,required=False,method='get')
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)

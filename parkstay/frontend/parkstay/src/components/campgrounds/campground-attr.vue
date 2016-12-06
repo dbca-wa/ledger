@@ -64,7 +64,7 @@
                                             </div>
                                         </div>
 									</div>
-                                    <imageEditor :images="campgroundImages"></imageEditor>
+                                    <imageEditor :images="campground.images"></imageEditor>
 								</div>
 							</div>
 						</div>
@@ -212,7 +212,6 @@ export default {
             errors: false,
             errorString: '',
             showUpdate: false,
-            campgroundImages:[],
             isLoading: false
         }
     },
@@ -240,7 +239,8 @@ export default {
             default: function() {
                 return {
                     address: {},
-                    contact: {}
+                    contact: {},
+                    images: [] 
                 };
             },
             type: Object
@@ -308,6 +308,7 @@ export default {
                 },
                 data: JSON.stringify(vm.campground),
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                contentType: "application/x-www-form-urlencoded",
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     if (method == 'POST') {
