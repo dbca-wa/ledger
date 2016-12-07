@@ -14,14 +14,17 @@
             <div class="col-sm-12">
                 <div v-show="!addingImage" class="col-sm-12">
                     <div class="upload">
-                        <div v-for="i in images" class="panel panel-default">
-                            <div class="panel-body">
-                                <img :src="i.image" class="img-thumbnail" alt="Responsive image" />
+                        <div v-for="(img,i) in images" class="panel panel-default">
+                            <div class="overlay">
+                                <button type="button" class="btn btn-danger" @click.prevent="removeImage(i)" > Remove <i class="fa fa-w fa-trash-o"></i></button>
+                            </div>
+                            <div class="panel-body" :data-index='i'>
+                                <img :src="img.image" class="img-thumbnail" alt="Responsive image" />
                                 <div v-show="showCaption" class="panel-footer">
                                     <div class="row">
                                         <div class="col-lg-12">
                                             <div class="form-group">
-                                                <input type="text" class="form-control" placeholder="Caption" v-model="i.caption"/>
+                                                <input type="text" class="form-control" placeholder="Caption" v-model="img.caption"/>
                                             </div>
                                         </div>
                                     </div>
@@ -101,6 +104,31 @@ module.exports = {
         loader
     },
     methods: {
+        removeImage:function (i) {
+            let vm = this;
+            vm.imageLoaderText='Loading Images...'
+            vm.addingImage = true;
+            vm.images.splice(i, 1);;
+            $('.upload').slick('unslick');
+            setTimeout(function(){
+                vm.slick_init();
+            },100);
+            setTimeout(function(){
+                vm.addingImage = false;
+                $('.upload').slick('resize');
+            },400);
+        },
+        showRemove:function () {
+            let vm = this;
+
+            var el = $('div[data-index]');
+            console.log($(el));
+            $(el).on('mouseover',function(e){
+                $(this).siblings('.overlay').addClass('show').on('mouseleave',function(el){
+                    $(this).removeClass('show');
+                });
+            });
+        },
         clearImages: function() {
             let vm = this;
             vm.images = [];
@@ -141,6 +169,7 @@ module.exports = {
                     };
                     reader.readAsDataURL(input.files[i]);
                 }
+                $(input).val("");
                 vm.slick_refresh();
             }
         }
@@ -157,6 +186,11 @@ module.exports = {
             }
         });
         vm.slide = vm.images.length;
+
+    },
+    updated:function () {
+        let vm =this;
+        vm.showRemove();
     }
 }
 
@@ -391,5 +425,28 @@ module.exports = {
 }
 .panel-group .panel+.panel {
     margin-top: 0;
+    z-index: 0;
+    cursor: pointer;
 }
+.overlay{
+    position:absolute;
+    top:0px;
+    height:100%;
+    width:inherit;
+    background-color: rgba(51, 122, 183, 0.4);
+    z-index:1;
+    overflow: hidden;
+    display:flex !important;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: nowrap;
+    align-items: center;
+    visibility: hidden;
+    cursor: pointer;
+}
+.show{
+    visibility: visible;
+    transition: visibility 1000s linear 0s;
+}
+
 </style>
