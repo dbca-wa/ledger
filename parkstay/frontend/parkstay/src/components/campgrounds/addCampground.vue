@@ -36,7 +36,6 @@ import {
     Moment,
     api_endpoints,
     helpers,
-    validate
 } from '../../hooks.js'
 import alert from '../utils/alert.vue'
 export default {

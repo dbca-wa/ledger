@@ -389,7 +389,6 @@ export default {
                     },
                     telephone: "required",
                     postcode: "required",
-                    editor: "required",
                     price_level: "required"
                 },
                 messages: {
@@ -397,7 +396,6 @@ export default {
                     park: "Select a park from the options",
                     campground_type: "Select a campground type from the options",
                     site_type: "Select a site type from the options",
-                    editor: "required",
                     price_level: "Select a price level from the options"
                 },
                 showErrors: function(errorMap, errorList) {
