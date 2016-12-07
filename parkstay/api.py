@@ -1,7 +1,6 @@
 import traceback
 import base64
-import six
-import uuid
+from urlparse import urlparse
 from django.db.models import Q
 from django.core.files.base import ContentFile
 from rest_framework import viewsets, serializers, status, generics, views
@@ -226,29 +225,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
 
-    def get_file_extension(self, file_name, decoded_file):
-        import imghdr
-
-        extension = imghdr.what(file_name, decoded_file)
-        extension = "jpg" if extension == "jpeg" else extension
-        return extension
-
-    def strip_b64_header(self, content):
-        if ';base64,' in content:
-            header, base64_data = content.split(';base64,') 
-            return base64_data
-
-    def createImage(self, content):
-        base64_data = self.strip_b64_header(content)
-        try:
-            decoded_file = base64.b64decode(base64_data)
-        except (TypeError, binascii.Error):
-            raise ValidationError(self.INVALID_FILE_MESSAGE)
-        file_name = str(uuid.uuid4())[:12]
-        file_extension = self.get_file_extension(file_name,decoded_file)
-        complete_file_name = "{}.{}".format(file_name, file_extension)
-        uploaded_image = ContentFile(decoded_file, name=complete_file_name)
-        return uploaded_image
 
     def list(self, request, format=None):
         queryset = self.get_queryset()
@@ -262,6 +238,51 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
+    def strip_b64_header(self, content):
+        if ';base64,' in content:
+            header, base64_data = content.split(';base64,') 
+            return base64_data
+        return content
+
+    def create(self, request, format=None):
+        try:
+            images_data = None
+            http_status = status.HTTP_200_OK
+            if "images" in request.data:
+                images_data = request.data.pop("images")
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance =serializer.save()
+            # Get and Validate campground images
+            initial_image_serializers = [CampgroundImageSerializer(data=image) for image in images_data] if images_data else []
+            image_serializers = []
+            if initial_image_serializers:
+
+                for image_serializer in initial_image_serializers:
+                    result = urlparse(image_serializer.initial_data['image'])
+                    if not (result.scheme =='http' or result.scheme == 'https') and not result.netloc:
+                        image_serializers.append(image_serializer)
+
+                if image_serializers:
+                    for image_serializer in image_serializers:
+                        image_serializer.initial_data["campground"] = instance.id
+                        image_serializer.initial_data["image"] = ContentFile(base64.b64decode(self.strip_b64_header(image_serializer.initial_data["image"])))
+                        image_serializer.initial_data["image"].name = 'uploaded'
+
+                    for image_serializer in image_serializers:
+                        image_serializer.is_valid(raise_exception=True)
+
+                    for image_serializer in image_serializers:
+                        image_serializer.save()
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     def update(self, request, *args, **kwargs):
         try:
             images_data = None
@@ -272,18 +293,26 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(instance,data=request.data,partial=True)
             serializer.is_valid(raise_exception=True)
             # Get and Validate campground images 
-            image_serializers = [CampgroundImageSerializer(data=image) for image in images_data] if images_data else []
-            if image_serializers:
+            initial_image_serializers = [CampgroundImageSerializer(data=image) for image in images_data] if images_data else []
+            image_serializers = []
+            if initial_image_serializers:
 
-                for image_serializer in image_serializers:
-                    image_serializer.initial_data["campground"] = instance.id
-                    image_serializer.initial_data["image"] = self.createImage(image_serializer.initial_data["image"])
+                for image_serializer in initial_image_serializers:
+                    result = urlparse(image_serializer.initial_data['image'])
+                    if not (result.scheme =='http' or result.scheme == 'https') and not result.netloc:
+                        image_serializers.append(image_serializer)
 
-                for image_serializer in image_serializers:
-                    image_serializer.is_valid(raise_exception=True)
-                
-                for image_serializer in image_serializers:
-                    image_serializer.save()
+                if image_serializers:
+                    for image_serializer in image_serializers:
+                        image_serializer.initial_data["campground"] = instance.id
+                        image_serializer.initial_data["image"] = ContentFile(base64.b64decode(self.strip_b64_header(image_serializer.initial_data["image"])))
+                        image_serializer.initial_data["image"].name = 'uploaded'
+
+                    for image_serializer in image_serializers:
+                        image_serializer.is_valid(raise_exception=True)
+                    
+                    for image_serializer in image_serializers:
+                        image_serializer.save()
 
             self.perform_update(serializer)
             return Response(serializer.data)

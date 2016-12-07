@@ -1,5 +1,11 @@
 from __future__ import unicode_literals
 
+import os
+import uuid
+import base64
+import binascii
+import hashlib
+from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.contrib.gis.db import models
@@ -244,7 +250,65 @@ class Campground(models.Model):
 class CampgroundImage(models.Model):
     image = models.ImageField(max_length=255,upload_to='{}/Parkstay/CampgroudImages'.format(settings.MEDIA_ROOT))
     campground = models.ForeignKey(Campground, related_name='images')
+    checksum = models.CharField(blank=True, max_length=255, editable=False)
+
+    class Meta:
+        ordering = ('id',)
     
+    def get_file_extension(self, file_name, decoded_file):
+        import imghdr
+
+        extension = imghdr.what(file_name, decoded_file)
+        extension = "jpg" if extension == "jpeg" else extension
+        return extension
+
+    def strip_b64_header(self, content):
+        if ';base64,' in content:
+            header, base64_data = content.split(';base64,') 
+            return base64_data
+        return content
+
+    def _calculate_checksum(self, content):
+        checksum = hashlib.md5()
+        checksum.update(content.read())
+        return base64.b64encode(checksum.digest())    
+
+    def createImage(self, content):
+        base64_data = self.strip_b64_header(content)
+        try:
+            decoded_file = base64.b64decode(base64_data)
+        except (TypeError, binascii.Error):
+            raise ValidationError(self.INVALID_FILE_MESSAGE)
+        file_name = str(uuid.uuid4())[:12]
+        file_extension = self.get_file_extension(file_name,decoded_file)
+        complete_file_name = "{}.{}".format(file_name, file_extension)
+        uploaded_image = ContentFile(decoded_file, name=complete_file_name)
+        return uploaded_image
+
+    def save(self, *args, **kwargs):
+        self.checksum = self._calculate_checksum(self.image)
+        self.image.seek(0)
+        if not self.pk:
+            self.image = self.createImage(base64.b64encode(self.image.read()))
+        else:
+            orig = CampgroundImage.objects.get(pk=self.pk)
+            if orig.image:
+                if orig.checksum != self.checksum:
+                    if os.path.isfile(orig.image.path):
+                        os.remove(orig.image)
+                    self.image = self.createImage(base64.b64encode(self.image.read()))
+                else:
+                    pass
+
+        super(CampgroundImage,self).save(*args,**kwargs)
+
+    def delete(self, *args, **kwargs):
+        try:
+            os.remove(self.image)
+        except:
+            pass
+        super(CampgroundImage,self).delete(*args,**kwargs)    
+
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),
@@ -741,9 +805,7 @@ class CampsiteRate(models.Model):
     # Methods
     # =================================
     def update(self,data):
-        print('here')
         for attr, value in data.items():
-            print('{} {}'.format(attr, value))
             setattr(self, attr, value)
         self.save()
 
