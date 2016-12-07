@@ -321,6 +321,7 @@ export default {
                 success: function(data, stat, xhr) {
                     vm.campground = data;
                     vm.fetchCampsites();
+                    bus.$emit('campgroundFetched');
                 }
             });
         }

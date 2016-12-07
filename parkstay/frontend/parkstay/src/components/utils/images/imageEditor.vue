@@ -10,7 +10,7 @@
                 </div>
             </div>
         <div class="form-group">
-            <loader :isLoading="addingImage">Adding Picture...</loader>
+            <loader :isLoading="addingImage">{{imageLoaderText}}</loader>
             <div class="col-sm-12">
                 <div v-show="!addingImage" class="col-sm-12">
                     <div class="upload">
@@ -42,6 +42,10 @@ import {
     slick
 }
 from '../../../hooks'
+import {
+    bus
+}
+from '../eventBus.js'
 import loader from '../loader.vue'
 module.exports = {
     name: '',
@@ -60,6 +64,7 @@ module.exports = {
         return {
             slide: 0,
             addingImage: false,
+            imageLoaderText:'',
             slickCaro: null,
             slick_options: {
                 dots: true,
@@ -108,12 +113,23 @@ module.exports = {
             let vm = this;
             vm.slickCaro = $('.upload').slick(vm.slick_options);
         },
+        slick_refresh: function(){
+            let vm = this;
+            setTimeout(function(){
+                vm.slick_init();
+            },100);
+            setTimeout(function(){
+                vm.addingImage = false;
+                $('.upload').slick('resize');
+            },400);
+        },
         readURL: function() {
             let vm = this;
             $('.upload').slick('unslick');
             vm.addingImage = true;
             var input = vm.$refs.imagePicker;
             if (input.files && input.files[0]) {
+                input.files.length > 1 ? vm.imageLoaderText='Adding Images...' : vm.imageLoaderText='Adding Image...';
                 for (var i = 0; i < input.files.length; i++) {
                     var reader = new FileReader();
                     reader.onload = function(e) {
@@ -125,19 +141,21 @@ module.exports = {
                     };
                     reader.readAsDataURL(input.files[i]);
                 }
-            setTimeout(function(){
-                vm.slick_init(); 
-            },100);
-            setTimeout(function(){
-                vm.addingImage = false;
-                $('.upload').slick('resize');
-            },400);
+                vm.slick_refresh();
             }
         }
     },
     mounted: function() {
         let vm = this;
         vm.slick_init();
+        bus.$on('campgroundFetched',function(){
+            if (vm.images){
+                $('.upload').slick('unslick');
+                vm.imageLoaderText='Loading Images...'
+                vm.addingImage = true;
+                vm.slick_refresh();
+            }
+        });
         vm.slide = vm.images.length;
     }
 }
