@@ -1,6 +1,7 @@
 <template lang="html">
 <div  id="cg_attr" >
 	<div v-show="!isLoading">
+		<form id="attForm">
 		<div class="col-sm-12">
 			<alert :show.sync="showUpdate" type="success" :duration="7000">
 				<p>Campground successfully updated</p>
@@ -9,7 +10,6 @@
 				<p>{{errorString}}
 					<p/>
 				</alert>
-				<form id="attForm">
 					<div class="row">
 						<div class="col-lg-12">
 							<div class="panel panel-primary">
@@ -144,7 +144,6 @@
 							</div>
 						</div>
 					</div>
-				</form>
 			</div>
 			<div class="row" style="margin-top: 40px;">
 				<div class="col-sm-8">
@@ -169,6 +168,7 @@
 					</div>
 				</div>
 			</div>
+			</form>
 		</div>
 		<loader :isLoading.sync="isLoading">Loading...</loader>
 	</div>
@@ -273,13 +273,34 @@ export default {
         },
         create: function() {
             if (this.form.valid()) {
-                this.sendData(api_endpoints.campgrounds, 'POST');
+                if (this.validateEditor()){
+                    this.sendData(api_endpoints.campgrounds, 'POST');
+               } 
             }
         },
         update: function() {
-            if (this.form.valid()) {
+            if (this.form.valid() && this.validateEditor()) {
                 this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
             }
+        },
+        validateEditor: function(){
+            let vm = this;
+            console.log('here');
+            var el = $('#editor');
+            el.tooltip("destroy");
+            if (!vm.campground.description || vm.campground.description.trim().length == 0){
+                el.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+
+                // add or update tooltips
+                el.tooltip({
+                        trigger: "focus"
+                    })
+                    .attr("data-original-title", 'Description is required')
+                    .parents('.form-group').addClass('has-error');
+                return false;
+            }
+            
+            return true;
         },
         sendData: function(url, method) {
             let vm = this;
