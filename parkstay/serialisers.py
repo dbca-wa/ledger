@@ -1,3 +1,4 @@
+from django.conf import settings
 from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
@@ -118,7 +119,7 @@ class CampgroundImageSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=17)
 
     def get_image(self, obj):
-        return obj.image.url
+        return self.context['request'].build_absolute_uri('/media{}'.format(obj.image.url.split(settings.MEDIA_ROOT)[1]))
 
     class Meta:
         model = CampgroundImage
@@ -132,7 +133,7 @@ class CampgroundImageSerializer(serializers.ModelSerializer):
             method = 'post'
         super(CampgroundImageSerializer, self).__init__(*args, **kwargs)
         if method == 'get':
-            self.image = serializers.SerializerMethodField()        
+            self.fields['image'] = serializers.SerializerMethodField()
 
 
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
