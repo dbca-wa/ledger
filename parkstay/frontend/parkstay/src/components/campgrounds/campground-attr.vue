@@ -140,7 +140,7 @@
 						<div class="col-md-12">
 							<div class="form-group">
 								<label class="control-label" >Description</label>
-								<div name="editor" id="editor" class="form-control"></div>
+								<div id="editor" class="form-control"></div>
 							</div>
 						</div>
 					</div>
@@ -240,7 +240,7 @@ export default {
                 return {
                     address: {},
                     contact: {},
-                    images: [] 
+                    images: []
                 };
             },
             type: Object
@@ -271,35 +271,38 @@ export default {
 		goBack: function() {
             helpers.goBack(this);
         },
+		validateForm:function () {
+			let vm = this;
+			var isValid = vm.validateEditor();
+            return  vm.form.valid() && isValid;
+		},
         create: function() {
-            if (this.form.valid()) {
-                if (this.validateEditor()){
-                    this.sendData(api_endpoints.campgrounds, 'POST');
-               } 
-            }
+			if(this.validateForm()){
+				this.sendData(api_endpoints.campgrounds, 'POST');
+			}
         },
         update: function() {
-            if (this.form.valid() && this.validateEditor()) {
-                this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
-            }
+			if(this.validateForm()){
+				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
+			}
         },
         validateEditor: function(){
             let vm = this;
-            console.log('here');
             var el = $('#editor');
-            el.tooltip("destroy");
-            if (!vm.campground.description || vm.campground.description.trim().length == 0){
-                el.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
-
+			if (el.parents('.form-group').hasClass('has-error')) {
+				$(el).tooltip("destroy");
+				$(el).attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+			}
+            if (vm.editor.getText().trim().length == 0){
                 // add or update tooltips
-                el.tooltip({
+                $(el).tooltip({
                         trigger: "focus"
                     })
                     .attr("data-original-title", 'Description is required')
                     .parents('.form-group').addClass('has-error');
                 return false;
             }
-            
+
             return true;
         },
         sendData: function(url, method) {
@@ -398,6 +401,7 @@ export default {
         },
         addFormValidations: function() {
             this.form.validate({
+				ignore:'div.ql-editor',
                 rules: {
                     name: "required",
                     park: "required",
@@ -420,9 +424,9 @@ export default {
                     price_level: "Select a price level from the options"
                 },
                 showErrors: function(errorMap, errorList) {
-
                     $.each(this.validElements(), function(index, element) {
                         var $element = $(element);
+
                         $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
                     });
 
@@ -476,6 +480,7 @@ export default {
 
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;
+			vm.validateEditor();
         });
 
         vm.form = $('#attForm');
