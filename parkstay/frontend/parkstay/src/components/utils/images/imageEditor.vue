@@ -1,23 +1,39 @@
 <template >
-    <div class="row" imageEditor>
-        <div class="form-group">
-            <div class="col-sm-12">
-                <span class="btn btn-default btn-file">
-                    <i class="fa fa-fw fa-camera"></i><input multiple ref="imagePicker" type="file" name='img' @change="readURL()" />
-                </span>
-                <button class="btn btn-primary" @click.prevent="clearImages">Clear All</button>
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-sm-12">
+        <div class="row" imageEditor>
+            <div class="form-group">
                 <div class="col-sm-12">
-                    <div class="upload">
-                    </div>
+                    <span class="btn btn-primary btn-file">
+                        <i class="fa fa-fw fa-camera"></i><input multiple ref="imagePicker" type="file" name='img' @change="readURL()" />
+                    Add Image
+                    </span>
+                    <button class="btn btn-danger" @click.prevent="clearImages">Clear All</button>
                 </div>
             </div>
+        <div class="form-group">
+            <loader :isLoading="addingImage">{{imageLoaderText}}</loader>
+            <div class="col-sm-12">
+                <div v-show="!addingImage" class="col-sm-12">
+                    <div class="upload">
+                        <div v-for="i in images" class="panel panel-default">
+                            <div class="panel-body">
+                                <img :src="i.image" class="img-thumbnail" alt="Responsive image" />
+                                <div v-show="showCaption" class="panel-footer">
+                                    <div class="row">
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                <input type="text" class="form-control" placeholder="Caption" v-model="i.caption"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
+                    </div>
+                </div>
+
+            </div>
         </div>
-    </div>
 </template>
 
 <script>
@@ -26,97 +42,147 @@ import {
     slick
 }
 from '../../../hooks'
+import {
+    bus
+}
+from '../eventBus.js'
+import loader from '../loader.vue'
 module.exports = {
     name: '',
+    props:{
+        showCaption:{
+            type: Boolean,
+            default: false
+        },
+        images: {
+            type: Array,
+            required: true
+        }
+    },
     data: function() {
         let vm = this;
         return {
             slide: 0,
-            images: []
-        }
-    },
-    components: {},
-    methods: {
-        clearImages:function () {
-            let vm = this;
-            for (var i = vm.slide; i >= 0 ;i-- ){
-                $('.upload').slick('slickRemove', i);
-            }
-        },
-        slick_init: function() {
-            $('.upload').slick({
+            addingImage: false,
+            imageLoaderText:'',
+            slickCaro: null,
+            slick_options: {
                 dots: true,
                 infinite: true,
                 speed: 300,
+                adaptiveHeight: true,
                 slidesToShow: 4,
                 slidesToScroll: 4,
                 responsive: [{
-                        breakpoint: 1024,
-                        settings: {
-                            slidesToShow: 3,
-                            slidesToScroll: 3,
-                            infinite: false,
-                            dots: true
-                        }
-                    }, {
-                        breakpoint: 600,
-                        settings: {
-                            slidesToShow: 2,
-                            slidesToScroll: 2
-                        }
-                    }, {
-                        breakpoint: 480,
-                        settings: {
-                            slidesToShow: 1,
-                            slidesToScroll: 1
-                        }
+                    breakpoint: 1024,
+                    settings: {
+                        slidesToShow: 3,
+                        slidesToScroll: 3,
+                        infinite: false,
+                        dots: true
                     }
-                    // You can unslick at a given breakpoint now by adding:
-                    // settings: "unslick"
-                    // instead of a settings object
-                ]
-            });
+                }, {
+                    breakpoint: 600,
+                    settings: {
+                        slidesToShow: 2,
+                        slidesToScroll: 2
+                    }
+                }, {
+                    breakpoint: 480,
+                    settings: {
+                        slidesToShow: 1,
+                        slidesToScroll: 1
+                    }
+                }]
+            }
+        }
+    },
+    components: {
+        loader
+    },
+    methods: {
+        clearImages: function() {
+            let vm = this;
+            vm.images = [];
+            $('.upload').slick('unslick');
+            setTimeout(function(){
+                vm.slick_init();
+            },100);
+        },
+        slick_init: function() {
+            let vm = this;
+            vm.slickCaro = $('.upload').slick(vm.slick_options);
+        },
+        slick_refresh: function(){
+            let vm = this;
+            setTimeout(function(){
+                vm.slick_init();
+            },100);
+            setTimeout(function(){
+                vm.addingImage = false;
+                $('.upload').slick('resize');
+            },400);
         },
         readURL: function() {
             let vm = this;
+            $('.upload').slick('unslick');
+            vm.addingImage = true;
             var input = vm.$refs.imagePicker;
-            console.log(input);
             if (input.files && input.files[0]) {
+                input.files.length > 1 ? vm.imageLoaderText='Adding Images...' : vm.imageLoaderText='Adding Image...';
                 for (var i = 0; i < input.files.length; i++) {
                     var reader = new FileReader();
                     reader.onload = function(e) {
                         vm.slide++
-                            $('.upload').slick('slickAdd', "<div><img src='" + e.target.result + "' class=\"img-thumbnail\" alt=\"Responsive image\"></div>");
+                            vm.images.push({
+                                image: e.target.result,
+                                caption: ''
+                            });
                     };
                     reader.readAsDataURL(input.files[i]);
                 }
+                vm.slick_refresh();
             }
-
         }
     },
     mounted: function() {
         let vm = this;
         vm.slick_init();
+        bus.$on('campgroundFetched',function(){
+            if (vm.images){
+                $('.upload').slick('unslick');
+                vm.imageLoaderText='Loading Images...'
+                vm.addingImage = true;
+                vm.slick_refresh();
+            }
+        });
+        vm.slide = vm.images.length;
     }
 }
 
 </script>
 
 <style lang="css">
+.upload .panel{
+    box-shadow: 0 1px 6px 0 rgba(0, 0, 0, 0.12), 0 1px 6px 0 rgba(0, 0, 0, 0.12);
+    border-radius: 2px;
+    margin-right: 5px;
+}
 .upload img{
     height: 250px;
     width:250px;
 }
 .btn-file {
     position: relative;
+    width: 110px;
     overflow: hidden;
 }
 .btn-file-large{
     position: relative;
     overflow: hidden;
-    width:96px;
+    width:120px;
     height:96px;
-    font-size: 45px;
+    /*font-size: 45px;*/
 }
 .btn-file input[type=file] {
     position: absolute;
@@ -322,5 +388,8 @@ module.exports = {
 {
     opacity: .75;
     color: black;
+}
+.panel-group .panel+.panel {
+    margin-top: 0;
 }
 </style>

@@ -117,10 +117,17 @@ module.exports = {
             this.showDetails =  this.statusHistory.status == 3;
         },
         close: function() {
-            //this.statusHistory = {};
             this.errors = false;
             this.errorString = '';
             this.isOpen = false;
+            this.statusHistory.id = '';
+            this.statusHistory.range_start= '';
+            this.statusHistory.range_end= '';
+            this.statusHistory.status= '';
+            this.statusHistory.details= '';
+            var today = new Date();
+            this.closeEndPicker.data('DateTimePicker').date(today);
+            this.closeStartPicker.data('DateTimePicker').clear();
         },
         addClosure: function() {
             if (this.form.valid()){
@@ -194,6 +201,6 @@ module.exports = {
         });
         vm.form = $(document.forms.closeForm);
         vm.addFormValidations();
-    }
+    },
 };
 </script>

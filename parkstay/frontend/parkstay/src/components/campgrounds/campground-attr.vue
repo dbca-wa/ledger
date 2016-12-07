@@ -1,6 +1,7 @@
 <template lang="html">
 <div  id="cg_attr" >
 	<div v-show="!isLoading">
+		<form id="attForm">
 		<div class="col-sm-12">
 			<alert :show.sync="showUpdate" type="success" :duration="7000">
 				<p>Campground successfully updated</p>
@@ -9,7 +10,6 @@
 				<p>{{errorString}}
 					<p/>
 				</alert>
-				<form id="attForm">
 					<div class="row">
 						<div class="col-lg-12">
 							<div class="panel panel-primary">
@@ -64,7 +64,7 @@
                                             </div>
                                         </div>
 									</div>
-                                    <imageEditor></imageEditor>
+                                    <imageEditor :images="campground.images"></imageEditor>
 								</div>
 							</div>
 						</div>
@@ -140,11 +140,10 @@
 						<div class="col-md-12">
 							<div class="form-group">
 								<label class="control-label" >Description</label>
-								<div name="editor" id="editor" class="form-control"></div>
+								<div id="editor" class="form-control"></div>
 							</div>
 						</div>
 					</div>
-				</form>
 			</div>
 			<div class="row" style="margin-top: 40px;">
 				<div class="col-sm-8">
@@ -169,6 +168,7 @@
 					</div>
 				</div>
 			</div>
+			</form>
 		</div>
 		<loader :isLoading.sync="isLoading">Loading...</loader>
 	</div>
@@ -239,7 +239,8 @@ export default {
             default: function() {
                 return {
                     address: {},
-                    contact: {}
+                    contact: {},
+                    images: []
                 };
             },
             type: Object
@@ -270,15 +271,39 @@ export default {
 		goBack: function() {
             helpers.goBack(this);
         },
+		validateForm:function () {
+			let vm = this;
+			var isValid = vm.validateEditor();
+            return  vm.form.valid() && isValid;
+		},
         create: function() {
-            if (this.form.valid()) {
-                this.sendData(api_endpoints.campgrounds, 'POST');
-            }
+			if(this.validateForm()){
+				this.sendData(api_endpoints.campgrounds, 'POST');
+			}
         },
         update: function() {
-            if (this.form.valid()) {
-                this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
+			if(this.validateForm()){
+				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
+			}
+        },
+        validateEditor: function(){
+            let vm = this;
+            var el = $('#editor');
+			if (el.parents('.form-group').hasClass('has-error')) {
+				$(el).tooltip("destroy");
+				$(el).attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+			}
+            if (vm.editor.getText().trim().length == 0){
+                // add or update tooltips
+                $(el).tooltip({
+                        trigger: "focus"
+                    })
+                    .attr("data-original-title", 'Description is required')
+                    .parents('.form-group').addClass('has-error');
+                return false;
             }
+
+            return true;
         },
         sendData: function(url, method) {
             let vm = this;
@@ -307,6 +332,7 @@ export default {
                 },
                 data: JSON.stringify(vm.campground),
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                contentType: "application/x-www-form-urlencoded",
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     if (method == 'POST') {
@@ -375,6 +401,7 @@ export default {
         },
         addFormValidations: function() {
             this.form.validate({
+				ignore:'div.ql-editor',
                 rules: {
                     name: "required",
                     park: "required",
@@ -387,7 +414,6 @@ export default {
                     },
                     telephone: "required",
                     postcode: "required",
-                    editor: "required",
                     price_level: "required"
                 },
                 messages: {
@@ -395,13 +421,12 @@ export default {
                     park: "Select a park from the options",
                     campground_type: "Select a campground type from the options",
                     site_type: "Select a site type from the options",
-                    editor: "required",
                     price_level: "Select a price level from the options"
                 },
                 showErrors: function(errorMap, errorList) {
-
                     $.each(this.validElements(), function(index, element) {
                         var $element = $(element);
+
                         $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
                     });
 
@@ -455,6 +480,7 @@ export default {
 
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;
+			vm.validateEditor();
         });
 
         vm.form = $('#attForm');

@@ -63,7 +63,9 @@ export default {
         return {
             campground: {},
             campsite:{},
-            closure: {},
+            closure: {
+                id:''
+            },
             deleteClosure: null,
             deleteClosurePrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",

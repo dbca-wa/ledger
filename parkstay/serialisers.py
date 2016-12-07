@@ -1,3 +1,4 @@
+from django.conf import settings
 from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
@@ -16,7 +17,8 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClass,
                                 Booking,
                                 CampsiteRate,
-                                Contact
+                                Contact,
+                                CampgroundImage
                             )
 from rest_framework import serializers
 
@@ -113,9 +115,31 @@ class FeatureSerializer(serializers.HyperlinkedModelSerializer):
         model = Feature
         fields = ('url','id','name','description','image')
 
+class CampgroundImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(max_length=17)
+
+    def get_image(self, obj):
+        return self.context['request'].build_absolute_uri('/media{}'.format(obj.image.url.split(settings.MEDIA_ROOT)[1]))
+
+    class Meta:
+        model = CampgroundImage
+        fields = ('id','image','campground')
+        read_only_fields = ('id',)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        super(CampgroundImageSerializer, self).__init__(*args, **kwargs)
+        if method == 'get':
+            self.fields['image'] = serializers.SerializerMethodField()
+
+
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     address = serializers.JSONField()
     contact = ContactSerializer(required=False)
+    images = CampgroundImageSerializer(many=True,required=False)
     class Meta:
         model = Campground
         fields = (
@@ -143,6 +167,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'dog_permitted',
             'check_in',
             'check_out',
+            'images'
         )
 
     def get_site_type(self, obj):
@@ -176,6 +201,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
             self.fields['address'] = serializers.SerializerMethodField()
+            self.fields['images'] = CampgroundImageSerializer(many=True,required=False,method='get')
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
@@ -186,7 +212,7 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','details','campsite','editable')
 
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
-    name = serializers.CharField(default='')
+    name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
         fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','cs_tents','cs_parking_spaces','cs_number_vehicles','cs_min_people','cs_max_people','cs_dimensions')

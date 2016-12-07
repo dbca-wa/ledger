@@ -110,7 +110,8 @@ export default {
         let vm = this;
         return {
             campground: {
-                address:{}
+                address:{},
+                images: []
             },
             campsites: [],
             isOpenOpenCS: false,
@@ -320,6 +321,7 @@ export default {
                 success: function(data, stat, xhr) {
                     vm.campground = data;
                     vm.fetchCampsites();
+                    bus.$emit('campgroundFetched');
                 }
             });
         }
