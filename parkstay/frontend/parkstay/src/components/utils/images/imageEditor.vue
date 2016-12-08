@@ -108,21 +108,14 @@ module.exports = {
             let vm = this;
             vm.imageLoaderText='Loading Images...'
             vm.addingImage = true;
-            vm.images.splice(i, 1);;
+            vm.images.splice(i, 1);
             $('.upload').slick('unslick');
-            setTimeout(function(){
-                vm.slick_init();
-            },100);
-            setTimeout(function(){
-                vm.addingImage = false;
-                $('.upload').slick('resize');
-            },400);
+            vm.slick_refresh();
         },
         showRemove:function () {
             let vm = this;
 
             var el = $('div[data-index]');
-            console.log($(el));
             $(el).on('mouseover',function(e){
                 $(this).siblings('.overlay').addClass('show').on('mouseleave',function(el){
                     $(this).removeClass('show');
@@ -131,11 +124,11 @@ module.exports = {
         },
         clearImages: function() {
             let vm = this;
-            vm.images = [];
+            vm.imageLoaderText='Removing Images...'
+            vm.addingImage = true;
+            vm.images.splice(0,vm.images.length);
             $('.upload').slick('unslick');
-            setTimeout(function(){
-                vm.slick_init();
-            },100);
+            vm.slick_refresh();
         },
         slick_init: function() {
             let vm = this;
@@ -381,10 +374,10 @@ module.exports = {
 
     cursor: pointer;
 
-    color: transparent;
+    color:transparent;;
     border: 0;
     outline: none;
-    background: transparent;
+    background:transparent;
 }
 .slick-dots li button:hover,
 .slick-dots li button:focus
@@ -398,8 +391,8 @@ module.exports = {
 }
 .slick-dots li button:before
 {
-    font-family: 'slick';
-    font-size: 6px;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: 12px;
     line-height: 20px;
 
     position: absolute;
@@ -409,19 +402,19 @@ module.exports = {
     width: 20px;
     height: 20px;
 
-    content: '•';
+    content: '\f111';
     text-align: center;
 
     opacity: .25;
-    color: black;
+    color: #337ab7;
 
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 .slick-dots li.slick-active button:before
 {
-    opacity: .75;
-    color: black;
+    opacity: 1;
+    color: #337ab7;
 }
 .panel-group .panel+.panel {
     margin-top: 0;

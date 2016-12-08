@@ -49,7 +49,8 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     RateDetailSerializer,
                                     CampgroundPriceHistorySerializer,
                                     CampsiteClassPriceHistorySerializer,
-                                    CampgroundImageSerializer
+                                    CampgroundImageSerializer,
+                                    ExistingCampgroundImageSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 
@@ -240,7 +241,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
     def strip_b64_header(self, content):
         if ';base64,' in content:
-            header, base64_data = content.split(';base64,') 
+            header, base64_data = content.split(';base64,')
             return base64_data
         return content
 
@@ -292,16 +293,37 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 images_data = request.data.pop("images")
             serializer = self.get_serializer(instance,data=request.data,partial=True)
             serializer.is_valid(raise_exception=True)
-            # Get and Validate campground images 
+            # Get and Validate campground images
             initial_image_serializers = [CampgroundImageSerializer(data=image) for image in images_data] if images_data else []
-            image_serializers = []
+            image_serializers, existing_image_serializers = [],[]
+            # Get campgrounds current images
+            current_images = instance.images.all()
             if initial_image_serializers:
 
                 for image_serializer in initial_image_serializers:
                     result = urlparse(image_serializer.initial_data['image'])
                     if not (result.scheme =='http' or result.scheme == 'https') and not result.netloc:
                         image_serializers.append(image_serializer)
+                    else:
+                        data = {
+                            'id':image_serializer.initial_data['id'],
+                            'image':image_serializer.initial_data['image'],
+                            'campground':instance.id
+                        }
+                        existing_image_serializers.append(ExistingCampgroundImageSerializer(data=data))
 
+                # Dealing with existing images
+                images_id_list = []
+                for image_serializer in existing_image_serializers:
+                    image_serializer.is_valid(raise_exception=True)
+                    images_id_list.append(image_serializer.validated_data['id'])
+
+                #Get current object images and check if any has been removed
+                for img in current_images:
+                    if img.id not in images_id_list:
+                        img.delete()
+
+                # Creating new Images
                 if image_serializers:
                     for image_serializer in image_serializers:
                         image_serializer.initial_data["campground"] = instance.id
@@ -310,9 +332,12 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
                     for image_serializer in image_serializers:
                         image_serializer.is_valid(raise_exception=True)
-                    
+
                     for image_serializer in image_serializers:
                         image_serializer.save()
+            else:
+                if current_images:
+                    current_images.delete()
 
             self.perform_update(serializer)
             return Response(serializer.data)

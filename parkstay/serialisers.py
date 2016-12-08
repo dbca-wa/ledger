@@ -135,6 +135,13 @@ class CampgroundImageSerializer(serializers.ModelSerializer):
         if method == 'get':
             self.fields['image'] = serializers.SerializerMethodField()
 
+class ExistingCampgroundImageSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+    image = serializers.URLField()
+    class Meta:
+        model = CampgroundImage
+        fields = ('id','image','campground')
+    
 
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     address = serializers.JSONField()
