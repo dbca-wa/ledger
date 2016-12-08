@@ -313,19 +313,15 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                         existing_image_serializers.append(ExistingCampgroundImageSerializer(data=data))
 
                 # Dealing with existing images
-                if existing_image_serializers:
-                    images_id_list = []
-                    for image_serializer in existing_image_serializers:
-                        image_serializer.is_valid(raise_exception=True)
-                        images_id_list.append(image_serializer.validated_data['id'])
+                images_id_list = []
+                for image_serializer in existing_image_serializers:
+                    image_serializer.is_valid(raise_exception=True)
+                    images_id_list.append(image_serializer.validated_data['id'])
 
-                    #Get current object images and check if any has been removed
-                    for img in current_images:
-                        if img.id not in images_id_list:
-                            img.delete()
-                else:
-                    if current_images:
-                        current_images.delete()
+                #Get current object images and check if any has been removed
+                for img in current_images:
+                    if img.id not in images_id_list:
+                        img.delete()
 
                 # Creating new Images
                 if image_serializers:
