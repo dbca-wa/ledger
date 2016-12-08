@@ -86,5 +86,16 @@ module.exports = {
     campsiteclass_price_history: function(id){
         return "/api/campsite_classes/"+ id +"/price_history.json";
     },
-
+    closureReasons:function () {
+        return "/api/closureReasons.json";
+    },
+    openReasons:function () {
+        return "/api/openReasons.json";
+    },
+    priceReasons:function () {
+        return "/api/priceReasons.json";
+    },
+    openReasons:function () {
+        return "/api/maxStayReasons.json";
+    },
 };
