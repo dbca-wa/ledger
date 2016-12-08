@@ -323,6 +323,9 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                     for img in current_images:
                         if img.id not in images_id_list:
                             img.delete()
+                else:
+                    if current_images:
+                        current_images.delete()
 
                 # Creating new Images
                 if image_serializers:
