@@ -96,6 +96,10 @@ class PriceReason(ReasonAdmin):
 class ClosureReason(ReasonAdmin):
     pass
 
+@admin.register(models.OpenReason)
+class OpenReason(ReasonAdmin):
+    pass
+
 admin.site.register(models.Rate)
 admin.site.register(models.Region)
 admin.site.register(models.District)

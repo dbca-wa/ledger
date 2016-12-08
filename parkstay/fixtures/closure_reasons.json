@@ -4,7 +4,7 @@
         "pk":1,
         "fields":
         {
-            "text":"Open",
+            "text":"Other",
             "editable": false
         }
     },
@@ -13,22 +13,13 @@
         "pk":2,
         "fields":
         {
-            "text":"Other",
-            "editable": false
-        }
-    },
-    {
-        "model": "parkstay.closurereason",
-        "pk":3,
-        "fields":
-        {
             "text":"Closed due to natural disaster",
             "editable": false
         }
     },
     {
         "model": "parkstay.closurereason",
-        "pk":4,
+        "pk":3,
         "fields":
         {
             "text":"Closed for maintenance",

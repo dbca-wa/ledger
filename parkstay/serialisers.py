@@ -18,7 +18,11 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 Booking,
                                 CampsiteRate,
                                 Contact,
-                                CampgroundImage
+                                CampgroundImage,
+                                ClosureReason,
+                                OpenReason,
+                                PriceReason,
+                                MaximumStayReason
                             )
 from rest_framework import serializers
 
@@ -331,3 +335,25 @@ class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
         model = CampsiteClassPriceHistory
         fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
         read_only_fields = ('id','editable','deletable','adult','concession','child')
+
+# Reasons
+# ============================
+class ClosureReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClosureReason
+        fields = ('id','text')
+
+class OpenReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OpenReason
+        fields = ('id','text')
+
+class PriceReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PriceReason
+        fields = ('id','text')
+
+class MaximumStayReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MaximumStayReason
+        fields = ('id','text')

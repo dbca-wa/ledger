@@ -312,14 +312,14 @@ class CampgroundImage(models.Model):
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),
-        (1, 'Closed due to natural disaster'),
-        (2, 'Closed for maintenance'),
-        (3, 'Other'),
+        (1, 'Closed'),
     )
     created = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now_add=True,help_text='Used to check if the start and end dated were changed')
 
     status = models.SmallIntegerField(choices=BOOKING_RANGE_CHOICES, default=0)
+    closure_reason = models.ForeignKey('ClosureReason',null=True,blank=True)
+    open_reason = models.ForeignKey('OpenReason',null=True,blank=True)
     details = models.TextField(blank=True,null=True)
     range_start = models.DateField(blank=True, null=True)
     range_end = models.DateField(blank=True, null=True)
@@ -349,6 +349,13 @@ class BookingRange(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        if self.status == 0 and not self.closure_reason:
+            raise ValidationError('A closure reason is required')
+        elif self.status == 1 and not self.open_reason:
+            raise ValidationError('An opening reason is required')
+
+        if (self.closure_reason.id == 1 or self.open_reason.id == 1 ) and not self.details:
+            raise ValidationError('Details is required if other option is selected')
 
         super(BookingRange, self).save(*args, **kwargs)
 
@@ -844,10 +851,10 @@ class MaximumStayReason(Reason):
     pass
 
 class ClosureReason(Reason):
-    class Meta:
-        ordering = ('id',)
-        verbose_name ='Availability Reason'
-        verbose_name_plural ='Availability Reasons'
+    pass
+
+class OpenReason(Reason):
+    pass
 
 class PriceReason(Reason):
     pass
