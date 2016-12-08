@@ -82,6 +82,7 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
         fields = (
             'id',
             'status',
+            'reason',
             'range_start',
             'range_end',
             'details',
@@ -99,6 +100,7 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
         fields = (
             'id',
             'status',
+            'reason',
             'range_start',
             'range_end',
             'details',
