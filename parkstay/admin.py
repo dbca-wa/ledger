@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib import admin
 from parkstay import models 
 
@@ -61,8 +62,27 @@ class ContactAdmin(admin.ModelAdmin):
     search_fields = ('name','phone_number')
 
 class ReasonAdmin(admin.ModelAdmin):
-    list_display = ('code','text')
+    list_display = ('code','text','editable')
     search_fields = ('code','text')
+    readonly_fields = ('code',)
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(self.readonly_fields)
+        if obj and not obj.editable:
+            fields += ['text','editable']
+        elif not obj:
+            fields = []
+        return fields
+
+    def has_add_permission(self, request, obj=None):
+        if obj and not obj.editable:
+            return False
+        return super(ReasonAdmin, self).has_delete_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.editable:
+            return False
+        return super(ReasonAdmin, self).has_delete_permission(request, obj)
 
 @admin.register(models.MaximumStayReason)
 class MaximumStayReason(ReasonAdmin):

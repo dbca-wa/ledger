@@ -822,6 +822,7 @@ class Booking(models.Model):
 # =====================================
 class Reason(models.Model):
     text = models.TextField()
+    editable = models.BooleanField(default=True,editable=False)
 
     class Meta:
         ordering = ('id',)
@@ -843,7 +844,10 @@ class MaximumStayReason(Reason):
     pass
 
 class ClosureReason(Reason):
-    pass
+    class Meta:
+        ordering = ('id',)
+        verbose_name ='Availability Reason'
+        verbose_name_plural ='Availability Reasons'
 
 class PriceReason(Reason):
     pass
