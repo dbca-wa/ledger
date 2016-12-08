@@ -241,7 +241,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
     def strip_b64_header(self, content):
         if ';base64,' in content:
-            header, base64_data = content.split(';base64,') 
+            header, base64_data = content.split(';base64,')
             return base64_data
         return content
 
@@ -293,7 +293,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 images_data = request.data.pop("images")
             serializer = self.get_serializer(instance,data=request.data,partial=True)
             serializer.is_valid(raise_exception=True)
-            # Get and Validate campground images 
+            # Get and Validate campground images
             initial_image_serializers = [CampgroundImageSerializer(data=image) for image in images_data] if images_data else []
             image_serializers, existing_image_serializers = [],[]
             # Get campgrounds current images
@@ -312,8 +312,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                         }
                         existing_image_serializers.append(ExistingCampgroundImageSerializer(data=data))
 
-                # Dealing with existing images
-                if existing_image_serializers:
                     images_id_list = []
                     for image_serializer in existing_image_serializers:
                         image_serializer.is_valid(raise_exception=True)
@@ -333,7 +331,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
                     for image_serializer in image_serializers:
                         image_serializer.is_valid(raise_exception=True)
-                    
+
                     for image_serializer in image_serializers:
                         image_serializer.save()
             else:
