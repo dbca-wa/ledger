@@ -338,6 +338,12 @@ class BookingRange(models.Model):
             return True
         return False
 
+    @property
+    def reason(self):
+        if self.status == 0:
+            return self.open_reason.text
+        return self.closure_reason.text
+
     # Methods
     # =====================================
     def _is_same(self,other):
@@ -349,13 +355,10 @@ class BookingRange(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        if self.status == 0 and not self.closure_reason:
-            raise ValidationError('A closure reason is required')
-        elif self.status == 1 and not self.open_reason:
-            raise ValidationError('An opening reason is required')
-
-        if (self.closure_reason.id == 1 or self.open_reason.id == 1 ) and not self.details:
-            raise ValidationError('Details is required if other option is selected')
+        if self.status == 1 and not self.closure_reason:
+            self.closure_reason = ClosureReason.objects.get(pk=1)
+        elif self.status == 0 and not self.open_reason:
+            self.open_reason = OpenReason.objects.get(pk=1)
 
         super(BookingRange, self).save(*args, **kwargs)
 
@@ -368,6 +371,7 @@ class StayHistory(models.Model):
     min_dba = models.SmallIntegerField(default=0)
     max_dba = models.SmallIntegerField(default=180)
 
+    reason = models.ForeignKey('MaximumStayReason')
     details = models.TextField(blank=True,null=True)
     range_start = models.DateField(blank=True, null=True)
     range_end = models.DateField(blank=True, null=True)
@@ -781,6 +785,8 @@ class CampsiteRate(models.Model):
     date_end = models.DateField(null=True, blank=True)
     rate_type = models.SmallIntegerField(choices=RATE_TYPE_CHOICES, default=0)
     price_model = models.SmallIntegerField(choices=PRICE_MODEL_CHOICES, default=0)
+    reason = models.ForeignKey('PriceReason')
+    details = models.TextField(null=True,blank=True)
     update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
 
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
