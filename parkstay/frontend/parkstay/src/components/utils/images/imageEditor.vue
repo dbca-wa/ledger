@@ -374,10 +374,10 @@ module.exports = {
 
     cursor: pointer;
 
-    color: transparent;
+    color:transparent;;
     border: 0;
     outline: none;
-    background: transparent;
+    background:transparent;
 }
 .slick-dots li button:hover,
 .slick-dots li button:focus
@@ -391,8 +391,8 @@ module.exports = {
 }
 .slick-dots li button:before
 {
-    font-family: 'slick';
-    font-size: 6px;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: 12px;
     line-height: 20px;
 
     position: absolute;
@@ -402,19 +402,19 @@ module.exports = {
     width: 20px;
     height: 20px;
 
-    content: '•';
+    content: '\f111';
     text-align: center;
 
     opacity: .25;
-    color: black;
+    color: #337ab7;
 
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 .slick-dots li.slick-active button:before
 {
-    opacity: .75;
-    color: black;
+    opacity: 1;
+    color: #337ab7;
 }
 .panel-group .panel+.panel {
     margin-top: 0;
