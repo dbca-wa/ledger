@@ -8,8 +8,9 @@
                 <select v-if="!reasons.length > 0" class="form-control" >
                     <option value="">Loading...</option>
                 </select>
-                <select v-else name="open_reason" v-model="selected_reason" class="form-control" id="open_cg_reason">
-                    <option v-for="reason in reasons" :value="reason.id">{{reason.name}}</option>
+                <select v-else name="open_reason" v-model="selected" class="form-control" id="open_cg_reason">
+                    <option value=""></option>
+                    <option v-for="reason in reasons" :value="reason.id">{{reason.text}}</option>
                 </select>
             </div>
         </div>
@@ -17,62 +18,73 @@
 </template>
 
 <script>
+import {
+    $,
+    api_endpoints,
+    bus
+}from '../../hooks.js'
 export default {
     name:'reasons',
     data:function () {
         let vm =this;
         return {
-            selected_reason:'',
-            reasons:[]
+            reasons:[],
+            selected:''
         }
     },
     props:{
-        reason:{
+        type:{
             required:true
+        }
+    },
+    watch:{
+        selected:function () {
+            this.$emit('reason_updated',this.selected);
         }
     },
     methods:{
         fetchOpenReasons:function () {
             let vm = this;
-            $.get(api_endpoints.reasons,function (data) {
+            $.get(api_endpoints.openReasons(),function (data) {
                 vm.reasons = data;
             });
         },
         fetchClosureReasons:function () {
             let vm = this;
-            $.get(api_endpoints.reasons,function (data) {
+            $.get(api_endpoints.closureReasons(),function (data) {
                 vm.reasons = data;
             });
         },
         fetchMaxStayReasons:function () {
             let vm = this;
-            $.get(api_endpoints.reasons,function (data) {
+            $.get(api_endpoints.maxStayReasons(),function (data) {
                 vm.reasons = data;
             });
         },
         fetchPriceReasons:function () {
             let vm = this;
-            $.get(api_endpoints.reasons,function (data) {
+            $.get(api_endpoints.priceReasons(),function (data) {
                 vm.reasons = data;
             });
         },
     },
     mounted:function(){
         let vm =this;
-
-        switch (vm.reason.toLowerCase()) {
-            case 'close':
-                vm.fetchClosureReasons();
-                break;
-            case 'open':
-                vm.fetchOpenReasons();
-                break;
-            case 'stay':
-                vm.fetchMaxStayReasons();
-                break;
-            case 'price':
-                vm.fetchPriceReasons();
-                break;
+        if(vm.type){
+            switch (vm.type.toLowerCase()) {
+                case 'close':
+                    vm.fetchClosureReasons();
+                    break;
+                case 'open':
+                    vm.fetchOpenReasons();
+                    break;
+                case 'stay':
+                    vm.fetchMaxStayReasons();
+                    break;
+                case 'price':
+                    vm.fetchPriceReasons();
+                    break;
+            }
         }
     }
 }
