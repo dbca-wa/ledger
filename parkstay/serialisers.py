@@ -82,7 +82,8 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
         fields = (
             'id',
             'status',
-            'reason',
+            'closure_reason',
+            'open_reason',
             'range_start',
             'range_end',
             'details',
@@ -100,7 +101,8 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
         fields = (
             'id',
             'status',
-            'reason',
+            'closure_reason',
+            'open_reason',
             'range_start',
             'range_end',
             'details',
