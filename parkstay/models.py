@@ -338,6 +338,12 @@ class BookingRange(models.Model):
             return True
         return False
 
+    @property
+    def reason(self):
+        if self.status == 0:
+            return self.open_reason.text
+        return self.closure_reason.text
+
     # Methods
     # =====================================
     def _is_same(self,other):

@@ -86,10 +86,12 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             'open_reason',
             'range_start',
             'range_end',
+            'reason',
             'details',
             'editable',
             'campground'
         )
+        read_only_fields = ('reason',)
         write_only_fields = (
             'campground'
         )
@@ -105,10 +107,12 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
             'open_reason',
             'range_start',
             'range_end',
+            'reason',
             'details',
             'editable',
             'campsite'
         )
+        read_only_fields = ('reason',)
         write_only_fields = (
             'campsite'
         )

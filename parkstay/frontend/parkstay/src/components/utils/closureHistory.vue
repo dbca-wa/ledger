@@ -111,7 +111,7 @@ export default {
                     }
 
                 }, {
-                    data: 'status'
+                    data: 'reason'
                 }, {
                     data: 'details'
                 }, {
