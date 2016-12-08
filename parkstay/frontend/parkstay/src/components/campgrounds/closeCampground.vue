@@ -34,20 +34,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label for="open_cg_reason">Reason: </label>
-                    </div>
-                    <div class="col-md-4">
-                        <select name="closure_reason" v-model="formdata.reason" class="form-control" id="close_cg_reason">
-                            <option value="1">Closed due to natural disaster</option>
-                            <option value="2">Closed for maintenance</option>
-                            <option value="3">Other</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+            <reason type="close" @reason_updated="updateReason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -69,6 +56,7 @@ import bootstrapModal from '../utils/bootstrap-modal.vue'
 import {bus} from '../utils/eventBus.js'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
 import alert from '../utils/alert.vue'
+import reason from '../utils/reasons.vue'
 module.exports = {
     name: 'pkCgClose',
     data: function() {
@@ -79,6 +67,7 @@ module.exports = {
                 range_start: '',
                 range_end: '',
                 reason:'',
+                status:'1',
                 details: ''
             },
             closeStartPicker: '',
@@ -97,12 +86,15 @@ module.exports = {
             return this.$parent.isOpenCloseCG;
         },
         requireDetails: function () {
-            return (this.formdata.reason === '3')? true: false;
-        }
+            let vm =this;
+
+            return (vm.formdata.reason == 1)? true: false;
+        },
     },
     components: {
         bootstrapModal,
-        alert
+        alert,
+        reason
     },
     methods: {
         close: function() {
@@ -114,9 +106,13 @@ module.exports = {
                 this.sendData();
             }
         },
+        updateReason:function (id) {
+            this.formdata.reason = id;
+        },
         sendData: function() {
             let vm = this;
             var data = this.formdata;
+            data.reason = vm.$refs.reasons.selected;
             data.status = vm.formdata.reason;
             $.ajax({
                 url: api_endpoints.opencloseCG(vm.id),
@@ -181,6 +177,10 @@ module.exports = {
     mounted: function() {
         var vm = this;
         bus.$on('openclose', function(data){
+            vm.status = data.status;
+            vm.id = data.id;
+        });
+        bus.$on('', function(data){
             vm.status = data.status;
             vm.id = data.id;
         });
