@@ -818,6 +818,35 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
 
+# REASON MODELS
+# =====================================
+class Reason(models.Model):
+    text = models.TextField()
+
+    class Meta:
+        ordering = ('id',)
+        abstract = True
+
+    # Properties
+    # ==============================
+    def code(self):
+        return self.__get_code() 
+
+    # Methods 
+    # ==============================
+    def __get_code(self):
+        length = len(str(self.id))
+        val = '0'
+        return '{}{}'.format((val*(6-length)),self.id)
+
+class MaximumStayReason(Reason):
+    pass
+
+class ClosureReason(Reason):
+    pass
+
+class PriceReason(Reason):
+    pass
 # VIEWS
 # =====================================
 class CampgroundPriceHistory(models.Model):
