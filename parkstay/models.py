@@ -837,7 +837,7 @@ class Reason(models.Model):
     def __get_code(self):
         length = len(str(self.id))
         val = '0'
-        return '{}{}'.format((val*(6-length)),self.id)
+        return '{}{}'.format((val*(4-length)),self.id)
 
 class MaximumStayReason(Reason):
     pass
