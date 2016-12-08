@@ -23,6 +23,10 @@ router.register(r'campsite_booking_ranges',api.CampsiteBookingRangeViewset)
 router.register(r'campsite_rate',api.CampsiteRateViewSet)
 router.register(r'campsites_stay_history',api.CampsiteStayHistoryViewSet)
 router.register(r'rates',api.RateViewset)
+router.register(r'closureReasons',api.ClosureReasonViewSet)
+router.register(r'openReasons',api.OpenReasonViewSet)
+router.register(r'priceReasons',api.PriceReasonViewSet)
+router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 
 api_patterns = [
     url(r'api/',include(router.urls))

@@ -27,7 +27,11 @@ from parkstay.models import (Campground,
                                 CampsiteRate,
                                 Rate,
                                 CampgroundPriceHistory,
-                                CampsiteClassPriceHistory
+                                CampsiteClassPriceHistory,
+                                ClosureReason,
+                                OpenReason,
+                                PriceReason,
+                                MaximumStayReason
                                 )
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
@@ -50,7 +54,11 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundPriceHistorySerializer,
                                     CampsiteClassPriceHistorySerializer,
                                     CampgroundImageSerializer,
-                                    ExistingCampgroundImageSerializer
+                                    ExistingCampgroundImageSerializer,
+                                    ClosureReasonSerializer,
+                                    OpenReasonSerializer,
+                                    PriceReasonSerializer,
+                                    MaximumStayReasonSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 
@@ -1005,3 +1013,22 @@ class CampsiteBookingRangeViewset(BookingRangeViewset):
 class RateViewset(viewsets.ModelViewSet):
     queryset = Rate.objects.all()
     serializer_class = RateSerializer
+
+# Reasons
+# =========================
+class ClosureReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ClosureReason.objects.all()
+    serializer_class = ClosureReasonSerializer
+
+class OpenReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = OpenReason.objects.all()
+    serializer_class = OpenReasonSerializer
+
+class PriceReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = PriceReason.objects.all()
+    serializer_class = PriceReasonSerializer
+
+class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MaximumStayReason.objects.all()
+    serializer_class = MaximumStayReasonSerializer
+
