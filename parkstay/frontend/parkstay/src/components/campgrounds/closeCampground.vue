@@ -66,7 +66,7 @@ module.exports = {
             formdata: {
                 range_start: '',
                 range_end: '',
-                reason:'',
+                closure_reason:'',
                 status:'1',
                 details: ''
             },
@@ -88,7 +88,7 @@ module.exports = {
         requireDetails: function () {
             let vm =this;
 
-            return (vm.formdata.reason == 1)? true: false;
+            return (vm.formdata.closure_reason == 1)? true: false;
         },
     },
     components: {
@@ -107,13 +107,11 @@ module.exports = {
             }
         },
         updateReason:function (id) {
-            this.formdata.reason = id;
+            this.formdata.closure_reason = id;
         },
         sendData: function() {
             let vm = this;
             var data = this.formdata;
-            data.reason = vm.$refs.reasons.selected;
-            data.status = vm.formdata.reason;
             $.ajax({
                 url: api_endpoints.opencloseCG(vm.id),
                 method: 'POST',
@@ -140,7 +138,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === '3';
+                                return vm.formdata.closure_reason === '1';
                             }
                         }
                     }
