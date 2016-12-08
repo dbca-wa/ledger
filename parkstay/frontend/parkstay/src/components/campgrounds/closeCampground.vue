@@ -34,7 +34,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="close" @reason_updated="updateReason" ></reason>
+            <reason type="close" @reason_updated="updateReason" ref="reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -87,7 +87,6 @@ module.exports = {
         },
         requireDetails: function () {
             let vm =this;
-
             return (vm.formdata.closure_reason == 1)? true: false;
         },
     },
@@ -99,7 +98,8 @@ module.exports = {
     methods: {
         close: function() {
             this.$parent.isOpenCloseCG = false;
-            this.status = '';
+            this.formdata = {};
+            this.$refs.reason.selected = "";
         },
         addClosure: function() {
             if (this.form.valid()){
@@ -125,7 +125,7 @@ module.exports = {
                 },
                 error:function (data){
                     vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+                    vm.errorString = helpers.apiError(data);
                 }
             });
         },
@@ -175,10 +175,6 @@ module.exports = {
     mounted: function() {
         var vm = this;
         bus.$on('openclose', function(data){
-            vm.status = data.status;
-            vm.id = data.id;
-        });
-        bus.$on('', function(data){
             vm.status = data.status;
             vm.id = data.id;
         });
