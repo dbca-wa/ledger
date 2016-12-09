@@ -231,6 +231,15 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','reason','details','campsite','editable')
         read_only_fields =('editable',)
 
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        super(CampsiteStayHistorySerializer, self).__init__(*args, **kwargs)
+        if method == 'get':
+            self.fields['reason'] = serializers.CharField(source='reason.text')
+
 class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
