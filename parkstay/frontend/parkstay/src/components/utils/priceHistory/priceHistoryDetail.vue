@@ -62,21 +62,8 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label>Reason: </label>
-                    </div>
-                    <div class="col-md-4">
-                        <select v-on:change="requireDetails()" name="reason" v-model="priceHistory.reason" class="form-control" id="close_cg_reason">
-                            <option value="1">Closed due to natural disaster</option>
-                            <option value="2">Closed for maintenance</option>
-                            <option value="3">Other</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div v-show="showDetails" class="row">
+            <reason type="price" v-model="priceHistory.reason" ></reason>
+            <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Details: </label>
@@ -94,6 +81,7 @@
 
 <script>
 import bootstrapModal from '../bootstrap-modal.vue'
+import reason from '../reasons.vue'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
 import alert from '../alert.vue'
 module.exports = {
@@ -131,7 +119,10 @@ module.exports = {
         },
         closure_id: function() {
             return this.priceHistory.id ? this.priceHistory.id : '';
-        }
+        },
+        requireDetails: function() {
+            return this.priceHistory.reason == '1';
+        },
     },
     watch: {
         selected_rate: function() {
@@ -156,12 +147,10 @@ module.exports = {
     },
     components: {
         bootstrapModal,
-        alert
+        alert,
+        reason
     },
     methods: {
-        requireDetails: function() {
-            this.showDetails =  this.priceHistory.reason == 3;
-        },
         close: function() {
             delete this.priceHistory.original;
             this.errors = false;
@@ -198,7 +187,7 @@ module.exports = {
                     details: {
                         required: {
                             depends: function(el){
-                                return vm.priceHistory.reason=== '3';
+                                return vm.priceHistory.reason=== '1';
                             }
                         }
                     }

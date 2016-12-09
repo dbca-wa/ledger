@@ -35,7 +35,7 @@
                 </div>
             </div>
             <reason type="close" v-model="statusHistory.reason" ></reason>
-            <div v-show="showDetails" class="row">
+            <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Details: </label>
@@ -72,7 +72,6 @@ module.exports = {
         let vm = this;
         return {
             id:'',
-            reason:'',
             current_closure: '',
             closeStartPicker: '',
             showDetails:false,
@@ -96,12 +95,9 @@ module.exports = {
         closure_id: function() {
             return this.statusHistory.id ? this.statusHistory.id : '';
         },
-    },
-    watch:{
-        reason:function () {
-            this.statusHistory.reason = this.reason;
-            this.requireDetails();
-        }
+        requireDetails: function() {
+            return this.statusHistory.reason == '1';
+        },
     },
     components: {
         bootstrapModal,
@@ -109,9 +105,6 @@ module.exports = {
         reason
     },
     methods: {
-        requireDetails: function() {
-            this.showDetails =  this.statusHistory.reason == '1';
-        },
         close: function() {
             this.errors = false;
             this.errorString = '';
@@ -122,7 +115,6 @@ module.exports = {
             this.statusHistory.status= '1';
             this.statusHistory.details= '';
             this.statusHistory.reason = '';
-            this.reason='';
             var today = new Date();
             this.closeEndPicker.data('DateTimePicker').date(today);
             this.closeStartPicker.data('DateTimePicker').clear();
@@ -145,7 +137,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.statusHistory.status === '3';
+                                return vm.statusHistory.reason=== '1';
                             }
                         }
                     }
