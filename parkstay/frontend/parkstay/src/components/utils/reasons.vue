@@ -8,7 +8,7 @@
                 <select v-if="!reasons.length > 0" class="form-control" >
                     <option value="">Loading...</option>
                 </select>
-                <select v-else name="open_reason" v-model="selected" class="form-control" id="open_cg_reason">
+                <select v-else name="open_reason" :value="value" @input="$emit('input', $event.target.value)" class="form-control" id="open_cg_reason">
                     <option value=""></option>
                     <option v-for="reason in reasons" :value="reason.id">{{reason.text}}</option>
                 </select>
@@ -28,18 +28,15 @@ export default {
     data:function () {
         let vm =this;
         return {
-            reasons:[],
-            selected:''
+            reasons:[]
         }
     },
     props:{
         type:{
             required:true
-        }
-    },
-    watch:{
-        selected:function () {
-            this.$emit('reason_updated',this.selected);
+        },
+        value:{
+
         }
     },
     methods:{

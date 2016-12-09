@@ -34,7 +34,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="close" @reason_updated="updateReason" ref="reason"></reason>
+            <reason type="close" v-model="formdata.closure_reason" ref="reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -98,16 +98,19 @@ module.exports = {
     methods: {
         close: function() {
             this.$parent.isOpenCloseCG = false;
-            this.formdata = {};
+            this.formdata = {
+                range_start: '',
+                range_end: '',
+                closure_reason:'',
+                status:'1',
+                details: ''
+            };
             this.$refs.reason.selected = "";
         },
         addClosure: function() {
             if (this.form.valid()){
                 this.sendData();
             }
-        },
-        updateReason:function (id) {
-            this.formdata.closure_reason = id;
         },
         sendData: function() {
             let vm = this;
