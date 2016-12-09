@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="open" @reason_updated="updateReason" ></reason>
+            <reason type="open" v-model="formdata.reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -98,9 +98,6 @@ module.exports = {
                 this.sendData();
             }
         },
-        updateReason:function (id) {
-            this.formdata.reason = id;
-        },
         sendData: function() {
             let vm = this;
             var data = this.formdata;
@@ -119,7 +116,7 @@ module.exports = {
                 },
                 error:function (data){
                     vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+                    vm.errorString = helpers.apiError(data);
                 }
             });
 
