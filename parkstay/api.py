@@ -187,7 +187,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
     def stay_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            serializer = CampsiteStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request})
+            serializer = CampsiteStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
             res = serializer.data
 
             return Response(res,status=http_status)

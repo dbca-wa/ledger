@@ -44,21 +44,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label for="stay_reason">Reason: </label>
-                    </div>
-                    <div class="col-md-4">
-                        <select name="stay_reason" v-model="stay.reason" class="form-control" id="stay_reason">
-                            <option value="1">Reason 1</option>
-                            <option value="2">Reason 2</option>
-                            <option value="3">Reason 3</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+            <reason type="stay" @reason_updated="updateReason" ref="reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -77,6 +63,7 @@
 
 <script>
 import bootstrapModal from '../../utils/bootstrap-modal.vue'
+import reason from '../../utils/reasons.vue'
 import {bus} from '../../utils/eventBus.js'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
 import alert from '../../utils/alert.vue'
@@ -114,12 +101,14 @@ module.exports = {
             return this.create ? 'Add New Maximum Stay Period' : 'Edit Maximum Stay Period';
         },
         requireDetails: function () {
-            return (this.stay.reason === 'other')? true: false;
+            let vm = this;
+            return (vm.stay.reason == 1)? true: false;
         }
     },
     components: {
         bootstrapModal,
-        alert
+        alert,
+        reason
     },
     methods: {
         close: function() {
@@ -128,6 +117,9 @@ module.exports = {
             this.errors = false;
             this.errorString = '';
             this.status = '';
+        },
+        updateReason:function (id) {
+            this.stay.reason = id;
         },
         addMaxStay: function() {
             if ($(this.form).valid()){
@@ -147,7 +139,7 @@ module.exports = {
                     stay_details: {
                         required: {
                             depends: function(el){
-                                return vm.stay.reason === 'other';
+                                return vm.stay.reason == 1;
                             }
                         }
                     }
