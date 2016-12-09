@@ -1155,3 +1155,30 @@ class CampsiteRateListener(object):
     def _post_delete(sender, instance, **kwargs): 
         if not instance.date_end:
             CampsiteRate.objects.filter(date_end=instance.date_start- timedelta(days=2),campsite=instance.campsite).update(date_end=None)
+
+class CampsiteStayHistoryListener(object):
+    """
+    Event listener for Campsite Stay History
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=CampsiteStayHistory)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = CampsiteStayHistory.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                within = CampsiteStayHistory.objects.get(Q(campsite=instance.campsite),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within.range_end = instance.range_start - timedelta(days=1)
+                within.save()
+            except CampsiteStayHistory.DoesNotExist:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=CampsiteStayHistory)
+    def _post_delete(sender, instance, **kwargs): 
+        if not instance.range_end:
+            CampsiteStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campsite=instance.campsite).update(range_end=None)
