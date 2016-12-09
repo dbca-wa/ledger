@@ -418,10 +418,6 @@ class CampgroundBookingRange(BookingRange):
 
     def clean(self, *args, **kwargs):
         original = None
-        if self.pk:
-            original = CampgroundBookingRange.objects.get(pk=self.pk)
-            if not original.editable:
-                raise ValidationError('This Booking Range is not editable')
 
         # Preventing ranges within other ranges
         within = CampgroundBookingRange.objects.filter(Q(campground=self.campground),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
@@ -429,6 +425,11 @@ class CampgroundBookingRange(BookingRange):
             raise BookingRangeWithinException('This Booking Range is within the range of another one')
         if self.range_start < datetime.now().date() and original.range_start != self.range_start:
             raise ValidationError('The start date can\'t be in the past')
+
+        if self.pk:
+            original = CampgroundBookingRange.objects.get(pk=self.pk)
+            if not original.editable:
+                raise ValidationError('This Booking Range is not editable')
 
 class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT, related_name='campsites')
@@ -609,10 +610,6 @@ class CampsiteBookingRange(BookingRange):
 
     def clean(self, *args, **kwargs):
         original = None
-        if self.pk:
-            original = CampsiteBookingRange.objects.get(pk=self.pk)
-            if not original.editable:
-                raise ValidationError('This Booking Range is not editable')
 
         # Preventing ranges within other ranges
         within = CampsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
@@ -620,6 +617,11 @@ class CampsiteBookingRange(BookingRange):
             raise BookingRangeWithinException('This Booking Range is within the range of another one')
         if self.range_start < datetime.now().date() and original.range_start != self.range_start:
             raise ValidationError('The start date can\'t be in the past')
+
+        if self.pk:
+            original = CampsiteBookingRange.objects.get(pk=self.pk)
+            if not original.editable:
+                raise ValidationError('This Booking Range is not editable')
 
 class CampsiteStayHistory(StayHistory):
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT,related_name='stay_history')
