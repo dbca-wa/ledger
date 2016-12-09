@@ -35,7 +35,7 @@
                 </div>
             </div>
             <reason type="close" v-model="statusHistory.reason" ></reason>
-            <div v-show="showDetails" class="row">
+            <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Details: </label>
@@ -96,6 +96,9 @@ module.exports = {
         closure_id: function() {
             return this.statusHistory.id ? this.statusHistory.id : '';
         },
+        requireDetails: function() {
+            return this.statusHistory.reason == '1';
+        },
     },
     watch:{
         reason:function () {
@@ -109,9 +112,6 @@ module.exports = {
         reason
     },
     methods: {
-        requireDetails: function() {
-            this.showDetails =  this.statusHistory.reason == '1';
-        },
         close: function() {
             this.errors = false;
             this.errorString = '';
