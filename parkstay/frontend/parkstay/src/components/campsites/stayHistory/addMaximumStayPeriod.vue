@@ -44,7 +44,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="stay" @reason_updated="updateReason" ref="reason"></reason>
+            <reason type="stay" v-model="stay.reason" ref="reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
