@@ -34,7 +34,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="close" ref="reason" @reason_updated="updateReason"></reason>
+            <reason type="close" ref="reason" v-model="reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -63,6 +63,7 @@ module.exports = {
         return {
             id:'',
             current_closure: '',
+            reason:'',
             formdata: {
                 status:1,
                 range_start: '',
@@ -87,13 +88,20 @@ module.exports = {
             return this.isOpen;
         },
         requireDetails: function () {
-            return (this.formdata.reason === '1')? true: false;
-        }
+            let vm =this;
+            return (vm.formdata.closure_reason == 1)? true: false;
+        },
     },
     components: {
         bootstrapModal,
         alert,
         reason
+    },
+    watch:{
+        reason:function () {
+            this.formdata.closure_reason = this.reason;
+
+        }
     },
     methods: {
         close: function() {
@@ -111,9 +119,6 @@ module.exports = {
             if (this.form.valid()){
                 this.$emit('closeCampsite');
             }
-        },
-        updateReason:function (id) {
-            this.formdata.closure_reason = id;
         },
         addFormValidations: function() {
             let vm = this;

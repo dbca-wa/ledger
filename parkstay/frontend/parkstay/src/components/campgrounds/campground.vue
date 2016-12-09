@@ -283,7 +283,6 @@ export default {
         closeCampsite: function() {
             let vm = this;
             var data = vm.$refs.closeCampsite.formdata;
-            data.status = vm.$refs.closeCampsite.formdata.reason;
             $.ajax({
                 url: api_endpoints.opencloseCS(vm.$refs.closeCampsite.id),
                 method: 'POST',
