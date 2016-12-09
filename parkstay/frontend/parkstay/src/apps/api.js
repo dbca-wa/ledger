@@ -95,7 +95,7 @@ module.exports = {
     priceReasons:function () {
         return "/api/priceReasons.json";
     },
-    openReasons:function () {
+    maxStayReasons:function () {
         return "/api/maxStayReasons.json";
     },
 };
