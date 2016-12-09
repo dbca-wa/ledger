@@ -332,7 +332,7 @@ class BookingRange(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if self.status != 0 and((self.range_start > today and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end)):
+        if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start > today and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end)):
             return True
         elif self.status == 0 and ((self.range_start <= today and not self.range_end) or self.range_start > today):
             return True
