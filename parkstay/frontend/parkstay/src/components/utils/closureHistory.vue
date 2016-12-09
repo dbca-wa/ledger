@@ -64,7 +64,8 @@ export default {
             campground: {},
             campsite:{},
             closure: {
-                id:''
+                id:'',
+                status: 1
             },
             deleteClosure: null,
             deleteClosurePrompt: {

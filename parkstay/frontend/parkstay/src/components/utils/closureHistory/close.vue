@@ -34,7 +34,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="close" v-model="reason" ></reason>
+            <reason type="close" v-model="statusHistory.reason" ></reason>
             <div v-show="showDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
