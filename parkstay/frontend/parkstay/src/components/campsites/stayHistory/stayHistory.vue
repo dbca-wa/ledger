@@ -51,7 +51,9 @@ export default {
         let vm = this;
         return {
             campsite: {},
-            stay: {},
+            stay: {
+                reason:''
+            },
             deleteStay: null,
             deleteStayPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
@@ -73,7 +75,7 @@ export default {
                 timeout: 5000,
                 errorString: ''
             },
-            msh_headers: ['ID', 'Period Start', 'Period End', 'Maximum Stay(Nights)', 'Comment', 'Action'],
+            msh_headers: ['ID', 'Period Start', 'Period End', 'Maximum Stay(Nights)','Reason', 'Comment', 'Action'],
             msh_options: {
                 responsive: true,
                 processing: true,
@@ -96,6 +98,8 @@ export default {
                     "data": "range_end"
                 }, {
                     "data": "max_days"
+                },{
+                    "data": "reason"
                 }, {
                     "data": "details"
                 }, {
