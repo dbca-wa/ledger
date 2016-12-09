@@ -122,7 +122,7 @@ module.exports = {
                 },
                 error:function (data){
                     vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+                    vm.errorString = helpers.apiError(data);
                 }
             });
 
