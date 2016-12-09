@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="open" v-model="formdata.reason"></reason>
+            <reason type="open" v-model="reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -58,6 +58,7 @@ module.exports = {
         return {
             status: '',
             id:'',
+            reason:'',
             current_closure: '',
             formdata: {
                 range_start: '',
@@ -70,6 +71,11 @@ module.exports = {
             form: ''
         }
     },
+    watch:{
+        reason:function () {
+            this.formdata.reason = this.reason;
+        }
+    },
     computed: {
         showError: function() {
             var vm = this;
@@ -79,7 +85,7 @@ module.exports = {
             return this.$parent.isOpenOpenCS;
         },
         requireDetails: function () {
-            return (this.formdata.reason === 'other')? true: false;
+            return (this.formdata.reason === '1')? true: false;
         }
     },
     components: {
