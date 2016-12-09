@@ -34,7 +34,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="close" ref="reason" @reason_updated="updateReason"></reason>
+            <reason type="close" ref="reason" v-model="formdata.reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -85,9 +85,6 @@ module.exports = {
         },
         isModalOpen: function() {
             return this.isOpen;
-        },
-        requireDetails: function () {
-            return (this.formdata.reason === '1')? true: false;
         }
     },
     components: {
