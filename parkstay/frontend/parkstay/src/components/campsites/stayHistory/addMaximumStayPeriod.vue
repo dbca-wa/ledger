@@ -112,7 +112,12 @@ module.exports = {
     },
     methods: {
         close: function() {
-            //this.stay= {};
+            this.stay.max_days= '';
+            this.stay.range_start = '';
+            this.stay.range_end = '';
+            this.stay.reason = '';
+            this.stay.details = '';
+            
             this.isOpen = false;
             this.errors = false;
             this.errorString = '';
