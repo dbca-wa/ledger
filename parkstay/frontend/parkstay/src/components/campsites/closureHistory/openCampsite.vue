@@ -91,6 +91,7 @@ module.exports = {
         close: function() {
             this.$parent.isOpenOpenCS = false;
             this.status = '';
+            this.formdata.reason = ''
         },
         addOpen: function() {
             if (this.form.valid()){

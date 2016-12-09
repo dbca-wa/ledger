@@ -85,7 +85,11 @@ module.exports = {
         },
         isModalOpen: function() {
             return this.isOpen;
-        }
+        },
+        requireDetails: function () {
+            let vm =this;
+            return (vm.formdata.closure_reason == 1)? true: false;
+        },
     },
     components: {
         bootstrapModal,
