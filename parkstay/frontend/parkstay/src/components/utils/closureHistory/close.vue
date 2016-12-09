@@ -72,7 +72,6 @@ module.exports = {
         let vm = this;
         return {
             id:'',
-            reason:'',
             current_closure: '',
             closeStartPicker: '',
             showDetails:false,
@@ -100,12 +99,6 @@ module.exports = {
             return this.statusHistory.reason == '1';
         },
     },
-    watch:{
-        reason:function () {
-            this.statusHistory.reason = this.reason;
-            this.requireDetails();
-        }
-    },
     components: {
         bootstrapModal,
         alert,
@@ -122,7 +115,6 @@ module.exports = {
             this.statusHistory.status= '1';
             this.statusHistory.details= '';
             this.statusHistory.reason = '';
-            this.reason='';
             var today = new Date();
             this.closeEndPicker.data('DateTimePicker').date(today);
             this.closeStartPicker.data('DateTimePicker').clear();
@@ -145,7 +137,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.statusHistory.status === '3';
+                                return vm.statusHistory.reason=== '1';
                             }
                         }
                     }
