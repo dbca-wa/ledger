@@ -122,7 +122,7 @@ module.exports = {
                 },
                 error:function (data){
                     vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+                    vm.errorString = helpers.apiError(data);
                 }
             });
 
@@ -172,11 +172,6 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('opencloseCS', function(data){
-            vm.status = data.status;
-            vm.id = data.id;
-            vm.current_closure = data.closure;
-        });
         vm.picker = $('#open_cg_range_start');
         vm.picker.datetimepicker({
             format: 'DD/MM/YYYY'

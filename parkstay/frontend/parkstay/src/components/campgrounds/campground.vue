@@ -1,7 +1,7 @@
 <template lang="html">
    <div class="panel-group" id="applications-accordion" role="tablist" aria-multiselectable="true">
         <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
-        <pkCsOpen></pkCsOpen>
+        <pkCsOpen ref="openCampsite"></pkCsOpen>
       <div class="panel panel-default" id="applications">
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
@@ -344,14 +344,19 @@ export default {
             var id = $(this).attr('data-campsite');
             var status = $(this).attr('data-status');
             var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
-            // Update close modal attributes
-            vm.$refs.closeCampsite.status = status;
-            vm.$refs.closeCampsite.id = id;
-            vm.$refs.closeCampsite.current_closure = current_closure;
+
             if (status === 'open'){
                 vm.showOpenOpenCS();
+                // Update open modal attributes
+                vm.$refs.openCampsite.status = 0;
+                vm.$refs.openCampsite.id = id;
+                vm.$refs.openCampsite.current_closure = current_closure;
             }else if (status === 'close'){
                 vm.showOpenCloseCS();
+                // Update close modal attributes
+                vm.$refs.closeCampsite.status = 1;
+                vm.$refs.closeCampsite.id = id;
+                vm.$refs.closeCampsite.current_closure = current_closure;
             }
         });
         helpers.namePopover($,vm.$refs.cg_campsites_dt.vmDataTable);
