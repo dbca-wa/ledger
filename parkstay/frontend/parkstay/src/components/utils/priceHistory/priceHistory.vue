@@ -70,7 +70,9 @@ export default {
         return {
             campground: {},
             campsite:{},
-            price: {},
+            price: {
+                reason:''
+            },
             deleteHistory: null,
             deleteHistoryPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
