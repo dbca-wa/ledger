@@ -10,6 +10,7 @@ import page_404 from '../components/utils/404.vue'
 import Router from 'vue-router'
 import Campsite_type_dash from '../components/campsites-types/campsite-types-dash.vue'
 import Campsite_type from '../components/campsites-types/campsite-type.vue'
+import Bulkpricing from '../components/bulkpricing/bulkpricing.vue'
 import $ from '../hooks'
 var css = require('../hooks-css.js');
 Vue.use(Router);
@@ -56,6 +57,11 @@ const routes = [
                         name:'campsite-types',
                         component: Campsite_type_dash
                     },
+                    {
+                        path:'bulkpricing',
+                        name:'bulkpricing',
+                        component: Bulkpricing
+                    }, 
                     {
                         path:'campsite-type',
                         component: {
