@@ -42,52 +42,39 @@
     									</div>
     								</div>
                                     <div class="row">
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <div class="form-group">
-                                                <label class="control-label" >Tents</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.tents"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <label class="control-label" >Minimum Number of People</label>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people"required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <div class="form-group">
-                                                <label class="control-label" >Parking Spaces</label>
-    											<select name="parking_spaces" class="form-control" v-model="campsite.parking_spaces" :disabled="selected_campsite_class_url() != ''" >
-    												<option value="0" >Parking within site</option>
-    												<option value="1" >Parking for exclusive use of site occupiers next to site, but separated from tent space</option>
-    												<option value="2" >Parking for exclusive use of occupiers, short walk from tent space</option>
-    												<option value="3" >Shared parking (not allocated), short walk from tent space</option>
-    											</select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label class="control-label" >Number of Vehicles</label>
-    											<select name="parking_spaces" class="form-control" v-model="campsite.number_vehicles" :disabled="selected_campsite_class_url() != ''" >
-    												<option value="0" >One vehicle</option>
-    												<option value="1" >Two vehicles</option>
-    												<option value="2" >One vehicle + small trailer</option>
-    												<option value="3" >One vehicle + small trailer/large vehicle</option>
-    											</select>
+                                                <label class="control-label" >Maximum Number of People</label>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people"required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label class="control-label" >Minimum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campground.tent" :disabled="selected_campsite_class_url() != ''"/>Tent</label>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label class="control-label" >Maximum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campground.campervan" :disabled="selected_campsite_class_url() != ''"/>Campervan</label>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label class="control-label" >Dimensions</label>
-                                                <input type="text" name="name" class="form-control"  v-model="campsite.dimensions"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campground.caravan" :disabled="selected_campsite_class_url() != ''"/>Caravan</label>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -202,12 +189,12 @@ export default {
             campsite: {
                 number: 1,
                 campsite_class: '',
-                tent: '',
-                parking_spaces:'',
-                number_vehicles:'',
+                tent: false,
+                description: '',
+                campervan:false,
+                caravan:false,
                 min_people: '',
                 max_people:'',
-                dimensions:'',
             },
             campsite_classes: [],
             createCampiste: true,
@@ -299,24 +286,23 @@ export default {
                     url:vm.selected_campsite_class_url(),
                     dataType: 'json',
                     success:function (sel_class) {
-                        vm.campsite.tents = sel_class.tents;
-                        vm.campsite.number_vehicles = sel_class.number_vehicles;
-                        vm.campsite.dimensions = sel_class.dimensions;
+                        vm.campsite.tent = sel_class.tent;
+                        vm.campsite.carvan= sel_class.caravan;
+                        vm.campsite.campervan= sel_class.campervan;
                         vm.campsite.max_people = sel_class.max_people;
                         vm.campsite.min_people= sel_class.min_people;
-                        vm.campsite.parking_spaces= sel_class.parking_spaces;
-                        console.log(vm.campsite);
+                        vm.description = sel_class.description;
                     }
 
                 });
             }else{
                 if (!vm.createCampsite){
-                    vm.campsite.tents = temp_campsite.tents;
-                    vm.campsite.number_vehicles = temp_campsite.number_vehicles;
-                    vm.campsite.dimensions = temp_campsite.dimensions;
+                    vm.campsite.tent = sel_class.tent;
+                    vm.campsite.carvan= sel_class.caravan;
+                    vm.campsite.campervan= sel_class.campervan;
                     vm.campsite.max_people = temp_campsite.max_people;
                     vm.campsite.min_people= temp_campsite.min_people;
-                    vm.campsite.parking_spaces= temp_campsite.parking_spaces;
+                    vm.description = temp_campsite.description;
                 }
             }
 
@@ -392,12 +378,11 @@ export default {
             vm.isLoading = true;
             var data = vm.campsite;
             if (vm.selected_campsite_class_url() == ''){
-                data.cs_tents = data.tents;
-                data.cs_parking_spaces = data.parking_spaces;
-                data.cs_number_vehicles = data.number_vehicles;
+                data.cs_tent = data.tent;
+                data.cs_caravan = data.caravan;
+                data.cs_campervan = data.campervan;
                 data.cs_min_people = data.min_people;
                 data.cs_max_people = data.max_people;
-                data.cs_dimensions = data.dimensions;
             }
             $.ajax({
                 beforeSend: function(xhrObj) {

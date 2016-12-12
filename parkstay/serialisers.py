@@ -243,9 +243,9 @@ class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','cs_tents','cs_parking_spaces','cs_number_vehicles','cs_min_people','cs_max_people','cs_dimensions')
-        extra_kwargs = {'cs_tents': {'write_only': True},'cs_parking_spaces': {'write_only': True},'cs_number_vehicles': {'write_only': True},'cs_min_people': {'write_only': True},'cs_max_people': {'write_only': True},'cs_dimensions': {'write_only': True}}
-        read_only_fields = ('tents','parking_spaces','number_vehicles','min_people','max_people','dimensions')
+        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tent','campervan','caravan','min_people','max_people','description','cs_tent','cs_campervan','cs_caravan','cs_min_people','cs_max_people','cs_description')
+        extra_kwargs = {'cs_tent': {'write_only': True},'cs_campervan': {'write_only': True},'cs_caravan': {'write_only': True},'cs_min_people': {'write_only': True},'cs_max_people': {'write_only': True},'cs_description': {'write_only': True}}
+        read_only_fields = ('tent','campervan','caravan','min_people','max_people')
 
     def __init__(self, *args, **kwargs):
         try:
@@ -271,7 +271,7 @@ class RegionSerializer(serializers.HyperlinkedModelSerializer):
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteClass
-        fields = ('url','id','name','tents','parking_spaces','number_vehicles','min_people','max_people','dimensions','features','deleted','can_add_rate','campsites')
+        fields = ('url','id','name','tent','campervan','min_people','caravan','description','features','deleted','can_add_rate','campsites')
         read_only_fields = ('campsites','can_add_rate',)
 
     def __init__(self, *args, **kwargs):
