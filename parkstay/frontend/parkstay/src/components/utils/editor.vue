@@ -42,10 +42,9 @@ export default {
             },
             theme: 'snow'
         });
-        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.value, 'api');
+        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.value, 'user');
         vm.editor.on('text-change', function(delta, oldDelta, source) {
             var text = $('#'+vm.editor_id+' >.ql-editor').html();
-            vm.value = text;
             vm.$emit('input', text);
         });
     }

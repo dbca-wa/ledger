@@ -283,10 +283,9 @@ export default {
         },
         onCampsiteClassChange:function () {
             let vm =this;
-            console.log(vm.campsite.campsite_class);
             if (vm.campsite_classes.length > 0){
                 if(vm.selected_campsite_class_url()){
-                    console.log('here');
+                    vm.$refs.descriptionEditor.disabled(true);
                     $.ajax({
                         url:vm.selected_campsite_class_url(),
                         dataType: 'json',
@@ -297,7 +296,6 @@ export default {
                             vm.campsite.max_people = sel_class.max_people;
                             vm.campsite.min_people= sel_class.min_people;
                             vm.description = sel_class.description;
-                            vm.$refs.descriptionEditor.disabled(true);
                         }
 
                     });
@@ -347,7 +345,7 @@ export default {
                             vm.temp_campsite = data;
                             vm.campsite = JSON.parse(JSON.stringify(data));
                             vm.$refs.select_features.loadSelectedFeatures(data.features);
-                            vm.campsite.campsite_class = vm.temp_campsite.campsite_class; 
+                            vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
                             clearInterval(interval);
                         }
                     },100);
