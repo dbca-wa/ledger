@@ -28,7 +28,7 @@
     											<select class="form-control" v-show="!campsite_classes.length > 0" >
     												<option>Loading...</option>
     											</select>
-    											<select v-if="campsite_classes.length > 1" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
+    											<select v-if="campsite_classes.length > 0" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
                                                     <option value=""></option>
     												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
     											</select>
@@ -373,7 +373,7 @@ export default {
             let vm = this;
             $.get(api_endpoints.campsite_classes_active, function(data) {
                 $.each(data,function(i,el){
-                    el.url = "//"+ el.url.split('://')[1]; 
+                    el.url = "//"+ el.url.split('://')[1];
                 });
                 vm.campsite_classes = data;
             })
@@ -424,13 +424,13 @@ export default {
     },
     mounted: function() {
         let vm = this;
+        vm.loadFeatures();
+        vm.fetchCampsiteClasses();
+        vm.fetchCampground();
         if (vm.$route.params.campsite_id) {
             vm.createCampsite = false;
             vm.fetchCampsite();
         }
-        vm.loadFeatures();
-        vm.fetchCampsiteClasses();
-        vm.fetchCampground();
     }
 }
 
