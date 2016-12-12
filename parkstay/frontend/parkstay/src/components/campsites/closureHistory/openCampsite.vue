@@ -56,11 +56,11 @@ module.exports = {
     name: 'pkCsOpen',
     data: function() {
         return {
-            status: '',
             id:'',
             reason:'',
             current_closure: '',
             formdata: {
+                status: 0,
                 range_start: '',
                 reason:'',
                 details: ''
@@ -68,7 +68,8 @@ module.exports = {
             picker: '',
             errors: false,
             errorString: '',
-            form: ''
+            form: '',
+            isOpen: false
         }
     },
     watch:{
@@ -82,7 +83,7 @@ module.exports = {
             return vm.errors;
         },
         isModalOpen: function() {
-            return this.$parent.isOpenOpenCS;
+            return this.isOpen;
         },
         requireDetails: function () {
             return (this.formdata.reason === '1')? true: false;
@@ -95,37 +96,13 @@ module.exports = {
     },
     methods: {
         close: function() {
-            this.$parent.isOpenOpenCS = false;
-            this.status = '';
+            this.isOpen = false;
             this.formdata.reason = ''
         },
         addOpen: function() {
             if (this.form.valid()){
-                this.sendData();
+                this.$emit('openCampsite');
             }
-        },
-        sendData: function() {
-            let vm = this;
-            var data = this.formdata;
-            data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            data.status = 0;
-            $.ajax({
-                url: api_endpoints.opencloseCS(vm.id),
-                method: 'POST',
-                xhrFields: { withCredentials:true },
-                data: data,
-                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.close();
-                    bus.$emit('refreshCSTable');
-                },
-                error:function (data){
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(data);
-                }
-            });
-
         },
         addFormValidations: function() {
             let vm = this;

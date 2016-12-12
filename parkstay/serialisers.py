@@ -179,7 +179,6 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'area_activities',
             'features',
             'driving_directions',
-            'bookable_per_site',
             'active',
             'current_closure',
             'campfires_allowed',
@@ -344,8 +343,8 @@ class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
     class Meta:
         model = CampgroundPriceHistory
-        fields = ('id','date_start','date_end','rate_id','adult','concession','child','reason','details','editable','deletable')
-        read_only_fields = ('id','editable','deletable','adult','concession','child','reason','details')
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
+        read_only_fields = ('id','editable','deletable','adult','concession','child')
 
 class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
