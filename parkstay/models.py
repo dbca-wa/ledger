@@ -72,11 +72,8 @@ class Contact(models.Model):
 
 class Campground(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
-        (0, 'Campground: no bookings'),
-        (1, 'Campground: book online'),
-        (2, 'Campground: book by phone'),
-        (3, 'Other accomodation'),
-        (4, 'Not Published')
+        (0, 'Bookable Online'),
+        (1, 'Not Bookable Online'),
     )
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
         (0, 'Campground level'),
@@ -84,8 +81,8 @@ class Campground(models.Model):
         (2, 'Campsite level'),
     )
     SITE_TYPE_CHOICES = (
-        (0, 'Unnumbered Site'),
-        (1, 'Numbered site')
+        (0, 'Bookable Per Site'),
+        (1, 'Bookable Per Site Type')
     )
 
     name = models.CharField(max_length=255, null=True)
@@ -109,8 +106,6 @@ class Campground(models.Model):
     customer_contact = models.ForeignKey('CustomerContact', blank=True, null=True, on_delete=models.PROTECT)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
-    bookable_per_site = models.BooleanField(default=False)
-    bookable_online = models.BooleanField(default=False)
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
@@ -628,9 +623,15 @@ class CampsiteStayHistory(StayHistory):
 
 
 class Feature(models.Model):
+    TYPE_CHOICES = (
+        (0, 'Campground'),
+        (1, 'Campsite'),
+        (2, 'Not Linked')
+    )
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True)
     image = models.ImageField(null=True)
+    type = models.SmallIntegerField(choices=TYPE_CHOICES,default=2,help_text="Set the model where the feature is located.")
 
     def __str__(self):
         return self.name
