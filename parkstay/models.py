@@ -434,12 +434,12 @@ class Campsite(models.Model):
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT, null=True,blank=True, related_name='campsites')
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     features = models.ManyToManyField('Feature')
-    cs_tents = models.SmallIntegerField(default=0)
-    cs_parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default=0)
-    cs_number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default=0)
+    cs_tent = models.BooleanField(default=False)
+    cs_campervan = models.BooleanField(default=False)
+    cs_caravan = models.BooleanField(default=False)
     cs_min_people = models.SmallIntegerField(default=1)
     cs_max_people = models.SmallIntegerField(default=12)
-    cs_dimensions = models.CharField(max_length=12, default='6x4')
+    cs_description = models.TextField(null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.campground, self.name)
@@ -450,28 +450,28 @@ class Campsite(models.Model):
     # Properties
     # ==============================
     property
-    def tents(self):
-        return self.campsite_class.tents if self.campsite_class else self.cs_tents
+    def tent(self):
+        return self.campsite_class.tent if self.campsite_class else self.cs_tent
 
-    property
-    def parking_spaces(self):
-        return self.campsite_class.parking_spaces if self.campsite_class else self.cs_parking_spaces
+    @property
+    def description(self):
+        return self.campsite_class.description if self.campsite_class else self.cs_description
 
-    property
-    def number_vehicles(self):
-        return self.campsite_class.number_vehicles if self.campsite_class else self.cs_number_vehicles
+    @property
+    def campervan(self):
+        return self.campsite_class.campervan if self.campsite_class else self.cs_campervan
 
-    property
+    @property
+    def caravan(self):
+        return self.campsite_class.caravan if self.campsite_class else self.cs_caravan
+
+    @property
     def min_people(self):
         return self.campsite_class.min_people if self.campsite_class else self.cs_min_people
 
-    property
+    @property
     def max_people(self):
         return self.campsite_class.max_people if self.campsite_class else self.cs_max_people
-
-    property
-    def dimensions(self):
-        return self.campsite_class.dimensions if self.campsite_class else self.cs_dimensions
 
     @property
     def type(self):
@@ -660,14 +660,14 @@ class CampsiteClass(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     camp_unit_suitability = TaggableManager()
-    tents = models.SmallIntegerField(default=0)
-    parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default=0)
-    number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default=0)
+    tent = models.BooleanField(default=False)
+    campervan = models.BooleanField(default=False)
+    caravan = models.BooleanField(default=False)
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
-    dimensions = models.CharField(max_length=12, default='6x4')
     features = models.ManyToManyField('Feature')
     deleted = models.BooleanField(default=False)
+    description = models.TextField(null=True)
 
     def __str__(self):
         return self.name
