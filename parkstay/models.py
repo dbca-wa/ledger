@@ -191,7 +191,7 @@ class Campground(models.Model):
             within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
-                within.save()
+                within.save(skip_validation=True)
         except CampgroundBookingRange.DoesNotExist:
         #if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
         #    self.__get_current_closure().delete()
@@ -205,7 +205,7 @@ class Campground(models.Model):
             within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
-                within.save()
+                within.save(skip_validation=True)
         except CampgroundBookingRange.DoesNotExist:
             b.save()
 
@@ -354,7 +354,9 @@ class BookingRange(models.Model):
         return False
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        skip_validation = bool(kwargs.pop('skip_validation',False))
+        if not skip_validation:
+            self.full_clean()
         if self.status == 1 and not self.closure_reason:
             self.closure_reason = ClosureReason.objects.get(pk=1)
         elif self.status == 0 and not self.open_reason:
@@ -498,7 +500,7 @@ class Campsite(models.Model):
 
     @property
     def current_closure(self):
-        closure = self._get_current_closure()
+        closure = self.__get_current_closure()
         if closure:
             return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
     # Methods
@@ -548,10 +550,8 @@ class Campsite(models.Model):
             within = CampsiteBookingRange.objects.filter(Q(campsite=b.campsite),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
-                within.save()
+                within.save(skip_validation=True)
         except CampsiteBookingRange.DoesNotExist:
-        #if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
-        #    self.__get_current_closure().delete()
             b.save()
 
     def close(self, data):
@@ -562,7 +562,7 @@ class Campsite(models.Model):
             within = CampsiteBookingRange.objects.filter(Q(campsite=b.campsite),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
-                within.save()
+                within.save(skip_validation=True)
         except CampsiteBookingRange.DoesNotExist:
             b.save()
     
@@ -949,7 +949,7 @@ class CampgroundBookingRangeListener(object):
             try:
                 within = CampgroundBookingRange.objects.get(~Q(id=instance.id),Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
                 within.range_end = instance.range_start
-                within.save()
+                within.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         if instance.status == 0 and not instance.range_end:
@@ -970,7 +970,7 @@ class CampgroundBookingRangeListener(object):
                     linked_open.range_start = instance.range_start
                 else:
                      linked_open.range_start = today
-                linked_open.save()
+                linked_open.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
@@ -1060,7 +1060,7 @@ class CampsiteBookingRangeListener(object):
             try:
                 within = CampsiteBookingRange.objects.get(Q(campsite=instance.campsite),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
                 within.range_end = instance.range_start
-                within.save()
+                within.save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
                 pass
         if instance.status == 0 and not instance.range_end:
@@ -1081,7 +1081,7 @@ class CampsiteBookingRangeListener(object):
                     linked_open.range_start = instance.range_start
                 else:
                      linked_open.range_start = today
-                linked_open.save()
+                linked_open.save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
