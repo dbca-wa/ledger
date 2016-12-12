@@ -1,7 +1,7 @@
-<template lang="html">
+openCampsite<template lang="html">
    <div class="panel-group" id="applications-accordion" role="tablist" aria-multiselectable="true">
         <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
-        <pkCsOpen ref="openCampsite"></pkCsOpen>
+        <pkCsOpen ref="openCampsite" @openCampsite="openCampsite()"></pkCsOpen>
       <div class="panel panel-default" id="applications">
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
@@ -236,7 +236,7 @@ export default {
                         else {
                             var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
-                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" >Open</a></td>";
+                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" data-current_closure='"+ full.current_closure +"'>Open</a></td>";
                             }
                         }
 
@@ -277,8 +277,29 @@ export default {
                 vm.$refs.cg_closure_dt.vmDataTable.ajax.reload();
             });
         },
-        showOpenCloseCS: function() {
+        showCloseCS: function() {
             this.$refs.closeCampsite.isOpen = true;
+        },
+        openCampsite: function() {
+            let vm = this;
+            var data = vm.$refs.openCampsite.formdata;
+            $.ajax({
+                url: api_endpoints.opencloseCS(vm.$refs.openCampsite.id),
+                method: 'POST',
+                xhrFields: { withCredentials:true },
+                data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.$refs.openCampsite.close();
+                    vm.refreshCampsiteClosures();
+                },
+                error:function (data){
+                    vm.$refs.openCampsite.errors = true;
+                    vm.$refs.openCampsite.errorString = helpers.apiError(data);
+                }
+            });
+
         },
         closeCampsite: function() {
             let vm = this;
@@ -304,7 +325,7 @@ export default {
             this.$refs.cg_campsites_dt.vmDataTable.ajax.reload();
         },
         showOpenOpenCS: function() {
-            this.isOpenOpenCS = true;
+            this.$refs.openCampsite.isOpen = true;
         },
         fetchCampsites: function(){
             let vm = this;
@@ -352,7 +373,7 @@ export default {
                 vm.$refs.openCampsite.id = id;
                 vm.$refs.openCampsite.current_closure = current_closure;
             }else if (status === 'close'){
-                vm.showOpenCloseCS();
+                vm.showCloseCS();
                 // Update close modal attributes
                 vm.$refs.closeCampsite.status = 1;
                 vm.$refs.closeCampsite.id = id;
