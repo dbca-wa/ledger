@@ -179,7 +179,6 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'area_activities',
             'features',
             'driving_directions',
-            'bookable_per_site',
             'active',
             'current_closure',
             'campfires_allowed',
