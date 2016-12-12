@@ -59,25 +59,26 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <div style="margin-top:10%;" class="checkbox">
-                                                    <label><input type="checkbox" v-model="campground.tent" :disabled="selected_campsite_class_url() != ''"/>Tent</label>
+                                                    <label><input type="checkbox" v-model="campsite.tent" :disabled="selected_campsite_class_url() != ''"/>Tent</label>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <div style="margin-top:10%;" class="checkbox">
-                                                    <label><input type="checkbox" v-model="campground.campervan" :disabled="selected_campsite_class_url() != ''"/>Campervan</label>
+                                                    <label><input type="checkbox" v-model="campsite.campervan" :disabled="selected_campsite_class_url() != ''"/>Campervan</label>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <div style="margin-top:10%;" class="checkbox">
-                                                    <label><input type="checkbox" v-model="campground.caravan" :disabled="selected_campsite_class_url() != ''"/>Caravan</label>
+                                                    <label><input type="checkbox" v-model="campsite.caravan" :disabled="selected_campsite_class_url() != ''"/>Caravan</label>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <editor ref="descriptionEditor" v-model="campsite.description"></editor>
     								<div class="row">
     									<div class="col-sm-12">
                                         <select-panel v-show="!createCampsite" :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
@@ -136,6 +137,7 @@ from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
 import stayHistory from './stayHistory/stayHistory.vue'
 import select_panel from '../utils/select-panel.vue'
+import editor from '../utils/editor.vue'
 import alert from '../utils/alert.vue'
 import pkCsClose from './closureHistory/closeCampsite.vue'
 import confirmbox from '../utils/confirmbox.vue'
@@ -149,6 +151,7 @@ import priceHistory from '../utils/priceHistory/priceHistory.vue'
 export default {
     name: 'campsite',
     components: {
+        editor,
         datatable,
         "select-panel": select_panel,
         alert,
@@ -197,7 +200,6 @@ export default {
                 max_people:'',
             },
             campsite_classes: [],
-            createCampiste: true,
             ph_options: {
                 responsive: true,
                 processing: true,
@@ -281,31 +283,36 @@ export default {
         },
         onCampsiteClassChange:function () {
             let vm =this;
-            if(vm.selected_campsite_class_url()){
-                $.ajax({
-                    url:vm.selected_campsite_class_url(),
-                    dataType: 'json',
-                    success:function (sel_class) {
-                        vm.campsite.tent = sel_class.tent;
-                        vm.campsite.carvan= sel_class.caravan;
-                        vm.campsite.campervan= sel_class.campervan;
-                        vm.campsite.max_people = sel_class.max_people;
-                        vm.campsite.min_people= sel_class.min_people;
-                        vm.description = sel_class.description;
-                    }
+            console.log(vm.campsite.campsite_class);
+            if (vm.campsite_classes.length > 0){
+                if(vm.selected_campsite_class_url()){
+                    console.log('here');
+                    $.ajax({
+                        url:vm.selected_campsite_class_url(),
+                        dataType: 'json',
+                        success:function (sel_class) {
+                            vm.campsite.tent = sel_class.tent;
+                            vm.campsite.carvan= sel_class.caravan;
+                            vm.campsite.campervan= sel_class.campervan;
+                            vm.campsite.max_people = sel_class.max_people;
+                            vm.campsite.min_people= sel_class.min_people;
+                            vm.description = sel_class.description;
+                            vm.$refs.descriptionEditor.disabled(true);
+                        }
 
-                });
-            }else{
-                if (!vm.createCampsite){
-                    vm.campsite.tent = sel_class.tent;
-                    vm.campsite.carvan= sel_class.caravan;
-                    vm.campsite.campervan= sel_class.campervan;
-                    vm.campsite.max_people = temp_campsite.max_people;
-                    vm.campsite.min_people= temp_campsite.min_people;
-                    vm.description = temp_campsite.description;
+                    });
+                }else{
+                    if (!vm.createCampsite){
+                        vm.campsite.tent = vm.temp_campsite.tent;
+                        vm.campsite.carvan= vm.temp_campsite.caravan;
+                        vm.campsite.campervan= vm.temp_campsite.campervan;
+                        vm.campsite.max_people = vm.temp_campsite.max_people;
+                        vm.campsite.min_people= vm.temp_campsite.min_people;
+                        vm.description = vm.temp_campsite.description;
+                        vm.$refs.descriptionEditor.disabled(false);
+                    }
                 }
             }
-
         },
         showCloseCS: function() {
             var id = this.campsite.id;
@@ -334,10 +341,16 @@ export default {
                 },
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    vm.campsite = data;
-                    vm.temp_campsite = JSON.parse(JSON.stringify(data));
-                    vm.$refs.select_features.loadSelectedFeatures(data.features);
-                    //vm.selected_features = ;
+                    var interval = setInterval(function(){
+                        if (vm.campsite_classes.length > 0){
+                            data.campsite_class = "//"+ data.campsite_class.split('://')[1];
+                            vm.temp_campsite = data;
+                            vm.campsite = JSON.parse(JSON.stringify(data));
+                            vm.$refs.select_features.loadSelectedFeatures(data.features);
+                            vm.campsite.campsite_class = vm.temp_campsite.campsite_class; 
+                            clearInterval(interval);
+                        }
+                    },100);
                 },
                 error: function(resp) {
                     if (resp.status == 404) {
@@ -381,6 +394,7 @@ export default {
                 data.cs_tent = data.tent;
                 data.cs_caravan = data.caravan;
                 data.cs_campervan = data.campervan;
+                data.cs_description = data.description;
                 data.cs_min_people = data.min_people;
                 data.cs_max_people = data.max_people;
             }
@@ -416,7 +430,7 @@ export default {
         vm.loadFeatures();
         vm.fetchCampsiteClasses();
         vm.fetchCampground();
-    }
+    },
 }
 
 </script>
