@@ -11,8 +11,6 @@
      <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel"
           aria-labelledby="applications-heading">
         <div class="panel-body">
-            <div class="row">
-              <div class="col-lg-12">
                   <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                   <div class="well well-sm">
                       <div class="row">
@@ -71,7 +69,7 @@
                                           <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
                                       </select>
                                   </div>
-                                  <div class="col-md-4" v-show="setPrice == priceOptions[2]">
+                                  <div class="col-md-8" v-show="setPrice == priceOptions[2]">
                                       <select name="tmpPark" v-show="!campsiteTypes.length > 0" class="form-control" >
                                           <option >Loading...</option>
                                       </select>
@@ -154,14 +152,12 @@
                               </div>
                               <div class="btn-group btn-group-sm">
                                   <button type="button" class="btn btn-primary" style="margin-right:10px;" >Save</button>
-                                  <button type="button" class="btn btn-default" >Cancel</button>
+                                  <button type="button" class="btn btn-default" @click="goBack()" >Cancel</button>
                               </div>
                         </div>
                       </div>
                     </form>
                   </div>
-              </div>
-            </div>
         </div>
     </div>
     </div>
@@ -171,6 +167,7 @@
 import {
     $,
     api_endpoints,
+    helpers
 }
 from '../../hooks.js'
 import alert from '../utils/alert.vue'
@@ -303,6 +300,9 @@ export default {
                 vm.campsiteTypes = data;
             });
         },
+        goBack:function () {
+            helpers.goBack(this);
+        },
         addFormValidations: function() {
             let vm = this;
             $(vm.form).validate({
@@ -377,5 +377,8 @@ export default {
 <style lang="css" scoped>
     .editor{
         height: 200px;
+    }
+    .well:last-child{
+        margin-bottom: 5px;
     }
 </style>
