@@ -291,11 +291,12 @@ export default {
                         dataType: 'json',
                         success:function (sel_class) {
                             vm.campsite.tent = sel_class.tent;
-                            vm.campsite.carvan= sel_class.caravan;
+                            vm.campsite.caravan= sel_class.caravan;
                             vm.campsite.campervan= sel_class.campervan;
                             vm.campsite.max_people = sel_class.max_people;
                             vm.campsite.min_people= sel_class.min_people;
-                            vm.description = sel_class.description;
+                            vm.campsite.description = sel_class.description;
+                            vm.$refs.descriptionEditor.updateContent(vm.campsite.description);
                         }
 
                     });
@@ -306,7 +307,7 @@ export default {
                         vm.campsite.campervan= vm.temp_campsite.campervan;
                         vm.campsite.max_people = vm.temp_campsite.max_people;
                         vm.campsite.min_people= vm.temp_campsite.min_people;
-                        vm.description = vm.temp_campsite.description;
+                        vm.campsite.description = vm.temp_campsite.description;
                         vm.$refs.descriptionEditor.disabled(false);
                     }
                 }

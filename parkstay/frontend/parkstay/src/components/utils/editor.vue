@@ -32,6 +32,11 @@ export default {
     methods:{
         disabled: function(is_disabled){
             this.editor.enable(!is_disabled);
+        },
+        updateContent:function (content) {
+            let vm = this;
+            vm.editor.clipboard.dangerouslyPasteHTML(0, content, 'api');
+            vm.$emit('input',content);
         }
     },
     mounted: function(){
@@ -47,6 +52,7 @@ export default {
             vm.$emit('input', text);
         });
         var valueReady = setInterval(function () {
+            console.log(vm.value);
             if(typeof(vm.value) != "undefined"){
                 vm.editor.clipboard.dangerouslyPasteHTML(0, vm.value, 'api');
                 clearInterval(valueReady);
