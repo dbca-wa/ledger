@@ -11,7 +11,8 @@
                              All options selected
                          </p>
                         <ul class="list-group">
-                            <a href="" v-for="option,key in options"  @click.prevent="addSelected(option,key)" class="list-group-item list-group-item-primary">{{option.name}}</a>
+                            <a href="" v-show="!isDisabled" v-for="option,key in options"  @click.prevent="addSelected(option,key)" class="list-group-item list-group-item-primary">{{option.name}}</a>
+                            <a href="" v-show="isDisabled" v-for="option,key in options"  @click.prevent.stop="" class="list-group-item disabled">{{option.name}}</a>
                         </ul>
                     </div>
                 </div>
@@ -26,7 +27,8 @@
                              No options selected
                          </p>
                         <ul class="list-group">
-                            <a href="" v-for="option,key in selected"  @click.prevent="removeSelected(option, key)" class="list-group-item ">{{option.name}}</a>
+                            <a href="" v-show="!isDisabled" v-for="option,key in selected"  @click.prevent="removeSelected(option, key)" class="list-group-item ">{{option.name}}</a>
+                            <a href="" v-show="isDisabled" v-for="option,key in selected"  @click.prevent.stop="" class="list-group-item disabled">{{option.name}}</a>
                         </ul>
                     </div>
                 </div>
@@ -40,6 +42,11 @@ import $ from 'jquery'
 
 export default {
     name:'select-panel',
+    data:function () {
+        return{
+            isDisabled:false
+        }
+    },
     props:{
         options:{
             type:Array,
@@ -47,6 +54,10 @@ export default {
             default:function () {
                 return [];
             }
+        },
+        disabled:{
+            type:Boolean,
+            default:false
         },
         selected:{
             type:Array,
@@ -81,6 +92,9 @@ export default {
                 return parseInt(a.id) - parseInt(b.id)
             });
         },
+        enabled:function (isEnabled) {
+            this.isDisabled = !isEnabled;
+        },
         loadSelectedFeatures: function(passed_features) {
             let vm = this;
             $.each(passed_features, function(i, cgfeature) {
@@ -93,6 +107,7 @@ export default {
                     }
                 })
             });
+
 
         }
     }

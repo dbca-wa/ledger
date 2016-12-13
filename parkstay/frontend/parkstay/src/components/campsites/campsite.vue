@@ -28,7 +28,7 @@
     											<select class="form-control" v-show="!campsite_classes.length > 0" >
     												<option>Loading...</option>
     											</select>
-    											<select v-if="campsite_classes.length > 1" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
+    											<select v-if="campsite_classes.length > 0" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
                                                     <option value=""></option>
     												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
     											</select>
@@ -185,6 +185,7 @@ export default {
         return {
             isLoading: false,
             features: [],
+            default_features:[],
             selected_features: [],
             createCampsite: true,
             temp_campsite: {},
@@ -286,16 +287,21 @@ export default {
             if (vm.campsite_classes.length > 0){
                 if(vm.selected_campsite_class_url()){
                     vm.$refs.descriptionEditor.disabled(true);
+                    vm.$refs.select_features.enabled(false);
                     $.ajax({
                         url:vm.selected_campsite_class_url(),
                         dataType: 'json',
                         success:function (sel_class) {
                             vm.campsite.tent = sel_class.tent;
-                            vm.campsite.carvan= sel_class.caravan;
+                            vm.campsite.caravan= sel_class.caravan;
                             vm.campsite.campervan= sel_class.campervan;
                             vm.campsite.max_people = sel_class.max_people;
                             vm.campsite.min_people= sel_class.min_people;
-                            vm.description = sel_class.description;
+                            vm.campsite.description = sel_class.description;
+                            vm.$refs.descriptionEditor.updateContent(vm.campsite.description);
+                            vm.features = JSON.parse(JSON.stringify(vm.default_features));
+                            vm.selected_features.splice(0,vm.selected_features.length);
+                            vm.$refs.select_features.loadSelectedFeatures(sel_class.features);
                         }
 
                     });
@@ -306,7 +312,7 @@ export default {
                         vm.campsite.campervan= vm.temp_campsite.campervan;
                         vm.campsite.max_people = vm.temp_campsite.max_people;
                         vm.campsite.min_people= vm.temp_campsite.min_people;
-                        vm.description = vm.temp_campsite.description;
+                        vm.campsite.description = vm.temp_campsite.description;
                         vm.$refs.descriptionEditor.disabled(false);
                     }
                 }
@@ -326,6 +332,7 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.features = data;
+                    vm.default_features = JSON.parse(JSON.stringify(data));
                 }
             });
         },
@@ -341,14 +348,17 @@ export default {
                 success: function(data, stat, xhr) {
                     var interval = setInterval(function(){
                         if (vm.campsite_classes.length > 0){
-                            data.campsite_class = "//"+ data.campsite_class.split('://')[1];
+                            data.campsite_class = (data.campsite_class != null || data.campsite_class.trim().length>0) ? "//"+ data.campsite_class.split('://')[1] : '';
                             vm.temp_campsite = data;
                             vm.campsite = JSON.parse(JSON.stringify(data));
-                            vm.$refs.select_features.loadSelectedFeatures(data.features);
+                            if (data.campsite_class.length>0) {
+                                vm.onCampsiteClassChange();
+                            }
                             vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
                             clearInterval(interval);
                         }
-                    },100);
+                     },100);
+
                 },
                 error: function(resp) {
                     if (resp.status == 404) {
@@ -370,7 +380,7 @@ export default {
             let vm = this;
             $.get(api_endpoints.campsite_classes_active, function(data) {
                 $.each(data,function(i,el){
-                    el.url = "//"+ el.url.split('://')[1]; 
+                    el.url = "//"+ el.url.split('://')[1];
                 });
                 vm.campsite_classes = data;
             })
@@ -382,7 +392,7 @@ export default {
             this.sendData(api_endpoints.campsites,'POST')
         },
         updateCampsite: function() {
-            this.sendData(api_endpoints.campsite(this.campsite.id),'PUT')
+            this.sendData(api_endpoints.campsite(this.$route.params.campsite_id),'PUT')
         },
         sendData: function(url,method) {
             let vm = this;
@@ -421,14 +431,14 @@ export default {
     },
     mounted: function() {
         let vm = this;
+        vm.loadFeatures();
+        vm.fetchCampsiteClasses();
+        vm.fetchCampground();
         if (vm.$route.params.campsite_id) {
             vm.createCampsite = false;
             vm.fetchCampsite();
         }
-        vm.loadFeatures();
-        vm.fetchCampsiteClasses();
-        vm.fetchCampground();
-    },
+    }
 }
 
 </script>

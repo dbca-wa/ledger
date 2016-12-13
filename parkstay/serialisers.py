@@ -148,7 +148,7 @@ class ExistingCampgroundImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = CampgroundImage
         fields = ('id','image','campground')
-    
+
 
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     address = serializers.JSONField()
@@ -286,6 +286,8 @@ class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
         elif method == 'post':
+            self.fields['features'] = serializers.HyperlinkedRelatedField(required=False,many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
+        elif method == 'put':
             self.fields['features'] = serializers.HyperlinkedRelatedField(required=False,many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
 
 class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
