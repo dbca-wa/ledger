@@ -86,7 +86,7 @@ class Campground(models.Model):
     )
 
     name = models.CharField(max_length=255, null=True)
-    park = models.ForeignKey('Park', on_delete=models.PROTECT)
+    park = models.ForeignKey('Park', on_delete=models.PROTECT, related_name='campgrounds')
     ratis_id = models.IntegerField(default=-1)
     contact = models.ForeignKey('Contact', on_delete=models.PROTECT, blank=True, null=True)
     campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=0)

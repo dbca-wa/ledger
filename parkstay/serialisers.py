@@ -30,11 +30,6 @@ class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
 
-class ParkSerializer(serializers.HyperlinkedModelSerializer):
-    district = DistrictSerializer()
-    class Meta:
-        model = Park
-
 class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
             model = PromoArea
@@ -185,7 +180,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'dog_permitted',
             'check_in',
             'check_out',
-            'images'
+            'images',
         )
 
     def get_site_type(self, obj):
@@ -220,6 +215,13 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             self.fields['features'] = FeatureSerializer(many=True)
             self.fields['address'] = serializers.SerializerMethodField()
             self.fields['images'] = CampgroundImageSerializer(many=True,required=False,method='get')
+
+class ParkSerializer(serializers.HyperlinkedModelSerializer):
+    district = DistrictSerializer()
+    campgrounds = CampgroundSerializer(many=True)
+    class Meta:
+        model = Park
+        fields = ('district', 'url', 'name', 'entry_fee_required', 'campgrounds')
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
