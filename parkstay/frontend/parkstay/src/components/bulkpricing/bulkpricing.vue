@@ -25,7 +25,7 @@
                               <div class="col-md-3">
                                   <div class="radio">
                                     <label for="">
-                                        <input type="radio">
+                                        <input type="radio" :value="priceOptions[0]" v-model="setPrice">
                                         Price Tariff
                                     </label>
                                   </div>
@@ -33,15 +33,15 @@
                               <div class="col-md-3">
                                   <div class="radio">
                                     <label for="">
-                                        <input type="radio">
-                                        Park/campground
+                                        <input type="radio" :value="priceOptions[1]" v-model="setPrice">
+                                        Park/Campground
                                     </label>
                                   </div>
                               </div>
                               <div class="col-md-3">
                                   <div class="radio">
                                     <label for="">
-                                        <input type="radio">
+                                        <input type="radio" :value="priceOptions[2]" v-model="setPrice">
                                         Campsite Type
                                     </label>
                                   </div>
@@ -52,13 +52,29 @@
                   <div class="well well-sm">
                       <div class="row">
                         <div class="col-lg-12">
-                            <h3>Add new Pricing Period For Campgrounds</h3>
+                            <h3>Add new Pricing Period For Campgrounds</h3><br/>
                             <form name="bulkpricingForm" class="form-horizontal">
                               <div class="form-group">
                                   <div class="col-md-2">
-                                      <label class="control-label" >Park</label>
+                                      <label class="control-label" >{{setPrice}}</label>
                                   </div>
-                                  <div class="col-md-4">
+                                  <div class="col-md-4" v-show="setPrice == priceOptions[0]">
+                                      <select name="tmpPark" v-show="!parks.length > 0" class="form-control" >
+                                          <option >Loading...</option>
+                                      </select>
+                                      <select name="park" v-if="parks.length > 0" @change="selectPark" class="form-control" v-model="bulkpricing.park">
+                                          <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+                                      </select>
+                                  </div>
+                                  <div class="col-md-4" v-show="setPrice == priceOptions[1]">
+                                      <select name="tmpPark" v-show="!parks.length > 0" class="form-control" >
+                                          <option >Loading...</option>
+                                      </select>
+                                      <select name="park" v-if="parks.length > 0" @change="selectPark" class="form-control" v-model="bulkpricing.park">
+                                          <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+                                      </select>
+                                  </div>
+                                  <div class="col-md-4" v-show="setPrice == priceOptions[2]">
                                       <select name="tmpPark" v-show="!parks.length > 0" class="form-control" >
                                           <option >Loading...</option>
                                       </select>
@@ -168,6 +184,8 @@ export default {
     data: function() {
         let vm = this;
         return {
+            priceOptions:['Price Tariff','Park/Campground','Campsite Type'],
+            setPrice:'',
             id:'',
             selected_rate: '',
             title: '',
@@ -327,6 +345,7 @@ export default {
     mounted: function() {
         var vm = this;
         vm.loadParks();
+        vm.setPrice = vm.priceOptions[0];
         vm.form = document.forms.bulkpricingForm;
         var picker = $(vm.form.period_start).closest('.date');
         var today = new Date();
