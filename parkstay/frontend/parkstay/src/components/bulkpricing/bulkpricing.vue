@@ -59,11 +59,8 @@
                                       <label class="control-label" >{{setPrice}}</label>
                                   </div>
                                   <div class="col-md-4" v-show="setPrice == priceOptions[0]">
-                                      <select name="tmpPark" v-show="!parks.length > 0" class="form-control" >
-                                          <option >Loading...</option>
-                                      </select>
-                                      <select name="park" v-if="parks.length > 0" @change="selectPark" class="form-control" v-model="bulkpricing.park">
-                                          <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+                                      <select class="form-control" >
+                                          <option >Price Tarriff</option>
                                       </select>
                                   </div>
                                   <div class="col-md-4" v-show="setPrice == priceOptions[1]">
@@ -75,11 +72,11 @@
                                       </select>
                                   </div>
                                   <div class="col-md-4" v-show="setPrice == priceOptions[2]">
-                                      <select name="tmpPark" v-show="!parks.length > 0" class="form-control" >
+                                      <select name="tmpPark" v-show="!campsiteTypes.length > 0" class="form-control" >
                                           <option >Loading...</option>
                                       </select>
-                                      <select name="park" v-if="parks.length > 0" @change="selectPark" class="form-control" v-model="bulkpricing.park">
-                                          <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+                                      <select name="park" v-if="campsiteTypes.length > 0" @change="selectCampsiteType" class="form-control" v-model="bulkpricing.campsiteType">
+                                          <option v-for="ct  in campsiteTypes" :value="ct.url">{{ ct.name }}</option>
                                       </select>
                                   </div>
                               </div>
@@ -201,6 +198,7 @@ export default {
             parks: [],
             selectedPark: {},
             campgrounds: [],
+            campsiteTypes:[],
         }
     },
     computed: {
@@ -265,6 +263,10 @@ export default {
             });
 
         },
+        selectCampsiteType:function () {
+            var vm = this;
+            console.log('campsite type selected');
+        },
         loadParks: function() {
             var vm = this;
             var url = api_endpoints.parks;
@@ -293,6 +295,12 @@ export default {
             let vm = this;
             $.get(api_endpoints.rates,function(data){
                 vm.rates = data;
+            });
+        },
+        fetchCampsiteTypes: function() {
+            let vm = this;
+            $.get(api_endpoints.campsite_classes,function(data){
+                vm.campsiteTypes = data;
             });
         },
         addFormValidations: function() {
@@ -361,6 +369,7 @@ export default {
         });
         vm.addFormValidations();
         vm.fetchRates();
+        vm.fetchCampsiteTypes();
     }
 };
 </script>
