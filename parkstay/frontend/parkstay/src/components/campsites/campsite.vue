@@ -185,6 +185,7 @@ export default {
         return {
             isLoading: false,
             features: [],
+            default_features:[],
             selected_features: [],
             createCampsite: true,
             temp_campsite: {},
@@ -286,6 +287,7 @@ export default {
             if (vm.campsite_classes.length > 0){
                 if(vm.selected_campsite_class_url()){
                     vm.$refs.descriptionEditor.disabled(true);
+                    vm.$refs.select_features.enabled(false);
                     $.ajax({
                         url:vm.selected_campsite_class_url(),
                         dataType: 'json',
@@ -297,6 +299,9 @@ export default {
                             vm.campsite.min_people= sel_class.min_people;
                             vm.campsite.description = sel_class.description;
                             vm.$refs.descriptionEditor.updateContent(vm.campsite.description);
+                            vm.features = JSON.parse(JSON.stringify(vm.default_features));
+                            vm.selected_features.splice(0,vm.selected_features.length);
+                            vm.$refs.select_features.loadSelectedFeatures(sel_class.features);
                         }
 
                     });
@@ -327,6 +332,7 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.features = data;
+                    vm.default_features = JSON.parse(JSON.stringify(data));
                 }
             });
         },
@@ -340,13 +346,18 @@ export default {
                 },
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    if (vm.campsite_classes.length > 0){
-                        data.campsite_class = "//"+ data.campsite_class.split('://')[1];
-                        vm.temp_campsite = data;
-                        vm.campsite = JSON.parse(JSON.stringify(data));
-                        vm.$refs.select_features.loadSelectedFeatures(data.features);
-                        vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
-                    }
+                    var interval = setInterval(function(){
+                        if (vm.campsite_classes.length > 0){
+                            data.campsite_class = (data.campsite_class != null || data.campsite_class.trim().length>0) ? "//"+ data.campsite_class.split('://')[1] : '';
+                            vm.temp_campsite = data;
+                            vm.campsite = JSON.parse(JSON.stringify(data));
+                            if (data.campsite_class.length>0) {
+                                vm.onCampsiteClassChange();
+                            }
+                            vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
+                            clearInterval(interval);
+                        }
+                     },100);
 
                 },
                 error: function(resp) {
@@ -381,7 +392,7 @@ export default {
             this.sendData(api_endpoints.campsites,'POST')
         },
         updateCampsite: function() {
-            this.sendData(api_endpoints.campsite(this.campsite.id),'PUT')
+            this.sendData(api_endpoints.campsite(this.$route.params.campsite_id),'PUT')
         },
         sendData: function(url,method) {
             let vm = this;
