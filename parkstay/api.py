@@ -769,7 +769,7 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             queryset = CampsiteClass.objects.filter(deleted=False)
         else:
             queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True,method='get')
         return Response(serializer.data)
 
     @detail_route(methods=['get'])
