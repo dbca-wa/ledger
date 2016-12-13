@@ -312,24 +312,21 @@ var pf = new Vue({
             format: new ol.format.GeoJSON()
         });
 
-        var genIconStyle = function(codepoint) {
+
+        /*var genIconStyle = function(codepoint) {
             return new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: 18,
-                    stroke: new ol.style.Stroke({
-                        color: '#fff'
-                    }),
-                    fill: new ol.style.Fill({
-                        color: '#3399cc'
-                    })
+                image: new ol.style.Icon({
+                    src: 'pin.svg',
+                    snapToPixel: true,
+                    anchor: [0.5, 1.0],
+                    anchorXUnits: 'fraction',
+                    anchorYUnits: 'fraction'
                 }),
                 text: new ol.style.Text({
                     font: '28px "DPaWSymbols"',
                     text: codepoint,
                     offsetX: 0,
-                    offsetY: 0,
-                    textAlign: 'center',
-                    textBaseline: 'middle',
+                    offsetY: -16,
                     fill: new ol.style.Fill({
                         color: '#fff'
                     })
@@ -342,17 +339,28 @@ var pf = new Vue({
             'RC2': genIconStyle('a'),
             'RC3': genIconStyle('q'),
             'RC4': genIconStyle('b')
-        };
+        };*/
+
+        
         this.grounds = new ol.layer.Vector({
-            source: new ol.source.Cluster({
-                distance: 64,
-                source: this.groundsSource
-            }),
-            style: function(feature) {
-                var size = feature.get('features').length;
-                if (size == 1) {
-                    return vm.styleCache['RC4'];
-                }
+            source: this.groundsSource,
+            style: function (feature) {
+                return new ol.style.Style({
+                    image: new ol.style.Icon({
+                        src: 'pin.svg',
+                        snapToPixel: true,
+                        anchor: [0.5, 1.0],
+                        anchorXUnits: 'fraction',
+                        anchorYUnits: 'fraction'
+                    }),
+                    zIndex: -feature.getGeometry().getCoordinates()[1]
+                })
+            }
+        });
+
+            /*style: function(feature) {
+                return vm.styleCache['RC4'];
+                
                 var style = vm.styleCache[size];
                 if (!style) {
                     style = new ol.style.Style({
@@ -380,8 +388,7 @@ var pf = new Vue({
                     vm.styleCache[size] = style;
                 }
                 return style;
-            }
-        });
+            }*/
 
         this.olmap = new ol.Map({
             logo: false,
@@ -402,9 +409,7 @@ var pf = new Vue({
                 altShiftDragRotate: false,
                 pinchRotate: false,
             }),
-            // TODO: replace with KMI
             layers: [
-                //new ol.layer.Tile({source: new ol.source.OSM()})
                 this.streets,
                 this.tenure,
                 this.grounds
