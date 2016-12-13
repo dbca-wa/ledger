@@ -344,11 +344,10 @@ var pf = new Vue({
             'RC4': genIconStyle('b')
         };
         this.grounds = new ol.layer.Vector({
-            /*source: new ol.source.Cluster({
+            source: new ol.source.Cluster({
                 distance: 64,
                 source: this.groundsSource
-            }),*/
-            source: this.groundsSource,
+            }),
             style: function(feature) {
                 var size = feature.get('features').length;
                 if (size == 1) {
