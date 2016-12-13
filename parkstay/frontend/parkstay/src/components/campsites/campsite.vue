@@ -339,16 +339,14 @@ export default {
                 },
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    var interval = setInterval(function(){
-                        if (vm.campsite_classes.length > 0){
-                            data.campsite_class = "//"+ data.campsite_class.split('://')[1];
-                            vm.temp_campsite = data;
-                            vm.campsite = JSON.parse(JSON.stringify(data));
-                            vm.$refs.select_features.loadSelectedFeatures(data.features);
-                            vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
-                            clearInterval(interval);
-                        }
-                    },100);
+                    if (vm.campsite_classes.length > 0){
+                        data.campsite_class = "//"+ data.campsite_class.split('://')[1];
+                        vm.temp_campsite = data;
+                        vm.campsite = JSON.parse(JSON.stringify(data));
+                        vm.$refs.select_features.loadSelectedFeatures(data.features);
+                        vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
+                    }
+
                 },
                 error: function(resp) {
                     if (resp.status == 404) {

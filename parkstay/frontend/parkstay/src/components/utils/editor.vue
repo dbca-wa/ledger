@@ -42,11 +42,17 @@ export default {
             },
             theme: 'snow'
         });
-        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.value, 'user');
         vm.editor.on('text-change', function(delta, oldDelta, source) {
             var text = $('#'+vm.editor_id+' >.ql-editor').html();
             vm.$emit('input', text);
         });
+        var valueReady = setInterval(function () {
+            if(typeof(vm.value) != "undefined"){
+                vm.editor.clipboard.dangerouslyPasteHTML(0, vm.value, 'api');
+                clearInterval(valueReady);
+            }
+        },100);
+
     }
 }
 </script>
