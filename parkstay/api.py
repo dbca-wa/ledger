@@ -772,6 +772,12 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True,method='get')
         return Response(serializer.data)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance,method='get')
+        return Response(serializer.data) 
+        
+
     @detail_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
         try:
