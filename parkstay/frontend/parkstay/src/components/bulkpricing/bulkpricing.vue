@@ -78,7 +78,7 @@
                                       </select>
                                   </div>
                               </div>
-                              <div class="form-group">
+                              <div class="form-group" v-show="setPrice != priceOptions[2]">
                                   <div class="col-md-2">
                                       <label class="control-label" >Campground</label>
                                   </div>
@@ -298,7 +298,11 @@ export default {
         fetchCampsiteTypes: function() {
             let vm = this;
             $.get(api_endpoints.campsite_classes,function(data){
-                vm.campsiteTypes = data;
+                vm.campsiteTypes = [];
+                $.each(data,function(i,el){
+                    el.can_add_rate ? vm.campsiteTypes.push(el): '';
+                });
+
             });
         },
         goBack:function () {
@@ -385,7 +389,7 @@ export default {
     }
     .helper {
         padding: 0px 12px;
-        background-color: transparent; 
+        background-color: transparent;
         border: none;
     }
     .helper > i{
