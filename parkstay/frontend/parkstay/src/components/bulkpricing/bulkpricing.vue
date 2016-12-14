@@ -20,14 +20,14 @@
                                     <label for="">Set price per : </label>
                                   </div>
                               </div>
-                              <div class="col-md-3">
+                              <!--<div class="col-md-3">
                                   <div class="radio">
                                     <label for="">
                                         <input type="radio" :value="priceOptions[0]" v-model="setPrice">
                                         Price Tariff
                                     </label>
                                   </div>
-                              </div>
+                              </div>-->
                               <div class="col-md-3">
                                   <div class="radio">
                                     <label for="">
@@ -69,7 +69,7 @@
                                           <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
                                       </select>
                                   </div>
-                                  <div class="col-md-8" v-show="setPrice == priceOptions[2]">
+                                  <div class="col-md-4" v-show="setPrice == priceOptions[2]">
                                       <select name="tmpPark" v-show="!campsiteTypes.length > 0" class="form-control" >
                                           <option >Loading...</option>
                                       </select>
@@ -96,11 +96,12 @@
                                       <label>Select Rate: </label>
                                   </div>
                                   <div class="col-md-4">
-                                      <select name="rate" v-model="selected_rate" class="form-control">
-                                          <option value=""></option>
+                                      <select name="rate" v-model="selected_rate" class="form-control" title="testing">
+                                          <option value="">Manual Entry</option>
                                           <option v-for="r in rates":value="r.id">{{r.name}}</option>
                                       </select>
                                   </div>
+                                    <div class="helper"><i class="fa fa-question-circle"data-toggle="tooltip" data-placement="right" title="Select a rate to prefill the price fields otherwise use the manual entry"></i></div>
                               </div>
                               <div class="form-group">
                                   <div class="col-md-2">
@@ -352,8 +353,9 @@ export default {
     },
     mounted: function() {
         var vm = this;
+        $('[data-toggle="tooltip"]').tooltip()
         vm.loadParks();
-        vm.setPrice = vm.priceOptions[0];
+        vm.setPrice = vm.priceOptions[1];
         vm.form = document.forms.bulkpricingForm;
         var picker = $(vm.form.period_start).closest('.date');
         var today = new Date();
@@ -380,5 +382,15 @@ export default {
     }
     .well:last-child{
         margin-bottom: 5px;
+    }
+    .helper {
+        padding: 0px 12px;
+        background-color: transparent; 
+        border: none;
+    }
+    .helper > i{
+        padding: 6px;
+        margin-left: -15px;
+        margin-top: 4px;
     }
 </style>

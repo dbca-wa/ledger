@@ -11,10 +11,11 @@
                     </div>
                     <div class="col-md-4">
                         <select name="rate" v-model="selected_rate" class="form-control">
-                            <option value=""></option>
+                            <option value="">Manual Entry</option>
                             <option v-for="r in rates":value="r.id">{{r.name}}</option>
                         </select>
                     </div>
+                    <div class="helper"><i class="fa fa-question-circle"data-toggle="tooltip" data-placement="right" title="Select a rate to prefill the price fields otherwise use the manual entry"></i></div>
                 </div>
             </div>
             <div class="row">
@@ -225,6 +226,7 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
+        $('[data-toggle="tooltip"]').tooltip()
         vm.form = document.forms.priceForm;
         var picker = $(vm.form.period_start).closest('.date');
         var today = new Date();
@@ -243,3 +245,15 @@ module.exports = {
     }
 };
 </script>
+<style lang="css" scoped>
+    .helper {
+        padding: 0px 12px;
+        background-color: transparent; 
+        border: none;
+    }
+    .helper > i{
+        padding: 6px;
+        margin-left: -15px;
+        margin-top: 4px;
+    }
+</style>
