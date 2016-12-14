@@ -345,16 +345,21 @@ var pf = new Vue({
         this.grounds = new ol.layer.Vector({
             source: this.groundsSource,
             style: function (feature) {
-                return new ol.style.Style({
-                    image: new ol.style.Icon({
-                        src: 'pin.svg',
-                        snapToPixel: true,
-                        anchor: [0.5, 1.0],
-                        anchorXUnits: 'fraction',
-                        anchorYUnits: 'fraction'
-                    }),
-                    zIndex: -feature.getGeometry().getCoordinates()[1]
-                })
+                style = feature.get('style');
+                if (!style) {
+                    style = new ol.style.Style({
+                        image: new ol.style.Icon({
+                            src: 'pin.svg',
+                            snapToPixel: true,
+                            anchor: [0.5, 1.0],
+                            anchorXUnits: 'fraction',
+                            anchorYUnits: 'fraction'
+                        }),
+                        zIndex: -feature.getGeometry().getCoordinates()[1]
+                    });
+                    feature.set('style', style);
+                }
+                return style;
             }
         });
 
