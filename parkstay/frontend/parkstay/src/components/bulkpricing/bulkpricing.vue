@@ -231,7 +231,6 @@ export default {
                         "theme": "bootstrap"
                     }).
                     on("select2:select",function (e) {
-                        console.log('here');
                         var selected = $(e.currentTarget);
                         vm.bulkpricing.park = selected.val();
                         vm.selectPark();
@@ -277,6 +276,12 @@ export default {
         loader
     },
     methods: {
+        sendData: function(){
+            let vm = this; 
+            var data = JSON.parse(JSON.stringify(vm.bulkpricing));
+            data.type = vm.setPrice;
+            console.log(data);
+        },
         close: function() {
             delete this.bulkpricing.original;
             this.errors = false;
