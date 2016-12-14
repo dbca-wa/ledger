@@ -253,10 +253,13 @@ export default {
         selectPark: function() {
             var vm = this;
             var park = vm.bulkpricing.park;
-
+            vm.campgrounds = [];
             $.each(vm.parks, function(i, el) {
                 if (el.url == park) {
-                    vm.campgrounds = el.campgrounds;
+                    $.each(el.campgrounds,function(k,c){
+                        c.price_level == 0 ? vm.campgrounds.push(c):null;
+                    })
+
                 };
             });
 
@@ -274,6 +277,7 @@ export default {
                 success: function(data, stat, xhr) {
                     $.each(data,function(i,el){
                         el.url = "//"+ el.url.split('://')[1];
+
                     });
                     vm.parks = data;
                 }
