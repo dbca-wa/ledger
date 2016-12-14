@@ -308,7 +308,7 @@ var pf = new Vue({
         });
 
         this.groundsSource = new ol.source.Vector({
-            url: 'mapdemo.json',
+            url: '/api/campground_map/?format=json',
             format: new ol.format.GeoJSON()
         });
 
@@ -347,9 +347,13 @@ var pf = new Vue({
             style: function (feature) {
                 style = feature.get('style');
                 if (!style) {
+                    var icon = 'pin_offline.svg';
+                    if (feature.get('bookable_online') === true) {
+                        icon = 'pin.svg';
+                    } 
                     style = new ol.style.Style({
                         image: new ol.style.Icon({
-                            src: 'pin.svg',
+                            src: icon,
                             snapToPixel: true,
                             anchor: [0.5, 1.0],
                             anchorXUnits: 'fraction',

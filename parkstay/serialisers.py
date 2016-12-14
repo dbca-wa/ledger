@@ -19,6 +19,7 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 Contact
                             )
 from rest_framework import serializers
+import rest_framework_gis.serializers as gis_serializers
 
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
@@ -112,6 +113,26 @@ class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Feature
         fields = ('url','id','name','description','image')
+
+class CampgroundMapFeatureSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Feature
+        fields = ('id', 'name', 'description', 'image')
+
+class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
+    features = CampgroundMapFeatureSerializer(read_only=True, many=True)
+    
+    class Meta:
+        model = Campground
+        geo_field = 'wkb_geometry'
+        fields = (
+            'id',
+            'name',
+            'description',
+            'features',
+            'bookable_online'
+        )
+    
 
 class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
     address = serializers.JSONField()

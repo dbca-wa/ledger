@@ -29,6 +29,7 @@ from parkstay.models import (Campground,
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
+                                    CampgroundMapSerializer,
                                     CampgroundSerializer,
                                     CampgroundCampsiteFilterSerializer,
                                     PromoAreaSerializer,
@@ -205,6 +206,11 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
             raise
         except Exception as e:
             raise serializers.ValidationError(str(e))
+
+class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Campground.objects.all()
+    serializer_class = CampgroundMapSerializer
+    permission_classes = [] 
 
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
