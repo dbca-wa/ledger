@@ -93,15 +93,15 @@
                               </div>
                               <div class="form-group">
                                   <div class="col-md-2">
-                                      <label>Select Rate: </label>
+                                      <label><i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom" title="Select a rate to prefill the price fields otherwise use the manual entry">&nbsp;</i>Select Rate: </label>
+                                    
                                   </div>
-                                  <div class="col-md-4">
+                                  <div class="col-sm-4">
                                       <select name="rate" v-model="selected_rate" class="form-control" title="testing">
                                           <option value="">Manual Entry</option>
                                           <option v-for="r in rates":value="r.id">{{r.name}}</option>
                                       </select>
                                   </div>
-                                    <div class="helper"><i class="fa fa-question-circle"data-toggle="tooltip" data-placement="right" title="Select a rate to prefill the price fields otherwise use the manual entry"></i></div>
                               </div>
                               <div class="form-group">
                                   <div class="col-md-2">
@@ -392,7 +392,7 @@ export default {
     },
     mounted: function() {
         var vm = this;
-        $('[data-toggle="tooltip"]').tooltip()
+        $("i.fa").tooltip();
         vm.loadParks();
         vm.setPrice = vm.priceOptions[1];
         vm.form = document.forms.bulkpricingForm;
@@ -422,15 +422,5 @@ export default {
     }
     .well:last-child{
         margin-bottom: 5px;
-    }
-    .helper {
-        padding: 0px 12px;
-        background-color: transparent;
-        border: none;
-    }
-    .helper > i{
-        padding: 6px;
-        margin-left: -15px;
-        margin-top: 4px;
     }
 </style>
