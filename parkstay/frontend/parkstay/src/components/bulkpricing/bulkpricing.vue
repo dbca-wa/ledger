@@ -246,6 +246,10 @@ export default {
                 setTimeout(function(){
                     $(vm.form.campsiteType).select2({
                         theme: 'bootstrap'
+                    }).
+                    on("select2:select",function (e) {
+                        var selected = $(e.currentTarget);
+                        vm.bulkpricing.campsiteType = selected.val();
                     });
                 },100);
             }
