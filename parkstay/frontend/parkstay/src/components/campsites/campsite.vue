@@ -314,6 +314,7 @@ export default {
                         vm.campsite.min_people= vm.temp_campsite.min_people;
                         vm.campsite.description = vm.temp_campsite.description;
                         vm.$refs.descriptionEditor.disabled(false);
+                        vm.$refs.select_features.enabled(true);
                     }
                 }
             }
