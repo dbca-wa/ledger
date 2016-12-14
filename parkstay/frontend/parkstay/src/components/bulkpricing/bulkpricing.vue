@@ -10,7 +10,9 @@
      </div>
      <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel"
           aria-labelledby="applications-heading">
-        <div class="panel-body">
+
+          <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
+        <div class="panel-body" v-show="!isLoading">
                   <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                   <div class="well well-sm">
                       <div class="row">
@@ -50,7 +52,7 @@
                   <div class="well well-sm">
                       <div class="row">
                         <div class="col-lg-12">
-                            <h3>Add new Pricing Period For Campgrounds</h3><br/>
+                            <h3>Add new Pricing Period For {{setPrice}}</h3><br/>
                             <form name="bulkpricingForm" class="form-horizontal">
                               <div class="form-group">
                                   <div class="col-md-2">
@@ -70,10 +72,10 @@
                                       </select>
                                   </div>
                                   <div class="col-md-4" v-show="setPrice == priceOptions[2]">
-                                      <select name="tmpPark" v-show="!campsiteTypes.length > 0" class="form-control" >
+                                      <select name="tmpCampsiteType" v-show="!campsiteTypes.length > 0" class="form-control" >
                                           <option >Loading...</option>
                                       </select>
-                                      <select name="park" v-if="campsiteTypes.length > 0" @change="selectCampsiteType" class="form-control" v-model="bulkpricing.campsiteType">
+                                      <select name="campsiteType" v-if="campsiteTypes.length > 0" @change="selectCampsiteType" class="form-control" v-model="bulkpricing.campsiteType">
                                           <option v-for="ct  in campsiteTypes" :value="ct.url">{{ ct.name }}</option>
                                       </select>
                                   </div>
@@ -174,13 +176,13 @@ import {
 from '../../hooks.js'
 import alert from '../utils/alert.vue'
 import reason from '../utils/reasons.vue'
-
+import loader from '../utils/loader.vue'
 export default {
     name:"bulkpricing",
     data: function() {
         let vm = this;
         return {
-            priceOptions:['Price Tariff','Park/Campground','Campsite Type'],
+            priceOptions:['Price Tariff','Park','Campsite Type'],
             setPrice:'',
             id:'',
             selected_rate: '',
@@ -192,6 +194,7 @@ export default {
             closeEndPicker: '',
             errors: false,
             errorString: '',
+            loading: [],
             form: '',
             bulkpricing: {
                 reason: '',
@@ -217,8 +220,37 @@ export default {
         requireDetails: function() {
             return this.bulkpricing.reason == '1';
         },
+        isLoading: function(){
+            let vm = this;
+            if ( vm.loading.length > 0){
+                return true;
+            }
+            else{
+                setTimeout(function (e) {
+                    $(vm.form.park).select2({
+                        "theme": "bootstrap"
+                    }).
+                    on("select2:select",function (e) {
+                        console.log('here');
+                        var selected = $(e.currentTarget);
+                        vm.bulkpricing.park = selected.val();
+                        vm.selectPark();
+                    });
+                },100);
+            }
+        },
     },
     watch: {
+        setPrice: function(){
+            let vm = this;
+            if (vm.setPrice == vm.priceOptions[2]){
+                setTimeout(function(){
+                    $(vm.form.campsiteType).select2({
+                        theme: 'bootstrap'
+                    });
+                },100);
+            }
+        },
         selected_rate: function() {
             let vm = this;
             if (vm.selected_rate != ''){
@@ -241,7 +273,8 @@ export default {
     },
     components: {
         alert,
-        reason
+        reason,
+        loader
     },
     methods: {
         close: function() {
@@ -289,6 +322,7 @@ export default {
         loadParks: function() {
             var vm = this;
             var url = api_endpoints.parks;
+            vm.loading.push('Loading Parks');
             $.ajax({
                 url: url,
                 dataType: 'json',
@@ -298,19 +332,7 @@ export default {
 
                     });
                     vm.parks = data;
-                    setTimeout(function (e) {
-
-                        $(vm.form.park).select2({
-                            "theme": "bootstrap"
-                        }).
-                        on("select2:select",function (e) {
-                            console.log('here');
-                            var selected = $(e.currentTarget);
-                            vm.bulkpricing.park = selected.val();
-                            vm.selectPark();
-                        });
-                    },100);
-
+                    vm.loading.splice('Loading Parks',1);
                 }
             });
 
@@ -326,18 +348,21 @@ export default {
         },
         fetchRates: function() {
             let vm = this;
+            vm.loading.push('Loading Rates');
             $.get(api_endpoints.rates,function(data){
                 vm.rates = data;
+                vm.loading.splice('Loading Rates',1);
             });
         },
         fetchCampsiteTypes: function() {
             let vm = this;
+            vm.loading.push('Loading CampsiteTypes');
             $.get(api_endpoints.campsite_classes,function(data){
                 vm.campsiteTypes = [];
                 $.each(data,function(i,el){
                     el.can_add_rate ? vm.campsiteTypes.push(el): '';
                 });
-
+                vm.loading.splice('Loading CampsiteTypes',1);
             });
         },
         goBack:function () {
@@ -411,7 +436,6 @@ export default {
         vm.addFormValidations();
         vm.fetchRates();
         vm.fetchCampsiteTypes();
-        //select2.defaults.set( "theme", "bootstrap" );
     }
 };
 </script>
