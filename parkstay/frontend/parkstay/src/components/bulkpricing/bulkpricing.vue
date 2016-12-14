@@ -65,7 +65,7 @@
                                       <select name="tmpPark" v-show="!parks.length > 0" class="form-control" >
                                           <option >Loading...</option>
                                       </select>
-                                      <select name="park" v-if="parks.length > 0" @change="selectPark" class="form-control" v-model="bulkpricing.park">
+                                      <select name="park" v-if="parks.length > 0" class="form-control" v-model="bulkpricing.park">
                                           <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
                                       </select>
                                   </div>
@@ -78,7 +78,7 @@
                                       </select>
                                   </div>
                               </div>
-                              <div class="form-group">
+                              <div class="form-group" v-show="setPrice != priceOptions[2] && campgrounds.length > 0">
                                   <div class="col-md-2">
                                       <label class="control-label" >Campground</label>
                                   </div>
@@ -86,7 +86,7 @@
                                       <select name="tmpCampground" v-show="!parks.length > 0" class="form-control" >
                                           <option >Loading...</option>
                                       </select>
-                                      <select name="campground" v-if="parks.length > 0" class="form-control" v-model="bulkpricing.campground">
+                                      <select name="campground" id="bulkpricingCampgrounds" v-if="parks.length > 0" class="form-control" v-model="bulkpricing.campgrounds" multiple="multiple">
                                           <option v-for="campground in campgrounds" :value="campground.id">{{ campground.name }}</option>
                                       </select>
                                   </div>
@@ -168,7 +168,8 @@
 import {
     $,
     api_endpoints,
-    helpers
+    helpers,
+    select2
 }
 from '../../hooks.js'
 import alert from '../utils/alert.vue'
@@ -192,7 +193,10 @@ export default {
             errors: false,
             errorString: '',
             form: '',
-            bulkpricing: {reason: ''},
+            bulkpricing: {
+                reason: '',
+                campgrounds:[]
+            },
             parks: [],
             selectedPark: {},
             campgrounds: [],
@@ -253,17 +257,34 @@ export default {
         selectPark: function() {
             var vm = this;
             var park = vm.bulkpricing.park;
-
+            vm.campgrounds = [];
             $.each(vm.parks, function(i, el) {
                 if (el.url == park) {
-                    vm.campgrounds = el.campgrounds;
+                    $.each(el.campgrounds,function(k,c){
+                        c.price_level == 0 ? vm.campgrounds.push(c):null;
+                    })
+
+                    setTimeout(function (e) {
+                        $(vm.form.campground).select2({
+                            "theme": "bootstrap"
+                        }).
+                        on("select2:select",function (e) {
+                            var selected = $(e.currentTarget);
+                            vm.bulkpricing.campgrounds = selected.val();
+                        }).
+                        on("select2:unselect",function (e) {
+                            var selected = $(e.currentTarget);
+
+                            vm.bulkpricing.campgrounds = selected.val();
+                        });
+                    },100);
                 };
             });
 
         },
         selectCampsiteType:function () {
             var vm = this;
-            console.log('campsite type selected');
+
         },
         loadParks: function() {
             var vm = this;
@@ -274,8 +295,22 @@ export default {
                 success: function(data, stat, xhr) {
                     $.each(data,function(i,el){
                         el.url = "//"+ el.url.split('://')[1];
+
                     });
                     vm.parks = data;
+                    setTimeout(function (e) {
+
+                        $(vm.form.park).select2({
+                            "theme": "bootstrap"
+                        }).
+                        on("select2:select",function (e) {
+                            console.log('here');
+                            var selected = $(e.currentTarget);
+                            vm.bulkpricing.park = selected.val();
+                            vm.selectPark();
+                        });
+                    },100);
+
                 }
             });
 
@@ -298,7 +333,11 @@ export default {
         fetchCampsiteTypes: function() {
             let vm = this;
             $.get(api_endpoints.campsite_classes,function(data){
-                vm.campsiteTypes = data;
+                vm.campsiteTypes = [];
+                $.each(data,function(i,el){
+                    el.can_add_rate ? vm.campsiteTypes.push(el): '';
+                });
+
             });
         },
         goBack:function () {
@@ -372,6 +411,7 @@ export default {
         vm.addFormValidations();
         vm.fetchRates();
         vm.fetchCampsiteTypes();
+        //select2.defaults.set( "theme", "bootstrap" );
     }
 };
 </script>
@@ -385,7 +425,7 @@ export default {
     }
     .helper {
         padding: 0px 12px;
-        background-color: transparent; 
+        background-color: transparent;
         border: none;
     }
     .helper > i{

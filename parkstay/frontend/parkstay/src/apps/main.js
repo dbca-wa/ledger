@@ -61,7 +61,7 @@ const routes = [
                         path:'bulkpricing',
                         name:'bulkpricing',
                         component: Bulkpricing
-                    }, 
+                    },
                     {
                         path:'campsite-type',
                         component: {
@@ -73,7 +73,7 @@ const routes = [
                                 name: 'campsite-type',
                                 component: Campsite_type
                             },
-                            { 
+                            {
                                 path:':campsite_type_id',
                                 name:'campsite-type-detail',
                                 component: Campsite_type,
