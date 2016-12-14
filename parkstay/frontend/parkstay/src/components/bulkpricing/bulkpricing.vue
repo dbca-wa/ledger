@@ -96,7 +96,7 @@
                               <div class="form-group">
                                   <div class="col-md-2">
                                       <label><i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom" title="Select a rate to prefill the price fields otherwise use the manual entry">&nbsp;</i>Select Rate: </label>
-                                    
+
                                   </div>
                                   <div class="col-sm-4">
                                       <select name="rate" v-model="selected_rate" class="form-control" title="testing">
@@ -110,7 +110,7 @@
                                       <label>Adult Price: </label>
                                   </div>
                                   <div class="col-md-4">
-                                      <input :readonly="selected_rate != ''" name="adult"  v-model="bulkpricing.adult" type='text' class="form-control" />
+                                      <input :readonly="selected_rate != ''" name="adult"  v-model="bulkpricing.adult" type='text' class="form-control" required="true" />
                                   </div>
                               </div>
                               <div class="form-group">
@@ -118,7 +118,7 @@
                                       <label>Concession Price: </label>
                                   </div>
                                   <div class="col-md-4">
-                                      <input :readonly="selected_rate != ''" name="concession"  v-model="bulkpricing.concession" type='text' class="form-control" />
+                                      <input :readonly="selected_rate != ''" name="concession"  v-model="bulkpricing.concession" type='text' class="form-control" required="true" />
                                   </div>
                               </div>
                               <div class="form-group">
@@ -126,7 +126,7 @@
                                       <label>Child Price: </label>
                                   </div>
                                   <div class="col-md-4">
-                                      <input :readonly="selected_rate != ''" name="child"  v-model="bulkpricing.child" type='text' class="form-control" />
+                                      <input :readonly="selected_rate != ''" name="child"  v-model="bulkpricing.child" type='text' class="form-control" required="true"/>
                                   </div>
                               </div>
                               <div class="form-group">
@@ -135,21 +135,21 @@
                                   </div>
                                   <div class="col-md-4">
                                       <div class='input-group date'>
-                                          <input  name="period_start"  v-model="bulkpricing.period_start" type='text' class="form-control" />
+                                          <input  name="period_start"  v-model="bulkpricing.period_start" type='text' class="form-control" required="true" />
                                           <span class="input-group-addon">
                                               <span class="glyphicon glyphicon-calendar"></span>
                                           </span>
                                       </div>
                                   </div>
                               </div>
-                              <reason type="price" v-model="bulkpricing.reason" style="margin:0px 0px;"></reason>
+                              <reason type="price" v-model="bulkpricing.reason" style="margin:0px 0px;" required="true"></reason>
                               <div v-show="requireDetails">
                                   <div class="form-group">
                                       <div class="col-md-2">
                                           <label>Details: </label>
                                       </div>
                                       <div class="col-md-5">
-                                          <textarea name="details" v-model="bulkpricing.details" class="form-control"></textarea>
+                                          <textarea name="details" v-model="bulkpricing.details" class="form-control" :required="requireDetails"></textarea>
                                       </div>
                                   </div>
                               </div>
@@ -174,6 +174,7 @@ import {
     select2
 }
 from '../../hooks.js'
+import validate from 'formValidate'
 import alert from '../utils/alert.vue'
 import reason from '../utils/reasons.vue'
 import loader from '../utils/loader.vue'
@@ -281,10 +282,15 @@ export default {
     },
     methods: {
         sendData: function(){
-            let vm = this; 
-            var data = JSON.parse(JSON.stringify(vm.bulkpricing));
-            data.type = vm.setPrice;
-            console.log(data);
+            let vm = this;
+            var validatedForm = validate.validate(vm.form);
+            if (validatedForm.isValid) {
+                var data = JSON.parse(JSON.stringify(vm.bulkpricing));
+                data.type = vm.setPrice;
+            }else{
+                console.log(validatedForm.errors);
+            }
+
         },
         close: function() {
             delete this.bulkpricing.original;
