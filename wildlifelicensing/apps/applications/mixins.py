@@ -3,7 +3,7 @@ import datetime
 from django.core.urlresolvers import reverse_lazy
 from django.contrib.auth.mixins import UserPassesTestMixin
 
-from wildlifelicensing.apps.main.helpers import is_customer, is_officer, get_user_assessor_groups
+from wildlifelicensing.apps.main.helpers import is_customer, is_officer, is_assessor, get_user_assessor_groups
 from wildlifelicensing.apps.applications.models import Application, Assessment
 
 
@@ -145,7 +145,7 @@ class CanPerformAssessmentMixin(UserPassesTestMixin):
             self.raise_exception = False
             return False
         self.raise_exception = True
-        if is_customer(user) or is_officer(user):
+        if not is_assessor(user):
             return False
         assessment = self.get_assessment()
         return assessment is not None and assessment.assessor_group in get_user_assessor_groups(user)
