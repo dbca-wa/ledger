@@ -103,7 +103,6 @@ class Campground(models.Model):
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     bookable_per_site = models.BooleanField(default=False)
-    bookable_online = models.BooleanField(default=False)
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))

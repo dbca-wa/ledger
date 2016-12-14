@@ -14,7 +14,7 @@
 
 @font-face {
     font-family: "DPaWSymbols";
-    src: url("campicon.woff") format("woff");
+    src: url("/static/ps/css/campicon.woff") format("woff");
 }
 
 .search-params hr {
@@ -166,77 +166,77 @@ input:checked + .symb {
 <body>
     <div id="parkfinder">
         <div class="row">
-            <form><div class="small-6 columns search-params">
+            <form><div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
                     <div class="input-group small-12 columns">
                         <input class="input-group-field" type="text"/>
                         <div class="input-group-button"><button class="button">Search</button></div>
                     </div>
                 </div><div class="row">
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label>Arrival <input type="text"/></label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label>Departure <input type="text"/></label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label>Guests <input type="text"/></label>
                     </div>
                 </div><div class="row">
                     <hr/>
                 </div><div class="row">
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="campingGear" class="show-for-sr" checked/><i class="symb RC2"></i> Tent</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="campingGear" class="show-for-sr"/><i class="symb RV10"></i> Campervan</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="campingGear" class="show-for-sr"/><i class="symb RC4"></i> Caravan</label>
                     </div>
                 </div><div class="row">
                     <hr class="search"/>
                 </div><div class="row">
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RV2"></i> 2WD accessible</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF8G"></i> BBQ</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF10"></i> Campfires allowed</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF17"></i> Dish washing</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RG2"></i> Dogs allowed</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RG15"></i> Generators allowed</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF13"></i> Mains water</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF6"></i> Picnic tables</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF19"></i> Portable toilet disposal</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF7"></i> Sheltered picnic tables</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF15"></i> Shower</label>
                     </div>
-                    <div class="small-4 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF1"></i> Toilets</label>
                     </div>
 
                 </div>
             </div></form>
-            <div class="large-6 columns">
+            <div class="small-12 medium-9 large-6 columns">
                 <div id="map"></div>
             </div>
         </div>
@@ -341,15 +341,16 @@ var pf = new Vue({
             'RC4': genIconStyle('b')
         };*/
 
-        
+
+
         this.grounds = new ol.layer.Vector({
             source: this.groundsSource,
             style: function (feature) {
                 style = feature.get('style');
                 if (!style) {
-                    var icon = 'pin_offline.svg';
+                    var icon = '/static/ps/img/pin_offline.svg';
                     if (feature.get('bookable_online') === true) {
-                        icon = 'pin.svg';
+                        icon = '/static/ps/img/pin.svg';
                     } 
                     style = new ol.style.Style({
                         image: new ol.style.Icon({

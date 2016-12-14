@@ -130,7 +130,7 @@ class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'name',
             'description',
             'features',
-            'bookable_online'
+            'campground_type'
         )
     
 
