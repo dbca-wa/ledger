@@ -421,7 +421,12 @@ export default {
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data) {
 
-                    vm.campsite = data;
+                    data.campsite_class = (data.campsite_class != null || data.campsite_class.trim().length>0) ? "//"+ data.campsite_class.split('://')[1] : '';
+                    vm.temp_campsite = data;
+                    vm.campsite = JSON.parse(JSON.stringify(data));
+                    if (data.campsite_class.length>0) {
+                        vm.onCampsiteClassChange();
+                    }
                     setTimeout(function () {
                         vm.isLoading = false;
                     },500);

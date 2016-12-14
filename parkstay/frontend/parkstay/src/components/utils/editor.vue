@@ -35,6 +35,7 @@ export default {
         },
         updateContent:function (content) {
             let vm = this;
+            vm.editor.setText('');
             vm.editor.clipboard.dangerouslyPasteHTML(0, content, 'api');
             vm.$emit('input',content);
         }
@@ -52,7 +53,6 @@ export default {
             vm.$emit('input', text);
         });
         var valueReady = setInterval(function () {
-            console.log(vm.value);
             if(typeof(vm.value) != "undefined"){
                 vm.editor.clipboard.dangerouslyPasteHTML(0, vm.value, 'api');
                 clearInterval(valueReady);

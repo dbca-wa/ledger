@@ -1038,3 +1038,16 @@ class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
 
+# Bulk Pricing
+# ===========================
+class BulkPricingView(generics.CreateAPIView):
+    
+    def create(self, request,*args, **kwargs):
+        try:
+            
+            return Response(data, status=http_status)
+
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))

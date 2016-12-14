@@ -379,3 +379,15 @@ class MaximumStayReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaximumStayReason
         fields = ('id','text')
+
+# Bulk Pricing
+# ==========================
+class BulkPricingSerializer(serializers.Serializer):
+    park = serializers.CharField()
+    campground = serializers.IntegerField()
+    adult = serializers.DecimalField(max_digits=8, decimal_places=2)
+    concession = serializers.DecimalField(max_digits=8, decimal_places=2)
+    child = serializers.DecimalField(max_digits=8, decimal_places=2)
+    period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y']) 
+    reason = serializers.IntegerField()
+    details =serializers.CharField()
