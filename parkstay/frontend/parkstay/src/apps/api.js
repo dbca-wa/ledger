@@ -98,4 +98,7 @@ module.exports = {
     maxStayReasons:function () {
         return "/api/maxStayReasons.json";
     },
+    bulkPricing: function(){
+        return "/api/bulkPricing";
+    }
 };

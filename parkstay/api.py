@@ -6,6 +6,7 @@ from django.core.files.base import ContentFile
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from datetime import datetime, timedelta
 from collections import OrderedDict
@@ -58,7 +59,8 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     ClosureReasonSerializer,
                                     OpenReasonSerializer,
                                     PriceReasonSerializer,
-                                    MaximumStayReasonSerializer
+                                    MaximumStayReasonSerializer,
+                                    BulkPricingSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 
@@ -402,7 +404,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
-                    #'reason': serializer.validated_data['reason'],
+                    'reason': PriceReason.objects.get(serializer.validated_data['reason']),
+                    'details': serializer.validated_data['details'],
                     'update_level': 0
                 }
                 self.get_object().createCampsitePriceHistory(data)
@@ -421,8 +424,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             original_data = request.data.pop('original')
-
-            original_serializer = CampgroundPriceHistorySerializer(data=original_data)
+            original_serializer = CampgroundPriceHistorySerializer(data=original_data,method='post')
             original_serializer.is_valid(raise_exception=True)
 
             serializer = RateDetailSerializer(data=request.data)
@@ -440,7 +442,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 new_data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
-                    #'reason': serializer.validated_data['reason'],
+                    'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
+                    'details': serializer.validated_data['details'],
                     'update_level': 0
                 }
                 self.get_object().updatePriceHistory(dict(original_serializer.validated_data),new_data)
@@ -827,7 +830,8 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
                 data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
-                    #'reason': serializer.validated_data['reason'],
+                    'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
+                    'details': serializer.validated_data['details'],
                     'update_level': 1
                 }
                 self.get_object().createCampsitePriceHistory(data)
@@ -865,7 +869,8 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
                 new_data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
-                    #'reason': serializer.validated_data['reason'],
+                    'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
+                    'details': serializer.validated_data['details'],
                     'update_level': 1
                 }
                 self.get_object().updatePriceHistory(dict(original_serializer.validated_data),new_data)
@@ -1041,13 +1046,41 @@ class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
 # Bulk Pricing
 # ===========================
 class BulkPricingView(generics.CreateAPIView):
-    
+    serializer_class = BulkPricingSerializer
+    renderer_classes = (JSONRenderer,)
+
     def create(self, request,*args, **kwargs):
         try:
-            
-            return Response(data, status=http_status)
+            http_status = status.HTTP_200_OK
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            print serializer.validated_data
+
+            rate_id = serializer.data.get('rate',None)
+            if rate_id:
+                try:
+                    rate = Rate.objects.get(id=rate_id)
+                except Rate.DoesNotExist as e :
+                    raise serializers.ValidationError('The selected rate does not exist')
+            else:
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+            if rate:
+                data = {
+                    'rate': rate,
+                    'date_start': serializer.validated_data['period_start'],
+                    'reason': PriceReason.objects.get(pk=serializer.data['reason']),
+                    'details': serializer.validated_data['details']
+                }
+            if serializer.data['type'] == 'Park':
+                for c in serializer.data['campgrounds']:
+                    data['update_level'] = 0
+                    Campground.objects.get(pk=c).createCampsitePriceHistory(data)
+
+            return Response(serializer.data, status=http_status)
 
         except serializers.ValidationError:
+            print traceback.print_exc()
             raise
         except Exception as e:
+            print traceback.print_exc()
             raise serializers.ValidationError(str(e))

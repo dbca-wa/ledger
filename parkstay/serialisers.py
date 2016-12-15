@@ -221,7 +221,7 @@ class ParkSerializer(serializers.HyperlinkedModelSerializer):
     campgrounds = CampgroundSerializer(many=True)
     class Meta:
         model = Park
-        fields = ('district', 'url', 'name', 'entry_fee_required', 'campgrounds')
+        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds')
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
@@ -346,18 +346,49 @@ class RateDetailSerializer(serializers.Serializer):
 
 class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
+    details = serializers.CharField(required=False)
     class Meta:
         model = CampgroundPriceHistory
-        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable','reason','details')
         read_only_fields = ('id','editable','deletable','adult','concession','child')
+
+    def validate(self,obj):
+        if obj.get('reason') == 1 and not obj.get('details'):
+            raise serializers.ValidationError('Details is rtequired if the reason is other.')
+        return obj
+        
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'get'
+        super(CampgroundPriceHistorySerializer, self).__init__(*args, **kwargs)
+        if method == 'post':
+            self.fields['reason'] = serializers.IntegerField(write_only=True)
 
 class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
+    details = serializers.CharField(required=False)
     class Meta:
         model = CampsiteClassPriceHistory
-        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable')
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable','reason','details')
         read_only_fields = ('id','editable','deletable','adult','concession','child')
 
+    def validate(self,obj):
+        if obj.get('reason') == 1 and not obj.get('details'):
+            raise serializers.ValidationError('Details is rtequired if the reason is other.')
+        return obj
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'get'
+        super(CampsiteClassPriceHistorySerializer, self).__init__(*args, **kwargs)
+        if method == 'post':
+            self.fields['reason'] = serializers.IntegerField()
+        
 # Reasons
 # ============================
 class ClosureReasonSerializer(serializers.ModelSerializer):
@@ -383,11 +414,42 @@ class MaximumStayReasonSerializer(serializers.ModelSerializer):
 # Bulk Pricing
 # ==========================
 class BulkPricingSerializer(serializers.Serializer):
-    park = serializers.CharField()
-    campground = serializers.IntegerField()
+    TYPE_CHOICES = (
+        ('Park','Park'),
+        ('Campsite Type','Campsite Type')
+    )
+    park = serializers.IntegerField(required=False)
+    campgrounds = serializers.ListField(
+       child=serializers.IntegerField()
+    ) 
+    campsiteType = serializers.IntegerField(required=False)
     adult = serializers.DecimalField(max_digits=8, decimal_places=2)
     concession = serializers.DecimalField(max_digits=8, decimal_places=2)
     child = serializers.DecimalField(max_digits=8, decimal_places=2)
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y']) 
     reason = serializers.IntegerField()
     details =serializers.CharField()
+    type = serializers.ChoiceField(choices=TYPE_CHOICES)
+
+    def validate_park(self, val):
+        try:
+            park = Park.objects.get(pk=int(val))
+        except Park.DoesNotExist:
+            raise
+        return val 
+
+    def validate_campgrounds(self,val):
+        for v in val:
+            try:
+                Campground.objects.get(pk=v)
+            except Campground.DoesNotExist:
+                raise    
+        return val
+
+    def validate_reason(self, val):
+        reason = None
+        try:
+            reason = PriceReason.objects.get(pk=int(val))
+        except PriceReason.DoesNotExist:
+            raise
+        return val 
