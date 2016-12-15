@@ -313,35 +313,6 @@ var pf = new Vue({
         });
 
 
-        /*var genIconStyle = function(codepoint) {
-            return new ol.style.Style({
-                image: new ol.style.Icon({
-                    src: 'pin.svg',
-                    snapToPixel: true,
-                    anchor: [0.5, 1.0],
-                    anchorXUnits: 'fraction',
-                    anchorYUnits: 'fraction'
-                }),
-                text: new ol.style.Text({
-                    font: '28px "DPaWSymbols"',
-                    text: codepoint,
-                    offsetX: 0,
-                    offsetY: -16,
-                    fill: new ol.style.Fill({
-                        color: '#fff'
-                    })
-                })
-            });
-        };
-
-        this.styleCache = {
-            'RC1': genIconStyle('p'),
-            'RC2': genIconStyle('a'),
-            'RC3': genIconStyle('q'),
-            'RC4': genIconStyle('b')
-        };*/
-
-
 
         this.grounds = new ol.layer.Vector({
             source: this.groundsSource,
@@ -349,9 +320,17 @@ var pf = new Vue({
                 style = feature.get('style');
                 if (!style) {
                     var icon = '/static/ps/img/pin_offline.svg';
-                    if (feature.get('bookable_online') === true) {
+                    var campgroundType = feature.get('campground_type');
+                    switch (campgroundType) {
+                        case 1:
                         icon = '/static/ps/img/pin.svg';
-                    } 
+                        break;
+                        case 3:
+                        icon = '/static/ps/img/pin_alt.svg';
+                        break;
+                        default:
+                        break;
+                    }
                     style = new ol.style.Style({
                         image: new ol.style.Icon({
                             src: icon,
@@ -368,37 +347,6 @@ var pf = new Vue({
             }
         });
 
-            /*style: function(feature) {
-                return vm.styleCache['RC4'];
-                
-                var style = vm.styleCache[size];
-                if (!style) {
-                    style = new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 18,
-                            stroke: new ol.style.Stroke({
-                                color: '#fff'
-                            }),
-                            fill: new ol.style.Fill({
-                                color: '#3399cc'
-                            })
-                        }),
-                        text: new ol.style.Text({
-                            font: 'bold 12px sans-serif',
-                            text: size.toString(),
-                            offsetX: 0,
-                            offsetY: 1,
-                            textAlign: 'center',
-                            textBaseline: 'middle',
-                            fill: new ol.style.Fill({
-                                color: '#fff'
-                            })
-                        })
-                    });
-                    vm.styleCache[size] = style;
-                }
-                return style;
-            }*/
 
         this.olmap = new ol.Map({
             logo: false,
