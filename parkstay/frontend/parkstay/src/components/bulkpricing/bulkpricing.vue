@@ -174,7 +174,6 @@ import {
     select2
 }
 from '../../hooks.js'
-import validate from 'formValidate'
 import alert from '../utils/alert.vue'
 import reason from '../utils/reasons.vue'
 import loader from '../utils/loader.vue'
@@ -229,12 +228,18 @@ export default {
             else{
                 setTimeout(function (e) {
                     $(vm.form.park).select2({
-                        "theme": "bootstrap"
+                        "theme": "bootstrap",
+                        allowClear: true,
+                        placeholder:"Select Park"
                     }).
                     on("select2:select",function (e) {
                         var selected = $(e.currentTarget);
                         vm.bulkpricing.park = selected.val();
                         vm.selectPark();
+                    }).
+                    on("select2:unselect",function (e) {
+                        var selected = $(e.currentTarget);
+                        vm.bulkpricing.park = "";
                     });
                 },100);
             }
@@ -246,10 +251,17 @@ export default {
             if (vm.setPrice == vm.priceOptions[2]){
                 setTimeout(function(){
                     $(vm.form.campsiteType).select2({
-                        theme: 'bootstrap'
+                        theme: 'bootstrap',
+                        allowClear: true,
+                        placeholder: "Select Campsite Type",
                     }).
                     on("select2:select",function (e) {
                         var selected = $(e.currentTarget);
+                        vm.bulkpricing.campsiteType = selected.val();
+                    }).
+                    on("select2:unselect",function (e) {
+                        var selected = $(e.currentTarget);
+
                         vm.bulkpricing.campsiteType = selected.val();
                     });
                 },100);
@@ -283,14 +295,11 @@ export default {
     methods: {
         sendData: function(){
             let vm = this;
-            var validatedForm = validate.validate(vm.form);
-            if (validatedForm.isValid) {
+            if($(vm.form).valid()){
                 var data = JSON.parse(JSON.stringify(vm.bulkpricing));
                 data.type = vm.setPrice;
-            }else{
-                console.log(validatedForm.errors);
+                //send ajax
             }
-
         },
         close: function() {
             delete this.bulkpricing.original;
@@ -314,7 +323,12 @@ export default {
 
                     setTimeout(function (e) {
                         $(vm.form.campground).select2({
-                            "theme": "bootstrap"
+                            "theme": "bootstrap",
+                            allowClear: true,
+                            placeholder: {
+                              text:"Select Campground",
+                              selected:'selected'
+                            }
                         }).
                         on("select2:select",function (e) {
                             var selected = $(e.currentTarget);
@@ -387,6 +401,27 @@ export default {
             let vm = this;
             $(vm.form).validate({
                 rules: {
+                    park:{
+                        required: {
+                            depends: function(el){
+                                return vm.setPrice == vm.priceOptions[1];
+                            }
+                        }
+                    },
+                    campground:{
+                        required: {
+                            depends: function(el){
+                                return vm.setPrice == vm.priceOptions[1];
+                            }
+                        }
+                    },
+                    campsiteType:{
+                        required: {
+                            depends: function(el){
+                                return vm.setPrice == vm.priceOptions[2];
+                            }
+                        }
+                    },
                     adult: "required",
                     concession: "required",
                     child: "required",
