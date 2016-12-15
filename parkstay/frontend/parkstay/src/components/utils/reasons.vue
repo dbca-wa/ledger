@@ -2,13 +2,13 @@
     <div class="row" id="reasons">
         <div class="form-group">
             <div class="col-md-2">
-                <label for="open_cg_reason">Reason: </label>
+                <label>Reason: </label>
             </div>
             <div class="col-md-4">
                 <select v-if="!reasons.length > 0" class="form-control" >
                     <option value="">Loading...</option>
                 </select>
-                <select v-else name="open_reason" :value="value" @input="$emit('input', $event.target.value)" class="form-control" id="open_cg_reason">
+                <select v-else name="open_reason" :value="value" @input="$emit('input', $event.target.value)" class="form-control">
                     <option value=""></option>
                     <option v-for="reason in reasons" :value="reason.id">{{reason.text}}</option>
                 </select>
@@ -63,7 +63,7 @@ export default {
             $.get(api_endpoints.priceReasons(),function (data) {
                 vm.reasons = data;
             });
-        },
+        }
     },
     mounted:function(){
         let vm =this;
