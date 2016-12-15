@@ -1075,6 +1075,9 @@ class BulkPricingView(generics.CreateAPIView):
                 for c in serializer.data['campgrounds']:
                     data['update_level'] = 0
                     Campground.objects.get(pk=c).createCampsitePriceHistory(data)
+            elif serializer.data['type'] == 'Campsite Type':
+                data['update_level'] = 1
+                CampsiteClass.objects.get(pk=serializer.data['campsiteType']).createCampsitePriceHistory(data)
 
             return Response(serializer.data, status=http_status)
 
