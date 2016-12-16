@@ -56,7 +56,7 @@
 											</div>
 										</div>
 									</div>
-                                    <imageEditor :images="campground.images"></imageEditor>
+                                    <imagePicker :images="campground.images"></imagePicker>
 								</div>
 							</div>
 						</div>
@@ -184,7 +184,7 @@ import {
     bus
 }
 from '../utils/eventBus.js';
-import imageEditor from '../utils/images/imageEditor.vue'
+import imagePicker from '../utils/images/imagePicker.vue'
 import Editor from 'quill';
 import Render from 'quill-render';
 import loader from '../utils/loader.vue'
@@ -194,7 +194,7 @@ export default {
     components: {
         alert,
         loader,
-        imageEditor
+        imagePicker
     },
     data: function() {
         let vm = this;
