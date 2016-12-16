@@ -869,7 +869,7 @@ class PriceReason(Reason):
     pass
 # VIEWS
 # =====================================
-class CampgroundPriceHistory(models.Model):
+class ViewPriceHistory(models.Model):
     id = models.IntegerField(primary_key=True)
     date_start = models.DateField()
     date_end = models.DateField()
@@ -877,57 +877,47 @@ class CampgroundPriceHistory(models.Model):
     adult = models.DecimalField(max_digits=8, decimal_places=2)
     concession = models.DecimalField(max_digits=8, decimal_places=2)
     child = models.DecimalField(max_digits=8, decimal_places=2)
+    details = models.TextField()
+    reason_id = models.IntegerField()
 
+    class Meta:
+        abstract =True
+
+    # Properties
+    # ====================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+            return True
+        return False
+
+    @property
+    def reason(self):
+        reason = ''
+        if self.reason_id:
+            reason = self.reason_id
+        return reason
+
+class CampgroundPriceHistory(ViewPriceHistory):
     class Meta:
         managed = False
         db_table = 'parkstay_campground_pricehistory_v'
         ordering = ['-date_start',]
 
-    # Properties
-    # ====================================
-    @property
-    def deletable(self):
-        today = datetime.now().date()
-        if self.date_start >= today:
-            return True
-        return False
-
-    @property
-    def editable(self):
-        today = datetime.now().date()
-        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
-            return True
-        return False
-
-class CampsiteClassPriceHistory(models.Model):
-    id = models.IntegerField(primary_key=True)
-    date_start = models.DateField()
-    date_end = models.DateField()
-    rate_id = models.IntegerField()
-    adult = models.DecimalField(max_digits=8, decimal_places=2)
-    concession = models.DecimalField(max_digits=8, decimal_places=2)
-    child = models.DecimalField(max_digits=8, decimal_places=2)
-
+class CampsiteClassPriceHistory(ViewPriceHistory):
     class Meta:
         managed = False
         db_table = 'parkstay_campsiteclass_pricehistory_v'
         ordering = ['-date_start',]
 
-    # Properties
-    # ====================================
-    @property
-    def deletable(self):
-        today = datetime.now().date()
-        if self.date_start >= today:
-            return True
-        return False
-
-    @property
-    def editable(self):
-        today = datetime.now().date()
-        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
-            return True
-        return False
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
@@ -1148,8 +1138,9 @@ class CampsiteRateListener(object):
         else:
             try:
                 within = CampsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
-                within.date_end = instance.date_start - timedelta(days=2)
+                within.date_end = instance.date_start
                 within.save()
+                instance.date_start = instance.date_start + timedelta(days=1)
             except CampsiteRate.DoesNotExist:
                 pass
 

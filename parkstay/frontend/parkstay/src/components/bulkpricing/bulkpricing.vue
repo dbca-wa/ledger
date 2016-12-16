@@ -68,7 +68,7 @@
                                           <option >Loading...</option>
                                       </select>
                                       <select name="park" v-if="parks.length > 0" class="form-control" v-model="bulkpricing.park">
-                                          <option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+                                          <option v-for="park in parks" :value="park.id">{{ park.name }}</option>
                                       </select>
                                   </div>
                                   <div class="col-md-4" v-show="setPrice == priceOptions[2]">
@@ -297,8 +297,26 @@ export default {
             let vm = this;
             if($(vm.form).valid()){
                 var data = JSON.parse(JSON.stringify(vm.bulkpricing));
+                var url = api_endpoints.bulkPricing();
                 data.type = vm.setPrice;
+                console.log(data);
                 //send ajax
+                $.ajax({
+                     beforeSend: function(xhrObj) {
+                        xhrObj.setRequestHeader("Content-Type", "application/json");
+                        xhrObj.setRequestHeader("Accept", "application/json");
+                    },
+                    method: "POST",
+                    url: url,
+                    xhrFields: { withCredentials:true },
+                    data: JSON.stringify(data),
+                    headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                    success: function(msg){
+                        console.log('hi');
+                    },
+                    error: function(resp){
+                    }
+                });
             }
         },
         close: function() {
@@ -316,7 +334,7 @@ export default {
             var park = vm.bulkpricing.park;
             vm.campgrounds = [];
             $.each(vm.parks, function(i, el) {
-                if (el.url == park) {
+                if (el.id == park) {
                     $.each(el.campgrounds,function(k,c){
                         c.price_level == 0 ? vm.campgrounds.push(c):null;
                     })
@@ -356,10 +374,9 @@ export default {
                 url: url,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    $.each(data,function(i,el){
-                        el.url = "//"+ el.url.split('://')[1];
-
-                    });
+                    //$.each(data,function(i,el){
+                    //    el.url = "//"+ el.url.split('://')[1];
+                    //});
                     vm.parks = data;
                     vm.loading.splice('Loading Parks',1);
                 }
@@ -426,6 +443,7 @@ export default {
                     concession: "required",
                     child: "required",
                     period_start: "required",
+                    open_reason: "required",
                     details: {
                         required: {
                             depends: function(el){
