@@ -76,7 +76,7 @@
                                           <option >Loading...</option>
                                       </select>
                                       <select name="campsiteType" v-if="campsiteTypes.length > 0" @change="selectCampsiteType" class="form-control" v-model="bulkpricing.campsiteType">
-                                          <option v-for="ct  in campsiteTypes" :value="ct.url">{{ ct.name }}</option>
+                                          <option v-for="ct  in campsiteTypes" :value="ct.id">{{ ct.name }}</option>
                                       </select>
                                   </div>
                               </div>
