@@ -13,7 +13,8 @@
 
           <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
         <div class="panel-body" v-show="!isLoading">
-                  <alert :show.sync="showError" type="danger">{{errorString}}</alert>
+                  <alert :show="showError" :duration="7000" type="danger">{{errorString}}</alert>
+                  <alert :show="showSuccess" :duration="7000" type="success"><strong>Bulk pricing was successfull </strong></alert>
                   <div class="well well-sm">
                       <div class="row">
                           <div class="col-lg-12">
@@ -204,6 +205,7 @@ export default {
             selectedPark: {},
             campgrounds: [],
             campsiteTypes:[],
+            showSuccess:false
         }
     },
     computed: {
@@ -313,12 +315,22 @@ export default {
                     success: function(msg){
                         setTimeout(function () {
                             vm.loading.splice('Updating prices...',1);
+                            vm.bulkpricing = {
+                                reason: '',
+                                campgrounds:[]
+                            };
+                            vm.showSuccess = true;
                         },500);
                     },
                     error: function(resp){
                         vm.loading.splice('Updating prices...',1);
+                        vm.errors = true;
+                        vm.errorString = resp;
                     }
                 });
+            }else{
+                vm.errors = true;
+                vm.errorString = "Please fill all details";
             }
         },
         close: function() {
