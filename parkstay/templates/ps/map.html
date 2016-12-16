@@ -105,6 +105,10 @@
     height: 75vh;
 }
 
+.click {
+    cursor: pointer;
+}
+
 input + .symb {
     color: #000000;
     transition: color 0.25s ease-out;
@@ -160,6 +164,53 @@ input:checked + .symb {
     left: 50%;
 }
 
+.mapPopup {
+    position: absolute;
+    background-color: white;
+    -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #cccccc;
+    bottom: 32px;
+    left: -140px;
+    min-width: 280px;
+}
+
+.mapPopup:after, .mapPopup:before {
+    top: 100%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+.mapPopup:after {
+    border-top-color: white;
+    border-width: 10px;
+    left: 138px;
+    margin-left: -10px; 
+}
+
+.mapPopup:before {
+    border-top-color: #cccccc;
+    border-width: 11px;
+    left: 138px;
+    margin-left: -11px;
+}
+
+.mapPopupClose {
+    text-decoration: none;
+    position: absolute;
+    top: 2px;
+    right: 8px;
+}
+
+.mapPopupClose:after {
+    content: "✖";
+}
 
     </style>
 </head>
@@ -238,6 +289,10 @@ input:checked + .symb {
             </div></form>
             <div class="small-12 medium-9 large-6 columns">
                 <div id="map"></div>
+                <div id="mapPopup" class="mapPopup">
+                    <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
+                    <div id="mapPopupContent"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -347,6 +402,20 @@ var pf = new Vue({
             }
         });
 
+        $('#mapPopupClose').on('click', function(ev) {
+            vm.popup.setPosition(undefined);
+            return false;
+        });
+        this.popupContent = document.getElementById('mapPopupContent');
+        this.popup = new ol.Overlay({
+            element: document.getElementById('mapPopup'),
+            autoPan: true,
+            autoPanAnimation: {
+                duration: 250
+            }
+        });
+
+
 
         this.olmap = new ol.Map({
             logo: false,
@@ -371,7 +440,37 @@ var pf = new Vue({
                 this.streets,
                 this.tenure,
                 this.grounds
-            ]
+            ],
+            overlays: [this.popup]
+        });
+
+    
+        // sad loop to change the pointer when mousing over a vector layer
+        this.olmap.on('pointermove', function(ev) {
+            if (ev.dragging) {
+                return;
+            }
+            var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
+                return true;
+            }, {
+                layerFilter: function (layer) {
+                    return layer === vm.grounds;
+                }
+            }) === true;
+            $('#map').toggleClass('click', result);
+        });
+
+        // another loop to spawn the popup on click
+        this.olmap.on('singleclick', function(ev) {
+            var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
+                vm.popup.setPosition(feature.getGeometry().getCoordinates());
+                vm.popupContent.innerHTML = feature.get('name');
+                return true;
+            }, {
+                layerFilter: function (layer) {
+                    return layer === vm.grounds;
+                }
+            });
         });
 
     }
