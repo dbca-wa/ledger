@@ -296,11 +296,10 @@ export default {
         sendData: function(){
             let vm = this;
             if($(vm.form).valid()){
+                vm.loading.push('Updating prices...');
                 var data = JSON.parse(JSON.stringify(vm.bulkpricing));
                 var url = api_endpoints.bulkPricing();
                 data.type = vm.setPrice;
-                console.log(data);
-                //send ajax
                 $.ajax({
                      beforeSend: function(xhrObj) {
                         xhrObj.setRequestHeader("Content-Type", "application/json");
@@ -312,9 +311,12 @@ export default {
                     data: JSON.stringify(data),
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                     success: function(msg){
-                        console.log('hi');
+                        setTimeout(function () {
+                            vm.loading.splice('Updating prices...',1);
+                        },500);
                     },
                     error: function(resp){
+                        vm.loading.splice('Updating prices...',1);
                     }
                 });
             }
@@ -374,9 +376,6 @@ export default {
                 url: url,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    //$.each(data,function(i,el){
-                    //    el.url = "//"+ el.url.split('://')[1];
-                    //});
                     vm.parks = data;
                     vm.loading.splice('Loading Parks',1);
                 }
