@@ -234,7 +234,7 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Campground.objects.exclude(campground_type=4)
+    queryset = Campground.objects.exclude(campground_type=1)
     serializer_class = CampgroundMapSerializer
     permission_classes = [] 
 
