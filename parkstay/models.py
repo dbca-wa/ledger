@@ -74,6 +74,7 @@ class Campground(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
         (0, 'Bookable Online'),
         (1, 'Not Bookable Online'),
+        (2, 'Other Accomodation'),
     )
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
         (0, 'Campground level'),
@@ -242,8 +243,11 @@ class Campground(models.Model):
         except Exception as e:
             raise
 
+def campground_image_path(instance, filename):
+    return '/'.join(['parkstay', 'campground_images', filename])
+
 class CampgroundImage(models.Model):
-    image = models.ImageField(max_length=255,upload_to='{}/Parkstay/CampgroudImages'.format(settings.MEDIA_ROOT))
+    image = models.ImageField(max_length=255, upload_to=campground_image_path)
     campground = models.ForeignKey(Campground, related_name='images')
     checksum = models.CharField(blank=True, max_length=255, editable=False)
 

@@ -27,27 +27,23 @@
                           <form class="form-inline" name="guest">
                               <div class="form-group">
                                 <div class="dropdown">
-                                    <input type="text" class="form-control dropdown-toggle" name="guests" placeholder="Guest" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                    <input type="text" class="form-control dropdown-toggle" name="guests" placeholder="Guest" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" v-model="guestsText">
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                                        <li>
-                                            <a href="#" @click.prevent.stop="">
-                                                <div class="row">
-                                                    <div class="col-sm-8">
-                                                        <span class="item">
-                                                            {{value.guests.adults}} Adults (non concession)
-                                                        </span>
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <div class="btn-group btn-group-sm pull-right">
-                                                          <button type="button" class="btn btn-default">+</button>
-                                                          <button type="button" class="btn btn-default">-</button>
-                                                        </div>
+                                        <li v-for="guest in guestsPicker">
+                                            <div class="row">
+                                                <div class="col-sm-8">
+                                                    <span class="item">
+                                                        {{guest.amount}} {{guest.name}} <span style="color:#888;font-weight:300;font-size:12px;">{{guest.description}}</span>
+                                                    </span>
+                                                    <br/><a href="#" class="text-info" v-show="guest.helpText">{{guest.helpText}}</a>
+                                                </div>
+                                                <div class="pull-right">
+                                                    <div class="btn-group btn-group-sm">
+                                                      <button type="button" class="btn btn-guest" @click.prevent.stop="addGuestCount(guest)"><span class="glyphicon glyphicon-plus"></span></button>
+                                                      <button type="button" class="btn btn-guest" @click.prevent.stop="removeGuestCount(guest)"><span class="glyphicon glyphicon-minus"></span></button>
                                                     </div>
                                                 </div>
-
-                                            </a>
-
-                                            <li role="separator" class="divider"></li>
+                                            </div>
                                         </li>
                                     </ul>
                                 </div>
@@ -71,7 +67,35 @@ export default {
     data:function () {
         let vm = this;
         return {
-            form : null
+            form : null,
+            guestsText:"",
+            guestsPicker:[
+                {
+                    id:"adults",
+                    name:"Adults (no concession)",
+                    amount:0,
+                    description: ""
+                },
+                {
+                    id:"concession",
+                    name:"Concession",
+                    amount:0,
+                    description: "",
+                    helpText:"accepted concession cards"
+                },
+                {
+                    id:"children",
+                    name:"Children",
+                    amount:0,
+                    description: "Ages 6-16"
+                },
+                {
+                    id:"infants",
+                    name:"Infants",
+                    amount:0,
+                    description: "Ages 0-5"
+                },
+            ]
         }
     },
     props:{
@@ -89,6 +113,58 @@ export default {
                     }
                 }
             }
+        }
+    },
+    methods:{
+        addGuestCount:function (guest) {
+            let vm =this;
+            guest.amount += 1;
+            switch (guest.id) {
+                case 'adults':
+                    vm.value.guests.adults = guest.amount;
+                    break;
+                case 'concession':
+                    vm.value.guests.concession = guest.amount;
+                    break;
+                case 'children':
+                    vm.value.guests.children = guest.amount;
+                    break;
+                case 'infants':
+                    vm.value.guests.infants = guest.amount;
+                    break;
+                default:
+
+            }
+            vm.generateGuestCountText();
+        },
+        removeGuestCount:function (guest) {
+            let vm =this;
+            guest.amount = (guest.amount > 0) ?  guest.amount-1: 0;
+            switch (guest.id) {
+                case 'adults':
+                    vm.value.guests.adults = guest.amount;
+                    break;
+                case 'concession':
+                    vm.value.guests.concession = guest.amount;
+                    break;
+                case 'children':
+                    vm.value.guests.children = guest.amount;
+                    break;
+                case 'infants':
+                    vm.value.guests.infants = guest.amount;
+                    break;
+                default:
+
+            }
+            vm.generateGuestCountText();
+        },
+        generateGuestCountText:function () {
+            let vm =this;
+            var text = "";
+            $.each(vm.guestsPicker,function (i,g) {
+                (i != vm.guestsPicker.length-1) ? (g.amount > 0 )?text += g.amount+" "+g.name+",  ":"" :(g.amount > 0 ) ? text += g.amount+" "+g.name+" ":"";
+            });
+            vm.guestsText = text.replace(/,\s*$/, "");
         }
     },
     mounted:function () {
@@ -153,13 +229,20 @@ export default {
         top:120%;
         width: 300px;
     }
-    .dropdown-menu li a{
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    .dropdown-menu li{
+        padding: 10px;
+        margin-right: 10px;
+        border-bottom: 1px solid #ccc;
+    }
+    .dropdown-menu li:last-child{
+        border-bottom: 0;
     }
     .dropdown-menu .item{
         line-height: 2;
-        font-weight: 700;
+    }
+    .btn-guest {
+        color: #ccc;
+        background-color: #fff;
+        border-color: #ccc;
     }
 </style>

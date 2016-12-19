@@ -25,6 +25,7 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 MaximumStayReason
                             )
 from rest_framework import serializers
+import rest_framework_gis.serializers as gis_serializers
 
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
@@ -122,6 +123,25 @@ class FeatureSerializer(serializers.HyperlinkedModelSerializer):
         model = Feature
         fields = ('url','id','name','description','image')
 
+class CampgroundMapFeatureSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Feature
+        fields = ('id', 'name', 'description', 'image')
+
+class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
+    features = CampgroundMapFeatureSerializer(read_only=True, many=True)
+    
+    class Meta:
+        model = Campground
+        geo_field = 'wkb_geometry'
+        fields = (
+            'id',
+            'name',
+            'description',
+            'features',
+            'campground_type'
+        )
+    
 class CampgroundImageSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=17)
 
@@ -281,7 +301,7 @@ class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
             method = kwargs.pop('method')
         except:
             method = 'post'
-        print method
+        print(method)
         super(CampsiteClassSerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)

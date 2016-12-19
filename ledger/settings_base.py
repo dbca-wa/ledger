@@ -14,7 +14,9 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG', False)
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
-if not DEBUG:
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
     ALLOWED_HOSTS = env('ALLOWED_HOSTS', [])
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [

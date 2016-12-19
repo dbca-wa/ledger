@@ -61,7 +61,7 @@ class CampgroundFeed(ICalFeed):
     def item_location(self, item):
         return '{} - {}'.format(item.campground.name, ', '.join([
             x[0] for x in item.campsitebooking_set.values_list('campsite__name').distinct()
-        ] )) 
+        ] ))
 
 class DashboardView(UserPassesTestMixin, TemplateView):
     template_name = 'ps/dash/dash_tables_campgrounds.html'
@@ -69,10 +69,10 @@ class DashboardView(UserPassesTestMixin, TemplateView):
     def test_func(self):
         return is_officer(self.request.user)
 
-    
+
 class MyBookingsView(LoginRequiredMixin, TemplateView):
-    template_name = 'ps/my_bookings.html'
-    
+    template_name = 'ps/booking/booking.html'
+
 
 class ParkstayRoutingView(TemplateView):
     template_name = 'ps/index.html'
@@ -84,3 +84,7 @@ class ParkstayRoutingView(TemplateView):
             return redirect('my-bookings')
         kwargs['form'] = LoginForm
         return super(ParkstayRoutingView, self).get(*args, **kwargs)
+
+
+class MapView(TemplateView):
+    template_name = 'ps/map.html'

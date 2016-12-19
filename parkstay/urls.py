@@ -9,6 +9,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 
 # API patterns
 router = routers.DefaultRouter()
+router.register(r'campground_map', api.CampgroundMapViewSet)
 router.register(r'campgrounds', api.CampgroundViewSet)
 router.register(r'campsites', api.CampsiteViewSet)
 router.register(r'campsite_bookings', api.CampsiteBookingViewSet)
@@ -46,7 +47,8 @@ urlpatterns = [
     url(r'^dashboard/campsite-types$', views.DashboardView.as_view(), name='dash-campsite-types'),
     url(r'^dashboard/bulkpricing$', views.DashboardView.as_view(), name='dash-bulkpricing'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
-    url(r'^booking/', views.DashboardView.as_view(), name='dash'),
+    url(r'^booking/', views.MyBookingsView.as_view(), name='dash'),
+    url(r'^map/', views.MapView.as_view(), name='map'),
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.
