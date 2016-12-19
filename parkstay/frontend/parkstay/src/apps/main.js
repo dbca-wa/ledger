@@ -6,6 +6,7 @@ import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
 import AddCampground from '../components/campgrounds/addCampground.vue'
 import Campsite from '../components/campsites/campsite.vue'
+import firstLevelSearch from '../components/booking/first-level-search.vue'
 import page_404 from '../components/utils/404.vue'
 import Router from 'vue-router'
 import Campsite_type_dash from '../components/campsites-types/campsite-types-dash.vue'
@@ -113,6 +114,19 @@ const routes = [
                             },
                         ]
                     },
+                ]
+            },
+            {
+                path:'booking',
+                component:{
+                    render (c) { return c('router-view') }
+                },
+                children:[
+                    {
+                        path:'/',
+                        name:'fl-search',
+                        component: firstLevelSearch
+                    }
                 ]
             }
         ]
