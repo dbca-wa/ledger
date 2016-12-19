@@ -1,5 +1,11 @@
 from __future__ import unicode_literals
 
+import os
+import uuid
+import base64
+import binascii
+import hashlib
+from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.contrib.gis.db import models
@@ -7,6 +13,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import IntegrityError, transaction, connection
 from django.utils import timezone
 from datetime import date, time, datetime, timedelta
+from django.conf import settings
 from taggit.managers import TaggableManager
 from django.dispatch import receiver
 from django.db.models.signals import post_delete, pre_save, post_save
@@ -65,11 +72,9 @@ class Contact(models.Model):
 
 class Campground(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
-        (0, 'Campground: no bookings'),
-        (1, 'Campground: book online'),
-        (2, 'Campground: book by phone'),
-        (3, 'Other accomodation'),
-        (4, 'Not Published')
+        (0, 'Bookable Online'),
+        (1, 'Not Bookable Online'),
+        (2, 'Other Accomodation'),
     )
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
         (0, 'Campground level'),
@@ -77,12 +82,12 @@ class Campground(models.Model):
         (2, 'Campsite level'),
     )
     SITE_TYPE_CHOICES = (
-        (0, 'Unnumbered Site'),
-        (1, 'Numbered site')
+        (0, 'Bookable Per Site'),
+        (1, 'Bookable Per Site Type')
     )
 
     name = models.CharField(max_length=255, null=True)
-    park = models.ForeignKey('Park', on_delete=models.PROTECT)
+    park = models.ForeignKey('Park', on_delete=models.PROTECT, related_name='campgrounds')
     ratis_id = models.IntegerField(default=-1)
     contact = models.ForeignKey('Contact', on_delete=models.PROTECT, blank=True, null=True)
     campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=0)
@@ -102,8 +107,6 @@ class Campground(models.Model):
     customer_contact = models.ForeignKey('CustomerContact', blank=True, null=True, on_delete=models.PROTECT)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
-    bookable_per_site = models.BooleanField(default=False)
-    bookable_online = models.BooleanField(default=False)
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
@@ -184,7 +187,7 @@ class Campground(models.Model):
             within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
-                within.save()
+                within.save(skip_validation=True)
         except CampgroundBookingRange.DoesNotExist:
         #if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
         #    self.__get_current_closure().delete()
@@ -198,7 +201,7 @@ class Campground(models.Model):
             within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
-                within.save()
+                within.save(skip_validation=True)
         except CampgroundBookingRange.DoesNotExist:
             b.save()
 
@@ -240,17 +243,82 @@ class Campground(models.Model):
         except Exception as e:
             raise
 
+def campground_image_path(instance, filename):
+    return '/'.join(['parkstay', 'campground_images', filename])
+
+class CampgroundImage(models.Model):
+    image = models.ImageField(max_length=255, upload_to=campground_image_path)
+    campground = models.ForeignKey(Campground, related_name='images')
+    checksum = models.CharField(blank=True, max_length=255, editable=False)
+
+    class Meta:
+        ordering = ('id',)
+    
+    def get_file_extension(self, file_name, decoded_file):
+        import imghdr
+
+        extension = imghdr.what(file_name, decoded_file)
+        extension = "jpg" if extension == "jpeg" else extension
+        return extension
+
+    def strip_b64_header(self, content):
+        if ';base64,' in content:
+            header, base64_data = content.split(';base64,') 
+            return base64_data
+        return content
+
+    def _calculate_checksum(self, content):
+        checksum = hashlib.md5()
+        checksum.update(content.read())
+        return base64.b64encode(checksum.digest())    
+
+    def createImage(self, content):
+        base64_data = self.strip_b64_header(content)
+        try:
+            decoded_file = base64.b64decode(base64_data)
+        except (TypeError, binascii.Error):
+            raise ValidationError(self.INVALID_FILE_MESSAGE)
+        file_name = str(uuid.uuid4())[:12]
+        file_extension = self.get_file_extension(file_name,decoded_file)
+        complete_file_name = "{}.{}".format(file_name, file_extension)
+        uploaded_image = ContentFile(decoded_file, name=complete_file_name)
+        return uploaded_image
+
+    def save(self, *args, **kwargs):
+        self.checksum = self._calculate_checksum(self.image)
+        self.image.seek(0)
+        if not self.pk:
+            self.image = self.createImage(base64.b64encode(self.image.read()))
+        else:
+            orig = CampgroundImage.objects.get(pk=self.pk)
+            if orig.image:
+                if orig.checksum != self.checksum:
+                    if os.path.isfile(orig.image.path):
+                        os.remove(orig.image)
+                    self.image = self.createImage(base64.b64encode(self.image.read()))
+                else:
+                    pass
+
+        super(CampgroundImage,self).save(*args,**kwargs)
+
+    def delete(self, *args, **kwargs):
+        try:
+            os.remove(self.image)
+        except:
+            pass
+        super(CampgroundImage,self).delete(*args,**kwargs)    
+
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),
-        (1, 'Closed due to natural disaster'),
-        (2, 'Closed for maintenance'),
-        (3, 'Other'),
+        (1, 'Closed'),
     )
     created = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now_add=True,help_text='Used to check if the start and end dated were changed')
 
     status = models.SmallIntegerField(choices=BOOKING_RANGE_CHOICES, default=0)
+    closure_reason = models.ForeignKey('ClosureReason',null=True,blank=True)
+    open_reason = models.ForeignKey('OpenReason',null=True,blank=True)
     details = models.TextField(blank=True,null=True)
     range_start = models.DateField(blank=True, null=True)
     range_end = models.DateField(blank=True, null=True)
@@ -262,9 +330,18 @@ class BookingRange(models.Model):
     # ====================================
     @property
     def editable(self):
-        if (self.range_start > datetime.now().date() and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end):
+        today = datetime.now().date()
+        if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start > today and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end)):
+            return True
+        elif self.status == 0 and ((self.range_start <= today and not self.range_end) or self.range_start > today):
             return True
         return False
+
+    @property
+    def reason(self):
+        if self.status == 0:
+            return self.open_reason.text
+        return self.closure_reason.text
 
     # Methods
     # =====================================
@@ -276,7 +353,13 @@ class BookingRange(models.Model):
         return False
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        skip_validation = bool(kwargs.pop('skip_validation',False))
+        if not skip_validation:
+            self.full_clean()
+        if self.status == 1 and not self.closure_reason:
+            self.closure_reason = ClosureReason.objects.get(pk=1)
+        elif self.status == 0 and not self.open_reason:
+            self.open_reason = OpenReason.objects.get(pk=1)
 
         super(BookingRange, self).save(*args, **kwargs)
 
@@ -289,6 +372,7 @@ class StayHistory(models.Model):
     min_dba = models.SmallIntegerField(default=0)
     max_dba = models.SmallIntegerField(default=180)
 
+    reason = models.ForeignKey('MaximumStayReason')
     details = models.TextField(blank=True,null=True)
     range_start = models.DateField(blank=True, null=True)
     range_end = models.DateField(blank=True, null=True)
@@ -335,17 +419,18 @@ class CampgroundBookingRange(BookingRange):
 
     def clean(self, *args, **kwargs):
         original = None
-        if self.pk:
-            if not self.editable:
-                raise ValidationError('This Booking Range is not editable')
-            original = CampgroundBookingRange.objects.get(pk=self.pk)
 
         # Preventing ranges within other ranges
         within = CampgroundBookingRange.objects.filter(Q(campground=self.campground),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
         if within:
             raise BookingRangeWithinException('This Booking Range is within the range of another one')
-        if self.range_start < datetime.now().date() and original.range_start != self.range_start:
-            raise ValidationError('The start date can\'t be in the past')
+        if self.pk:
+            original = CampgroundBookingRange.objects.get(pk=self.pk)
+            if not original.editable:
+                raise ValidationError('This Booking Range is not editable')
+            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+                raise ValidationError('The start date can\'t be in the past')
+
 
 class Campsite(models.Model):
     campground = models.ForeignKey('Campground', db_index=True, on_delete=models.PROTECT, related_name='campsites')
@@ -353,12 +438,12 @@ class Campsite(models.Model):
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT, null=True,blank=True, related_name='campsites')
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     features = models.ManyToManyField('Feature')
-    cs_tents = models.SmallIntegerField(default=0)
-    cs_parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default=0)
-    cs_number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default=0)
+    cs_tent = models.BooleanField(default=False)
+    cs_campervan = models.BooleanField(default=False)
+    cs_caravan = models.BooleanField(default=False)
     cs_min_people = models.SmallIntegerField(default=1)
     cs_max_people = models.SmallIntegerField(default=12)
-    cs_dimensions = models.CharField(max_length=12, default='6x4')
+    cs_description = models.TextField(null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.campground, self.name)
@@ -369,28 +454,28 @@ class Campsite(models.Model):
     # Properties
     # ==============================
     property
-    def tents(self):
-        return self.campsite_class.tents if self.campsite_class else self.cs_tents
+    def tent(self):
+        return self.campsite_class.tent if self.campsite_class else self.cs_tent
 
-    property
-    def parking_spaces(self):
-        return self.campsite_class.parking_spaces if self.campsite_class else self.cs_parking_spaces
+    @property
+    def description(self):
+        return self.campsite_class.description if self.campsite_class else self.cs_description
 
-    property
-    def number_vehicles(self):
-        return self.campsite_class.number_vehicles if self.campsite_class else self.cs_number_vehicles
+    @property
+    def campervan(self):
+        return self.campsite_class.campervan if self.campsite_class else self.cs_campervan
 
-    property
+    @property
+    def caravan(self):
+        return self.campsite_class.caravan if self.campsite_class else self.cs_caravan
+
+    @property
     def min_people(self):
         return self.campsite_class.min_people if self.campsite_class else self.cs_min_people
 
-    property
+    @property
     def max_people(self):
         return self.campsite_class.max_people if self.campsite_class else self.cs_max_people
-
-    property
-    def dimensions(self):
-        return self.campsite_class.dimensions if self.campsite_class else self.cs_dimensions
 
     @property
     def type(self):
@@ -414,7 +499,7 @@ class Campsite(models.Model):
 
     @property
     def current_closure(self):
-        closure = self._get_current_closure()
+        closure = self.__get_current_closure()
         if closure:
             return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
     # Methods
@@ -464,10 +549,8 @@ class Campsite(models.Model):
             within = CampsiteBookingRange.objects.filter(Q(campsite=b.campsite),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
-                within.save()
+                within.save(skip_validation=True)
         except CampsiteBookingRange.DoesNotExist:
-        #if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
-        #    self.__get_current_closure().delete()
             b.save()
 
     def close(self, data):
@@ -478,7 +561,7 @@ class Campsite(models.Model):
             within = CampsiteBookingRange.objects.filter(Q(campsite=b.campsite),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
-                within.save()
+                within.save(skip_validation=True)
         except CampsiteBookingRange.DoesNotExist:
             b.save()
     
@@ -526,26 +609,33 @@ class CampsiteBookingRange(BookingRange):
 
     def clean(self, *args, **kwargs):
         original = None
-        if self.pk:
-            if not self.editable:
-                raise ValidationError('This Booking Range is not editable')
-            original = CampsiteBookingRange.objects.get(pk=self.pk)
 
         # Preventing ranges within other ranges
         within = CampsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
         if within:
             raise BookingRangeWithinException('This Booking Range is within the range of another one')
-        if self.range_start < datetime.now().date() and original.range_start != self.range_start:
-            raise ValidationError('The start date can\'t be in the past')
+        if self.pk:
+            original = CampsiteBookingRange.objects.get(pk=self.pk)
+            if not original.editable:
+                raise ValidationError('This Booking Range is not editable')
+            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+                raise ValidationError('The start date can\'t be in the past')
+
 
 class CampsiteStayHistory(StayHistory):
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT,related_name='stay_history')
 
 
 class Feature(models.Model):
+    TYPE_CHOICES = (
+        (0, 'Campground'),
+        (1, 'Campsite'),
+        (2, 'Not Linked')
+    )
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True)
     image = models.ImageField(null=True)
+    type = models.SmallIntegerField(choices=TYPE_CHOICES,default=2,help_text="Set the model where the feature is located.")
 
     def __str__(self):
         return self.name
@@ -574,14 +664,14 @@ class CampsiteClass(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     camp_unit_suitability = TaggableManager()
-    tents = models.SmallIntegerField(default=0)
-    parking_spaces = models.SmallIntegerField(choices=PARKING_SPACE_CHOICES, default=0)
-    number_vehicles = models.SmallIntegerField(choices=NUMBER_VEHICLE_CHOICES, default=0)
+    tent = models.BooleanField(default=False)
+    campervan = models.BooleanField(default=False)
+    caravan = models.BooleanField(default=False)
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
-    dimensions = models.CharField(max_length=12, default='6x4')
     features = models.ManyToManyField('Feature')
     deleted = models.BooleanField(default=False)
+    description = models.TextField(null=True)
 
     def __str__(self):
         return self.name
@@ -702,6 +792,8 @@ class CampsiteRate(models.Model):
     date_end = models.DateField(null=True, blank=True)
     rate_type = models.SmallIntegerField(choices=RATE_TYPE_CHOICES, default=0)
     price_model = models.SmallIntegerField(choices=PRICE_MODEL_CHOICES, default=0)
+    reason = models.ForeignKey('PriceReason')
+    details = models.TextField(null=True,blank=True)
     update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
 
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -733,9 +825,7 @@ class CampsiteRate(models.Model):
     # Methods
     # =================================
     def update(self,data):
-        print('here')
         for attr, value in data.items():
-            print('{} {}'.format(attr, value))
             setattr(self, attr, value)
         self.save()
 
@@ -748,9 +838,42 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
 
+# REASON MODELS
+# =====================================
+class Reason(models.Model):
+    text = models.TextField()
+    editable = models.BooleanField(default=True,editable=False)
+
+    class Meta:
+        ordering = ('id',)
+        abstract = True
+
+    # Properties
+    # ==============================
+    def code(self):
+        return self.__get_code() 
+
+    # Methods 
+    # ==============================
+    def __get_code(self):
+        length = len(str(self.id))
+        val = '0'
+        return '{}{}'.format((val*(4-length)),self.id)
+
+class MaximumStayReason(Reason):
+    pass
+
+class ClosureReason(Reason):
+    pass
+
+class OpenReason(Reason):
+    pass
+
+class PriceReason(Reason):
+    pass
 # VIEWS
 # =====================================
-class CampgroundPriceHistory(models.Model):
+class ViewPriceHistory(models.Model):
     id = models.IntegerField(primary_key=True)
     date_start = models.DateField()
     date_end = models.DateField()
@@ -758,57 +881,47 @@ class CampgroundPriceHistory(models.Model):
     adult = models.DecimalField(max_digits=8, decimal_places=2)
     concession = models.DecimalField(max_digits=8, decimal_places=2)
     child = models.DecimalField(max_digits=8, decimal_places=2)
+    details = models.TextField()
+    reason_id = models.IntegerField()
 
+    class Meta:
+        abstract =True
+
+    # Properties
+    # ====================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+            return True
+        return False
+
+    @property
+    def reason(self):
+        reason = ''
+        if self.reason_id:
+            reason = self.reason_id
+        return reason
+
+class CampgroundPriceHistory(ViewPriceHistory):
     class Meta:
         managed = False
         db_table = 'parkstay_campground_pricehistory_v'
         ordering = ['-date_start',]
 
-    # Properties
-    # ====================================
-    @property
-    def deletable(self):
-        today = datetime.now().date()
-        if self.date_start >= today:
-            return True
-        return False
-
-    @property
-    def editable(self):
-        today = datetime.now().date()
-        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
-            return True
-        return False
-
-class CampsiteClassPriceHistory(models.Model):
-    id = models.IntegerField(primary_key=True)
-    date_start = models.DateField()
-    date_end = models.DateField()
-    rate_id = models.IntegerField()
-    adult = models.DecimalField(max_digits=8, decimal_places=2)
-    concession = models.DecimalField(max_digits=8, decimal_places=2)
-    child = models.DecimalField(max_digits=8, decimal_places=2)
-
+class CampsiteClassPriceHistory(ViewPriceHistory):
     class Meta:
         managed = False
         db_table = 'parkstay_campsiteclass_pricehistory_v'
         ordering = ['-date_start',]
 
-    # Properties
-    # ====================================
-    @property
-    def deletable(self):
-        today = datetime.now().date()
-        if self.date_start >= today:
-            return True
-        return False
-
-    @property
-    def editable(self):
-        today = datetime.now().date()
-        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
-            return True
-        return False
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
@@ -829,9 +942,9 @@ class CampgroundBookingRangeListener(object):
             delattr(instance, "_original_instance")
         else:
             try:
-                within = CampgroundBookingRange.objects.get(Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within = CampgroundBookingRange.objects.get(~Q(id=instance.id),Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
                 within.range_end = instance.range_start
-                within.save()
+                within.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         if instance.status == 0 and not instance.range_end:
@@ -852,7 +965,7 @@ class CampgroundBookingRangeListener(object):
                     linked_open.range_start = instance.range_start
                 else:
                      linked_open.range_start = today
-                linked_open.save()
+                linked_open.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
@@ -942,7 +1055,7 @@ class CampsiteBookingRangeListener(object):
             try:
                 within = CampsiteBookingRange.objects.get(Q(campsite=instance.campsite),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
                 within.range_end = instance.range_start
-                within.save()
+                within.save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
                 pass
         if instance.status == 0 and not instance.range_end:
@@ -963,7 +1076,7 @@ class CampsiteBookingRangeListener(object):
                     linked_open.range_start = instance.range_start
                 else:
                      linked_open.range_start = today
-                linked_open.save()
+                linked_open.save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
@@ -1029,8 +1142,9 @@ class CampsiteRateListener(object):
         else:
             try:
                 within = CampsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
-                within.date_end = instance.date_start - timedelta(days=2)
+                within.date_end = instance.date_start
                 within.save()
+                instance.date_start = instance.date_start + timedelta(days=1)
             except CampsiteRate.DoesNotExist:
                 pass
 
@@ -1039,3 +1153,30 @@ class CampsiteRateListener(object):
     def _post_delete(sender, instance, **kwargs): 
         if not instance.date_end:
             CampsiteRate.objects.filter(date_end=instance.date_start- timedelta(days=2),campsite=instance.campsite).update(date_end=None)
+
+class CampsiteStayHistoryListener(object):
+    """
+    Event listener for Campsite Stay History
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=CampsiteStayHistory)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = CampsiteStayHistory.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                within = CampsiteStayHistory.objects.get(Q(campsite=instance.campsite),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within.range_end = instance.range_start - timedelta(days=1)
+                within.save()
+            except CampsiteStayHistory.DoesNotExist:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=CampsiteStayHistory)
+    def _post_delete(sender, instance, **kwargs): 
+        if not instance.range_end:
+            CampsiteStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campsite=instance.campsite).update(range_end=None)

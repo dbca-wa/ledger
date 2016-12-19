@@ -29,21 +29,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label for="open_cg_reason">Reason: </label>
-                    </div>
-                    <div class="col-md-4">
-                        <select name="open_reason" v-model="formdata.reason" class="form-control" id="open_cg_reason">
-                            <option value="1">Reason 1</option>
-                            <option value="2">Reason 2</option>
-                            <option value="3">Reason 3</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+            <reason type="open" v-model="reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -62,6 +48,7 @@
 
 <script>
 import bootstrapModal from '../../utils/bootstrap-modal.vue'
+import reason from '../../utils/reasons.vue'
 import {bus} from '../../utils/eventBus.js'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
 import alert from '../../utils/alert.vue'
@@ -69,10 +56,11 @@ module.exports = {
     name: 'pkCsOpen',
     data: function() {
         return {
-            status: '',
             id:'',
+            reason:'',
             current_closure: '',
             formdata: {
+                status: 0,
                 range_start: '',
                 reason:'',
                 details: ''
@@ -80,7 +68,13 @@ module.exports = {
             picker: '',
             errors: false,
             errorString: '',
-            form: ''
+            form: '',
+            isOpen: false
+        }
+    },
+    watch:{
+        reason:function () {
+            this.formdata.reason = this.reason;
         }
     },
     computed: {
@@ -89,48 +83,26 @@ module.exports = {
             return vm.errors;
         },
         isModalOpen: function() {
-            return this.$parent.isOpenOpenCS;
+            return this.isOpen;
         },
         requireDetails: function () {
-            return (this.formdata.reason === 'other')? true: false;
+            return (this.formdata.reason === '1')? true: false;
         }
     },
     components: {
         bootstrapModal,
-        alert
+        alert,
+        reason
     },
     methods: {
         close: function() {
-            this.$parent.isOpenOpenCS = false;
-            this.status = '';
+            this.isOpen = false;
+            this.formdata.reason = ''
         },
         addOpen: function() {
             if (this.form.valid()){
-                this.sendData();
+                this.$emit('openCampsite');
             }
-        },
-        sendData: function() {
-            let vm = this;
-            var data = this.formdata;
-            data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            data.status = 0;
-            $.ajax({
-                url: api_endpoints.opencloseCS(vm.id),
-                method: 'POST',
-                xhrFields: { withCredentials:true },
-                data: data,
-                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.close();
-                    bus.$emit('refreshCSTable');
-                },
-                error:function (data){
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
-                }
-            });
-
         },
         addFormValidations: function() {
             let vm = this;
@@ -177,11 +149,6 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('opencloseCS', function(data){
-            vm.status = data.status;
-            vm.id = data.id;
-            vm.current_closure = data.closure;
-        });
         vm.picker = $('#open_cg_range_start');
         vm.picker.datetimepicker({
             format: 'DD/MM/YYYY'

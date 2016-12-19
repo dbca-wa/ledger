@@ -36,7 +36,6 @@ import {
     Moment,
     api_endpoints,
     helpers,
-    validate
 } from '../../hooks.js'
 import alert from '../utils/alert.vue'
 export default {
@@ -48,8 +47,8 @@ export default {
     data: function() {
         return {
             campground:{
-                address: {
-                },
+                address: {},
+                images:[]
             },
             title:'',
             errors:false,

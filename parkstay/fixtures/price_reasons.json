@@ -1,0 +1,11 @@
+[
+    {
+        "model": "parkstay.pricereason",
+        "pk":1,
+        "fields":
+        {
+            "text":"Other",
+            "editable": false
+        }
+    }
+]

@@ -1,7 +1,7 @@
-<template lang="html">
+openCampsite<template lang="html">
    <div class="panel-group" id="applications-accordion" role="tablist" aria-multiselectable="true">
         <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
-        <pkCsOpen></pkCsOpen>
+        <pkCsOpen ref="openCampsite" @openCampsite="openCampsite()"></pkCsOpen>
       <div class="panel panel-default" id="applications">
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
@@ -110,7 +110,8 @@ export default {
         let vm = this;
         return {
             campground: {
-                address:{}
+                address:{},
+                images: []
             },
             campsites: [],
             isOpenOpenCS: false,
@@ -163,13 +164,15 @@ export default {
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\">Edit</a><br/>"
                             if (full.deletable){
-                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\">Delete</a></td>";
                             }
                             column = column.replace(/__START__/g, full.date_start)
                             column = column.replace(/__END__/g, full.date_end)
                             column = column.replace(/__RATE__/g, full.rate_id)
+                            column = column.replace(/__REASON__/g, full.reason)
+                            column = column.replace(/__DETAILS__/g, full.details)
                             return column
                         }
                         else {
@@ -235,7 +238,7 @@ export default {
                         else {
                             var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
-                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" >Open</a></td>";
+                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" data-current_closure='"+ full.current_closure +"'>Open</a></td>";
                             }
                         }
 
@@ -276,13 +279,33 @@ export default {
                 vm.$refs.cg_closure_dt.vmDataTable.ajax.reload();
             });
         },
-        showOpenCloseCS: function() {
+        showCloseCS: function() {
             this.$refs.closeCampsite.isOpen = true;
+        },
+        openCampsite: function() {
+            let vm = this;
+            var data = vm.$refs.openCampsite.formdata;
+            $.ajax({
+                url: api_endpoints.opencloseCS(vm.$refs.openCampsite.id),
+                method: 'POST',
+                xhrFields: { withCredentials:true },
+                data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.$refs.openCampsite.close();
+                    vm.refreshCampsiteClosures();
+                },
+                error:function (data){
+                    vm.$refs.openCampsite.errors = true;
+                    vm.$refs.openCampsite.errorString = helpers.apiError(data);
+                }
+            });
+
         },
         closeCampsite: function() {
             let vm = this;
             var data = vm.$refs.closeCampsite.formdata;
-            data.status = vm.$refs.closeCampsite.formdata.reason;
             $.ajax({
                 url: api_endpoints.opencloseCS(vm.$refs.closeCampsite.id),
                 method: 'POST',
@@ -304,7 +327,7 @@ export default {
             this.$refs.cg_campsites_dt.vmDataTable.ajax.reload();
         },
         showOpenOpenCS: function() {
-            this.isOpenOpenCS = true;
+            this.$refs.openCampsite.isOpen = true;
         },
         fetchCampsites: function(){
             let vm = this;
@@ -320,6 +343,7 @@ export default {
                 success: function(data, stat, xhr) {
                     vm.campground = data;
                     vm.fetchCampsites();
+                    bus.$emit('campgroundFetched');
                 }
             });
         }
@@ -343,14 +367,19 @@ export default {
             var id = $(this).attr('data-campsite');
             var status = $(this).attr('data-status');
             var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
-            // Update close modal attributes
-            vm.$refs.closeCampsite.status = status;
-            vm.$refs.closeCampsite.id = id;
-            vm.$refs.closeCampsite.current_closure = current_closure;
+
             if (status === 'open'){
                 vm.showOpenOpenCS();
+                // Update open modal attributes
+                vm.$refs.openCampsite.status = 0;
+                vm.$refs.openCampsite.id = id;
+                vm.$refs.openCampsite.current_closure = current_closure;
             }else if (status === 'close'){
-                vm.showOpenCloseCS();
+                vm.showCloseCS();
+                // Update close modal attributes
+                vm.$refs.closeCampsite.status = 1;
+                vm.$refs.closeCampsite.id = id;
+                vm.$refs.closeCampsite.current_closure = current_closure;
             }
         });
         helpers.namePopover($,vm.$refs.cg_campsites_dt.vmDataTable);

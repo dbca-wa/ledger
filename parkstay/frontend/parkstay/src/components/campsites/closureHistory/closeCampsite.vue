@@ -34,20 +34,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label for="open_cg_reason">Reason: </label>
-                    </div>
-                    <div class="col-md-4">
-                        <select name="closure_reason" v-model="formdata.reason" class="form-control" id="close_cg_reason">
-                            <option value="1">Closed due to natural disaster</option>
-                            <option value="2">Closed for maintenance</option>
-                            <option value="3">Other</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+            <reason type="close" ref="reason" v-model="reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -66,6 +53,7 @@
 
 <script>
 import bootstrapModal from '../../utils/bootstrap-modal.vue'
+import reason from '../../utils/reasons.vue'
 import {bus} from '../../utils/eventBus.js'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
 import alert from '../../utils/alert.vue'
@@ -73,13 +61,14 @@ module.exports = {
     name: 'pkCsClose',
     data: function() {
         return {
-            status: '',
             id:'',
             current_closure: '',
+            reason:'',
             formdata: {
+                status:1,
                 range_start: '',
                 range_end: '',
-                reason:'',
+                closure_reason:'',
                 details: ''
             },
             closeStartPicker: '',
@@ -99,17 +88,32 @@ module.exports = {
             return this.isOpen;
         },
         requireDetails: function () {
-            return (this.formdata.reason === '3')? true: false;
-        }
+            let vm =this;
+            return (vm.formdata.closure_reason == 1)? true: false;
+        },
     },
     components: {
         bootstrapModal,
-        alert
+        alert,
+        reason
+    },
+    watch:{
+        reason:function () {
+            this.formdata.closure_reason = this.reason;
+
+        }
     },
     methods: {
         close: function() {
             this.isOpen = false;
-            this.status = '';
+            this.formdata = {
+                status:1,
+                range_start: '',
+                range_end: '',
+                closure_reason:'',
+                details: ''
+            };
+            this.$refs.reason.selected = "";
         },
         addClosure: function() {
             if (this.form.valid()){
