@@ -295,6 +295,9 @@ input:checked + .symb {
                 </div>
             </div>
         </div>
+        <div class="row" v-for="f in extentFeatures">
+            {% verbatim %}{{ f.get('name') }}{% endverbatim %}
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.4/vue.js"></script>
@@ -304,6 +307,27 @@ input:checked + .symb {
     <script>
 
 
+var debounce = function (func, wait, immediate) {
+    // Returns a function, that, as long as it continues to be invoked, will not
+    // be triggered. The function will be called after it stops being called for
+    // N milliseconds. If `immediate` is passed, trigger the function on the
+    // leading edge, instead of the trailing.
+    'use strict';
+    var timeout;
+    return function () {
+        var context = this;
+        var args = arguments;
+        var later = function () {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        }
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    }
+}
+
 var pf = new Vue({
     el: '#parkfinder',
     data: {
@@ -311,10 +335,38 @@ var pf = new Vue({
         defaultLayers: [
             ['dpaw:mapbox_outdoors', {}],
             ['cddp:dpaw_tenure', {}],
-        ]
+        ],
+        extentFeatures: []
+    },
+    computed: {
+        extent: {
+            cache: false,
+            get: function() {
+                return this.olmap.getView().calculateExtent(this.olmap.getSize());
+            }
+        },
     },
     methods: {
-    
+        groundFilter: function(feature) {
+            return true;
+        },
+        updateViewport: function(runNow) {
+            var vm = this;
+            var updateViewportFunc = function() {
+                vm.extentFeatures = vm.groundsSource.getFeaturesInExtent(vm.extent).filter(vm.groundFilter);
+                
+            };
+            if (runNow) {
+                updateViewportFunc();
+            } else {
+                if (!vm._updateViewport) {
+                    vm._updateViewport = debounce(function() {
+                        updateViewportFunc();
+                    }, 100);
+                }
+                vm._updateViewport();
+            }
+        }
     },
     mounted: function () {
         var vm = this;
@@ -473,6 +525,10 @@ var pf = new Vue({
             });
         });
 
+        // hook to update the visible feature list on viewport change
+        this.olmap.getView().on('propertychange', function(ev) {
+            vm.updateViewport();
+        });
     }
 });
 
