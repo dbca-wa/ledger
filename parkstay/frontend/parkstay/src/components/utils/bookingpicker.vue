@@ -35,6 +35,7 @@
                                                     <span class="item">
                                                         {{guest.amount}} {{guest.name}} <span style="color:#888;font-weight:300;font-size:12px;">{{guest.description}}</span>
                                                     </span>
+                                                    <br/><a href="#" class="text-info" v-show="guest.helpText">{{guest.helpText}}</a>
                                                 </div>
                                                 <div class="pull-right">
                                                     <div class="btn-group btn-group-sm">
@@ -79,7 +80,8 @@ export default {
                     id:"concession",
                     name:"Concession",
                     amount:0,
-                    description: ""
+                    description: "",
+                    helpText:"accepted concession cards"
                 },
                 {
                     id:"children",
