@@ -301,7 +301,7 @@ class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
             method = kwargs.pop('method')
         except:
             method = 'post'
-        print method
+        print(method)
         super(CampsiteClassSerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)

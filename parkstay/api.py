@@ -1,6 +1,6 @@
 import traceback
 import base64
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from django.db.models import Q
 from django.core.files.base import ContentFile
 from rest_framework import viewsets, serializers, status, generics, views
@@ -1060,7 +1060,7 @@ class BulkPricingView(generics.CreateAPIView):
             http_status = status.HTTP_200_OK
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            print serializer.validated_data
+            print(serializer.validated_data)
 
             rate_id = serializer.data.get('rate',None)
             if rate_id:
@@ -1088,8 +1088,8 @@ class BulkPricingView(generics.CreateAPIView):
             return Response(serializer.data, status=http_status)
 
         except serializers.ValidationError:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise
         except Exception as e:
-            print traceback.print_exc()
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
