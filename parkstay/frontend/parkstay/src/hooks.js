@@ -8,6 +8,7 @@ var Moment = require('moment');
 var datetimepicker = require('datetimepicker');
 var validate = require('jquery-validation');
 var slick = require('slick-carousel-browserify');
+var select2 = require('select2');
 import api_endpoints from './apps/api.js';
 import helpers from './components/utils/helpers.js'
 import {bus} from './components/utils/eventBus.js'
@@ -22,5 +23,6 @@ export {
     helpers,
     validate,
     bus,
-    slick
+    slick,
+    select2
 }

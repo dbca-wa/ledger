@@ -1,6 +1,7 @@
 <template lang="html">
 <div  id="cg_attr" >
 	<div v-show="!isLoading">
+		<form id="attForm">
 		<div class="col-sm-12">
 			<alert :show.sync="showUpdate" type="success" :duration="7000">
 				<p>Campground successfully updated</p>
@@ -9,7 +10,6 @@
 				<p>{{errorString}}
 					<p/>
 				</alert>
-				<form id="attForm">
 					<div class="row">
 						<div class="col-lg-12">
 							<div class="panel panel-primary">
@@ -37,34 +37,26 @@
 										</div>
 									</div>
 									<div class="row">
-										<div class="col-md-4">
+										<div class="col-md-6">
 											<div class="form-group ">
 												<label class="control-label" >Campground Type</label>
 												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.campground_type">
-													<option value="0">Campground: no bookings</option>
-													<option value="1">Campground: book online</option>
-													<option value="2">Campground: book by phone</option>
-													<option value="3">Other accommodation</option>
-													<option value="4">Not Published</option>
+													<option value="0">Bookable Online</option>
+													<option value="1">Not Bookable Online</option>
 												</select>
 											</div>
 										</div>
-										<div class="col-md-4">
+										<div class="col-md-6">
 											<div class="form-group ">
-												<label class="control-label" >Site Type</label>
+												<label class="control-label" >Booking Configuration</label>
 												<select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
-													<option value="0">Unnumbered Site</option>
-													<option value="1">Numbered Site</option>
+													<option value="0">Bookable per site</option>
+													<option value="1">Bookable per site type</option>
 												</select>
 											</div>
 										</div>
-                                        <div class="col-md-4">
-                                            <div style="margin-top:10%;" class="checkbox">
-                                                <label><input type="checkbox" v-model="campground.bookable_per_site"/>Bookable Per Site</label>
-                                            </div>
-                                        </div>
 									</div>
-                                    <imageEditor></imageEditor>
+                                    <imagePicker :images="campground.images"></imagePicker>
 								</div>
 							</div>
 						</div>
@@ -76,27 +68,33 @@
 									<h3 class="panel-title">Address</h3>
 								</div>
 								<div class="panel-body">
-									<div class="col-md-3">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="">Email</label>
+											<input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="">Telephone</label>
+											<input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
+										</div>
+									</div>
+									<div class="col-md-4">
 										<div class="form-group">
 											<label for="">Street</label>
 											<input id="street" name="street" type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
 										</div>
 									</div>
-									<div class="col-md-3">
+									<div class="col-md-4">
 										<div class="form-group">
-											<label for="">email</label>
-											<input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
+											<label for="">City</label>
+											<input id="city" name="city" type="text" class="form-control" v-model="campground.address.city"  placeholder=""/>
 										</div>
 									</div>
-									<div class="col-md-3">
+									<div class="col-md-4">
 										<div class="form-group">
-											<label for="">telephone</label>
-											<input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-3">
-										<div class="form-group">
-											<label for="">postcode</label>
+											<label for="">Postcode</label>
 											<input id="postcode" name="postcode" type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
 										</div>
 									</div>
@@ -140,11 +138,10 @@
 						<div class="col-md-12">
 							<div class="form-group">
 								<label class="control-label" >Description</label>
-								<div name="editor" id="editor" class="form-control"></div>
+								<div id="editor" class="form-control"></div>
 							</div>
 						</div>
 					</div>
-				</form>
 			</div>
 			<div class="row" style="margin-top: 40px;">
 				<div class="col-sm-8">
@@ -169,6 +166,7 @@
 					</div>
 				</div>
 			</div>
+			</form>
 		</div>
 		<loader :isLoading.sync="isLoading">Loading...</loader>
 	</div>
@@ -186,7 +184,7 @@ import {
     bus
 }
 from '../utils/eventBus.js';
-import imageEditor from '../utils/images/imageEditor.vue'
+import imagePicker from '../utils/images/imagePicker.vue'
 import Editor from 'quill';
 import Render from 'quill-render';
 import loader from '../utils/loader.vue'
@@ -196,7 +194,7 @@ export default {
     components: {
         alert,
         loader,
-        imageEditor
+        imagePicker
     },
     data: function() {
         let vm = this;
@@ -239,7 +237,8 @@ export default {
             default: function() {
                 return {
                     address: {},
-                    contact: {}
+                    contact: {},
+                    images: []
                 };
             },
             type: Object
@@ -270,15 +269,39 @@ export default {
 		goBack: function() {
             helpers.goBack(this);
         },
+		validateForm:function () {
+			let vm = this;
+			var isValid = vm.validateEditor();
+            return  vm.form.valid() && isValid;
+		},
         create: function() {
-            if (this.form.valid()) {
-                this.sendData(api_endpoints.campgrounds, 'POST');
-            }
+			if(this.validateForm()){
+				this.sendData(api_endpoints.campgrounds, 'POST');
+			}
         },
         update: function() {
-            if (this.form.valid()) {
-                this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
+			if(this.validateForm()){
+				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
+			}
+        },
+        validateEditor: function(){
+            let vm = this;
+            var el = $('#editor');
+			if (el.parents('.form-group').hasClass('has-error')) {
+				$(el).tooltip("destroy");
+				$(el).attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+			}
+            if (vm.editor.getText().trim().length == 0){
+                // add or update tooltips
+                $(el).tooltip({
+                        trigger: "focus"
+                    })
+                    .attr("data-original-title", 'Description is required')
+                    .parents('.form-group').addClass('has-error');
+                return false;
             }
+
+            return true;
         },
         sendData: function(url, method) {
             let vm = this;
@@ -307,6 +330,7 @@ export default {
                 },
                 data: JSON.stringify(vm.campground),
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                contentType: "application/x-www-form-urlencoded",
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     if (method == 'POST') {
@@ -375,6 +399,7 @@ export default {
         },
         addFormValidations: function() {
             this.form.validate({
+				ignore:'div.ql-editor',
                 rules: {
                     name: "required",
                     park: "required",
@@ -387,7 +412,6 @@ export default {
                     },
                     telephone: "required",
                     postcode: "required",
-                    editor: "required",
                     price_level: "required"
                 },
                 messages: {
@@ -395,13 +419,12 @@ export default {
                     park: "Select a park from the options",
                     campground_type: "Select a campground type from the options",
                     site_type: "Select a site type from the options",
-                    editor: "required",
                     price_level: "Select a price level from the options"
                 },
                 showErrors: function(errorMap, errorList) {
-
                     $.each(this.validElements(), function(index, element) {
                         var $element = $(element);
+
                         $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
                     });
 
@@ -455,6 +478,7 @@ export default {
 
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;
+			vm.validateEditor();
         });
 
         vm.form = $('#attForm');

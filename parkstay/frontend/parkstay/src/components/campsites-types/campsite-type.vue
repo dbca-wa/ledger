@@ -27,60 +27,46 @@
                                                 <input type="text" name="name" class="form-control"  v-model="campsite_type.name"required/>
                                             </div>
                                         </div>
+                                    </div>
+                                    <div class="row">
                                         <div class="col-md-6">
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label class="control-label" >Tents</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite_type.tents"required/>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label class="control-label" >Parking Spaces</label>
-    											<select name="parking_spaces" class="form-control" v-model="campsite_type.parking_spaces" >
-    												<option value="0" >Parking within site</option>
-    												<option value="1" >Parking for exclusive use of site occupiers next to site, but separated from tent space</option>
-    												<option value="2" >Parking for exclusive use of occupiers, short walk from tent space</option>
-    												<option value="3" >Shared parking (not allocated), short walk from tent space</option>
-    											</select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label class="control-label" >Number of Vehicles</label>
-    											<select name="parking_spaces" class="form-control" v-model="campsite_type.number_vehicles" >
-    												<option value="0" >One vehicle</option>
-    												<option value="1" >Two vehicles</option>
-    												<option value="2" >One vehicle + small trailer</option>
-    												<option value="3" >One vehicle + small trailer/large vehicle</option>
-    											</select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-4">
                                             <div class="form-group">
                                                 <label class="control-label" >Minimum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite_type.min_people"required/>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite_type.min_people"required />
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="control-label" >Maximum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite_type.max_people"required/>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite_type.max_people"required />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campsite_type.tent" />Tent</label>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label class="control-label" >Dimensions</label>
-                                                <input type="text" name="name" class="form-control"  v-model="campsite_type.dimensions"required/>
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campsite_type.campervan" />Campervan</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campsite_type.caravan" />Caravan</label>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                     <select-panel ref="select_features" :options="features" :selected="selected_features" id="select-features"></select-panel>
+                                    <editor ref="descriptionEditor" v-model="campsite_type.description"></editor>
                                     <div class="row">
                                       <div class="col-sm-6">
 
@@ -123,6 +109,7 @@ import {
 }
 from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
+import editor from '../utils/editor.vue'
 import select_panel from '../utils/select-panel.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import loader from '../utils/loader.vue'
@@ -133,7 +120,8 @@ export default {
     components: {
         "select-panel": select_panel,
         loader,
-        priceHistory
+        priceHistory,
+        editor
     },
     computed: {
         myID: function() {
@@ -201,13 +189,15 @@ export default {
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" >Edit</a><br/>"
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\">Edit</a><br/>"
                             if (full.deletable){
-                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\">Delete</a></td>";
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\">Delete</a></td>";
                             }
                             column = column.replace(/__START__/g, full.date_start)
                             column = column.replace(/__END__/g, full.date_end)
                             column = column.replace(/__RATE__/g, full.rate_id)
+                            column = column.replace(/__REASON__/g, full.reason)
+                            column = column.replace(/__DETAILS__/g, full.details)
                             return column
                         }
                         else {
@@ -267,7 +257,6 @@ export default {
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data, stat, xhr) {
                     vm.campsite_type = data;
-
                     vm.$refs.select_features.loadSelectedFeatures(data.features);
                 },
                 error: function(resp) {

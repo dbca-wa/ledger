@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.conf.urls import url, include
+from django.conf.urls.static import static
 from rest_framework import routers
 from parkstay import views, api
 from parkstay.admin import admin
@@ -22,8 +24,13 @@ router.register(r'campsite_booking_ranges',api.CampsiteBookingRangeViewset)
 router.register(r'campsite_rate',api.CampsiteRateViewSet)
 router.register(r'campsites_stay_history',api.CampsiteStayHistoryViewSet)
 router.register(r'rates',api.RateViewset)
+router.register(r'closureReasons',api.ClosureReasonViewSet)
+router.register(r'openReasons',api.OpenReasonViewSet)
+router.register(r'priceReasons',api.PriceReasonViewSet)
+router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 
 api_patterns = [
+    url(r'api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
     url(r'api/',include(router.urls))
 ]
 
@@ -38,6 +45,10 @@ urlpatterns = [
     url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),
     url(r'^dashboard/campgrounds$', views.DashboardView.as_view(), name='dash-campgrounds'),
     url(r'^dashboard/campsite-types$', views.DashboardView.as_view(), name='dash-campsite-types'),
+    url(r'^dashboard/bulkpricing$', views.DashboardView.as_view(), name='dash-bulkpricing'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
     url(r'^map/', views.MapView.as_view(), name='map'),
 ] + ledger_patterns
+
+if settings.DEBUG:  # Serve media locally in development.
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
