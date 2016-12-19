@@ -371,7 +371,7 @@ var pf = new Vue({
     mounted: function () {
         var vm = this;
         $(document).foundation();
-        console.log('LOADING MAP');
+        console.log('Loading map...');
 
         // generate WMTS tile grid
         var projection = ol.proj.get('EPSG:3857');
@@ -429,10 +429,10 @@ var pf = new Vue({
                     var icon = '/static/ps/img/pin_offline.svg';
                     var campgroundType = feature.get('campground_type');
                     switch (campgroundType) {
-                        case 1:
+                        case 0:
                         icon = '/static/ps/img/pin.svg';
                         break;
-                        case 3:
+                        case 2:
                         icon = '/static/ps/img/pin_alt.svg';
                         break;
                         default:
