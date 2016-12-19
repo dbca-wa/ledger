@@ -9,6 +9,7 @@ var datetimepicker = require('datetimepicker');
 var validate = require('jquery-validation');
 var slick = require('slick-carousel-browserify');
 var select2 = require('select2');
+var daterangepicker = require('bootstrap-daterangepicker')
 import api_endpoints from './apps/api.js';
 import helpers from './components/utils/helpers.js'
 import {bus} from './components/utils/eventBus.js'
@@ -24,5 +25,6 @@ export {
     validate,
     bus,
     slick,
-    select2
+    select2,
+    daterangepicker
 }
