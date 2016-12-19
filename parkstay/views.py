@@ -84,3 +84,7 @@ class ParkstayRoutingView(TemplateView):
             return redirect('my-bookings')
         kwargs['form'] = LoginForm
         return super(ParkstayRoutingView, self).get(*args, **kwargs)
+
+
+class MapView(TemplateView):
+    template_name = 'ps/map.html'
