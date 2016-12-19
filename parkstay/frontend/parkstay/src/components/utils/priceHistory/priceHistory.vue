@@ -70,7 +70,9 @@ export default {
         return {
             campground: {},
             campsite:{},
-            price: {},
+            price: {
+                reason:''
+            },
             deleteHistory: null,
             deleteHistoryPrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
@@ -175,6 +177,8 @@ export default {
         sendData: function(url,method) {
             let vm = this;
             var data = vm.price;
+            data.reason = parseInt(data.reason);
+            console.log(vm.price);
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
@@ -207,11 +211,15 @@ export default {
                 if (vm.level != 'campsite'){
                     var start = $(this).data('date_start');
                     var end = $(this).data('date_end');
+                    var reason = $(this).data('reason');
+                    var details = $(this).data('details');
                     vm.$refs.historyModal.selected_rate= rate;
                     vm.price.period_start = Moment(start).format('D/MM/YYYY');
                     vm.price.original = {
                         'date_start': start,
-                        'rate_id': rate 
+                        'rate_id': rate, 
+                        'reason': reason,
+                        'details': details
                     };
                     end != null ? vm.price.date_end : '';
                     vm.showHistory();

@@ -34,21 +34,8 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label for="open_cg_reason">Reason: </label>
-                    </div>
-                    <div class="col-md-4">
-                        <select v-on:change="requireDetails()" name="closure_status" v-model="statusHistory.status" class="form-control" id="close_cg_reason">
-                            <option value="1">Closed due to natural disaster</option>
-                            <option value="2">Closed for maintenance</option>
-                            <option value="3">Other</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div v-show="showDetails" class="row">
+            <reason type="close" v-model="statusHistory.reason" ></reason>
+            <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Details: </label>
@@ -68,6 +55,7 @@
 import bootstrapModal from '../bootstrap-modal.vue'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
 import alert from '../alert.vue'
+import reason from '../reasons.vue'
 module.exports = {
     name: 'Close',
     props: {
@@ -86,7 +74,7 @@ module.exports = {
             id:'',
             current_closure: '',
             closeStartPicker: '',
-            showDetails: false,
+            showDetails:false,
             closeEndPicker: '',
             errors: false,
             errorString: '',
@@ -106,21 +94,30 @@ module.exports = {
         },
         closure_id: function() {
             return this.statusHistory.id ? this.statusHistory.id : '';
-        }
+        },
+        requireDetails: function() {
+            return this.statusHistory.reason == '1';
+        },
     },
     components: {
         bootstrapModal,
-        alert
+        alert,
+        reason
     },
     methods: {
-        requireDetails: function() {
-            this.showDetails =  this.statusHistory.status == 3;
-        },
         close: function() {
-            //this.statusHistory = {};
             this.errors = false;
             this.errorString = '';
             this.isOpen = false;
+            this.statusHistory.id = '';
+            this.statusHistory.range_start= '';
+            this.statusHistory.range_end= '';
+            this.statusHistory.status= '1';
+            this.statusHistory.details= '';
+            this.statusHistory.reason = '';
+            var today = new Date();
+            this.closeEndPicker.data('DateTimePicker').date(today);
+            this.closeStartPicker.data('DateTimePicker').clear();
         },
         addClosure: function() {
             if (this.form.valid()){
@@ -140,7 +137,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.statusHistory.status === '3';
+                                return vm.statusHistory.reason=== '1';
                             }
                         }
                     }
@@ -176,6 +173,8 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
+        vm.statusHistory.status=1;
+        vm.statusHistory.reason='';
         vm.closeEndPicker = $('#'+vm.close_cg_range_end);
         vm.closeStartPicker = $('#'+vm.close_cg_range_start).datetimepicker({
             format: 'DD/MM/YYYY',
@@ -194,6 +193,6 @@ module.exports = {
         });
         vm.form = $(document.forms.closeForm);
         vm.addFormValidations();
-    }
+    },
 };
 </script>

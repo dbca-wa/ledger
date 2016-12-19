@@ -29,21 +29,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label for="open_cg_reason">Reason: </label>
-                    </div>
-                    <div class="col-md-4">
-                        <select name="open_reason" v-model="formdata.reason" class="form-control" id="open_cg_reason">
-                            <option value="1">Reason 1</option>
-                            <option value="2">Reason 2</option>
-                            <option value="3">Reason 3</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+            <reason type="open" v-model="formdata.reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -62,6 +48,7 @@
 
 <script>
 import bootstrapModal from '../utils/bootstrap-modal.vue'
+import reason from '../utils/reasons.vue'
 import {bus} from '../utils/eventBus.js'
 import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
 import alert from '../utils/alert.vue'
@@ -75,6 +62,7 @@ module.exports = {
             formdata: {
                 range_start: '',
                 reason:'',
+                status:'0',
                 details: ''
             },
             picker: '',
@@ -97,7 +85,8 @@ module.exports = {
     },
     components: {
         bootstrapModal,
-        alert
+        alert,
+        reason
     },
     methods: {
         close: function() {
@@ -127,7 +116,7 @@ module.exports = {
                 },
                 error:function (data){
                     vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+                    vm.errorString = helpers.apiError(data);
                 }
             });
 

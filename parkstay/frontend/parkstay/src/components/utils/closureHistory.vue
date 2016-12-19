@@ -63,7 +63,11 @@ export default {
         return {
             campground: {},
             campsite:{},
-            closure: {},
+            closure: {
+                id:'',
+                status: 1,
+                reason: ''
+            },
             deleteClosure: null,
             deleteClosurePrompt: {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-danger' aria-hidden='true'></i>",
@@ -109,7 +113,9 @@ export default {
                     }
 
                 }, {
-                    data: 'status'
+                    mRender: function(data,type, full){
+                        return full.reason ? full.reason: '';
+                    }
                 }, {
                     data: 'details'
                 }, {

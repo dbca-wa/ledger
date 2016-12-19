@@ -28,7 +28,7 @@
     											<select class="form-control" v-show="!campsite_classes.length > 0" >
     												<option>Loading...</option>
     											</select>
-    											<select v-if="campsite_classes.length > 1" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
+    											<select v-if="campsite_classes.length > 0" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
                                                     <option value=""></option>
     												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
     											</select>
@@ -42,55 +42,43 @@
     									</div>
     								</div>
                                     <div class="row">
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <div class="form-group">
-                                                <label class="control-label" >Tents</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.tents"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <label class="control-label" >Minimum Number of People</label>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people"required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <div class="form-group">
-                                                <label class="control-label" >Parking Spaces</label>
-    											<select name="parking_spaces" class="form-control" v-model="campsite.parking_spaces" :disabled="selected_campsite_class_url() != ''" >
-    												<option value="0" >Parking within site</option>
-    												<option value="1" >Parking for exclusive use of site occupiers next to site, but separated from tent space</option>
-    												<option value="2" >Parking for exclusive use of occupiers, short walk from tent space</option>
-    												<option value="3" >Shared parking (not allocated), short walk from tent space</option>
-    											</select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label class="control-label" >Number of Vehicles</label>
-    											<select name="parking_spaces" class="form-control" v-model="campsite.number_vehicles" :disabled="selected_campsite_class_url() != ''" >
-    												<option value="0" >One vehicle</option>
-    												<option value="1" >Two vehicles</option>
-    												<option value="2" >One vehicle + small trailer</option>
-    												<option value="3" >One vehicle + small trailer/large vehicle</option>
-    											</select>
+                                                <label class="control-label" >Maximum Number of People</label>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people"required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label class="control-label" >Minimum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campsite.tent" :disabled="selected_campsite_class_url() != ''"/>Tent</label>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label class="control-label" >Maximum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campsite.campervan" :disabled="selected_campsite_class_url() != ''"/>Campervan</label>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label class="control-label" >Dimensions</label>
-                                                <input type="text" name="name" class="form-control"  v-model="campsite.dimensions"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <div style="margin-top:10%;" class="checkbox">
+                                                    <label><input type="checkbox" v-model="campsite.caravan" :disabled="selected_campsite_class_url() != ''"/>Caravan</label>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <editor ref="descriptionEditor" v-model="campsite.description"></editor>
     								<div class="row">
     									<div class="col-sm-12">
                                         <select-panel v-show="!createCampsite" :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
@@ -149,6 +137,7 @@ from '../../hooks.js';
 import datatable from '../utils/datatable.vue'
 import stayHistory from './stayHistory/stayHistory.vue'
 import select_panel from '../utils/select-panel.vue'
+import editor from '../utils/editor.vue'
 import alert from '../utils/alert.vue'
 import pkCsClose from './closureHistory/closeCampsite.vue'
 import confirmbox from '../utils/confirmbox.vue'
@@ -162,6 +151,7 @@ import priceHistory from '../utils/priceHistory/priceHistory.vue'
 export default {
     name: 'campsite',
     components: {
+        editor,
         datatable,
         "select-panel": select_panel,
         alert,
@@ -195,6 +185,7 @@ export default {
         return {
             isLoading: false,
             features: [],
+            default_features:[],
             selected_features: [],
             createCampsite: true,
             temp_campsite: {},
@@ -202,15 +193,14 @@ export default {
             campsite: {
                 number: 1,
                 campsite_class: '',
-                tent: '',
-                parking_spaces:'',
-                number_vehicles:'',
+                tent: false,
+                description: '',
+                campervan:false,
+                caravan:false,
                 min_people: '',
                 max_people:'',
-                dimensions:'',
             },
             campsite_classes: [],
-            createCampiste: true,
             ph_options: {
                 responsive: true,
                 processing: true,
@@ -294,32 +284,40 @@ export default {
         },
         onCampsiteClassChange:function () {
             let vm =this;
-            if(vm.selected_campsite_class_url()){
-                $.ajax({
-                    url:vm.selected_campsite_class_url(),
-                    dataType: 'json',
-                    success:function (sel_class) {
-                        vm.campsite.tents = sel_class.tents;
-                        vm.campsite.number_vehicles = sel_class.number_vehicles;
-                        vm.campsite.dimensions = sel_class.dimensions;
-                        vm.campsite.max_people = sel_class.max_people;
-                        vm.campsite.min_people= sel_class.min_people;
-                        vm.campsite.parking_spaces= sel_class.parking_spaces;
-                        console.log(vm.campsite);
-                    }
+            if (vm.campsite_classes.length > 0){
+                if(vm.selected_campsite_class_url()){
+                    vm.$refs.descriptionEditor.disabled(true);
+                    vm.$refs.select_features.enabled(false);
+                    $.ajax({
+                        url:vm.selected_campsite_class_url(),
+                        dataType: 'json',
+                        success:function (sel_class) {
+                            vm.campsite.tent = sel_class.tent;
+                            vm.campsite.caravan= sel_class.caravan;
+                            vm.campsite.campervan= sel_class.campervan;
+                            vm.campsite.max_people = sel_class.max_people;
+                            vm.campsite.min_people= sel_class.min_people;
+                            vm.campsite.description = sel_class.description;
+                            vm.$refs.descriptionEditor.updateContent(vm.campsite.description);
+                            vm.features = JSON.parse(JSON.stringify(vm.default_features));
+                            vm.selected_features.splice(0,vm.selected_features.length);
+                            vm.$refs.select_features.loadSelectedFeatures(sel_class.features);
+                        }
 
-                });
-            }else{
-                if (!vm.createCampsite){
-                    vm.campsite.tents = temp_campsite.tents;
-                    vm.campsite.number_vehicles = temp_campsite.number_vehicles;
-                    vm.campsite.dimensions = temp_campsite.dimensions;
-                    vm.campsite.max_people = temp_campsite.max_people;
-                    vm.campsite.min_people= temp_campsite.min_people;
-                    vm.campsite.parking_spaces= temp_campsite.parking_spaces;
+                    });
+                }else{
+                    if (!vm.createCampsite){
+                        vm.campsite.tent = vm.temp_campsite.tent;
+                        vm.campsite.carvan= vm.temp_campsite.caravan;
+                        vm.campsite.campervan= vm.temp_campsite.campervan;
+                        vm.campsite.max_people = vm.temp_campsite.max_people;
+                        vm.campsite.min_people= vm.temp_campsite.min_people;
+                        vm.campsite.description = vm.temp_campsite.description;
+                        vm.$refs.descriptionEditor.disabled(false);
+                        vm.$refs.select_features.enabled(true);
+                    }
                 }
             }
-
         },
         showCloseCS: function() {
             var id = this.campsite.id;
@@ -335,6 +333,7 @@ export default {
                 dataType: 'json',
                 success: function(data, stat, xhr) {
                     vm.features = data;
+                    vm.default_features = JSON.parse(JSON.stringify(data));
                 }
             });
         },
@@ -348,10 +347,19 @@ export default {
                 },
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    vm.campsite = data;
-                    vm.temp_campsite = JSON.parse(JSON.stringify(data));
-                    vm.$refs.select_features.loadSelectedFeatures(data.features);
-                    //vm.selected_features = ;
+                    var interval = setInterval(function(){
+                        if (vm.campsite_classes.length > 0){
+                            data.campsite_class = (data.campsite_class != null || data.campsite_class.trim().length>0) ? "//"+ data.campsite_class.split('://')[1] : '';
+                            vm.temp_campsite = data;
+                            vm.campsite = JSON.parse(JSON.stringify(data));
+                            if (data.campsite_class.length>0) {
+                                vm.onCampsiteClassChange();
+                            }
+                            vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
+                            clearInterval(interval);
+                        }
+                     },100);
+
                 },
                 error: function(resp) {
                     if (resp.status == 404) {
@@ -373,7 +381,7 @@ export default {
             let vm = this;
             $.get(api_endpoints.campsite_classes_active, function(data) {
                 $.each(data,function(i,el){
-                    el.url = "//"+ el.url.split('://')[1]; 
+                    el.url = "//"+ el.url.split('://')[1];
                 });
                 vm.campsite_classes = data;
             })
@@ -385,19 +393,19 @@ export default {
             this.sendData(api_endpoints.campsites,'POST')
         },
         updateCampsite: function() {
-            this.sendData(api_endpoints.campsite(this.campsite.id),'PUT')
+            this.sendData(api_endpoints.campsite(this.$route.params.campsite_id),'PUT')
         },
         sendData: function(url,method) {
             let vm = this;
             vm.isLoading = true;
             var data = vm.campsite;
             if (vm.selected_campsite_class_url() == ''){
-                data.cs_tents = data.tents;
-                data.cs_parking_spaces = data.parking_spaces;
-                data.cs_number_vehicles = data.number_vehicles;
+                data.cs_tent = data.tent;
+                data.cs_caravan = data.caravan;
+                data.cs_campervan = data.campervan;
+                data.cs_description = data.description;
                 data.cs_min_people = data.min_people;
                 data.cs_max_people = data.max_people;
-                data.cs_dimensions = data.dimensions;
             }
             $.ajax({
                 beforeSend: function(xhrObj) {
@@ -413,7 +421,12 @@ export default {
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data) {
 
-                    vm.campsite = data;
+                    data.campsite_class = (data.campsite_class != null || data.campsite_class.trim().length>0) ? "//"+ data.campsite_class.split('://')[1] : '';
+                    vm.temp_campsite = data;
+                    vm.campsite = JSON.parse(JSON.stringify(data));
+                    if (data.campsite_class.length>0) {
+                        vm.onCampsiteClassChange();
+                    }
                     setTimeout(function () {
                         vm.isLoading = false;
                     },500);
@@ -424,13 +437,13 @@ export default {
     },
     mounted: function() {
         let vm = this;
+        vm.loadFeatures();
+        vm.fetchCampsiteClasses();
+        vm.fetchCampground();
         if (vm.$route.params.campsite_id) {
             vm.createCampsite = false;
             vm.fetchCampsite();
         }
-        vm.loadFeatures();
-        vm.fetchCampsiteClasses();
-        vm.fetchCampground();
     }
 }
 
