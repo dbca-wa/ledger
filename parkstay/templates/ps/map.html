@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Unicode is great -->
+    <meta charset="utf-8" />
+    <title>Park Finder</title>
+    <!-- Disable awful IE compatibility mode -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Force fit-to-viewport sizing on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.4/foundation.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.19.1/ol-debug.css" />
+    <style type="text/css">
+
+@font-face {
+    font-family: "DPaWSymbols";
+    src: url("/static/ps/css/campicon.woff") format("woff");
+}
+
+.search-params hr {
+    margin: 0;
+}
+
+.search-params label {
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.symb {
+    font-family: "DPaWSymbols";
+    font-style: normal;
+    font-size: 1.5rem;
+}
+
+.symb.RC2:before {
+    content: "a"
+}
+
+.symb.RC4:before {
+    content: "b"
+}
+
+.symb.RV10:before {
+    content: "c"
+}
+
+.symb.RG2:before {
+    content: "d"
+}
+
+.symb.RG15:before {
+    content: "e"
+}
+
+.symb.RV2:before {
+    content: "f"
+}
+
+.symb.RF10:before {
+    content: "g"
+}
+
+.symb.RF13:before {
+    content: "h"
+}
+
+.symb.RF15:before {
+    content: "i"
+}
+
+.symb.RF17:before {
+    content: "j"
+}
+
+.symb.RF1:before {
+    content: "k"
+}
+
+.symb.RF6:before {
+    content: "l"
+}
+
+.symb.RF7:before {
+    content: "m"
+}
+
+.symb.RF19:before {
+    content: "n"
+}
+
+.symb.RF8G:before {
+    content: "o"
+}
+
+.symb.RC1:before {
+    content: "p"
+}
+
+.symb.RC3:before {
+    content: "q"
+}
+
+
+#map {
+    height: 75vh;
+}
+
+.click {
+    cursor: pointer;
+}
+
+input + .symb {
+    color: #000000;
+    transition: color 0.25s ease-out;
+}
+
+input:checked + .symb {
+    color: #2199e8;
+}
+
+.button.selector {
+    background-color: #fff;
+    border: 1px solid #777;
+    border-radius: 4px;
+    color: #000;
+}
+
+.button.selector:hover {
+    background-color: #d6eaff;
+    border: 1px solid #729fcf;
+}
+
+.button.selector ~ input:checked {
+    color: #fff;
+    background-color: #0060c4;
+    border: 1px solid #00366e;
+}
+
+.button.selector:hover ~ input:checked {
+    color: #fff;
+    background-color: #0e83ff;
+    border: 1px solid #004d9f;
+}
+
+
+.tooltip {
+    position: relative;
+    border-radius: 4px;
+    background-color: #ffcc33;
+    color: black;
+    padding: 4px 8px;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.tooltip:before {
+    border-top: 6px solid rgba(0, 0, 0, 0.5);
+    border-right: 6px solid transparent;
+    border-left: 6px solid transparent;
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    margin-left: -7px;
+    left: 50%;
+}
+
+.mapPopup {
+    position: absolute;
+    background-color: white;
+    -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #cccccc;
+    bottom: 32px;
+    left: -140px;
+    min-width: 280px;
+}
+
+.mapPopup:after, .mapPopup:before {
+    top: 100%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+.mapPopup:after {
+    border-top-color: white;
+    border-width: 10px;
+    left: 138px;
+    margin-left: -10px; 
+}
+
+.mapPopup:before {
+    border-top-color: #cccccc;
+    border-width: 11px;
+    left: 138px;
+    margin-left: -11px;
+}
+
+.mapPopupClose {
+    text-decoration: none;
+    position: absolute;
+    top: 2px;
+    right: 8px;
+}
+
+.mapPopupClose:after {
+    content: "✖";
+}
+
+    </style>
+</head>
+<body>
+    <div id="parkfinder">
+        <div class="row">
+            <form><div class="small-12 medium-3 large-6 columns search-params">
+                <div class="row">
+                    <div class="input-group small-12 columns">
+                        <input class="input-group-field" type="text"/>
+                        <div class="input-group-button"><button class="button">Search</button></div>
+                    </div>
+                </div><div class="row">
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label>Arrival <input type="text"/></label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label>Departure <input type="text"/></label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label>Guests <input type="text"/></label>
+                    </div>
+                </div><div class="row">
+                    <hr/>
+                </div><div class="row">
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="campingGear" class="show-for-sr" checked/><i class="symb RC2"></i> Tent</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="campingGear" class="show-for-sr"/><i class="symb RV10"></i> Campervan</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="campingGear" class="show-for-sr"/><i class="symb RC4"></i> Caravan</label>
+                    </div>
+                </div><div class="row">
+                    <hr class="search"/>
+                </div><div class="row">
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RV2"></i> 2WD accessible</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF8G"></i> BBQ</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF10"></i> Campfires allowed</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF17"></i> Dish washing</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RG2"></i> Dogs allowed</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RG15"></i> Generators allowed</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF13"></i> Mains water</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF6"></i> Picnic tables</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF19"></i> Portable toilet disposal</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF7"></i> Sheltered picnic tables</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF15"></i> Shower</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF1"></i> Toilets</label>
+                    </div>
+
+                </div>
+            </div></form>
+            <div class="small-12 medium-9 large-6 columns">
+                <div id="map"></div>
+                <div id="mapPopup" class="mapPopup">
+                    <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
+                    <div id="mapPopupContent"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row" v-for="f in extentFeatures">
+            {% verbatim %}{{ f.get('name') }}{% endverbatim %}
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.4/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.4/foundation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.19.1/ol-debug.js"></script>
+    <script>
+
+
+var debounce = function (func, wait, immediate) {
+    // Returns a function, that, as long as it continues to be invoked, will not
+    // be triggered. The function will be called after it stops being called for
+    // N milliseconds. If `immediate` is passed, trigger the function on the
+    // leading edge, instead of the trailing.
+    'use strict';
+    var timeout;
+    return function () {
+        var context = this;
+        var args = arguments;
+        var later = function () {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        }
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    }
+}
+
+var pf = new Vue({
+    el: '#parkfinder',
+    data: {
+        defaultCenter: [13775786.985667605, -2871569.067879858], // [123.75, -24.966],
+        defaultLayers: [
+            ['dpaw:mapbox_outdoors', {}],
+            ['cddp:dpaw_tenure', {}],
+        ],
+        extentFeatures: []
+    },
+    computed: {
+        extent: {
+            cache: false,
+            get: function() {
+                return this.olmap.getView().calculateExtent(this.olmap.getSize());
+            }
+        },
+    },
+    methods: {
+        groundFilter: function(feature) {
+            return true;
+        },
+        updateViewport: function(runNow) {
+            var vm = this;
+            var updateViewportFunc = function() {
+                vm.extentFeatures = vm.groundsSource.getFeaturesInExtent(vm.extent).filter(vm.groundFilter);
+                
+            };
+            if (runNow) {
+                updateViewportFunc();
+            } else {
+                if (!vm._updateViewport) {
+                    vm._updateViewport = debounce(function() {
+                        updateViewportFunc();
+                    }, 100);
+                }
+                vm._updateViewport();
+            }
+        }
+    },
+    mounted: function () {
+        var vm = this;
+        $(document).foundation();
+        console.log('LOADING MAP');
+
+        // generate WMTS tile grid
+        var projection = ol.proj.get('EPSG:3857');
+        var projectionExtent = projection.getExtent();
+        var size = ol.extent.getWidth(projectionExtent) / 256;
+        var matrixSet = 'mercator';
+        var resolutions = new Array(14);
+        var matrixIds = new Array(14);
+        for (var z = 0; z < 14; ++z) {
+            // generate resolutions and matrixIds arrays for this WMTS
+            resolutions[z] = size / Math.pow(2, z);
+            matrixIds[z] = matrixSet + ':' + z;
+        }
+        var tileGrid = new ol.tilegrid.WMTS({
+            origin: ol.extent.getTopLeft(projectionExtent),
+            resolutions: resolutions,
+            matrixIds: matrixIds
+        });
+
+        this.streets = new ol.layer.Tile({
+            source: new ol.source.WMTS({
+                url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                format: 'image/png',
+                layer: 'dpaw:mapbox_outdoors',
+                matrixSet: matrixSet,
+                projection: projection,
+                tileGrid: tileGrid
+            })
+        });
+
+        this.tenure = new ol.layer.Tile({
+            opacity: 0.6,
+            source: new ol.source.WMTS({
+                url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                format: 'image/png',
+                layer: 'cddp:dpaw_tenure',
+                matrixSet: matrixSet,
+                projection: projection,
+                tileGrid: tileGrid
+            })
+        });
+
+        this.groundsSource = new ol.source.Vector({
+            url: '/api/campground_map/?format=json',
+            format: new ol.format.GeoJSON()
+        });
+
+
+
+        this.grounds = new ol.layer.Vector({
+            source: this.groundsSource,
+            style: function (feature) {
+                style = feature.get('style');
+                if (!style) {
+                    var icon = '/static/ps/img/pin_offline.svg';
+                    var campgroundType = feature.get('campground_type');
+                    switch (campgroundType) {
+                        case 1:
+                        icon = '/static/ps/img/pin.svg';
+                        break;
+                        case 3:
+                        icon = '/static/ps/img/pin_alt.svg';
+                        break;
+                        default:
+                        break;
+                    }
+                    style = new ol.style.Style({
+                        image: new ol.style.Icon({
+                            src: icon,
+                            snapToPixel: true,
+                            anchor: [0.5, 1.0],
+                            anchorXUnits: 'fraction',
+                            anchorYUnits: 'fraction'
+                        }),
+                        zIndex: -feature.getGeometry().getCoordinates()[1]
+                    });
+                    feature.set('style', style);
+                }
+                return style;
+            }
+        });
+
+        $('#mapPopupClose').on('click', function(ev) {
+            vm.popup.setPosition(undefined);
+            return false;
+        });
+        this.popupContent = document.getElementById('mapPopupContent');
+        this.popup = new ol.Overlay({
+            element: document.getElementById('mapPopup'),
+            autoPan: true,
+            autoPanAnimation: {
+                duration: 250
+            }
+        });
+
+
+
+        this.olmap = new ol.Map({
+            logo: false,
+            renderer: 'canvas',
+            target: 'map',
+            view: new ol.View({
+                projection: 'EPSG:3857',
+                center: vm.defaultCenter,
+                zoom: 5,
+                maxZoom: 21,
+                minZoom: 5
+            }),
+            controls: [
+                new ol.control.Zoom(),
+                new ol.control.ScaleLine(),
+            ],
+            interactions: ol.interaction.defaults({
+                altShiftDragRotate: false,
+                pinchRotate: false,
+            }),
+            layers: [
+                this.streets,
+                this.tenure,
+                this.grounds
+            ],
+            overlays: [this.popup]
+        });
+
+    
+        // sad loop to change the pointer when mousing over a vector layer
+        this.olmap.on('pointermove', function(ev) {
+            if (ev.dragging) {
+                return;
+            }
+            var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
+                return true;
+            }, {
+                layerFilter: function (layer) {
+                    return layer === vm.grounds;
+                }
+            }) === true;
+            $('#map').toggleClass('click', result);
+        });
+
+        // another loop to spawn the popup on click
+        this.olmap.on('singleclick', function(ev) {
+            var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
+                vm.popup.setPosition(feature.getGeometry().getCoordinates());
+                vm.popupContent.innerHTML = feature.get('name');
+                return true;
+            }, {
+                layerFilter: function (layer) {
+                    return layer === vm.grounds;
+                }
+            });
+        });
+
+        // hook to update the visible feature list on viewport change
+        this.olmap.getView().on('propertychange', function(ev) {
+            vm.updateViewport();
+        });
+    }
+});
+
+
+    </script>
+</body>
+</html>

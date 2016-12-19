@@ -43,6 +43,7 @@
 												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.campground_type">
 													<option value="0">Bookable Online</option>
 													<option value="1">Not Bookable Online</option>
+													<option value="2">Other accomodation</option>
 												</select>
 											</div>
 										</div>
