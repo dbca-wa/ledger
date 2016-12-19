@@ -8,8 +8,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- Force fit-to-viewport sizing on mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.4/foundation.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.19.1/ol-debug.css" />
+    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.css" />
+    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.css" />
+    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/css/foundation-datepicker.css" />
     <style type="text/css">
 
 @font-face {
@@ -105,6 +106,7 @@
     height: 75vh;
 }
 
+/* set on the #map element when mousing over a feature */
 .click {
     cursor: pointer;
 }
@@ -116,6 +118,11 @@ input + .symb {
 
 input:checked + .symb {
     color: #2199e8;
+}
+
+.button.formButton {
+    display: block;
+    width: 100%;
 }
 
 .button.selector {
@@ -231,7 +238,36 @@ input:checked + .symb {
                         <label>Departure <input type="text"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Guests <input type="text"/></label>
+                        <label>
+                            Guests <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
+                        </label>
+                        <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
+                            <div class="row">
+                                <div class="small-6 columns">
+                                    <label for="numAdults" class="text-right">Adults<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numAdults" name="numAdults" v-model="numAdults" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="numConcessions" class="text-right">Concessions<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numConcessions" name="numConcessions" v-model="numConcessions" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="numChildren" class="text-right">Children (ages 6-15)<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numChildren" name="numChildren" v-model="numChildren" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="numInfants" class="text-right">Infants (ages 0-5)<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numInfants" name="numInfants" v-model="numInfants" min="0" max="16"/></label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div><div class="row">
                     <hr/>
@@ -300,10 +336,11 @@ input:checked + .symb {
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.4/vue.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.4/foundation.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.19.1/ol-debug.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/vue/2.1.6/vue.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.min.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/js/foundation-datepicker.min.js"></script>
     <script>
 
 
@@ -336,7 +373,11 @@ var pf = new Vue({
             ['dpaw:mapbox_outdoors', {}],
             ['cddp:dpaw_tenure', {}],
         ],
-        extentFeatures: []
+        extentFeatures: [],
+        numAdults: 1,
+        numConcessions: 0,
+        numChildren: 0,
+        numInfants: 0
     },
     computed: {
         extent: {
@@ -345,6 +386,17 @@ var pf = new Vue({
                 return this.olmap.getView().calculateExtent(this.olmap.getSize());
             }
         },
+        numPeople: {
+            cache: false,
+            get: function() {
+                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
+                if (count === 1) {
+                    return count +" person";
+                } else {
+                    return count + " people";
+                }
+            }
+        }
     },
     methods: {
         groundFilter: function(feature) {
