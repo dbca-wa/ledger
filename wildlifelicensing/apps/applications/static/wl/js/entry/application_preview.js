@@ -1,4 +1,38 @@
 define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
+    function _setupDisclaimers(disclaimersSelector, lodgeSelector) {
+        var $disclaimers = $(disclaimersSelector),
+            $lodge = $(lodgeSelector),
+            $form = $lodge.parents('form'),
+            $buttonClicked;
+
+        if($lodge.hasClass('disabled')) {
+            $lodge.tooltip({});
+        }
+
+        // ensure form only submits when either approve (enterConditions) is enabled or decline is clicked
+        $(lodgeSelector).click(function() {
+            $buttonClicked = $(this);
+        });
+
+        $form.submit(function(e) {
+            if($buttonClicked.is($lodge) && $lodge.hasClass('disabled')) {
+                e.preventDefault();
+            }
+        });
+
+        // enable lodge button if the number of checked checkboxes is the same as the number of
+        // checkboxes in the dislaimer div (which is the parent of the disclaimers selector's elements)
+        $(disclaimersSelector).change(function(e) {
+            if($(disclaimersSelector).parent().find(':checked').length === $(disclaimersSelector).length) {
+                $lodge.removeClass('disabled');
+                $lodge.tooltip('destroy');
+            } else {
+                $lodge.addClass('disabled');
+                $lodge.tooltip({});
+            }
+        });
+    }
+
     function _layoutItem(item, isRepeat, itemData) {
         var itemContainer = $('<div>'),
             childrenAnchorPoint;
@@ -179,12 +213,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             $('body').scrollspy({ target: '#sectionList' });
             sectionList.affix({ offset: { top: sectionList.offset().top }});
         },
-        setupDisclaimer: function(disclaimersSelector, lodgeSelector) {
-            $(disclaimersSelector).change(function(e) {
-                // enable lodge button if the number of checked checkboxes is the same as the number of
-                // checkboxes in the dislaimer div (which is the parent of the disclaimers selector's elements)
-                $(lodgeSelector).attr('disabled', $(disclaimersSelector).parent().find(':checked').length !== $(disclaimersSelector).length);
-            });
-        }
+        setupDisclaimer: _setupDisclaimers
     };
 });

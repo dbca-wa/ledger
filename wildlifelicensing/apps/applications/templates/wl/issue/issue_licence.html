@@ -54,6 +54,12 @@
     </div>
 {% endblock %}
 
+{% block messages %}
+    <div class='hidden'>
+        {{ block.super }}
+    </div>
+{% endblock %}
+
 {% block intro_title %}
     {% if application.licence %}
         <h3>Reissue Licence</h3>
@@ -154,37 +160,35 @@
                             </div>
                             <div class="panel-body">
                                 {% for item in extracted_fields %}
-                                    {% if not item.readonly %}
-                                        {% if not item.children %}
-                                            <div class="form-group">
-                                                <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
-                                                {% include 'wl/issue/extracted_field.html' with field=item %}
-                                                {% if item.help_text %}
-                                                    <p class="help-block">{{ item.help_text }}</p>
-                                                {% endif %}
-                                            </div>
-                                        {% else %}
+                                    {% if not item.children %}
+                                        <div class="form-group">
                                             <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
+                                            {% include 'wl/issue/extracted_field.html' with field=item %}
                                             {% if item.help_text %}
                                                 <p class="help-block">{{ item.help_text }}</p>
                                             {% endif %}
-                                            {% for item_group in item.children %}
-                                                <div class="row">
-                                                    {% with width=item_group|length|derive_col_width %}
-                                                        {% for child_item in item_group %}
-                                                            <div class="col-md-{{ width }}">
-                                                                <div class="form-group">
-                                                                    {% if forloop.parentloop.first %}
-                                                                        <label class="control-label">{{ child_item.label }}</label>
-                                                                    {% endif %}
-                                                                    {% include 'wl/issue/extracted_field.html' with field=child_item group_index=forloop.parentloop.counter %}
-                                                                </div>
-                                                            </div>
-                                                        {% endfor %}
-                                                    {% endwith %}
-                                                </div>
-                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
+                                        {% if item.help_text %}
+                                            <p class="help-block">{{ item.help_text }}</p>
                                         {% endif %}
+                                        {% for item_group in item.children %}
+                                            <div class="row">
+                                                {% with width=item_group|length|derive_col_width %}
+                                                    {% for child_item in item_group %}
+                                                        <div class="col-md-{{ width }}">
+                                                            <div class="form-group">
+                                                                {% if forloop.parentloop.first %}
+                                                                    <label class="control-label">{{ child_item.label }}</label>
+                                                                {% endif %}
+                                                                {% include 'wl/issue/extracted_field.html' with field=child_item group_index=forloop.parentloop.counter %}
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% endwith %}
+                                            </div>
+                                        {% endfor %}
                                     {% endif %}
                                 {% endfor %}
                             </div>

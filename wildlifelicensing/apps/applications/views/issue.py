@@ -53,6 +53,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                             return_frequency=return_frequency)
 
             kwargs['extracted_fields'] = extract_licence_fields(application.licence_type.application_schema, application.data)
+            print kwargs['extracted_fields']
 
         if application.proxy_applicant is None:
             to = application.applicant
@@ -136,7 +137,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 previous_licence.save()
 
             licence.variants.clear()
-            for index, avl in enumerate(application.variants.through.objects.all().order_by('order')):
+            for index, avl in enumerate(application.variants.through.objects.filter(application=application).
+                                        order_by('order')):
                 WildlifeLicenceVariantLink.objects.create(licence=licence, variant=avl.variant, order=index)
 
             issue_licence_form.save_m2m()
@@ -225,22 +227,26 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
             issue_licence_form = IssueLicenceForm(request.GET, skip_required=True)
             extracted_fields = extract_licence_fields(application.licence_type.application_schema, application.data)
 
-        licence = issue_licence_form.save(commit=False)
-        licence.licence_type = application.licence_type
-        licence.profile = application.applicant_profile
-        licence.holder = application.applicant
-        licence.extracted_fields = update_licence_fields(extracted_fields, request.GET)
+        if issue_licence_form.is_valid():
+            licence = issue_licence_form.save(commit=False)
+            licence.licence_type = application.licence_type
+            licence.profile = application.applicant_profile
+            licence.holder = application.applicant
+            licence.extracted_fields = update_licence_fields(extracted_fields, request.GET)
 
-        filename = '%s.pdf' % application.lodgement_number
+            filename = '%s.pdf' % application.lodgement_number
 
-        application.customer_status = 'approved'
-        application.processing_status = 'issued'
-        application.licence = licence
+            application.customer_status = 'approved'
+            application.processing_status = 'issued'
+            application.licence = licence
 
-        response = HttpResponse(content_type='application/pdf')
+            response = HttpResponse(content_type='application/pdf')
 
-        response.write(create_licence_pdf_bytes(filename, licence, application,
-                                                request.build_absolute_uri(reverse('home')),
-                                                original_issue_date))
+            response.write(create_licence_pdf_bytes(filename, licence, application,
+                                                    request.build_absolute_uri(reverse('home')),
+                                                    original_issue_date))
 
-        return response
+            return response
+        else:
+            return HttpResponse('<script type="text/javascript">window.close()</script>')
+

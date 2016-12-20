@@ -117,7 +117,9 @@
                     </div>
                     <div>
                         <a data-entry-link="True" class="btn btn-default" href="{% url 'wl_applications:enter_details' %}">Edit Application Details</a>
-                        <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>
+                        <button type="submit" id="lodge" type="button" name="lodge"
+                                class="btn btn-primary pull-right disabled"
+                                data-title="You must check both dislaimer checkboxes to lodge the application">
                             {% if is_payment_required %}
                                 Proceed to Payment
                             {% else %}
