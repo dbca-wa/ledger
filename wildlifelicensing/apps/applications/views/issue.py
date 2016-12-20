@@ -53,7 +53,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                             return_frequency=return_frequency)
 
             kwargs['extracted_fields'] = extract_licence_fields(application.licence_type.application_schema, application.data)
-            print kwargs['extracted_fields']
 
         if application.proxy_applicant is None:
             to = application.applicant
