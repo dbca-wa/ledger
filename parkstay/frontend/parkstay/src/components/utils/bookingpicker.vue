@@ -49,7 +49,7 @@
                                 </div>
                               </div>
                               <div class="form-group">
-                                 <button type="button" class="btn btn-primary"> Search</button>
+                                 <button type="button" class="btn btn-primary" @click.prevent="secondLevelSearch()"> Search</button>
                               </div>
                           </form>
                       </div>
@@ -57,17 +57,21 @@
                 </form>
             </div>
         </div>
+        <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
     </div>
 </template>
 
 <script>
-import {$,daterangepicker}from '../../hooks.js'
+import {$,daterangepicker,api_endpoints,select2}from '../../hooks.js'
+import loader from './loader.vue'
 export default {
     name:'booking-picker',
     data:function () {
         let vm = this;
         return {
             form : null,
+            parks:[],
+            loading:[],
             guestsText:"",
             guestsPicker:[
                 {
@@ -98,6 +102,9 @@ export default {
             ]
         }
     },
+    components:{
+        loader
+    },
     props:{
         value:{
             default:function () {
@@ -114,6 +121,17 @@ export default {
                 }
             }
         }
+    },
+    computed:{
+        isLoading: function(){
+            let vm = this;
+            if ( vm.loading.length > 0){
+                return true;
+            }
+            else{
+                return false;
+            }
+        },
     },
     methods:{
         addGuestCount:function (guest) {
@@ -165,6 +183,21 @@ export default {
                 (i != vm.guestsPicker.length-1) ? (g.amount > 0 )?text += g.amount+" "+g.name+",  ":"" :(g.amount > 0 ) ? text += g.amount+" "+g.name+" ":"";
             });
             vm.guestsText = text.replace(/,\s*$/, "");
+        },
+        secondLevelSearch:function () {
+            let vm =this;
+            vm.$router.push({
+                 path: '/map',
+                 query: {
+                      search: vm.value.where,
+                      arrival: vm.value.checkin,
+                      depature:vm.value.checkout,
+                      adults:vm.value.guests.adults,
+                      children:vm.value.guests.children,
+                      concession:vm.value.guests.concession,
+                      infants:vm.value.guests.infants,
+                  }
+            })
         }
     },
     mounted:function () {
@@ -189,7 +222,7 @@ export default {
 </script>
 
 <style lang="css" scoped>
-    .form-control, .form-group .form-control {
+    .form-control, .form-group .form-control{
         border: 0;
         background-image: -webkit-gradient(linear, left top, left bottom, from(#009688), to(#009688)), -webkit-gradient(linear, left top, left bottom, from(#D2D2D2), to(#D2D2D2));
         background-image: -webkit-linear-gradient(#009688, #009688), -webkit-linear-gradient(#D2D2D2, #D2D2D2);
