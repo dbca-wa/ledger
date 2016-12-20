@@ -57,17 +57,21 @@
                 </form>
             </div>
         </div>
+        <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
     </div>
 </template>
 
 <script>
-import {$,daterangepicker}from '../../hooks.js'
+import {$,daterangepicker,api_endpoints,select2}from '../../hooks.js'
+import loader from './loader.vue'
 export default {
     name:'booking-picker',
     data:function () {
         let vm = this;
         return {
             form : null,
+            parks:[],
+            loading:[],
             guestsText:"",
             guestsPicker:[
                 {
@@ -98,6 +102,9 @@ export default {
             ]
         }
     },
+    components:{
+        loader
+    },
     props:{
         value:{
             default:function () {
@@ -114,6 +121,17 @@ export default {
                 }
             }
         }
+    },
+    computed:{
+        isLoading: function(){
+            let vm = this;
+            if ( vm.loading.length > 0){
+                return true;
+            }
+            else{
+                return false;
+            }
+        },
     },
     methods:{
         addGuestCount:function (guest) {
@@ -189,7 +207,7 @@ export default {
 </script>
 
 <style lang="css" scoped>
-    .form-control, .form-group .form-control {
+    .form-control, .form-group .form-control{
         border: 0;
         background-image: -webkit-gradient(linear, left top, left bottom, from(#009688), to(#009688)), -webkit-gradient(linear, left top, left bottom, from(#D2D2D2), to(#D2D2D2));
         background-image: -webkit-linear-gradient(#009688, #009688), -webkit-linear-gradient(#D2D2D2, #D2D2D2);
