@@ -49,7 +49,7 @@
                                 </div>
                               </div>
                               <div class="form-group">
-                                 <button type="button" class="btn btn-primary"> Search</button>
+                                 <button type="button" class="btn btn-primary" @click.prevent="secondLevelSearch()"> Search</button>
                               </div>
                           </form>
                       </div>
@@ -183,6 +183,21 @@ export default {
                 (i != vm.guestsPicker.length-1) ? (g.amount > 0 )?text += g.amount+" "+g.name+",  ":"" :(g.amount > 0 ) ? text += g.amount+" "+g.name+" ":"";
             });
             vm.guestsText = text.replace(/,\s*$/, "");
+        },
+        secondLevelSearch:function () {
+            let vm =this;
+            vm.$router.push({
+                 path: '/map',
+                 query: {
+                      search: vm.value.where,
+                      arrival: vm.value.checkin,
+                      depature:vm.value.checkout,
+                      adults:vm.value.guests.adults,
+                      children:vm.value.guests.children,
+                      concession:vm.value.guests.concession,
+                      infants:vm.value.guests.infants,
+                  }
+            })
         }
     },
     mounted:function () {
