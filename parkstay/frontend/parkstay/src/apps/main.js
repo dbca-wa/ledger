@@ -2,6 +2,7 @@
 // so you don't have to do: import Vue from 'vue/dist/vue'
 // This is done with the browser options. For the config, see package.json
 import Vue from 'vue'
+import resource from 'vue-resource'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
 import AddCampground from '../components/campgrounds/addCampground.vue'
@@ -16,6 +17,7 @@ import Bulkpricing from '../components/bulkpricing/bulkpricing.vue'
 import $ from '../hooks'
 var css = require('../hooks-css.js');
 Vue.use(Router);
+Vue.use(resource);
 
 // Define global variables
 global.debounce = function (func, wait, immediate) {
