@@ -1,0 +1,16 @@
+{% extends 'ps/booking/base.html' %}
+{% load static %}
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'ps/css/build.css' %}">
+    <link href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet"/>
+{% endblock %}
+{% block vue-component %}
+  <div id="app">
+       <router-view></router-view>
+  </div>
+{% endblock %}
+
+{% block custom_js %}
+  <script type="text/javascript" src="{% static 'ps/js/build.js' %}"></script>
+{% endblock %}
