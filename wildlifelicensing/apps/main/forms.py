@@ -123,6 +123,12 @@ class IssueLicenceForm(forms.ModelForm):
 
             self.fields['return_frequency'].initial = return_frequency
 
+    def clean(self):
+        cleaned_data = super(IssueLicenceForm, self).clean()
+
+        if cleaned_data.get('end_date') < cleaned_data.get('start_date'):
+            raise forms.ValidationError('End date must be greater than start date')
+
 
 class CommunicationsLogEntryForm(forms.ModelForm):
     attachment = forms.FileField(required=False)

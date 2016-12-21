@@ -13,8 +13,6 @@ from reportlab.lib.colors import HexColor
 from django.core.files import File
 from django.conf import settings
 
-from wildlifelicensing.apps.main.helpers import render_user_name
-
 from ledger.accounts.models import Document
 
 BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
@@ -240,7 +238,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
                           Paragraph(address.country.name, styles['Left'])]
     delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
-                              [Paragraph(render_user_name(application.applicant),
+                              [Paragraph(_format_name(application.applicant, include_first_name=True),
                                          styles['Left'])] + address_paragraphs]],
                             colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=licence_table_style))
@@ -306,7 +304,8 @@ def _layout_extracted_fields(extracted_fields):
                     heading_row = []
                     for child_field in group:
                         heading_row.append(Paragraph(child_field['label'], styles['BoldLeft']))
-                    table_data.append(heading_row)
+                    if heading_row:
+                        table_data.append(heading_row)
 
                 row = []
                 for child_field in group:
@@ -323,9 +322,11 @@ def _layout_extracted_fields(extracted_fields):
                     else:
                         row.append(Paragraph(child_field['data'], styles['Left']))
 
-                table_data.append(row)
+                if row:
+                    table_data.append(row)
 
-            elements.append(Table(table_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
+            if table_data:
+                elements.append(Table(table_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 
     return elements
 
