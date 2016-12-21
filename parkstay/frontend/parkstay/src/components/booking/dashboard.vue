@@ -55,8 +55,10 @@
             </div>
           </div>
       </div>
+      <changebooking :campsites="[]" :campgrounds="campgrounds"/>
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
+
 </div>
 </template>
 
@@ -64,11 +66,13 @@
 import {$,datetimepicker,api_endpoints} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
+import changebooking from "./changebooking.vue"
 export default {
     name:'booking-dashboard',
     components:{
         datatable,
-        loader
+        loader,
+        changebooking
     },
     data:function () {
         let vm =this;
