@@ -128,9 +128,27 @@ class CampgroundMapFeatureSerializer(serializers.HyperlinkedModelSerializer):
         model = Feature
         fields = ('id', 'name', 'description', 'image')
 
+class CampgroundMapRegionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Region
+        fields = ('id', 'name', 'abbreviation')
+
+class CampgroundMapDistrictSerializer(serializers.HyperlinkedModelSerializer):
+    region = CampgroundMapRegionSerializer(read_only=True)
+    class Meta:
+        model = District
+        fields = ('id', 'name', 'abbreviation', 'region')
+
+class CampgroundMapParkSerializer(serializers.HyperlinkedModelSerializer):
+    district = CampgroundMapDistrictSerializer(read_only=True)
+    class Meta:
+        model = Park
+        fields = ('id','name', 'entry_fee_required', 'district')
+
 class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
     features = CampgroundMapFeatureSerializer(read_only=True, many=True)
-    
+    park = CampgroundMapParkSerializer(read_only=True)
+
     class Meta:
         model = Campground
         geo_field = 'wkb_geometry'
@@ -139,7 +157,8 @@ class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'name',
             'description',
             'features',
-            'campground_type'
+            'campground_type',
+            'park',
         )
     
 class CampgroundImageSerializer(serializers.ModelSerializer):
