@@ -75,7 +75,7 @@ export default {
     data:function () {
         let vm = this;
         return {
-            isModalOpen:true,
+            isModalOpen:false,
             selectedCampground:"",
             campsites:[],
             form:null
