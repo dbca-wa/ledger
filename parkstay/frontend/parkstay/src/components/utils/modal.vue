@@ -6,13 +6,6 @@
         </div>
       </div>
     </div>
-
-
-    <!--<div class="modal-mask" @click="close" v-show="isModalOpen" transition="modal">
-        <div class="modal-container" @click.stop>
-            <slot></slot>
-        </div>
-    </div>-->
 </template>
 
 <script>
@@ -25,7 +18,7 @@ module.exports = {
             return this.$parent.isModalOpen;
         }
     },
-    methods: {    
+    methods: {
         close: function (){
             this.$parent.close();
         },
@@ -76,7 +69,7 @@ module.exports = {
     .modal-body {
       margin: 20px 0;
     }
-    
+
     .text-right {
         text-align: right;
     }

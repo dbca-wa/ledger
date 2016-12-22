@@ -100,5 +100,6 @@ module.exports = {
     },
     bulkPricing: function(){
         return "/api/bulkPricing";
-    }
+    },
+    countries:"https://restcountries.eu/rest/v1/?fullText=true"
 };

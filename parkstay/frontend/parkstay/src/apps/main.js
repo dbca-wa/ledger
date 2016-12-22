@@ -2,11 +2,14 @@
 // so you don't have to do: import Vue from 'vue/dist/vue'
 // This is done with the browser options. For the config, see package.json
 import Vue from 'vue'
+import resource from 'vue-resource'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
 import AddCampground from '../components/campgrounds/addCampground.vue'
 import Campsite from '../components/campsites/campsite.vue'
 import firstLevelSearch from '../components/booking/first-level-search.vue'
+import bookingDashboard from '../components/booking/dashboard.vue'
+import addBooking from '../components/booking/addbooking.vue'
 import page_404 from '../components/utils/404.vue'
 import Router from 'vue-router'
 import Campsite_type_dash from '../components/campsites-types/campsite-types-dash.vue'
@@ -15,6 +18,7 @@ import Bulkpricing from '../components/bulkpricing/bulkpricing.vue'
 import $ from '../hooks'
 var css = require('../hooks-css.js');
 Vue.use(Router);
+Vue.use(resource);
 
 // Define global variables
 global.debounce = function (func, wait, immediate) {
@@ -111,6 +115,23 @@ const routes = [
                                 path:':id/campsites/:campsite_id',
                                 name:'view_campsite',
                                 component:Campsite
+                            },
+                        ]
+                    },{
+                        path:'bookings',
+                        component: {
+                            render (c) { return c('router-view') }
+                        },
+                        children:[
+                            {
+                                path: '/',
+                                name: 'booking-dashboard',
+                                component: bookingDashboard,
+                            },
+                            {
+                                path: 'add',
+                                name: 'add-booking',
+                                component: addBooking,
                             },
                         ]
                     },
