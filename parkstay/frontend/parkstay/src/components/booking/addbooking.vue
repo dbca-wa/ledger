@@ -21,7 +21,7 @@
                                                 <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
                                                 <div class="col-md-4">
                                                     <div class="input-group">
-                                                        <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY"  readonly="readonly">
+                                                        <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY" v-model="booking.arrival" >
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -29,7 +29,7 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="input-group">
-                                                        <input type="text" class="form-control" name="depature" placeholder="DD/MM/YYYY" readonly="readonly">
+                                                        <input type="text" class="form-control" name="depature" placeholder="DD/MM/YYYY" v-model="booking.depature">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -39,7 +39,7 @@
                                             <div class="form-group">
                                                 <label class="col-md-2 control-label pull-left"  for="Campground">Guests: </label>
                                                 <div class="col-md-4">
-                                                    <input type="text" name="guests" class="form-control" placeholder="Guests" readonly="readonly">
+                                                    <input type="text" name="guests" class="form-control" placeholder="Guests" v-model="booking.guests">
                                                 </div>
                                             </div>
                                         </div>
@@ -63,7 +63,7 @@
                                   <div class="col-md-6">
                                       <div class="form-group">
                                         <label for="Campsite">Campsite</label>
-                                        <select class="form-control" name="campsite" >
+                                        <select class="form-control" name="campsite" v-model="booking.campsite">
                                             <option value=""></option>
                                         </select>
                                       </div>
@@ -86,7 +86,7 @@
                           <div class="col-md-3">
                               <div class="form-group">
                                 <label for="Email">Email</label>
-                                <input type="text" name="email" class="form-control">
+                                <input type="text" name="email" class="form-control" v-model="booking.email">
                               </div>
                           </div>
                           <div class="col-md-3">
@@ -100,13 +100,13 @@
                           <div class="col-md-3">
                               <div class="form-group">
                                 <label for="First Name">First Name</label>
-                                <input type="text" name="firstname" class="form-control">
+                                <input type="text" name="firstname" class="form-control" v-model="booking.firstname">
                               </div>
                           </div>
                           <div class="col-md-3">
                               <div class="form-group">
                                 <label for="Surname">Surname</label>
-                                <input type="text" name="surname" class="form-control">
+                                <input type="text" name="surname" class="form-control" v-model="booking.surname">
                               </div>
                           </div>
                         </div>
@@ -114,13 +114,13 @@
                           <div class="col-md-3">
                               <div class="form-group">
                                 <label for="Postcode">Postcode</label>
-                                <input type="text" name="postcode" class="form-control">
+                                <input type="text" name="postcode" class="form-control" v-model="booking.postcode">
                               </div>
                           </div>
                           <div class="col-md-3">
                               <div class="form-group">
                                 <label for="Country">Country</label>
-                                <input type="text" name="country" class="form-control" id="countriesList" >
+                                <input type="text" name="country" class="form-control" v-model="booking.country" >
                               </div>
                           </div>
                         </div>
@@ -128,13 +128,13 @@
                           <div class="col-md-3">
                               <div class="form-group">
                                 <label for="Phone">Phone <span class="text-muted">(mobile prefered)</span></label>
-                                <input type="text" name="phone" class="form-control">
+                                <input type="text" name="phone" class="form-control" v-model="booking.phone">
                               </div>
                           </div>
                           <div class="col-md-3">
                               <div class="form-group">
                                 <label for="Vehicle Registration">Vehicle Registration</label>
-                                <input type="text" name="vehicle" class="form-control">
+                                <input type="text" name="vehicle" class="form-control" v-model="booking.vehicle">
                               </div>
                           </div>
                         </div>
@@ -180,7 +180,20 @@ export default {
     data:function () {
         return{
             bookingForm:null,
-            countries:[]
+            countries:[],
+            booking:{
+                arrival:"",
+                depature:"",
+                guests:"",
+                campsite:"",
+                email:"",
+                firstname:"",
+                surname:"",
+                postcode:"",
+                country:"",
+                phone:"",
+                vehicle:""
+            }
         };
     },
     methods:{
@@ -193,15 +206,23 @@ export default {
                     list.push(c.name);
                 });
                 vm.$nextTick(function () {
-                    var input = document.getElementById("countriesList");
-                    new awesomplete(input, {
+                    var input = vm.bookingForm.country;
+                    var autoc = new awesomplete(input, {
                         list,
                         minChars: 1,
+                        maxItems:5,
+                        autoFirst: true,
+                        sort:function (text,input) {
+                            return text > input;
+                        }
+                    });
+                    window.addEventListener('awesomplete-selectcomplete',function (e) {
+                        vm.booking.country = e.text.value;
                     });
                 });
 
             },(response)=>{
-
+                console.log(response);
             });
         }
     },
