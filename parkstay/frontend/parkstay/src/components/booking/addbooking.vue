@@ -150,7 +150,7 @@
                                 <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.Park entry fee(where applicable) not included.)</span></label>
                                 <div class="input-group">
                                   <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
-                                  <input type="text" class="form-control" placeholder="0.00">
+                                  <input type="text" class="form-control" :placeholder="0.00|formatMoney(2,'.',',')" :value="booking.price|formatMoney(2,'.',',')">
                                 </div>
                               </div>
                           </div>
@@ -192,9 +192,21 @@ export default {
                 postcode:"",
                 country:"",
                 phone:"",
-                vehicle:""
+                vehicle:"",
+                price:"12.00"
             }
         };
+    },
+    filters:{
+        formatMoney:function(n,c, d, t){
+            c = isNaN(c = Math.abs(c)) ? 2 : c;
+            d = d == undefined ? "." : d;
+            t = t == undefined ? "," : t;
+            var s = n < 0 ? "-" : "";
+            var i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c)));
+            var j = (j = i.length) > 3 ? j % 3 : 0;
+           return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+         }
     },
     methods:{
         fetchCountries:function (){
