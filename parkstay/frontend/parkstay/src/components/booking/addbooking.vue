@@ -21,7 +21,7 @@
                                             <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
                                             <div class="col-md-4">
                                                 <div class="input-group">
-                                                    <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY">
+                                                    <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY"  readonly="readonly">
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
@@ -29,7 +29,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="input-group">
-                                                    <input type="text" class="form-control" name="depature" placeholder="DD/MM/YYYY">
+                                                    <input type="text" class="form-control" name="depature" placeholder="DD/MM/YYYY" readonly="readonly">
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
@@ -39,7 +39,7 @@
                                         <div class="form-group">
                                             <label class="col-md-2 control-label pull-left"  for="Campground">Campground: </label>
                                             <div class="col-md-4">
-                                                <input type="text" name="guests" class="form-control" placeholder="guests">
+                                                <input type="text" name="guests" class="form-control" placeholder="guests" readonly="readonly">
                                             </div>
                                         </div>
                                     </div>
@@ -121,7 +121,10 @@
                       <div class="col-md-3">
                           <div class="form-group">
                             <label for="Country">Country</label>
-                            <input type="text" name="" class="form-control">
+                            <input type="text" name="" class="form-control" id="countriesList" >
+                            <!--datalist id="countriesList">
+                                <option v-for="c in countries" :value="c.name">{{c.name}}</option>
+                            </datalist-->
                           </div>
                       </div>
                     </div>
@@ -174,7 +177,42 @@
 </template>
 
 <script>
-export default {}
+import {$,awesomplete,bus} from "../../hooks.js";
+export default {
+    name:"addBooking",
+    data:function () {
+        return{
+            countries:[]
+        };
+    },
+    methods:{
+        fetchCountries:function (){
+            let vm =this;
+            vm.$http.get("https://restcountries.eu/rest/v1/?fullText=true").then((response)=>{
+                vm.countries = response.body;
+                var list = [];
+                $.each(vm.countries,function (i,c) {
+                    list.push(c.name);
+                });
+                vm.$nextTick(function () {
+                    var input = document.getElementById("countriesList");
+                    new awesomplete(input, {
+                        list,
+                        minChars: 1,
+                    });
+                });
+
+            },(response)=>{
+
+            });
+        }
+    },
+    mounted:function () {
+        let vm = this;
+        vm.fetchCountries();
+
+    }
+}
 
 </script>
 
@@ -182,5 +220,8 @@ export default {}
     .pricing{
         margin-left: 25px;
         font-size: 20px;
+    }
+    .awesomplete{
+        width:100%;
     }
 </style>

@@ -76,6 +76,7 @@
     }
   },
   "dependencies": {
+    "awesomplete": "^1.1.1",
     "bootstrap": "^3.3.7",
     "bootstrap-daterangepicker": "^2.1.24",
     "datatables.net": "^1.10.12",
