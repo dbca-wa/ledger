@@ -34,72 +34,88 @@
 }
 
 .symb.RC2:before {
-    content: "a"
+    content: "a";
 }
 
 .symb.RC4:before {
-    content: "b"
+    content: "b";
 }
 
 .symb.RV10:before {
-    content: "c"
+    content: "c";
 }
 
 .symb.RG2:before {
-    content: "d"
+    content: "d";
 }
 
 .symb.RG15:before {
-    content: "e"
+    content: "e";
 }
 
 .symb.RV2:before {
-    content: "f"
+    content: "f";
 }
 
 .symb.RF10:before {
-    content: "g"
+    content: "g";
 }
 
 .symb.RF13:before {
-    content: "h"
+    content: "h";
 }
 
 .symb.RF15:before {
-    content: "i"
+    content: "i";
 }
 
 .symb.RF17:before {
-    content: "j"
+    content: "j";
 }
 
 .symb.RF1:before {
-    content: "k"
+    content: "k";
 }
 
 .symb.RF6:before {
-    content: "l"
+    content: "l";
 }
 
 .symb.RF7:before {
-    content: "m"
+    content: "m";
 }
 
 .symb.RF19:before {
-    content: "n"
+    content: "n";
 }
 
 .symb.RF8G:before {
-    content: "o"
+    content: "o";
 }
 
 .symb.RC1:before {
-    content: "p"
+    content: "p";
 }
 
 .symb.RC3:before {
-    content: "q"
+    content: "q";
 }
+
+.fa-chevron-left:before {
+    font-style: normal;
+    content: "«";
+}
+
+.fa-chevron-right:before {
+    font-style: normal;    
+    content: "»";
+}
+
+.fa-remove:before {
+    font-style: normal;    
+    content: "×";
+}
+
 
 
 #map {
@@ -232,10 +248,10 @@ input:checked + .symb {
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Arrival <input id="dateArrival" type="text" placeholder="dd/mm/yyyy"/></label>
+                        <label>Arrival <input id="dateArrival" type="text" placeholder="dd/mm/yyyy" v-on:blur="reload()"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Departure <input id="dateDeparture" type="text" placeholder="dd/mm/yyyy"/></label>
+                        <label>Departure <input id="dateDeparture" type="text" placeholder="dd/mm/yyyy" v-on:blur="reload()"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label>
@@ -419,6 +435,9 @@ var pf = new Vue({
                 }
                 vm._updateViewport();
             }
+        },
+        reload: function() {
+            this.groundsSource.loadSource();
         }
     },
     mounted: function () {
@@ -431,7 +450,9 @@ var pf = new Vue({
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
         var arrivalEl = $('#dateArrival');
-        var arrivalData = arrivalEl.fdatepicker({
+        var departureEl = $('#dateDeparture');
+
+        this.arrivalData = arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
             onRender: function (date) {
                 // disallow start dates before today
@@ -440,25 +461,24 @@ var pf = new Vue({
             }
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
-            if (arrivalData.date.valueOf() >= departureData.date.valueOf()) {
-                var newDate = moment(arrivalData.date).add(1, 'days').toDate();
-                departureData.date = newDate;
-                departureData.setValue();
-                departureData.fill();
+            if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
+                var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
+                vm.departureData.date = newDate;
+                vm.departureData.setValue();
+                vm.departureData.fill();
                 departureEl.trigger('changeDate');
             }
-            arrivalData.hide();
+            vm.arrivalData.hide();
         }).data('datepicker');
 
-        var departureEl = $('#dateDeparture');
-        var departureData = departureEl.fdatepicker({
+        this.departureData = departureEl.fdatepicker({
             format: 'dd/mm/yyyy',
             onRender: function (date) {
-                return (date.valueOf() <= arrivalData.date.valueOf()) ? 'disabled': '';
+                return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
-            departureData.hide();
+            vm.departureData.hide();
         }).data('datepicker');
 
 
@@ -503,11 +523,42 @@ var pf = new Vue({
             })
         });
 
-        this.groundsSource = new ol.source.Vector({
-            url: '/api/campground_map/?format=json',
-            format: new ol.format.GeoJSON()
+        //this.groundsSource = new ol.source.Vector({
+        //    url: '/api/campground_map/?format=json',
+        //    format: new ol.format.GeoJSON()
+        //});
+
+        this.geojson = new ol.format.GeoJSON({
+            featureProjection: 'EPSG:3857'   
         });
 
+        this.groundsSource = new ol.source.Vector();
+        this.groundsSource.loadSource = function (onSuccess) {
+            var urlBase = '/api/campground_map/?';
+            var params = {format: 'json'};
+            if ((vm.arrivalData.date) && (vm.departureData.date)) {
+                params.arrival = moment(vm.arrivalData.date).format('YYYY/MM/DD');
+                params.departure = moment(vm.departureData.date).format('YYYY/MM/DD');
+                params.num_adult = vm.numAdults;
+                params.num_concessions = vm.numConcessions;
+                params.num_children = vm.numChildren;
+                params.num_infants = vm.numInfants;
+            }
+            $.ajax({
+                url: urlBase+$.param(params),
+                success: function (response, stat, xhr) {
+                    var features = vm.geojson.readFeatures(response);
+                    console.log(features);
+                    vm.groundsSource.clear();
+                    vm.groundsSource.addFeatures(features);
+                    vm.groundsSource.dispatchEvent('loadSource');
+                    if (onSuccess) {
+                        onSuccess();
+                    }
+                },
+                dataType: 'json'
+            });
+        };
 
 
         this.grounds = new ol.layer.Vector({
@@ -618,6 +669,8 @@ var pf = new Vue({
         this.olmap.getView().on('propertychange', function(ev) {
             vm.updateViewport();
         });
+
+        this.reload();
     }
 });
 

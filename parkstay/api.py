@@ -233,12 +233,47 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
     # TODO: add exclude for unpublished campground objects
     #queryset = Campground.objects.exclude(campground_type=1)
     queryset = Campground.objects.all()
     serializer_class = CampgroundMapSerializer
-    permission_classes = [] 
+    permission_classes = []
+   
+
+    def list(self, request, *args, **kwargs):
+        print(request.GET)
+        data = {
+            "arrival" : request.GET.get('arrival', None),
+            "departure" : request.GET.get('departure', None),
+            "num_adult" : request.GET.get('num_adult', 0),
+            "num_concession" : request.GET.get('num_concession', 0),
+            "num_child" : request.GET.get('num_child', 0),
+            "num_infant" : request.GET.get('num_infant', 0)
+        }
+        if data['arrival'] and data['departure'] and (data['arrival'] < data['departure']):
+            serializer = CampgroundCampsiteFilterSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            print(serializer.validated_data)
+            sites = Campsite.objects.prefetch_related('campsitebooking').exclude(
+                campsitebooking__date__range=(
+                    serializer.validated_data['arrival'],
+                    serializer.validated_data['departure']-timedelta(days=1)
+                )
+            )
+            queryset = Campground.objects.filter(id__in=sites.values('campground'))
+        else:
+            queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
