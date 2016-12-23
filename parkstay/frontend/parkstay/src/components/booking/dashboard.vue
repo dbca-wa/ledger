@@ -6,10 +6,10 @@
             <div class="col-md-3">
                 <div class="form-group">
                   <label for="">Campground</label>
-                  <select v-show="isLoading" class="form-control" name="">
+                  <select v-show="isLoading" class="form-control" >
                       <option value="">Loading...</option>
                   </select>
-                  <select v-if="!isLoading" class="form-control" name="">
+                  <select v-if="!isLoading" class="form-control" v-model="filterCampground">
                       <option value="All">All</option>
                       <option v-for="campground in campgrounds" value="campground.id">{{campground.name}}</option>
                   </select>
@@ -21,8 +21,8 @@
                   <select v-show="isLoading" class="form-control" name="">
                         <option value="">Loading...</option>
                   </select>
-                  <select v-if="!isLoading" class="form-control" name="">
-                        <option value="">All</option>
+                  <select v-if="!isLoading" class="form-control" v-model="filterRegion">
+                        <option value="All">All</option>
                         <option v-for="park in parks" value="park.id">{{park.name}}</option>
                   </select>
                 </div>
@@ -133,14 +133,51 @@ export default {
             dateFromPicker:null,
             dateToPicker:null,
             datepickerOptions:{
-                minDate:new Date(),
                 format: 'DD/MM/YYYY',
                 showClear:true
             },
             loading:[],
             parks:[],
             campgrounds:[],
-            selected_booking:{}
+            selected_booking:{},
+            filterCampground:"All",
+            filterRegion:"All",
+            filterDateFrom:"",
+            filterDateTo:""
+        }
+    },
+    watch:{
+        filterCampground: function() {
+            let vm = this;
+            if (vm.filterCampground != 'All') {
+                vm.$refs.bookings_table.vmDataTable.columns(0).search(vm.filterCampground).draw();
+            } else {
+                vm.$refs.bookings_table.vmDataTable.columns(0).search('').draw();
+            }
+        },
+        filterRegion: function() {
+            let vm = this;
+            if (vm.filterRegion != 'All') {
+                vm.$refs.bookings_table.vmDataTable.columns(1).search(vm.filterRegion).draw();
+            } else {
+                vm.$refs.bookings_table.vmDataTable.columns(1).search('').draw();
+            }
+        },
+        filterDateFrom: function() {
+            let vm = this;
+            if (vm.filterDateFrom) {
+                vm.$refs.bookings_table.vmDataTable.draw();
+            } else {
+                vm.$refs.bookings_table.vmDataTable.draw();
+            }
+        },
+        filterDateTo: function() {
+            let vm = this;
+            if (vm.filterDateTo) {
+                vm.$refs.bookings_table.vmDataTable.draw();
+            } else {
+                vm.$refs.bookings_table.vmDataTable.draw();
+            }
         }
     },
     computed:{
@@ -171,11 +208,31 @@ export default {
         },
         addEventListeners:function () {
             let vm =this;
-            //change event
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
                 vm.selected_booking = JSON.parse($(this).attr('data-change'));
                 vm.$refs.changebooking.isModalOpen = true;
             });
+
+            vm.dateToPicker.on('dp.change', function(e){
+                 vm.filterDateTo =  vm.dateToPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
+             });
+
+            vm.dateFromPicker.on('dp.change',function (e) {
+                vm.filterDateFrom = vm.dateFromPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
+            });
+            $.fn.dataTable.ext.search.push(
+                function( settings, data, dataIndex ) {
+                    if (vm.filterDateFrom && vm.filterDateTo) {
+                        var fromDate = new Date(data[6]);
+                        var fromFilterDate = new Date(vm.filterDateFrom);
+                        var toFilterDate = new Date(vm.filterDateTo);
+                        return (fromDate.getTime() >= fromFilterDate.getTime() && fromDate.getTime() < toFilterDate.getTime());
+                    }else{
+                        return true;
+                    }
+                    return false;
+                }
+            );
         }
     },
     mounted:function () {
