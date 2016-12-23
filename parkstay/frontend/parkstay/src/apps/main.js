@@ -116,7 +116,7 @@ const routes = [
                     {
                         path:'bulkpricing',
                         name:'bulkpricing',
-                        component:BulkPricing
+                        component:Bulkpricing
                     },
                 ]
             }
