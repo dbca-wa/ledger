@@ -51,11 +51,11 @@
           </div>
           <div class="row">
             <div class="col-lg-12">
-                <datatable id="bookings-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
+                <datatable ref="bookings_table" id="bookings-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
             </div>
           </div>
       </div>
-      <changebooking :campsites="[]" :campgrounds="campgrounds"/>
+      <changebooking ref="changebooking" :booking="selected_booking" :campgrounds="campgrounds"/>
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
 
@@ -78,7 +78,56 @@ export default {
         let vm =this;
         return {
             dtOptions:{
-
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                ajax: {
+                    "url": api_endpoints.bookings,
+                    "dataSrc": ''
+                },
+                columns:[
+                    {
+                        data:"campground.name"
+                    },
+                    {
+                        data:"campground.region"
+                    },
+                    {
+                        data:"legacy_name"
+                    },
+                    {
+                        data:"legacy_id"
+                    },
+                    {
+                        data:"campground.site_type"
+                    },
+                    {
+                        mRender: function(data, type, full) {
+                            var status = (data == true) ? "Open" : "Temporarily Closed";
+                            var column = "<td >__Status__</td>";
+                            return column.replace('__Status__', status);
+                        }
+                    },
+                    {
+                        data:"arrival"
+                    },
+                    {
+                        data:"departure"
+                    },
+                    {
+                        mRender: function(data, type, full) {
+                            var status = (data == true) ? "Open" : "Temporarily Closed";
+                            var booking = JSON.stringify(full);
+                            var column = "<td > \
+                                            <a href='#' class='text-primary' data-rec-payment='' > Record Payment</a><br/>\
+                                            <a href='#' class='text-primary' data-cancel= '' > Cancel</a><br/>\
+                                            <a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>\
+                                        </td>";
+                            return column.replace('__Status__', status);
+                        }
+                    },
+                ]
             },
             dtHeaders:["Campground","Region","Person","Confirmation #"," Campsite(Type)","Status","From","To","Action"],
             dateFromPicker:null,
@@ -90,7 +139,8 @@ export default {
             },
             loading:[],
             parks:[],
-            campgrounds:[]
+            campgrounds:[],
+            selected_booking:{}
         }
     },
     computed:{
@@ -118,6 +168,14 @@ export default {
             }, (response) => {
               vm.loading.splice('fetching parks',1);
             });
+        },
+        addEventListeners:function () {
+            let vm =this;
+            //change event
+            vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
+                vm.selected_booking = JSON.parse($(this).attr('data-change'));
+                vm.$refs.changebooking.isModalOpen = true;
+            });
         }
     },
     mounted:function () {
@@ -126,6 +184,7 @@ export default {
         vm.dateToPicker = $('#booking-date-to').datetimepicker(vm.datepickerOptions);
         vm.fetchCampgrounds();
         vm.fetchParks();
+        vm.addEventListeners();
     }
 
 }
