@@ -114,6 +114,11 @@ const routes = [
                             },
                         ]
                     },
+                    {
+                        path:'bulkpricing',
+                        name:'bulkpricing',
+                        component:Bulkpricing
+                    },
                 ]
             },
             {
