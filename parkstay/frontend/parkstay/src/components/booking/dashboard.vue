@@ -29,8 +29,8 @@
             </div>
             <div class="col-md-3">
                 <label for="">Date From</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" id="booking-date-from" placeholder="DD/MM/YYYY">
+                <div class="input-group date" id="booking-date-from">
+                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY">
                   <span class="input-group-addon">
                       <span class="glyphicon glyphicon-calendar"></span>
                   </span>
@@ -38,8 +38,8 @@
             </div>
             <div class="col-md-3">
                 <label for="">Date To</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" id="booking-date-to" placeholder="DD/MM/YYYY">
+                <div class="input-group date" id="booking-date-to">
+                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY">
                   <span class="input-group-addon">
                       <span class="glyphicon glyphicon-calendar"></span>
                   </span>
@@ -219,6 +219,7 @@ export default {
 
             vm.dateFromPicker.on('dp.change',function (e) {
                 vm.filterDateFrom = vm.dateFromPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
+                vm.dateToPicker.data("DateTimePicker").minDate(e.date);
             });
             $.fn.dataTable.ext.search.push(
                 function( settings, data, dataIndex ) {
