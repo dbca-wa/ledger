@@ -15,7 +15,7 @@
              <div class="panel-body">
                 <div class="col-lg-12">
                    <div class="row" >
-                       <form >
+                       <form name="campsiteForm">
                            <div class="panel panel-primary">
     							<div class="panel-heading">
     								<h3 class="panel-title">Campsite Details</h3>
@@ -37,7 +37,7 @@
     									<div v-show="showName" class="col-md-6">
     										<div class="form-group">
     											<label class="control-label" >Campsite Name</label>
-    											<input type="text" name="name" class="form-control"  v-model="campsite.name"required/>
+    											<input type="text" name="name" class="form-control"  v-model="campsite.name" required/>
     										</div>
     									</div>
     								</div>
@@ -45,13 +45,13 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="control-label" >Minimum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people" required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="control-label" >Maximum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people"required :disabled="selected_campsite_class_url() != ''"/>
+                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people" required :disabled="selected_campsite_class_url() != ''"/>
                                             </div>
                                         </div>
                                     </div>
@@ -104,7 +104,7 @@
                                               <div class="col-sm-6 pull-right">
                                                   <div class="pull-right">
                                                       <button type="button" v-show="!createCampsite" style="margin-right:5px" @click="updateCampsite" class="btn btn-primary">Update</button>
-                                                      <button type="button" class="btn btn-default pull-right" @click="goBack">Cancel</button>
+                                                      <button type="button" class="btn btn-default pull-right" @click="goBack">Back</button>
                                                   </div>
 
                                               </div>
@@ -285,6 +285,33 @@ export default {
         onCampsiteClassChange:function () {
             let vm =this;
             if (vm.campsite_classes.length > 0){
+                if(vm.selected_campsite_class_url()) {
+                    vm.$refs.descriptionEditor.disabled(true);
+                    vm.$refs.select_features.enabled(false);
+                    var sel_class = vm.campsite_classes.find(function (el) {
+                        return el.url == vm.campsite.campsite_class;
+                    });
+
+                    if (sel_class) {
+                        vm.campsite.tent = sel_class.tent;
+                        vm.campsite.caravan= sel_class.caravan;
+                        vm.campsite.campervan= sel_class.campervan;
+                        vm.campsite.max_people = sel_class.max_people;
+                        vm.campsite.min_people= sel_class.min_people;
+                        vm.campsite.description = sel_class.description;
+                        vm.$refs.descriptionEditor.updateContent(vm.campsite.description);
+                        vm.features = JSON.parse(JSON.stringify(vm.default_features));
+                        vm.selected_features.splice(0,vm.selected_features.length);
+                        vm.$refs.select_features.loadSelectedFeatures(sel_class.features);
+                    }
+
+                } else {
+                    vm.$refs.descriptionEditor.disabled(false);
+                    vm.$refs.select_features.enabled(true);
+                }
+
+                /*
+                
                 if(vm.selected_campsite_class_url()){
                     vm.$refs.descriptionEditor.disabled(true);
                     vm.$refs.select_features.enabled(false);
@@ -316,7 +343,7 @@ export default {
                         vm.$refs.descriptionEditor.disabled(false);
                         vm.$refs.select_features.enabled(true);
                     }
-                }
+                }*/
             }
         },
         showCloseCS: function() {
@@ -349,10 +376,9 @@ export default {
                 success: function(data, stat, xhr) {
                     var interval = setInterval(function(){
                         if (vm.campsite_classes.length > 0){
-                            data.campsite_class = (data.campsite_class != null || data.campsite_class.trim().length>0) ? "//"+ data.campsite_class.split('://')[1] : '';
                             vm.temp_campsite = data;
                             vm.campsite = JSON.parse(JSON.stringify(data));
-                            if (data.campsite_class.length>0) {
+                            if (data.campsite_class) {
                                 vm.onCampsiteClassChange();
                             }
                             vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
@@ -380,9 +406,6 @@ export default {
         fetchCampsiteClasses: function() {
             let vm = this;
             $.get(api_endpoints.campsite_classes_active, function(data) {
-                $.each(data,function(i,el){
-                    el.url = "//"+ el.url.split('://')[1];
-                });
                 vm.campsite_classes = data;
             })
         },
@@ -399,14 +422,6 @@ export default {
             let vm = this;
             vm.isLoading = true;
             var data = vm.campsite;
-            if (vm.selected_campsite_class_url() == ''){
-                data.cs_tent = data.tent;
-                data.cs_caravan = data.caravan;
-                data.cs_campervan = data.campervan;
-                data.cs_description = data.description;
-                data.cs_min_people = data.min_people;
-                data.cs_max_people = data.max_people;
-            }
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
@@ -420,24 +435,27 @@ export default {
                 data: JSON.stringify(data),
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data) {
-
-                    data.campsite_class = (data.campsite_class != null || data.campsite_class.trim().length>0) ? "//"+ data.campsite_class.split('://')[1] : '';
+                    if (Array.isArray(data)) {
+                        data = data[data.length-1];
+                    }
                     vm.temp_campsite = data;
                     vm.campsite = JSON.parse(JSON.stringify(data));
-                    if (data.campsite_class.length>0) {
+                    if (data.campsite_class) {
                         vm.onCampsiteClassChange();
                     }
                     setTimeout(function () {
                         vm.isLoading = false;
                     },500);
-
                 }
-            })
+            });
+
+
         }
     },
     mounted: function() {
         let vm = this;
         vm.loadFeatures();
+        vm.form = document.forms.campsiteForm;
         vm.fetchCampsiteClasses();
         vm.fetchCampground();
         if (vm.$route.params.campsite_id) {

@@ -256,20 +256,16 @@ class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
             serializer = CampgroundCampsiteFilterSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             print(serializer.validated_data)
-            sites = Campsite.objects.prefetch_related('campsitebooking').exclude(
+            sites = Campsite.objects.prefetch_related('campsite_class').exclude(
                 campsitebooking__date__range=(
                     serializer.validated_data['arrival'],
                     serializer.validated_data['departure']-timedelta(days=1)
                 )
             )
-            queryset = Campground.objects.filter(id__in=sites.values('campground'))
         else:
-            queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            sites = Campsite.objects.prefetch_related('campsite_class')
+        site_ids = [s.campground.id for s in sites if s.caravan]
+        queryset = Campground.objects.filter(id__in=site_ids)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
