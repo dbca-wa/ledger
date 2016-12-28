@@ -58,25 +58,42 @@
       <changebooking ref="changebooking" :booking="selected_booking" :campgrounds="campgrounds"/>
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
-
+   <confirmbox id="cancelBooking" :options="cancelBookingOptions"></confirmbox>
 </div>
 </template>
 
 <script>
-import {$,datetimepicker,api_endpoints} from "../../hooks.js"
+import {$,bus,datetimepicker,api_endpoints} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
+import confirmbox from '../utils/confirmbox.vue'
 import changebooking from "./changebooking.vue"
 export default {
     name:'booking-dashboard',
     components:{
         datatable,
         loader,
-        changebooking
+        changebooking,
+        confirmbox
     },
     data:function () {
         let vm =this;
         return {
+            cancelBookingOptions: {
+                icon: "<i class='fa fa-exclamation-triangle fa-2x text-warning' aria-hidden='true'></i>",
+                message: "Are you sure you want to cancel this booking ?",
+                buttons: [{
+                    text: "Cancel",
+                    event: "cbevent",
+                    bsColor: "btn-warning",
+                    handler: function() {
+                        vm.cancelBooking(vm.selected_booking);
+                        vm.selected_booking = {};
+                    },
+                    autoclose: true
+                }],
+                id: 'cancelBooking'
+            },
             dtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -121,7 +138,7 @@ export default {
                             var booking = JSON.stringify(full);
                             var column = "<td > \
                                             <a href='#' class='text-primary' data-rec-payment='' > Record Payment</a><br/>\
-                                            <a href='#' class='text-primary' data-cancel= '' > Cancel</a><br/>\
+                                            <a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>\
                                             <a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>\
                                         </td>";
                             return column.replace('__Status__', status);
@@ -206,6 +223,10 @@ export default {
               vm.loading.splice('fetching parks',1);
             });
         },
+        cancelBooking:function (booking) {
+            //TODO cancelbooking logic
+            console.log('cancelling booking');
+        },
         addEventListeners:function () {
             let vm =this;
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
@@ -213,6 +234,10 @@ export default {
                 vm.$refs.changebooking.isModalOpen = true;
             });
 
+            vm.$refs.bookings_table.vmDataTable.on('click','a[data-cancel]',function (e) {
+                vm.selected_booking = JSON.parse($(this).attr('data-cancel'));
+                bus.$emit('showAlert', 'cancelBooking');
+            });
             vm.dateToPicker.on('dp.change', function(e){
                  vm.filterDateTo =  vm.dateToPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
              });
@@ -249,4 +274,7 @@ export default {
 </script>
 
 <style lang="css">
+    .text-warning{
+        color:#f0ad4e;
+    }
 </style>
