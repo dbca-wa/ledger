@@ -250,22 +250,25 @@ class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
             "num_adult" : request.GET.get('num_adult', 0),
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
-            "num_infant" : request.GET.get('num_infant', 0)
+            "num_infant" : request.GET.get('num_infant', 0),
+            "gear_type": request.GET.get('gear_type', 'tent')
         }
-        if data['arrival'] and data['departure'] and (data['arrival'] < data['departure']):
-            serializer = CampgroundCampsiteFilterSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            print(serializer.validated_data)
-            sites = Campsite.objects.prefetch_related('campsite_class').exclude(
+
+        serializer = CampgroundCampsiteFilterSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        scrubbed = serializer.validated_data
+        if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
+            sites = Campsite.objects.exclude(
                 campsitebooking__date__range=(
-                    serializer.validated_data['arrival'],
-                    serializer.validated_data['departure']-timedelta(days=1)
+                    scrubbed['arrival'],
+                    scrubbed['departure']-timedelta(days=1)
                 )
-            )
+            ).filter(**{scrubbed['gear_type']: True})
+            site_ids = set([s.campground.id for s in sites])
+            queryset = Campground.objects.filter(id__in=site_ids).order_by('name')
         else:
-            sites = Campsite.objects.prefetch_related('campsite_class')
-        site_ids = [s.campground.id for s in sites if s.caravan]
-        queryset = Campground.objects.filter(id__in=site_ids)
+            # include all campgrounds, even the ones without any campsites!
+            queryset = Campground.objects.all().order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
