@@ -20,16 +20,16 @@
                                             <div class="form-group">
                                                 <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
                                                 <div class="col-md-4">
-                                                    <div class="input-group">
-                                                        <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY" v-model="booking.arrival" >
+                                                    <div class="input-group date" id="dateArrival">
+                                                        <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="booking.arrival" >
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <div class="input-group">
-                                                        <input type="text" class="form-control" name="depature" placeholder="DD/MM/YYYY" v-model="booking.depature">
+                                                    <div class="input-group date" id="dateDepature">
+                                                        <input type="text" class="form-control" name="depature" placeholder="Depature" v-model="booking.depature">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -65,6 +65,7 @@
                                         <label for="Campsite">Campsite</label>
                                         <select class="form-control" name="campsite" v-model="booking.campsite">
                                             <option value=""></option>
+                                            <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}}</option>
                                         </select>
                                       </div>
                                   </div>
@@ -150,7 +151,7 @@
                                 <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.Park entry fee(where applicable) not included.)</span></label>
                                 <div class="input-group">
                                   <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
-                                  <input type="text" class="form-control" :placeholder="0.00|formatMoney(2,'.',',')" :value="booking.price|formatMoney(2,'.',',')">
+                                  <input type="text" class="form-control" :placeholder="0.00|formatMoney(2)" :value="booking.price|formatMoney(2)">
                                 </div>
                               </div>
                           </div>
@@ -185,6 +186,7 @@ export default {
                 arrival:"",
                 depature:"",
                 guests:"",
+                campground:120,
                 campsite:"",
                 email:"",
                 firstname:"",
@@ -193,8 +195,9 @@ export default {
                 country:"",
                 phone:"",
                 vehicle:"",
-                price:"12.00"
-            }
+                price:12
+            },
+            campsites:[]
         };
     },
     filters:{
@@ -236,12 +239,21 @@ export default {
             },(response)=>{
                 console.log(response);
             });
+        },
+        fetchCampsites:function () {
+            let vm = this;
+            vm.$http.get(api_endpoints.campgroundCampsites(vm.booking.campground)).then((response)=>{
+                vm.campsites = response.body;
+            },(response)=>{
+                console.log(response);
+            });
         }
     },
     mounted:function () {
         let vm = this;
         vm.bookingForm = document.forms.bookingForm;
         vm.fetchCountries();
+        vm.fetchCampsites();
 
     }
 }
