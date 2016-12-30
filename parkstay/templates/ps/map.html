@@ -546,11 +546,29 @@ var pf = new Vue({
             featureProjection: 'EPSG:3857'   
         });
 
-        this.groundsSource = new ol.source.Vector();
+        this.groundsData = new ol.Collection();
+        this.groundsFilter = new ol.Collection();
+        $.ajax({
+            url: '/api/campground_map/?format=json',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+                var features = vm.geojson.readFeatures(response);
+                vm.groundsData.clear();
+                vm.groundsData.extend(features);
+                vm.groundsSource.loadSource();
+            }
+        });
+
+        this.groundsSource = new ol.source.Vector({
+            features: vm.groundsFilter   
+        });
+        
         this.groundsSource.loadSource = function (onSuccess) {
-            var urlBase = '/api/campground_map/?';
+            var urlBase = '/api/campground_map_filter/?';
             var params = {format: 'json'};
+            var isCustom = false;
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
+                isCustom = true;
                 var arrival = vm.arrivalDateString;
                 if (arrival) {
                     params.arrival = arrival;
@@ -568,14 +586,17 @@ var pf = new Vue({
             $.ajax({
                 url: urlBase+$.param(params),
                 success: function (response, stat, xhr) {
-                    var features = vm.geojson.readFeatures(response);
-                    console.log(features);
-                    vm.groundsSource.clear();
-                    vm.groundsSource.addFeatures(features);
-                    vm.groundsSource.dispatchEvent('loadSource');
-                    if (onSuccess) {
-                        onSuccess();
-                    }
+                    var ids = new Set();
+                    response.forEach(function(el) {
+                        ids.add(el.id);
+                    });
+                    vm.groundsFilter.clear();
+                    vm.groundsData.forEach(function (el) {
+                        if (ids.has(el.id_)) {
+                            vm.groundsFilter.push(el);
+                        }
+                    });
+
                 },
                 dataType: 'json'
             });

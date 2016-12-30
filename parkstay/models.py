@@ -438,7 +438,7 @@ class Campsite(models.Model):
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT, null=True,blank=True, related_name='campsites')
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     features = models.ManyToManyField('Feature')
-    tent = models.BooleanField(default=False)
+    tent = models.BooleanField(default=True)
     campervan = models.BooleanField(default=False)
     caravan = models.BooleanField(default=False)
     min_people = models.SmallIntegerField(default=1)
@@ -643,7 +643,7 @@ class CampsiteClass(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     camp_unit_suitability = TaggableManager()
-    tent = models.BooleanField(default=False)
+    tent = models.BooleanField(default=True)
     campervan = models.BooleanField(default=False)
     caravan = models.BooleanField(default=False)
     min_people = models.SmallIntegerField(default=1)

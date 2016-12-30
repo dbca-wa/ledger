@@ -146,6 +146,11 @@ class CampgroundMapParkSerializer(serializers.HyperlinkedModelSerializer):
         model = Park
         fields = ('id','name', 'entry_fee_required', 'district')
 
+class CampgroundMapFilterSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Campground
+        fields = ('id',)
+
 class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
     features = CampgroundMapFeatureSerializer(read_only=True, many=True)
     park = CampgroundMapParkSerializer(read_only=True)

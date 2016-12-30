@@ -10,6 +10,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'campground_map', api.CampgroundMapViewSet)
+router.register(r'campground_map_filter', api.CampgroundMapFilterViewSet)
 router.register(r'campgrounds', api.CampgroundViewSet)
 router.register(r'campsites', api.CampsiteViewSet)
 router.register(r'campsite_bookings', api.CampsiteBookingViewSet)

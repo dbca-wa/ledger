@@ -38,6 +38,7 @@ from parkstay.models import (Campground,
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
                                     CampgroundMapSerializer,
+                                    CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
                                     CampgroundCampsiteFilterSerializer,
                                     PromoAreaSerializer,
@@ -235,10 +236,16 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
 
 
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Campground.objects.all()
+    serializer_class = CampgroundMapSerializer
+    permission_classes = []
+
+
+class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
     # TODO: add exclude for unpublished campground objects
     #queryset = Campground.objects.exclude(campground_type=1)
     queryset = Campground.objects.all()
-    serializer_class = CampgroundMapSerializer
+    serializer_class = CampgroundMapFilterSerializer
     permission_classes = []
    
 
