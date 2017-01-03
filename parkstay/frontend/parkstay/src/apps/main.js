@@ -129,7 +129,7 @@ const routes = [
                                 component: bookingDashboard,
                             },
                             {
-                                path: 'add',
+                                path: 'add/:cg',
                                 name: 'add-booking',
                                 component: addBooking,
                             },
