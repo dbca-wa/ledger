@@ -38,8 +38,28 @@
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-2 control-label pull-left"  for="Campground">Guests: </label>
-                                                <div class="col-md-4">
-                                                    <input type="text" name="guests" class="form-control" placeholder="Guests" v-model="booking.guests">
+                                                <div class="col-md-8">
+                                                      <div class="dropdown guests">
+                                                          <input type="text" class="form-control dropdown-toggle" name="guests" placeholder="Guest" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" v-model="guestsText">
+                                                          <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                                                              <li v-for="guest in guestsPicker">
+                                                                  <div class="row">
+                                                                      <div class="col-sm-8">
+                                                                          <span class="item">
+                                                                              {{guest.amount}} {{guest.name}} <span style="color:#888;font-weight:300;font-size:12px;">{{guest.description}}</span>
+                                                                          </span>
+                                                                          <br/><a href="#" class="text-info" v-show="guest.helpText">{{guest.helpText}}</a>
+                                                                      </div>
+                                                                      <div class="pull-right">
+                                                                          <div class="btn-group btn-group-sm">
+                                                                            <button type="button" class="btn btn-guest" @click.prevent.stop="addGuestCount(guest)"><span class="glyphicon glyphicon-plus"></span></button>
+                                                                            <button type="button" class="btn btn-guest" @click.prevent.stop="removeGuestCount(guest)"><span class="glyphicon glyphicon-minus"></span></button>
+                                                                          </div>
+                                                                      </div>
+                                                                  </div>
+                                                              </li>
+                                                          </ul>
+                                                      </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -195,10 +215,48 @@ export default {
                 country:"",
                 phone:"",
                 vehicle:"",
-                price:12
+                price:"12"
             },
-            campsites:[]
+            campsites:[],
+            loading:[],
+            campground:{},
+            guestsText:"",
+            guestsPicker:[
+                {
+                    id:"adults",
+                    name:"Adults (no concession)",
+                    amount:0,
+                    description: ""
+                },
+                {
+                    id:"concession",
+                    name:"Concession",
+                    amount:0,
+                    description: "",
+                    helpText:"accepted concession cards"
+                },
+                {
+                    id:"children",
+                    name:"Children",
+                    amount:0,
+                    description: "Ages 6-16"
+                },
+                {
+                    id:"infants",
+                    name:"Infants",
+                    amount:0,
+                    description: "Ages 0-5"
+                },
+            ]
         };
+    },
+    components:{
+        loader
+    },
+    computed:{
+        isLoading:function () {
+            return this.loading.length > 0;
+        }
     },
     filters:{
         formatMoney:function(n,c, d, t){
