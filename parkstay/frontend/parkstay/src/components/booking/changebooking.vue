@@ -8,7 +8,7 @@
                             <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
                             <div class="col-md-4">
                                 <div class="input-group">
-                                    <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY">
+                                    <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY" v-model="booking.arrival">
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar"></span>
                                     </span>
@@ -16,7 +16,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="input-group">
-                                    <input type="text" class="form-control" name="depature" placeholder="DD/MM/YYYY">
+                                    <input type="text" class="form-control" name="departure" placeholder="DD/MM/YYYY" v-model="booking.departure">
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar"></span>
                                     </span>
@@ -35,7 +35,7 @@
                         <div class="form-group" v-show="selectedCampground">
                             <label class="col-md-2 control-label pull-left"  for="Campsite">Campsite: </label>
                             <div class="col-md-4">
-                                <select class="form-control" name="campsite"  >
+                                <select class="form-control" name="campsite" v-model="booking.campsite" >
                                     <option value="">Select Campsite</option>
                                     <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}}</option>
                                 </select>
@@ -75,7 +75,7 @@ export default {
     data:function () {
         let vm = this;
         return {
-            isModalOpen:true,
+            isModalOpen:false,
             selectedCampground:"",
             campsites:[],
             form:null
@@ -112,7 +112,7 @@ export default {
             $(vm.form).validate({
                 rules: {
                     arrival:"required",
-                    depature:"required",
+                    departure:"required",
                     campground:"required",
                     campsite:{
                         required: {
@@ -124,7 +124,7 @@ export default {
                 },
                 messages: {
                     arrival:"field is required",
-                    depature:"field is required",
+                    departure:"field is required",
                     campground:"field is required",
                     campsite:"field is required"
                 },
@@ -161,8 +161,20 @@ export default {
            format: 'DD/MM/YYYY',
            showClear:true
        };
-       $(vm.form.arrival).datetimepicker(datepickerOptions);
-       $(vm.form.depature).datetimepicker(datepickerOptions);
+       var arrival = $(vm.form.arrival);
+       var departure = $(vm.form.departure);
+
+       arrival.datetimepicker(datepickerOptions);
+       departure.datetimepicker(datepickerOptions);
+
+       arrival.on('dp.change', function(e){
+           vm.booking.arrival = arrival.data('DateTimePicker').date().format('YYYY-MM-DD');
+           departure.data("DateTimePicker").minDate(e.date);
+       });
+
+      departure.on('dp.change', function(e){
+           vm.booking.departure =  departure.data('DateTimePicker').date().format('YYYY-MM-DD');
+       });
    }
 }
 </script>
