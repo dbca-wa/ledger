@@ -248,10 +248,10 @@ input:checked + .symb {
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:blur="reload()"/></label>
+                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:blur="reload()"/></label>
+                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label>
@@ -289,25 +289,25 @@ input:checked + .symb {
                     <hr/>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" class="show-for-sr" checked v-on:blur="reload()"/><i class="symb RC2"></i> Tent</label>
+                        <label><input type="radio" name="gear_type" value="tent" class="show-for-sr" checked v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="campervan" class="show-for-sr" v-on:blur="reload()"/><i class="symb RV10"></i> Campervan</label>
+                        <label><input type="radio" name="gear_type" value="campervan" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="caravan" class="show-for-sr" v-on:blur="reload()"/><i class="symb RC4"></i> Caravan</label>
+                        <label><input type="radio" name="gear_type" value="caravan" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
                     </div>
                 </div><div class="row">
                     <hr class="search"/>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RV2"></i> 2WD accessible</label>
+                        <label><input type="checkbox" class="show-for-sr" value="filt_twowheel" v-model="filterParams.twowheel"/> <i class="symb RV2"></i> 2WD accessible</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF8G"></i> BBQ</label>
+                        <label><input type="checkbox" class="show-for-sr" value="filt_bbq" v-model="filterParams.bbq"/> <i class="symb RF8G"></i> BBQ</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF10"></i> Campfires allowed</label>
+                        <label><input type="checkbox" class="show-for-sr" value="filt_campfire" v-model="filterParams.campfire"/> <i class="symb RF10"></i> Campfires allowed</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF17"></i> Dish washing</label>
@@ -394,7 +394,9 @@ var pf = new Vue({
         numAdults: 1,
         numConcessions: 0,
         numChildren: 0,
-        numInfants: 0
+        numInfants: 0,
+        filterParams: {
+        }
     },
     computed: {
         extent: {
@@ -450,7 +452,16 @@ var pf = new Vue({
         },
         reload: debounce(function () {
             this.groundsSource.loadSource();
-        }, 250)
+        }, 250),
+        updateFilter: function() {
+            var vm = this;
+            this.groundsFilter.clear();
+            this.groundsData.forEach(function (el) {
+                if (vm.groundsIds.has(el.id_)) {
+                    vm.groundsFilter.push(el);
+                }
+            });
+        }
     },
     mounted: function () {
         var vm = this;
@@ -480,9 +491,10 @@ var pf = new Vue({
                 vm.departureData.date = newDate;
                 vm.departureData.setValue();
                 vm.departureData.fill();
-                this.departureEl.trigger('changeDate');
+                vm.departureEl.trigger('changeDate');
             }
             vm.arrivalData.hide();
+            vm.reload();
         }).data('datepicker');
 
         this.departureData = this.departureEl.fdatepicker({
@@ -493,6 +505,7 @@ var pf = new Vue({
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
             vm.departureData.hide();
+            vm.reload();
         }).data('datepicker');
 
 
@@ -547,6 +560,7 @@ var pf = new Vue({
         });
 
         this.groundsData = new ol.Collection();
+        this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
         $.ajax({
             url: '/api/campground_map/?format=json',
@@ -586,17 +600,11 @@ var pf = new Vue({
             $.ajax({
                 url: urlBase+$.param(params),
                 success: function (response, stat, xhr) {
-                    var ids = new Set();
+                    vm.groundsIds.clear();
                     response.forEach(function(el) {
-                        ids.add(el.id);
+                        vm.groundsIds.add(el.id);
                     });
-                    vm.groundsFilter.clear();
-                    vm.groundsData.forEach(function (el) {
-                        if (ids.has(el.id_)) {
-                            vm.groundsFilter.push(el);
-                        }
-                    });
-
+                    vm.updateFilter();
                 },
                 dataType: 'json'
             });
