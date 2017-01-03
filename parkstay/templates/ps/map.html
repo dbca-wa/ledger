@@ -8,8 +8,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- Force fit-to-viewport sizing on mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.4/foundation.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.19.1/ol-debug.css" />
+    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.css" />
+    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.css" />
+    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/css/foundation-datepicker.css" />
     <style type="text/css">
 
 @font-face {
@@ -33,78 +34,95 @@
 }
 
 .symb.RC2:before {
-    content: "a"
+    content: "a";
 }
 
 .symb.RC4:before {
-    content: "b"
+    content: "b";
 }
 
 .symb.RV10:before {
-    content: "c"
+    content: "c";
 }
 
 .symb.RG2:before {
-    content: "d"
+    content: "d";
 }
 
 .symb.RG15:before {
-    content: "e"
+    content: "e";
 }
 
 .symb.RV2:before {
-    content: "f"
+    content: "f";
 }
 
 .symb.RF10:before {
-    content: "g"
+    content: "g";
 }
 
 .symb.RF13:before {
-    content: "h"
+    content: "h";
 }
 
 .symb.RF15:before {
-    content: "i"
+    content: "i";
 }
 
 .symb.RF17:before {
-    content: "j"
+    content: "j";
 }
 
 .symb.RF1:before {
-    content: "k"
+    content: "k";
 }
 
 .symb.RF6:before {
-    content: "l"
+    content: "l";
 }
 
 .symb.RF7:before {
-    content: "m"
+    content: "m";
 }
 
 .symb.RF19:before {
-    content: "n"
+    content: "n";
 }
 
 .symb.RF8G:before {
-    content: "o"
+    content: "o";
 }
 
 .symb.RC1:before {
-    content: "p"
+    content: "p";
 }
 
 .symb.RC3:before {
-    content: "q"
+    content: "q";
 }
+
+.fa-chevron-left:before {
+    font-style: normal;
+    content: "«";
+}
+
+.fa-chevron-right:before {
+    font-style: normal;    
+    content: "»";
+}
+
+.fa-remove:before {
+    font-style: normal;    
+    content: "×";
+}
+
 
 
 #map {
     height: 75vh;
 }
 
+/* set on the #map element when mousing over a feature */
 .click {
     cursor: pointer;
 }
@@ -116,6 +134,11 @@ input + .symb {
 
 input:checked + .symb {
     color: #2199e8;
+}
+
+.button.formButton {
+    display: block;
+    width: 100%;
 }
 
 .button.selector {
@@ -217,7 +240,7 @@ input:checked + .symb {
 <body>
     <div id="parkfinder">
         <div class="row">
-            <form><div class="small-12 medium-3 large-6 columns search-params">
+            <form name="parkFinderForm"><div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
                     <div class="input-group small-12 columns">
                         <input class="input-group-field" type="text"/>
@@ -225,66 +248,65 @@ input:checked + .symb {
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Arrival <input type="text"/></label>
+                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Departure <input type="text"/></label>
+                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Guests <input type="text"/></label>
+                        <label>
+                            Guests <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
+                        </label>
+                        <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
+                            <div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_adults" class="text-right">Adults<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_concessions" class="text-right">Concessions<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_children" class="text-right">Children (ages 6-15)<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_infants" class="text-right">Infants (ages 0-5)<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numInfants" name="num_infants" v-model="numInfants" min="0" max="16"/></label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div><div class="row">
                     <hr/>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="campingGear" class="show-for-sr" checked/><i class="symb RC2"></i> Tent</label>
+                        <label><input type="radio" name="gear_type" value="tent" class="show-for-sr" checked v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="campingGear" class="show-for-sr"/><i class="symb RV10"></i> Campervan</label>
+                        <label><input type="radio" name="gear_type" value="campervan" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="campingGear" class="show-for-sr"/><i class="symb RC4"></i> Caravan</label>
+                        <label><input type="radio" name="gear_type" value="caravan" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
                     </div>
                 </div><div class="row">
                     <hr class="search"/>
                 </div><div class="row">
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RV2"></i> 2WD accessible</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF8G"></i> BBQ</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF10"></i> Campfires allowed</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF17"></i> Dish washing</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RG2"></i> Dogs allowed</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RG15"></i> Generators allowed</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF13"></i> Mains water</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF6"></i> Picnic tables</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF19"></i> Portable toilet disposal</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF7"></i> Sheltered picnic tables</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF15"></i> Shower</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF1"></i> Toilets</label>
-                    </div>
-
+{% verbatim %}
+                    <template v-for="filt in filterList">
+                        <div class="small-12 medium-12 large-4 columns">
+                            <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
+                        </div>
+                    </template>
+{% endverbatim %}
                 </div>
             </div></form>
             <div class="small-12 medium-9 large-6 columns">
@@ -300,10 +322,12 @@ input:checked + .symb {
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.4/vue.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.4/foundation.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.19.1/ol-debug.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/vue/2.1.6/vue.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.min.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/js/foundation-datepicker.min.js"></script>
     <script>
 
 
@@ -336,7 +360,27 @@ var pf = new Vue({
             ['dpaw:mapbox_outdoors', {}],
             ['cddp:dpaw_tenure', {}],
         ],
-        extentFeatures: []
+        filterList: [
+            {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
+            {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
+            {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
+            {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
+            {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']},
+            {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
+            {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
+            {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
+            {name: 'Portable toilet disposal', symb: 'RF19', key: 'sullage', 'remoteKey': []},
+            {name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
+            {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
+            {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
+        ],
+        extentFeatures: [],
+        numAdults: 1,
+        numConcessions: 0,
+        numChildren: 0,
+        numInfants: 0,
+        filterParams: {
+        }
     },
     computed: {
         extent: {
@@ -345,6 +389,29 @@ var pf = new Vue({
                 return this.olmap.getView().calculateExtent(this.olmap.getSize());
             }
         },
+        arrivalDateString: {
+            cache: false,
+            get: function() {
+                return this.arrivalEl[0].value ? moment(this.arrivalData.getDate()).format('YYYY/MM/DD') : null; 
+            }
+        },
+        departureDateString: {
+            cache: false,
+            get: function() {
+                return this.departureEl[0].value ? moment(this.departureData.getDate()).format('YYYY/MM/DD') : null; 
+            }
+        },
+        numPeople: {
+            cache: false,
+            get: function() {
+                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
+                if (count === 1) {
+                    return count +" person";
+                } else {
+                    return count + " people";
+                }
+            }
+        }
     },
     methods: {
         groundFilter: function(feature) {
@@ -366,12 +433,92 @@ var pf = new Vue({
                 }
                 vm._updateViewport();
             }
+        },
+        reload: debounce(function () {
+            this.groundsSource.loadSource();
+        }, 250),
+        updateFilter: function() {
+            var vm = this;
+            // make a lookup table of campground features to filter on
+            var legit = new Set();
+            this.filterList.forEach(function (el) {
+                if (vm.filterParams[el.key] === true) {
+                    el.remoteKey.forEach(function (fl) {
+                        legit.add(fl);
+                    });
+                }
+            });
+            console.log('filter all the things');
+            console.log(legit);
+
+            this.groundsFilter.clear();
+            this.groundsData.forEach(function (el) {
+                // first pass filter against the list of IDs returned by search
+                if (vm.groundsIds.has(el.id_)) {
+                    if (legit.size) { // if we have a feature filter list
+                        // check that all parameters are present
+                        var feats = new Set(el.get('features').map(function(x) {
+                            return x.name;
+                        }));
+                        for (var x of legit) {
+                            if (!feats.has(x)) {
+                                return;     // missing a feature!
+                            }
+                        }
+                        vm.groundsFilter.push(el);
+
+                    } else {  // no features, return all results
+                        vm.groundsFilter.push(el);
+                    }
+                }
+            });
         }
     },
     mounted: function () {
         var vm = this;
         $(document).foundation();
         console.log('Loading map...');
+
+        vm.form = document.forms.parkFinderForm;
+
+        // enable arrival/departure date pickers
+        var nowTemp = new Date();
+        var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+
+        this.arrivalEl = $('#dateArrival');
+        this.departureEl = $('#dateDeparture');
+
+        this.arrivalData = this.arrivalEl.fdatepicker({
+            format: 'dd/mm/yyyy',
+            onRender: function (date) {
+                // disallow start dates before today
+                //return date.valueOf() < now.valueOf() ? 'disabled': '';
+                return '';
+            }
+        }).on('changeDate', function (ev) {
+            console.log('arrivalEl changeDate');
+            if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
+                var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
+                vm.departureData.date = newDate;
+                vm.departureData.setValue();
+                vm.departureData.fill();
+                vm.departureEl.trigger('changeDate');
+            }
+            vm.arrivalData.hide();
+            vm.reload();
+        }).data('datepicker');
+
+        this.departureData = this.departureEl.fdatepicker({
+            format: 'dd/mm/yyyy',
+            onRender: function (date) {
+                return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
+            }
+        }).on('changeDate', function (ev) {
+            console.log('departureEl changeDate');
+            vm.departureData.hide();
+            vm.reload();
+        }).data('datepicker');
+
 
         // generate WMTS tile grid
         var projection = ol.proj.get('EPSG:3857');
@@ -414,11 +561,65 @@ var pf = new Vue({
             })
         });
 
-        this.groundsSource = new ol.source.Vector({
-            url: '/api/campground_map/?format=json',
-            format: new ol.format.GeoJSON()
+        //this.groundsSource = new ol.source.Vector({
+        //    url: '/api/campground_map/?format=json',
+        //    format: new ol.format.GeoJSON()
+        //});
+
+        this.geojson = new ol.format.GeoJSON({
+            featureProjection: 'EPSG:3857'   
         });
 
+        this.groundsData = new ol.Collection();
+        this.groundsIds = new Set();
+        this.groundsFilter = new ol.Collection();
+        $.ajax({
+            url: '/api/campground_map/?format=json',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+                var features = vm.geojson.readFeatures(response);
+                vm.groundsData.clear();
+                vm.groundsData.extend(features);
+                vm.groundsSource.loadSource();
+            }
+        });
+
+        this.groundsSource = new ol.source.Vector({
+            features: vm.groundsFilter   
+        });
+        
+        this.groundsSource.loadSource = function (onSuccess) {
+            var urlBase = '/api/campground_map_filter/?';
+            var params = {format: 'json'};
+            var isCustom = false;
+            if ((vm.arrivalData.date) && (vm.departureData.date)) {
+                isCustom = true;
+                var arrival = vm.arrivalDateString;
+                if (arrival) {
+                    params.arrival = arrival;
+                }
+                var departure = vm.departureDateString;
+                if (departure) {
+                    params.departure = vm.departureDateString;
+                }
+                params.num_adult = vm.numAdults;
+                params.num_concessions = vm.numConcessions;
+                params.num_children = vm.numChildren;
+                params.num_infants = vm.numInfants;
+                params.gear_type = vm.form.gear_type.value;
+            }
+            $.ajax({
+                url: urlBase+$.param(params),
+                success: function (response, stat, xhr) {
+                    vm.groundsIds.clear();
+                    response.forEach(function(el) {
+                        vm.groundsIds.add(el.id);
+                    });
+                    vm.updateFilter();
+                },
+                dataType: 'json'
+            });
+        };
 
 
         this.grounds = new ol.layer.Vector({
@@ -529,6 +730,8 @@ var pf = new Vue({
         this.olmap.getView().on('propertychange', function(ev) {
             vm.updateViewport();
         });
+
+        this.reload();
     }
 });
 
