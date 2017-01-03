@@ -1,17 +1,17 @@
 <template lang="html">
     <div id="addBooking">
-        <form name="bookingForm">
+        <form v-show="!isLoading" name="bookingForm">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="well">
                         <div class="row">
                             <div class="col-md-12">
-                                <h3 class="text-primary">Nanga Brook</h3>
+                                <h3 class="text-primary">{{campground.name}}</h3>
                             </div>
                             <div class="col-md-4">
                                   <img src="http://placehold.it/200x150" class="img-thumbnail img-responsive">
                                   <p class="pricing">
-                                      <strong>$10.00</strong> <span class="text-muted">per/night</span>
+                                      <strong>${{booking.price|formatMoney(2)}}</strong> <span class="text-muted">per/night</span>
                                   </p>
                             </div>
                             <div class="col-md-8">
@@ -190,23 +190,31 @@
                 </div>
             </div>
         </form>
+        <loader :isLoading="isLoading" >{{loading.join(' , ')}}...</loader>
     </div>
 
 </template>
 
 <script>
 import {$,awesomplete,api_endpoints} from "../../hooks.js";
+import loader from '../utils/loader.vue';
 export default {
     name:"addBooking",
     data:function () {
+        let vm =this;
         return{
             bookingForm:null,
             countries:[],
             booking:{
                 arrival:"",
                 depature:"",
-                guests:"",
-                campground:120,
+                guests:{
+                    adults:0,
+                    concession:0,
+                    children:0,
+                    infants:0
+                },
+                campground:"",
                 campsite:"",
                 email:"",
                 firstname:"",
@@ -272,6 +280,7 @@ export default {
     methods:{
         fetchCountries:function (){
             let vm =this;
+            vm.loading.push('fetching countries');
             vm.$http.get(api_endpoints.countries).then((response)=>{
                 vm.countries = response.body;
                 var list = [];
@@ -292,27 +301,121 @@ export default {
                     window.addEventListener('awesomplete-selectcomplete',function (e) {
                         vm.booking.country = e.text.value;
                     });
+                    vm.loading.splice('fetching countries',1);
                 });
 
             },(response)=>{
                 console.log(response);
+                vm.loading.splice('fetching countries',1);
             });
         },
         fetchCampsites:function () {
             let vm = this;
+            vm.loading.push('fetching campsites');
             vm.$http.get(api_endpoints.campgroundCampsites(vm.booking.campground)).then((response)=>{
                 vm.campsites = response.body;
+                vm.loading.splice('fetching campsites',1);
             },(response)=>{
                 console.log(response);
+                vm.loading.splice('fetching campsites',1);
             });
-        }
+        },
+        fetchCampground:function () {
+            let vm =this;
+            vm.loading.push('fetching campground');
+            var cgId = vm.$route.params.cg;
+            vm.$http.get(api_endpoints.campground(cgId)).then((response)=>{
+                vm.campground = response.body;
+                vm.booking.campground = vm.campground.id;
+                vm.fetchCampsites();
+                vm.loading.splice('fetching campground',1);
+            },(error)=>{
+                console.log(error);
+                vm.loading.splice('fetching campground',1);
+            });
+        },
+        addEventListeners:function(){
+            let vm = this;
+            var arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
+            var depaturePicker = $(vm.bookingForm.depature).closest('.date');
+            var today = new Date();
+            today.setDate(today.getDate()+1);
+            var tomorrow = new Date(today);
+
+            arrivalPicker.datetimepicker({
+                format: 'DD/MM/YYYY',
+                minDate: new Date()
+            });
+            depaturePicker.datetimepicker({
+                format: 'DD/MM/YYYY',
+                useCurrent: false,
+                minDate: tomorrow
+            });
+            arrivalPicker.on('dp.change', function(e){
+                vm.booking.arrival = arrivalPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            });
+            depaturePicker.on('dp.change', function(e){
+                vm.booking.depature = depaturePicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            });
+        },
+        addGuestCount:function (guest) {
+            let vm =this;
+            guest.amount += 1;
+            switch (guest.id) {
+                case 'adults':
+                    vm.booking.guests.adults = guest.amount;
+                    break;
+                case 'concession':
+                    vm.booking.guests.concession = guest.amount;
+                    break;
+                case 'children':
+                    vm.booking.guests.children = guest.amount;
+                    break;
+                case 'infants':
+                    vm.booking.guests.infants = guest.amount;
+                    break;
+                default:
+
+            }
+            vm.generateGuestCountText();
+        },
+        removeGuestCount:function (guest) {
+            let vm =this;
+            guest.amount = (guest.amount > 0) ?  guest.amount-1: 0;
+            switch (guest.id) {
+                case 'adults':
+                    vm.booking.guests.adults = guest.amount;
+                    break;
+                case 'concession':
+                    vm.booking.guests.concession = guest.amount;
+                    break;
+                case 'children':
+                    vm.booking.guests.children = guest.amount;
+                    break;
+                case 'infants':
+                    vm.booking.guests.infants = guest.amount;
+                    break;
+                default:
+
+            }
+            vm.generateGuestCountText();
+        },
+        generateGuestCountText:function () {
+            let vm =this;
+            var text = "";
+            $.each(vm.guestsPicker,function (i,g) {
+                console.log(g);
+                (i != vm.guestsPicker.length-1) ? (g.amount > 0 )?text += g.amount+" "+g.name+",  ":"" :(g.amount > 0 ) ? text += g.amount+" "+g.name+" ":"";
+            });
+            vm.guestsText = text.replace(/,\s*$/, "");
+        },
     },
     mounted:function () {
         let vm = this;
         vm.bookingForm = document.forms.bookingForm;
+        vm.fetchCampground();
         vm.fetchCountries();
-        vm.fetchCampsites();
-
+        vm.addEventListeners();
     }
 }
 
@@ -325,5 +428,36 @@ export default {
     }
     .awesomplete{
         width:100%;
+    }
+    .dropdown-menu:before {
+      position: absolute;
+      top: -12px;
+      left: 12px;
+      display: inline-block;
+      border-right: 12px solid transparent;
+      border-bottom: 12px solid #ccc;
+      border-left: 12px solid transparent;
+      border-bottom-color: rgba(46, 109, 164, 1);
+      content: '';
+    }
+    .dropdown-menu{
+        top:120%;
+        width: 300px;
+    }
+    .guests li{
+        padding: 10px;
+        margin-right: 10px;
+        border-bottom: 1px solid #ccc;
+    }
+    .guests li:last-child{
+        border-bottom: 0;
+    }
+    .guests.item{
+        line-height: 2;
+    }
+    .btn-guest {
+        color: #ccc;
+        background-color: #fff;
+        border-color: #ccc;
     }
 </style>
