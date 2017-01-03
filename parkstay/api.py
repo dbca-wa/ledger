@@ -271,11 +271,16 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                     scrubbed['departure']-timedelta(days=1)
                 )
             ).filter(**{scrubbed['gear_type']: True})
-            site_ids = set([s.campground.id for s in sites])
-            queryset = Campground.objects.filter(id__in=site_ids).order_by('name')
+            ground_ids = set([s.campground.id for s in sites])
+            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
         else:
-            # include all campgrounds, even the ones without any campsites!
-            queryset = Campground.objects.all().order_by('name')
+            ground_ids = set((x[0] for x in Campsite.objects.filter(**{scrubbed['gear_type']: True}).values_list('campground')))
+            # we need to be tricky here. for the default search (tent, no timestamps),
+            # we want to include all of the "campgrounds" that don't have any campsites in the model!
+            if scrubbed['gear_type'] == 'tent':
+                ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
+    
+            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

@@ -300,43 +300,13 @@ input:checked + .symb {
                 </div><div class="row">
                     <hr class="search"/>
                 </div><div class="row">
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr" value="filt_twowheel" v-model="filterParams.twowheel"/> <i class="symb RV2"></i> 2WD accessible</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr" value="filt_bbq" v-model="filterParams.bbq"/> <i class="symb RF8G"></i> BBQ</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr" value="filt_campfire" v-model="filterParams.campfire"/> <i class="symb RF10"></i> Campfires allowed</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF17"></i> Dish washing</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RG2"></i> Dogs allowed</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RG15"></i> Generators allowed</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF13"></i> Mains water</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF6"></i> Picnic tables</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF19"></i> Portable toilet disposal</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF7"></i> Sheltered picnic tables</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF15"></i> Shower</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" class="show-for-sr"/> <i class="symb RF1"></i> Toilets</label>
-                    </div>
-
+{% verbatim %}
+                    <template v-for="filt in filterList">
+                        <div class="small-12 medium-12 large-4 columns">
+                            <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
+                        </div>
+                    </template>
+{% endverbatim %}
                 </div>
             </div></form>
             <div class="small-12 medium-9 large-6 columns">
@@ -389,6 +359,20 @@ var pf = new Vue({
         defaultLayers: [
             ['dpaw:mapbox_outdoors', {}],
             ['cddp:dpaw_tenure', {}],
+        ],
+        filterList: [
+            {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
+            {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
+            {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
+            {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
+            {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']},
+            {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
+            {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
+            {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
+            {name: 'Portable toilet disposal', symb: 'RF19', key: 'sullage', 'remoteKey': []},
+            {name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
+            {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
+            {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
         ],
         extentFeatures: [],
         numAdults: 1,
@@ -455,10 +439,37 @@ var pf = new Vue({
         }, 250),
         updateFilter: function() {
             var vm = this;
+            // make a lookup table of campground features to filter on
+            var legit = new Set();
+            this.filterList.forEach(function (el) {
+                if (vm.filterParams[el.key] === true) {
+                    el.remoteKey.forEach(function (fl) {
+                        legit.add(fl);
+                    });
+                }
+            });
+            console.log('filter all the things');
+            console.log(legit);
+
             this.groundsFilter.clear();
             this.groundsData.forEach(function (el) {
+                // first pass filter against the list of IDs returned by search
                 if (vm.groundsIds.has(el.id_)) {
-                    vm.groundsFilter.push(el);
+                    if (legit.size) { // if we have a feature filter list
+                        // check that all parameters are present
+                        var feats = new Set(el.get('features').map(function(x) {
+                            return x.name;
+                        }));
+                        for (var x of legit) {
+                            if (!feats.has(x)) {
+                                return;     // missing a feature!
+                            }
+                        }
+                        vm.groundsFilter.push(el);
+
+                    } else {  // no features, return all results
+                        vm.groundsFilter.push(el);
+                    }
                 }
             });
         }
