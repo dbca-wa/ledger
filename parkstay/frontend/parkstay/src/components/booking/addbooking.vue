@@ -159,7 +159,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p class="text-muted">
-                                    Payments will ne recorded against the booking once the booking is completed and the payment is received.
+                                    Payments will not be recorded against the booking once the booking is completed and the payment is received.
                                 </p>
                             </div>
                             <div class="col-md-6">
