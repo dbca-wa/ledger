@@ -171,7 +171,7 @@ class CampgroundImageSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=17)
 
     def get_image(self, obj):
-        return self.context['request'].build_absolute_uri('/media{}'.format(obj.image.url.split(settings.MEDIA_ROOT)[1]))
+        return self.context['request'].build_absolute_uri(format(obj.image.url.split(settings.MEDIA_ROOT)[0]))
 
     class Meta:
         model = CampgroundImage
