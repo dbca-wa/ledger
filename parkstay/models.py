@@ -438,12 +438,12 @@ class Campsite(models.Model):
     campsite_class = models.ForeignKey('CampsiteClass', on_delete=models.PROTECT, null=True,blank=True, related_name='campsites')
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     features = models.ManyToManyField('Feature')
-    cs_tent = models.BooleanField(default=False)
-    cs_campervan = models.BooleanField(default=False)
-    cs_caravan = models.BooleanField(default=False)
-    cs_min_people = models.SmallIntegerField(default=1)
-    cs_max_people = models.SmallIntegerField(default=12)
-    cs_description = models.TextField(null=True)
+    tent = models.BooleanField(default=True)
+    campervan = models.BooleanField(default=False)
+    caravan = models.BooleanField(default=False)
+    min_people = models.SmallIntegerField(default=1)
+    max_people = models.SmallIntegerField(default=12)
+    description = models.TextField(null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.campground, self.name)
@@ -453,30 +453,6 @@ class Campsite(models.Model):
 
     # Properties
     # ==============================
-    property
-    def tent(self):
-        return self.campsite_class.tent if self.campsite_class else self.cs_tent
-
-    @property
-    def description(self):
-        return self.campsite_class.description if self.campsite_class else self.cs_description
-
-    @property
-    def campervan(self):
-        return self.campsite_class.campervan if self.campsite_class else self.cs_campervan
-
-    @property
-    def caravan(self):
-        return self.campsite_class.caravan if self.campsite_class else self.cs_caravan
-
-    @property
-    def min_people(self):
-        return self.campsite_class.min_people if self.campsite_class else self.cs_min_people
-
-    @property
-    def max_people(self):
-        return self.campsite_class.max_people if self.campsite_class else self.cs_max_people
-
     @property
     def type(self):
         return self.campsite_class.name
@@ -585,6 +561,9 @@ class Campsite(models.Model):
                     c.name = name
                     c.save()
                     if c.campsite_class:
+                        for attr in ['tent', 'campervan', 'caravan', 'min_people', 'max_people', 'description']:
+                            if attr not in data:
+                                setattr(c, attr, getattr(c.campsite_class, attr))
                         c.features = c.campsite_class.features.all()
                         c.save()
                     created_campsites.append(c)
@@ -664,7 +643,7 @@ class CampsiteClass(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     camp_unit_suitability = TaggableManager()
-    tent = models.BooleanField(default=False)
+    tent = models.BooleanField(default=True)
     campervan = models.BooleanField(default=False)
     caravan = models.BooleanField(default=False)
     min_people = models.SmallIntegerField(default=1)

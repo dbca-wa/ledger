@@ -38,6 +38,7 @@ from parkstay.models import (Campground,
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
                                     CampgroundMapSerializer,
+                                    CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
                                     CampgroundCampsiteFilterSerializer,
                                     PromoAreaSerializer,
@@ -233,12 +234,57 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Campground.objects.all()
+    serializer_class = CampgroundMapSerializer
+    permission_classes = []
+
+
+class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
     # TODO: add exclude for unpublished campground objects
     #queryset = Campground.objects.exclude(campground_type=1)
     queryset = Campground.objects.all()
-    serializer_class = CampgroundMapSerializer
-    permission_classes = [] 
+    serializer_class = CampgroundMapFilterSerializer
+    permission_classes = []
+   
+
+    def list(self, request, *args, **kwargs):
+        print(request.GET)
+        data = {
+            "arrival" : request.GET.get('arrival', None),
+            "departure" : request.GET.get('departure', None),
+            "num_adult" : request.GET.get('num_adult', 0),
+            "num_concession" : request.GET.get('num_concession', 0),
+            "num_child" : request.GET.get('num_child', 0),
+            "num_infant" : request.GET.get('num_infant', 0),
+            "gear_type": request.GET.get('gear_type', 'tent')
+        }
+
+        serializer = CampgroundCampsiteFilterSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        scrubbed = serializer.validated_data
+        if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
+            sites = Campsite.objects.exclude(
+                campsitebooking__date__range=(
+                    scrubbed['arrival'],
+                    scrubbed['departure']-timedelta(days=1)
+                )
+            ).filter(**{scrubbed['gear_type']: True})
+            ground_ids = set([s.campground.id for s in sites])
+            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+        else:
+            ground_ids = set((x[0] for x in Campsite.objects.filter(**{scrubbed['gear_type']: True}).values_list('campground')))
+            # we need to be tricky here. for the default search (tent, no timestamps),
+            # we want to include all of the "campgrounds" that don't have any campsites in the model!
+            if scrubbed['gear_type'] == 'tent':
+                ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
+    
+            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()

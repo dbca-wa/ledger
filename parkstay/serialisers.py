@@ -36,12 +36,13 @@ class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
             model = PromoArea
 
 class CampgroundCampsiteFilterSerializer(serializers.Serializer):
-    arrival = serializers.DateField(input_formats=['%Y/%m/%d'])
-    departure = serializers.DateField(input_formats=['%Y/%m/%d'])
+    arrival = serializers.DateField(input_formats=['%Y/%m/%d'], allow_null=True)
+    departure = serializers.DateField(input_formats=['%Y/%m/%d'], allow_null=True)
     num_adult = serializers.IntegerField(default=0)
     num_concession = serializers.IntegerField(default=0)
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
+    gear_type = serializers.ChoiceField(choices=('tent', 'caravan', 'campervan'))
 
 class BookingRangeSerializer(serializers.ModelSerializer):
 
@@ -128,8 +129,31 @@ class CampgroundMapFeatureSerializer(serializers.HyperlinkedModelSerializer):
         model = Feature
         fields = ('id', 'name', 'description', 'image')
 
+class CampgroundMapRegionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Region
+        fields = ('id', 'name', 'abbreviation')
+
+class CampgroundMapDistrictSerializer(serializers.HyperlinkedModelSerializer):
+    region = CampgroundMapRegionSerializer(read_only=True)
+    class Meta:
+        model = District
+        fields = ('id', 'name', 'abbreviation', 'region')
+
+class CampgroundMapParkSerializer(serializers.HyperlinkedModelSerializer):
+    district = CampgroundMapDistrictSerializer(read_only=True)
+    class Meta:
+        model = Park
+        fields = ('id','name', 'entry_fee_required', 'district')
+
+class CampgroundMapFilterSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Campground
+        fields = ('id',)
+
 class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
     features = CampgroundMapFeatureSerializer(read_only=True, many=True)
+    park = CampgroundMapParkSerializer(read_only=True)
 
     class Meta:
         model = Campground
@@ -139,7 +163,8 @@ class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'name',
             'description',
             'features',
-            'campground_type'
+            'campground_type',
+            'park',
         )
 
 class CampgroundImageSerializer(serializers.ModelSerializer):
@@ -265,9 +290,7 @@ class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tent','campervan','caravan','min_people','max_people','description','cs_tent','cs_campervan','cs_caravan','cs_min_people','cs_max_people','cs_description')
-        extra_kwargs = {'cs_tent': {'write_only': True},'cs_campervan': {'write_only': True},'cs_caravan': {'write_only': True},'cs_min_people': {'write_only': True},'cs_max_people': {'write_only': True},'cs_description': {'write_only': True}}
-        read_only_fields = ('tent','campervan','caravan','min_people','max_people')
+        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tent','campervan','caravan','min_people','max_people','description',)
 
     def __init__(self, *args, **kwargs):
         try:
