@@ -130,7 +130,7 @@ class CampgroundMapFeatureSerializer(serializers.HyperlinkedModelSerializer):
 
 class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
     features = CampgroundMapFeatureSerializer(read_only=True, many=True)
-    
+
     class Meta:
         model = Campground
         geo_field = 'wkb_geometry'
@@ -141,7 +141,7 @@ class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'features',
             'campground_type'
         )
-    
+
 class CampgroundImageSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=17)
 
@@ -322,6 +322,17 @@ class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
 class BookingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Booking
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground')
+
+    def __init__(self,*args,**kwargs):
+        try:
+            method = kwargs.pop('method')
+        except :
+            method = "get"
+        print(method)
+        super(BookingSerializer,self).__init__(*args,**kwargs)
+        if method == 'get':
+            self.fields['campground'] = CampgroundSerializer()
 
 class RateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -376,7 +387,7 @@ class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
         if obj.get('reason') == 1 and not obj.get('details'):
             raise serializers.ValidationError('Details is rtequired if the reason is other.')
         return obj
-        
+
 
     def __init__(self, *args, **kwargs):
         try:
@@ -408,7 +419,7 @@ class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
         super(CampsiteClassPriceHistorySerializer, self).__init__(*args, **kwargs)
         if method == 'post':
             self.fields['reason'] = serializers.IntegerField()
-        
+
 # Reasons
 # ============================
 class ClosureReasonSerializer(serializers.ModelSerializer):
@@ -441,12 +452,12 @@ class BulkPricingSerializer(serializers.Serializer):
     park = serializers.IntegerField(required=False)
     campgrounds = serializers.ListField(
        child=serializers.IntegerField()
-    ) 
+    )
     campsiteType = serializers.IntegerField(required=False)
     adult = serializers.DecimalField(max_digits=8, decimal_places=2)
     concession = serializers.DecimalField(max_digits=8, decimal_places=2)
     child = serializers.DecimalField(max_digits=8, decimal_places=2)
-    period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y']) 
+    period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
     details =serializers.CharField()
     type = serializers.ChoiceField(choices=TYPE_CHOICES)
@@ -456,14 +467,14 @@ class BulkPricingSerializer(serializers.Serializer):
             park = Park.objects.get(pk=int(val))
         except Park.DoesNotExist:
             raise
-        return val 
+        return val
 
     def validate_campgrounds(self,val):
         for v in val:
             try:
                 Campground.objects.get(pk=v)
             except Campground.DoesNotExist:
-                raise    
+                raise
         return val
 
     def validate_reason(self, val):
@@ -472,4 +483,4 @@ class BulkPricingSerializer(serializers.Serializer):
             reason = PriceReason.objects.get(pk=int(val))
         except PriceReason.DoesNotExist:
             raise
-        return val 
+        return val
