@@ -95,7 +95,7 @@
                     </div>
                 </div>
                 <div class="col-sm-7">
-                    <h3><a href="{{ line.product.get_absolute_url }}">{{ line.description }}</a></h3>
+                    <h3>{% comment %}Temp comment to block users from accessing the shop pages. <a href="{{ line.product.get_absolute_url }}">{% endcomment %}{{ line.description }}{% comment %}</a>{% endcomment %}</h3>
                     
                 </div>
                 <div class="col-sm-1 align-center">
