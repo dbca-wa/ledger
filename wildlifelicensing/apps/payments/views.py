@@ -2,6 +2,7 @@ import json
 import requests
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
@@ -28,7 +29,7 @@ PAYMENT_SYSTEM_ID = settings.WL_PAYMENT_SYSTEM_ID
 SENIOR_VOUCHER_CODE = settings.WL_SENIOR_VOUCHER_CODE
 
 
-class CheckoutApplicationView(RedirectView):
+class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
         product = get_product(generate_product_title(application))
@@ -67,7 +68,7 @@ class CheckoutApplicationView(RedirectView):
         return HttpResponse(response.content)
 
 
-class ManualPaymentView(RedirectView):
+class ManualPaymentView(LoginRequiredMixin, RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
 
@@ -80,7 +81,7 @@ class ManualPaymentView(RedirectView):
         return redirect('{}?{}'.format(url, urlencode(params)))
 
 
-class PaymentsReportView(View):
+class PaymentsReportView(LoginRequiredMixin, View):
     success_url = reverse_lazy('wl_reports:reports')
     error_url = success_url
 
