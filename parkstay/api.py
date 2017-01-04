@@ -571,7 +571,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def price_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
             serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
 
@@ -840,7 +840,7 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
     def price_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            price_history = CampsiteClassPriceHistory.objects.filter(id=self.get_object().id)
+            price_history = CampsiteClassPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
             # Format list
             open_ranges,formatted_list,fixed_list= [],[],[]
             for p in price_history:
