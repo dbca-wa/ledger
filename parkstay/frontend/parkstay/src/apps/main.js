@@ -63,11 +63,6 @@ const routes = [
                         component: Campsite_type_dash
                     },
                     {
-                        path:'bulkpricing',
-                        name:'bulkpricing',
-                        component: Bulkpricing
-                    },
-                    {
                         path:'campsite-type',
                         component: {
                             render (c) { return c('router-view') }

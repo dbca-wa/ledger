@@ -178,7 +178,6 @@ export default {
             let vm = this;
             var data = vm.price;
             data.reason = parseInt(data.reason);
-            console.log(vm.price);
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
