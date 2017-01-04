@@ -244,12 +244,17 @@ input:checked + .symb {
     content: "✖";
 }
 
+.searchTitle {
+    font-size: 150%;
+    font-weight: bold;
+}
+
     </style>
 </head>
 <body>
-    <div id="parkfinder">
+    <div id="parkfinder" v-cloak>
         <div class="row">
-            <form name="parkFinderForm"><div class="small-12 medium-3 large-6 columns search-params">
+            <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
                     <div class="input-group small-12 columns">
                         <input class="input-group-field" type="text"/>
@@ -298,13 +303,13 @@ input:checked + .symb {
                     <hr/>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" class="show-for-sr" checked v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
+                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="campervan" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
+                        <label><input type="radio" name="gear_type" value="campervan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="caravan" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
+                        <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
                     </div>
                 </div><div class="row">
                     <hr class="search"/>
@@ -317,19 +322,34 @@ input:checked + .symb {
                     </template>
 {% endverbatim %}
                 </div>
-            </div></form>
+            </div>
             <div class="small-12 medium-9 large-6 columns">
                 <div id="map"></div>
-                <div id="mapPopup" class="mapPopup">
+                <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
-                    <div id="mapPopupContent"></div>
+                    <div id="mapPopupContent">
+                        <h5 id="mapPopupName"></h5>
+                        <p>Description goes here</p>
+                        <button id="mapPopupInfo" class="button formButton">More info</button>
+                        <button id="mapPopupBook" class="button formButton">Book now</button>
+                    </div>
                 </div>
             </div>
         </div>
 {% verbatim %}
         <paginate name="filterResults" :list="extentFeatures" :per="10">
             <div class="row" v-for="f in paginated('filterResults')">
-                {{ f.name }}
+                <div class="small-12 columns">
+                    <span class="searchTitle">{{ f.name }}</span>
+                </div>
+                <div class="small-12 medium-3 large-3 columns">
+                     
+                </div>
+                <div class="small-12 medium-9 large-9 columns">
+                    <p>Description goes here</p>
+                    <button class="button">More info</button>
+                    <button v-if="f.campground_type == 0" class="button">Book now</button>
+                </div>
             </div>
         </paginate>
         <div class="row">
@@ -343,6 +363,7 @@ input:checked + .symb {
     <script src="//static.dpaw.wa.gov.au/static/libs/vue/2.1.8/vue.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/js/vue-paginate-3.2.2/dist/vue-paginate.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.min.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.js"></script>
@@ -398,6 +419,7 @@ var pf = new Vue({
         numConcessions: 0,
         numChildren: 0,
         numInfants: 0,
+        gearType: 'tent',
         filterParams: {
         },
         paginate: ['filterResults']
@@ -530,8 +552,6 @@ var pf = new Vue({
         $(document).foundation();
         console.log('Loading map...');
 
-        vm.form = document.forms.parkFinderForm;
-
         // enable arrival/departure date pickers
         var nowTemp = new Date();
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
@@ -657,7 +677,7 @@ var pf = new Vue({
                 params.num_concessions = vm.numConcessions;
                 params.num_children = vm.numChildren;
                 params.num_infants = vm.numInfants;
-                params.gear_type = vm.form.gear_type.value;
+                params.gear_type = vm.gearType;
             }
             $.ajax({
                 url: urlBase+$.param(params),
@@ -768,7 +788,15 @@ var pf = new Vue({
         this.olmap.on('singleclick', function(ev) {
             var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
                 vm.popup.setPosition(feature.getGeometry().getCoordinates());
-                vm.popupContent.innerHTML = feature.get('name');
+                // really want to make vue.js render this, except reactivity dies
+                // when you pass control of the popup element to OpenLayers :(
+                $("#mapPopupName")[0].innerHTML = feature.get('name');
+                //$("#mapPopupInfo")[0].innerHTML = feature.get('name');
+                if (feature.get('campground_type') == 0) {
+                    $("#mapPopupBook").show();
+                } else {
+                    $("#mapPopupBook").hide();
+                }
                 return true;
             }, {
                 layerFilter: function (layer) {
