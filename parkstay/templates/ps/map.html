@@ -249,6 +249,10 @@ input:checked + .symb {
     font-weight: bold;
 }
 
+[v-cloak] {
+    display: none;
+}
+
     </style>
 </head>
 <body>
@@ -329,6 +333,7 @@ input:checked + .symb {
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
                     <div id="mapPopupContent">
                         <h5 id="mapPopupName"></h5>
+                        <p>Pic goes here</p>
                         <p>Description goes here</p>
                         <button id="mapPopupInfo" class="button formButton">More info</button>
                         <button id="mapPopupBook" class="button formButton">Book now</button>
@@ -343,7 +348,7 @@ input:checked + .symb {
                     <span class="searchTitle">{{ f.name }}</span>
                 </div>
                 <div class="small-12 medium-3 large-3 columns">
-                     
+                    <p>Pic goes here</p> 
                 </div>
                 <div class="small-12 medium-9 large-9 columns">
                     <p>Description goes here</p>
@@ -545,6 +550,7 @@ var pf = new Vue({
                     }
                 }
             });
+            this.updateViewport(true);
         }
     },
     mounted: function () {
