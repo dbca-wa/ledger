@@ -373,9 +373,10 @@ class CampsiteRateReadonlySerializer(serializers.ModelSerializer):
     adult = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.adult')
     concession = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.concession')
     child = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.child')
+    infant = serializers.DecimalField(max_digits=5, decimal_places=2,source='rate.infant')
     class Meta:
         model = CampsiteRate
-        fields = ('id','adult','concession','child','date_start','date_end','rate','editable','deletable','update_level')
+        fields = ('id','adult','concession','child','infant','date_start','date_end','rate','editable','deletable','update_level')
 
 class RateDetailSerializer(serializers.Serializer):
     '''Used to validate rates from the frontend
@@ -403,8 +404,8 @@ class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     class Meta:
         model = CampgroundPriceHistory
-        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable','reason','details')
-        read_only_fields = ('id','editable','deletable','adult','concession','child')
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','infant','editable','deletable','reason','details')
+        read_only_fields = ('id','editable','deletable','adult','concession','child','infant')
 
     def validate(self,obj):
         if obj.get('reason') == 1 and not obj.get('details'):
@@ -426,8 +427,8 @@ class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     class Meta:
         model = CampsiteClassPriceHistory
-        fields = ('id','date_start','date_end','rate_id','adult','concession','child','editable','deletable','reason','details')
-        read_only_fields = ('id','editable','deletable','adult','concession','child')
+        fields = ('id','date_start','date_end','rate_id','adult','concession','child','infant','editable','deletable','reason','details')
+        read_only_fields = ('id','editable','deletable','adult','concession','child','infant')
 
     def validate(self,obj):
         if obj.get('reason') == 1 and not obj.get('details'):
