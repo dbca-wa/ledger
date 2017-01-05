@@ -385,6 +385,7 @@ class RateDetailSerializer(serializers.Serializer):
     adult = serializers.DecimalField(max_digits=5, decimal_places=2)
     concession = serializers.DecimalField(max_digits=5, decimal_places=2)
     child = serializers.DecimalField(max_digits=5, decimal_places=2)
+    infant = serializers.DecimalField(max_digits=5, decimal_places=2)
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False)
