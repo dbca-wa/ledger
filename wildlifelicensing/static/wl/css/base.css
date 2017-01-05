@@ -34,6 +34,14 @@
     margin-top: 20px;
 }
 
+.top-buffer-s {
+    margin-top: 10px;
+}
+
+.top-buffer-xs {
+    margin-top: 5px;
+}
+
 .bottom-buffer {
     margin-bottom: 20px;
 }
@@ -85,4 +93,33 @@
 
 .popover {
     max-width: 100%;
+}
+
+.intro {
+    padding: 10px;
+    border-radius: 3px;
+}
+
+.intro h3 {
+    margin-top: 0px;
+}
+
+.intro h4 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.applications {
+    color: #ffffff !important;
+    background-color: #7d9acc !important;
+}
+
+.licences {
+    color: #ffffff !important;
+    background-color: #ead47c !important;
+}
+
+.returns {
+    color: #ffffff !important;
+    background-color: #d86565!important;
 }

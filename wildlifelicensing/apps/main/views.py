@@ -190,15 +190,13 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
         original_last_name = emailuser.last_name
         emailuser_form = EmailUserForm(request.POST, instance=emailuser)
         if emailuser_form.is_valid():
-            emailuser = emailuser_form.save(commit=False)
+            emailuser = emailuser_form.save()
             is_name_changed = any([original_first_name != emailuser.first_name, original_last_name != emailuser.last_name])
 
             # send signal if either first name or last name is changed
             if is_name_changed:
                 messages.warning(request, "Please upload new identification after you changed your name.")
                 return redirect(self.identification_url)
-            elif not emailuser.identification:
-                messages.warning(request, "Please upload your identification.")
             else:
                 messages.success(request, "User account was saved.")
 
@@ -228,6 +226,9 @@ class LicenceRenewalPDFView(OfficerRequiredMixin, View):
         response.write(create_licence_renewal_pdf_bytes(filename, licence,
                                                         request.build_absolute_uri(reverse('home'))))
 
+        licence.renewal_sent = True
+        licence.save()
+
         return response
 
 
@@ -240,18 +241,28 @@ class BulkLicenceRenewalPDFView(OfficerRequiredMixin, View):
         filename = 'bulk-renewals.pdf'
         response = HttpResponse(content_type='application/pdf')
         response.write(bulk_licence_renewal_pdf_bytes(licences, request.build_absolute_uri(reverse('home'))))
+
+        if licences:
+            licences.update(renewal_sent=True)
+
         return response
 
 
 class CommunicationsLogListView(OfficerRequiredMixin, View):
+    serial_template = {
+        'exclude': ['communicationslogentry_ptr', 'customer', 'staff'],
+        'posthook': format_communications_log_entry
+    }
+
     def get(self, request, *args, **kwargs):
-        q = Q(officer=args[0]) | Q(customer=args[0])
+        q = Q(staff=args[0]) | Q(customer=args[0])
 
-        data = serialize(CommunicationsLogEntry.objects.filter(q).order_by('created'),
-                         posthook=format_communications_log_entry,
-                         exclude=['communicationslogentry_ptr', 'customer', 'officer']),
+        data = serialize(
+            CommunicationsLogEntry.objects.filter(q).order_by('created'),
+            **self.serial_template
+        )
 
-        return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
+        return JsonResponse({'data': data}, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class AddCommunicationsLogEntryView(OfficerRequiredMixin, View):

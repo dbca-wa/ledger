@@ -2,3 +2,34 @@
 
 {% block applications_filters %}
 {% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="bottom-buffer">
+            <h2>Welcome to the Wildlife Licensing Online Portal</h2>
+            <p>
+                On this site you will be able to apply online for a wildlife licence, manage your current licences and
+                submit returns.
+            </p>
+            <h4>Licences</h4>
+            <p>
+                Licences can be obtained by following the application process and receiving approval from a licensing officer.
+                You may apply for as many licences as required. Once you've applied, the status of your applications will be
+                shown in the <a href="#applications">Applications table</a> below. To begin the process, click the link below.
+            </p>
+            <p>
+                <a href="{% url 'wl_applications:new_application' %}">Apply for a new wildlife licence online</a>
+            </p>
+            <p>
+                Once your licence has been approved, you will be notified via email with your licence attached. A summary of all you current
+                and past licences is shown in the <a href="#licences">Licences table</a> below.
+            </p>
+            <h4>Returns</h4>
+            <p>
+                Depending on the type of licence you hold, you may be required to submit returns on a regular basis. These are accessible
+                in the <a href="#returns">Returns table</a> below. The table will contain any past returns submitted as well as the next return due.
+            </p>
+        </div>
+    </div>
+    {{ block.super }}
+{% endblock %}

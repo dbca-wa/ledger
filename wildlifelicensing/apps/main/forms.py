@@ -2,10 +2,12 @@ import json
 import os
 from datetime import datetime
 
-from dateutil.relativedelta import relativedelta
+from django.utils import six
 from django import forms
 from django.contrib.postgres.forms import JSONField
 from django.forms.widgets import SelectMultiple
+
+from dateutil.relativedelta import relativedelta
 
 from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
 
@@ -25,7 +27,7 @@ class BetterJSONField(JSONField):
     def prepare_value(self, value):
         if value is None:
             return ""
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             # already a string
             return value
         else:
@@ -120,6 +122,12 @@ class IssueLicenceForm(forms.ModelForm):
             self.fields['is_renewable'].initial = is_renewable
 
             self.fields['return_frequency'].initial = return_frequency
+
+    def clean(self):
+        cleaned_data = super(IssueLicenceForm, self).clean()
+
+        if cleaned_data.get('end_date') < cleaned_data.get('start_date'):
+            raise forms.ValidationError('End date must be greater than start date')
 
 
 class CommunicationsLogEntryForm(forms.ModelForm):

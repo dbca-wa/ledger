@@ -2,6 +2,7 @@ import json
 import requests
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
@@ -13,7 +14,7 @@ from django.utils import timezone
 
 from wildlifelicensing.apps.applications.models import Application
 
-from wildlifelicensing.apps.payments.utils import generate_product_code, get_product, to_json
+from wildlifelicensing.apps.payments.utils import generate_product_title, get_product
 from wildlifelicensing.apps.payments.forms import PaymentsReportForm
 from wildlifelicensing.apps.main.helpers import is_officer
 
@@ -28,10 +29,10 @@ PAYMENT_SYSTEM_ID = settings.WL_PAYMENT_SYSTEM_ID
 SENIOR_VOUCHER_CODE = settings.WL_SENIOR_VOUCHER_CODE
 
 
-class CheckoutApplicationView(RedirectView):
+class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
-        product = get_product(generate_product_code(application))
+        product = get_product(generate_product_title(application))
         user = application.applicant.id
 
         error_url = request.build_absolute_uri(reverse('wl_applications:preview'))
@@ -67,7 +68,7 @@ class CheckoutApplicationView(RedirectView):
         return HttpResponse(response.content)
 
 
-class ManualPaymentView(RedirectView):
+class ManualPaymentView(LoginRequiredMixin, RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
 
@@ -80,7 +81,7 @@ class ManualPaymentView(RedirectView):
         return redirect('{}?{}'.format(url, urlencode(params)))
 
 
-class PaymentsReportView(View):
+class PaymentsReportView(LoginRequiredMixin, View):
     success_url = reverse_lazy('wl_reports:reports')
     error_url = success_url
 
@@ -89,16 +90,23 @@ class PaymentsReportView(View):
         if form.is_valid():
             start = form.cleaned_data.get('start')
             end = form.cleaned_data.get('end')
+            banked_start = form.cleaned_data.get('banked_start')
+            banked_end = form.cleaned_data.get('banked_end')
             # here start and end should be timezone aware (with the settings.TIME_ZONE
             start = timezone.make_aware(start) if not timezone.is_aware(start) else start
             end = timezone.make_aware(end) if not timezone.is_aware(end) else end
+            banked_start = timezone.make_aware(banked_start) if not timezone.is_aware(banked_start) else banked_start
+            banked_end = timezone.make_aware(banked_end) if not timezone.is_aware(banked_end) else banked_end
+
             url = request.build_absolute_uri(
                 reverse('payments:ledger-report')
             )
             data = {
                 'system': PAYMENT_SYSTEM_ID,
                 'start': start,
-                'end': end
+                'end': end,
+                'banked_start': banked_start,
+                'banked_end': banked_end
             }
             if 'items' in request.GET:
                 data['items'] = True

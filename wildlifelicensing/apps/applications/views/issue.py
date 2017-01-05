@@ -16,8 +16,9 @@ from wildlifelicensing.apps.main.forms import IssueLicenceForm
 from wildlifelicensing.apps.main.pdf import create_licence_pdf_document, create_licence_pdf_bytes,\
     create_cover_letter_pdf_document
 from wildlifelicensing.apps.main.signals import licence_issued
-from wildlifelicensing.apps.applications.models import Application, Assessment
-from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_application
+from wildlifelicensing.apps.applications.models import Application, Assessment, ApplicationUserAction
+from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_application, \
+    extract_licence_fields, update_licence_fields
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.payments import utils as payment_utils
@@ -38,6 +39,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         # if reissue
         if application.licence:
             kwargs['issue_licence_form'] = IssueLicenceForm(instance=application.licence)
+
+            kwargs['extracted_fields'] = application.licence.extracted_fields
         else:
             purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
 
@@ -48,6 +51,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes, is_renewable=application.licence_type.is_renewable,
                                                             return_frequency=return_frequency)
+
+            kwargs['extracted_fields'] = extract_licence_fields(application.licence_type.application_schema, application.data)
 
         if application.proxy_applicant is None:
             to = application.applicant
@@ -71,16 +76,17 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             return redirect(request.get_full_path())
 
-        # do credit card payment if required
-        if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
-                payment_utils.invoke_credit_card_payment(application)
-
         original_issue_date = None
         if application.licence is not None:
             issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES)
             original_issue_date = application.licence.issue_date
+            extracted_fields = application.licence.extracted_fields
         else:
             issue_licence_form = IssueLicenceForm(request.POST, files=request.FILES)
+            extracted_fields = extract_licence_fields(application.licence_type.application_schema, application.data)
+
+        # update contents of extracted field based on posted data
+        extracted_fields = update_licence_fields(extracted_fields, request.POST)
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
@@ -91,12 +97,14 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence.holder = application.applicant
             licence.issuer = request.user
 
+            previous_licence = None
             if application.previous_application is not None:
-                licence.licence_number = application.previous_application.licence.licence_number
+                previous_licence = application.previous_application.licence
+                licence.licence_number = previous_licence.licence_number
 
-                # if licence is renewal, use previous licence's sequence number
+                # if licence is renewal, start with previous licence's sequence number
                 if licence.licence_sequence == 0:
-                    licence.licence_sequence = application.previous_application.licence.licence_sequence
+                    licence.licence_sequence = previous_licence.licence_sequence
 
             if not licence.licence_number:
                 licence.save(no_revision=True)
@@ -104,6 +112,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                                     str(licence.id).zfill(LICENCE_NUMBER_NUM_CHARS))
 
             licence.licence_sequence += 1
+
+            licence.extracted_fields = extracted_fields
+
+            # reset renewal_sent flag in case of reissue
+            licence.renewal_sent = False
 
             licence_filename = 'licence-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
@@ -118,8 +131,13 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             licence.save()
 
+            if previous_licence is not None:
+                previous_licence.replaced_by = licence
+                previous_licence.save()
+
             licence.variants.clear()
-            for index, avl in enumerate(application.variants.through.objects.all().order_by('order')):
+            for index, avl in enumerate(application.variants.through.objects.filter(application=application).
+                                        order_by('order')):
                 WildlifeLicenceVariantLink.objects.create(licence=licence, variant=avl.variant, order=index)
 
             issue_licence_form.save_m2m()
@@ -131,6 +149,15 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             application.licence = licence
 
             application.save()
+
+            application.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(licence),
+                request
+            )
+
+            # do credit card payment if required
+            if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+                payment_utils.invoke_credit_card_payment(application)
 
             # The licence should be emailed to the customer if they applied for it online. If an officer entered
             # the application on their behalf, the licence needs to be posted to the user.
@@ -160,17 +187,20 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                                  '<a href="{2}" target="_blank">Cover Letter PDF</a><img height="20px" src="{3}">'
                                  '</img>'.format(licence.licence_document.file.url, static('wl/img/pdf.png'),
                                                  licence.cover_letter_document.file.url, static('wl/img/pdf.png')))
-
-            if ccs:
-                send_licence_issued_email(licence, application, request, to=ccs, additional_attachments=attachments)
+                if ccs:
+                    send_licence_issued_email(licence, application, request, to=ccs, additional_attachments=attachments)
             return redirect('wl_dashboard:home')
         else:
             messages.error(request, issue_licence_form.errors)
 
             log_entry_form = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
 
+            payment_status = payment_utils.PAYMENT_STATUSES.get(payment_utils.get_application_payment_status(application))
+
             return render(request, self.template_name, {'application': serialize(application, posthook=format_application),
                                                         'issue_licence_form': issue_licence_form,
+                                                        'extracted_fields': extracted_fields,
+                                                        'payment_status': payment_status,
                                                         'log_entry_form': log_entry_form})
 
 
@@ -191,24 +221,31 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
         if application.licence is not None:
             issue_licence_form = IssueLicenceForm(request.GET, instance=application.licence, skip_required=True)
             original_issue_date = application.licence.issue_date
+            extracted_fields = application.licence.extracted_fields
         else:
             issue_licence_form = IssueLicenceForm(request.GET, skip_required=True)
+            extracted_fields = extract_licence_fields(application.licence_type.application_schema, application.data)
 
-        licence = issue_licence_form.save(commit=False)
-        licence.licence_type = application.licence_type
-        licence.profile = application.applicant_profile
-        licence.holder = application.applicant
+        if issue_licence_form.is_valid():
+            licence = issue_licence_form.save(commit=False)
+            licence.licence_type = application.licence_type
+            licence.profile = application.applicant_profile
+            licence.holder = application.applicant
+            licence.extracted_fields = update_licence_fields(extracted_fields, request.GET)
 
-        filename = '%s.pdf' % application.lodgement_number
+            filename = '%s.pdf' % application.lodgement_number
 
-        application.customer_status = 'approved'
-        application.processing_status = 'issued'
-        application.licence = licence
+            application.customer_status = 'approved'
+            application.processing_status = 'issued'
+            application.licence = licence
 
-        response = HttpResponse(content_type='application/pdf')
+            response = HttpResponse(content_type='application/pdf')
 
-        response.write(create_licence_pdf_bytes(filename, licence, application,
-                                                request.build_absolute_uri(reverse('home')),
-                                                original_issue_date))
+            response.write(create_licence_pdf_bytes(filename, licence, application,
+                                                    request.build_absolute_uri(reverse('home')),
+                                                    original_issue_date))
 
-        return response
+            return response
+        else:
+            return HttpResponse('<script type="text/javascript">window.close()</script>')
+

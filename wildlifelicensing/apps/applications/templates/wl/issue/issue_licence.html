@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/applications_base.html' %}
 
 {% load static %}
 
@@ -6,28 +6,30 @@
 
 {% load jsonify %}
 
+{% load application_filters %}
+
 {% block extra_css %}
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
         rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css"
         rel="stylesheet"/>
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
+    {{ block.super }}
 {% endblock %}
 
 {% block requirements %}
-    require(['js/issue/issue_licence', 'js/communications_log'], function(issueLicence, commsLog) {
-        $(function () {
-            issueLicence.initialise();
-
-            commsLog.initCommunicationLog({
-                showLogPopoverSelector: '#showLog',
-                showLogEntryModalSelector: '#addLogEntry',
-                logEntryModalSelector: '#logEntryModal',
-                logEntryFormSelector: '#addLogEntryForm',
-                logListURL: "{% url 'wl_applications:log_list' application.id %}",
-                addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
-            });
+    require([
+        'js/issue/issue_licence',
+        'js/logs'
+    ],
+    function(issueLicence, logs) {
+        issueLicence.initialise();
+        logs.initCommunicationLog({
+            logListURL: "{% url 'wl_applications:log_list' application.id %}",
+            addLogEntryURL: "{% url 'wl_applications:add_log_entry' application.id %}"
+        });
+        logs.initActionLog({
+            logListURL: "{% url 'wl_applications:action_list' application.id %}",
         });
     });
 {% endblock %}
@@ -52,19 +54,27 @@
     </div>
 {% endblock %}
 
+{% block messages %}
+    <div class='hidden'>
+        {{ block.super }}
+    </div>
+{% endblock %}
+
+{% block intro_title %}
+    {% if application.licence %}
+        <h3>Reissue Licence</h3>
+    {% else %}
+        <h3>Issue Licence</h3>
+    {% endif %}
+{% endblock %}
+{% block intro_subtitle %}
+    <h4 class="inline">
+        {{ application.licence_type.name }}
+    </h4> 
+{% endblock %}
+
 {% block content %}
     <div class="container bottom-buffer">
-        <div class="row">
-            <div class="col-md-12">
-                {% if application.licence %}
-                    <h2>Reissue Licence</h2>
-                {% else %}
-                    <h2>Issue Licence</h2>
-                {% endif %}
-                <h3>{{ application.licence_type.name }}</h3>
-                <hr>
-            </div>
-        </div>
         <div class="row">
             <div class="col-md-3">
                 <div class="row">
@@ -116,9 +126,7 @@
                         </div>
                     </div>
                 </div>
-                {% with add_text='Add application log entry' %}
-                    {% include 'wl/communications_panel.html' %}
-                {% endwith %}
+                {% include 'wl/logs_panel.html' %}
                 {% if payment_status == 'Awaiting Payment' %}
                     <button id="issue" type="button" class="btn btn-sm btn-success pull-right disabled"
                             data-title="Payment must be received before licence can be issued">
@@ -145,6 +153,47 @@
             <div class="col-md-9">
                 <form method="post" id="issueLicenceForm" enctype="multipart/form-data">
                     {% csrf_token %}
+                    {% if extracted_fields %}
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">Editable application fields (will appear on licence)</h4>
+                            </div>
+                            <div class="panel-body">
+                                {% for item in extracted_fields %}
+                                    {% if not item.children %}
+                                        <div class="form-group">
+                                            <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
+                                            {% include 'wl/issue/extracted_field.html' with field=item %}
+                                            {% if item.help_text %}
+                                                <p class="help-block">{{ item.help_text }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <label class="control-label" for="id_{{ item.name }}">{{ item.label }}</label>
+                                        {% if item.help_text %}
+                                            <p class="help-block">{{ item.help_text }}</p>
+                                        {% endif %}
+                                        {% for item_group in item.children %}
+                                            <div class="row">
+                                                {% with width=item_group|length|derive_col_width %}
+                                                    {% for child_item in item_group %}
+                                                        <div class="col-md-{{ width }}">
+                                                            <div class="form-group">
+                                                                {% if forloop.parentloop.first %}
+                                                                    <label class="control-label">{{ child_item.label }}</label>
+                                                                {% endif %}
+                                                                {% include 'wl/issue/extracted_field.html' with field=child_item group_index=forloop.parentloop.counter %}
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% endwith %}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
                     {% bootstrap_form issue_licence_form %}
                     <a href="#" id="add_attachment" class="top-buffer">Add attachment</a>
                 </form>
@@ -154,5 +203,5 @@
 {% endblock %}
 
 {% block modals %}
-    {% include 'wl/communications_modal.html' %}
+    {% include 'wl/logs_comm_entry_modal.html' %}
 {% endblock %}

@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils.encoding import smart_text
 
-from wildlifelicensing.apps.emails.emails import TemplateEmailBase, hosts_reverse
+from wildlifelicensing.apps.emails.emails import TemplateEmailBase, host_reverse
 from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
@@ -75,14 +75,13 @@ def send_assessment_reminder_email(assessment, request=None):
     application = assessment.application
 
     email = ApplicationAssessmentReminderEmail()
-
     if request is not None:
         url = request.build_absolute_uri(
             reverse('wl_applications:enter_conditions_assessor',
                     args=(application.pk, assessment.pk))
         )
     else:
-        url = hosts_reverse('wl_applications:enter_conditions_assessor', args=(application.pk, assessment.pk))
+        url = host_reverse('wl_applications:enter_conditions_assessor', args=(application.pk, assessment.pk))
 
     context = {
         'assessor': assessment.assessor_group,
@@ -194,7 +193,7 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
         'licence': licence
     }
     if licence.licence_document is not None:
-        file_name = 'WL_licence_' + smart_text(licence.licence_type.product_code)
+        file_name = 'WL_licence_' + smart_text(licence.licence_type.product_title)
         if licence.licence_number:
             file_name += '_' + smart_text(licence.licence_number)
         if licence.licence_sequence:
@@ -222,24 +221,6 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
     return log_entry
 
 
-class LicenceRenewalNotificationEmail(TemplateEmailBase):
-    subject = 'Your wildlife licence is due for renewal.'
-    html_template = 'wl/emails/renew_licence_notification.html'
-    txt_template = 'wl/emails/renew_licence_notification.txt'
-
-
-def send_licence_renewal_email_notification(licence):
-    email = LicenceRenewalNotificationEmail()
-    url = hosts_reverse('wl_home')
-
-    context = {
-        'url': url,
-        'licence': licence
-    }
-
-    email.send(licence.profile.email, context=context)
-
-
 class UserNameChangeNotificationEmail(TemplateEmailBase):
     subject = 'User has changed name and requires licence reissue.'
     html_template = 'wl/emails/user_name_change_notification.html'
@@ -249,7 +230,7 @@ class UserNameChangeNotificationEmail(TemplateEmailBase):
 def send_user_name_change_notification_email(licence):
     email = UserNameChangeNotificationEmail()
 
-    url = hosts_reverse('wl_applications:reissue_licence', args=(licence.pk,))
+    url = host_reverse('wl_applications:reissue_licence', args=(licence.pk,))
 
     context = {
         'licence': licence,

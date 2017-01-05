@@ -1,4 +1,4 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/applications_base.html' %}
 
 {% load static %}
 
@@ -7,10 +7,6 @@
 {% load jsonify %}
 
 {% load users %}
-
-{% block extra_css %}
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
-{% endblock %}
 
 {% block requirements %}
     require(['jQuery',
@@ -52,25 +48,40 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}<h3>Preview and Lodge Application</h3>{% endblock %}
+{% block intro_subtitle %}
+    <h4 class="inline">
+        {{ licence_type.name }} {% if is_renewal %}(Renewal) {% endif %} {% if is_amendment %}(Amendment) {% endif %}
+    </h4> 
+    {% if customer %}
+            <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
+    {% endif %}
+    {% if variants %}
+        <h4>
+            <em>({{ variants }})</em>
+        </h4>
+    {% endif %}
+{% endblock %}
+{% block intro_text %}
+    <p>
+        Please review the answers you provided to ensure their correctness before lodging your application. If you need to change any answers, click the
+        Edit Application Details button at the bottom-left.
+        {% if is_payment_required %}
+            When you are satisfied with your answers, check the disclaimer checkboxes and click the Proceed to Payment button at the bottom-right.
+        {% else %}
+            When you are satisfied with your answers, check the disclaimer checkboxes and click the Lodge
+            Application button at the bottom-right.
+        {% endif %}
+    </p>
+    <p>
+        Note that once you have lodged the application, you will not be able to alter it unless a Wildlife Licensing officer requests
+        amendments be made. Should amendments be required, you will be notified via email (using the email address of the selected profile) whereby
+        you will need to alter the application according to the amendments requested.
+    </p>
+{% endblock %}
+
 {% block content %}
     <div id="mainContainer" class="container hidden">
-        <div class="row">
-            <div class="col-md-12">
-                {% with heading='Preview and Lodge Application' %}
-                    {% include 'wl/entry/header.html' %}
-                {% endwith %}
-                <p>
-                    Please review the answers you provided to ensure their correctness before lodging your application. If you need to change any answers, click the
-                    Edit Application Details button at the bottom-left. When you are satisfied with your answers, check the disclaimer checkboxes and click the Lodge
-                    Application button at the bottom-right.
-                </p>
-                <p>
-                    Note that once you have lodged the application, you will not be able to alter it unless a Wildlife Licensing officer requests
-                    amendments be made. Should amendments be required, you will be notified via email (using the email address for the profile selected) whereby
-                    you will need to alter the application according to the amendments requested.
-                </p>
-            </div>
-        </div>
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="top-buffer">Selected Profile:</label>
@@ -106,7 +117,9 @@
                     </div>
                     <div>
                         <a data-entry-link="True" class="btn btn-default" href="{% url 'wl_applications:enter_details' %}">Edit Application Details</a>
-                        <button type="submit" id="lodge" class="btn btn-primary pull-right" name="lodge" disabled>
+                        <button type="submit" id="lodge" type="button" name="lodge"
+                                class="btn btn-primary pull-right disabled"
+                                data-title="You must check both dislaimer checkboxes to lodge the application">
                             {% if is_payment_required %}
                                 Proceed to Payment
                             {% else %}

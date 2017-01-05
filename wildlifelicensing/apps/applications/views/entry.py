@@ -14,17 +14,17 @@ from wildlifelicensing.apps.main.models import WildlifeLicenceType,\
     WildlifeLicenceCategory, Variant
 from wildlifelicensing.apps.main.forms import IdentificationForm, SeniorCardForm
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest,\
-    ApplicationVariantLink
+    ApplicationVariantLink, ApplicationUserAction
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
 from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin,\
-    UserCanViewApplicationMixin
+    UserCanViewApplicationMixin, UserCanRenewApplicationMixin, UserCanAmendApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_customer
+from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
 from django.core.urlresolvers import reverse
 from wildlifelicensing.apps.applications.utils import delete_session_application
-from wildlifelicensing.apps.payments.utils import is_licence_free,\
-    generate_product_code
+from wildlifelicensing.apps.payments.utils import is_licence_free, get_licence_price, \
+    generate_product_title
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -100,7 +100,7 @@ class DeleteApplicationView(View, UserCanViewApplicationMixin):
         return redirect('wl_dashboard:home')
 
 
-class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
+class RenewLicenceView(UserCanRenewApplicationMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
@@ -122,7 +122,7 @@ class RenewLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
         return redirect('wl_applications:enter_details')
 
 
-class AmendLicenceView(View):  # NOTE: need a UserCanRenewLicence type mixin
+class AmendLicenceView(UserCanAmendApplicationMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
@@ -171,6 +171,10 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
                 customer = create_customer_form.save()
                 application.applicant = customer
                 application.save()
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_CREATE_CUSTOMER_.format(render_user_name(customer)),
+                    request
+                )
             else:
                 context = {'create_customer_form': create_customer_form}
                 return render(request, self.template_name, context)
@@ -192,6 +196,8 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
 
             application.licence_type = WildlifeLicenceType.objects.get(id=self.args[0])
 
+            application.data = None
+
             application.variants.clear()
 
             for index, variant_id in enumerate(request.GET.getlist('variants', [])):
@@ -208,55 +214,57 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
 
         categories = []
 
-        def _get_variants(variant_group, licence_type, current_params):
+        def __get_variants(variant_group, licence_type, current_params):
             variants = []
 
             for variant in variant_group.variants.all():
                 variant_dict = {'text': variant.name}
 
+                params = current_params + [variant]
+
                 if variant_group.child is not None:
-                    variant_dict['nodes'] = _get_variants(variant_group.child, licence_type, current_params + [variant.id])
+                    variant_dict['nodes'] = __get_variants(variant_group.child, licence_type, params)
                 else:
-                    params = urlencode({'variants': current_params + [variant.id]}, doseq=True)
+                    encoded_params = urlencode({'variants': [v.id for v in params]}, doseq=True)
 
                     variant_dict['href'] = '{}?{}'.format(reverse('wl_applications:select_licence_type',
-                                                                  args=(licence_type.id,)), params)
+                                                                  args=(licence_type.id,)), encoded_params)
+
+                    prod_code = '{} {}'.format(licence_type.product_title, ' '.join([v.product_title for v in params]))
+                    variant_dict['price'] = get_licence_price(prod_code)
+
+                variant_dict['help_text'] = variant.help_text
 
                 variants.append(variant_dict)
 
             return variants
 
+        def __populate_category_dict(category_dict, licence_type_queryset, categories):
+            for licence_type in licence_type_queryset:
+                licence_type_dict = {'text': licence_type.name}
+
+                if licence_type.variant_group is not None:
+                    licence_type_dict['nodes'] = __get_variants(licence_type.variant_group, licence_type, [])
+                else:
+                    licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
+                                                        args=(licence_type.id,))
+
+                    licence_type_dict['price'] = get_licence_price(licence_type.product_title)
+
+                category_dict['licence_types'].append(licence_type_dict)
+
+                licence_type_dict['help_text'] = licence_type.help_text
+
+            categories.append(category_dict)
+
         for category in WildlifeLicenceCategory.objects.all():
-            category_dict = {'name': category.name, 'licence_types': []}
+            __populate_category_dict({'name': category.name, 'licence_types': []},
+                                     WildlifeLicenceType.objects.filter(category=category, replaced_by__isnull=True),
+                                     categories)
 
-            for licence_type in WildlifeLicenceType.objects.filter(category=category, replaced_by__isnull=True):
-                licence_type_dict = {'text': licence_type.name}
-
-                if licence_type.variant_group is not None:
-                    licence_type_dict['nodes'] = _get_variants(licence_type.variant_group, licence_type, [])
-                else:
-                    licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
-                                                        args=(licence_type.id,))
-
-                category_dict['licence_types'].append(licence_type_dict)
-
-            categories.append(category_dict)
-
-        if WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True).exists():
-            category_dict = {'name': 'Other', 'licence_types': []}
-
-            for licence_type in WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True):
-                licence_type_dict = {'text': licence_type.name}
-
-                if licence_type.variant_group is not None:
-                    licence_type_dict['nodes'] = _get_variants(licence_type.variant_group, licence_type, [])
-                else:
-                    licence_type_dict['href'] = reverse('wl_applications:select_licence_type',
-                                                        args=(licence_type.id,))
-
-                category_dict['licence_types'].append(licence_type_dict)
-
-            categories.append(category_dict)
+        uncategorised_queryset = WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True)
+        if uncategorised_queryset.exists():
+            __populate_category_dict({'name': 'Other', 'licence_types': []}, uncategorised_queryset, categories)
 
         return render(request, self.template_name, {'categories': categories})
 
@@ -379,7 +387,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                                                           initial_email=application.applicant.email,
                                                           user=application.applicant)
 
-        kwargs['address_form'] = AddressForm()
+        kwargs['address_form'] = AddressForm(user=application.applicant)
 
         return super(CreateSelectProfileView, self).get_context_data(**kwargs)
 
@@ -400,7 +408,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                 return render(request, self.template_name, {'licence_type': application.licence_type,
                                                             'profile_selection_form': profile_selection_form,
                                                             'profile_creation_form': ProfileForm(),
-                                                            'address_form': AddressForm()})
+                                                            'address_form': AddressForm(user=application.applicant)})
         elif 'create' in request.POST:
             profile_form = ProfileForm(request.POST)
             address_form = AddressForm(request.POST)
@@ -412,6 +420,10 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
 
                 application.applicant_profile = profile
                 application.save()
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_CREATE_PROFILE_.format(profile),
+                    request
+                )
             else:
                 return render(request, self.template_name,
                               {'licence_type': application.licence_type,
@@ -502,7 +514,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
-        kwargs['is_payment_required'] = not is_licence_free(generate_product_code(application)) and \
+        kwargs['is_payment_required'] = not is_licence_free(generate_product_title(application)) and \
             not application.invoice_reference and is_customer(self.request.user)
 
         if application.data:
@@ -548,6 +560,10 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                                                       str(application.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
         application.save(version_user=application.applicant, version_comment='Details Modified')
+        application.log_user_action(
+            ApplicationUserAction.ACTION_LODGE_APPLICATION.format(application),
+            request
+        )
 
         if application.invoice_reference:
             return redirect('wl_applications:complete')
@@ -574,7 +590,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
 
         context['application'] = application
 
-        context['show_invoice'] = not is_licence_free(generate_product_code(application)) and \
+        context['show_invoice'] = not is_licence_free(generate_product_title(application)) and \
             not application.is_licence_amendment
 
         delete_session_application(request.session)
