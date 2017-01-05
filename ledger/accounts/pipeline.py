@@ -1,5 +1,5 @@
 #from django.contrib.auth.models import User
-from social.exceptions import InvalidEmail
+from social_core.exceptions import InvalidEmail
 from .models import EmailUser, EmailIdentity
 from django.contrib.auth import logout
 

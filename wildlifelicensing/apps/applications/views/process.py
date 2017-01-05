@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.core.context_processors import csrf
+from django.template.context_processors import csrf
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View

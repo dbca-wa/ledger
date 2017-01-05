@@ -1,13 +1,14 @@
 from __future__ import unicode_literals
 import re
 import os
+import datetime
 
 from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 from django.contrib.auth.models import Group
 from django_dynamic_fixture import get as get_ddf
-from social.apps.django_app.default.models import UserSocialAuth
+from social_django.models import UserSocialAuth
 
 from ledger.accounts.models import EmailUser
 from wildlifelicensing.apps.main.models import WildlifeLicenceType, AssessorGroup
@@ -22,19 +23,19 @@ class TestData(object):
         'email': 'customer@test.com',
         'first_name': 'Homer',
         'last_name': 'Cust',
-        'dob': '1989-08-12',
+        'dob': datetime.date(1989, 8, 12),
     }
     DEFAULT_OFFICER = {
         'email': 'officer@test.com',
         'first_name': 'Offy',
         'last_name': 'Sir',
-        'dob': '1979-12-13',
+        'dob': datetime.date(1979, 12, 13),
     }
     DEFAULT_ASSESSOR = {
         'email': 'assessor@test.com',
         'first_name': 'Assess',
         'last_name': 'Ore',
-        'dob': '1979-10-05',
+        'dob': datetime.date(1979, 10, 5),
     }
     DEFAULT_ASSESSOR_GROUP = {
         'name': 'ass group',
@@ -78,13 +79,15 @@ def add_to_group(user, group_name):
     return user
 
 
-def get_or_create_user(email, defaults):
-    user, created = EmailUser.objects.get_or_create(defaults=defaults, email=email)
+def get_or_create_user(params):
+    user, created = EmailUser.objects.get_or_create(**params)
     return user, created
 
 
 def create_random_user():
-    return get_ddf(EmailUser, dob='1970-01-01')
+    user = get_ddf(EmailUser, dob=datetime.date(1970, 1, 1))
+    user.save()
+    return user
 
 
 def create_random_customer():
@@ -92,12 +95,12 @@ def create_random_customer():
 
 
 def get_or_create_default_customer():
-    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER['email'], TestData.DEFAULT_CUSTOMER)
+    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER)
     return user
 
 
 def get_or_create_default_officer():
-    user, created = get_or_create_user(TestData.DEFAULT_OFFICER['email'], TestData.DEFAULT_OFFICER)
+    user, created = get_or_create_user(TestData.DEFAULT_OFFICER)
     if created:
         add_to_group(user, 'Officers')
     return user
@@ -108,7 +111,7 @@ def create_licence_type(product_code='regulation-17'):
 
 
 def get_or_create_default_assessor():
-    user, created = get_or_create_user(TestData.DEFAULT_ASSESSOR['email'], TestData.DEFAULT_ASSESSOR)
+    user, created = get_or_create_user(TestData.DEFAULT_ASSESSOR)
     if created:
         add_to_group(user, 'Assessors')
     return user
