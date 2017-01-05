@@ -253,7 +253,7 @@ class CampgroundImage(models.Model):
 
     class Meta:
         ordering = ('id',)
-    
+
     def get_file_extension(self, file_name, decoded_file):
         import imghdr
 
@@ -263,14 +263,14 @@ class CampgroundImage(models.Model):
 
     def strip_b64_header(self, content):
         if ';base64,' in content:
-            header, base64_data = content.split(';base64,') 
+            header, base64_data = content.split(';base64,')
             return base64_data
         return content
 
     def _calculate_checksum(self, content):
         checksum = hashlib.md5()
         checksum.update(content.read())
-        return base64.b64encode(checksum.digest())    
+        return base64.b64encode(checksum.digest())
 
     def createImage(self, content):
         base64_data = self.strip_b64_header(content)
@@ -306,7 +306,7 @@ class CampgroundImage(models.Model):
             os.remove(self.image)
         except:
             pass
-        super(CampgroundImage,self).delete(*args,**kwargs)    
+        super(CampgroundImage,self).delete(*args,**kwargs)
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
@@ -459,7 +459,7 @@ class Campsite(models.Model):
 
     @property
     def price(self):
-        return 'Set at {}'.format(self.campground.get_price_level_display()) 
+        return 'Set at {}'.format(self.campground.get_price_level_display())
 
     @property
     def can_add_rate(self):
@@ -540,7 +540,7 @@ class Campsite(models.Model):
                 within.save(skip_validation=True)
         except CampsiteBookingRange.DoesNotExist:
             b.save()
-    
+
     @staticmethod
     def bulk_create(number,data):
         try:
@@ -830,9 +830,9 @@ class Reason(models.Model):
     # Properties
     # ==============================
     def code(self):
-        return self.__get_code() 
+        return self.__get_code()
 
-    # Methods 
+    # Methods
     # ==============================
     def __get_code(self):
         length = len(str(self.id))
@@ -862,6 +862,7 @@ class ViewPriceHistory(models.Model):
     child = models.DecimalField(max_digits=8, decimal_places=2)
     details = models.TextField()
     reason_id = models.IntegerField()
+    infant = models.DecimalField(max_digits=8, decimal_places=2)
 
     class Meta:
         abstract =True
@@ -1010,9 +1011,9 @@ class CampgroundListener(object):
                             cr = CampsiteRate(campsite=c,rate_id=ch.rate_id,date_start=today + timedelta(days=1))
                             cr.save()
                         except CampsiteClassPriceHistory.DoesNotExist:
-                            pass 
+                            pass
                         except Exception:
-                            pass 
+                            pass
 
 class CampsiteBookingRangeListener(object):
     """
@@ -1129,7 +1130,7 @@ class CampsiteRateListener(object):
 
     @staticmethod
     @receiver(post_delete, sender=CampsiteRate)
-    def _post_delete(sender, instance, **kwargs): 
+    def _post_delete(sender, instance, **kwargs):
         if not instance.date_end:
             CampsiteRate.objects.filter(date_end=instance.date_start- timedelta(days=2),campsite=instance.campsite).update(date_end=None)
 
@@ -1156,6 +1157,6 @@ class CampsiteStayHistoryListener(object):
 
     @staticmethod
     @receiver(post_delete, sender=CampsiteStayHistory)
-    def _post_delete(sender, instance, **kwargs): 
+    def _post_delete(sender, instance, **kwargs):
         if not instance.range_end:
             CampsiteStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campsite=instance.campsite).update(range_end=None)
