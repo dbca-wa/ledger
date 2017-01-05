@@ -205,9 +205,6 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
-                order: [
-                    [0,'desc']
-                ],
                 ajax: {
                     url: api_endpoints.campsites_price_history(this.$route.params.campsite_id),
                     dataSrc: ''
@@ -311,7 +308,7 @@ export default {
                 }
 
                 /*
-                
+
                 if(vm.selected_campsite_class_url()){
                     vm.$refs.descriptionEditor.disabled(true);
                     vm.$refs.select_features.enabled(false);

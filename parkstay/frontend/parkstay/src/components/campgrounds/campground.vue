@@ -121,9 +121,6 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
-                order: [
-                    [0,'desc']
-                ],
                 ajax: {
                     url: api_endpoints.campground_price_history(this.$route.params.id),
                     dataSrc: ''

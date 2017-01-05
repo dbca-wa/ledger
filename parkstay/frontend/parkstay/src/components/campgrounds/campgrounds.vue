@@ -116,10 +116,13 @@ module.exports = {
                 }, {
                     "mRender": function(data, type, full) {
                         var id = full.id;
+                        var addBooking = (full.campground_type != 1)?"<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>":"";
                         if (full.active) {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a></td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>\
+                            "+addBooking+"</td>";
                         } else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a></td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>\
+                            "+addBooking+"</td>";
                         }
                         column = column.replace(/__Current_Closure__/,full.current_closure);
                         return column.replace(/__ID__/g, id);
@@ -220,6 +223,16 @@ module.exports = {
             }else if (status === 'close'){
                 vm.showOpenCloseCG();
             }
+        });
+        vm.$refs.dtGrounds.vmDataTable.on('click', '.addBooking', function(e) {
+            e.preventDefault();
+            var id = $(this).attr('data-campground');
+            vm.$router.push({
+                name: 'add-booking',
+                params: {
+                    "cg": id
+                }
+            });
         });
          bus.$on('refreshCGTable', function(){
             vm.$refs.dtGrounds.vmDataTable.ajax.reload();
