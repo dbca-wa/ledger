@@ -11,15 +11,19 @@
                             <div class="col-md-4">
                                   <img v-if="campground.images && campground.images.length>0" :src="campground.images[0].image" width="250" class="img-thumbnail img-responsive">
                                   <img v-else src="https://placeholdit.imgix.net/~text?txtsize=33&txt=Campground&w=250&h=250" alt="campground"  width="250" class="img-thumbnail img-responsive">
-                                  <p class="pricing">
-                                      <strong>${{booking.price|formatMoney(2)}}</strong> <span class="text-muted">per/night</span>
+                                  <p class="pricing" v-if="priceHistory">
+                                      <strong >${{priceHistory.adult|formatMoney(2)}}</strong>
+                                      <br> <span class="text-muted">Per adult per night</span>
+                                  </p>
+                                  <p v-else>
+                                      Select campsite for pricing details
                                   </p>
                             </div>
                             <div class="col-md-8">
                                 <div class="row form-horizontal">
                                     <div class="col-md-12">
                                         <div class="form-group">
-                                            <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
+                                            <label class="col-md-2 control-label pull-left required"  for="Dates">Dates: </label>
                                             <div class="col-md-4">
                                                 <div class="input-group date" id="dateArrival">
                                                     <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="booking.arrival" >
@@ -38,7 +42,7 @@
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label class="col-md-2 control-label pull-left"  for="Campground">Guests: </label>
+                                            <label class="col-md-2 control-label pull-left required"  for="Campground">Guests: </label>
                                             <div class="col-md-8">
                                                   <div class="dropdown guests">
                                                       <input type="text" class="form-control dropdown-toggle" name="guests" placeholder="Guests" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" v-model="guestsText">
@@ -78,13 +82,13 @@
                             <div class="col-lg-12">
                                 <h3 class="text-primary">Camp Site</h3>
                                 <p>
-                                    Click here to open the map of the campground to help you select the preferred campsite
+                                    Click <a href="#">here</a> to open the map of the campground to help you select the preferred campsite
                                 </p>
                                 <div class="row">
                                   <div class="col-md-6">
                                       <div class="form-group">
                                         <label for="Campsite" class="required">Campsite</label>
-                                        <select class="form-control" name="campsite" v-model="booking.campsite">
+                                        <select class="form-control" name="campsite" v-model="selected_campsite">
                                             <option value=""></option>
                                             <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}}</option>
                                         </select>
@@ -172,7 +176,7 @@
                                 <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.Park entry fee(where applicable) not included.)</span></label>
                                 <div class="input-group">
                                   <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
-                                  <input type="text" class="form-control" :placeholder="0.00|formatMoney(2)" :value="booking.price|formatMoney(2)">
+                                  <input type="text" class="form-control" :placeholder="0|formatMoney(2)" :value="booking.price|formatMoney(2)" readonly="true">
                                 </div>
                               </div>
                           </div>
@@ -180,7 +184,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p class="text-muted">
-                                    Payments will not be recorded against the booking once the booking is completed and the payment is received.
+                                    Payments will be recorded against the booking once the booking is completed and the payment is received.
                                 </p>
                             </div>
                             <div class="col-md-6">
@@ -197,7 +201,7 @@
 </template>
 
 <script>
-import {$,awesomplete,api_endpoints} from "../../hooks.js";
+import {$,awesomplete,Moment,api_endpoints} from "../../hooks.js";
 import loader from '../utils/loader.vue';
 export default {
     name:"addBooking",
@@ -206,14 +210,16 @@ export default {
         return{
             bookingForm:null,
             countries:[],
+            selected_campsite:"",
+            priceHistory:null,
             booking:{
                 arrival:"",
                 depature:"",
                 guests:{
-                    adults:0,
+                    adult:0,
                     concession:0,
-                    children:0,
-                    infants:0
+                    child:0,
+                    infant:0
                 },
                 campground:"",
                 campsite:"",
@@ -224,7 +230,7 @@ export default {
                 country:"",
                 phone:"",
                 vehicle:"",
-                price:"12"
+                price:"0"
             },
             campsites:[],
             loading:[],
@@ -232,7 +238,7 @@ export default {
             guestsText:"",
             guestsPicker:[
                 {
-                    id:"adults",
+                    id:"adult",
                     name:"Adults (no concession)",
                     amount:0,
                     description: ""
@@ -245,13 +251,13 @@ export default {
                     helpText:"accepted concession cards"
                 },
                 {
-                    id:"children",
+                    id:"child",
                     name:"Children",
                     amount:0,
                     description: "Ages 6-16"
                 },
                 {
-                    id:"infants",
+                    id:"infant",
                     name:"Infants",
                     amount:0,
                     description: "Ages 0-5"
@@ -277,6 +283,40 @@ export default {
             var j = (j = i.length) > 3 ? j % 3 : 0;
            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
          }
+    },
+    watch:{
+        selected_campsite:function () {
+            let vm = this;
+            vm.priceHistory = null;
+            vm.booking.price = 0;
+            if (vm.selected_campsite) {
+
+                vm.loading.push('fetching prices');
+                vm.$http.get(api_endpoints.campsites_price_history(vm.selected_campsite)).then((response)=>{
+                    var prices = response.body;
+                    $.each(prices,function (i,price) {
+                        //var now = moment(vm.booking.arrival, "DD-MM-YYYY");
+                        var now = Moment();
+                        var priceStart = Moment(price.date_start);
+                        var priceEnd = (!price.date_end) ? Moment(price.date_end):null;
+
+                        if (now.isSameOrAfter(priceStart) ) {
+                            if (priceEnd == null) {
+                                vm.priceHistory = price;
+                            }
+                            else if (priceEnd.isSameOrBefore(now)) {
+                                vm.priceHistory = price;
+                            }
+                            vm.generateBookingPrice();
+                        }
+
+                    });
+                    vm.loading.splice('fetching prices',1);
+                },(error)=>{
+
+                });
+            }
+        }
     },
     methods:{
         fetchCountries:function (){
@@ -363,17 +403,17 @@ export default {
             let vm =this;
             guest.amount += 1;
             switch (guest.id) {
-                case 'adults':
-                    vm.booking.guests.adults = guest.amount;
+                case 'adult':
+                    vm.booking.guests.adult = guest.amount;
                     break;
                 case 'concession':
                     vm.booking.guests.concession = guest.amount;
                     break;
-                case 'children':
-                    vm.booking.guests.children = guest.amount;
+                case 'child':
+                    vm.booking.guests.child = guest.amount;
                     break;
-                case 'infants':
-                    vm.booking.guests.infants = guest.amount;
+                case 'infant':
+                    vm.booking.guests.infant = guest.amount;
                     break;
                 default:
 
@@ -384,17 +424,17 @@ export default {
             let vm =this;
             guest.amount = (guest.amount > 0) ?  guest.amount-1: 0;
             switch (guest.id) {
-                case 'adults':
-                    vm.booking.guests.adults = guest.amount;
+                case 'adult':
+                    vm.booking.guests.adult = guest.amount;
                     break;
                 case 'concession':
                     vm.booking.guests.concession = guest.amount;
                     break;
-                case 'children':
-                    vm.booking.guests.children = guest.amount;
+                case 'child':
+                    vm.booking.guests.child = guest.amount;
                     break;
-                case 'infants':
-                    vm.booking.guests.infants = guest.amount;
+                case 'infant':
+                    vm.booking.guests.infant = guest.amount;
                     break;
                 default:
 
@@ -408,7 +448,21 @@ export default {
                 (i != vm.guestsPicker.length-1) ? (g.amount > 0 )?text += g.amount+" "+g.name+",  ":"" :(g.amount > 0 ) ? text += g.amount+" "+g.name+" ":"";
             });
             vm.guestsText = text.replace(/,\s*$/, "");
+            vm.generateBookingPrice();
         },
+        generateBookingPrice:function () {
+            let vm =this;
+            var price = 0;
+            if (vm.priceHistory) {
+                for (var guest in vm.booking.guests) {
+                    if (vm.booking.guests.hasOwnProperty(guest)) {
+                        price += vm.booking.guests[guest] * vm.priceHistory[guest];
+                    }
+                }
+                vm.booking.price = price;
+            }
+
+        }
     },
     mounted:function () {
         let vm = this;
