@@ -451,7 +451,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 data = {
@@ -491,7 +491,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 new_data = {
@@ -879,7 +879,7 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 data = {
@@ -918,7 +918,7 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 new_data = {

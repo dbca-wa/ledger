@@ -26,7 +26,7 @@
                                             <label class="col-md-2 control-label pull-left required"  for="Dates">Dates: </label>
                                             <div class="col-md-4">
                                                 <div class="input-group date" id="dateArrival">
-                                                    <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="booking.arrival" >
+                                                    <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="selected_arrival" >
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
@@ -34,7 +34,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="input-group date" id="dateDepature">
-                                                    <input type="text" class="form-control" name="depature" placeholder="Depature" v-model="booking.depature">
+                                                    <input type="text" class="form-control" name="depature" placeholder="Depature" v-model="selected_depature">
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
@@ -211,6 +211,8 @@ export default {
             bookingForm:null,
             countries:[],
             selected_campsite:"",
+            selected_arrival:"",
+            selected_depature:"",
             priceHistory:null,
             booking:{
                 arrival:"",
@@ -287,7 +289,22 @@ export default {
     watch:{
         selected_campsite:function () {
             let vm = this;
+            vm.updatePrices();
+        },
+        selected_arrival:function () {
+            let vm = this;
+            vm.updatePrices();
+        },
+        selected_depature:function () {
+            let vm = this;
+            vm.updatePrices();
+        }
+    },
+    methods:{
+        updatePrices:function () {
+            let vm = this;
             vm.priceHistory = null;
+            vm.booking.campsite = vm.selected_campsite;
             vm.booking.price = 0;
             if (vm.selected_campsite) {
 
@@ -295,18 +312,15 @@ export default {
                 vm.$http.get(api_endpoints.campsites_price_history(vm.selected_campsite)).then((response)=>{
                     var prices = response.body;
                     $.each(prices,function (i,price) {
-                        //var now = moment(vm.booking.arrival, "DD-MM-YYYY");
-                        var now = Moment();
+                        var arrival = Moment(vm.booking.arrival, "DD-MM-YYYY");
                         var priceStart = Moment(price.date_start);
-                        var priceEnd = (!price.date_end) ? Moment(price.date_end):null;
-
-                        if (now.isSameOrAfter(priceStart) ) {
-                            if (priceEnd == null) {
-                                vm.priceHistory = price;
-                            }
-                            else if (priceEnd.isSameOrBefore(now)) {
-                                vm.priceHistory = price;
-                            }
+                        var priceEnd = (price.date_end) ? Moment(price.date_end):null;
+                        if (!priceEnd && priceStart.isSameOrBefore(arrival)) {
+                            vm.priceHistory = price;
+                            vm.generateBookingPrice();
+                        }
+                        else if(arrival.isSameOrAfter(priceStart) && arrival.isSameOrBefore(priceEnd)) {
+                            vm.priceHistory = price;
                             vm.generateBookingPrice();
                         }
 
@@ -316,9 +330,7 @@ export default {
 
                 });
             }
-        }
-    },
-    methods:{
+        },
         fetchCountries:function (){
             let vm =this;
             vm.loading.push('fetching countries');
@@ -390,13 +402,17 @@ export default {
             depaturePicker.datetimepicker({
                 format: 'DD/MM/YYYY',
                 useCurrent: false,
-                minDate: tomorrow
             });
             arrivalPicker.on('dp.change', function(e){
                 vm.booking.arrival = arrivalPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+                vm.selected_arrival = vm.booking.arrival;
+                vm.selected_depature = "";
+                vm.booking.depature = "";
+                depaturePicker.data("DateTimePicker").minDate(e.date.add(1,'d'));
             });
             depaturePicker.on('dp.change', function(e){
                 vm.booking.depature = depaturePicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+                vm.selected_depature= vm.booking.depature;
             });
         },
         addGuestCount:function (guest) {
@@ -453,15 +469,19 @@ export default {
         generateBookingPrice:function () {
             let vm =this;
             var price = 0;
-            if (vm.priceHistory) {
-                for (var guest in vm.booking.guests) {
-                    if (vm.booking.guests.hasOwnProperty(guest)) {
-                        price += vm.booking.guests[guest] * vm.priceHistory[guest];
+            if (vm.booking.arrival && vm.booking.depature) {
+                var depature = Moment(vm.booking.depature, "DD-MM-YYYY");
+                var arrival = Moment(vm.booking.arrival, "DD-MM-YYYY");
+                var nights = depature.diff(arrival,'days');
+                if (vm.priceHistory) {
+                    for (var guest in vm.booking.guests) {
+                        if (vm.booking.guests.hasOwnProperty(guest)) {
+                            price += vm.booking.guests[guest] * vm.priceHistory[guest];
+                        }
                     }
+                    vm.booking.price = price*nights;
                 }
-                vm.booking.price = price;
             }
-
         }
     },
     mounted:function () {
