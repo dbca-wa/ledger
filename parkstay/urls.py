@@ -48,7 +48,8 @@ urlpatterns = [
     url(r'^dashboard/bookings$', views.DashboardView.as_view(), name='dash-bookings'),
     url(r'^dashboard/bulkpricing$', views.DashboardView.as_view(), name='dash-bulkpricing'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
-    url(r'^booking/', views.BookingsView.as_view(), name='public_make_booking'),
+    url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
+    url(r'^mybooking/', views.MyBookingsView.as_view(), name='public_my_booking'),
     url(r'^map/', views.MapView.as_view(), name='map'),
 ] + ledger_patterns
 
