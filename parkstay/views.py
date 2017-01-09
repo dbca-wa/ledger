@@ -70,8 +70,11 @@ class DashboardView(UserPassesTestMixin, TemplateView):
         return is_officer(self.request.user)
 
 
-class BookingsView(LoginRequiredMixin, TemplateView):
+class MakeBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/make_booking.html'
+
+class MyBookingsView(LoginRequiredMixin, TemplateView):
+    template_name = 'ps/booking/my_bookings.html'
 
 
 class ParkstayRoutingView(TemplateView):
