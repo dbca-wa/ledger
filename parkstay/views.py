@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic.base import View, TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
-
+from parkstay.forms import MakeBookingsForm
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -72,6 +72,10 @@ class DashboardView(UserPassesTestMixin, TemplateView):
 
 class MakeBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/make_booking.html'
+    form_class = MakeBookingsForm
+    def get(self,request,*args,**kwargs):
+        form = self.form_class
+        return render(request, self.template_name, {'form': form})
 
 class MyBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/my_bookings.html'
