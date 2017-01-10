@@ -37,7 +37,7 @@ class ApplicationEntryBaseView(TemplateView):
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         kwargs['licence_type'] = application.licence_type
@@ -159,7 +159,7 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
         try:
             application = utils.get_session_application(request.session)
         except Exception as e:
-            messages.error(request, e.message)
+            messages.error(request, str(e))
             return redirect('wl_applications:new_application')
 
         if 'select' in request.POST:
@@ -191,7 +191,7 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
             try:
                 application = utils.get_session_application(self.request.session)
             except Exception as e:
-                messages.error(self.request, e.message)
+                messages.error(self.request, str(e))
                 return redirect('wl_applications:new_application')
 
             application.licence_type = WildlifeLicenceType.objects.get(id=self.args[0])
@@ -277,7 +277,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         if application.licence_type.identification_required and application.applicant.identification is None:
@@ -289,7 +289,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         kwargs['application'] = application
@@ -302,7 +302,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         if application.applicant.identification is not None:
@@ -329,7 +329,7 @@ class CheckSeniorCardView(LoginRequiredMixin, ApplicationEntryBaseView, FormView
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         if application.licence_type.senior_applicable \
@@ -347,7 +347,7 @@ class CheckSeniorCardView(LoginRequiredMixin, ApplicationEntryBaseView, FormView
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         if application.applicant.senior_card is not None:
@@ -366,7 +366,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         kwargs['application'] = application
@@ -395,7 +395,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
         try:
             application = utils.get_session_application(request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         if 'select' in request.POST:
@@ -440,7 +440,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         if application.review_status == 'awaiting_amendments':
@@ -458,7 +458,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         application.data = utils.create_data_from_form(application.licence_type.application_schema,
@@ -511,7 +511,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         kwargs['is_payment_required'] = not is_licence_free(generate_product_title(application)) and \
@@ -535,7 +535,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         application.correctness_disclaimer = request.POST.get('correctnessDisclaimer', '') == 'on'
@@ -578,7 +578,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
         try:
             application = utils.get_session_application(self.request.session)
         except Exception as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, str(e))
             return redirect('wl_applications:new_application')
 
         # update invoice reference if received, else keep the same

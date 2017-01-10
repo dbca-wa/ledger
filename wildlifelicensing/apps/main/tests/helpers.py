@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import os
+import datetime
 import re
 
 from django.contrib.auth.models import Group
@@ -22,7 +23,7 @@ class TestData(object):
         'email': 'customer@test.com',
         'first_name': 'Homer',
         'last_name': 'Cust',
-        'dob': '1989-08-12',
+        'dob': datetime.date(1989, 8, 12),
     }
     DEFAULT_PROFILE = {
         'email': 'customer@test.com',
@@ -36,13 +37,13 @@ class TestData(object):
         'email': 'officer@test.com',
         'first_name': 'Offy',
         'last_name': 'Sir',
-        'dob': '1979-12-13',
+        'dob': datetime.date(1979, 12, 13),
     }
     DEFAULT_ASSESSOR = {
         'email': 'assessor@test.com',
         'first_name': 'Assess',
         'last_name': 'Ore',
-        'dob': '1979-10-05',
+        'dob': datetime.date(1979, 10, 5),
     }
     DEFAULT_ASSESSOR_GROUP = {
         'name': 'ass group',
@@ -96,8 +97,8 @@ def add_to_group(user, group_name):
     return user
 
 
-def get_or_create_user(email, defaults):
-    user, created = EmailUser.objects.get_or_create(defaults=defaults, email=email)
+def get_or_create_user(params):
+    user, created = EmailUser.objects.get_or_create(**params)
     return user, created
 
 
@@ -110,7 +111,7 @@ def create_random_customer():
 
 
 def get_or_create_default_customer(include_default_profile=False):
-    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER['email'], TestData.DEFAULT_CUSTOMER)
+    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER)
 
     if include_default_profile:
         address = Address.objects.create(user=user, **TestData.DEFAULT_ADDRESS)
@@ -121,14 +122,14 @@ def get_or_create_default_customer(include_default_profile=False):
 
 
 def get_or_create_default_officer():
-    user, created = get_or_create_user(TestData.DEFAULT_OFFICER['email'], TestData.DEFAULT_OFFICER)
+    user, created = get_or_create_user(TestData.DEFAULT_OFFICER)
     if created:
         add_to_group(user, 'Officers')
     return user
 
 
 def get_or_create_api_user():
-    user, created = get_or_create_user(TestData.DEFAULT_API_USER['email'], TestData.DEFAULT_API_USER)
+    user, created = get_or_create_user(TestData.DEFAULT_API_USER)
     if created:
         add_to_group(user, 'API')
     return user
@@ -145,7 +146,7 @@ def create_licence(holder, issuer, product_title='regulation-17'):
 
 
 def get_or_create_default_assessor():
-    user, created = get_or_create_user(TestData.DEFAULT_ASSESSOR['email'], TestData.DEFAULT_ASSESSOR)
+    user, created = get_or_create_user(TestData.DEFAULT_ASSESSOR)
     if created:
         add_to_group(user, 'Assessors')
     return user
