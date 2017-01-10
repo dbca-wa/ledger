@@ -1,5 +1,6 @@
 {% extends 'ps/booking/base.html' %}
 {% load static %}
+{% load forms %}
 {% block extra_css %}
     {{ block.super }}
     <link href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet"/>
@@ -45,7 +46,7 @@
                                         <label class="col-md-2 control-label pull-left required"  for="Dates">Dates: </label>
                                         <div class="col-md-4">
                                             <div class="input-group date" id="dateArrival">
-                                                <input type="text" class="form-control" name="arrival" placeholder="Arrival"  >
+                                                {{form.arrival|class:'form-control'}}
                                                 <span class="input-group-addon">
                                                     <span class="glyphicon glyphicon-calendar"></span>
                                                 </span>
@@ -53,7 +54,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="input-group date" id="dateDepature">
-                                                <input type="text" class="form-control" name="depature" placeholder="Depature" >
+                                                {{form.depature|class:'form-control'}}
                                                 <span class="input-group-addon">
                                                     <span class="glyphicon glyphicon-calendar"></span>
                                                 </span>
@@ -138,11 +139,8 @@
                                 <div class="row">
                                   <div class="col-md-6">
                                       <div class="form-group">
-                                        <label for="Campsite" class="required">Campsite</label>
-                                        <select class="form-control" name="campsite" >
-                                            <option value=""></option>
-                                            <option ></option>
-                                        </select>
+                                          {{form.campsite.label_tag}}
+                                          {{ form.campsite|class:'form-control'}}
                                       </div>
                                   </div>
                                 </div>
@@ -178,56 +176,56 @@
                     <div class="row">
                       <div class="col-md-3">
                           <div class="form-group">
-                            <label for="Email" class="required">Email</label>
-                            <input type="text" name="email" class="form-control" >
+                            {{form.email.label_tag}}
+                            {{ form.email|class:'form-control'}}
                           </div>
                       </div>
                       <div class="col-md-3" >
                           <div class="form-group">
-                            <label for="Confirm Email" class="required">Confirm Email</label>
-                            <input type="text" name="confirm_email" class="form-control">
+                              {{form.confirmEmail.label_tag}}
+                              {{ form.confirmEmail|class:'form-control'}}
                           </div>
                       </div>
                     </div>
                     <div class="row">
                       <div class="col-md-3">
                           <div class="form-group">
-                            <label for="First Name" class="required">First Name</label>
-                            <input type="text" name="firstname" class="form-control" >
+                            {{form.firstName.label_tag}}
+                            {{ form.firstName|class:'form-control'}}
                           </div>
                       </div>
                       <div class="col-md-3">
                           <div class="form-group">
-                            <label for="Surname" class="required">Surname</label>
-                            <input type="text" name="surname" class="form-control" >
-                          </div>
-                      </div>
-                    </div>
-                    <div class="row">
-                      <div class="col-md-3">
-                          <div class="form-group">
-                            <label for="Postcode" class="required">Postcode</label>
-                            <input type="text" name="postcode" class="form-control" >
-                          </div>
-                      </div>
-                      <div class="col-md-3">
-                          <div class="form-group">
-                            <label for="Country" class="required">Country</label>
-                            <input type="text" name="country" class="form-control"  >
+                              {{form.surname.label_tag}}
+                              {{ form.surname|class:'form-control'}}
                           </div>
                       </div>
                     </div>
                     <div class="row">
                       <div class="col-md-3">
                           <div class="form-group">
-                            <label for="Phone" class="required">Phone <span class="text-muted">(mobile prefered)</span></label>
-                            <input type="text" name="phone" class="form-control" >
+                              {{form.postcode.label_tag}}
+                              {{ form.postcode|class:'form-control'}}
                           </div>
                       </div>
                       <div class="col-md-3">
                           <div class="form-group">
-                            <label for="Vehicle Registration">Vehicle Registration</label>
-                            <input type="text" name="vehicle" class="form-control" >
+                              {{form.country.label_tag}}
+                              {{ form.country|class:'form-control'}}
+                          </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              {{form.phone.label_tag}}
+                              {{ form.phone|class:'form-control'}}
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              {{form.vehicleRego.label_tag}}
+                              {{ form.vehicleRego|class:'form-control'}}
                           </div>
                       </div>
                     </div>
