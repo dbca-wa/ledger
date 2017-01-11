@@ -21,7 +21,7 @@
 {% endblock %}
 {% block content %}
 <div id="addBooking">
-    <form name="bookingForm">
+    <form name="addBookingForm" @submit.prevent="validate()" novalidate>
         <div class="row">
             <div class="col-lg-12">
                 <div class="well">
@@ -35,7 +35,7 @@
                                   <strong >$12.00</strong>
                                   <br> <span class="text-muted">Per adult per night</span>
                               </p>
-                              <p v-else>
+                              <p>
                                   Select campsite for pricing details
                               </p>
                         </div>
@@ -189,7 +189,7 @@
                             <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.Park entry fee(where applicable) not included.)</span></label>
                             <div class="input-group">
                               <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
-                              <input type="text" class="form-control" :placeholder="0|formatMoney(2)" :value="booking.price|formatMoney(2)" readonly="true">
+                              <input type="text" class="form-control" :placeholder="0|formatMoney(2)" value="12" readonly="true">
                             </div>
                           </div>
                       </div>
@@ -201,7 +201,7 @@
                             </p>
                         </div>
                         <div class="col-md-6">
-                          <button type="button" class="btn btn-primary btn-lg pull-right">Pay Now</button>
+                          <button type="submit" class="btn btn-primary btn-lg pull-right">Pay Now</button>
                         </div>
                     </div>
                 </div>
@@ -213,9 +213,55 @@
 
 {% block custom_js %}
 <script src="//static.dpaw.wa.gov.au/static/libs/vue/2.1.6/vue.js"></script>
-<script src="//static.dpaw.wa.gov.au/static/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script type="text/javascript">
-    $('.dropdown-toggle').dropdown();
+    new Vue({
+        el: '#addBooking',
+        filters:{
+            formatMoney:function(n,c, d, t){
+                c = isNaN(c = Math.abs(c)) ? 2 : c;
+                d = d == undefined ? "." : d;
+                t = t == undefined ? "," : t;
+                var s = n < 0 ? "-" : "";
+                var i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c)));
+                var j = (j = i.length) > 3 ? j % 3 : 0;
+               return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+             }
+        },
+        methods:{
+            validate:function (e) {
+                var isValid = true;
+                var form = document.forms.addBookingForm;
+                var fields = $(form).find(':input');
+                $('.tooltip-err').tooltip("destroy");
+                $.each(fields, function(i, field) {
+                    $(field).removeClass('tooltip-err');
+                    $(field).closest('.form-group').removeClass('has-error');
+                    if ($(field).attr('required') == 'required' || $(field).attr('required') == 'true') {
+                        var inputStr = $(field).val();
+                        if (inputStr == "" || inputStr == null) {
+                             var errMsg = $(field).attr('data-error-msg') ? $(field).attr('data-error-msg') : "Field is required";
+                             $(field).closest('.form-group').addClass('has-error');
+                               $(field).focus();
+                               $(field).select();
+                               $(field).addClass('tooltip-err');
+                               $(field).tooltip()
+                                   .attr("data-original-title", errMsg)
+                             isValid = false;
+                         }
+                    }
+                });
+                console.log(isValid);
+                if (isValid) {
+                    form.submit();
+                }
+            }
+        },
+        mounted:function () {
+
+        }
+    });
 </script>
 {% endblock %}
