@@ -166,10 +166,10 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 
     # cannot use licence get_title_with_variants because licence isn't saved yet so can't get variants
     if application.variants.exists():
-        title = '{} ({})'.format(application.licence_type.name, ' / '.join(application.variants.all().
+        title = '{} ({})'.format(application.licence_type.name.encode('UTF-8'), ' / '.join(application.variants.all().
                                                                            values_list('name', flat=True)))
     else:
-        title = licence.licence_type.name
+        title = licence.licence_type.name.encode('UTF-8')
 
     elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     elements.append(Paragraph(licence.licence_type.statement, styles['InfoTitleLargeLeft']))
@@ -440,7 +440,7 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
     elements.append(Spacer(1, LETTER_ADDRESS_BUFFER_HEIGHT))
 
-    elements += _create_letter_paragraph('{}'.format(licence.licence_type.name), style='LetterBoldLeft')
+    elements += _create_letter_paragraph('{}'.format(licence.licence_type.name.encode('UTF-8')), style='LetterBoldLeft')
 
     elements += _create_letter_paragraph('Please find the licence attached.')
 
@@ -473,7 +473,7 @@ def _create_licence_renewal_elements(licence):
 
     licence_renewal_elements += _create_letter_paragraph('This is a reminder that your licence:')
 
-    licence_renewal_elements += _create_letter_paragraph('{} <{}>'.format(licence.licence_type.name,
+    licence_renewal_elements += _create_letter_paragraph('{} <{}>'.format(licence.licence_type.name.encode('UTF-8'),
                                                                           licence.reference),
                                                          style='LetterBoldLeft')
 
