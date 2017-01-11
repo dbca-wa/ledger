@@ -49,7 +49,7 @@
 {% block intro_text %}
     <p>
         The Wildlife Licensing System utilises the concept of “profiles” to allow users to hold licences under different circumstances,
-        rather than registering numerous accounts. Each profile can have a different email addresses, postal address and affiliation details.
+        rather than registering numerous accounts. Each profile can have a different email address, postal address and affiliation details.
     </p>
     <p>
         For example, a registered user may have a “Consultant” profile for work/employment purposes, a “Friends of”
@@ -105,12 +105,6 @@
             <div class="col-md-12">
                 <h2>Create Profile</h2>
                 <hr>
-                <p>
-                    The Wildlife Licensing system utilises the concept of profiles to allow users to apply for a licence under different circumstances, such holding a licence
-                    for personal, commercial or research purposes. You must create at least one profile in order to apply for a licence. When applying for subsequent licences, you
-                    will have the option to create or select alternative profiles. At any time, you can create and edit profiles by selecting Manage Profiles from the Options menu
-                    on the menu bar.
-                </p>
                 <form method="post">
                     {% csrf_token %}
                     {% bootstrap_form profile_creation_form %}

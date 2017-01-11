@@ -148,7 +148,13 @@
         <div class="form-group clearfix">
             <div class="row">
                 <div class="col-sm-3 col-sm-offset-9">
-                     <button id="place-order" formnovalidate type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">{% trans "Pay" %}</button>
+                     <button id="place-order" formnovalidate type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">
+                         {% if payment_method == 'card' %}
+                            {% trans "Pay" %}
+                         {% else %}
+                            {% trans "Continue" %}
+                         {% endif %}
+                     </button>
                 </div>
             </div>
         </div>
