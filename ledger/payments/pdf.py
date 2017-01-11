@@ -242,7 +242,7 @@ def _create_invoice(invoice_buffer, invoice):
         data.append(
             [
                 val,
-                item.description,
+                Paragraph(item.description, styles['Normal']),
                 item.quantity,
                 '${}'.format(item.line_price_before_discounts_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
