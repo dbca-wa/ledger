@@ -8,26 +8,32 @@
         <div class="bottom-buffer">
             <h2>Welcome to the Wildlife Licensing Online Portal</h2>
             <p>
-                On this site you will be able to apply online for a wildlife licence, manage your current licences and
-                submit returns.
+                On this site you can apply online for specific wildlife licence types and manage your current licences and returns.
+            </p>
+            <p>
+                All correspondence regarding your applications, licences and returns and any other information or prompts will be
+                sent to the email address that you have used to log into this system.
+                <strong>Please remember to check this email regularly.</strong>
+            </p>
+            <p>
+                <a class="btn btn-primary" href="{% url 'wl_applications:new_application' %}">Apply for a new wildlife licence online</a>
+            </p>
+            <h4>Applications</h4>
+            <p>
+                The <a href="#applications">“Applications” table</a> below displays your pending applications. It also displays
+                any draft applications that you have saved and not yet submitted.
             </p>
             <h4>Licences</h4>
             <p>
-                Licences can be obtained by following the application process and receiving approval from a licensing officer.
-                You may apply for as many licences as required. Once you've applied, the status of your applications will be
-                shown in the <a href="#applications">Applications table</a> below. To begin the process, click the link below.
+                As you begin using the online system, a summary of your current and past licences will be shown in the <a href="#licences">“Licences” table</a> below.
             </p>
             <p>
-                <a href="{% url 'wl_applications:new_application' %}">Apply for a new wildlife licence online</a>
-            </p>
-            <p>
-                Once your licence has been approved, you will be notified via email with your licence attached. A summary of all you current
-                and past licences is shown in the <a href="#licences">Licences table</a> below.
+                Options in the “action” column for each licence allow you to apply to amend licences or have them reissued.
             </p>
             <h4>Returns</h4>
             <p>
-                Depending on the type of licence you hold, you may be required to submit returns on a regular basis. These are accessible
-                in the <a href="#returns">Returns table</a> below. The table will contain any past returns submitted as well as the next return due.
+                Depending on the types of licences you hold, you may be required to submit returns on a regular basis. These are accessible 
+                in the <a href="#returns">“Returns” table</a> below. The table will contain any past returns submitted as well as returns due or overdue.
             </p>
         </div>
     </div>
