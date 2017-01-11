@@ -90,7 +90,7 @@ class Remittance(Flowable):
         dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO_SM)
 
         dpaw_header_logo_size = dpaw_header_logo.getSize()
-        canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - (dpaw_header_logo_size[1]/1.8),height=dpaw_header_logo_size[1]/1.8, mask='auto', width=dpaw_header_logo_size[0]/1.9)
+        canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - (dpaw_header_logo_size[1]/1.8),height=dpaw_header_logo_size[1]/1.8, mask='auto', width=dpaw_header_logo_size[0]/1.8)
         
         current_y = -20
         canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
@@ -180,7 +180,7 @@ def _create_header(canvas, doc, draw_page_number=True):
 
     dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO)
     dpaw_header_logo_size = dpaw_header_logo.getSize()
-    canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]-250, height=dpaw_header_logo_size[1]/2, mask='auto')
+    canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]/2, height=dpaw_header_logo_size[1]/2, mask='auto')
 
     current_y -= 60
     canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'TAX INVOICE')
@@ -278,9 +278,10 @@ def _create_invoice(invoice_buffer, invoice):
             style=invoice_table_style,
             hAlign='LEFT'
         )
-    t._argW[1] = 2.3 * inch
-    for x in range (2,6):
-        t._argW[x] = 1.2 * inch
+    t._argW[1] = 3.4 * inch
+    t._argW[2] = 0.7 * inch
+    for x in range (3,6):
+        t._argW[x] = 1.0 * inch
     elements.append(t)
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     # /Products Table
