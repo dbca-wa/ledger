@@ -8,6 +8,7 @@ import copy
 from dateutil.parser import parse as date_parse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.models.query import EmptyQuerySet
@@ -89,6 +90,10 @@ class DashBoardRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
+            if (not self.request.user.first_name) or (not self.request.user.last_name) or (not self.request.user.dob):
+                messages.info(self.request, 'Welcome! As this is your first time using the website, please enter your full name and date of birth.')
+                return redirect('wl_main:edit_account')
+
             if is_officer(self.request.user):
                 return redirect('wl_dashboard:tree_officer')
             elif is_assessor(self.request.user):

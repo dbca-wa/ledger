@@ -178,8 +178,8 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         emailuser = get_object_or_404(EmailUser, pk=request.user.id)
         # if user doesn't choose a identification, display a warning message
-        if not emailuser.identification:
-            messages.warning(request, "Please upload your identification.")
+        #if not emailuser.identification:
+        #    messages.warning(request, "Please upload your identification.")
 
         return render(request, self.template_name, {'emailuser_form': EmailUserForm(instance=emailuser),})
 
@@ -199,6 +199,7 @@ class EditAccountView(CustomerRequiredMixin, TemplateView):
                 return redirect(self.identification_url)
             else:
                 messages.success(request, "User account was saved.")
+                return redirect('wl_home')
 
         return render(request, self.template_name, {'emailuser_form': emailuser_form,})
 
