@@ -13,7 +13,7 @@ is due to expire on {{ licence.end_date|date:'d/m/Y' }}.
 
 Please note that if you have oustanding returns, these are required to be submitted before the licence can be renewed.
 
-If you have any queries, please contact the wildlife licencing section on 9219 9831 or wildlifelicensing@dpaw.wa.gov.au.
+If you have any queries, please contact the Wildlife Licencing Section on 9219 9831 or wildlifelicensing@dpaw.wa.gov.au.
 {% endblock %}
 
 {% block signature %}

@@ -242,7 +242,7 @@ LOGGING = {
             'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
             'propagate': True
         },
-        'django.request': {
+        'django': {
             'handlers': ['file'],
             'level': 'INFO',
             'propagate': False,
@@ -251,6 +251,10 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
+#        'oscar.checkout': {
+#            'handlers': ['file'],
+#            'level': 'INFO'
+#        }
     }
 }
 

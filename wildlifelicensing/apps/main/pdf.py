@@ -456,7 +456,7 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
 
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    elements += _create_letter_paragraph('If you have any queries, please contact the Wildlife Licensing section '
+    elements += _create_letter_paragraph('If you have any queries, please contact the Wildlife Licensing Section '
                                          'on 9219 9831.')
 
     elements += _create_letter_signature()
@@ -485,7 +485,7 @@ def _create_licence_renewal_elements(licence):
                                                          'renewed.')
 
     licence_renewal_elements += _create_letter_paragraph('If you have any queries, please contact the Wildlife '
-                                                         'Licensing section on 9219 9831.')
+                                                         'Licensing Section on 9219 9831.')
 
     return licence_renewal_elements
 
