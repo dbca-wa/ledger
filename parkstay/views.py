@@ -72,9 +72,9 @@ class DashboardView(UserPassesTestMixin, TemplateView):
 
 class MakeBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/make_booking.html'
-    form_class = MakeBookingsForm
     def get(self,request,*args,**kwargs):
-        form = self.form_class
+        # TODO: find campsites related to campground
+        form = MakeBookingsForm(args,campsites =[('exp','example')])
         return render(request, self.template_name, {'form': form})
 
 class MyBookingsView(LoginRequiredMixin, TemplateView):
