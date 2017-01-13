@@ -1,5 +1,5 @@
 Django<1.11.0
-git+https://github.com/parksandwildlife/dpaw-utils.git@0.3a13#egg=dpaw-utils
+git+https://github.com/parksandwildlife/dpaw-utils.git@0.3a14#egg=dpaw-utils
 git+https://github.com/django-oscar/django-oscar.git@feature/django-110#egg=django-oscar
 social-auth-app-django==0.1.0
 coverage==4.3.1
