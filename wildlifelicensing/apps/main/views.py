@@ -170,7 +170,7 @@ class IdentificationView(LoginRequiredMixin, TemplateView):
         return self.get(request, **ctx)
 
 
-class EditAccountView(CustomerRequiredMixin, TemplateView):
+class EditAccountView(LoginRequiredMixin, TemplateView):
     template_name = 'wl/edit_account.html'
     login_url = '/'
     identification_url = reverse_lazy('wl_main:identification')
