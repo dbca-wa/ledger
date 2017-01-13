@@ -1,0 +1,267 @@
+{% extends 'ps/booking/base.html' %}
+{% load static %}
+{% load forms %}
+{% block extra_css %}
+    {{ block.super }}
+    <link href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet"/>
+    <style>
+        #guest-dropdown{
+            min-width:200px;
+            padding: 5px;
+        }
+        #guest-dropdown li{
+            padding: 5px;
+        }
+        .radio-title{
+            font-weight: bold;
+            font-size: 18px;
+
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<div id="addBooking">
+    <form name="addBookingForm" @submit.prevent="validate()" novalidate>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="well">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h3 class="text-primary">Nanga Brook</h3>
+                        </div>
+                        <div class="col-md-4">
+                              <img src="https://placeholdit.imgix.net/~text?txtsize=33&txt=Campground&w=250&h=250" alt="campground"  width="250" class="img-thumbnail img-responsive">
+                              <p class="pricing" >
+                                  <strong >$12.00</strong>
+                                  <br> <span class="text-muted">Per adult per night</span>
+                              </p>
+                              <p>
+                                  Select campsite for pricing details
+                              </p>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row form-horizontal">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="col-xs-2 control-label pull-left required"  for="Dates">Dates: </label>
+                                        <div class="col-xs-4">
+                                            <div class="input-group date" id="dateArrival">
+                                                {{form.arrival|class:'form-control'}}
+                                                <span class="input-group-addon">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-4">
+                                            <div class="input-group date" id="dateDepature">
+                                                {{form.depature|class:'form-control'}}
+                                                <span class="input-group-addon">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-xs-2 control-label pull-left required"  for="Campground">Guests: </label>
+                                        <div class="col-xs-8">
+                                                {{form.guests|class:'form-control'}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="well">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h3 class="text-primary">Camp Site</h3>
+                            <div class="">
+                                <p>
+                                    Click <a href="#">here</a> to open the map of the campground to help you select the preferred campsite
+                                </p>
+                                <div class="row">
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                          {{form.campsite.label_tag}}
+                                          {{ form.campsite|class:'form-control'}}
+                                      </div>
+                                  </div>
+                                </div>
+                            </div>
+                            <div class="">
+                                <div class="radio">
+                                  <label>
+                                    <input type="radio" name="campsiteTypeOptions" value="option1" checked>
+                                    <span class="radio-title">Campsite Type 1</span>
+                                  </label>
+                                  <p class="help-block">Description of campsite Type</p>
+                                </div>
+                                <div class="radio">
+                                  <label>
+                                    <input type="radio" name="campsiteTypeOptions" value="option1" >
+                                    <span class="radio-title">Campsite Type 2</span>
+                                  </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="well">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h3 class="text-primary">Personal Details</h3>
+                        </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-3">
+                          <div class="form-group">
+                            {{form.email.label_tag}}
+                            {{ form.email|class:'form-control'}}
+                          </div>
+                      </div>
+                      <div class="col-md-3" >
+                          <div class="form-group">
+                              {{form.confirmEmail.label_tag}}
+                              {{ form.confirmEmail|class:'form-control'}}
+                          </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-3">
+                          <div class="form-group">
+                            {{form.firstName.label_tag}}
+                            {{ form.firstName|class:'form-control'}}
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              {{form.surname.label_tag}}
+                              {{ form.surname|class:'form-control'}}
+                          </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              {{form.postcode.label_tag}}
+                              {{ form.postcode|class:'form-control'}}
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              {{form.country.label_tag}}
+                              {{ form.country|class:'form-control'}}
+                          </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              {{form.phone.label_tag}}
+                              {{ form.phone|class:'form-control'}}
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              {{form.vehicleRego.label_tag}}
+                              {{ form.vehicleRego|class:'form-control'}}
+                          </div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="well">
+                    <div class="row">
+                      <div class="col-md-6">
+                          <div class="form-group">
+                            <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.Park entry fee(where applicable) not included.)</span></label>
+                            <div class="input-group">
+                              <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
+                              <input type="text" class="form-control" :placeholder="0|formatMoney(2)" value="12" readonly="true">
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="text-muted">
+                                Payments will be recorded against the booking once the booking is completed and the payment is received.
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                          <button type="submit" class="btn btn-primary btn-lg pull-right">Pay Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script src="//static.dpaw.wa.gov.au/static/libs/vue/2.1.6/vue.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+    new Vue({
+        el: '#addBooking',
+        filters:{
+            formatMoney:function(n,c, d, t){
+                c = isNaN(c = Math.abs(c)) ? 2 : c;
+                d = d == undefined ? "." : d;
+                t = t == undefined ? "," : t;
+                var s = n < 0 ? "-" : "";
+                var i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c)));
+                var j = (j = i.length) > 3 ? j % 3 : 0;
+               return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+             }
+        },
+        methods:{
+            validate:function (e) {
+                var isValid = true;
+                var form = document.forms.addBookingForm;
+                var fields = $(form).find(':input');
+                $('.tooltip-err').tooltip("destroy");
+                $.each(fields, function(i, field) {
+                    $(field).removeClass('tooltip-err');
+                    $(field).closest('.form-group').removeClass('has-error');
+                    if ($(field).attr('required') == 'required' || $(field).attr('required') == 'true') {
+                        var inputStr = $(field).val();
+                        if (inputStr == "" || inputStr == null) {
+                             var errMsg = $(field).attr('data-error-msg') ? $(field).attr('data-error-msg') : "Field is required";
+                             $(field).closest('.form-group').addClass('has-error');
+                               $(field).focus();
+                               $(field).select();
+                               $(field).addClass('tooltip-err');
+                               $(field).tooltip()
+                                   .attr("data-original-title", errMsg)
+                             isValid = false;
+                         }
+                    }
+                });
+                console.log(isValid);
+                if (isValid) {
+                    form.submit();
+                }
+            }
+        },
+        mounted:function () {
+
+        }
+    });
+</script>
+{% endblock %}

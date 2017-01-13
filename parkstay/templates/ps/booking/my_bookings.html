@@ -1,0 +1,83 @@
+{% extends 'ps/booking/base.html' %}
+{% load static %}
+{% block extra_css %}
+    {{ block.super }}
+    <link href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet"/>
+    <style>
+        .bold{
+            font-weight: bold;
+        }
+        .table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th{
+            border:none;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="row" style="margin-top:20px;">
+        <div class="col-sm-12">
+            <div class="well">
+              <div class="col-sm-12">
+                <h3 class="text-primary">Martin Tank</h3>
+              </div>
+              <div class="row">
+                  <div class="col-sm-4">
+                      <img src="https://placeholdit.imgix.net/~text?txtsize=33&txt=Campground&w=250&h=250" class="img-thumbnail img-responsive" height="200" alt="">
+                  </div>
+                  <div class="col-sm-8">
+                      <div class="row">
+                          <div class="col-sm-12">
+                          <table class="table">
+                              <tbody>
+                                  <tr>
+                                      <td class="bold" >Booking Confirmation number</td>
+                                      <td >ps1</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="bold" >Number of guests</td>
+                                      <td></td>
+                                  </tr>
+                                  <tr>
+                                      <td class="bold" >Arrivale date</td>
+                                      <td></td>
+                                  </tr>
+                                  <tr>
+                                      <td class="bold" >Check out date</td>
+                                      <td></td>
+                                  </tr>
+                                  <tr>
+                                      <td class="bold" >Site</td>
+                                      <td></td>
+                                  </tr>
+                                  <tr>
+                                      <td class="bold" >Payment status</td>
+                                      <td></td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="row" style="margin-top:20px;">
+                  <div class="col-sm-offset-4">
+                      <div class="col-xs-6">
+                          <p class="bold">Printed confirmation must be brought along to campground</p>
+                      </div>
+                      <div class="col-xs-6">
+                          <div class="pull-right">
+                              <a href="#" class="btn btn-info btn-sm" >Print</a>
+                              <a href="#" class="btn btn-info btn-sm" >Cancel</a>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+<script type="text/javascript">
+
+</script>
+{% endblock %}
