@@ -20,8 +20,13 @@ class MakeBookingsForm(forms.Form):
     country = forms.ChoiceField(label="Country",widget=forms.TextInput(attrs={'required':True}))
 
     def __init__(self, *args, **kwargs):
+        campsites = None
+        if len(kwargs) > 0:
+            campsites = kwargs['campsites']
+            kwargs.pop('campsites')
         super(MakeBookingsForm, self).__init__(*args, **kwargs)
         self.fields['arrival'].widget.attrs['readonly'] = True
         self.fields['depature'].widget.attrs['readonly'] = True
         self.fields['guests'].widget.attrs['readonly'] = True
         self.fields['firstName'].widget.attrs['required'] = True
+        self.fields['campsite'].choices = campsites

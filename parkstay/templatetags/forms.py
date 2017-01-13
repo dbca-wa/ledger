@@ -10,5 +10,5 @@ def addClass(value, arg):
         if arg not in css_classes:
             css_classes = '%s %s' % (css_classes, arg)
     else:
-        css_classes = '%s' % (arg)        
+        css_classes = '%s' % (arg)
     return value.as_widget(attrs={'class': css_classes})
