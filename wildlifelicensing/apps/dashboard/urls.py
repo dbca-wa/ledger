@@ -9,7 +9,7 @@ urlpatterns = [
     url(r'^dashboard/tables/assessor/?$', assessor.TableAssessorView.as_view(), name='tables_assessor'),
 
     # Applications
-    url(r'^dashboard/tables/applications/officer/?$', officer.TableApplicationsOfficerView.as_view(),
+    url(r'^dashboard/tables/applications/officer/?$', officer.TablesApplicationsOfficerView.as_view(),
         name='tables_applications_officer'),
     url(r'^dashboard/data/applications/officer/?$', officer.DataTableApplicationsOfficerView.as_view(),
         name='data_application_officer'),
@@ -23,7 +23,7 @@ urlpatterns = [
         name='data_application_assessor'),
 
     # Licences
-    url(r'^dashboard/tables/licences/officer/?$', officer.TableLicencesOfficerView.as_view(),
+    url(r'^dashboard/tables/licences/officer/?$', officer.TablesLicencesOfficerView.as_view(),
         name='tables_licences_officer'),
     url(r'^dashboard/data/licences/officer/?$', officer.DataTableLicencesOfficerView.as_view(),
         name='data_licences_officer'),
@@ -33,7 +33,7 @@ urlpatterns = [
         name='bulk_licence_renewal_pdf'),
 
     # Returns
-    url(r'^dashboard/tables/returns/officer/?$', officer.TableReturnsOfficerView.as_view(),
+    url(r'^dashboard/tables/returns/officer/?$', officer.TablesReturnsOfficerView.as_view(),
         name='tables_returns_officer'),
     url(r'^dashboard/data/returns/officer/?$', officer.DataTableReturnsOfficerView.as_view(),
         name='data_returns_officer'),

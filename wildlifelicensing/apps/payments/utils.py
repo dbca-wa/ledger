@@ -28,43 +28,46 @@ def to_json(data):
     return json.dumps(data, cls=WildlifeLicensingJSONEncoder)
 
 
-def generate_product_code_variants(licence_type):
-    def __append_variant_codes(product_code, variant_group, current_variant_codes):
+def generate_product_title_variants(licence_type):
+    def __append_variant_codes(product_title, variant_group, current_variant_codes):
         if variant_group is None:
-            variant_codes.append(product_code)
+            variant_codes.append(product_title)
             return
 
         for variant in variant_group.variants.all():
-            variant_code = '{}_{}'.format(product_code, variant.product_code)
+            variant_code = '{} {}'.format(product_title, variant.product_title)
 
             __append_variant_codes(variant_code, variant_group.child, variant_codes)
 
     variant_codes = []
 
-    __append_variant_codes(licence_type.product_code, licence_type.variant_group, variant_codes)
+    __append_variant_codes(licence_type.product_title, licence_type.variant_group, variant_codes)
 
     return variant_codes
 
 
-def generate_product_code(application):
-    product_code = application.licence_type.product_code
+def generate_product_title(application):
+    product_title = application.licence_type.product_title
 
     if application.variants.exists():
-        product_code += '_' + '_'.join(application.variants.through.objects.filter(application=application).
-                                       order_by('order').values_list('variant__product_code', flat=True))
+        product_title = '{} {}'.format(product_title,
+                                      ' '.join(application.variants.through.objects.filter(application=application).
+                                               order_by('order').values_list('variant__product_title', flat=True)))
 
-    return product_code
+    return product_title
 
 
-def get_product(product_code):
+def get_product(product_title):
     try:
-        return Product.objects.get(title=product_code)
+        return Product.objects.get(title=product_title)
     except Product.DoesNotExist:
+        return None
+    except Product.MultipleObjectsReturned:
         return None
 
 
-def is_licence_free(product_code):
-    product = get_product(product_code)
+def is_licence_free(product_title):
+    product = get_product(product_title)
 
     if product is None:
         return True
@@ -74,6 +77,19 @@ def is_licence_free(product_code):
     purchase_info = strategy.fetch_for_product(product=product)
 
     return purchase_info.price.effective_price == 0
+
+
+def get_licence_price(product_title):
+    product = get_product(product_title)
+
+    if product is None:
+        return 0.00
+
+    selector = Selector()
+    strategy = selector.strategy()
+    purchase_info = strategy.fetch_for_product(product=product)
+
+    return purchase_info.price.effective_price
 
 
 def get_application_payment_status(application):

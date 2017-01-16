@@ -1,25 +1,28 @@
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Q
 
 from wildlifelicensing.apps.applications.models import Assessment
 from wildlifelicensing.apps.dashboard.views import base
-from wildlifelicensing.apps.dashboard.views.officer import TableApplicationsOfficerView
 from wildlifelicensing.apps.main.helpers import render_user_name
 from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin, \
     AssessorRequiredMixin
 
 
-class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
+class TableAssessorView(AssessorRequiredMixin, base.TablesBaseView):
     """
     Same table as officer with limited filters
     """
     template_name = 'wl/dash_tables_assessor.html'
 
-    def _build_data(self):
-        data = super(TableAssessorView, self)._build_data()
-        data['applications']['columnDefinitions'] = [
+    STATUS_PENDING = 'pending'
+
+    applications_data_url_lazy = reverse_lazy('wl_dashboard:data_application_assessor')
+
+    @property
+    def applications_columns(self):
+        return [
             {
-                'title': 'Lodge Number'
+                'title': 'Lodgement Number'
             },
             {
                 'title': 'Licence Type'
@@ -42,12 +45,29 @@ class TableAssessorView(AssessorRequiredMixin, TableApplicationsOfficerView):
                 'orderable': False
             }
         ]
-        # override the status to have have the Assessment status instead of the application status
-        data['applications']['filters']['status']['values'] = \
-            [('all', 'All')] + [(v, l) for v, l in Assessment.STATUS_CHOICES]
-        # override the data url
-        data['applications']['ajax']['url'] = reverse('wl_dashboard:data_application_assessor')
-        return data
+
+    @property
+    def applications_table_options(self):
+        return {
+            'pageLength': 25,
+            'order': [[4, 'desc'], [0, 'desc']]
+        }
+
+    @property
+    def applications_data_url(self):
+        return str(self.applications_data_url_lazy)
+
+    @property
+    def applications_filters(self):
+        status_filter_values = [('all', 'All')] + [(v, l) for v, l in Assessment.STATUS_CHOICES]
+        return {
+            'licence_type': self.get_licence_types_values(),
+            'status': status_filter_values,
+        }
+
+    @property
+    def get_applications_session_data(self):
+        return DataTableApplicationAssessorView.get_session_data(self.request)
 
 
 class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.DataTableBaseView):

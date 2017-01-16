@@ -31,7 +31,7 @@ class TestViewAccess(TestCase):
 
         self.urls_post = [
             {
-                'url': reverse('wl_applications:create_condition'),
+                'url': reverse('wl_applications:create_condition', args=[self.application.pk]),
                 'data': {
                     'code': '123488374',
                     'text': 'condition text'
@@ -111,7 +111,7 @@ class TestViewAccess(TestCase):
         ]
         urls_post_forbidden = [
             {
-                'url': reverse('wl_applications:create_condition'),
+                'url': reverse('wl_applications:create_condition', args=[self.application.pk]),
                 'data': {
                     'code': '123488374',
                     'text': 'condition text'
@@ -181,7 +181,7 @@ class TestViewAccess(TestCase):
         ]
         urls_post_forbidden = [
             {
-                'url': reverse('wl_applications:create_condition'),
+                'url': reverse('wl_applications:create_condition', args=[self.application.pk]),
                 'data': {
                     'code': '123488374',
                     'text': 'condition text'

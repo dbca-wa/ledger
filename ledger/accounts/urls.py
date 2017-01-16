@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.contrib.auth import views as auth_views
 
 from ledger.accounts import views
@@ -8,7 +8,7 @@ api_patterns = [
     url(r'api/report/duplicate_identity$', UserReportView.as_view(),name='ledger-user-report'),
 ]
 
-urlpatterns = patterns('accounts',
+urlpatterns = [
     url(r'^$', views.home, name='home'),
     url(r'^done/$', views.done, name='done'),
     url(r'^validation-sent/$', views.validation_sent, name='validation_sent'),
@@ -16,4 +16,4 @@ urlpatterns = patterns('accounts',
     url(r'^logout/', views.logout, name='logout'),
     url(r'^firsttime/', views.first_time, name='first_time'),
     url(r'accounts/', include(api_patterns)),
-)
+]

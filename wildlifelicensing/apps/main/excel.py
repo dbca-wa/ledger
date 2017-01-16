@@ -3,6 +3,7 @@ from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
 
+from django.utils import six
 from django.utils.text import Truncator
 from django.http import HttpResponse
 
@@ -62,7 +63,7 @@ def is_blank_value(value):
 
 
 def is_empty_string(value):
-    return isinstance(value, basestring) and len(value.strip()) == 0
+    return isinstance(value, six.string_types) and len(value.strip()) == 0
 
 
 def is_cell_blank(cell):
@@ -74,7 +75,7 @@ def is_all_blanks(cells):
 
 
 def strip(value):
-    return value.strip() if isinstance(value, basestring) else value
+    return value.strip() if isinstance(value, six.string_types) else value
 
 
 def get_value_for_key(ws, key, direction='down'):

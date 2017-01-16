@@ -16,6 +16,10 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
 
         _initInputField(item, $itemContainer);
 
+        if(item.type === 'section' || item.type === 'group') {
+            _initCollapsible($itemContainer);
+        }
+
         // unset item name and value if they were set otherwise there may be unintended consequences if extra form fields are created dynamically
         item.name = item.name.slice(0, item.name.indexOf(suffix));
         item.value = undefined;
@@ -190,6 +194,44 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
     }
 
+    function _initCollapsible($itemContainer, removeExistingEvents) {
+        var $collapsible = $itemContainer.find('.children-anchor-point').first(),
+            $topLink = $collapsible.siblings('.collapse-link-top'),
+            $topLinkSpan = $topLink.find('span'),
+            $bottomLink = $collapsible.siblings('.collapse-link-bottom').first();
+
+        if(removeExistingEvents) {
+            $collapsible.off('hide.bs.collapse').off('show.bs.collapse').off('shown.bs.collapse');
+            $topLink.off('click');
+            if($bottomLink.length) {
+                $bottomLink.off('click');
+            }
+        }
+
+        $collapsible.on('hide.bs.collapse', function () {
+            $topLinkSpan.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+            if($bottomLink.length) {
+                $bottomLink.hide();
+            }
+        }).on('show.bs.collapse', function() {
+            $topLinkSpan.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+        }).on('shown.bs.collapse', function() {
+            if($bottomLink.length) {
+                $bottomLink.show();
+            };
+        });
+
+        $topLink.click(function() {
+            $collapsible.collapse('toggle');
+        });
+
+        if($bottomLink.length) {
+            $bottomLink.click(function() {
+                $collapsible.collapse('toggle');
+            });
+        }
+    }
+
     function _setupCopyRemoveEvents(item, itemSelector, suffix) {
         itemSelector.find('[id^="copy_' + item.name + '"]').first().click(function(e) {
             var itemCopy = itemSelector.clone(true, true),
@@ -241,9 +283,14 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
                 $(this).replaceWith(speciesClone);
             });
 
-            itemCopy.find('[id^="remove_' + item.name + '"]').removeClass('hidden');
+            itemCopy.find('[id^="copy_' + item.name + '"]').off('click');
+            itemCopy.find('[id^="remove_' + item.name + '"]').parent().removeClass('hidden');
             itemCopy.find('[id^="description_' + item.name + '"]').addClass('hidden');
+
             itemSelector.after(itemCopy);
+
+            _initCollapsible(itemCopy, true);
+
             groupInput.val(groupCount + 1);
             _setupCopyRemoveEvents(item, itemCopy, suffix);
         });

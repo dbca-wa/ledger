@@ -1,5 +1,6 @@
 import datetime
 import decimal
+from pytz import timezone
 from django.db import IntegrityError
 from django.utils.translation import ugettext_lazy as _
 from oscar.apps.payment.exceptions import UnableToTakePayment, InvalidGatewayRequestError
@@ -87,6 +88,8 @@ class Facade(object):
         txn = None
         if settlement_date:
             settlement_date=datetime.datetime.strptime(settlement_date, '%Y%m%d').date()
+        if processed:
+            processed=timezone('Australia/Sydney').localize(datetime.datetime.strptime(processed[:26], "%Y-%m-%dT%H:%M:%S.%f"))
         try:
             txn = BpointTransaction.objects.create(
                 action=action,

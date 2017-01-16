@@ -1,4 +1,4 @@
-define(['jQuery', 'bootstrap.treeView'], function ($) {
+define(['jQuery', 'js/wl.bootstrap-treeview'], function ($) {
     "use strict";
 
     function _convertToSlug(text) {

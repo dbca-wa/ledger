@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django_dynamic_fixture import get as get_ddf
-from ledger.accounts.models import EmailUser, Address
+from ledger.accounts.models import EmailUser, Address, Country
 
 
 class EmailUserTest(TestCase):
@@ -50,7 +50,8 @@ class AddressTest(TestCase):
 
     def setUp(self):
         super(AddressTest, self).setUp()
-        self.address1 = get_ddf(Address)
+        get_ddf(Country, iso_3166_1_a2='AU')
+        self.address1 = get_ddf(Address, country='AU')
 
     def test_prop_join_fields(self):
         """Test the Address join_fields property

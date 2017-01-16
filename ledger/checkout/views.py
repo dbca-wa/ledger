@@ -400,7 +400,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         except BpointToken.DoesNotExist:
                             raise ValueError('This stored card does not exist.')
                         if self.checkout_session.invoice_association():
-                            invoice.token = token.DVToken
+                            invoice.token = '{}|{}'.format(token.DVToken,token.expiry_date.strftime("%m%y"))
                             invoice.save()
                         else:
                             bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
