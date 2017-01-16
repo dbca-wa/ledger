@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic.base import View, TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
-
+from parkstay.forms import MakeBookingsForm
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -70,8 +70,15 @@ class DashboardView(UserPassesTestMixin, TemplateView):
         return is_officer(self.request.user)
 
 
+class MakeBookingsView(LoginRequiredMixin, TemplateView):
+    template_name = 'ps/booking/make_booking.html'
+    def get(self,request,*args,**kwargs):
+        # TODO: find campsites related to campground
+        form = MakeBookingsForm(args,campsites =[('exp','example')])
+        return render(request, self.template_name, {'form': form})
+
 class MyBookingsView(LoginRequiredMixin, TemplateView):
-    template_name = 'ps/booking/booking.html'
+    template_name = 'ps/booking/my_bookings.html'
 
 
 class ParkstayRoutingView(TemplateView):

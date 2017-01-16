@@ -40,7 +40,6 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.ParkstayRoutingView.as_view(), name='ps_home'),
-    url(r'^my_bookings/$', views.MyBookingsView.as_view(), name='my-bookings'),
     url(r'^campsites/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^campsite_classes/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),
@@ -49,7 +48,8 @@ urlpatterns = [
     url(r'^dashboard/bookings$', views.DashboardView.as_view(), name='dash-bookings'),
     url(r'^dashboard/bulkpricing$', views.DashboardView.as_view(), name='dash-bulkpricing'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
-    url(r'^booking/', views.MyBookingsView.as_view(), name='dash'),
+    url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
+    url(r'^mybooking/', views.MyBookingsView.as_view(), name='public_my_booking'),
     url(r'^map/', views.MapView.as_view(), name='map'),
 ] + ledger_patterns
 
