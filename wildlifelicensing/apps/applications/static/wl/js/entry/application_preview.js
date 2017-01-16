@@ -1,4 +1,38 @@
 define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'js/precompiled_handlebars_templates'], function($, Handlebars) {
+    function _setupDisclaimers(disclaimersSelector, lodgeSelector) {
+        var $disclaimers = $(disclaimersSelector),
+            $lodge = $(lodgeSelector),
+            $form = $lodge.parents('form'),
+            $buttonClicked;
+
+        if($lodge.hasClass('disabled')) {
+            $lodge.tooltip({});
+        }
+
+        // ensure form only submits when either approve (enterConditions) is enabled or decline is clicked
+        $(lodgeSelector).click(function() {
+            $buttonClicked = $(this);
+        });
+
+        $form.submit(function(e) {
+            if($buttonClicked.is($lodge) && $lodge.hasClass('disabled')) {
+                e.preventDefault();
+            }
+        });
+
+        // enable lodge button if the number of checked checkboxes is the same as the number of
+        // checkboxes in the dislaimer div (which is the parent of the disclaimers selector's elements)
+        $(disclaimersSelector).change(function(e) {
+            if($(disclaimersSelector).parent().find(':checked').length === $(disclaimersSelector).length) {
+                $lodge.removeClass('disabled');
+                $lodge.tooltip('destroy');
+            } else {
+                $lodge.addClass('disabled');
+                $lodge.tooltip({});
+            }
+        });
+    }
+
     function _layoutItem(item, isRepeat, itemData) {
         var itemContainer = $('<div>'),
             childrenAnchorPoint;
@@ -17,6 +51,7 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         if(item.type === 'section' || item.type === 'group') {
             item.isPreviewMode = true;
             itemContainer.append(Handlebars.templates[item.type](item));
+            _initCollapsible(itemContainer);
         } else if (item.type === 'radiobuttons' || item.type === 'select') {
             var isSpecified = false;
             itemContainer.append($('<label>').text(item.label));
@@ -65,7 +100,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         childrenAnchorPoint = _getCreateChildrenAnchorPoint(itemContainer);
 
         if(item.conditions !== undefined) {
-
             if(item.conditions !== undefined) {
                 $.each(item.conditions, function(condition, children) {
                     if(condition === itemData[item.name]) {
@@ -122,6 +156,36 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
         return $childrenAnchorPoint;
     }
 
+    function _initCollapsible($itemContainer) {
+        var $collapsible = $itemContainer.find('.children-anchor-point').first(),
+            $topLink = $collapsible.siblings('.collapse-link-top'),
+            $topLinkSpan = $topLink.find('span'),
+            $bottomLink = $collapsible.siblings('.collapse-link-bottom').first();
+
+        $collapsible.on('hide.bs.collapse', function () {
+            $topLinkSpan.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+            if($bottomLink.length) {
+                $bottomLink.hide();
+            }
+        }).on('show.bs.collapse', function() {
+            $topLinkSpan.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+        }).on('shown.bs.collapse', function() {
+            if($bottomLink.length) {
+                $bottomLink.show();
+            };
+        });
+
+        $topLink.click(function() {
+            $collapsible.collapse('toggle');
+        });
+
+        if($bottomLink.length) {
+            $bottomLink.click(function() {
+                $collapsible.collapse('toggle');
+            });
+        }
+    }
+
     return {
         layoutPreviewItems: function(containerSelector, formStructure, data, tempFilesUrl) {
             var container = $(containerSelector);
@@ -149,12 +213,6 @@ define(['jQuery', 'handlebars.runtime', 'bootstrap', 'js/handlebars_helpers', 'j
             $('body').scrollspy({ target: '#sectionList' });
             sectionList.affix({ offset: { top: sectionList.offset().top }});
         },
-        setupDisclaimer: function(disclaimersSelector, lodgeSelector) {
-            $(disclaimersSelector).change(function(e) {
-                // enable lodge button if the number of checked checkboxes is the same as the number of
-                // checkboxes in the dislaimer div (which is the parent of the disclaimers selector's elements)
-                $(lodgeSelector).attr('disabled', $(disclaimersSelector).parent().find(':checked').length !== $(disclaimersSelector).length);
-            });
-        }
+        setupDisclaimer: _setupDisclaimers
     };
 });

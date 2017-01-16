@@ -5,13 +5,14 @@ from django.shortcuts import get_object_or_404
 from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.payments import utils as payment_utils
-from wildlifelicensing.apps.applications.models import Application, Assessment, ApplicationLogEntry
+from wildlifelicensing.apps.applications.models import Application, Assessment, ApplicationLogEntry, \
+    ApplicationUserAction
 from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMixin, CanPerformAssessmentMixin
 from wildlifelicensing.apps.applications.utils import convert_documents_to_url, append_app_document_to_schema_data, \
     get_log_entry_to, format_application, format_assessment
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.main.models import Document
-from wildlifelicensing.apps.main.helpers import is_officer
+from wildlifelicensing.apps.main.helpers import is_officer, render_user_name
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
 from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
@@ -35,7 +36,8 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
         if is_officer(self.request.user):
             kwargs['customer'] = application.applicant
 
-            kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+            kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
+                                                               fromm=self.request.user.get_full_name())
         else:
             kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                           get_application_payment_status(application))
@@ -58,12 +60,14 @@ class ViewReadonlyOfficerView(UserCanViewApplicationMixin, TemplateView):
 
         kwargs['application'] = serialize(application, posthook=format_application)
 
-        kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
+        kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
+                                          posthook=format_assessment)
 
         kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                       get_application_payment_status(application))
 
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
+                                                           fromm=self.request.user.get_full_name())
 
         return super(ViewReadonlyOfficerView, self).get_context_data(**kwargs)
 
@@ -91,19 +95,25 @@ class ViewReadonlyAssessorView(CanPerformAssessmentMixin, TemplateView):
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
                                                 exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
 
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
+                                                           fromm=self.request.user.get_full_name())
 
         return super(ViewReadonlyAssessorView, self).get_context_data(**kwargs)
 
 
 class ApplicationLogListView(OfficerOrAssessorRequiredMixin, View):
+    serial_template = {
+        'exclude': ['application', 'communicationslogentry_ptr', 'customer', 'staff'],
+        'posthook': format_communications_log_entry
+    }
+
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
-        data = serialize(ApplicationLogEntry.objects.filter(application=application),
-                         posthook=format_communications_log_entry,
-                         exclude=['application', 'communicationslogentry_ptr', 'customer', 'officer']),
-
-        return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
+        data = serialize(
+            ApplicationLogEntry.objects.filter(application=application),
+            **self.serial_template
+        )
+        return JsonResponse({'data': data}, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
 class AddApplicationLogEntryView(OfficerOrAssessorRequiredMixin, View):
@@ -145,3 +155,22 @@ class AddApplicationLogEntryView(OfficerOrAssessorRequiredMixin, View):
                     ]
                 },
                 safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)
+
+
+class ApplicationUserActionListView(OfficerOrAssessorRequiredMixin, View):
+    serial_template = {
+        'fields': ['who', 'when', 'what'],
+        'related': {
+            'who': {
+                'posthook': render_user_name
+            }
+        }
+    }
+
+    def get(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=args[0])
+        data = serialize(
+            ApplicationUserAction.objects.filter(application=application),
+            **self.serial_template
+        )
+        return JsonResponse({'data': data}, safe=False, encoder=WildlifeLicensingJSONEncoder)

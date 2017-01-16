@@ -1,18 +1,19 @@
 from __future__ import unicode_literals
-import re
-import os
 
+import os
+import datetime
+import re
+
+from django.contrib.auth.models import Group
 from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
-from django.contrib.auth.models import Group
-from django_dynamic_fixture import get as get_ddf
-from social.apps.django_app.default.models import UserSocialAuth
-
-from ledger.accounts.models import EmailUser
-from wildlifelicensing.apps.main.models import WildlifeLicenceType, AssessorGroup
-from wildlifelicensing.apps.main import helpers as accounts_helpers
 from django.utils.encoding import smart_text
+from django_dynamic_fixture import G
+
+from ledger.accounts.models import EmailUser, Profile, Address, Country
+from wildlifelicensing.apps.main import helpers as accounts_helpers
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, WildlifeLicence, AssessorGroup
 
 
 class TestData(object):
@@ -22,23 +23,37 @@ class TestData(object):
         'email': 'customer@test.com',
         'first_name': 'Homer',
         'last_name': 'Cust',
-        'dob': '1989-08-12',
+        'dob': datetime.date(1989, 8, 12),
+    }
+    DEFAULT_PROFILE = {
+        'email': 'customer@test.com',
+    }
+    DEFAULT_ADDRESS = {
+        'line1': '1 Test Street',
+        'locality': 'Testland',
+        'postcode': '7777',
     }
     DEFAULT_OFFICER = {
         'email': 'officer@test.com',
         'first_name': 'Offy',
         'last_name': 'Sir',
-        'dob': '1979-12-13',
+        'dob': datetime.date(1979, 12, 13),
     }
     DEFAULT_ASSESSOR = {
         'email': 'assessor@test.com',
         'first_name': 'Assess',
         'last_name': 'Ore',
-        'dob': '1979-10-05',
+        'dob': datetime.date(1979, 10, 5),
     }
     DEFAULT_ASSESSOR_GROUP = {
         'name': 'ass group',
         'email': 'assessor@test.com',
+    }
+    DEFAULT_API_USER = {
+        'email': 'apir@test.com',
+        'first_name': 'api',
+        'last_name': 'user',
+        'dob': '1979-12-13',
     }
 
 
@@ -62,6 +77,10 @@ class SocialClient(Client):
         self.get(reverse('accounts:logout'))
 
 
+def create_default_country():
+    return G(Country, iso_3166_1_a2='AU')
+
+
 def is_client_authenticated(client):
     return '_auth_user_id' in client.session
 
@@ -78,37 +97,56 @@ def add_to_group(user, group_name):
     return user
 
 
-def get_or_create_user(email, defaults):
-    user, created = EmailUser.objects.get_or_create(defaults=defaults, email=email)
+def get_or_create_user(params):
+    user, created = EmailUser.objects.get_or_create(**params)
     return user, created
 
 
 def create_random_user():
-    return get_ddf(EmailUser, dob='1970-01-01')
+    return G(EmailUser, dob='1970-01-01')
 
 
 def create_random_customer():
     return create_random_user()
 
 
-def get_or_create_default_customer():
-    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER['email'], TestData.DEFAULT_CUSTOMER)
+def get_or_create_default_customer(include_default_profile=False):
+    user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER)
+
+    if include_default_profile:
+        address = Address.objects.create(user=user, **TestData.DEFAULT_ADDRESS)
+        profile = Profile.objects.create(user=user, postal_address=address, **TestData.DEFAULT_PROFILE)
+        profile.user = user
+
     return user
 
 
 def get_or_create_default_officer():
-    user, created = get_or_create_user(TestData.DEFAULT_OFFICER['email'], TestData.DEFAULT_OFFICER)
+    user, created = get_or_create_user(TestData.DEFAULT_OFFICER)
     if created:
         add_to_group(user, 'Officers')
     return user
 
 
-def create_licence_type(product_code='regulation-17'):
-    return WildlifeLicenceType.objects.get_or_create(product_code=product_code)[0]
+def get_or_create_api_user():
+    user, created = get_or_create_user(TestData.DEFAULT_API_USER)
+    if created:
+        add_to_group(user, 'API')
+    return user
+
+
+def get_or_create_licence_type(product_title='regulation-17'):
+    return WildlifeLicenceType.objects.get_or_create(product_title=product_title)[0]
+
+
+def create_licence(holder, issuer, product_title='regulation-17'):
+    licence_type = get_or_create_licence_type(product_title)
+    return WildlifeLicence.objects.create(licence_type=licence_type, holder=holder, issuer=issuer,
+                                          profile=holder.profiles.first())
 
 
 def get_or_create_default_assessor():
-    user, created = get_or_create_user(TestData.DEFAULT_ASSESSOR['email'], TestData.DEFAULT_ASSESSOR)
+    user, created = get_or_create_user(TestData.DEFAULT_ASSESSOR)
     if created:
         add_to_group(user, 'Assessors')
     return user
@@ -170,6 +208,15 @@ def clear_id_file(user):
 def clear_all_id_files():
     for user in EmailUser.objects.all():
         clear_id_file(user)
+
+
+def get_user_home_url(user):
+    if accounts_helpers.is_officer(user):
+        return '/dashboard/officer'
+    elif accounts_helpers.is_assessor(user):
+        return '/dashboard/tables/assessor'
+
+    return '/dashboard/tables/customer'
 
 
 class HelpersTest(TestCase):

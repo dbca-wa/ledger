@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
-    'social.apps.django_app.default',
+    'social_django',
     'django_extensions',
     'reversion',
     'widget_tweaks',
@@ -65,7 +65,6 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
-    'ledger.middleware.FirstTimeNagScreenMiddleware',
     'oscar.apps.basket.middleware.BasketMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 ]
@@ -73,12 +72,12 @@ MIDDLEWARE_CLASSES = [
 # Authentication settings
 LOGIN_URL = '/'
 AUTHENTICATION_BACKENDS = (
-    'social.backends.email.EmailAuth',
+    'social_core.backends.email.EmailAuth',
     'django.contrib.auth.backends.ModelBackend',
 )
 AUTH_USER_MODEL = 'accounts.EmailUser'
-SOCIAL_AUTH_STRATEGY = 'social.strategies.django_strategy.DjangoStrategy'
-SOCIAL_AUTH_STORAGE = 'social.apps.django_app.default.models.DjangoStorage'
+SOCIAL_AUTH_STRATEGY = 'social_django.strategy.DjangoStrategy'
+SOCIAL_AUTH_STORAGE = 'social_django.models.DjangoStorage'
 SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/'
 SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'ledger.accounts.mail.send_validation'
 SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/ledger/validation-sent/'
@@ -87,20 +86,20 @@ SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
 SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
 SOCIAL_AUTH_PIPELINE = (
-    'social.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_details',
     'ledger.accounts.pipeline.lower_email_address',
     'ledger.accounts.pipeline.logout_previous_session',
-    'social.pipeline.social_auth.social_uid',
-    'social.pipeline.social_auth.auth_allowed',
-    'social.pipeline.social_auth.social_user',
-    'social.pipeline.user.get_username',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',
     # 'social.pipeline.mail.mail_validation',
     'ledger.accounts.pipeline.mail_validation',
     'ledger.accounts.pipeline.user_by_email',
-    'social.pipeline.user.create_user',
-    'social.pipeline.social_auth.associate_user',
-    'social.pipeline.social_auth.load_extra_data',
-    'social.pipeline.user.user_details'
+    'social_core.pipeline.user.create_user',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
+    #'social_core.pipeline.user.user_details'
 )
 
 SESSION_COOKIE_DOMAIN = env('SESSION_COOKIE_DOMAIN', None)
@@ -241,7 +240,7 @@ LOGGING = {
             'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
             'propagate': True
         },
-        'django.request': {
+        'django': {
             'handlers': ['file'],
             'level': 'INFO',
             'propagate': False,
@@ -250,6 +249,10 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
+#        'oscar.checkout': {
+#            'handlers': ['file'],
+#            'level': 'INFO'
+#        }
     }
 }
 
@@ -261,6 +264,7 @@ CMS_URL=env('CMS_URL',None)
 LEDGER_USER=env('LEDGER_USER',None)
 LEDGER_PASS=env('LEDGER_PASS')
 NOTIFICATION_EMAIL=env('NOTIFICATION_EMAIL')
+
 # BPAY settings
 BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
 # BPOINT settings
@@ -269,7 +273,7 @@ BPOINT_BILLER_CODE=env('BPOINT_BILLER_CODE')
 BPOINT_USERNAME=env('BPOINT_USERNAME')
 BPOINT_PASSWORD=env('BPOINT_PASSWORD')
 BPOINT_MERCHANT_NUM=env('BPOINT_MERCHANT_NUM')
-BPOINT_TEST=True
+BPOINT_TEST=env('BPOINT_TEST',True)
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True

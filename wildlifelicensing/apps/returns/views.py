@@ -1,8 +1,7 @@
 import os
 import shutil
 import tempfile
-
-from datetime import date
+import datetime
 
 from django.views.generic.base import TemplateView, View
 from django.shortcuts import render, get_object_or_404, redirect
@@ -56,7 +55,7 @@ def _get_table_rows_from_post(table_name, post_data):
     by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(key)) for key in post_data.keys() if
                       key.startswith(table_namespace)])
     # by_column is of format {'col_header':[row1_val, row2_val,...],...}
-    num_rows = len(by_column.values()[0])
+    num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
     rows = []
     for row_num in range(num_rows):
         row_data = {}
@@ -92,7 +91,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         ret.lodgement_number = '%s-%s' % (str(ret.licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
                                           str(ret.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
-        ret.lodgement_date = date.today()
+        ret.lodgement_date = datetime.date.today()
 
         if is_officer(self.request.user):
             ret.proxy_customer = self.request.user
@@ -126,10 +125,20 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         for resource in ret.return_type.resources:
             resource_name = resource.get('name')
             schema = Schema(resource.get('schema'))
-            headers = [{"title": f.name, "required": f.required} for f in schema.fields]
-            table = {'name': resource_name, 'title': resource.get('title', resource.get('name')),
-                     'headers': headers}
-
+            headers = []
+            for f in schema.fields:
+                header = {
+                    "title": f.name,
+                    "required": f.required
+                }
+                if f.is_species:
+                    header["species"] = f.species_type
+                headers.append(header)
+            table = {
+                'name': resource_name,
+                'title': resource.get('title', resource.get('name')),
+                'headers': headers
+            }
             try:
                 return_table = ret.returntable_set.get(name=resource_name)
                 rows = [return_row.data for return_row in return_table.returnrow_set.all()]
@@ -140,7 +149,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
             kwargs['tables'].append(table)
 
-        kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
+        if 'upload_spreadsheet_form' not in kwargs:
+            kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
         kwargs['nil_return_form'] = NilReturnForm()
 
         return super(EnterReturnView, self).get_context_data(**kwargs)
@@ -162,16 +172,26 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
 
                     for table in context['tables']:
                         worksheet = excel.get_sheet(workbook, table.get('title')) \
-                                    or excel.get_sheet(workbook, table.get('name'))
+                            or excel.get_sheet(workbook, table.get('name'))
                         if worksheet is not None:
                             table_data = excel.TableData(worksheet)
                             schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
-                            validated_rows = list(schema.rows_validator(table_data.rows_by_col_header_it()))
+                            excel_rows = list(table_data.rows_by_col_header_it())
+                            validated_rows = list(schema.rows_validator(excel_rows))
+                            # We want to stringify the datetime/date that might have been created by the excel parser
+                            for vr in validated_rows:
+                                for col, validation in vr.items():
+                                    value = validation.get('value')
+                                    if isinstance(value, datetime.datetime) or isinstance(value, datetime.date):
+                                        validation['value'] = value.strftime(DATE_FORMAT)
                             table['data'] = validated_rows
                         else:
                             messages.warning(request, 'Missing worksheet ' + table.get('name'))
                 finally:
                     shutil.rmtree(temp_file_dir)
+            else:
+                context['upload_spreadsheet_form'] = form
+
         elif 'draft' in request.POST or 'draft_continue' in request.POST:
             _create_return_data_from_post_data(ret, context['tables'], request.POST)
 
@@ -213,45 +233,25 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
 
-class CurateReturnView(OfficerRequiredMixin, TemplateView):
+class CurateReturnView(EnterReturnView):
     template_name = 'wl/curate_return.html'
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        ret = get_object_or_404(Return, pk=self.args[0])
-
-        kwargs['return'] = serialize(ret, posthook=format_return)
-
-        kwargs['tables'] = []
-
-        for resource in ret.return_type.resources:
-            resource_name = resource.get('name')
-            schema = Schema(resource.get('schema'))
-            table = {'name': resource_name, 'title': resource.get('title', resource.get('name')),
-                     'headers': schema.headers}
-
-            try:
-                return_table = ret.returntable_set.get(name=resource_name)
-                rows = [return_row.data for return_row in return_table.returnrow_set.all()]
-                validated_rows = list(schema.rows_validator(rows))
-                table['data'] = validated_rows
-            except ReturnTable.DoesNotExist:
-                pass
-
-            kwargs['tables'].append(table)
-
-        kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
+        ctx = super(CurateReturnView, self).get_context_data(**kwargs)
+        ret = ctx['return']
+        ctx['return'] = serialize(ret, posthook=format_return)
 
         if ret.proxy_customer is None:
             to = ret.licence.holder
         else:
             to = ret.proxy_customer
 
-        kwargs['log_entry_form'] = ReturnsLogEntryForm(to=to.get_full_name(),
-                                                       fromm=self.request.user.get_full_name(),
-                                                       )
-
-        return super(CurateReturnView, self).get_context_data(**kwargs)
+        ctx['log_entry_form'] = ReturnsLogEntryForm(
+            to=to.get_full_name(),
+            fromm=self.request.user.get_full_name(),
+        )
+        return ctx
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data()
@@ -265,6 +265,12 @@ class CurateReturnView(OfficerRequiredMixin, TemplateView):
                 ret.save()
 
                 messages.success(request, 'Return was accepted.')
+                return redirect('home')
+            elif ret.nil_return:
+                ret.status = 'accepted'
+                ret.save()
+
+                messages.success(request, 'Nil return was accepted.')
                 return redirect('home')
             else:
                 for table in context['tables']:

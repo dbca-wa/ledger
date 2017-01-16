@@ -1,13 +1,13 @@
 {% load bootstrap3 %}
 
-<div class="modal fade" id="logEntryModal" tabindex="-1">
+<div class="modal fade" id="logCommEntryModal" tabindex="-1">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 <h4 class="modal-title">Add log entry</h4>
             </div>
-            <form id="addLogEntryForm" method="post" enctype="multipart/form-data">
+            <form id="addLogCommEntryForm" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="modal-body">

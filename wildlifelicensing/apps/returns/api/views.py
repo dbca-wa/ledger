@@ -5,12 +5,20 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
+from django.utils import timezone
 
+from wildlifelicensing.apps.returns.api.mixins import APIUserRequiredMixin
 from wildlifelicensing.apps.returns.models import ReturnType, ReturnRow
 from wildlifelicensing.apps.returns.utils_schema import Schema
 
+API_SESSION_TIMEOUT = 100 * 24 * 3600  # 100 days
 
-class ExplorerView(View):
+
+def set_api_session_timeout(request):
+    request.session.set_expiry(API_SESSION_TIMEOUT)
+
+
+class ExplorerView(APIUserRequiredMixin, View):
     """
     Return a JSON representation of the ReturnTypes.
     The main goal of this view is to provide for every resources (ReturnTable) a link to download the data
@@ -19,7 +27,15 @@ class ExplorerView(View):
 
     def get(self, request):
         queryset = ReturnType.objects.all()
-        results = []
+        # for API purpose, increase the session timeout
+        set_api_session_timeout(request)
+        sessionid = self.request.session.session_key
+        payload = OrderedDict()
+        payload['auth'] = {
+            "sessionId": sessionid,
+            "expires": timezone.localtime(self.request.session.get_expiry_date())
+        }
+        data = []
         for rt in queryset:
             return_obj = OrderedDict({'id': rt.id})
             licence_type = {
@@ -30,28 +46,39 @@ class ExplorerView(View):
             # resources
             resources = []
             for idx, resource in enumerate(rt.resources):
-                resource_obj = OrderedDict()
-                resource_obj['name'] = resource.get('name', '')
-                resource_obj['data'] = request.build_absolute_uri(reverse('wl_returns:api:data', kwargs={
+                url = request.build_absolute_uri(reverse('wl_returns:api:data', kwargs={
                     'return_type_pk': rt.pk,
                     'resource_number': idx
                 }))
+                resource_obj = OrderedDict()
+                resource_obj['name'] = resource.get('name', '')
+                resource_obj['data'] = url
+                resource_obj['python'] = "requests.get('{0}', cookies={{'sessionid':'{1}'}}).content".format(
+                    url,
+                    sessionid
+                )
+                resource_obj['shell'] = "curl {0} --cookie 'sessionid={1}'".format(
+                    url,
+                    sessionid
+                )
                 resource_obj['schema'] = resource.get('schema', {})
                 resources.append(resource_obj)
 
             return_obj['resources'] = resources
-            results.append(return_obj)
+            data.append(return_obj)
+        payload['data'] = data
+        return JsonResponse(payload, json_dumps_params={'indent': 2}, safe=False)
 
-        return JsonResponse(results, safe=False)
 
-
-class ReturnsDataView(View):
+class ReturnsDataView(APIUserRequiredMixin, View):
     """
     Export returns data in CSV format.
     """
 
     def get(self, request, *args, **kwargs):
         return_type = get_object_or_404(ReturnType, pk=kwargs.get('return_type_pk'))
+        # for API purpose, increase the session timeout
+        set_api_session_timeout(request)
         resource_number = kwargs.get('resource_number')
         if not resource_number:
             resource_number = 0

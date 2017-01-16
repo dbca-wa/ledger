@@ -468,10 +468,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
-            print traceback.format_exc()
+            print(traceback.format_exc())
             raise
         except Exception as e:
-            print traceback.format_exc()
+            print(traceback.format_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'],)
