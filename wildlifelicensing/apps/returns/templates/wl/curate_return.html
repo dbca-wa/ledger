@@ -1,10 +1,12 @@
-{% extends 'wl/base.html' %}
+{% extends 'wl/returns_base.html' %}
 
 {% load static %}
 
 {% load bootstrap3 %}
 
 {% load dict_helpers %}
+
+{% load users %}
 
 {% block extra_css %}
     <link rel="stylesheet"
@@ -15,17 +17,17 @@
 {% endblock %}
 
 {% block requirements %}
-    require(["{% static 'wl/js/return_table.js' %}", 'js/communications_log'], function (returnTable, commsLog) {
-    returnTable.initTables();
+    require([
+        "{% static 'wl/js/return_table.js' %}",
+        'js/logs'
+    ],
+    function (returnTable, logs) {
+        returnTable.initTables();
 
-    commsLog.initCommunicationLog({
-    showLogPopoverSelector: '#showLog',
-    showLogEntryModalSelector: '#addLogEntry',
-    logEntryModalSelector: '#logEntryModal',
-    logEntryFormSelector: '#addLogEntryForm',
-    logListURL: "{% url 'wl_returns:log_list' return.id %}",
-    addLogEntryURL: "{% url 'wl_returns:add_log_entry' return.id %}"
-    });
+        logs.initCommunicationLog({
+            logListURL: "{% url 'wl_returns:log_list' return.id %}",
+            addLogEntryURL: "{% url 'wl_returns:add_log_entry' return.id %}"
+        });
     });
 {% endblock %}
 
@@ -35,6 +37,9 @@
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
                     <li><a href="{% url 'home' %}">Home</a></li>
+                    {% if request.user|is_officer %}
+                        <li><a href="{% url 'wl_dashboard:tables_returns_officer' %}">Returns</a></li>
+                    {% endif %}
                     <li class="active">Curate Return</li>
                 </ol>
             </div>
@@ -42,15 +47,17 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}
+    <h3>Curate Return</h3>
+{% endblock %}
+{% block intro_subtitle %}
+     <h4 class="inline">
+         {{ return.licence.licence_type.name }}
+     </h4>
+{% endblock %}
+
 {% block content %}
     <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h2>Curate Return</h2>
-                <h3>{{ return.licence.licence_type.name }}</h3>
-                <hr>
-            </div>
-        </div>
         <div class="row">
             <div class="col-md-3">
                 <div class="row">
@@ -91,9 +98,9 @@
                                 </div>
                             </div>
                         </div>
-                        {% with add_text='Add return log entry' %}
-                            {% include 'wl/communications_panel.html' %}
-                        {% endwith %}
+                        {%  with hide_action_log=True %}
+                            {% include 'wl/logs_panel.html' %}
+                        {%  endwith %}
                     </div>
                 </div>
                 <button id="accept" type="submit" name="accept" type="button"
@@ -115,7 +122,7 @@
                                         <thead>
                                             <tr>
                                                 {% for header in table.headers %}
-                                                    <th>{{ header }}</th>
+                                                    <th>{{ header.title }}{% if header.required %} *{% endif %}</th>
                                                 {% endfor %}
                                             </tr>
                                         </thead>
@@ -123,10 +130,14 @@
                                             {% for row in table.data %}
                                                 <tr>
                                                     {% for header in table.headers %}
-                                                        {% with value=row|get_item:header|get_item:'value' error=row|get_item:header|get_item:'error' %}
+                                                        {% with value=row|get_item:header.title|get_item:'value' error=row|get_item:header.title|get_item:'error' %}
                                                             <td>
-                                                                <input name="{{ table.name }}::{{ header }}"
-                                                                       value="{{ value }}"/>
+                                                                <input name="{{ table.name }}::{{ header.title }}"
+                                                                       value="{{ value|default_if_none:"" }}"
+                                                                       {%  if header.species %}
+                                                                           data-species="{{ header.species }}"
+                                                                       {% endif %}
+                                                                />
                                                                 {% if error %}
                                                                     <div><span class="text-danger">{{ error }}</span>
                                                                     </div>
@@ -158,5 +169,5 @@
 {% endblock %}
 
 {% block modals %}
-    {% include 'wl/communications_modal.html' %}
+    {% include 'wl/logs_comm_entry_modal.html' %}
 {% endblock %}

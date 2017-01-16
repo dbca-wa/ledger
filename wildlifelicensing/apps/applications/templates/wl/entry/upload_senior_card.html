@@ -4,10 +4,6 @@
 
 {% load users %}
 
-{% block extra_css %}
-    <link href="{% static 'wl/css/application.css' %}" rel="stylesheet"/>
-{% endblock %}
-
 {% block breadcrumbs %}
     <div class="container">
         <div class="row">
@@ -26,24 +22,55 @@
     </div>
 {% endblock %}
 
+{% block intro_title %}<h3>Upload Senior Card</h3>{% endblock %}
+{% block intro_subtitle %}
+    <h4 class="inline">
+        {{ licence_type.name }} {% if is_renewal %}(Renewal) {% endif %} {% if is_amendment %}(Amendment) {% endif %}
+    </h4> 
+    {% if customer %}
+            <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
+    {% endif %}
+    {% if variants %}
+        <h4>
+            <em>({{ variants }})</em>
+        </h4>
+    {% endif %}
+{% endblock %}
+{% block intro_text %}
+    <p>
+        With this type of licence you are eligible for a senior discount if you are the holder of a Senior
+        Card.
+        If you have a scanned or photographed image of it, please upload it here.
+    </p>
+    <p>
+        <strong>
+            <em>Note: You must upload a Senior card document before lodging your application to be granted the senior discount.</em>
+        </strong>
+    </p>
+    <p>
+        This type of licence requires photographic identification. You can upload a scanned or photographed image of a valid
+        Australian driver’s licence, passport, or proof-of-age card.
+    </p>
+    <p>
+        If you cannot provide identification at this point, you can skip this step of the application process. You can then, at
+        any time, upload your photo ID by selecting the Manage ID option under the Options menu on the menu bar. Alternatively,
+        you can present your photo ID in person at the Wildlife Licensing office, 17 Dick Perry Avenue, Kensington.
+    </p>
+    <p>
+        <strong>
+            <em>Note: your application will not be approved until identification has been submitted.</em>
+        </strong>
+    </p>
+    <p>
+        If you are the holder of a Senior Card and you cannot provide a digital version of it, please contact
+        the Wildlife Licensing office on 9219 9831 before lodging your application.
+    </p>
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                {% with heading='Upload Senior Card' %}
-                    {% include 'wl/entry/header.html' %}
-                {% endwith %}
-                <p>
-                    With this type of licence you are eligible for a senior discount if you are the holder of a Senior
-                    Card.
-                    If you have a scanned or photographed image of it, please upload it here.
-                </p>
-                <p><strong><em>Note: You must upload a Senior card document before lodging your application to be
-                    granted the senior discount.</em></strong></p>
-                <p>
-                    If you are the holder of a Senior Card and you cannot provide a digital version of it, please contact
-                    the Wildlife Licensing office on 9219 9831 before lodging your application.
-                </p>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% with field=form.senior_card %}

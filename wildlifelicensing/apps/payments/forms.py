@@ -15,6 +15,12 @@ class PaymentsReportForm(forms.Form):
     end = forms.DateTimeField(required=True, widget=forms.DateTimeInput(
         format=date_format
     ))
+    banked_start = forms.DateTimeField(required=True, widget=forms.DateTimeInput(
+        format=date_format
+    ))
+    banked_end = forms.DateTimeField(required=True, widget=forms.DateTimeInput(
+        format=date_format
+    ))
 
     def __init__(self, *args, **kwargs):
         super(PaymentsReportForm, self).__init__(*args, **kwargs)
@@ -35,5 +41,10 @@ class PaymentsReportForm(forms.Form):
         end = today_ten_pm_aest_local + delta
         start = end + relativedelta(weeks=-1)
 
+        banked_start =  (start - datetime.timedelta(days=start.weekday())).replace(hour=0, minute=0)
+        banked_end = (banked_start + datetime.timedelta(days=6)).replace(hour=23, minute=59, second=59)
+
         self.fields['start'].initial = start
         self.fields['end'].initial = end
+        self.fields['banked_start'].initial = banked_start
+        self.fields['banked_end'].initial = banked_end

@@ -1,5 +1,14 @@
 {% extends 'wl/dash_tables.html' %}
 
+{% block content %}
+    <div class="container">
+        <p>
+            <a href="{% url 'wl_applications:new_application' %}">Apply for a new wildlife licence online</a>
+        </p>
+    </div>
+    {{ block.super }}
+{% endblock %}
+
 {% block applications_title %}My Proxied Applications{% endblock %}
 {% block applications_filters %}
     <form class="form" id="applications-filter-form">
@@ -20,6 +29,11 @@
             </div>
         </div>
     </form>
+    <div class="row">
+        <div class="col-md-2 col-md-offset-5">
+            <a class="hidden btn btn-primary btn-xs" id="reset-applications-filter-button" href="#">Reset filters</a>
+        </div>
+    </div>
 {% endblock %}
 
 {%  block licences %}
@@ -46,4 +60,9 @@
             </div>
         </div>
     </form>
+    <div class="row">
+        <div class="col-md-2 col-md-offset-5">
+            <a class="hidden btn btn-primary btn-xs" id="reset-returns-filter-button" href="#">Reset filters</a>
+        </div>
+    </div>
 {%  endblock %}

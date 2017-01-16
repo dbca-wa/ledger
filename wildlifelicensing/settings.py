@@ -27,15 +27,15 @@ BOOTSTRAP3 = {
     'javascript_in_head': False,
     'include_jquery': False,
     'required_css_class': 'required-form-field',
+    'success_css_class': '',
     'set_placeholder': False,
 }
-
 
 STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')))
 
 CRON_CLASSES = [
-    'wildlifelicensing.apps.applications.cron.CheckLicenceRenewalsCronJob',
     'wildlifelicensing.apps.applications.cron.AssessmentRemindersCronJob',
+    'wildlifelicensing.apps.main.cron.CheckLicenceRenewalsCronJob',
     'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
 
@@ -47,3 +47,6 @@ HERBIE_SPECIES_WFS_URL = env('HERBIE_SPECIES_WFS_URL',
 
 WL_PAYMENT_SYSTEM_ID = env('WL_PAYMENT_SYSTEM_ID', 'S369')
 WL_SENIOR_VOUCHER_CODE = env('WL_SENIOR_VOUCHER_CODE', 'WL_SENIOR_VOUCHER')
+
+# next setting is necessary to resolve absolute URL for the emails sent by the tasks running in cron.
+DEFAULT_HOST = env('DEFAULT_HOST', "https://wildlifelicensing.dpaw.wa.gov.au")

@@ -65,8 +65,8 @@ def logout(request, *args, **kwargs):
         user.delete()
     messages.success(request,
                      "You have successfully logged out.")
-    if 'next' in kwargs:
-        return redirect(kwargs['next_page'])
+    if 'next' in request.GET:
+        return redirect(request.GET['next'])
     return bounce(request)
 
 

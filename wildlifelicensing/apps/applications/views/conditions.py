@@ -12,7 +12,8 @@ from wildlifelicensing.apps.payments import utils as payment_utils
 from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, AssessmentCondition
+from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, \
+    AssessmentCondition, ApplicationUserAction
 from wildlifelicensing.apps.applications.utils import append_app_document_to_schema_data, convert_documents_to_url, \
     get_log_entry_to, format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
 from wildlifelicensing.apps.applications.emails import send_assessment_done_email
@@ -36,9 +37,11 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 
         kwargs['application'] = serialize(application, posthook=format_application)
         kwargs['form_structure'] = application.licence_type.application_schema
-        kwargs['assessments'] = serialize(Assessment.objects.filter(application=application), posthook=format_assessment)
+        kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
+                                          posthook=format_assessment)
 
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
+                                                           fromm=self.request.user.get_full_name())
 
         kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                       get_application_payment_status(application))
@@ -54,6 +57,9 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         application.conditions.clear()
 
         application.save()
+        application.log_user_action(
+            ApplicationUserAction.ACTION_ENTER_CONDITIONS,
+            request)
 
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
             ApplicationCondition.objects.create(condition=Condition.objects.get(pk=condition_id),
@@ -68,7 +74,6 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     template_name = 'wl/conditions/assessor_enter_conditions.html'
     success_url = reverse_lazy('wl_dashboard:home')
-
 
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
@@ -89,7 +94,8 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
                                                 exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
 
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
+                                                           fromm=self.request.user.get_full_name())
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
@@ -97,7 +103,8 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         assessment = get_object_or_404(Assessment, pk=args[1])
 
         if assessment.status == 'assessed':
-            messages.warning(request, 'This assessment has already been concluded and may only be viewed in read-only mode.')
+            messages.warning(request,
+                             'This assessment has already been concluded and may only be viewed in read-only mode.')
             return redirect('wl_applications:view_assessment', *args)
 
         return super(EnterConditionsAssessorView, self).get(*args, **kwargs)
@@ -112,8 +119,13 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
                                                assessment=assessment, order=order)
 
         # set the assessment request status to be 'assessed' if concluding
+        user_action = ApplicationUserAction.ACTION_SAVE_ASSESSMENT_
         if 'conclude' in request.POST:
             assessment.status = 'assessed'
+            user_action = ApplicationUserAction.ACTION_CONCLUDE_ASSESSMENT_
+        application.log_user_action(
+            user_action.format(assessment.assessor_group),
+            request)
 
         comment = request.POST.get('comment', '')
         if len(comment.strip()) > 0:
@@ -133,7 +145,7 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
             send_assessment_done_email(assessment, request)
 
             messages.success(request, 'The application assessment has been forwarded back to the Wildlife Licensing '
-                             'office for review.')
+                                      'office for review.')
 
             return redirect(self.success_url)
         else:
@@ -159,8 +171,15 @@ class SearchConditionsView(OfficerOrAssessorRequiredMixin, View):
 class CreateConditionView(OfficerRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
-            response = serialize(Condition.objects.create(code=request.POST.get('code'), text=request.POST.get('text'),
-                                                          one_off=not request.POST.get('addToGeneralList', False)))
+            condition = Condition.objects.create(code=request.POST.get('code'), text=request.POST.get('text'),
+                                                 one_off=not request.POST.get('addToGeneralList', False))
+            if len(self.args) > 0:
+                application = get_object_or_404(Application, pk=self.args[0])
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_CREATE_CONDITION_.format(condition),
+                    request
+                )
+            response = serialize(condition)
         except IntegrityError:
             response = 'This code has already been used. Please enter a unique code.'
 

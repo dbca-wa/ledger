@@ -15,7 +15,7 @@ from wildlifelicensing.apps.applications.views.conditions import EnterConditions
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
 from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, ViewReadonlyOfficerView, \
-    ViewReadonlyAssessorView, AddApplicationLogEntryView, ApplicationLogListView
+    ViewReadonlyAssessorView, AddApplicationLogEntryView, ApplicationLogListView, ApplicationUserActionListView
 
 
 urlpatterns = [
@@ -52,12 +52,15 @@ urlpatterns = [
     url('^add-log-entry/([0-9]+)/$', AddApplicationLogEntryView.as_view(), name='add_log_entry'),
     url('^log-list/([0-9]+)/$', ApplicationLogListView.as_view(), name='log_list'),
 
+    # action log
+    url('^action-list/([0-9]+)/$', ApplicationUserActionListView.as_view(), name='action_list'),
+
     # conditions
     url('^enter-conditions/([0-9]+)/$', EnterConditionsView.as_view(), name='enter_conditions'),
     url('^enter-conditions/([0-9]+)/assessment/([0-9]+)/?$', EnterConditionsAssessorView.as_view(),
         name='enter_conditions_assessor'),
     url('^search-conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
-    url('^create-condition/$', CreateConditionView.as_view(), name='create_condition'),
+    url('^create-condition/([0-9]+)/$', CreateConditionView.as_view(), name='create_condition'),
     url('^set-assessment-condition-state/$', SetAssessmentConditionState.as_view(), name='set_assessment_condition_state'),
 
     # issue

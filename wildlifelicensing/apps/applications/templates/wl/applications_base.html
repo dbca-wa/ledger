@@ -1,0 +1,18 @@
+{% extends 'wl/base.html' %}
+
+{% load static %}
+
+{% block extra_css %}
+    <link href="{% static 'wl/css/applications.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block intro %}
+    <div class="container bottom-buffer">
+        <div class="top-buffer bottom-buffer intro applications">
+            {% block intro_title %}{% endblock %}
+            {% block intro_subtitle %}{% endblock %}
+        </div>
+        {% block intro_text%}{% endblock %}
+        <hr>
+    </div>
+{% endblock %}
