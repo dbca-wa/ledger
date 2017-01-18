@@ -1,7 +1,9 @@
 import traceback
 import base64
+import geojson
 from six.moves.urllib.parse import urlparse
 from django.db.models import Q
+from django.http import HttpResponse
 from django.core.files.base import ContentFile
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
@@ -283,6 +285,18 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+def search_suggest(request, *args, **kwargs):
+    entries = []
+    for x in Campground.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Campground', 'id': x[0], 'name': x[1]}))
+    for x in Park.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Park', 'id': x[0], 'name': x[1]}))
+    for x in PromoArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))    
+
+    return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
 
 
 class CampgroundViewSet(viewsets.ModelViewSet):

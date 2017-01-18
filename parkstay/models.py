@@ -49,6 +49,7 @@ class Park(models.Model):
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
     entry_fee_required = models.BooleanField(default=True)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
@@ -59,6 +60,7 @@ class Park(models.Model):
 
 class PromoArea(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
         return self.name

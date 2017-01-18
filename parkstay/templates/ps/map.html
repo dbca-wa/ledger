@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.css" />
     <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.css" />
     <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/css/foundation-datepicker.css" />
+    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/awesomplete/1.1.1/awesomplete.css" />
     <style type="text/css">
 
 @font-face {
@@ -253,6 +254,15 @@ input:checked + .symb {
     display: none;
 }
 
+/* hacks to make awesomeplete play nice with F6 */
+div.awesomplete {
+    display: block;
+}
+
+div.awesomplete > input {
+    display: table-cell;
+}
+
     </style>
 </head>
 <body>
@@ -261,7 +271,7 @@ input:checked + .symb {
             <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
                     <div class="input-group small-12 columns">
-                        <input class="input-group-field" type="text"/>
+                        <input class="input-group-field" id="searchInput" type="text"/>
                         <div class="input-group-button"><button class="button">Search</button></div>
                     </div>
                 </div><div class="row">
@@ -373,6 +383,7 @@ input:checked + .symb {
     <script src="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.min.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/js/foundation-datepicker.min.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/awesomplete/1.1.1/awesomplete.js"></script>
     <script>
 
 
@@ -467,6 +478,20 @@ var pf = new Vue({
         }
     },
     methods: {
+        animatePan: function(location) {
+            var pan = ol.animation.pan({
+                source: this.center
+            });
+            this.olmap.beforeRender(pan);
+            this.olmap.getView().setCenter(location);
+        },
+        animateZoom: function(resolution) {
+            var zoom = ol.animation.zoom({
+                resolution: this.olmap.getView().getResolution()
+            });
+            this.olmap.beforeRender(zoom);
+            this.olmap.getView().setResolution(resolution);
+        },
         groundFilter: function(feature) {
             return true;
         },
@@ -596,23 +621,46 @@ var pf = new Vue({
             vm.reload();
         }).data('datepicker');
 
+        // load autosuggest choices
+        var search = document.getElementById('searchInput');
+        var autocomplete = new Awesomplete(search);
+        autocomplete.autoFirst = true;
+        $.ajax({
+            url: '/api/search_suggest',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+                $(search).on('awesomplete-selectcomplete', function(ev) {
+                    var target = response['features'].find(function(el) {
+                        return (el['properties']['name'] == ev.target.value);
+                        
+                    });
+                    vm.animatePan(ol.proj.fromLonLat(target['coordinates']));
+                    vm.animateZoom(vm.resolutions[10]);
+                });
+
+                autocomplete.list = response['features'].map(function (el) {
+                    return el['properties']['name'];
+                });
+            }
+        });
+
 
         // generate WMTS tile grid
-        var projection = ol.proj.get('EPSG:3857');
-        var projectionExtent = projection.getExtent();
-        var size = ol.extent.getWidth(projectionExtent) / 256;
-        var matrixSet = 'mercator';
-        var resolutions = new Array(14);
-        var matrixIds = new Array(14);
+        this.projection = ol.proj.get('EPSG:3857');
+        this.projectionExtent = this.projection.getExtent();
+        var size = ol.extent.getWidth(this.projectionExtent) / 256;
+        this.matrixSet = 'mercator';
+        this.resolutions = new Array(14);
+        this.matrixIds = new Array(14);
         for (var z = 0; z < 14; ++z) {
             // generate resolutions and matrixIds arrays for this WMTS
-            resolutions[z] = size / Math.pow(2, z);
-            matrixIds[z] = matrixSet + ':' + z;
+            this.resolutions[z] = size / Math.pow(2, z);
+            this.matrixIds[z] = this.matrixSet + ':' + z;
         }
         var tileGrid = new ol.tilegrid.WMTS({
-            origin: ol.extent.getTopLeft(projectionExtent),
-            resolutions: resolutions,
-            matrixIds: matrixIds
+            origin: ol.extent.getTopLeft(this.projectionExtent),
+            resolutions: this.resolutions,
+            matrixIds: this.matrixIds
         });
 
         this.streets = new ol.layer.Tile({
@@ -620,8 +668,8 @@ var pf = new Vue({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
                 layer: 'dpaw:mapbox_outdoors',
-                matrixSet: matrixSet,
-                projection: projection,
+                matrixSet: this.matrixSet,
+                projection: this.projection,
                 tileGrid: tileGrid
             })
         });
@@ -632,8 +680,8 @@ var pf = new Vue({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
                 layer: 'cddp:dpaw_tenure',
-                matrixSet: matrixSet,
-                projection: projection,
+                matrixSet: this.matrixSet,
+                projection: this.projection,
                 tileGrid: tileGrid
             })
         });
