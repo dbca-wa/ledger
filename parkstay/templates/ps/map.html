@@ -270,9 +270,8 @@ div.awesomplete > input {
         <div class="row">
             <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
-                    <div class="input-group small-12 columns">
-                        <input class="input-group-field" id="searchInput" type="text"/>
-                        <div class="input-group-button"><button class="button">Search</button></div>
+                    <div class="small-12 columns">
+                        <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/>
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
@@ -430,6 +429,7 @@ var pf = new Vue({
             {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
             {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
         ],
+        suggestions: {},
         extentFeatures: [],
         numAdults: 1,
         numConcessions: 0,
@@ -478,6 +478,44 @@ var pf = new Vue({
         }
     },
     methods: {
+        search: function(place) {
+            if (!place) {
+                return;
+            }
+            var vm = this;
+            // search through the autocomplete list first
+            var target = this.suggestions['features'].find(function (el) {
+                return el['properties']['name'] == place;
+            });
+            if (target) {
+                //console.log('Search suggestion!')
+                vm.animatePan(ol.proj.fromLonLat(target['coordinates']));
+                vm.animateZoom(vm.resolutions[12]);
+                return;
+            }
+
+            // no match, forward on to mapbox geocode query
+            var center = ol.proj.toLonLat(vm.center);
+            $.ajax({
+                url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+encodeURIComponent(place)+'.json?'+ $.param({
+                    country: 'au',
+                    proximity: ''+center[0]+','+center[1],
+                    bbox: '112.920934,-35.191991,129.0019283,-11.9662455',
+                    types: 'region,postcode,place,locality,neighborhood,address'
+                }),
+                dataType: 'json',
+                success: function(data, status, xhr) {
+                    if (data.features && data.features.length > 0) {
+                        //console.log('Mapbox!');
+                        //console.log(data.features[0]);
+                        vm.animatePan(ol.proj.fromLonLat(data.features[0].geometry.coordinates));
+                        vm.animateZoom(vm.resolutions[12]);
+
+                    }
+                }
+            })
+
+        },
         animatePan: function(location) {
             var pan = ol.animation.pan({
                 source: this.center
@@ -629,18 +667,35 @@ var pf = new Vue({
             url: '/api/search_suggest',
             dataType: 'json',
             success: function (response, stat, xhr) {
+                vm.suggestions = response;
                 $(search).on('awesomplete-selectcomplete', function(ev) {
-                    var target = response['features'].find(function(el) {
-                        return (el['properties']['name'] == ev.target.value);
-                        
-                    });
-                    vm.animatePan(ol.proj.fromLonLat(target['coordinates']));
-                    vm.animateZoom(vm.resolutions[10]);
+                    //console.log('autoselect');
+                    //console.log(ev);
+                    this.blur();
+                    //vm.search(ev.target.value);
                 });
 
                 autocomplete.list = response['features'].map(function (el) {
                     return el['properties']['name'];
                 });
+            }
+        });
+
+        // wire up search box
+        $(search).on('blur', function(ev) {
+            //console.log('blur');
+            //console.log(ev);
+            vm.search(ev.target.value);
+        }).on('keypress', function(ev) {
+            if (!ev) {
+                ev = window.event;
+            }
+            // intercept enter keys 
+            var keyCode = ev.keyCode || ev.which;
+            if (keyCode == '13') {
+                //console.log('enter');
+                this.blur();
+                return false;
             }
         });
 
