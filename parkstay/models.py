@@ -107,6 +107,7 @@ class Campground(models.Model):
     key = models.CharField(max_length=255, blank=True, null=True)
     price_level = models.SmallIntegerField(choices=CAMPGROUND_PRICE_LEVEL_CHOICES, default=0)
     customer_contact = models.ForeignKey('CustomerContact', blank=True, null=True, on_delete=models.PROTECT)
+    info_url = models.CharField(max_length=255, blank=True)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     dog_permitted = models.BooleanField(default=False)
