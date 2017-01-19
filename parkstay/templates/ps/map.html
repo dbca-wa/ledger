@@ -489,8 +489,14 @@ var pf = new Vue({
             });
             if (target) {
                 //console.log('Search suggestion!')
+                // pan to the spot
                 vm.animatePan(ol.proj.fromLonLat(target['coordinates']));
-                vm.animateZoom(vm.resolutions[12]);
+                // zoom slightly closer in for campgrounds
+                if (target['properties']['type'] == 'Campground') {
+                    vm.animateZoom(vm.resolutions[12]);
+                } else {
+                    vm.animateZoom(vm.resolutions[10]);
+                }
                 return;
             }
 
