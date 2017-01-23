@@ -381,6 +381,7 @@ export default {
                 vm.campground = response.body;
                 vm.booking.campground = vm.campground.id;
                 vm.fetchCampsites();
+                vm.addEventListeners();
                 vm.loading.splice('fetching campground',1);
             },(error)=>{
                 console.log(error);
@@ -391,13 +392,10 @@ export default {
             let vm = this;
             var arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
             var depaturePicker = $(vm.bookingForm.depature).closest('.date');
-            var today = new Date();
-            today.setDate(today.getDate()+1);
-            var tomorrow = new Date(today);
-
             arrivalPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
-                minDate: new Date()
+                minDate: new Date(),
+                maxDate: Moment().add(parseInt(vm.campground.max_advance_booking),'days')
             });
             depaturePicker.datetimepicker({
                 format: 'DD/MM/YYYY',
@@ -489,7 +487,6 @@ export default {
         vm.bookingForm = document.forms.bookingForm;
         vm.fetchCampground();
         vm.fetchCountries();
-        vm.addEventListeners();
     }
 }
 
