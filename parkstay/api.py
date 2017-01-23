@@ -711,15 +711,17 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             length = settings.PS_MAX_BOOKING_LENGTH
             end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
 
-        # fetch all of the single-day CampsiteBooking objects within the date range for the campground
-        bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__campground=ground,
-                            date__gte=start_date,
-                            date__lt=end_date
-                        ).order_by('date', 'campsite__name')
+
         # fetch all the campsites and applicable rates for the campground
         sites_qs = Campsite.objects.filter(campground=ground).filter(**{gear_type: True})
         rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
+
+        # fetch all of the single-day CampsiteBooking objects within the date range for the sites
+        bookings_qs =   CampsiteBooking.objects.filter(
+                            campsite__in=sites_qs,
+                            date__gte=start_date,
+                            date__lt=end_date
+                        ).order_by('date', 'campsite__name')
 
         # make a map of campsite class to cost
         rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
@@ -775,7 +777,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         for b in bookings_qs:
             offset = (b.date-start_date).days
             key = b.campsite.campsite_class.pk
-
+            print(b)
             # clear the campsite from the class sites map
             if b.campsite.pk in class_sites_map[key]:
                 class_sites_map[key].remove(b.campsite.pk)
