@@ -777,7 +777,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         for b in bookings_qs:
             offset = (b.date-start_date).days
             key = b.campsite.campsite_class.pk
-            print(b)
             # clear the campsite from the class sites map
             if b.campsite.pk in class_sites_map[key]:
                 class_sites_map[key].remove(b.campsite.pk)
