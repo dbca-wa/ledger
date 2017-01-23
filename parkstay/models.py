@@ -715,16 +715,19 @@ class CampsiteClass(models.Model):
                         r.delete()
         except Exception as e:
             raise
+
+            
 class CampsiteBooking(models.Model):
     BOOKING_TYPE_CHOICES = (
         (0, 'Reception booking'),
         (1, 'Internet booking'),
-        (2, 'Black booking')
+        (2, 'Black booking'),
+        (3, 'Temporary reservation')
     )
 
     campsite = models.ForeignKey('Campsite', db_index=True, on_delete=models.PROTECT)
     date = models.DateField(db_index=True)
-    booking = models.ForeignKey('Booking', on_delete=models.PROTECT, null=True)
+    booking = models.ForeignKey('Booking', on_delete=models.CASCADE, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
 
     def __str__(self):
@@ -811,15 +814,30 @@ class CampsiteRate(models.Model):
             setattr(self, attr, value)
         self.save()
 
+
 class Booking(models.Model):
+    BOOKING_TYPE_CHOICES = (
+        (0, 'Reception booking'),
+        (1, 'Internet booking'),
+        (2, 'Black booking'),
+        (3, 'Temporary reservation')
+    )
+
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
     legacy_id = models.IntegerField(unique=True, null=True)
     legacy_name = models.CharField(max_length=255, blank=True)
     arrival = models.DateField()
     departure = models.DateField()
     details = JSONField(null=True)
+    booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
+    expiry_time = models.DateTimeField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
+
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    def __str__(self):
+        return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
 
 # REASON MODELS
 # =====================================
