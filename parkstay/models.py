@@ -49,6 +49,7 @@ class Park(models.Model):
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
     entry_fee_required = models.BooleanField(default=True)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
@@ -59,6 +60,7 @@ class Park(models.Model):
 
 class PromoArea(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -105,6 +107,7 @@ class Campground(models.Model):
     key = models.CharField(max_length=255, blank=True, null=True)
     price_level = models.SmallIntegerField(choices=CAMPGROUND_PRICE_LEVEL_CHOICES, default=0)
     customer_contact = models.ForeignKey('CustomerContact', blank=True, null=True, on_delete=models.PROTECT)
+    info_url = models.CharField(max_length=255, blank=True)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     dog_permitted = models.BooleanField(default=False)
@@ -809,7 +812,8 @@ class CampsiteRate(models.Model):
         self.save()
 
 class Booking(models.Model):
-    legacy_id = models.IntegerField(unique=True)
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
+    legacy_id = models.IntegerField(unique=True, null=True)
     legacy_name = models.CharField(max_length=255, blank=True)
     arrival = models.DateField()
     departure = models.DateField()
@@ -1078,6 +1082,7 @@ class CampsiteBookingRangeListener(object):
         # Check if its a closure and has an end date to create new opening range
         if instance.status != 0 and instance.range_end:
             another_open = CampsiteBookingRange.objects.filter(campsite=instance.campsite,range_start=datetime.now().date()+timedelta(days=1),status=0)
+
             if not another_open:
                 try:
                     CampsiteBookingRange.objects.create(campsite=instance.campsite,range_start=instance.range_end+timedelta(days=1),status=0)

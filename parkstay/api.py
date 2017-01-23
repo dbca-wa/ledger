@@ -1,8 +1,11 @@
 import traceback
 import base64
+import geojson
 from six.moves.urllib.parse import urlparse
 from django.db.models import Q
+from django.http import HttpResponse
 from django.core.files.base import ContentFile
+from django.conf import settings
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
@@ -283,6 +286,18 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+def search_suggest(request, *args, **kwargs):
+    entries = []
+    for x in Campground.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Campground', 'id': x[0], 'name': x[1]}))
+    for x in Park.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Park', 'id': x[0], 'name': x[1]}))
+    for x in PromoArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))    
+
+    return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
 
 
 class CampgroundViewSet(viewsets.ModelViewSet):
@@ -675,7 +690,9 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             "num_adult" : request.GET.get('num_adult', 0),
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
-            "num_infant" : request.GET.get('num_infant', 0)
+            "num_infant" : request.GET.get('num_infant', 0),
+
+            "gear_type" : request.GET.get('gear_type', 'tent')
         }
         serializer = CampgroundCampsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -686,6 +703,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         num_concession = serializer.validated_data['num_concession']
         num_child = serializer.validated_data['num_child']
         num_infant = serializer.validated_data['num_infant']
+        gear_type = serializer.validated_data['gear_type']
 
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
@@ -700,7 +718,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                             date__lt=end_date
                         ).order_by('date', 'campsite__name')
         # fetch all the campsites and applicable rates for the campground
-        sites_qs = Campsite.objects.filter(campground=ground)
+        sites_qs = Campsite.objects.filter(campground=ground).filter(**{gear_type: True})
         rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
 
         # make a map of campsite class to cost

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.css" />
     <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.css" />
     <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/css/foundation-datepicker.css" />
+    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/awesomplete/1.1.1/awesomplete.css" />
     <style type="text/css">
 
 @font-face {
@@ -253,6 +254,15 @@ input:checked + .symb {
     display: none;
 }
 
+/* hacks to make awesomeplete play nice with F6 */
+div.awesomplete {
+    display: block;
+}
+
+div.awesomplete > input {
+    display: table-cell;
+}
+
     </style>
 </head>
 <body>
@@ -260,9 +270,8 @@ input:checked + .symb {
         <div class="row">
             <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
-                    <div class="input-group small-12 columns">
-                        <input class="input-group-field" type="text"/>
-                        <div class="input-group-button"><button class="button">Search</button></div>
+                    <div class="small-12 columns">
+                        <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/>
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
@@ -373,6 +382,7 @@ input:checked + .symb {
     <script src="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.min.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.js"></script>
     <script src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/js/foundation-datepicker.min.js"></script>
+    <script src="//static.dpaw.wa.gov.au/static/libs/awesomplete/1.1.1/awesomplete.js"></script>
     <script>
 
 
@@ -419,6 +429,7 @@ var pf = new Vue({
             {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
             {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
         ],
+        suggestions: {},
         extentFeatures: [],
         numAdults: 1,
         numConcessions: 0,
@@ -467,6 +478,64 @@ var pf = new Vue({
         }
     },
     methods: {
+        search: function(place) {
+            if (!place) {
+                return;
+            }
+            var vm = this;
+            // search through the autocomplete list first
+            var target = this.suggestions['features'].find(function (el) {
+                return el['properties']['name'] == place;
+            });
+            if (target) {
+                //console.log('Search suggestion!')
+                // pan to the spot
+                vm.animatePan(ol.proj.fromLonLat(target['coordinates']));
+                // zoom slightly closer in for campgrounds
+                if (target['properties']['type'] == 'Campground') {
+                    vm.animateZoom(vm.resolutions[12]);
+                } else {
+                    vm.animateZoom(vm.resolutions[10]);
+                }
+                return;
+            }
+
+            // no match, forward on to mapbox geocode query
+            var center = ol.proj.toLonLat(vm.center);
+            $.ajax({
+                url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+encodeURIComponent(place)+'.json?'+ $.param({
+                    country: 'au',
+                    proximity: ''+center[0]+','+center[1],
+                    bbox: '112.920934,-35.191991,129.0019283,-11.9662455',
+                    types: 'region,postcode,place,locality,neighborhood,address'
+                }),
+                dataType: 'json',
+                success: function(data, status, xhr) {
+                    if (data.features && data.features.length > 0) {
+                        //console.log('Mapbox!');
+                        //console.log(data.features[0]);
+                        vm.animatePan(ol.proj.fromLonLat(data.features[0].geometry.coordinates));
+                        vm.animateZoom(vm.resolutions[12]);
+
+                    }
+                }
+            })
+
+        },
+        animatePan: function(location) {
+            var pan = ol.animation.pan({
+                source: this.center
+            });
+            this.olmap.beforeRender(pan);
+            this.olmap.getView().setCenter(location);
+        },
+        animateZoom: function(resolution) {
+            var zoom = ol.animation.zoom({
+                resolution: this.olmap.getView().getResolution()
+            });
+            this.olmap.beforeRender(zoom);
+            this.olmap.getView().setResolution(resolution);
+        },
         groundFilter: function(feature) {
             return true;
         },
@@ -596,23 +665,63 @@ var pf = new Vue({
             vm.reload();
         }).data('datepicker');
 
+        // load autosuggest choices
+        var search = document.getElementById('searchInput');
+        var autocomplete = new Awesomplete(search);
+        autocomplete.autoFirst = true;
+        $.ajax({
+            url: '/api/search_suggest',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+                vm.suggestions = response;
+                $(search).on('awesomplete-selectcomplete', function(ev) {
+                    //console.log('autoselect');
+                    //console.log(ev);
+                    this.blur();
+                    //vm.search(ev.target.value);
+                });
+
+                autocomplete.list = response['features'].map(function (el) {
+                    return el['properties']['name'];
+                });
+            }
+        });
+
+        // wire up search box
+        $(search).on('blur', function(ev) {
+            //console.log('blur');
+            //console.log(ev);
+            vm.search(ev.target.value);
+        }).on('keypress', function(ev) {
+            if (!ev) {
+                ev = window.event;
+            }
+            // intercept enter keys 
+            var keyCode = ev.keyCode || ev.which;
+            if (keyCode == '13') {
+                //console.log('enter');
+                this.blur();
+                return false;
+            }
+        });
+
 
         // generate WMTS tile grid
-        var projection = ol.proj.get('EPSG:3857');
-        var projectionExtent = projection.getExtent();
-        var size = ol.extent.getWidth(projectionExtent) / 256;
-        var matrixSet = 'mercator';
-        var resolutions = new Array(14);
-        var matrixIds = new Array(14);
+        this.projection = ol.proj.get('EPSG:3857');
+        this.projectionExtent = this.projection.getExtent();
+        var size = ol.extent.getWidth(this.projectionExtent) / 256;
+        this.matrixSet = 'mercator';
+        this.resolutions = new Array(14);
+        this.matrixIds = new Array(14);
         for (var z = 0; z < 14; ++z) {
             // generate resolutions and matrixIds arrays for this WMTS
-            resolutions[z] = size / Math.pow(2, z);
-            matrixIds[z] = matrixSet + ':' + z;
+            this.resolutions[z] = size / Math.pow(2, z);
+            this.matrixIds[z] = this.matrixSet + ':' + z;
         }
         var tileGrid = new ol.tilegrid.WMTS({
-            origin: ol.extent.getTopLeft(projectionExtent),
-            resolutions: resolutions,
-            matrixIds: matrixIds
+            origin: ol.extent.getTopLeft(this.projectionExtent),
+            resolutions: this.resolutions,
+            matrixIds: this.matrixIds
         });
 
         this.streets = new ol.layer.Tile({
@@ -620,8 +729,8 @@ var pf = new Vue({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
                 layer: 'dpaw:mapbox_outdoors',
-                matrixSet: matrixSet,
-                projection: projection,
+                matrixSet: this.matrixSet,
+                projection: this.projection,
                 tileGrid: tileGrid
             })
         });
@@ -632,8 +741,8 @@ var pf = new Vue({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
                 layer: 'cddp:dpaw_tenure',
-                matrixSet: matrixSet,
-                projection: projection,
+                matrixSet: this.matrixSet,
+                projection: this.projection,
                 tileGrid: tileGrid
             })
         });
