@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib import admin
-from parkstay import models 
+from parkstay import models
 
 @admin.register(models.CampsiteClass)
 class CampsiteClassAdmin(admin.ModelAdmin):
@@ -18,7 +18,7 @@ class ParkAdmin(admin.ModelAdmin):
 
 @admin.register(models.Campground)
 class CampgroundAdmin(admin.ModelAdmin):
-    list_display = ('name','park','promo_area','campground_type','site_type')
+    list_display = ('name','park','promo_area','campground_type','site_type','max_advance_booking')
     ordering = ('name',)
     search_fields = ('name',)
     list_filter = ('campground_type','site_type')
@@ -104,4 +104,3 @@ admin.site.register(models.Rate)
 admin.site.register(models.Region)
 admin.site.register(models.District)
 admin.site.register(models.PromoArea)
-

@@ -226,6 +226,7 @@ class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
             'check_in',
             'check_out',
             'images',
+            'max_advance_booking'
         )
 
     def get_site_type(self, obj):

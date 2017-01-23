@@ -113,6 +113,7 @@ class Campground(models.Model):
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
+    max_advance_booking = models.IntegerField(default =180)
 
     def __str__(self):
         return self.name
