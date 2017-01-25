@@ -49,6 +49,7 @@ class Park(models.Model):
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
     entry_fee_required = models.BooleanField(default=True)
+    entry_fee = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
@@ -821,6 +822,11 @@ class Booking(models.Model):
     details = JSONField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
+
+class BookingVehicleRego(models.Model):
+    """docstring for BookingVehicleRego."""
+    booking = models.ForeignKey(Booking, related_name = "regos")
+    rego = models.CharField(max_length=50)
 
 # REASON MODELS
 # =====================================
