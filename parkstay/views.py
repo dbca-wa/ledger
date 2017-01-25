@@ -33,6 +33,13 @@ class CampsiteBookingSelector(TemplateView):
 class CampgroundFeed(ICalFeed):
     timezone = 'UTC+8'
 
+    # permissions check
+    def __call__(self, request, *args, **kwargs):
+        if not is_officer(self.request.user):
+            raise Http403('Insufficient permissions')
+
+        return super(ICalFeed, self).__call__(request, *args, **kwargs)
+
     def get_object(self, request, ground_id):
         # FIXME: add authentication parameter check
         return Campground.objects.get(pk=ground_id)

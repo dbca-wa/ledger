@@ -157,10 +157,31 @@
                                 <input type="text" name="phone" class="form-control" v-model="booking.phone">
                               </div>
                           </div>
-                          <div class="col-md-3">
+                          <!--div class="col-md-3">
                               <div class="form-group">
                                 <label for="Vehicle Registration">Vehicle Registration</label>
                                 <input type="text" name="vehicle" class="form-control" v-model="booking.vehicle">
+                              </div>
+                          </div-->
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <h3 class="text-primary">Park Entry Fees</h3>
+                            </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-md-3">
+                              <div class="form-group">
+                                <label for="Phone" class="required">Number of Vehicles</label>
+                                <input type="number" min="0" name="vehicles" class="form-control" v-model="booking.parkEntry.vehicles">
+                              </div>
+                          </div>
+                        </div>
+                        <div class="row" v-for="v in booking.parkEntry.vehicles">
+                          <div class="col-md-3">
+                              <div class="form-group">
+                                <label for="Phone" class="required">Vehicle Registration</label>
+                                <input type="text" name="regos[]" class="form-control" v-model="booking.parkEntry.regos[v-1]">
                               </div>
                           </div>
                         </div>
@@ -232,7 +253,11 @@ export default {
                 country:"",
                 phone:"",
                 vehicle:"",
-                price:"0"
+                price:"0",
+                parkEntry:{
+                    vehicles:0,
+                    regos:[]
+                }
             },
             campsites:[],
             loading:[],
@@ -381,6 +406,7 @@ export default {
                 vm.campground = response.body;
                 vm.booking.campground = vm.campground.id;
                 vm.fetchCampsites();
+                vm.addEventListeners();
                 vm.loading.splice('fetching campground',1);
             },(error)=>{
                 console.log(error);
@@ -391,13 +417,10 @@ export default {
             let vm = this;
             var arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
             var depaturePicker = $(vm.bookingForm.depature).closest('.date');
-            var today = new Date();
-            today.setDate(today.getDate()+1);
-            var tomorrow = new Date(today);
-
             arrivalPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
-                minDate: new Date()
+                minDate: new Date(),
+                maxDate: Moment().add(parseInt(vm.campground.max_advance_booking),'days')
             });
             depaturePicker.datetimepicker({
                 format: 'DD/MM/YYYY',
@@ -489,7 +512,6 @@ export default {
         vm.bookingForm = document.forms.bookingForm;
         vm.fetchCampground();
         vm.fetchCountries();
-        vm.addEventListeners();
     }
 }
 
