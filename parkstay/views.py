@@ -84,6 +84,7 @@ class MakeBookingsView(LoginRequiredMixin, TemplateView):
         form = MakeBookingsForm(args,campsites =[('exp','example')])
         return render(request, self.template_name, {'form': form})
 
+
 class MyBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/my_bookings.html'
 

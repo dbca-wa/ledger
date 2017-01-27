@@ -149,7 +149,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                     <tr>
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span></td>
                         <td class="book">
-                            <button v-if="site.price" class="button"><small>Book now</small><br/>{{ site.price }}</button>
+                            <button v-if="site.price" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
                             <template v-else>
                                 <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)"><small>Show availability</small></button>
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
@@ -192,6 +192,22 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                 timeout = setTimeout(later, wait);
                 if (callNow) func.apply(context, args);
             }
+        }
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie != '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
 
         var nowTemp = new Date();
@@ -246,6 +262,27 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                         });
                         site.showBreakdown = true;
                     }
+                },
+                submitBooking: function (site) {
+                    var vm = this;
+                    var submitData = {
+                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                        num_adult: vm.numAdults,
+                        num_child: vm.numChildren,
+                        num_concession: vm.numConcessions,
+                        num_infant: vm.numInfants,
+                        campground: {{ ground_id }},
+                        campsite_class: site.type
+                    };
+                    console.log(site);
+                    console.log(submitData);
+                    $.ajax({
+                        url: '{% url 'create_class_booking' %}',
+                        method: 'POST',
+                        data: submitData,
+                        headers: {'X-CSRFToken': getCookie('csrftoken')}
+                    });
                 },
                 update: function() {
                     var vm = this;
