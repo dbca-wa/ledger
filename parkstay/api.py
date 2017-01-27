@@ -695,7 +695,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-
             "gear_type" : request.GET.get('gear_type', 'tent')
         }
         serializer = CampgroundCampsiteFilterSerializer(data=data)
@@ -852,6 +851,14 @@ def create_class_booking(request, *args, **kwargs):
     num_child = serializer.validated_data['num_child']
     num_infant = serializer.validated_data['num_infant']
 
+    if 'ps_booking' in request.session:
+        # already a booking in the current session, send bounce signal
+        return HttpResponse(geojson.dumps({
+            'status': 'success',
+            'msg': 'Booking already in progress',
+            'pk': request.session['ps_booking']
+        }), content_type='application/json')
+
     # TODO: campground openness business logic
     # TODO: campsite openness business logic
     # TODO: date range check business logic
@@ -870,7 +877,10 @@ def create_class_booking(request, *args, **kwargs):
                     )
 
         if not sites_qs.exists():
-            return HttpResponse(geojson.dumps({'error': 'No matching campsites found'}), content_type='application/json')
+            return HttpResponse(geojson.dumps({
+                'status': 'error',
+                'msg': 'No matching campsites found'
+            }), content_type='application/json')
 
 
         # fetch all of the single-day CampsiteBooking objects within the date range for the sites
@@ -885,20 +895,24 @@ def create_class_booking(request, *args, **kwargs):
         sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
 
         if not sites:
-            return HttpResponse(geojson.dumps({'error': 'Campsite class unavailable for specified time period'}), content_type='application/json')
+            return HttpResponse(geojson.dumps({
+                'status': 'error',
+                'msg': 'Campsite class unavailable for specified time period'
+            }), content_type='application/json')
 
         # TODO: add campsite sorting logic based on business requirements
         # for now, pick the first campsite in the list
         site = sites[0]
 
-        # Create a new temporary booking with a 20 minute expiry
+        # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
                         booking_type=3, 
                         arrival=start_date,
                         departure=end_date,
-                        expiry_time=timezone.now()+timedelta(minutes=20),
+                        expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                         campground=campground
                     )
+        request.session['ps_booking'] = booking.pk
         for i in range((end_date-start_date).days):
             cb =    CampsiteBooking.objects.create(
                         campsite=site,
@@ -907,7 +921,10 @@ def create_class_booking(request, *args, **kwargs):
                         booking=booking
                     )
 
-    return HttpResponse(geojson.dumps({'success': booking.pk}), content_type='application/json')    
+    return HttpResponse(geojson.dumps({
+        'status': 'success',
+        'pk': booking.pk
+    }), content_type='application/json')    
 
 
 class PromoAreaViewSet(viewsets.ModelViewSet):
