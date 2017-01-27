@@ -609,6 +609,8 @@ class CampsiteBookingRange(BookingRange):
 class CampsiteStayHistory(StayHistory):
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT,related_name='stay_history')
 
+class CampgroundStayHistory(StayHistory):
+    campground = models.ForeignKey('Campground', on_delete=models.PROTECT,related_name='stay_history')
 
 class Feature(models.Model):
     TYPE_CHOICES = (
@@ -1172,3 +1174,30 @@ class CampsiteStayHistoryListener(object):
     def _post_delete(sender, instance, **kwargs):
         if not instance.range_end:
             CampsiteStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campsite=instance.campsite).update(range_end=None)
+
+class CampgroundStayHistoryListener(object):
+    """
+    Event listener for Campground Stay History
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=CampgroundStayHistory)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = CampgroundStayHistory.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                within = CampgroundStayHistory.objects.get(Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within.range_end = instance.range_start - timedelta(days=1)
+                within.save()
+            except CampgroundStayHistory.DoesNotExist:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=CampgroundStayHistory)
+    def _post_delete(sender, instance, **kwargs):
+        if not instance.range_end:
+            CampgroundStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campground=instance.campground).update(range_end=None)
