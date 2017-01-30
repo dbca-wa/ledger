@@ -19,8 +19,9 @@ openCampsite<template lang="html">
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID"></priceHistory>
-                <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
+                <stay-history :object_id="ID" :datatableURL="stayHistoryURL"></stay-history>
+                <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="ID"></priceHistory>
+                <closureHistory ref="cg_closure_dt" :object_id="ID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
          </div>
@@ -63,6 +64,7 @@ import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import pkCsClose from '../campsites/closureHistory/closeCampsite.vue'
 import pkCsOpen from '../campsites/closureHistory/openCampsite.vue'
+import stayHistory from '../utils/stayHistory/stayHistory.vue'
 import {
     bus
 }
@@ -84,7 +86,8 @@ export default {
         pkCsClose,
         pkCsOpen,
         closureHistory,
-        priceHistory
+        priceHistory,
+        "stay-history":stayHistory
     },
     computed: {
         closureHistoryURL: function() {
@@ -93,7 +96,7 @@ export default {
         priceHistoryURL: function() {
             return api_endpoints.campground_price_history(this.$route.params.id);
         },
-        myID: function(){
+        ID: function(){
             return parseInt(this.$route.params.id);
         },
         hasCampsites: function() {
@@ -109,6 +112,7 @@ export default {
     data: function() {
         let vm = this;
         return {
+            stayHistoryURL:api_endpoints.campgroundStayHistory(this.$route.params.id),
             campground: {
                 address:{},
                 images: []

@@ -70,7 +70,7 @@ import alert from '../../utils/alert.vue'
 module.exports = {
     name: 'addMaxStayCS',
     props: {
-        campsite: {
+        campground: {
             type: Object,
             required: true
         },
@@ -117,7 +117,7 @@ module.exports = {
             this.stay.range_end = '';
             this.stay.reason = '';
             this.stay.details = '';
-            
+
             this.isOpen = false;
             this.errors = false;
             this.errorString = '';
@@ -129,7 +129,7 @@ module.exports = {
         addMaxStay: function() {
             if ($(this.form).valid()){
                 if (!this.stay.id){
-                    this.$emit('addStayHistory');
+                    this.$emit('addCgStayHistory');
                 }else {
                     this.$emit('updateStayHistory');
                 }

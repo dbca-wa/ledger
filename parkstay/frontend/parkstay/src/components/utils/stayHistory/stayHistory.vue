@@ -1,6 +1,6 @@
 <template id="stayHistory">
 <div class="row">
-    <StayHistoryDetail :stay="stay" :campground.sync="campground" ref="addMaxStayModal" @addStayHistory="addStayHistory()" @updateStayHistory="updateStayHistory()"></StayHistoryDetail>
+    <StayHistoryDetail :stay="stay" :campground="campground" ref="addMaxStayModal" @addCgStayHistory="addStayHistory()" @updateStayHistory="updateStayHistory()"></StayHistoryDetail>
     <div class="well">
         <alert ref="retrieveStayAlert" :show.sync="retrieve_stay.error" type="danger" :duration="retrieve_stay.timeout">{{retrieve_stay.errorString}}</alert>
         <div class="col-sm-8">
@@ -123,6 +123,7 @@ export default {
             this.$refs.addMaxStayModal.create = create;
         },
         addStayHistory: function() {
+            let vm = this;
             this.sendData(api_endpoints.campground_stay_history, 'POST')
         },
         updateStayHistory: function() {

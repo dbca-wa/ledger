@@ -22,7 +22,8 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
-                                MaximumStayReason
+                                MaximumStayReason,
+                                CampgroundStayHistory
                             )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -284,6 +285,23 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         except:
             method = 'post'
         super(CampsiteStayHistorySerializer, self).__init__(*args, **kwargs)
+        if method == 'get':
+            self.fields['reason'] = serializers.CharField(source='reason.text')
+class CampgroundStayHistorySerializer(serializers.ModelSerializer):
+    details = serializers.CharField(required=False)
+    range_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
+    range_end = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
+    class Meta:
+        model = CampgroundStayHistory
+        fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','reason','details','campground','editable')
+        read_only_fields =('editable',)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        super(CampgroundStayHistorySerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['reason'] = serializers.CharField(source='reason.text')
 
