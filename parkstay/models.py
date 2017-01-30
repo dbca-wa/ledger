@@ -836,6 +836,10 @@ class Booking(models.Model):
 
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
+    @property
+    def num_days(self):
+        return (self.departure-self.arrival).days
+
     def __str__(self):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
 
