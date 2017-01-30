@@ -281,7 +281,13 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                         url: '{% url 'create_class_booking' %}',
                         method: 'POST',
                         data: submitData,
-                        headers: {'X-CSRFToken': getCookie('csrftoken')}
+                        headers: {'X-CSRFToken': getCookie('csrftoken')},
+                        success: function(data, stat, xhr) {
+                            console.log(data);
+                            if (data.status == 'success') {
+                                window.location.href = '{% url 'public_make_booking' %}';
+                            }
+                        }
                     });
                 },
                 update: function() {

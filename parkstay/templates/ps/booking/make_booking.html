@@ -269,7 +269,7 @@
             var timer = setInterval(function (ev) {
                 if (vm.timer > 0) {
                     vm.timer -= 1;
-                } else {
+                } else if (vm.timer == 0) {
                     clearInterval(timer);
                     location.reload();
                 }

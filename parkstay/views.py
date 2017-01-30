@@ -84,7 +84,7 @@ class MakeBookingsView(LoginRequiredMixin, TemplateView):
         # TODO: find campsites related to campground
         form = MakeBookingsForm(args, campsites =[('exp','example')])
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        expiry = (booking.expiry_time - timezone.now()).seconds if booking else 0
+        expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         campsite = booking.campsitebooking_set.all()[0].campsite if booking else None
