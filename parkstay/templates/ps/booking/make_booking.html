@@ -267,7 +267,12 @@
         mounted: function () {
             var vm = this;
             var timer = setInterval(function (ev) {
-                vm.timer -= 1;
+                if (vm.timer > 0) {
+                    vm.timer -= 1;
+                } else {
+                    clearInterval(timer);
+                    location.reload();
+                }
             }, 1000);
         }
     });
