@@ -19,14 +19,14 @@ openCampsite<template lang="html">
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <stay-history :object_id="ID" :datatableURL="stayHistoryURL"></stay-history>
+                <stay-history :object_id="ID" :datatableURL="stayHistoryURL"style="margin-top:100px;"></stay-history>
                 <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="ID"></priceHistory>
                 <closureHistory ref="cg_closure_dt" :object_id="ID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
          </div>
       </div>
-      <div class="panel panel-default" id="applications">
+      <div class="panel panel-default" id="applications" style="margin-top:50px;">
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#campsites"
