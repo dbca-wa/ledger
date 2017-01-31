@@ -372,20 +372,22 @@ class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
     def get_booking_type(self, obj):
         return dict(CampsiteBooking.BOOKING_TYPE_CHOICES).get(obj.booking_type)
 
-class BookingSerializer(serializers.HyperlinkedModelSerializer):
+class BookingSerializer(serializers.ModelSerializer):
+    campground_name = serializers.CharField(source='campground.name',read_only=True)
+    campground_region = serializers.CharField(source='campground.region',read_only=True)
+    campground_site_type = serializers.CharField(source='campground.site_type',read_only=True)
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type')
 
     def __init__(self,*args,**kwargs):
         try:
             method = kwargs.pop('method')
         except :
             method = "get"
-        print(method)
         super(BookingSerializer,self).__init__(*args,**kwargs)
-        if method == 'get':
-            self.fields['campground'] = CampgroundSerializer()
+        #if method == 'get':
+        #    self.fields['campground'] = CampgroundSerializer()
 
 class RateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

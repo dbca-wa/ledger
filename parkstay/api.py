@@ -14,6 +14,7 @@ from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
+from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 
@@ -1123,9 +1124,15 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+class BookingPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+    pagination_class = BookingPagination
 
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
