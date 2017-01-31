@@ -3,9 +3,12 @@ import base64
 import geojson
 from six.moves.urllib.parse import urlparse
 from django.db.models import Q
+from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
 from django.conf import settings
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
@@ -45,6 +48,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
                                     CampgroundCampsiteFilterSerializer,
+                                    CampsiteClassBookingSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     FeatureSerializer,
@@ -726,7 +730,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-
             "gear_type" : request.GET.get('gear_type', 'tent')
         }
         serializer = CampgroundCampsiteFilterSerializer(data=data)
@@ -746,15 +749,17 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             length = settings.PS_MAX_BOOKING_LENGTH
             end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
 
-        # fetch all of the single-day CampsiteBooking objects within the date range for the campground
-        bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__campground=ground,
-                            date__gte=start_date,
-                            date__lt=end_date
-                        ).order_by('date', 'campsite__name')
+
         # fetch all the campsites and applicable rates for the campground
         sites_qs = Campsite.objects.filter(campground=ground).filter(**{gear_type: True})
         rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
+
+        # fetch all of the single-day CampsiteBooking objects within the date range for the sites
+        bookings_qs =   CampsiteBooking.objects.filter(
+                            campsite__in=sites_qs,
+                            date__gte=start_date,
+                            date__lt=end_date
+                        ).order_by('date', 'campsite__name')
 
         # make a map of campsite class to cost
         rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
@@ -783,7 +788,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             site = {
                 'name': c[2],
                 'id': None,
-                'type': ground.campground_type,
+                'type': c[1],
                 'price': '${}'.format(rate*length),
                 'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
                 'breakdown': OrderedDict()
@@ -810,7 +815,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         for b in bookings_qs:
             offset = (b.date-start_date).days
             key = b.campsite.campsite_class.pk
-
             # clear the campsite from the class sites map
             if b.campsite.pk in class_sites_map[key]:
                 class_sites_map[key].remove(b.campsite.pk)
@@ -853,6 +857,110 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
 
         return Response(result)
+
+
+@require_http_methods(['POST'])
+def create_class_booking(request, *args, **kwargs):
+    """Create a temporary booking and link it to the current session"""
+    
+    data = {
+        'arrival': request.POST.get('arrival'),
+        'departure': request.POST.get('departure'),
+        'num_adult': request.POST.get('num_adult', 0),
+        'num_concession': request.POST.get('num_concession', 0),
+        'num_child': request.POST.get('num_child', 0),
+        'num_infant': request.POST.get('num_infant', 0),
+        'campground': request.POST.get('campground'),
+        'campsite_class': request.POST.get('campsite_class')
+    }
+
+    serializer = CampsiteClassBookingSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+
+    campground = serializer.validated_data['campground']
+    campsite_class = serializer.validated_data['campsite_class']
+    start_date = serializer.validated_data['arrival']
+    end_date = serializer.validated_data['departure']
+    num_adult = serializer.validated_data['num_adult']
+    num_concession = serializer.validated_data['num_concession']
+    num_child = serializer.validated_data['num_child']
+    num_infant = serializer.validated_data['num_infant']
+
+    if 'ps_booking' in request.session:
+        # already a booking in the current session, send bounce signal
+        return HttpResponse(geojson.dumps({
+            'status': 'success',
+            'msg': 'Booking already in progress',
+            'pk': request.session['ps_booking']
+        }), content_type='application/json')
+
+    # TODO: campground openness business logic
+    # TODO: campsite openness business logic
+    # TODO: date range check business logic
+    # TODO: number of people check? this might be modifyable later
+
+    # the CampsiteBooking table runs the risk of a race condition,
+    # wrap all this behaviour up in a transaction
+    with transaction.atomic():
+        # get campground
+        campground = Campground.objects.get(pk=campground)
+
+        # fetch all the campsites and applicable rates for the campground
+        sites_qs =  Campsite.objects.filter(
+                        campground=campground, 
+                        campsite_class=campsite_class
+                    )
+
+        if not sites_qs.exists():
+            return HttpResponse(geojson.dumps({
+                'status': 'error',
+                'msg': 'No matching campsites found'
+            }), content_type='application/json')
+
+
+        # fetch all of the single-day CampsiteBooking objects within the date range for the sites
+        bookings_qs =   CampsiteBooking.objects.filter(
+                            campsite__in=sites_qs,
+                            date__gte=start_date,
+                            date__lt=end_date
+                        ).order_by('date', 'campsite__name')
+
+        excluded_site_ids = set([x[0] for x in bookings_qs.values_list('campsite')])
+        # create a list of campsites without bookings for that period
+        sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
+
+        if not sites:
+            return HttpResponse(geojson.dumps({
+                'status': 'error',
+                'msg': 'Campsite class unavailable for specified time period'
+            }), content_type='application/json')
+
+        # TODO: add campsite sorting logic based on business requirements
+        # for now, pick the first campsite in the list
+        site = sites[0]
+
+        # Create a new temporary booking with an expiry timestamp (default 20mins)
+        booking =   Booking.objects.create(
+                        booking_type=3, 
+                        arrival=start_date,
+                        departure=end_date,
+                        expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
+                        campground=campground
+                    )
+        request.session['ps_booking'] = booking.pk
+        for i in range((end_date-start_date).days):
+            cb =    CampsiteBooking.objects.create(
+                        campsite=site,
+                        booking_type=3,
+                        date=start_date+timedelta(days=i),
+                        booking=booking
+                    )
+
+    return HttpResponse(geojson.dumps({
+        'status': 'success',
+        'pk': booking.pk
+    }), content_type='application/json')    
+
 
 class PromoAreaViewSet(viewsets.ModelViewSet):
     queryset = PromoArea.objects.all()

@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic.base import View, TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.utils import timezone
 from parkstay.forms import MakeBookingsForm
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -79,10 +80,21 @@ class DashboardView(UserPassesTestMixin, TemplateView):
 
 class MakeBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/make_booking.html'
-    def get(self,request,*args,**kwargs):
+    def get(self, request, *args, **kwargs):
         # TODO: find campsites related to campground
-        form = MakeBookingsForm(args,campsites =[('exp','example')])
-        return render(request, self.template_name, {'form': form})
+        form = MakeBookingsForm(args, campsites =[('exp','example')])
+        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
+        # for now, we can assume that there's only one campsite per booking.
+        # later on we might need to amend that
+        campsite = booking.campsitebooking_set.all()[0].campsite if booking else None
+        return render(request, self.template_name, {
+            'form': form, 
+            'booking': booking,
+            'campsite': campsite,
+            'expiry': expiry
+        })
+
 
 class MyBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/my_bookings.html'
