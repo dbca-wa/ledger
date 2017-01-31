@@ -101,13 +101,6 @@ export default {
                 ajax: {
                     "url": api_endpoints.bookings,
                     "dataSrc": 'results',
-                    "data": function(d){
-                        console.log(JSON.parse(JSON.stringify(d)));
-                        //d.dtData = "results";
-                        d.draw = "page";
-                        d.dtRecordsTotal = "count";
-                        return JSON.stringify(d);
-                    }
                 },
                 columns:[
                     {

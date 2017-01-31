@@ -54,7 +54,7 @@ class CampsiteClassBookingSerializer(serializers.Serializer):
     num_infant = serializers.IntegerField(default=0)
     campground = serializers.IntegerField(default=0)
     campsite_class = serializers.IntegerField(default=0)
-    
+
 
 class BookingRangeSerializer(serializers.ModelSerializer):
 

@@ -863,7 +863,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 @require_http_methods(['POST'])
 def create_class_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
-    
+
     data = {
         'arrival': request.POST.get('arrival'),
         'departure': request.POST.get('departure'),
@@ -908,7 +908,7 @@ def create_class_booking(request, *args, **kwargs):
 
         # fetch all the campsites and applicable rates for the campground
         sites_qs =  Campsite.objects.filter(
-                        campground=campground, 
+                        campground=campground,
                         campsite_class=campsite_class
                     )
 
@@ -942,7 +942,7 @@ def create_class_booking(request, *args, **kwargs):
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
-                        booking_type=3, 
+                        booking_type=3,
                         arrival=start_date,
                         departure=end_date,
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
@@ -960,7 +960,7 @@ def create_class_booking(request, *args, **kwargs):
     return HttpResponse(geojson.dumps({
         'status': 'success',
         'pk': booking.pk
-    }), content_type='application/json')    
+    }), content_type='application/json')
 
 
 class PromoAreaViewSet(viewsets.ModelViewSet):
@@ -1125,8 +1125,9 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
 
 
 class BookingPagination(PageNumberPagination):
-    page_size = 100
-    page_size_query_param = 'page_size'
+    page_size = 10
+    page_size_query_param = 'length'
+    page_query_param = 'draw'
     max_page_size = 100
 
 class BookingViewSet(viewsets.ModelViewSet):
@@ -1134,6 +1135,11 @@ class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
     pagination_class = BookingPagination
 
+    def list(self, request, format=None):
+        queryset = Booking.objects.all()
+        print queryset[0].arrival
+        serializer = BookingSerializer(queryset, many =True)
+        return Response(serializer.data)
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
