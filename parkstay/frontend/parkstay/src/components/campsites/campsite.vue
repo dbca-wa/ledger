@@ -1,128 +1,116 @@
 <template lang="html">
     <div id="campsite">
         <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
-       <div class="panel panel-default" id="applications">
-         <div class="panel-heading" role="tab" id="applications-heading">
-             <h4 class="panel-title">
-                 <a role="button" data-toggle="collapse" href="#applications-collapse"
-                    aria-expanded="false" aria-controls="applications-collapse">
-                     <h3>Campsite</h3>
-                 </a>
-             </h4>
-         </div>
-         <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel"
-              aria-labelledby="applications-heading">
-             <div class="panel-body">
-                <div class="col-lg-12">
-                   <div class="row" >
-                       <form name="campsiteForm">
-                           <div class="panel panel-primary">
-    							<div class="panel-heading">
-    								<h3 class="panel-title">Campsite Details</h3>
+        <div class="col-lg-12">
+           <div class="row" >
+               <form name="campsiteForm">
+                   <div class="panel panel-primary">
+    					<div class="panel-heading">
+    						<h3 class="panel-title">Campsite Details</h3>
+    					</div>
+    					<div class="panel-body" v-show="!isLoading">
+                            <div class="row">
+    							<div class="col-md-6">
+    								<div class="form-group">
+    									<label class="control-label" >Campsite Type</label>
+    									<select class="form-control" v-show="!campsite_classes.length > 0" >
+    										<option>Loading...</option>
+    									</select>
+    									<select v-if="campsite_classes.length > 0" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
+                                            <option value=""></option>
+    										<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
+    									</select>
+    								</div>
     							</div>
-    							<div class="panel-body" v-show="!isLoading">
-                                    <div class="row">
-    									<div class="col-md-6">
-    										<div class="form-group">
-    											<label class="control-label" >Campsite Type</label>
-    											<select class="form-control" v-show="!campsite_classes.length > 0" >
-    												<option>Loading...</option>
-    											</select>
-    											<select v-if="campsite_classes.length > 0" @change="onCampsiteClassChange" name="campsite_class" class="form-control" v-model="campsite.campsite_class" >
-                                                    <option value=""></option>
-    												<option v-for="campsite_class in campsite_classes" :value="campsite_class.url" >{{campsite_class.name}}</option>
-    											</select>
-    										</div>
-    									</div>
-    									<div v-show="showName" class="col-md-6">
-    										<div class="form-group">
-    											<label class="control-label" >Campsite Name</label>
-    											<input type="text" name="name" class="form-control"  v-model="campsite.name" required/>
-    										</div>
-    									</div>
+    							<div v-show="showName" class="col-md-6">
+    								<div class="form-group">
+    									<label class="control-label" >Campsite Name</label>
+    									<input type="text" name="name" class="form-control"  v-model="campsite.name" required/>
     								</div>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="control-label" >Minimum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.min_people" required :disabled="selected_campsite_class_url() != ''"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="control-label" >Maximum Number of People</label>
-                                                <input type="number" name="name" class="form-control"  v-model="campsite.max_people" required :disabled="selected_campsite_class_url() != ''"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <div style="margin-top:10%;" class="checkbox">
-                                                    <label><input type="checkbox" v-model="campsite.tent" :disabled="selected_campsite_class_url() != ''"/>Tent</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <div style="margin-top:10%;" class="checkbox">
-                                                    <label><input type="checkbox" v-model="campsite.campervan" :disabled="selected_campsite_class_url() != ''"/>Campervan</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <div style="margin-top:10%;" class="checkbox">
-                                                    <label><input type="checkbox" v-model="campsite.caravan" :disabled="selected_campsite_class_url() != ''"/>Caravan</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <editor ref="descriptionEditor" v-model="campsite.description"></editor>
-    								<div class="row">
-    									<div class="col-sm-12">
-                                        <select-panel v-show="!createCampsite" :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
-    									</div>
-    								</div>
-                                    <div class="row">
-                                      <div class="col-sm-6">
-
-                                      </div>
-                                      <div class="col-sm-6">
-                                          <div class="row">
-
-                                              <div class="form-group">
-                                                  <div class="col-sm-6 col-xs-8">
-                                                      <button @click.prevent="addCampsite" type="button" v-show="createCampsite" class="btn btn-primary btn-create">Create</button>
-                                                  </div>
-                                                  <div class="col-sm-2 col-xs-4  pull-right">
-                                                      <input type="number" v-show="createCampsite" class="form-control" name="number" v-model="campsite.number" value="">
-                                                  </div>
-                                              </div>
-                                          </div>
-                                          <div class="row" style="margin-top:10px;">
-                                              <div class="col-sm-6 pull-right">
-                                                  <div class="pull-right">
-                                                      <button type="button" v-show="!createCampsite" style="margin-right:5px" @click="updateCampsite" class="btn btn-primary">Update</button>
-                                                      <button type="button" class="btn btn-default pull-right" @click="goBack">Back</button>
-                                                  </div>
-
-                                              </div>
-                                          </div>
-                                      </div>
-                                    </div>
     							</div>
     						</div>
-                       </form>
-                       <loader :isLoading="isLoading">Saving Campsite Data...</loader>
-                   </div>
-                    <stayHistory v-if="!createCampsite" ref="stay_dt" :object_id="myID" :datatableURL="stayHistoryURL"></stayHistory>
-                    <priceHistory v-if="!createCampsite" level="campsite" ref="price_dt" :object_id="myID" :dt_options="ph_options" :showAddBtn="canAddRate"></priceHistory>
-                    <closureHistory v-if="!createCampsite" ref="cg_closure_dt" :closeCampground=false :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
-                </div>
-             </div>
-          </div>
-       </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="control-label" >Minimum Number of People</label>
+                                        <input type="number" name="name" class="form-control"  v-model="campsite.min_people" required :disabled="selected_campsite_class_url() != ''"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="control-label" >Maximum Number of People</label>
+                                        <input type="number" name="name" class="form-control"  v-model="campsite.max_people" required :disabled="selected_campsite_class_url() != ''"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <div style="margin-top:10%;" class="checkbox">
+                                            <label><input type="checkbox" v-model="campsite.tent" :disabled="selected_campsite_class_url() != ''"/>Tent</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <div style="margin-top:10%;" class="checkbox">
+                                            <label><input type="checkbox" v-model="campsite.campervan" :disabled="selected_campsite_class_url() != ''"/>Campervan</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <div style="margin-top:10%;" class="checkbox">
+                                            <label><input type="checkbox" v-model="campsite.caravan" :disabled="selected_campsite_class_url() != ''"/>Caravan</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <editor ref="descriptionEditor" v-model="campsite.description"></editor>
+    						<div class="row">
+    							<div class="col-sm-12">
+                                <select-panel v-show="!createCampsite" :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
+    							</div>
+    						</div>
+                            <div class="row">
+                              <div class="col-sm-6">
+
+                              </div>
+                              <div class="col-sm-6">
+                                  <div class="row">
+
+                                      <div class="form-group">
+                                          <div class="col-sm-6 col-xs-8">
+                                              <button @click.prevent="addCampsite" type="button" v-show="createCampsite" class="btn btn-primary btn-create">Create</button>
+                                          </div>
+                                          <div class="col-sm-2 col-xs-4  pull-right">
+                                              <input type="number" v-show="createCampsite" class="form-control" name="number" v-model="campsite.number" value="">
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div class="row" style="margin-top:10px;">
+                                      <div class="col-sm-6 pull-right">
+                                          <div class="pull-right">
+                                              <button type="button" v-show="!createCampsite" style="margin-right:5px" @click="updateCampsite" class="btn btn-primary">Update</button>
+                                              <button type="button" class="btn btn-default pull-right" @click="goBack">Back</button>
+                                          </div>
+
+                                      </div>
+                                  </div>
+                              </div>
+                            </div>
+    					</div>
+    				</div>
+               </form>
+               <loader :isLoading="isLoading">Saving Campsite Data...</loader>
+           </div>
+           <div style="margin-top:50px;">
+               <!--stayHistory v-if="!createCampsite" ref="stay_dt" :object_id="myID" :datatableURL="stayHistoryURL"></stayHistory-->
+               <priceHistory v-if="!createCampsite" level="campsite" ref="price_dt" :object_id="myID" :dt_options="ph_options" :showAddBtn="canAddRate"></priceHistory>
+               <closureHistory v-if="!createCampsite" ref="cg_closure_dt" :closeCampground=false :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
+           </div>
+
+        </div>
    </div>
 </template>
 

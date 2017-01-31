@@ -25,6 +25,7 @@ from parkstay.models import (Campground,
                                 CampgroundBookingRange,
                                 CampsiteBookingRange,
                                 CampsiteStayHistory,
+                                CampgroundStayHistory,
                                 PromoArea,
                                 Park,
                                 Feature,
@@ -59,6 +60,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteRateSerializer,
                                     CampsiteRateReadonlySerializer,
                                     CampsiteStayHistorySerializer,
+                                    CampgroundStayHistorySerializer,
                                     RateSerializer,
                                     RateDetailSerializer,
                                     CampgroundPriceHistorySerializer,
@@ -240,6 +242,26 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
+    queryset = CampgroundStayHistory.objects.all()
+    serializer_class = CampgroundStayHistorySerializer
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance,data=request.data,partial=partial)
+            serializer.is_valid(raise_exception=True)
+            if instance.range_end and not serializer.validated_data.get('range_end'):
+                instance.range_end = None
+            self.perform_update(serializer)
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
 
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.all()
@@ -299,7 +321,7 @@ def search_suggest(request, *args, **kwargs):
     for x in Park.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Park', 'id': x[0], 'name': x[1]}))
     for x in PromoArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
-        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))    
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))
 
     return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
 
@@ -592,6 +614,19 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
             serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+            res = serializer.data
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def stay_history(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer = CampgroundStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
             res = serializer.data
 
             return Response(res,status=http_status)
