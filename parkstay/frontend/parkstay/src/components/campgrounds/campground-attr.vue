@@ -58,115 +58,119 @@
 										</div>
 									</div>
                                     <imagePicker :images="campground.images"></imagePicker>
+
+									<div class="row" style="margin-top: 40px;">
+										<div class="col-lg-12">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h3 class="panel-title">Address</h3>
+												</div>
+												<div class="panel-body">
+													<div class="col-md-6">
+														<div class="form-group">
+															<label for="">Email</label>
+															<input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
+														</div>
+													</div>
+													<div class="col-md-6">
+														<div class="form-group">
+															<label for="">Telephone</label>
+															<input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
+														</div>
+													</div>
+													<div class="col-md-4">
+														<div class="form-group">
+															<label for="">Street</label>
+															<input id="street" name="street" type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
+														</div>
+													</div>
+													<div class="col-md-4">
+														<div class="form-group">
+															<label for="">City</label>
+															<input id="city" name="city" type="text" class="form-control" v-model="campground.address.city"  placeholder=""/>
+														</div>
+													</div>
+													<div class="col-md-4">
+														<div class="form-group">
+															<label for="">Postcode</label>
+															<input id="postcode" name="postcode" type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row" style="margin-top: 40px;">
+										<div class="col-sm-6 features">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h3 class="panel-title">Features</h3>
+												</div>
+												<div class="panel-body" v-bind:class="{ 'empty-features': allFeaturesSelected }">
+													<p v-show="allFeaturesSelected">
+				                             All features selected
+				                         </p>
+													<ul class="list-group">
+														<a href="" v-for="feature,key in features"  @click.prevent="addSelectedFeature(feature,key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
+													</ul>
+												</div>
+											</div>
+										</div>
+										<div class="col-sm-6 features">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h3 class="panel-title">Selected Feautures</h3>
+												</div>
+												<div class="panel-body"  v-bind:class="{ 'empty-features': !hasSelectedFeatures }">
+													<p v-show="!hasSelectedFeatures">
+				                             No features selected
+				                         </p>
+													<ul class="list-group">
+														<a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row" style="margin-top: 40px;">
+										<div class="col-md-12">
+											<div class="form-group">
+												<label class="control-label" >Description</label>
+												<div id="editor" class="form-control"></div>
+											</div>
+										</div>
+									</div>
+
+									<div class="row" style="margin-top: 40px;">
+										<div class="col-sm-8">
+											<div class="form-group">
+												<div class="col-sm-4 col-md-3 col-lg-2">
+													<label style="line-height: 2.5;">Price set at: </label>
+												</div>
+												<div class="col-sm-8 col-md-9 col-lg-10">
+													<select id="price_level" name="price_level" class="form-control" v-model="campground.price_level">
+														<option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
+													</select>
+												</div>
+											</div>
+										</div>
+										<div class="col-sm-4">
+											<div class="col-sm-12">
+												<div class="form-group pull-right">
+													<a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
+													<a href="#" v-else class="btn btn-primary" @click.prevent="update">Update</a>
+													<a href="#" class="btn btn-default" @click.prevent="goBack">Cancel</a>
+												</div>
+											</div>
+										</div>
+									</div>
 								</div>
-							</div>
+
 						</div>
 					</div>
-					<div class="row" style="margin-top: 40px;">
-						<div class="col-lg-12">
-							<div class="panel panel-primary">
-								<div class="panel-heading">
-									<h3 class="panel-title">Address</h3>
-								</div>
-								<div class="panel-body">
-									<div class="col-md-6">
-										<div class="form-group">
-											<label for="">Email</label>
-											<input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-6">
-										<div class="form-group">
-											<label for="">Telephone</label>
-											<input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group">
-											<label for="">Street</label>
-											<input id="street" name="street" type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group">
-											<label for="">City</label>
-											<input id="city" name="city" type="text" class="form-control" v-model="campground.address.city"  placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group">
-											<label for="">Postcode</label>
-											<input id="postcode" name="postcode" type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="row" style="margin-top: 40px;">
-						<div class="col-sm-6 features">
-							<div class="panel panel-primary">
-								<div class="panel-heading">
-									<h3 class="panel-title">Features</h3>
-								</div>
-								<div class="panel-body" v-bind:class="{ 'empty-features': allFeaturesSelected }">
-									<p v-show="allFeaturesSelected">
-                             All features selected
-                         </p>
-									<ul class="list-group">
-										<a href="" v-for="feature,key in features"  @click.prevent="addSelectedFeature(feature,key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
-									</ul>
-								</div>
-							</div>
-						</div>
-						<div class="col-sm-6 features">
-							<div class="panel panel-primary">
-								<div class="panel-heading">
-									<h3 class="panel-title">Selected Feautures</h3>
-								</div>
-								<div class="panel-body"  v-bind:class="{ 'empty-features': !hasSelectedFeatures }">
-									<p v-show="!hasSelectedFeatures">
-                             No features selected
-                         </p>
-									<ul class="list-group">
-										<a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="row" style="margin-top: 40px;">
-						<div class="col-md-12">
-							<div class="form-group">
-								<label class="control-label" >Description</label>
-								<div id="editor" class="form-control"></div>
-							</div>
-						</div>
-					</div>
+
 			</div>
-			<div class="row" style="margin-top: 40px;">
-				<div class="col-sm-8">
-					<div class="form-group">
-						<div class="col-sm-4 col-md-3 col-lg-2">
-							<label style="line-height: 2.5;">Price set at: </label>
-						</div>
-						<div class="col-sm-8 col-md-9 col-lg-10">
-							<select id="price_level" name="price_level" class="form-control" v-model="campground.price_level">
-								<option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
-							</select>
-						</div>
-					</div>
-				</div>
-				<div class="col-sm-4">
-					<div class="col-sm-12">
-						<div class="form-group pull-right">
-							<a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
-							<a href="#" v-else class="btn btn-primary" @click.prevent="update">Update</a>
-							<a href="#" class="btn btn-default" @click.prevent="goBack">Cancel</a>
-						</div>
-					</div>
-				</div>
-			</div>
+
 			</form>
 		</div>
 		<loader :isLoading.sync="isLoading">Loading...</loader>
