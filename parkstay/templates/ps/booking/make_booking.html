@@ -39,45 +39,45 @@
                     <div class="row">
                         <div class="col-md-12">
                             {% verbatim %}
-                            <p><b>Your temporary reservation expires in {{ timeleft }}.</b> <a class="btn btn-warning" href="#">Cancel</a></p>
+                            <p v-cloak><b>Your temporary reservation expires in {{ timeleft }}.</b> <a class="btn btn-warning" href="#">Cancel</a></p>
                             {% endverbatim %}
                             <h3 class="text-primary">Booking information</h3>
                         </div>
-                        <div class="col-md-4">
-                              <img src="https://placeholdit.imgix.net/~text?txtsize=33&txt=Campground&w=250&h=250" alt="campground"  width="250" class="img-thumbnail img-responsive">
+                        <div class="col-md-2">
+                              <img src="https://placeholdit.imgix.net/~text?txtsize=33&txt=Campground&w=128&h=128" alt="campground"  class="img-thumbnail img-responsive">
                               <p class="pricing" >
                                   <strong >$12.00</strong>
                                   <br> <span class="text-muted">Per adult per night</span>
                               </p>
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-md-10">
                             <div class="row form-horizontal">
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label class="col-xs-2 control-label pull-left required">Campground: </label>
-                                        <div class="col-xs-8">
+                                        <label class="col-sm-4 control-label pull-left required">Campground: </label>
+                                        <div class="col-sm-8">
                                             {{ booking.campground.name }}
                                         </div>
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="col-xs-2 control-label pull-left required">Campsite type: </label>
-                                        <div class="col-xs-8">
+                                        <label class="col-sm-4 control-label pull-left required">Campsite type: </label>
+                                        <div class="col-sm-8">
                                             {{ campsite.type }}
                                         </div>
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="col-xs-2 control-label pull-left required" >Dates: </label>
-                                        <div class="col-xs-8">
+                                        <label class="col-sm-4 control-label pull-left required" >Dates: </label>
+                                        <div class="col-sm-8">
                                             <div class="input-group date">
                                                 {{ booking.arrival }} to {{ booking.departure }} ({{ booking.num_days }} days)
                                             </div>
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label class="col-xs-2 control-label pull-left required">Guests: </label>
-                                        <div class="col-xs-8">
+                                        <label class="col-sm-4 control-label pull-left required">Guests: </label>
+                                        <div class="col-sm-8">
                                                 {{form.guests|class:'form-control'}}
                                         </div>
                                     </div>
