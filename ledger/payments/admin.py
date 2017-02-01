@@ -26,6 +26,10 @@ class CashAdmin(admin.ModelAdmin):
 class InvoiceAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.InvoiceBPAY)
+class InvoiceBpayAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(models.BpayTransaction)
 class BpayTransactionAdmin(admin.ModelAdmin):
     list_display = (

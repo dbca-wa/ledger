@@ -63,7 +63,8 @@ class BpayTransactionSerializer(serializers.ModelSerializer):
             "car",
             "discount_ref",
             "discount_method",
-            "approved"
+            "approved",
+            "matched"
         )
         
     def get_type(self, obj):

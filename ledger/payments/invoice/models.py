@@ -61,7 +61,10 @@ class Invoice(models.Model):
     def bpay_transactions(self):
         ''' Get this invoice's bpay transactions.
         '''
-        return BpayTransaction.objects.filter(crn=self.reference)
+        txns = BpayTransaction.objects.filter(crn=self.reference)
+        linked_txns = BpayTransaction.objects.filter(id__in=InvoiceBPAY.objects.filter(invoice=self).values('bpay'))
+        
+        return txns | linked_txns
 
     @property
     def bpoint_transactions(self):
@@ -174,3 +177,7 @@ class Invoice(models.Model):
         except Exception as e:
             print(str(e))
             raise
+
+class InvoiceBPAY(models.Model):
+    invoice = models.ForeignKey(Invoice)
+    bpay = models.ForeignKey('bpay.BpayTransaction')
