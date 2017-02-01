@@ -81,7 +81,22 @@
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label pull-left required">Guests: </label>
                                         <div class="col-sm-8">
-                                                {{form.guests|class:'form-control'}}
+                                            <div class="row">
+                                                <div class="col-sm-6 text-right">{{ form.num_adult.label_tag }}</div>
+                                                <div class="col-sm-6">{{ form.num_adult }}</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-6 text-right">{{ form.num_concession.label_tag }}</div>
+                                                <div class="col-sm-6">{{ form.num_concession }}</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-6 text-right">{{ form.num_child.label_tag }}</div>
+                                                <div class="col-sm-6">{{ form.num_child }}</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-6 text-right">{{ form.num_adult.label_tag }}</div>
+                                                <div class="col-sm-6">{{ form.num_infant }}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -108,16 +123,16 @@
                       </div>
                       <div class="col-md-3" >
                           <div class="form-group">
-                              {{form.confirmEmail.label_tag}}
-                              {{ form.confirmEmail|class:'form-control'}}
+                              {{form.confirm_email.label_tag}}
+                              {{ form.confirm_email|class:'form-control'}}
                           </div>
                       </div>
                     </div>
                     <div class="row">
                       <div class="col-md-3">
                           <div class="form-group">
-                            {{form.firstName.label_tag}}
-                            {{ form.firstName|class:'form-control'}}
+                            {{form.first_name.label_tag}}
+                            {{ form.first_name|class:'form-control'}}
                           </div>
                       </div>
                       <div class="col-md-3">
@@ -150,8 +165,8 @@
                       </div>
                       <div class="col-md-3">
                           <div class="form-group">
-                              {{form.vehicleRego.label_tag}}
-                              {{ form.vehicleRego|class:'form-control'}}
+                              {{form.vehicle_rego.label_tag}}
+                              {{ form.vehicle_rego|class:'form-control'}}
                           </div>
                       </div>
                     </div>
