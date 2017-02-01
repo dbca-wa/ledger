@@ -1130,16 +1130,53 @@ class BookingPagination(PageNumberPagination):
     page_query_param = 'draw'
     max_page_size = 100
 
+    def get_paginated_response(self, data):
+        return Response(OrderedDict([
+            ('recordsTotal', self.page.paginator.count),
+            ('recordsFiltered',self.page.paginator.count),
+            ('next', self.get_next_link()),
+            ('previous', self.get_previous_link()),
+            ('results', data)
+        ]),status=status.HTTP_200_OK)
+
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
     pagination_class = BookingPagination
 
-    def list(self, request, format=None):
-        queryset = Booking.objects.all()
-        print queryset[0].arrival
-        serializer = BookingSerializer(queryset, many =True)
-        return Response(serializer.data)
+
+
+    def list(self, request, *args, **kwargs):
+        search = request.GET.get('search[value]').lower()
+        queryset = None
+        http_status = status.HTTP_200_OK
+        if search:
+            print search
+            queryset = self.filter_queryset(self.get_queryset().filter(
+            campground__name__icontains = search).
+            filter(campground__park__district__region__name__icontains = search
+            ))
+
+        else:
+            queryset = self.filter_queryset(self.get_queryset())
+        if not queryset:
+            queryset = []
+            return Response(OrderedDict([
+                ('recordsTotal', 0),
+                ('recordsFiltered',0),
+                ('results', [])
+            ]),status=status.HTTP_200_OK)
+        page = self.paginate_queryset(queryset)
+        if page:
+            serializer = self.get_serializer(page,many=True)
+            data = serializer.data
+            #data['recordsTotal'] = data.count
+            #print data['recordsTotal']
+            #data.append({'recordsFiltered':len(data)})
+            return self.get_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data,status = http_status)
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
