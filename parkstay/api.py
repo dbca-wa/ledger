@@ -1148,17 +1148,57 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         search = request.GET.get('search[value]').lower()
-        queryset = None
+        draw = request.GET.get('draw') if request.GET.get('draw') else 0
+        print draw
+        dates = request.GET.get('dates')
         http_status = status.HTTP_200_OK
-        if search:
-            print search
-            queryset = self.filter_queryset(self.get_queryset().filter(
-            campground__name__icontains = search).
-            filter(campground__park__district__region__name__icontains = search
-            ))
-
+        sql = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+            parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id\
+            from parkstay_booking\
+            join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
+            join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
+            join parkstay_district on parkstay_park.district_id = parkstay_district.id\
+            join parkstay_region on parkstay_district.region_id = parkstay_region.id '
+        sqlCount = 'select count(*)\
+            from parkstay_booking\
+            join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
+            join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
+            join parkstay_district on parkstay_park.district_id = parkstay_district.id\
+            join parkstay_region on parkstay_district.region_id = parkstay_region.id '
+        if dates:
+            sql + 'where parkstay_booking.arrival >= {}\
+            and parkstay_booking.departure <= {}'.format(arrival, departure)
+        elif search:
+                sqlsearch = 'where lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
+                sql = sql + sqlsearch
+                sqlCount = sqlCount+sqlsearch
+                sql = sql + 'limit {} '.format(10)
+                sql = sql + 'offset {} ;'.format(draw)
+                print sql
+                from django.db import connection, transaction
+                cursor = connection.cursor()
+                cursor.execute("Select count(*) from parkstay_booking ");
+                recordsTotal = cursor.fetchone()[0]
+                cursor.execute(sqlCount);
+                recordsFiltered = cursor.fetchone()[0]
+                #cursor = connection.cursor()
+                cursor.execute(sql)
+                columns = [col[0] for col in cursor.description]
+                data = [
+                    dict(zip(columns, row))
+                    for row in cursor.fetchall()
+                ]
+                return Response(OrderedDict([
+                    ('recordsTotal', recordsTotal),
+                    ('recordsFiltered',recordsFiltered),
+                    ('results',data)
+                ]),status=status.HTTP_200_OK)
         else:
             queryset = self.filter_queryset(self.get_queryset())
+
         if not queryset:
             queryset = []
             return Response(OrderedDict([
