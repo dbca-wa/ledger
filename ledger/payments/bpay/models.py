@@ -139,6 +139,19 @@ class BpayTransaction(models.Model):
                 pass
         
         return matched
+    
+    @property
+    def linked(self):
+        from ledger.payments.invoice.models import InvoiceBPAY
+        linked = False
+        # Check if there is any association between invoice and this payment
+        try:
+            InvoiceBPAY.objects.get(bpay=self)
+            linked = True
+        except InvoiceBPAY.DoesNotExist:
+            pass
+        
+        return linked
 
     def __unicode__(self):
         return str(self.crn)
