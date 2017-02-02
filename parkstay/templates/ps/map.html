@@ -271,7 +271,7 @@ div.awesomplete > input {
             <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
                     <div class="small-12 columns">
-                        <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/>
+                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/></label>
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
@@ -315,6 +315,9 @@ div.awesomplete > input {
                 </div><div class="row">
                     <hr/>
                 </div><div class="row">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Equipment</label>
+                    </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
                     </div>
@@ -327,6 +330,9 @@ div.awesomplete > input {
                 </div><div class="row">
                     <hr class="search"/>
                 </div><div class="row">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Features</label>
+                    </div>
 {% verbatim %}
                     <template v-for="filt in filterList">
                         <div class="small-12 medium-12 large-4 columns">
@@ -334,6 +340,21 @@ div.awesomplete > input {
                         </div>
                     </template>
 {% endverbatim %}
+                </div><div class="row">
+                    <hr/>
+                </div><div class="row">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Legend</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><img src="/static/ps/img/pin.svg"/> Online bookings</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><img src="/static/ps/img/pin_offline.svg"/> No online bookings</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><img src="/static/ps/img/pin_alt.svg"/> Non-P&amp;W ground</label>
+                    </div>
                 </div>
             </div>
             <div class="small-12 medium-9 large-6 columns">

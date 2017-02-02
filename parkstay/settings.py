@@ -3,12 +3,19 @@ from ledger.settings_base import *
 ROOT_URLCONF = 'parkstay.urls'
 SITE_ID = 1
 
+# number of seconds before expiring a temporary booking
+BOOKING_TIMEOUT = 1200
+
 INSTALLED_APPS += [
     'bootstrap3',
     'parkstay',
     'taggit',
     'rest_framework',
     'rest_framework_gis'
+]
+
+MIDDLEWARE_CLASSES += [
+    'parkstay.middleware.BookingTimerMiddleware'
 ]
 
 # maximum number of days allowed for a booking

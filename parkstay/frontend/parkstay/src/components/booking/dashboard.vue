@@ -23,7 +23,7 @@
                   </select>
                   <select v-if="!isLoading" class="form-control" v-model="filterRegion">
                         <option value="All">All</option>
-                        <option v-for="park in parks" value="park.id">{{park.name}}</option>
+                        <option v-for="region in regions" value="region.id">{{region.name}}</option>
                   </select>
                 </div>
             </div>
@@ -44,9 +44,6 @@
                       <span class="glyphicon glyphicon-calendar"></span>
                   </span>
                 </div>
-            </div>
-            <div class="col-md-12">
-                <router-link :to="{name:'add-booking'}" type="button" class="btn btn-primary pull-right">Add Booking</router-link>
             </div>
           </div>
           <div class="row">
@@ -99,16 +96,18 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide:true,
+                processing:true,
                 ajax: {
                     "url": api_endpoints.bookings,
-                    "dataSrc": ''
+                    "dataSrc": 'results',
                 },
                 columns:[
                     {
-                        data:"campground.name"
+                        data:"campground_name"
                     },
                     {
-                        data:"campground.region"
+                        data:"campground_region"
                     },
                     {
                         data:"legacy_name"
@@ -117,7 +116,7 @@ export default {
                         data:"legacy_id"
                     },
                     {
-                        data:"campground.site_type"
+                        data:"campground_site_type"
                     },
                     {
                         mRender: function(data, type, full) {
@@ -154,7 +153,7 @@ export default {
                 showClear:true
             },
             loading:[],
-            parks:[],
+            regions:[],
             campgrounds:[],
             selected_booking:{},
             filterCampground:"All",
@@ -213,14 +212,15 @@ export default {
               vm.loading.splice('fetching campgrounds',1);
             });
         },
-        fetchParks:function () {
+        fetchRegions:function () {
             let vm =this;
-            vm.loading.push('fetching parks');
-            vm.$http.get(api_endpoints.parks).then((response) => {
-                vm.parks = response.body;
-                vm.loading.splice('fetching parks',1);
-            }, (response) => {
-              vm.loading.splice('fetching parks',1);
+            vm.loading.push('fetching regions');
+            vm.$http.get(api_endpoints.regions).then((response) => {
+                vm.regions = response.body;
+                vm.loading.splice('fetching regions',1);
+            }, (error) => {
+              vm.loading.splice('fetching regions',1);
+              console.log(error);
             });
         },
         cancelBooking:function (booking) {
@@ -266,7 +266,7 @@ export default {
         vm.dateFromPicker = $('#booking-date-from').datetimepicker(vm.datepickerOptions);
         vm.dateToPicker = $('#booking-date-to').datetimepicker(vm.datepickerOptions);
         vm.fetchCampgrounds();
-        vm.fetchParks();
+        vm.fetchRegions();
         vm.addEventListeners();
     }
 
