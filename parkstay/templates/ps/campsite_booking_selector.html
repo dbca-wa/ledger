@@ -293,7 +293,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                 update: function() {
                     var vm = this;
                     debounce(function() {
-                        var url = '{% url 'campground-campsite-class-bookings' pk=ground_id %}?'+$.param({
+                        var url = '{% url 'availability-list' %}{{ ground_id }}/?'+$.param({
                             arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                             departure: moment(vm.departureDate).format('YYYY/MM/DD'),
                             num_adult: vm.numAdults,
