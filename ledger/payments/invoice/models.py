@@ -179,5 +179,7 @@ class Invoice(models.Model):
             raise
 
 class InvoiceBPAY(models.Model):
+    ''' Link between unmatched bpay payments and invoices 
+    '''
     invoice = models.ForeignKey(Invoice)
     bpay = models.ForeignKey('bpay.BpayTransaction')
