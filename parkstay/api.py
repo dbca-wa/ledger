@@ -1148,35 +1148,36 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         search = request.GET.get('search[value]').lower()
-        draw = request.GET.get('draw') if request.GET.get('draw') else 0
-        print draw
+        draw = request.GET.get('draw') if request.GET.get('draw') else 1
+        start = request.GET.get('start') if request.GET.get('draw') else 1
+        length = request.GET.get('length') if request.GET.get('draw') else 10
+        print length
         dates = request.GET.get('dates')
         http_status = status.HTTP_200_OK
-        sql = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+        sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
             parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id\
-            from parkstay_booking\
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
+        sqlCount = 'select count(*)'
+
+        sqlFrom = ' from parkstay_booking\
             join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
             join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
             join parkstay_district on parkstay_park.district_id = parkstay_district.id\
             join parkstay_region on parkstay_district.region_id = parkstay_region.id '
-        sqlCount = 'select count(*)\
-            from parkstay_booking\
-            join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
-            join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
-            join parkstay_district on parkstay_park.district_id = parkstay_district.id\
-            join parkstay_region on parkstay_district.region_id = parkstay_region.id '
+
         if dates:
-            sql + 'where parkstay_booking.arrival >= {}\
+            sql + ' where parkstay_booking.arrival >= {}\
             and parkstay_booking.departure <= {}'.format(arrival, departure)
         elif search:
-                sqlsearch = 'where lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
+                sqlsearch = ' where lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
-                sql = sql + sqlsearch
-                sqlCount = sqlCount+sqlsearch
-                sql = sql + 'limit {} '.format(10)
-                sql = sql + 'offset {} ;'.format(draw)
+
+                sql = sqlSelect + sqlFrom + sqlsearch
+                sqlCount = sqlCount + sqlFrom + sqlsearch
+                sql = sql + ' limit {} '.format(length)
+                sql = sql + ' offset {} ;'.format(start)
+
                 print sql
                 from django.db import connection, transaction
                 cursor = connection.cursor()
