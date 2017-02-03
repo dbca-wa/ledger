@@ -1159,8 +1159,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         length = request.GET.get('length') if request.GET.get('draw') else 10
         arrival = request.GET.get('arrival')
         departure= request.GET.get('departure')
-        print departure
-        dates = request.GET.get('dates')
+
         sql = ''
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
@@ -1214,8 +1213,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         return Response(OrderedDict([
             ('recordsTotal', recordsTotal),
             ('recordsFiltered',recordsFiltered),
-            ('results',data),
-            ('draw',draw)
+            ('results',data)
         ]),status=status.HTTP_200_OK)
 
 class CampsiteRateViewSet(viewsets.ModelViewSet):

@@ -101,6 +101,11 @@ export default {
                 ajax: {
                     "url": api_endpoints.bookings,
                     "dataSrc": 'results',
+                    data :function (d) {
+                        d.arrival = vm.filterDateFrom;
+                        d.departure = vm.filterDateTo;
+                        return d;
+                    }
                 },
                 columns:[
                     {
@@ -150,7 +155,8 @@ export default {
             dateToPicker:null,
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
-                showClear:true
+                showClear:true,
+                useCurrent:false
             },
             loading:[],
             regions:[],
@@ -181,19 +187,11 @@ export default {
         },
         filterDateFrom: function() {
             let vm = this;
-            if (vm.filterDateFrom) {
-                vm.$refs.bookings_table.vmDataTable.draw();
-            } else {
-                vm.$refs.bookings_table.vmDataTable.draw();
-            }
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
         filterDateTo: function() {
             let vm = this;
-            if (vm.filterDateTo) {
-                vm.$refs.bookings_table.vmDataTable.draw();
-            } else {
-                vm.$refs.bookings_table.vmDataTable.draw();
-            }
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
         }
     },
     computed:{
@@ -246,19 +244,6 @@ export default {
                 vm.filterDateFrom = vm.dateFromPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
                 vm.dateToPicker.data("DateTimePicker").minDate(e.date);
             });
-            $.fn.dataTable.ext.search.push(
-                function( settings, data, dataIndex ) {
-                    if (vm.filterDateFrom && vm.filterDateTo) {
-                        var fromDate = new Date(data[6]);
-                        var fromFilterDate = new Date(vm.filterDateFrom);
-                        var toFilterDate = new Date(vm.filterDateTo);
-                        return (fromDate.getTime() >= fromFilterDate.getTime() && fromDate.getTime() < toFilterDate.getTime());
-                    }else{
-                        return true;
-                    }
-                    return false;
-                }
-            );
         }
     },
     mounted:function () {
