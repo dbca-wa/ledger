@@ -66,7 +66,8 @@ class BpayTransactionSerializer(serializers.ModelSerializer):
             "discount_method",
             "approved",
             "matched",
-            "linked"
+            "linked",
+            "biller_code"
         )
         
     def get_type(self, obj):
