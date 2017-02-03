@@ -210,3 +210,15 @@ class BpayCollection(models.Model):
         for f in self.files:
             txns.extend(f.transactions.all())
         return txns
+    
+class BillerCodeSystem(models.Model):
+    biller_code = models.CharField(max_length=10,unique=True)
+    system = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return '{} - Biller Code: {}'.format(self.system,self.biller_code)
+    
+class BillerCodeRecipient(models.Model):
+    app = models.ForeignKey(BillerCodeSystem, related_name='recipients')
+    email = models.EmailField()
+    
