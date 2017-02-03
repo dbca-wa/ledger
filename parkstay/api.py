@@ -1185,19 +1185,20 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql += ' and'
                 sqlCount += ' and'
         if search:
-            if not arrival:
-                sql += ' where'
-                sqlCount += ' where'
             sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
             or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
             or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
-            sql += sqlsearch
-            sqlCount += sqlsearch
-
+            if not arrival:
+                sql += ' where' + sqlsearch
+                sqlCount += ' where ' + sqlsearch
+            else:
+                sql += " ( "+ sqlsearch +" )"
+                sqlCount +=  " ( "+ sqlsearch +" )"
 
         sql = sql + ' limit {} '.format(length)
         sql = sql + ' offset {} ;'.format(start)
 
+        print sql;
         cursor = connection.cursor()
         cursor.execute("Select count(*) from parkstay_booking ");
         recordsTotal = cursor.fetchone()[0]
