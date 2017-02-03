@@ -109,32 +109,48 @@ export default {
                 },
                 columns:[
                     {
-                        data:"campground_name"
+                        data:"campground_name",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"campground_region"
+                        data:"campground_region",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"legacy_name"
+                        data:"legacy_name",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"legacy_id"
+                        data:"legacy_id",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"campground_site_type"
+                        data:"campground_site_type",
+                        orderable:false,
+                        searchable:false
                     },
                     {
                         mRender: function(data, type, full) {
                             var status = (data == true) ? "Open" : "Temporarily Closed";
                             var column = "<td >__Status__</td>";
                             return column.replace('__Status__', status);
-                        }
+                        },
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"arrival"
+                        data:"arrival",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"departure"
+                        data:"departure",
+                        orderable:false,
+                        searchable:false
                     },
                     {
                         mRender: function(data, type, full) {
@@ -146,7 +162,9 @@ export default {
                                             <a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>\
                                         </td>";
                             return column.replace('__Status__', status);
-                        }
+                        },
+                        orderable:false,
+                        searchable:false
                     },
                 ]
             },
