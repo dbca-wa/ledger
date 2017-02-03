@@ -49,6 +49,18 @@ class BpayFileAdmin(admin.ModelAdmin):
         'created',
     )
 
+class BillerCodeRecipientInline(admin.StackedInline):
+    model = models.BillerCodeRecipient
+    extra = 1
+
+@admin.register(models.BillerCodeSystem)
+class BillerCodeSystemAdmin(admin.ModelAdmin):
+    list_display= (
+        'system',
+        'biller_code'
+    )
+    inlines = [BillerCodeRecipientInline]
+
 @admin.register(models.BpointTransaction)
 class BpointTransactionAdmin(admin.ModelAdmin):
     readonly_fields = (
