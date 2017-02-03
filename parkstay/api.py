@@ -333,10 +333,15 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
 
     def list(self, request, format=None):
-        queryset = self.get_queryset()
-        formatted = bool(request.GET.get("formatted", False))
-        serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
-        return Response(serializer.data)
+        from django.core.cache import cache
+        data = cache.get('campgrounds')
+        if data is None:
+            queryset = self.get_queryset()
+            formatted = bool(request.GET.get("formatted", False))
+            serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
+            data = serializer.data
+            cache.set('campgrounds',data,1800)
+        return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
