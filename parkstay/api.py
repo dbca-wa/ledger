@@ -1152,12 +1152,16 @@ class BookingViewSet(viewsets.ModelViewSet):
 
 
     def list(self, request, *args, **kwargs):
-        search = request.GET.get('search[value]').lower()
+        from django.db import connection, transaction
+        search = request.GET.get('search[value]')
         draw = request.GET.get('draw') if request.GET.get('draw') else 1
         start = request.GET.get('start') if request.GET.get('draw') else 1
         length = request.GET.get('length') if request.GET.get('draw') else 10
-        print length
+        arrival = request.GET.get('arrival')
+        departure= request.GET.get('departure')
+        print departure
         dates = request.GET.get('dates')
+        sql = ''
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
             parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
