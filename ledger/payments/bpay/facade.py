@@ -355,7 +355,7 @@ def sendBillerCodeEmail(summaries):
     connection.send_messages(emails)
     
 
-def generateTransactionsSummary(files):
+def generateTransactionsSummary(files,unmatched_only=False):
     try:
         # Split transactions into biller codes
         biller_codes = {}
@@ -376,10 +376,11 @@ def generateTransactionsSummary(files):
                 else:
                     unmatched.append(t)
             output = StringIO()
-            # Matched txns
-            output.write('Matched transactions:\n')
-            for m in matched:
-                output.write('  CRN: {} Amount: ${}\n'.format(m.crn,m.amount))
+            if not unmatched_only:
+                # Matched txns
+                output.write('Matched transactions:\n')
+                for m in matched:
+                    output.write('  CRN: {} Amount: ${}\n'.format(m.crn,m.amount))
             # Unmatched txns
             output.write('\nUnmatched transactions:\n')
             for u in unmatched:
