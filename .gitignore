@@ -89,3 +89,6 @@ import/
 importo.py
 build.js
 build.css
+
+#caches
+parkstay/cache/*
