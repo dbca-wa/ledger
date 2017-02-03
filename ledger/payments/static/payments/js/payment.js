@@ -25,6 +25,9 @@ $(function(){
                 data: "crn"
             },
             {
+                data: "biller_code"
+            },
+            {
                 data: "amount"
             },
             {
@@ -44,6 +47,9 @@ $(function(){
         "columns":[
             {
                 data: "crn"
+            },
+            {
+                data: "biller_code"
             },
             {
                 data: "amount"
