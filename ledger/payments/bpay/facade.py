@@ -336,14 +336,20 @@ def sendBillerCodeEmail(summaries):
     emails = []
     dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
     for k,v in summaries.items():
-        email = EmailMessage(
-            'BPAY Summary: Biller Code {} as at {}'.format(k,dt),
-            'BPAY Transaction Summary File for Biller Code {} as at {}'.format(k,dt),
-            settings.DEFAULT_FROM_EMAIL,
-            to=[settings.NOTIFICATION_EMAIL]
-        )
-        email.attach('summary.txt', v, 'text/plain')
-        emails.append(email)
+        try:
+            sys = BillerCodeSystem.objects.get(biller_code=k)
+            recipients = [x.email for x in sys.recipients.all()]
+            
+            email = EmailMessage(
+                'BPAY Summary: Biller Code {} as at {}'.format(k,dt),
+                'BPAY Transaction Summary File for Biller Code {} as at {}'.format(k,dt),
+                settings.DEFAULT_FROM_EMAIL,
+                to= recipients
+            )
+            email.attach('summary.txt', v, 'text/plain')
+            emails.append(email)
+        except BillerCodeSystem.DoesNotExist:
+            pass
         
     connection = get_connection()
     connection.send_messages(emails)
