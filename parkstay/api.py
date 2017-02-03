@@ -1174,59 +1174,50 @@ class BookingViewSet(viewsets.ModelViewSet):
             join parkstay_district on parkstay_park.district_id = parkstay_district.id\
             join parkstay_region on parkstay_district.region_id = parkstay_region.id '
 
-        if dates:
-            sql + ' where parkstay_booking.arrival >= {}\
-            and parkstay_booking.departure <= {}'.format(arrival, departure)
-        elif search:
-                sqlsearch = ' where lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
+        sql = sqlSelect + sqlFrom
+        sqlCount = sqlCount + sqlFrom
+        if arrival:
+            sql += ' where parkstay_booking.arrival >= \'{}\''.format(arrival)
+            sqlCount += ' where parkstay_booking.arrival >= \'{}\''.format(arrival)
+            if departure:
+                sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+                sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+            if search:
+                sql += ' and'
+                sqlCount += ' and'
+        if search:
+            if not arrival:
+                sql += ' where'
+                sqlCount += ' where'
+            sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
+            or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
+            or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
+            sql += sqlsearch
+            sqlCount += sqlsearch
 
-                sql = sqlSelect + sqlFrom + sqlsearch
-                sqlCount = sqlCount + sqlFrom + sqlsearch
-                sql = sql + ' limit {} '.format(length)
-                sql = sql + ' offset {} ;'.format(start)
 
-                print sql
-                from django.db import connection, transaction
-                cursor = connection.cursor()
-                cursor.execute("Select count(*) from parkstay_booking ");
-                recordsTotal = cursor.fetchone()[0]
-                cursor.execute(sqlCount);
-                recordsFiltered = cursor.fetchone()[0]
-                #cursor = connection.cursor()
-                cursor.execute(sql)
-                columns = [col[0] for col in cursor.description]
-                data = [
-                    dict(zip(columns, row))
-                    for row in cursor.fetchall()
-                ]
-                return Response(OrderedDict([
-                    ('recordsTotal', recordsTotal),
-                    ('recordsFiltered',recordsFiltered),
-                    ('results',data)
-                ]),status=status.HTTP_200_OK)
-        else:
-            queryset = self.filter_queryset(self.get_queryset())
+        sql = sql + ' limit {} '.format(length)
+        sql = sql + ' offset {} ;'.format(start)
 
-        if not queryset:
-            queryset = []
-            return Response(OrderedDict([
-                ('recordsTotal', 0),
-                ('recordsFiltered',0),
-                ('results', [])
-            ]),status=status.HTTP_200_OK)
-        page = self.paginate_queryset(queryset)
-        if page:
-            serializer = self.get_serializer(page,many=True)
-            data = serializer.data
-            #data['recordsTotal'] = data.count
-            #print data['recordsTotal']
-            #data.append({'recordsFiltered':len(data)})
-            return self.get_paginated_response(data)
+        cursor = connection.cursor()
+        cursor.execute("Select count(*) from parkstay_booking ");
+        recordsTotal = cursor.fetchone()[0]
+        cursor.execute(sqlCount);
+        recordsFiltered = cursor.fetchone()[0]
+        #cursor = connection.cursor()
+        cursor.execute(sql)
+        columns = [col[0] for col in cursor.description]
+        data = [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
+        return Response(OrderedDict([
+            ('recordsTotal', recordsTotal),
+            ('recordsFiltered',recordsFiltered),
+            ('results',data),
+            ('draw',draw)
+        ]),status=status.HTTP_200_OK)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data,status = http_status)
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
