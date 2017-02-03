@@ -14,6 +14,7 @@ from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
+from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 
@@ -862,7 +863,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 @require_http_methods(['POST'])
 def create_class_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
-    
+
     data = {
         'arrival': request.POST.get('arrival'),
         'departure': request.POST.get('departure'),
@@ -907,7 +908,7 @@ def create_class_booking(request, *args, **kwargs):
 
         # fetch all the campsites and applicable rates for the campground
         sites_qs =  Campsite.objects.filter(
-                        campground=campground, 
+                        campground=campground,
                         campsite_class=campsite_class
                     )
 
@@ -941,7 +942,7 @@ def create_class_booking(request, *args, **kwargs):
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
-                        booking_type=3, 
+                        booking_type=3,
                         arrival=start_date,
                         departure=end_date,
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
@@ -959,7 +960,7 @@ def create_class_booking(request, *args, **kwargs):
     return HttpResponse(geojson.dumps({
         'status': 'success',
         'pk': booking.pk
-    }), content_type='application/json')    
+    }), content_type='application/json')
 
 
 class PromoAreaViewSet(viewsets.ModelViewSet):
@@ -1123,10 +1124,100 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+class BookingPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'length'
+    page_query_param = 'draw'
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        return Response(OrderedDict([
+            ('recordsTotal', self.page.paginator.count),
+            ('recordsFiltered',self.page.paginator.count),
+            ('next', self.get_next_link()),
+            ('previous', self.get_previous_link()),
+            ('results', data)
+        ]),status=status.HTTP_200_OK)
+
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+    pagination_class = BookingPagination
 
+
+
+    def list(self, request, *args, **kwargs):
+        search = request.GET.get('search[value]').lower()
+        draw = request.GET.get('draw') if request.GET.get('draw') else 1
+        start = request.GET.get('start') if request.GET.get('draw') else 1
+        length = request.GET.get('length') if request.GET.get('draw') else 10
+        print length
+        dates = request.GET.get('dates')
+        http_status = status.HTTP_200_OK
+        sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+            parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
+        sqlCount = 'select count(*)'
+
+        sqlFrom = ' from parkstay_booking\
+            join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
+            join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
+            join parkstay_district on parkstay_park.district_id = parkstay_district.id\
+            join parkstay_region on parkstay_district.region_id = parkstay_region.id '
+
+        if dates:
+            sql + ' where parkstay_booking.arrival >= {}\
+            and parkstay_booking.departure <= {}'.format(arrival, departure)
+        elif search:
+                sqlsearch = ' where lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
+
+                sql = sqlSelect + sqlFrom + sqlsearch
+                sqlCount = sqlCount + sqlFrom + sqlsearch
+                sql = sql + ' limit {} '.format(length)
+                sql = sql + ' offset {} ;'.format(start)
+
+                print sql
+                from django.db import connection, transaction
+                cursor = connection.cursor()
+                cursor.execute("Select count(*) from parkstay_booking ");
+                recordsTotal = cursor.fetchone()[0]
+                cursor.execute(sqlCount);
+                recordsFiltered = cursor.fetchone()[0]
+                #cursor = connection.cursor()
+                cursor.execute(sql)
+                columns = [col[0] for col in cursor.description]
+                data = [
+                    dict(zip(columns, row))
+                    for row in cursor.fetchall()
+                ]
+                return Response(OrderedDict([
+                    ('recordsTotal', recordsTotal),
+                    ('recordsFiltered',recordsFiltered),
+                    ('results',data)
+                ]),status=status.HTTP_200_OK)
+        else:
+            queryset = self.filter_queryset(self.get_queryset())
+
+        if not queryset:
+            queryset = []
+            return Response(OrderedDict([
+                ('recordsTotal', 0),
+                ('recordsFiltered',0),
+                ('results', [])
+            ]),status=status.HTTP_200_OK)
+        page = self.paginate_queryset(queryset)
+        if page:
+            serializer = self.get_serializer(page,many=True)
+            data = serializer.data
+            #data['recordsTotal'] = data.count
+            #print data['recordsTotal']
+            #data.append({'recordsFiltered':len(data)})
+            return self.get_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data,status = http_status)
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
