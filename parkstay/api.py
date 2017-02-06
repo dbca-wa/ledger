@@ -17,6 +17,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, B
 from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
+from django.core.cache import cache
 
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -333,14 +334,14 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
 
     def list(self, request, format=None):
-        from django.core.cache import cache
+
         data = cache.get('campgrounds')
         if data is None:
             queryset = self.get_queryset()
             formatted = bool(request.GET.get("formatted", False))
             serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
             data = serializer.data
-            cache.set('campgrounds',data,1800)
+            cache.set('campgrounds',data)
         return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
@@ -386,6 +387,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                     for image_serializer in image_serializers:
                         image_serializer.save()
 
+            cache.delete('campgrounds')
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -450,6 +452,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                     current_images.delete()
 
             self.perform_update(serializer)
+            cache.delete('campgrounds')
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -975,6 +978,15 @@ class PromoAreaViewSet(viewsets.ModelViewSet):
 class ParkViewSet(viewsets.ModelViewSet):
     queryset = Park.objects.all()
     serializer_class = ParkSerializer
+
+    def list(self, request, *args, **kwargs):
+        data = cache.get('parks')
+        if data is None:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            data = serializer.data
+            cache.set('parks',data,1800)
+        return Response(data)
 
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
