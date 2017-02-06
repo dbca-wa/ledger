@@ -183,3 +183,15 @@ class InvoiceBPAY(models.Model):
     '''
     invoice = models.ForeignKey(Invoice)
     bpay = models.ForeignKey('bpay.BpayTransaction')
+
+    def __str__(self):
+        return 'Invoice No. {}: BPAY CRN {}'.format(self.invoice.reference,self.bpay.crn)
+
+
+    def clean(self, *args, **kwargs):
+        if (self.invoice.payment_status == 'paid' or self.invoice.payment_status == 'over_paid') and not self.pk:
+            raise ValidationError('This invoice has already been paid for.')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super(InvoiceBPAY,self).save(*args, **kwargs)
