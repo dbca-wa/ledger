@@ -29,6 +29,11 @@ REST_FRAMEWORK = {
     )
 }
 
+# disable Django REST Framework UI on prod
+if not DEBUG:
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES']=('rest_framework.renderers.JSONRenderer',)
+
+
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'parkstay', 'templates'))
 '''BOOTSTRAP3 = {
     'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',

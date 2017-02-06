@@ -36,18 +36,20 @@ class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
             model = PromoArea
 
+
 class CampgroundCampsiteFilterSerializer(serializers.Serializer):
-    arrival = serializers.DateField(input_formats=['%Y/%m/%d'], allow_null=True)
-    departure = serializers.DateField(input_formats=['%Y/%m/%d'], allow_null=True)
+    arrival = serializers.DateField(input_formats=['%Y/%m/%d'])
+    departure = serializers.DateField(input_formats=['%Y/%m/%d'])
     num_adult = serializers.IntegerField(default=0)
     num_concession = serializers.IntegerField(default=0)
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
     gear_type = serializers.ChoiceField(choices=('tent', 'caravan', 'campervan'))
 
+
 class CampsiteClassBookingSerializer(serializers.Serializer):
-    arrival = serializers.DateField(input_formats=['%Y/%m/%d'], allow_null=True)
-    departure = serializers.DateField(input_formats=['%Y/%m/%d'], allow_null=True)
+    arrival = serializers.DateField(input_formats=['%Y/%m/%d'])
+    departure = serializers.DateField(input_formats=['%Y/%m/%d'])
     num_adult = serializers.IntegerField(default=0)
     num_concession = serializers.IntegerField(default=0)
     num_child = serializers.IntegerField(default=0)

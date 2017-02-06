@@ -78,11 +78,19 @@ class DashboardView(UserPassesTestMixin, TemplateView):
         return is_officer(self.request.user)
 
 
-class MakeBookingsView(LoginRequiredMixin, TemplateView):
+def abort_booking_view(request, *args, **kwargs):
+    if 'ps_booking' in request.session:
+        booking = Booking.objects.get(pk=request.session['ps_booking'])
+        booking.delete()
+        del request.session['ps_booking']
+    return redirect('public_make_booking')
+
+
+class MakeBookingsView(TemplateView):
     template_name = 'ps/booking/make_booking.html'
     def get(self, request, *args, **kwargs):
         # TODO: find campsites related to campground
-        form = MakeBookingsForm(args, campsites =[('exp','example')])
+        form = MakeBookingsForm(args)
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
         expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
         # for now, we can assume that there's only one campsite per booking.

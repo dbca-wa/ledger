@@ -11,6 +11,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 router = routers.DefaultRouter()
 router.register(r'campground_map', api.CampgroundMapViewSet)
 router.register(r'campground_map_filter', api.CampgroundMapFilterViewSet)
+router.register(r'availability', api.AvailabilityViewSet, 'availability')
 router.register(r'campgrounds', api.CampgroundViewSet)
 router.register(r'campsites', api.CampsiteViewSet)
 router.register(r'campsite_bookings', api.CampsiteBookingViewSet)
@@ -44,13 +45,13 @@ urlpatterns = [
     url(r'', include(api_patterns)),
     url(r'^$', views.ParkstayRoutingView.as_view(), name='ps_home'),
     url(r'^campsites/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
-    url(r'^campsite_classes/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),
     url(r'^dashboard/campgrounds$', views.DashboardView.as_view(), name='dash-campgrounds'),
     url(r'^dashboard/campsite-types$', views.DashboardView.as_view(), name='dash-campsite-types'),
     url(r'^dashboard/bookings$', views.DashboardView.as_view(), name='dash-bookings'),
     url(r'^dashboard/bulkpricing$', views.DashboardView.as_view(), name='dash-bulkpricing'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
+    url(r'^booking/abort$', views.abort_booking_view, name='public_abort_booking'),
     url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
     url(r'^mybooking/', views.MyBookingsView.as_view(), name='public_my_booking'),
     url(r'^map/', views.MapView.as_view(), name='map'),
