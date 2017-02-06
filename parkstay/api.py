@@ -1105,7 +1105,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         draw = request.GET.get('draw') if request.GET.get('draw') else 1
         start = request.GET.get('start') if request.GET.get('draw') else 1
         length = request.GET.get('length') if request.GET.get('draw') else 10
-        print length
+        print(length)
         dates = request.GET.get('dates')
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
@@ -1132,7 +1132,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql = sql + ' limit {} '.format(length)
                 sql = sql + ' offset {} ;'.format(start)
 
-                print sql
+                print(sql)
                 from django.db import connection, transaction
                 cursor = connection.cursor()
                 cursor.execute("Select count(*) from parkstay_booking ");
@@ -1166,7 +1166,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(page,many=True)
             data = serializer.data
             #data['recordsTotal'] = data.count
-            #print data['recordsTotal']
+            #print(data['recordsTotal'])
             #data.append({'recordsFiltered':len(data)})
             return self.get_paginated_response(data)
 
