@@ -96,13 +96,14 @@ class BpayTransaction(models.Model):
     entry_method = models.CharField(max_length=3, choices=ENTRY_METHODS, null=True, blank=True, help_text='Manner in which the payment details are captured.')
     orig_ref_num = models.CharField(max_length=21, blank=True, null=True, help_text='Contains the original/previous CRN in the case of a refund or reversal.')
     ref_rev_code = models.CharField(max_length=3,choices=REF_REV_CODE,blank=True,null=True, help_text='Reason code for reversal or refund.')
-    discretionary_data = models.CharField(max_length=50, null=True, blank=False, help_text='Reason for refund or reversal.')
+    discretionary_data = models.CharField(max_length=50, null=True, blank=True, help_text='Reason for refund or reversal.')
     payer_name = models.CharField(max_length=40, null=True, blank=True, help_text='Name of payer extracted from payer\'s account details.')
-    country = models.CharField(max_length=3, null=True, blank=False, help_text='Country of payment.')
+    country = models.CharField(max_length=3, null=True, blank=True, help_text='Country of payment.')
     state = models.CharField(max_length=4,null=True, blank=True, help_text='State code of payer institution.')
-    car = models.CharField(max_length=20,null=True, blank=False, help_text='Customer Additional Reference.')
+    car = models.CharField(max_length=20,null=True, blank=True, help_text='Customer Additional Reference.')
     discount_ref = models.CharField(max_length=20, null=True, blank=True, help_text='Discount Reference Code.')
     discount_method = models.CharField(max_length=3, null=True, blank=True, help_text='Discount Method Code.')
+    biller_code = models.CharField(max_length=10)
     file = models.ForeignKey(BpayFile, related_name='transactions')
 
     class Meta:
@@ -117,6 +118,41 @@ class BpayTransaction(models.Model):
     @property
     def system(self):
         pass
+    
+    @property
+    def matched(self):
+        from ledger.payments.invoice.models import Invoice, InvoiceBPAY
+        matched = False
+        
+        # Check if there is any invoice with a matching crn
+        try:
+            Invoice.objects.get(reference=self.crn)
+            matched = True
+        except Invoice.DoesNotExist:
+            pass
+        
+        # Check if there is any association between invoice and this payment
+        if not matched:
+            try:
+                InvoiceBPAY.objects.get(bpay=self)
+                matched = True
+            except InvoiceBPAY.DoesNotExist:
+                pass
+        
+        return matched
+    
+    @property
+    def linked(self):
+        from ledger.payments.invoice.models import InvoiceBPAY
+        linked = False
+        # Check if there is any association between invoice and this payment
+        try:
+            InvoiceBPAY.objects.get(bpay=self)
+            linked = True
+        except InvoiceBPAY.DoesNotExist:
+            pass
+        
+        return linked
 
     def __unicode__(self):
         return str(self.crn)
@@ -174,3 +210,15 @@ class BpayCollection(models.Model):
         for f in self.files:
             txns.extend(f.transactions.all())
         return txns
+    
+class BillerCodeSystem(models.Model):
+    biller_code = models.CharField(max_length=10,unique=True)
+    system = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return '{} - Biller Code: {}'.format(self.system,self.biller_code)
+    
+class BillerCodeRecipient(models.Model):
+    app = models.ForeignKey(BillerCodeSystem, related_name='recipients')
+    email = models.EmailField()
+    

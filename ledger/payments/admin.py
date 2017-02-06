@@ -26,6 +26,10 @@ class CashAdmin(admin.ModelAdmin):
 class InvoiceAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.InvoiceBPAY)
+class InvoiceBpayAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(models.BpayTransaction)
 class BpayTransactionAdmin(admin.ModelAdmin):
     list_display = (
@@ -44,6 +48,18 @@ class BpayFileAdmin(admin.ModelAdmin):
         #'creation_time',
         'created',
     )
+
+class BillerCodeRecipientInline(admin.StackedInline):
+    model = models.BillerCodeRecipient
+    extra = 1
+
+@admin.register(models.BillerCodeSystem)
+class BillerCodeSystemAdmin(admin.ModelAdmin):
+    list_display= (
+        'system',
+        'biller_code'
+    )
+    inlines = [BillerCodeRecipientInline]
 
 @admin.register(models.BpointTransaction)
 class BpointTransactionAdmin(admin.ModelAdmin):
