@@ -1150,6 +1150,9 @@ class BookingViewSet(viewsets.ModelViewSet):
         length = request.GET.get('length') if request.GET.get('draw') else 10
         arrival = request.GET.get('arrival')
         departure= request.GET.get('departure')
+        campground = request.GET.get('campground')
+        region = request.GET.get('region')
+
 
         sql = ''
         http_status = status.HTTP_200_OK
@@ -1162,34 +1165,42 @@ class BookingViewSet(viewsets.ModelViewSet):
             join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
             join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
             join parkstay_district on parkstay_park.district_id = parkstay_district.id\
-            join parkstay_region on parkstay_district.region_id = parkstay_region.id '
+            join parkstay_region on parkstay_district.region_id = parkstay_region.id'
 
-        sql = sqlSelect + sqlFrom
-        sqlCount = sqlCount + sqlFrom
+        sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
+        sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
+
+        if campground :
+            sqlCampground = ' parkstay_campground.id = {}'.format(campground)
+            sql += sqlCampground
+            sqlCount += sqlCampground
+        if region:
+            sqlRegion = " parkstay_region.id = {}".format(region)
+            sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
+            sqlCount = sqlCount +" and "+ sqlRegion if campground else sqlCount + sqlRegion
         if arrival:
-            sql += ' where parkstay_booking.arrival >= \'{}\''.format(arrival)
-            sqlCount += ' where parkstay_booking.arrival >= \'{}\''.format(arrival)
+            sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
+            sqlCount = sqlCount + " and "+ sqlArrival if campground or region else sqlCount + sqlArrival
+            sql = sql + " and "+ sqlArrival if campground or region else sql + sqlArrival
             if departure:
                 sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
                 sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
-            if search:
-                sql += ' and'
-                sqlCount += ' and'
         if search:
             sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
             or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
             or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
-            if not arrival:
+            if arrival or campground or region:
+                sql += " and ( "+ sqlsearch +" )"
+                sqlCount +=  " and  ( "+ sqlsearch +" )"
+            else:
                 sql += ' where' + sqlsearch
                 sqlCount += ' where ' + sqlsearch
-            else:
-                sql += " ( "+ sqlsearch +" )"
-                sqlCount +=  " ( "+ sqlsearch +" )"
+
 
         sql = sql + ' limit {} '.format(length)
         sql = sql + ' offset {} ;'.format(start)
 
-        print sql;
+        print sqlCount;
         cursor = connection.cursor()
         cursor.execute("Select count(*) from parkstay_booking ");
         recordsTotal = cursor.fetchone()[0]

@@ -11,7 +11,7 @@
                   </select>
                   <select v-if="!isLoading" class="form-control" v-model="filterCampground">
                       <option value="All">All</option>
-                      <option v-for="campground in campgrounds" value="campground.id">{{campground.name}}</option>
+                      <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
                   </select>
                 </div>
             </div>
@@ -23,7 +23,7 @@
                   </select>
                   <select v-if="!isLoading" class="form-control" v-model="filterRegion">
                         <option value="All">All</option>
-                        <option v-for="region in regions" value="region.id">{{region.name}}</option>
+                        <option v-for="region in regions" :value="region.id">{{region.name}}</option>
                   </select>
                 </div>
             </div>
@@ -102,8 +102,19 @@ export default {
                     "url": api_endpoints.bookings,
                     "dataSrc": 'results',
                     data :function (d) {
-                        d.arrival = vm.filterDateFrom;
-                        d.departure = vm.filterDateTo;
+                        if (vm.filterDateFrom) {
+                            d.arrival = vm.filterDateFrom;
+                        }
+                        if (vm.filterDateTo) {
+                            d.departure = vm.filterDateTo;
+                        }
+                        if (vm.filterCampground != "All") {
+                            d.campground = vm.filterCampground
+                        }
+                        if (vm.filterRegion != "All") {
+                            d.region = vm.filterRegion
+                        }
+
                         return d;
                     }
                 },
@@ -189,19 +200,11 @@ export default {
     watch:{
         filterCampground: function() {
             let vm = this;
-            if (vm.filterCampground != 'All') {
-                vm.$refs.bookings_table.vmDataTable.columns(0).search(vm.filterCampground).draw();
-            } else {
-                vm.$refs.bookings_table.vmDataTable.columns(0).search('').draw();
-            }
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
         filterRegion: function() {
             let vm = this;
-            if (vm.filterRegion != 'All') {
-                vm.$refs.bookings_table.vmDataTable.columns(1).search(vm.filterRegion).draw();
-            } else {
-                vm.$refs.bookings_table.vmDataTable.columns(1).search('').draw();
-            }
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
         filterDateFrom: function() {
             let vm = this;
@@ -254,13 +257,23 @@ export default {
                 vm.selected_booking = JSON.parse($(this).attr('data-cancel'));
                 bus.$emit('showAlert', 'cancelBooking');
             });
-            vm.dateToPicker.on('dp.change', function(e){
-                 vm.filterDateTo =  vm.dateToPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
+            vm.dateToPicker.on('dp.hide', function(e){
+                vm.filterDateTo =  e.date.format('YYYY-MM-DD');
+                if (vm.dateToPicker.data('date') === "") {
+                    vm.filterDateTo = ""
+                }else {
+                    vm.filterDateTo =  e.date.format('YYYY-MM-DD');
+                }
              });
 
-            vm.dateFromPicker.on('dp.change',function (e) {
-                vm.filterDateFrom = vm.dateFromPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
-                vm.dateToPicker.data("DateTimePicker").minDate(e.date);
+            vm.dateFromPicker.on('dp.hide',function (e) {
+                if (vm.dateFromPicker.data('date') === "") {
+                    vm.filterDateFrom = ""
+                }else {
+                    vm.filterDateFrom = e.date.format('YYYY-MM-DD');
+                    vm.dateToPicker.data("DateTimePicker").minDate(e.date);
+                }
+
             });
         }
     },
