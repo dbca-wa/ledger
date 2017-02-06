@@ -820,7 +820,8 @@ class ReportCreateView(views.APIView):
                                             serializer.validated_data['start'],
                                             serializer.validated_data['end'],
                                             serializer.validated_data['banked_start'],
-                                            serializer.validated_data['banked_end'])
+                                            serializer.validated_data['banked_end'],
+                                            district = serializer.validated_data['district'])
             else:
                 report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
                                             ,serializer.validated_data['start'],

@@ -131,16 +131,15 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
 
         
             # Get all transactions
-            eftpos.extend([x for x in i.cash_transactions.filter(created__gte=start, created__lte=end, source='eftpos')])
-            banked_cash.extend([x for x in i.cash_transactions.filter(created__gte=banked_start, created__lte=banked_end).exclude(source='eftpos')])
-            bpoint.extend([x for x in i.bpoint_transactions.filter(created__gte=start, created__lte=end)])
-            bpay.extend([x for x in i.bpay_transactions.filter(p_date__gte=start, p_date__lte=end)])
+            if not district:
+                eftpos.extend([x for x in i.cash_transactions.filter(created__gte=start, created__lte=end, source='eftpos').exclude(district__isnull=True)])
+                banked_cash.extend([x for x in i.cash_transactions.filter(created__gte=banked_start, created__lte=banked_end).exclude(source='eftpos').exclude(district__isnull=True)])
+                bpoint.extend([x for x in i.bpoint_transactions.filter(created__gte=start, created__lte=end)])
+                bpay.extend([x for x in i.bpay_transactions.filter(p_date__gte=start, p_date__lte=end)])
+            else:
+                eftpos.extend([x for x in i.cash_transactions.filter(created__gte=start, created__lte=end, source='eftpos',district=district)])
+                banked_cash.extend([x for x in i.cash_transactions.filter(created__gte=banked_start, created__lte=banked_end,district=district).exclude(source='eftpos')])
         # Go through items
-        #print((start, end))
-        #print([(x, x.created) for x in eftpos])
-        #print([(x, x.created) for x in banked_cash])
-        #print([(x, x.created) for x in bpoint])
-        #print([(x, x.created) for x in bpay])
         
         for item in items:
             price = D(item.get('item').line_price_before_discounts_incl_tax)
