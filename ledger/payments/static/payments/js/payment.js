@@ -111,17 +111,20 @@ $(function(){
     // Check if invoice is paid
     function checkInvoiceStatus(){
         var status = '';
+        var amount_paid = '';
         var redirect_url = $('#payment_div').data('redirect');
         $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
             status = resp.payment_status;
+            amount_paid = '$'+resp.payment_amount;
             if (status === 'paid' && redirect_url) {
                 window.location.replace(redirect_url);
             }
-            updateBanner(status);
+            updateBanner(status,amount_paid);
         });
     }
-    function updateBanner(value) {
+    function updateBanner(value,amount_paid) {
         $('#invoice_status').html(value);
+        $('#invoice_paid').html(amount_paid);
         if (!$success_div.hasClass('hide')) {
             setTimeout(function(){$success_div.addClass('hide');},3000);
         }
