@@ -387,7 +387,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                     for image_serializer in image_serializers:
                         image_serializer.save()
 
-            cache.delete('campgrounds')
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -452,7 +451,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                     current_images.delete()
 
             self.perform_update(serializer)
-            cache.delete('campgrounds')
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -985,7 +983,7 @@ class ParkViewSet(viewsets.ModelViewSet):
             queryset = self.get_queryset()
             serializer = self.get_serializer(queryset, many=True)
             data = serializer.data
-            cache.set('parks',data,1800)
+            cache.set('parks',data,3600)
         return Response(data)
 
 class FeatureViewSet(viewsets.ModelViewSet):
@@ -1140,28 +1138,9 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-
-class BookingPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'length'
-    page_query_param = 'draw'
-    max_page_size = 100
-
-    def get_paginated_response(self, data):
-        return Response(OrderedDict([
-            ('recordsTotal', self.page.paginator.count),
-            ('recordsFiltered',self.page.paginator.count),
-            ('next', self.get_next_link()),
-            ('previous', self.get_previous_link()),
-            ('results', data)
-        ]),status=status.HTTP_200_OK)
-
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
-    pagination_class = BookingPagination
-
-
 
     def list(self, request, *args, **kwargs):
         from django.db import connection, transaction
