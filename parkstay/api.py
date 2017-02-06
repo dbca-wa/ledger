@@ -341,7 +341,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             formatted = bool(request.GET.get("formatted", False))
             serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
             data = serializer.data
-            cache.set('campgrounds',data)
+            cache.set('campgrounds',data,3600)
         return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
@@ -1111,7 +1111,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
             parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,parkstay_booking.invoice_reference'
         sqlCount = 'select count(*)'
 
         sqlFrom = ' from parkstay_booking\
@@ -1158,7 +1158,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         recordsTotal = cursor.fetchone()[0]
         cursor.execute(sqlCount);
         recordsFiltered = cursor.fetchone()[0]
-        
+
         cursor.execute(sql)
         columns = [col[0] for col in cursor.description]
         data = [
