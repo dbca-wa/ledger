@@ -17,6 +17,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, B
 from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
+from django.core.cache import cache
 
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -333,10 +334,15 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
 
     def list(self, request, format=None):
-        queryset = self.get_queryset()
-        formatted = bool(request.GET.get("formatted", False))
-        serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
-        return Response(serializer.data)
+
+        data = cache.get('campgrounds')
+        if data is None:
+            queryset = self.get_queryset()
+            formatted = bool(request.GET.get("formatted", False))
+            serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
+            data = serializer.data
+            cache.set('campgrounds',data)
+        return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -784,7 +790,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
 
         # don't group by class, list individual sites
-        else: 
+        else:
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates_map[s.campsite_class_id])) for s in sites_qs])
             bookings_map = {}
@@ -924,6 +930,15 @@ class PromoAreaViewSet(viewsets.ModelViewSet):
 class ParkViewSet(viewsets.ModelViewSet):
     queryset = Park.objects.all()
     serializer_class = ParkSerializer
+
+    def list(self, request, *args, **kwargs):
+        data = cache.get('parks')
+        if data is None:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            data = serializer.data
+            cache.set('parks',data,3600)
+        return Response(data)
 
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
@@ -1077,36 +1092,22 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-
-class BookingPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'length'
-    page_query_param = 'draw'
-    max_page_size = 100
-
-    def get_paginated_response(self, data):
-        return Response(OrderedDict([
-            ('recordsTotal', self.page.paginator.count),
-            ('recordsFiltered',self.page.paginator.count),
-            ('next', self.get_next_link()),
-            ('previous', self.get_previous_link()),
-            ('results', data)
-        ]),status=status.HTTP_200_OK)
-
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
-    pagination_class = BookingPagination
-
-
 
     def list(self, request, *args, **kwargs):
-        search = request.GET.get('search[value]').lower()
+        from django.db import connection, transaction
+        search = request.GET.get('search[value]')
         draw = request.GET.get('draw') if request.GET.get('draw') else 1
         start = request.GET.get('start') if request.GET.get('draw') else 1
         length = request.GET.get('length') if request.GET.get('draw') else 10
-        print(length)
-        dates = request.GET.get('dates')
+        arrival = request.GET.get('arrival')
+        departure= request.GET.get('departure')
+        campground = request.GET.get('campground')
+        region = request.GET.get('region')
+
+        sql = ''
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
             parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
@@ -1117,61 +1118,59 @@ class BookingViewSet(viewsets.ModelViewSet):
             join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
             join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
             join parkstay_district on parkstay_park.district_id = parkstay_district.id\
-            join parkstay_region on parkstay_district.region_id = parkstay_region.id '
+            join parkstay_region on parkstay_district.region_id = parkstay_region.id'
 
-        if dates:
-            sql + ' where parkstay_booking.arrival >= {}\
-            and parkstay_booking.departure <= {}'.format(arrival, departure)
-        elif search:
-                sqlsearch = ' where lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
+        sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
+        sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
 
-                sql = sqlSelect + sqlFrom + sqlsearch
-                sqlCount = sqlCount + sqlFrom + sqlsearch
-                sql = sql + ' limit {} '.format(length)
-                sql = sql + ' offset {} ;'.format(start)
+        if campground :
+            sqlCampground = ' parkstay_campground.id = {}'.format(campground)
+            sql += sqlCampground
+            sqlCount += sqlCampground
+        if region:
+            sqlRegion = " parkstay_region.id = {}".format(region)
+            sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
+            sqlCount = sqlCount +" and "+ sqlRegion if campground else sqlCount + sqlRegion
+        if arrival:
+            sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
+            sqlCount = sqlCount + " and "+ sqlArrival if campground or region else sqlCount + sqlArrival
+            sql = sql + " and "+ sqlArrival if campground or region else sql + sqlArrival
+            if departure:
+                sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+                sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+        if search:
+            sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
+            or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
+            or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
+            if arrival or campground or region:
+                sql += " and ( "+ sqlsearch +" )"
+                sqlCount +=  " and  ( "+ sqlsearch +" )"
+            else:
+                sql += ' where' + sqlsearch
+                sqlCount += ' where ' + sqlsearch
 
-                print(sql)
-                from django.db import connection, transaction
-                cursor = connection.cursor()
-                cursor.execute("Select count(*) from parkstay_booking ");
-                recordsTotal = cursor.fetchone()[0]
-                cursor.execute(sqlCount);
-                recordsFiltered = cursor.fetchone()[0]
-                #cursor = connection.cursor()
-                cursor.execute(sql)
-                columns = [col[0] for col in cursor.description]
-                data = [
-                    dict(zip(columns, row))
-                    for row in cursor.fetchall()
-                ]
-                return Response(OrderedDict([
-                    ('recordsTotal', recordsTotal),
-                    ('recordsFiltered',recordsFiltered),
-                    ('results',data)
-                ]),status=status.HTTP_200_OK)
-        else:
-            queryset = self.filter_queryset(self.get_queryset())
 
-        if not queryset:
-            queryset = []
-            return Response(OrderedDict([
-                ('recordsTotal', 0),
-                ('recordsFiltered',0),
-                ('results', [])
-            ]),status=status.HTTP_200_OK)
-        page = self.paginate_queryset(queryset)
-        if page:
-            serializer = self.get_serializer(page,many=True)
-            data = serializer.data
-            #data['recordsTotal'] = data.count
-            #print(data['recordsTotal'])
-            #data.append({'recordsFiltered':len(data)})
-            return self.get_paginated_response(data)
+        sql = sql + ' limit {} '.format(length)
+        sql = sql + ' offset {} ;'.format(start)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data,status = http_status)
+        cursor = connection.cursor()
+        cursor.execute("Select count(*) from parkstay_booking ");
+        recordsTotal = cursor.fetchone()[0]
+        cursor.execute(sqlCount);
+        recordsFiltered = cursor.fetchone()[0]
+        
+        cursor.execute(sql)
+        columns = [col[0] for col in cursor.description]
+        data = [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
+        return Response(OrderedDict([
+            ('recordsTotal', recordsTotal),
+            ('recordsFiltered',recordsFiltered),
+            ('results',data)
+        ]),status=status.HTTP_200_OK)
+
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer

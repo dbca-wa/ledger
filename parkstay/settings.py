@@ -46,7 +46,11 @@ TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'parkstay', 'templates'))
     'required_css_class': 'required-form-field',
     'set_placeholder': False,
 }'''
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'parkstay', 'cache'),
+    }
+}
 STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'parkstay', 'static')))
 STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'parkstay', 'frontend', 'parkstay', 'dist')))
-
-

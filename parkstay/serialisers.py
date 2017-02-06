@@ -341,7 +341,7 @@ class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
         elif method == 'put':
             self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
 
-class RegionSerializer(serializers.HyperlinkedModelSerializer):
+class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
 

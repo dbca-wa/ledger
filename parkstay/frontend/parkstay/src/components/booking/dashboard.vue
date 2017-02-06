@@ -11,7 +11,7 @@
                   </select>
                   <select v-if="!isLoading" class="form-control" v-model="filterCampground">
                       <option value="All">All</option>
-                      <option v-for="campground in campgrounds" value="campground.id">{{campground.name}}</option>
+                      <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
                   </select>
                 </div>
             </div>
@@ -23,7 +23,7 @@
                   </select>
                   <select v-if="!isLoading" class="form-control" v-model="filterRegion">
                         <option value="All">All</option>
-                        <option v-for="region in regions" value="region.id">{{region.name}}</option>
+                        <option v-for="region in regions" :value="region.id">{{region.name}}</option>
                   </select>
                 </div>
             </div>
@@ -101,35 +101,67 @@ export default {
                 ajax: {
                     "url": api_endpoints.bookings,
                     "dataSrc": 'results',
+                    data :function (d) {
+                        if (vm.filterDateFrom) {
+                            d.arrival = vm.filterDateFrom;
+                        }
+                        if (vm.filterDateTo) {
+                            d.departure = vm.filterDateTo;
+                        }
+                        if (vm.filterCampground != "All") {
+                            d.campground = vm.filterCampground
+                        }
+                        if (vm.filterRegion != "All") {
+                            d.region = vm.filterRegion
+                        }
+
+                        return d;
+                    }
                 },
                 columns:[
                     {
-                        data:"campground_name"
+                        data:"campground_name",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"campground_region"
+                        data:"campground_region",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"legacy_name"
+                        data:"legacy_name",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"legacy_id"
+                        data:"legacy_id",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"campground_site_type"
+                        data:"campground_site_type",
+                        orderable:false,
+                        searchable:false
                     },
                     {
                         mRender: function(data, type, full) {
                             var status = (data == true) ? "Open" : "Temporarily Closed";
                             var column = "<td >__Status__</td>";
                             return column.replace('__Status__', status);
-                        }
+                        },
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"arrival"
+                        data:"arrival",
+                        orderable:false,
+                        searchable:false
                     },
                     {
-                        data:"departure"
+                        data:"departure",
+                        orderable:false,
+                        searchable:false
                     },
                     {
                         mRender: function(data, type, full) {
@@ -141,7 +173,9 @@ export default {
                                             <a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>\
                                         </td>";
                             return column.replace('__Status__', status);
-                        }
+                        },
+                        orderable:false,
+                        searchable:false
                     },
                 ]
             },
@@ -150,7 +184,8 @@ export default {
             dateToPicker:null,
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
-                showClear:true
+                showClear:true,
+                useCurrent:false
             },
             loading:[],
             regions:[],
@@ -165,35 +200,19 @@ export default {
     watch:{
         filterCampground: function() {
             let vm = this;
-            if (vm.filterCampground != 'All') {
-                vm.$refs.bookings_table.vmDataTable.columns(0).search(vm.filterCampground).draw();
-            } else {
-                vm.$refs.bookings_table.vmDataTable.columns(0).search('').draw();
-            }
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
         filterRegion: function() {
             let vm = this;
-            if (vm.filterRegion != 'All') {
-                vm.$refs.bookings_table.vmDataTable.columns(1).search(vm.filterRegion).draw();
-            } else {
-                vm.$refs.bookings_table.vmDataTable.columns(1).search('').draw();
-            }
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
         filterDateFrom: function() {
             let vm = this;
-            if (vm.filterDateFrom) {
-                vm.$refs.bookings_table.vmDataTable.draw();
-            } else {
-                vm.$refs.bookings_table.vmDataTable.draw();
-            }
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
         filterDateTo: function() {
             let vm = this;
-            if (vm.filterDateTo) {
-                vm.$refs.bookings_table.vmDataTable.draw();
-            } else {
-                vm.$refs.bookings_table.vmDataTable.draw();
-            }
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
         }
     },
     computed:{
@@ -238,27 +257,24 @@ export default {
                 vm.selected_booking = JSON.parse($(this).attr('data-cancel'));
                 bus.$emit('showAlert', 'cancelBooking');
             });
-            vm.dateToPicker.on('dp.change', function(e){
-                 vm.filterDateTo =  vm.dateToPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
+            vm.dateToPicker.on('dp.hide', function(e){
+                vm.filterDateTo =  e.date.format('YYYY-MM-DD');
+                if (vm.dateToPicker.data('date') === "") {
+                    vm.filterDateTo = ""
+                }else {
+                    vm.filterDateTo =  e.date.format('YYYY-MM-DD');
+                }
              });
 
-            vm.dateFromPicker.on('dp.change',function (e) {
-                vm.filterDateFrom = vm.dateFromPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
-                vm.dateToPicker.data("DateTimePicker").minDate(e.date);
-            });
-            $.fn.dataTable.ext.search.push(
-                function( settings, data, dataIndex ) {
-                    if (vm.filterDateFrom && vm.filterDateTo) {
-                        var fromDate = new Date(data[6]);
-                        var fromFilterDate = new Date(vm.filterDateFrom);
-                        var toFilterDate = new Date(vm.filterDateTo);
-                        return (fromDate.getTime() >= fromFilterDate.getTime() && fromDate.getTime() < toFilterDate.getTime());
-                    }else{
-                        return true;
-                    }
-                    return false;
+            vm.dateFromPicker.on('dp.hide',function (e) {
+                if (vm.dateFromPicker.data('date') === "") {
+                    vm.filterDateFrom = ""
+                }else {
+                    vm.filterDateFrom = e.date.format('YYYY-MM-DD');
+                    vm.dateToPicker.data("DateTimePicker").minDate(e.date);
                 }
-            );
+
+            });
         }
     },
     mounted:function () {

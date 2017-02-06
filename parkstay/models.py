@@ -18,6 +18,7 @@ from taggit.managers import TaggableManager
 from django.dispatch import receiver
 from django.db.models.signals import post_delete, pre_save, post_save
 from parkstay.exceptions import BookingRangeWithinException
+from django.core.cache import cache
 
 # Create your models here.
 
@@ -54,6 +55,10 @@ class Park(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
+
+    def save(self,*args,**kwargs):
+        cache.delete('parks')
+        super(Park,self).save(*args,**kwargs)
 
     class Meta:
         unique_together = (('name',),)
@@ -118,6 +123,10 @@ class Campground(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self,*args,**kwargs):
+        cache.delete('campgrounds')
+        super(Campground,self).save(*args,**kwargs)
 
     class Meta:
         unique_together = (('name', 'park'),)
@@ -720,7 +729,7 @@ class CampsiteClass(models.Model):
         except Exception as e:
             raise
 
-            
+
 class CampsiteBooking(models.Model):
     BOOKING_TYPE_CHOICES = (
         (0, 'Reception booking'),
