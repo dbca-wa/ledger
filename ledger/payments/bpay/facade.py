@@ -332,7 +332,7 @@ def sendSummaryEmail(summary):
     email.attach('summary.txt', summary, 'text/plain')
     email.send()
     
-def sendBillerCodeEmail(summaries):
+def sendBillerCodeEmail(summaries,monthly=False):
     emails = []
     dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
     for k,v in summaries.items():
@@ -340,9 +340,16 @@ def sendBillerCodeEmail(summaries):
             sys = BillerCodeSystem.objects.get(biller_code=k)
             recipients = [x.email for x in sys.recipients.all()]
             
+            if not monthly:
+                subject = 'BPAY Summary: Biller Code {} as at {}'.format(k,dt)
+                content = 'BPAY Transaction Summary File for Biller Code {} as at {}'.format(k,dt)
+            else:
+                subject = 'Monthly BPAY Report: Biller Code {} as at {}'.format(k,dt)
+                content = 'Monthly BPAY Transaction Report for Biller Code {} as at {}'.format(k,dt)
+            
             email = EmailMessage(
-                'BPAY Summary: Biller Code {} as at {}'.format(k,dt),
-                'BPAY Transaction Summary File for Biller Code {} as at {}'.format(k,dt),
+                subject,
+                content,
                 settings.DEFAULT_FROM_EMAIL,
                 to= recipients
             )
@@ -360,12 +367,24 @@ def generateTransactionsSummary(files,unmatched_only=False):
         # Split transactions into biller codes
         biller_codes = {}
         biller_code_emails = {}
-        for n, f in files:
-            for t in f.transactions.all():
-                if t.biller_code in biller_codes:
-                    biller_codes[t.biller_code] = biller_codes[t.biller_code].append(t)
-                else:
-                    biller_codes[t.biller_code] = [t]
+        if unmatched_only:
+            for f in files:
+                for t in f.transactions.all():
+                    if t.biller_code in biller_codes:
+                        txns = list(biller_codes[t.biller_code])
+                        txns.append(t)
+                        biller_codes[t.biller_code] = txns
+                    else:
+                        biller_codes[t.biller_code] = [t]
+        else:
+            for n, f in files:
+                for t in f.transactions.all():
+                    if t.biller_code in biller_codes:
+                        txns = list(biller_codes[t.biller_code])
+                        txns.append(t)
+                        biller_codes[t.biller_code] = txns
+                    else:
+                        biller_codes[t.biller_code] = [t]
         # Generate summaries per biller code
         for k,v in biller_codes.items():
             matched = []
@@ -394,6 +413,10 @@ def generateTransactionsSummary(files,unmatched_only=False):
     except Exception as e:
         traceback.print_exc(e)
         raise
+
+def monthlyReport():
+    files =  BpayFile.objects.all()
+    sendBillerCodeEmail(generateTransactionsSummary(files,unmatched_only=True),monthly=True)
 
 def bpayParser(path):
     files = getfiles(path)
