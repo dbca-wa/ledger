@@ -38,8 +38,9 @@ class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CampgroundCampsiteFilterSerializer(serializers.Serializer):
-    arrival = serializers.DateField(input_formats=['%Y/%m/%d'])
-    departure = serializers.DateField(input_formats=['%Y/%m/%d'])
+    """Serializer used by the campground availability map."""
+    arrival = serializers.DateField(input_formats=['%Y/%m/%d'], allow_null=True)
+    departure = serializers.DateField(input_formats=['%Y/%m/%d'], allow_null=True)
     num_adult = serializers.IntegerField(default=0)
     num_concession = serializers.IntegerField(default=0)
     num_child = serializers.IntegerField(default=0)
@@ -48,6 +49,7 @@ class CampgroundCampsiteFilterSerializer(serializers.Serializer):
 
 
 class CampsiteClassBookingSerializer(serializers.Serializer):
+    """Serializer used by the booking creation process."""
     arrival = serializers.DateField(input_formats=['%Y/%m/%d'])
     departure = serializers.DateField(input_formats=['%Y/%m/%d'])
     num_adult = serializers.IntegerField(default=0)

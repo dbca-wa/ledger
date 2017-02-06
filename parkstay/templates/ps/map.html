@@ -344,16 +344,16 @@ div.awesomplete > input {
                     <hr/>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-12 columns">
-                        <label>Legend</label>
+                        <label>Booking Type</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><img src="/static/ps/img/pin.svg"/> Online bookings</label>
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img src="/static/ps/img/pin.svg"/> Online</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><img src="/static/ps/img/pin_offline.svg"/> No online bookings</label>
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img src="/static/ps/img/pin_offline.svg"/> In-person</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><img src="/static/ps/img/pin_alt.svg"/> Non-P&amp;W ground</label>
+                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img src="/static/ps/img/pin_alt.svg"/> Non-P&amp;W site</label>
                     </div>
                 </div>
             </div>
@@ -459,6 +459,9 @@ var pf = new Vue({
         gearType: 'tent',
         filterParams: {
         },
+        sitesOnline: 1,
+        sitesInPerson: 1,
+        sitesAlt: 1,
         paginate: ['filterResults']
     },
     computed: {
@@ -621,7 +624,29 @@ var pf = new Vue({
             
             this.groundsFilter.clear();
             this.groundsData.forEach(function (el) {
-                // first pass filter against the list of IDs returned by search
+                // first pass filter against the list of IDs returned by searc
+                
+                var campgroundType = el.get('campground_type');
+                switch (campgroundType) {
+                    case 0:
+                    if (!vm.sitesOnline) {
+                        return;
+                    }
+                    break;
+                    case 1: 
+                    if (!vm.sitesInPerson) {
+                        return;
+                    }
+                    break;
+                    case 2:
+                    if (!vm.sitesAlt) {
+                        return;
+                    }
+                    break;
+                    default:
+                    break;
+                }
+                
                 if (vm.groundsIds.has(el.id_)) {
                     if (legit.size) { // if we have a feature filter list
                         // check that all parameters are present
