@@ -18,7 +18,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
     banked_oracle_codes = {}
     date_format = '%A %d/%m/%y'
 
-    eft = []
+    eftpos = []
     banked_cash = []
     bpoint = []
     bpay = []
@@ -36,7 +36,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 'amounts':{
                     'card': D('0.0'),
                     'bpay': D('0.0'),
-                    'eft': D('0.0'),
+                    'eftpos': D('0.0'),
                     'cash': D('0.0'),
                     'cheque': D('0.0'),
                     'money_order': D('0.0')
@@ -73,7 +73,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                             'amounts':{
                                 'card': D('0.0'),
                                 'bpay': D('0.0'),
-                                'eft': D('0.0'),
+                                'eftpos': D('0.0'),
                                 'cash': D('0.0'),
                                 'cheque': D('0.0'),
                                 'money_order': D('0.0')
@@ -95,7 +95,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                         'item': x,
                         'card': D('0.0'),
                         'bpay': D('0.0'),
-                        'eft': D('0.0'),
+                        'eftpos': D('0.0'),
                         'cash': D('0.0'),
                         'cheque': D('0.0'),
                         'money_order': D('0.0')
@@ -110,7 +110,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                                 'amounts':{
                                     'card': D('0.0'),
                                     'bpay': D('0.0'),
-                                    'eft': D('0.0'),
+                                    'eftpos': D('0.0'),
                                     'cash': D('0.0'),
                                     'cheque': D('0.0'),
                                     'money_order': D('0.0')
@@ -131,13 +131,13 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
 
         
             # Get all transactions
-            eft.extend([x for x in i.cash_transactions.filter(created__gte=start, created__lte=end, source='eft')])
-            banked_cash.extend([x for x in i.cash_transactions.filter(created__gte=banked_start, created__lte=banked_end).exclude(source='eft')])
+            eftpos.extend([x for x in i.cash_transactions.filter(created__gte=start, created__lte=end, source='eftpos')])
+            banked_cash.extend([x for x in i.cash_transactions.filter(created__gte=banked_start, created__lte=banked_end).exclude(source='eftpos')])
             bpoint.extend([x for x in i.bpoint_transactions.filter(created__gte=start, created__lte=end)])
             bpay.extend([x for x in i.bpay_transactions.filter(p_date__gte=start, p_date__lte=end)])
         # Go through items
         #print((start, end))
-        #print([(x, x.created) for x in eft])
+        #print([(x, x.created) for x in eftpos])
         #print([(x, x.created) for x in banked_cash])
         #print([(x, x.created) for x in bpoint])
         #print([(x, x.created) for x in bpay])
@@ -177,16 +177,16 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                         break
                     index += 1
                 # EFT
-                for c in eft:
+                for c in eftpos:
                     if c.created.strftime(date_format) == d.get('date') and c.invoice.order == order:
                         if c.type == 'payment':
-                            oracle_codes[code][date_amount_index]['amounts']['eft'] += price
-                            item['eft'] += price
-                            date_amounts[date_amount_index]['amounts']['eft'] += price
+                            oracle_codes[code][date_amount_index]['amounts']['eftpos'] += price
+                            item['eftpos'] += price
+                            date_amounts[date_amount_index]['amounts']['eftpos'] += price
                         elif c.type in ('refund', 'reversal'):
-                            oracle_codes[code][date_amount_index]['amounts']['eft'] -= price
-                            item['eft'] -= price
-                            date_amounts[date_amount_index]['amounts']['eft'] -= price
+                            oracle_codes[code][date_amount_index]['amounts']['eftpos'] -= price
+                            item['eftpos'] -= price
+                            date_amounts[date_amount_index]['amounts']['eftpos'] -= price
 
                 # Card
                 for c in bpoint:
@@ -220,28 +220,28 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
             item_str += '{},'.format(code)
             card_total = D('0.0')
             bpay_total = D('0.0')
-            eft_total = D('0.0')
+            eftpos_total = D('0.0')
             for d in oracle_codes[code]:
-                item_str += '{},{},{},'.format(d['amounts']['card'],d['amounts']['bpay'],d['amounts']['eft'])
+                item_str += '{},{},{},'.format(d['amounts']['card'],d['amounts']['bpay'],d['amounts']['eftpos'])
                 card_total += d['amounts']['card']
                 bpay_total += d['amounts']['bpay']
-                eft_total += d['amounts']['eft']
-            item_str += ',{},{},{},'.format(card_total, bpay_total, eft_total)
-            if not ((card_total == D('0.0')) and (bpay_total == D('0.0')) and (eft_total == D('0.0'))):
+                eftpos_total += d['amounts']['eftpos']
+            item_str += ',{},{},{},'.format(card_total, bpay_total, eftpos_total)
+            if not ((card_total == D('0.0')) and (bpay_total == D('0.0')) and (eftpos_total == D('0.0'))):
                 writer.writerow(item_str.split(','))
 
         total_str = 'Totals,'
         total_amounts = {
             'card': D('0.0'),
             'bpay': D('0.0'),
-            'eft': D('0.0')
+            'eftpos': D('0.0')
         }
         for d in date_amounts:
             total_amounts['card'] += d['amounts']['card']
             total_amounts['bpay'] += d['amounts']['bpay']
-            total_amounts['eft'] += d['amounts']['eft']
-            total_str += '{},{},{},'.format(d['amounts']['card'],d['amounts']['bpay'],d['amounts']['eft'])
-        total_str += ',{},{},{},'.format(total_amounts['card'],total_amounts['bpay'],total_amounts['eft'])
+            total_amounts['eftpos'] += d['amounts']['eftpos']
+            total_str += '{},{},{},'.format(d['amounts']['card'],d['amounts']['bpay'],d['amounts']['eftpos'])
+        total_str += ',{},{},{},'.format(total_amounts['card'],total_amounts['bpay'],total_amounts['eftpos'])
         writer.writerow('')
         writer.writerow(total_str.split(','))
 
