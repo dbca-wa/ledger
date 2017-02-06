@@ -790,7 +790,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
 
         # don't group by class, list individual sites
-        else: 
+        else:
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates_map[s.campsite_class_id])) for s in sites_qs])
             bookings_map = {}
@@ -1107,7 +1107,6 @@ class BookingViewSet(viewsets.ModelViewSet):
         campground = request.GET.get('campground')
         region = request.GET.get('region')
 
-
         sql = ''
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
@@ -1154,13 +1153,12 @@ class BookingViewSet(viewsets.ModelViewSet):
         sql = sql + ' limit {} '.format(length)
         sql = sql + ' offset {} ;'.format(start)
 
-        print sqlCount;
         cursor = connection.cursor()
         cursor.execute("Select count(*) from parkstay_booking ");
         recordsTotal = cursor.fetchone()[0]
         cursor.execute(sqlCount);
         recordsFiltered = cursor.fetchone()[0]
-        #cursor = connection.cursor()
+        
         cursor.execute(sql)
         columns = [col[0] for col in cursor.description]
         data = [
