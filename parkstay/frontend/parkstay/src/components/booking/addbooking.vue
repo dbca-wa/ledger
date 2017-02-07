@@ -104,86 +104,93 @@
                 <div class="col-lg-12">
                     <div class="well">
                         <div class="row">
-                            <div class="col-lg-12">
+                            <div class="col-lg-6">
                                 <h3 class="text-primary">Personal Details</h3>
                             </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Email" class="required">Email</label>
-                                <input type="text" name="email" class="form-control" v-model="booking.email">
-                              </div>
-                          </div>
-                          <div class="col-md-3" v-show="false">
-                              <div class="form-group">
-                                <label for="Confirm Email" class="required">Confirm Email</label>
-                                <input type="text" name="confirm_email" class="form-control">
-                              </div>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="First Name" class="required">First Name</label>
-                                <input type="text" name="firstname" class="form-control" v-model="booking.firstname">
-                              </div>
-                          </div>
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Surname" class="required">Surname</label>
-                                <input type="text" name="surname" class="form-control" v-model="booking.surname">
-                              </div>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Postcode" class="required">Postcode</label>
-                                <input type="text" name="postcode" class="form-control" v-model="booking.postcode">
-                              </div>
-                          </div>
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Country" class="required">Country</label>
-                                <input type="text" name="country" class="form-control" v-model="booking.country" >
-                              </div>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Phone" class="required">Phone <span class="text-muted">(mobile prefered)</span></label>
-                                <input type="text" name="phone" class="form-control" v-model="booking.phone">
-                              </div>
-                          </div>
-                          <!--div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Vehicle Registration">Vehicle Registration</label>
-                                <input type="text" name="vehicle" class="form-control" v-model="booking.vehicle">
-                              </div>
-                          </div-->
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-12">
+                            <div class="col-lg-6">
                                 <h3 class="text-primary">Park Entry Fees</h3>
                             </div>
                         </div>
                         <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Phone" class="required">Number of Vehicles</label>
-                                <input type="number" min="0" name="vehicles" class="form-control" v-model="booking.parkEntry.vehicles">
+                            <div class="col-lg-6">
+                                <div class="row">
+                                  <div class="col-md-12">
+                                      <div class="form-group">
+                                        <label for="Email" class="required">Email</label>
+                                        <input type="text" name="email" class="form-control" v-model="booking.email" list="matched_emails" @change="autofillUser()" @keyup="fetchUsers()"  >
+                                        <datalist id="matched_emails">
+                                            <option v-if="usersEmail" v-for="email in usersEmail" :value="email"></option>
+                                        </datalist>
+                                      </div>
+                                  </div>
+                                  <div class="col-md-6" v-show="false">
+                                      <div class="form-group">
+                                        <label for="Confirm Email" class="required">Confirm Email</label>
+                                        <input type="text" name="confirm_email" class="form-control">
+                                      </div>
+                                  </div>
+                                </div>
+                                <div class="row">
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="First Name" class="required">First Name</label>
+                                        <input type="text" name="firstname" class="form-control" v-model="booking.firstname">
+                                      </div>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="Surname" class="required">Surname</label>
+                                        <input type="text" name="surname" class="form-control" v-model="booking.surname">
+                                      </div>
+                                  </div>
+                                </div>
+                                <div class="row">
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="Postcode" class="required">Postcode</label>
+                                        <input type="text" name="postcode" class="form-control" v-model="booking.postcode">
+                                      </div>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="Country" class="required">Country</label>
+                                        <input type="text" name="country" class="form-control" v-model="booking.country" >
+                                      </div>
+                                  </div>
+                                </div>
+                                <div class="row">
+                              <div class="col-md-6">
+                                  <div class="form-group">
+                                    <label for="Phone" class="required">Phone <span class="text-muted">(mobile prefered)</span></label>
+                                    <input type="text" name="phone" class="form-control" v-model="booking.phone">
+                                  </div>
                               </div>
-                          </div>
-                        </div>
-                        <div class="row" v-for="v in booking.parkEntry.vehicles">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Phone" class="required">Vehicle Registration</label>
-                                <input type="text" name="regos[]" class="form-control" v-model="booking.parkEntry.regos[v-1]">
-                              </div>
-                          </div>
+                              <!--div class="col-md-6">
+                                  <div class="form-group">
+                                    <label for="Vehicle Registration">Vehicle Registration</label>
+                                    <input type="text" name="vehicle" class="form-control" v-model="booking.vehicle">
+                                  </div>
+                              </div-->
+                            </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="row">
+                                  <div class="col-md-12">
+                                      <div class="form-group">
+                                        <label for="Phone" class="required">Number of Vehicles</label>
+                                        <input type="number" min="0" name="vehicles" class="form-control" v-model="booking.parkEntry.vehicles">
+                                      </div>
+                                  </div>
+                                </div>
+                                <div class="row" v-for="v in booking.parkEntry.vehicles">
+                                  <div class="col-md-12">
+                                      <div class="form-group">
+                                        <label for="Phone" class="required">Vehicle Registration</label>
+                                        <input type="text" name="regos[]" class="form-control" v-model="booking.parkEntry.regos[v-1]">
+                                      </div>
+                                  </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -289,7 +296,9 @@ export default {
                     amount:0,
                     description: "Ages 0-5"
                 },
-            ]
+            ],
+            users:[],
+            usersEmail:[],
         };
     },
     components:{
@@ -505,6 +514,31 @@ export default {
                     vm.booking.price = price*nights;
                 }
             }
+        },
+        fetchUsers:function (event) {
+            let vm = this;
+            vm.$http.get(api_endpoints.usersLookup(vm.booking.email)).then((response)=>{
+                vm.users = response.body;
+                vm.usersEmail = [];
+                $.each(vm.users,function (i,u) {
+                    vm.usersEmail.push(u.email);
+                });
+            });
+        },
+        autofillUser:function (event) {
+            let vm =this;
+            $.each(vm.users,function (i, user) {
+                if (user.email == vm.booking.email) {
+                    vm.booking.firstname = user.first_name;
+                    vm.booking.surname = user.last_name;
+                    vm.booking.phone = user.mobile_number;
+                    if (user.profile_addresses[0]) {
+                        vm.booking.postcode = user.profile_addresses[0].postcode;
+                        vm.booking.country = user.profile_addresses[0].country;
+                    }
+                    return false;
+                }
+            })
         }
     },
     mounted:function () {
