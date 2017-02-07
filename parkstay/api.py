@@ -18,6 +18,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
+from ledger.accounts.models import EmailUser,Address
 
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -73,7 +74,9 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     OpenReasonSerializer,
                                     PriceReasonSerializer,
                                     MaximumStayReasonSerializer,
-                                    BulkPricingSerializer
+                                    BulkPricingSerializer,
+                                    UsersSerializer,
+                                    AccountsAddressSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 
@@ -1304,6 +1307,21 @@ class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
 
+class UsersViewSet(viewsets.ModelViewSet):
+    queryset = EmailUser.objects.all()
+    serializer_class = UsersSerializer
+
+    def list(self, request, *args, **kwargs):
+        start = request.GET.get('start') if request.GET.get('draw') else 1
+        length = request.GET.get('length') if request.GET.get('draw') else 10
+        q = request.GET.get('q')
+        if q :
+            queryset = EmailUser.objects.filter(email__icontains=q)[:10]
+        else:
+            queryset = self.get_queryset()
+
+        serializer = self.get_serializer(queryset,many=True)
+        return Response(serializer.data)
 # Bulk Pricing
 # ===========================
 class BulkPricingView(generics.CreateAPIView):

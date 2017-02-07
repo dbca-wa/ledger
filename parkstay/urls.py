@@ -31,6 +31,7 @@ router.register(r'closureReasons',api.ClosureReasonViewSet)
 router.register(r'openReasons',api.OpenReasonViewSet)
 router.register(r'priceReasons',api.PriceReasonViewSet)
 router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
+router.register(r'users',api.UsersViewSet)
 
 api_patterns = [
     url(r'api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
