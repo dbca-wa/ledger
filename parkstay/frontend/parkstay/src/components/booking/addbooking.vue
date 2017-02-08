@@ -107,8 +107,8 @@
                             <div class="col-lg-6">
                                 <h3 class="text-primary">Personal Details</h3>
                             </div>
-                            <div class="col-lg-6">
-                                <h3 class="text-primary">Park Entry Fees</h3>
+                            <div class="col-lg-6" v-if="park.entry_fee_required">
+                                <h3 class="text-primary">Park Entry Fees <small>(${{park.entry_fee|formatMoney(2)}}/per vehicle)</small></h3>
                             </div>
                         </div>
                         <div class="row">
@@ -173,16 +173,16 @@
                               </div-->
                             </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-6" v-if="park.entry_fee_required">
                                 <div class="row">
                                   <div class="col-md-12">
                                       <div class="form-group">
                                         <label for="Phone" class="required">Number of Vehicles</label>
-                                        <input type="number" min="0" name="vehicles" class="form-control" v-model="booking.parkEntry.vehicles">
+                                        <input type="number" min="0" max="10" name="vehicles" class="form-control" v-model="booking.parkEntry.vehicles" @change="updatePrices()">
                                       </div>
                                   </div>
                                 </div>
-                                <div class="row" v-for="v in booking.parkEntry.vehicles">
+                                <div class="row" v-for="v in maxEntryVehicles">
                                   <div class="col-md-12">
                                       <div class="form-group">
                                         <label for="Phone" class="required">Vehicle Registration</label>
@@ -299,6 +299,10 @@ export default {
             ],
             users:[],
             usersEmail:[],
+            park:{
+                entry_fee_required:false,
+                entry_fee:0
+            }
         };
     },
     components:{
@@ -307,6 +311,12 @@ export default {
     computed:{
         isLoading:function () {
             return this.loading.length > 0;
+        },
+        maxEntryVehicles:function () {
+            let vm = this;
+            var entries =  ( vm.booking.parkEntry.vehicles <= 10 ) ? vm.booking.parkEntry.vehicles :  10;
+            vm.booking.parkEntry.vehicles = entries;
+            return entries;
         }
     },
     filters:{
@@ -341,8 +351,6 @@ export default {
             vm.booking.campsite = vm.selected_campsite;
             vm.booking.price = 0;
             if (vm.selected_campsite) {
-
-                vm.loading.push('fetching prices');
                 vm.$http.get(api_endpoints.campsites_price_history(vm.selected_campsite)).then((response)=>{
                     var prices = response.body;
                     $.each(prices,function (i,price) {
@@ -359,9 +367,8 @@ export default {
                         }
 
                     });
-                    vm.loading.splice('fetching prices',1);
                 },(error)=>{
-
+                    console.log(error);
                 });
             }
         },
@@ -401,6 +408,9 @@ export default {
             vm.loading.push('fetching campsites');
             vm.$http.get(api_endpoints.campgroundCampsites(vm.booking.campground)).then((response)=>{
                 vm.campsites = response.body;
+                if (vm.campsites.length >0) {
+                    vm.selected_campsite =vm.campsites[0].id;
+                }
                 vm.loading.splice('fetching campsites',1);
             },(response)=>{
                 console.log(response);
@@ -415,11 +425,23 @@ export default {
                 vm.campground = response.body;
                 vm.booking.campground = vm.campground.id;
                 vm.fetchCampsites();
+                vm.fetchPark();
                 vm.addEventListeners();
                 vm.loading.splice('fetching campground',1);
             },(error)=>{
                 console.log(error);
                 vm.loading.splice('fetching campground',1);
+            });
+        },
+        fetchPark:function () {
+            let vm =this;
+            vm.loading.push('fetching park');
+            vm.$http.get(api_endpoints.park(vm.campground.park)).then((response)=>{
+                vm.park = response.body;
+                vm.loading.splice('fetching park',1);
+            },(error)=>{
+                console.log(error);
+                vm.loading.splice('fetching park',1);
             });
         },
         addEventListeners:function(){
@@ -514,6 +536,7 @@ export default {
                     vm.booking.price = price*nights;
                 }
             }
+            vm.booking.price = vm.booking.price + (vm.park.entry_fee * vm.booking.parkEntry.vehicles);
         },
         fetchUsers:function (event) {
             let vm = this;
