@@ -165,12 +165,12 @@
                                     <input type="text" name="phone" class="form-control" v-model="booking.phone">
                                   </div>
                               </div>
-                              <!--div class="col-md-6">
+                              <div class="col-md-6" v-if="!park.entry_fee_required">
                                   <div class="form-group">
                                     <label for="Vehicle Registration">Vehicle Registration</label>
                                     <input type="text" name="vehicle" class="form-control" v-model="booking.vehicle">
                                   </div>
-                              </div-->
+                              </div>
                             </div>
                             </div>
                             <div class="col-lg-6" v-if="park.entry_fee_required">
