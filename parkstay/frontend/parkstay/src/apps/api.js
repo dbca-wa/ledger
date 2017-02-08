@@ -5,6 +5,9 @@ module.exports = {
     },
     regions:"/api/regions.json",
     parks:"/api/parks.json",
+    park:function (id) {
+       return "/api/parks/"+id+".json"
+    },
     // Campgrounds
     campgrounds:"/api/campgrounds.json",
     campground:function (id) {

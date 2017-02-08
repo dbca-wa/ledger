@@ -210,7 +210,7 @@ class ExistingCampgroundImageSerializer(serializers.ModelSerializer):
         fields = ('id','image','campground')
 
 
-class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
+class CampgroundSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
     contact = ContactSerializer(required=False)
     images = CampgroundImageSerializer(many=True,required=False)
@@ -282,7 +282,7 @@ class ParkSerializer(serializers.HyperlinkedModelSerializer):
     campgrounds = CampgroundSerializer(many=True)
     class Meta:
         model = Park
-        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds')
+        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds','entry_fee_required','entry_fee')
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
