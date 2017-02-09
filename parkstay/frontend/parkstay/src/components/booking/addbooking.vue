@@ -186,7 +186,7 @@
                                   <div class="col-md-12">
                                       <div class="form-group">
                                         <label for="Phone" class="required">Vehicle Registration</label>
-                                        <input type="text" name="regos[]" class="form-control" v-model="booking.parkEntry.regos[v-1]" @change="alert">
+                                        <input type="text" name="regos[]" class="form-control" required="required" v-model="booking.parkEntry.regos[v-1]" @change="validateRego">
                                       </div>
                                   </div>
                                 </div>
@@ -229,7 +229,7 @@
 </template>
 
 <script>
-import {$,awesomplete,Moment,api_endpoints,validate} from "../../hooks.js";
+import {$,awesomplete,Moment,api_endpoints,validate,formValidate} from "../../hooks.js";
 import loader from '../utils/loader.vue';
 export default {
     name:"addBooking",
@@ -263,7 +263,7 @@ export default {
                 price:"0",
                 parkEntry:{
                     vehicles:0,
-                    regos:[]
+                    regos: new Array(10)
                 }
             },
             campsites:[],
@@ -345,8 +345,8 @@ export default {
         }
     },
     methods:{
-        alert:function (i) {
-            console.log(i.target);
+        validateRego:function (e) {
+            formValidate.isNotEmpty(e.target);
         },
         updatePrices:function () {
             let vm = this;
@@ -584,10 +584,12 @@ export default {
                 if (vm.booking.parkEntry.vehicles > vm.booking.parkEntry.regos) {
                     isValid = false;
                 }
-                if (vm.booking.parkEntry.regos > vm.booking.parkEntry.vehicles  ) {
-                    vm.booking.parkEntry.regos.splice(vm.booking.parkEntry.vehicles,(vm.booking.parkEntry.regos - vm.booking.parkEntry.vehicles));
-                }
             }
+            /** Move this to submit **
+            *if (vm.booking.parkEntry.regos.length > vm.booking.parkEntry.vehicles  ) {
+            *    vm.booking.parkEntry.regos.splice((vm.booking.parkEntry.vehicles-1),(vm.booking.parkEntry.regos.length - vm.booking.parkEntry.vehicles));
+            *}
+            */
             return isValid;
         },
         addFormValidations: function() {
