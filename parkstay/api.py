@@ -19,6 +19,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
+from ledger.accounts.models import EmailUser,Address
 
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -74,7 +75,9 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     OpenReasonSerializer,
                                     PriceReasonSerializer,
                                     MaximumStayReasonSerializer,
-                                    BulkPricingSerializer
+                                    BulkPricingSerializer,
+                                    UsersSerializer,
+                                    AccountsAddressSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 from parkstay.utils import create_booking_by_class
@@ -342,7 +345,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             formatted = bool(request.GET.get("formatted", False))
             serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
             data = serializer.data
-            cache.set('campgrounds',data)
+            cache.set('campgrounds',data,3600)
         return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
@@ -1067,7 +1070,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
             parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,parkstay_booking.invoice_reference'
         sqlCount = 'select count(*)'
 
         sqlFrom = ' from parkstay_booking\
@@ -1114,7 +1117,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         recordsTotal = cursor.fetchone()[0]
         cursor.execute(sqlCount);
         recordsFiltered = cursor.fetchone()[0]
-        
+
         cursor.execute(sql)
         columns = [col[0] for col in cursor.description]
         data = [
@@ -1260,6 +1263,21 @@ class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
 
+class UsersViewSet(viewsets.ModelViewSet):
+    queryset = EmailUser.objects.all()
+    serializer_class = UsersSerializer
+
+    def list(self, request, *args, **kwargs):
+        start = request.GET.get('start') if request.GET.get('draw') else 1
+        length = request.GET.get('length') if request.GET.get('draw') else 10
+        q = request.GET.get('q')
+        if q :
+            queryset = EmailUser.objects.filter(email__icontains=q)[:10]
+        else:
+            queryset = self.get_queryset()
+
+        serializer = self.get_serializer(queryset,many=True)
+        return Response(serializer.data)
 # Bulk Pricing
 # ===========================
 class BulkPricingView(generics.CreateAPIView):

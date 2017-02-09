@@ -11,6 +11,7 @@ var slick = require('slick-carousel-browserify');
 var select2 = require('select2');
 var awesomplete = require('awesomplete')
 var daterangepicker = require('bootstrap-daterangepicker')
+var formValidate = require('formValidate')
 import api_endpoints from './apps/api.js';
 import helpers from './components/utils/helpers.js'
 import {bus} from './components/utils/eventBus.js'
@@ -28,5 +29,6 @@ export {
     slick,
     select2,
     daterangepicker,
-    awesomplete
+    awesomplete,
+    formValidate
 }

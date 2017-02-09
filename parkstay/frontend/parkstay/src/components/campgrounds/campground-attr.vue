@@ -31,7 +31,7 @@
 													<option >Loading...</option>
 												</select>
 												<select name="park" v-if="parks.length > 0" class="form-control" v-model="campground.park">
-													<option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+													<option v-for="park in parks" :value="park.id">{{ park.name }}</option>
 												</select>
 											</div>
 										</div>
@@ -317,7 +317,7 @@ export default {
                 vm.campground.features = vm.selected_features;
             }
             vm.campground.features.forEach(function(f) {
-                featuresURL.push(f.url);
+                featuresURL.push(f.id);
             });
             vm.campground.features = featuresURL;
             if (vm.campground.contact == null && !vm.createCampground) {

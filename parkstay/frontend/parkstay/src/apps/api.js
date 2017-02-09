@@ -5,6 +5,9 @@ module.exports = {
     },
     regions:"/api/regions.json",
     parks:"/api/parks.json",
+    park:function (id) {
+       return "/api/parks/"+id+".json"
+    },
     // Campgrounds
     campgrounds:"/api/campgrounds.json",
     campground:function (id) {
@@ -111,5 +114,9 @@ module.exports = {
     //bookings
     bookings:"/api/booking.json",
     //other
-    countries:"https://restcountries.eu/rest/v1/?fullText=true"
+    countries:"https://restcountries.eu/rest/v1/?fullText=true",
+    users: "/api/users.json",
+    usersLookup: function (q) {
+       return  encodeURI("/api/users.json?q="+q);
+    }
 };
