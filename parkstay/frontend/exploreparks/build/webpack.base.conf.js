@@ -1,3 +1,5 @@
+var webpack = require('webpack');
+
 var path = require('path')
 var utils = require('./utils')
 var config = require('../config')
@@ -31,6 +33,13 @@ module.exports = {
       'components': resolve('src/components')
     }
   },
+  plugins: [
+    new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery'
+    })
+  ],
   module: {
     rules: [
       {
