@@ -1,3 +1,4 @@
+from django.core.exceptions import ImproperlyConfigured
 from confy import env, database
 from oscar.defaults import *
 from oscar import get_core_apps, OSCAR_MAIN_TEMPLATE_DIR
@@ -274,6 +275,19 @@ BPOINT_USERNAME=env('BPOINT_USERNAME')
 BPOINT_PASSWORD=env('BPOINT_PASSWORD')
 BPOINT_MERCHANT_NUM=env('BPOINT_MERCHANT_NUM')
 BPOINT_TEST=env('BPOINT_TEST',True)
+# Custom Email Settings
+EMAIL_BACKEND = 'ledger.ledger_email.LedgerEmailBackend'
+PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', True)
+#print PRODUCTION_EMAIL
+EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
+NON_PROD_EMAIL = env('NON_PROD_EMAIL')
+if not PRODUCTION_EMAIL:
+    if not NON_PROD_EMAIL:
+        raise ImproperlyConfigured('NON_PROD_EMAIL must not be empty if PRODUCTION_EMAIL is set to True')
+    if EMAIL_INSTANCE not in ['PROD','DEV','TEST','UAT']:
+        raise ImproperlyConfigured('EMAIL_INSTANCE must be either "PROD","DEV","TEST","UAT"')
+    if EMAIL_INSTANCE == 'PRODUCTION':
+        raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PRODUCTION\' if PRODUCTION_EMAIL is set to True')
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True
