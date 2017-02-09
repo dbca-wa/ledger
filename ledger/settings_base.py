@@ -283,11 +283,11 @@ EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
 NON_PROD_EMAIL = env('NON_PROD_EMAIL')
 if not PRODUCTION_EMAIL:
     if not NON_PROD_EMAIL:
-        raise ImproperlyConfigured('NON_PROD_EMAIL must not be empty if PRODUCTION_EMAIL is set to True')
+        raise ImproperlyConfigured('NON_PROD_EMAIL must not be empty if PRODUCTION_EMAIL is set to False')
     if EMAIL_INSTANCE not in ['PROD','DEV','TEST','UAT']:
         raise ImproperlyConfigured('EMAIL_INSTANCE must be either "PROD","DEV","TEST","UAT"')
     if EMAIL_INSTANCE == 'PRODUCTION':
-        raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PRODUCTION\' if PRODUCTION_EMAIL is set to True')
+        raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PRODUCTION\' if PRODUCTION_EMAIL is set to False')
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True
