@@ -186,7 +186,7 @@
                                   <div class="col-md-12">
                                       <div class="form-group">
                                         <label for="Phone" class="required">Vehicle Registration</label>
-                                        <input type="text" name="regos[]" class="form-control" v-model="booking.parkEntry.regos[v-1]">
+                                        <input type="text" name="regos[]" class="form-control" v-model="booking.parkEntry.regos[v-1]" @change="alert">
                                       </div>
                                   </div>
                                 </div>
@@ -216,7 +216,7 @@
                                 </p>
                             </div>
                             <div class="col-md-6">
-                              <button type="button" class="btn btn-primary btn-lg pull-right"> Book</button>
+                              <button type="button" class="btn btn-primary btn-lg pull-right" @click="bookNow()"> Book</button>
                             </div>
                         </div>
                     </div>
@@ -229,7 +229,7 @@
 </template>
 
 <script>
-import {$,awesomplete,Moment,api_endpoints} from "../../hooks.js";
+import {$,awesomplete,Moment,api_endpoints,validate} from "../../hooks.js";
 import loader from '../utils/loader.vue';
 export default {
     name:"addBooking",
@@ -345,6 +345,9 @@ export default {
         }
     },
     methods:{
+        alert:function (i) {
+            console.log(i.target);
+        },
         updatePrices:function () {
             let vm = this;
             vm.priceHistory = null;
@@ -562,13 +565,82 @@ export default {
                     return false;
                 }
             })
-        }
+        },
+        bookNow:function () {
+            let vm = this;
+            if (vm.isFormValid()) {
+                console.log(JSON.stringify(vm.booking));
+            }
+
+        },
+        isFormValid:function () {
+            let vm =this;
+            return (vm.validateParkEntry() && $(vm.bookingForm).valid());
+        },
+        validateParkEntry:function () {
+            let vm = this;
+            var isValid = true;
+            if (vm.booking.parkEntry.vehicles > 0) {
+                if (vm.booking.parkEntry.vehicles > vm.booking.parkEntry.regos) {
+                    isValid = false;
+                }
+                if (vm.booking.parkEntry.regos > vm.booking.parkEntry.vehicles  ) {
+                    vm.booking.parkEntry.regos.splice(vm.booking.parkEntry.vehicles,(vm.booking.parkEntry.regos - vm.booking.parkEntry.vehicles));
+                }
+            }
+            return isValid;
+        },
+        addFormValidations: function() {
+            $(this.bookingForm).validate({
+                rules: {
+                    arrival: "required",
+                    departure: "required",
+                    guests: "required",
+                    campsite: "required",
+                    email: {
+                        required: true,
+                        email: true
+                    },
+                    firstname: "required",
+                    surname: "required",
+                    phone: "required",
+                    postcode: "required",
+                    country: "required",
+                    price_level: "required"
+                },
+                messages: {
+                    firstname: "fill in all details",
+                },
+                showErrors: function(errorMap, errorList) {
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+        },
     },
     mounted:function () {
         let vm = this;
         vm.bookingForm = document.forms.bookingForm;
         vm.fetchCampground();
         vm.fetchCountries();
+        vm.addFormValidations();
     }
 }
 
