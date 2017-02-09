@@ -178,6 +178,7 @@ def validate_file(f):
     current_step = 0
     error = None
     line = 1
+    row_count = 0
     try:
         reader = csv.reader(f)
         for row in reader:
@@ -193,11 +194,13 @@ def validate_file(f):
                     logger.error(error)
                     raise Exception(error)
             line += 1
-        for k,v in steps_count.items():
-            if v < 1:
-                error = 'An error occured at line {0}: Ensure that the file contains all the record types.'.format(line)
-                logger.error(error)
-                raise Exception(error)
+            row_count += 1
+        if row_count > 2:
+            for k,v in steps_count.items():
+                if v < 1:
+                    error = 'An error occured at line {0}: Ensure that the file contains all the record types.'.format(line)
+                    logger.error(error)
+                    raise Exception(error)
             
     except:
         raise
