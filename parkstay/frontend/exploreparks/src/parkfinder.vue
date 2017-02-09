@@ -381,7 +381,7 @@ import Awesomplete from 'awesomplete';
 import $ from 'jquery';
 import ol from 'openlayers';
 import debounce from 'debounce';
-
+import moment from 'moment';
 
 export default {
     name: 'parkfinder',
