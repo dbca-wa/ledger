@@ -587,6 +587,7 @@ export default {
             this.groundsData.forEach(function (el) {
                 // first pass filter against the list of IDs returned by searc
                 
+                //console.log(el);
                 var campgroundType = el.get('campground_type');
                 switch (campgroundType) {
                     case 0:
@@ -676,8 +677,9 @@ export default {
         var search = document.getElementById('searchInput');
         var autocomplete = new Awesomplete(search);
         autocomplete.autoFirst = true;
+
         $.ajax({
-            url: '/api/search_suggest',
+            url: PARKSTAY_URL+'/api/search_suggest',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
@@ -754,11 +756,6 @@ export default {
             })
         });
 
-        //this.groundsSource = new ol.source.Vector({
-        //    url: '/api/campground_map/?format=json',
-        //    format: new ol.format.GeoJSON()
-        //});
-
         this.geojson = new ol.format.GeoJSON({
             featureProjection: 'EPSG:3857'   
         });
@@ -767,7 +764,7 @@ export default {
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
         $.ajax({
-            url: '/api/campground_map/?format=json',
+            url: PARKSTAY_URL+'/api/campground_map/?format=json',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 var features = vm.geojson.readFeatures(response);
@@ -782,7 +779,7 @@ export default {
         });
         
         this.groundsSource.loadSource = function (onSuccess) {
-            var urlBase = '/api/campground_map_filter/?';
+            var urlBase = PARKSTAY_URL+'/api/campground_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
