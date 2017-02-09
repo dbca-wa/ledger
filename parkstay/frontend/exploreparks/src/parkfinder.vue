@@ -78,13 +78,13 @@
                         <label>Booking Type</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img src="/static/ps/img/pin.svg"/> Online</label>
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img src="/static/ps/img/pin_offline.svg"/> In-person</label>
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> In-person</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img src="/static/ps/img/pin_alt.svg"/> Non-P&amp;W site</label>
+                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Non-P&amp;W site</label>
                     </div>
                 </div>
             </div>
@@ -128,7 +128,7 @@
 <style>
 @font-face {
     font-family: "DPaWSymbols";
-    src: url("/static/ps/css/campicon.woff") format("woff");
+    src: url("./assets/campicon.woff") format("woff");
 }
 
 .search-params hr {
@@ -417,8 +417,11 @@ export default {
             filterParams: {
             },
             sitesOnline: 1,
+            sitesOnlineIcon: require('./assets/pin.svg'),
             sitesInPerson: 1,
+            sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAlt: 1,
+            sitesAltIcon: require('./assets/pin_alt.svg'),
             paginate: ['filterResults']
         }
     },
@@ -817,14 +820,14 @@ export default {
             style: function (feature) {
                 style = feature.get('style');
                 if (!style) {
-                    var icon = '/static/ps/img/pin_offline.svg';
+                    var icon = vm.sitesInPersonIcon;
                     var campgroundType = feature.get('campground_type');
                     switch (campgroundType) {
                         case 0:
-                        icon = '/static/ps/img/pin.svg';
+                        icon = vm.sitesOnlineIcon;
                         break;
                         case 2:
-                        icon = '/static/ps/img/pin_alt.svg';
+                        icon = vm.sitesAltIcon;
                         break;
                         default:
                         break;
