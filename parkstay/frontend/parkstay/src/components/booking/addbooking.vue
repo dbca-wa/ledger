@@ -104,86 +104,93 @@
                 <div class="col-lg-12">
                     <div class="well">
                         <div class="row">
-                            <div class="col-lg-12">
+                            <div class="col-lg-6">
                                 <h3 class="text-primary">Personal Details</h3>
                             </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Email" class="required">Email</label>
-                                <input type="text" name="email" class="form-control" v-model="booking.email">
-                              </div>
-                          </div>
-                          <div class="col-md-3" v-show="false">
-                              <div class="form-group">
-                                <label for="Confirm Email" class="required">Confirm Email</label>
-                                <input type="text" name="confirm_email" class="form-control">
-                              </div>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="First Name" class="required">First Name</label>
-                                <input type="text" name="firstname" class="form-control" v-model="booking.firstname">
-                              </div>
-                          </div>
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Surname" class="required">Surname</label>
-                                <input type="text" name="surname" class="form-control" v-model="booking.surname">
-                              </div>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Postcode" class="required">Postcode</label>
-                                <input type="text" name="postcode" class="form-control" v-model="booking.postcode">
-                              </div>
-                          </div>
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Country" class="required">Country</label>
-                                <input type="text" name="country" class="form-control" v-model="booking.country" >
-                              </div>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Phone" class="required">Phone <span class="text-muted">(mobile prefered)</span></label>
-                                <input type="text" name="phone" class="form-control" v-model="booking.phone">
-                              </div>
-                          </div>
-                          <!--div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Vehicle Registration">Vehicle Registration</label>
-                                <input type="text" name="vehicle" class="form-control" v-model="booking.vehicle">
-                              </div>
-                          </div-->
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <h3 class="text-primary">Park Entry Fees</h3>
+                            <div class="col-lg-6" v-if="park.entry_fee_required">
+                                <h3 class="text-primary">Park Entry Fees <small>(${{park.entry_fee|formatMoney(2)}}/per vehicle)</small></h3>
                             </div>
                         </div>
                         <div class="row">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Phone" class="required">Number of Vehicles</label>
-                                <input type="number" min="0" name="vehicles" class="form-control" v-model="booking.parkEntry.vehicles">
+                            <div class="col-lg-6">
+                                <div class="row">
+                                  <div class="col-md-12">
+                                      <div class="form-group">
+                                        <label for="Email" class="required">Email</label>
+                                        <input type="text" name="email" class="form-control" v-model="booking.email" list="matched_emails" @change="autofillUser()" @keyup="fetchUsers()"  >
+                                        <datalist id="matched_emails">
+                                            <option v-if="usersEmail" v-for="email in usersEmail" :value="email"></option>
+                                        </datalist>
+                                      </div>
+                                  </div>
+                                  <div class="col-md-6" v-show="false">
+                                      <div class="form-group">
+                                        <label for="Confirm Email" class="required">Confirm Email</label>
+                                        <input type="text" name="confirm_email" class="form-control">
+                                      </div>
+                                  </div>
+                                </div>
+                                <div class="row">
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="First Name" class="required">First Name</label>
+                                        <input type="text" name="firstname" class="form-control" v-model="booking.firstname">
+                                      </div>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="Surname" class="required">Surname</label>
+                                        <input type="text" name="surname" class="form-control" v-model="booking.surname">
+                                      </div>
+                                  </div>
+                                </div>
+                                <div class="row">
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="Postcode" class="required">Postcode</label>
+                                        <input type="text" name="postcode" class="form-control" v-model="booking.postcode">
+                                      </div>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="Country" class="required">Country</label>
+                                        <input type="text" name="country" class="form-control" v-model="booking.country" >
+                                      </div>
+                                  </div>
+                                </div>
+                                <div class="row">
+                              <div class="col-md-6">
+                                  <div class="form-group">
+                                    <label for="Phone" class="required">Phone <span class="text-muted">(mobile prefered)</span></label>
+                                    <input type="text" name="phone" class="form-control" v-model="booking.phone">
+                                  </div>
                               </div>
-                          </div>
-                        </div>
-                        <div class="row" v-for="v in booking.parkEntry.vehicles">
-                          <div class="col-md-3">
-                              <div class="form-group">
-                                <label for="Phone" class="required">Vehicle Registration</label>
-                                <input type="text" name="regos[]" class="form-control" v-model="booking.parkEntry.regos[v-1]">
+                              <div class="col-md-6" v-if="!park.entry_fee_required">
+                                  <div class="form-group">
+                                    <label for="Vehicle Registration">Vehicle Registration</label>
+                                    <input type="text" name="vehicle" class="form-control" v-model="booking.vehicle">
+                                  </div>
                               </div>
-                          </div>
+                            </div>
+                            </div>
+                            <div class="col-lg-6" v-if="park.entry_fee_required">
+                                <div class="row">
+                                  <div class="col-md-12">
+                                      <div class="form-group">
+                                        <label for="Phone" class="required">Number of Vehicles</label>
+                                        <input type="number" min="0" max="10" name="vehicles" class="form-control" v-model="booking.parkEntry.vehicles" @change="updatePrices()">
+                                      </div>
+                                  </div>
+                                </div>
+                                <div class="row" v-for="v in maxEntryVehicles">
+                                  <div class="col-md-12">
+                                      <div class="form-group">
+                                        <label for="Phone" class="required">Vehicle Registration</label>
+                                        <input type="text" name="regos[]" class="form-control" required="required" v-model="booking.parkEntry.regos[v-1]" @change="validateRego">
+                                      </div>
+                                  </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -209,7 +216,7 @@
                                 </p>
                             </div>
                             <div class="col-md-6">
-                              <button type="button" class="btn btn-primary btn-lg pull-right"> Book</button>
+                              <button type="button" class="btn btn-primary btn-lg pull-right" @click="bookNow()"> Book</button>
                             </div>
                         </div>
                     </div>
@@ -222,7 +229,7 @@
 </template>
 
 <script>
-import {$,awesomplete,Moment,api_endpoints} from "../../hooks.js";
+import {$,awesomplete,Moment,api_endpoints,validate,formValidate} from "../../hooks.js";
 import loader from '../utils/loader.vue';
 export default {
     name:"addBooking",
@@ -256,7 +263,7 @@ export default {
                 price:"0",
                 parkEntry:{
                     vehicles:0,
-                    regos:[]
+                    regos: new Array(10)
                 }
             },
             campsites:[],
@@ -289,7 +296,13 @@ export default {
                     amount:0,
                     description: "Ages 0-5"
                 },
-            ]
+            ],
+            users:[],
+            usersEmail:[],
+            park:{
+                entry_fee_required:false,
+                entry_fee:0
+            }
         };
     },
     components:{
@@ -298,6 +311,12 @@ export default {
     computed:{
         isLoading:function () {
             return this.loading.length > 0;
+        },
+        maxEntryVehicles:function () {
+            let vm = this;
+            var entries =  ( vm.booking.parkEntry.vehicles <= 10 ) ? vm.booking.parkEntry.vehicles :  10;
+            vm.booking.parkEntry.vehicles = entries;
+            return entries;
         }
     },
     filters:{
@@ -326,14 +345,15 @@ export default {
         }
     },
     methods:{
+        validateRego:function (e) {
+            formValidate.isNotEmpty(e.target);
+        },
         updatePrices:function () {
             let vm = this;
             vm.priceHistory = null;
             vm.booking.campsite = vm.selected_campsite;
             vm.booking.price = 0;
             if (vm.selected_campsite) {
-
-                vm.loading.push('fetching prices');
                 vm.$http.get(api_endpoints.campsites_price_history(vm.selected_campsite)).then((response)=>{
                     var prices = response.body;
                     $.each(prices,function (i,price) {
@@ -350,9 +370,8 @@ export default {
                         }
 
                     });
-                    vm.loading.splice('fetching prices',1);
                 },(error)=>{
-
+                    console.log(error);
                 });
             }
         },
@@ -392,6 +411,9 @@ export default {
             vm.loading.push('fetching campsites');
             vm.$http.get(api_endpoints.campgroundCampsites(vm.booking.campground)).then((response)=>{
                 vm.campsites = response.body;
+                if (vm.campsites.length >0) {
+                    vm.selected_campsite =vm.campsites[0].id;
+                }
                 vm.loading.splice('fetching campsites',1);
             },(response)=>{
                 console.log(response);
@@ -406,11 +428,23 @@ export default {
                 vm.campground = response.body;
                 vm.booking.campground = vm.campground.id;
                 vm.fetchCampsites();
+                vm.fetchPark();
                 vm.addEventListeners();
                 vm.loading.splice('fetching campground',1);
             },(error)=>{
                 console.log(error);
                 vm.loading.splice('fetching campground',1);
+            });
+        },
+        fetchPark:function () {
+            let vm =this;
+            vm.loading.push('fetching park');
+            vm.$http.get(api_endpoints.park(vm.campground.park)).then((response)=>{
+                vm.park = response.body;
+                vm.loading.splice('fetching park',1);
+            },(error)=>{
+                console.log(error);
+                vm.loading.splice('fetching park',1);
             });
         },
         addEventListeners:function(){
@@ -505,13 +539,110 @@ export default {
                     vm.booking.price = price*nights;
                 }
             }
-        }
+            vm.booking.price = vm.booking.price + (vm.park.entry_fee * vm.booking.parkEntry.vehicles);
+        },
+        fetchUsers:function (event) {
+            let vm = this;
+            vm.$http.get(api_endpoints.usersLookup(vm.booking.email)).then((response)=>{
+                vm.users = response.body;
+                vm.usersEmail = [];
+                $.each(vm.users,function (i,u) {
+                    vm.usersEmail.push(u.email);
+                });
+            });
+        },
+        autofillUser:function (event) {
+            let vm =this;
+            $.each(vm.users,function (i, user) {
+                if (user.email == vm.booking.email) {
+                    vm.booking.firstname = user.first_name;
+                    vm.booking.surname = user.last_name;
+                    vm.booking.phone = user.mobile_number;
+                    if (user.profile_addresses[0]) {
+                        vm.booking.postcode = user.profile_addresses[0].postcode;
+                        vm.booking.country = user.profile_addresses[0].country;
+                    }
+                    return false;
+                }
+            })
+        },
+        bookNow:function () {
+            let vm = this;
+            if (vm.isFormValid()) {
+                console.log(JSON.stringify(vm.booking));
+            }
+
+        },
+        isFormValid:function () {
+            let vm =this;
+            return (vm.validateParkEntry() && $(vm.bookingForm).valid());
+        },
+        validateParkEntry:function () {
+            let vm = this;
+            var isValid = true;
+            if (vm.booking.parkEntry.vehicles > 0) {
+                if (vm.booking.parkEntry.vehicles > vm.booking.parkEntry.regos) {
+                    isValid = false;
+                }
+            }
+            /** Move this to submit **
+            *if (vm.booking.parkEntry.regos.length > vm.booking.parkEntry.vehicles  ) {
+            *    vm.booking.parkEntry.regos.splice((vm.booking.parkEntry.vehicles-1),(vm.booking.parkEntry.regos.length - vm.booking.parkEntry.vehicles));
+            *}
+            */
+            return isValid;
+        },
+        addFormValidations: function() {
+            $(this.bookingForm).validate({
+                rules: {
+                    arrival: "required",
+                    departure: "required",
+                    guests: "required",
+                    campsite: "required",
+                    email: {
+                        required: true,
+                        email: true
+                    },
+                    firstname: "required",
+                    surname: "required",
+                    phone: "required",
+                    postcode: "required",
+                    country: "required",
+                    price_level: "required"
+                },
+                messages: {
+                    firstname: "fill in all details",
+                },
+                showErrors: function(errorMap, errorList) {
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+        },
     },
     mounted:function () {
         let vm = this;
         vm.bookingForm = document.forms.bookingForm;
         vm.fetchCampground();
         vm.fetchCountries();
+        vm.addFormValidations();
     }
 }
 

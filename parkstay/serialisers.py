@@ -1,4 +1,5 @@
 from django.conf import settings
+from ledger.accounts.models import EmailUser,Address
 from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
@@ -211,7 +212,7 @@ class ExistingCampgroundImageSerializer(serializers.ModelSerializer):
         fields = ('id','image','campground')
 
 
-class CampgroundSerializer(serializers.HyperlinkedModelSerializer):
+class CampgroundSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
     contact = ContactSerializer(required=False)
     images = CampgroundImageSerializer(many=True,required=False)
@@ -283,7 +284,7 @@ class ParkSerializer(serializers.HyperlinkedModelSerializer):
     campgrounds = CampgroundSerializer(many=True)
     class Meta:
         model = Park
-        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds')
+        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds','entry_fee_required','entry_fee')
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
@@ -502,6 +503,19 @@ class MaximumStayReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaximumStayReason
         fields = ('id','text')
+
+class AccountsAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = '__all__'
+
+class UsersSerializer(serializers.ModelSerializer):
+    profile_addresses = AccountsAddressSerializer(many=True,read_only=True)
+    #postcode = serializers.CharField(source='profile_addresses.postcode',read_only=True)
+    class Meta:
+        model = EmailUser
+        fields = ('id','email','first_name','last_name','phone_number','mobile_number','profile_addresses')
+
 
 # Bulk Pricing
 # ==========================
