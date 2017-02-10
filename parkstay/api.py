@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
@@ -79,7 +80,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     AccountsAddressSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
-
+from parkstay.utils import create_booking_by_class
 
 
 
@@ -851,75 +852,30 @@ def create_class_booking(request, *args, **kwargs):
     num_infant = serializer.validated_data['num_infant']
 
     if 'ps_booking' in request.session:
-        # already a booking in the current session, send bounce signal
+        # if there's already a booking in the current session, send bounce signal
         return HttpResponse(geojson.dumps({
             'status': 'success',
             'msg': 'Booking already in progress',
             'pk': request.session['ps_booking']
         }), content_type='application/json')
 
-    # TODO: campground openness business logic
-    # TODO: campsite openness business logic
-    # TODO: date range check business logic
-    # TODO: number of people check? this might be modifyable later
+    # try to create a temporary booking
+    try:
+        booking = create_booking_by_class(
+            campground, campsite_class,
+            start_date, end_date,
+            num_adult, num_concession,
+            num_child, num_infant
+        )
+    except ValidationError as e:
+        return HttpResponse(geojson.dumps({
+            'status': 'error',
+            'msg': e.message
+        }), content_type='application/json')
 
-    # the CampsiteBooking table runs the risk of a race condition,
-    # wrap all this behaviour up in a transaction
-    with transaction.atomic():
-        # get campground
-        campground = Campground.objects.get(pk=campground)
-
-        # fetch all the campsites and applicable rates for the campground
-        sites_qs =  Campsite.objects.filter(
-                        campground=campground,
-                        campsite_class=campsite_class
-                    )
-
-        if not sites_qs.exists():
-            return HttpResponse(geojson.dumps({
-                'status': 'error',
-                'msg': 'No matching campsites found'
-            }), content_type='application/json')
-
-
-        # fetch all of the single-day CampsiteBooking objects within the date range for the sites
-        bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__in=sites_qs,
-                            date__gte=start_date,
-                            date__lt=end_date
-                        ).order_by('date', 'campsite__name')
-
-        excluded_site_ids = set([x[0] for x in bookings_qs.values_list('campsite')])
-        # create a list of campsites without bookings for that period
-        sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
-
-        if not sites:
-            return HttpResponse(geojson.dumps({
-                'status': 'error',
-                'msg': 'Campsite class unavailable for specified time period'
-            }), content_type='application/json')
-
-        # TODO: add campsite sorting logic based on business requirements
-        # for now, pick the first campsite in the list
-        site = sites[0]
-
-        # Create a new temporary booking with an expiry timestamp (default 20mins)
-        booking =   Booking.objects.create(
-                        booking_type=3,
-                        arrival=start_date,
-                        departure=end_date,
-                        expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                        campground=campground
-                    )
-        request.session['ps_booking'] = booking.pk
-        for i in range((end_date-start_date).days):
-            cb =    CampsiteBooking.objects.create(
-                        campsite=site,
-                        booking_type=3,
-                        date=start_date+timedelta(days=i),
-                        booking=booking
-                    )
-
+    # add the booking to the current session
+    request.session['ps_booking'] = booking.pk
+    
     return HttpResponse(geojson.dumps({
         'status': 'success',
         'pk': booking.pk

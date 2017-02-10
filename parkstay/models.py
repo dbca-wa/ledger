@@ -377,6 +377,9 @@ class BookingRange(models.Model):
 
         super(BookingRange, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return '{} {} - {}'.format(self.status, self.range_start, self.range_end)
+
 class StayHistory(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     # minimum/maximum consecutive days allowed for a booking
@@ -602,7 +605,6 @@ class CampsiteBookingRange(BookingRange):
 
     def clean(self, *args, **kwargs):
         original = None
-
         # Preventing ranges within other ranges
         within = CampsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
         if within:
@@ -614,6 +616,8 @@ class CampsiteBookingRange(BookingRange):
             if self.range_start < datetime.now().date() and original.range_start != self.range_start:
                 raise ValidationError('The start date can\'t be in the past')
 
+    def __str__(self):
+        return '{}: {} {} - {}'.format(self.campsite, self.status, self.range_start, self.range_end)
 
 class CampsiteStayHistory(StayHistory):
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT,related_name='stay_history')

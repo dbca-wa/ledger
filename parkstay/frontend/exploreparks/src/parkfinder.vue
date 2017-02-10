@@ -1,22 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- Unicode is great -->
-    <meta charset="utf-8" />
-    <title>Park Finder</title>
-    <!-- Disable awful IE compatibility mode -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <!-- Force fit-to-viewport sizing on mobile -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.css" />
-    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.css" />
-    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/css/foundation-datepicker.css" />
-    <link rel="stylesheet" href="//static.dpaw.wa.gov.au/static/libs/awesomplete/1.1.1/awesomplete.css" />
-    <style type="text/css">
+<template>
+    <div v-cloak>
+        <div class="row">
+            <div class="small-12 medium-3 large-6 columns search-params">
+                <div class="row">
+                    <div class="small-12 columns">
+                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/></label>
+                    </div>
+                </div><div class="row">
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label>
+                            Guests <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
+                        </label>
+                        <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
+                            <div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_adults" class="text-right">Adults<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_concessions" class="text-right">Concessions<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_children" class="text-right">Children (ages 6-15)<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
+                                </div>
+                            </div><div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_infants" class="text-right">Infants (ages 0-5)<label>
+                                </div><div class="small-6 columns">
+                                    <input type="number" id="numInfants" name="num_infants" v-model="numInfants" min="0" max="16"/></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><div class="row">
+                    <hr/>
+                </div><div class="row">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Equipment</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="campervan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
+                    </div>
+                </div><div class="row">
+                    <hr class="search"/>
+                </div><div class="row">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Features</label>
+                    </div>
+                    <template v-for="filt in filterList">
+                        <div class="small-12 medium-12 large-4 columns">
+                            <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
+                        </div>
+                    </template>
+                </div><div class="row">
+                    <hr/>
+                </div><div class="row">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Booking Type</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> In-person</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Non-P&amp;W site</label>
+                    </div>
+                </div>
+            </div>
+            <div class="small-12 medium-9 large-6 columns">
+                <div id="map"></div>
+                <div id="mapPopup" class="mapPopup" v-cloak>
+                    <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
+                    <div id="mapPopupContent">
+                        <h5 id="mapPopupName"></h5>
+                        <p>Pic goes here</p>
+                        <p>Description goes here</p>
+                        <button id="mapPopupInfo" class="button formButton">More info</button>
+                        <button id="mapPopupBook" class="button formButton">Book now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <paginate name="filterResults" :list="extentFeatures" :per="10">
+            <div class="row" v-for="f in paginated('filterResults')">
+                <div class="small-12 columns">
+                    <span class="searchTitle">{{ f.name }}</span>
+                </div>
+                <div class="small-12 medium-3 large-3 columns">
+                    <p>Pic goes here</p> 
+                </div>
+                <div class="small-12 medium-9 large-9 columns">
+                    <p>Description goes here</p>
+                    <button class="button">More info</button>
+                    <button v-if="f.campground_type == 0" class="button">Book now</button>
+                </div>
+            </div>
+        </paginate>
+        <div class="row">
+            <paginate-links for="filterResults" :classes="{
+                'ul': 'pagination'
+            }"></paginate-links>
+        </div>
+    </div>
+</template>
 
+<style>
 @font-face {
     font-family: "DPaWSymbols";
-    src: url("/static/ps/css/campicon.woff") format("woff");
+    src: url("./assets/campicon.woff") format("woff");
 }
 
 .search-params hr {
@@ -262,207 +374,56 @@ div.awesomplete {
 div.awesomplete > input {
     display: table-cell;
 }
+</style>
 
-    </style>
-</head>
-<body>
-    <div id="parkfinder" v-cloak>
-        <div class="row">
-            <div class="small-12 medium-3 large-6 columns search-params">
-                <div class="row">
-                    <div class="small-12 columns">
-                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/></label>
-                    </div>
-                </div><div class="row">
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label>
-                            Guests <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
-                        </label>
-                        <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
-                            <div class="row">
-                                <div class="small-6 columns">
-                                    <label for="num_adults" class="text-right">Adults<label>
-                                </div><div class="small-6 columns">
-                                    <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>
-                                </div>
-                            </div><div class="row">
-                                <div class="small-6 columns">
-                                    <label for="num_concessions" class="text-right">Concessions<label>
-                                </div><div class="small-6 columns">
-                                    <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
-                                </div>
-                            </div><div class="row">
-                                <div class="small-6 columns">
-                                    <label for="num_children" class="text-right">Children (ages 6-15)<label>
-                                </div><div class="small-6 columns">
-                                    <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
-                                </div>
-                            </div><div class="row">
-                                <div class="small-6 columns">
-                                    <label for="num_infants" class="text-right">Infants (ages 0-5)<label>
-                                </div><div class="small-6 columns">
-                                    <input type="number" id="numInfants" name="num_infants" v-model="numInfants" min="0" max="16"/></label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div><div class="row">
-                    <hr/>
-                </div><div class="row">
-                    <div class="small-12 medium-12 large-12 columns">
-                        <label>Equipment</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="campervan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
-                    </div>
-                </div><div class="row">
-                    <hr class="search"/>
-                </div><div class="row">
-                    <div class="small-12 medium-12 large-12 columns">
-                        <label>Features</label>
-                    </div>
-{% verbatim %}
-                    <template v-for="filt in filterList">
-                        <div class="small-12 medium-12 large-4 columns">
-                            <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
-                        </div>
-                    </template>
-{% endverbatim %}
-                </div><div class="row">
-                    <hr/>
-                </div><div class="row">
-                    <div class="small-12 medium-12 large-12 columns">
-                        <label>Booking Type</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img src="/static/ps/img/pin.svg"/> Online</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img src="/static/ps/img/pin_offline.svg"/> In-person</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img src="/static/ps/img/pin_alt.svg"/> Non-P&amp;W site</label>
-                    </div>
-                </div>
-            </div>
-            <div class="small-12 medium-9 large-6 columns">
-                <div id="map"></div>
-                <div id="mapPopup" class="mapPopup" v-cloak>
-                    <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
-                    <div id="mapPopupContent">
-                        <h5 id="mapPopupName"></h5>
-                        <p>Pic goes here</p>
-                        <p>Description goes here</p>
-                        <button id="mapPopupInfo" class="button formButton">More info</button>
-                        <button id="mapPopupBook" class="button formButton">Book now</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-{% verbatim %}
-        <paginate name="filterResults" :list="extentFeatures" :per="10">
-            <div class="row" v-for="f in paginated('filterResults')">
-                <div class="small-12 columns">
-                    <span class="searchTitle">{{ f.name }}</span>
-                </div>
-                <div class="small-12 medium-3 large-3 columns">
-                    <p>Pic goes here</p> 
-                </div>
-                <div class="small-12 medium-9 large-9 columns">
-                    <p>Description goes here</p>
-                    <button class="button">More info</button>
-                    <button v-if="f.campground_type == 0" class="button">Book now</button>
-                </div>
-            </div>
-        </paginate>
-        <div class="row">
-            <paginate-links for="filterResults" :classes="{
-                'ul': 'pagination'
-            }"></paginate-links>
-        </div>
-{% endverbatim %}
-    </div>
+<script>
+import Awesomplete from 'awesomplete';
+import ol from 'openlayers';
+import 'foundation-sites';
+import 'foundation-datepicker/js/foundation-datepicker';
+import debounce from 'debounce';
+import moment from 'moment';
 
-    <script src="//static.dpaw.wa.gov.au/static/libs/vue/2.1.8/vue.js"></script>
-    <script src="//static.dpaw.wa.gov.au/static/js/vue-paginate-3.2.2/dist/vue-paginate.js"></script>
-    <script src="//static.dpaw.wa.gov.au/static/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="//static.dpaw.wa.gov.au/static/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min.js"></script>
-    <script src="//static.dpaw.wa.gov.au/static/libs/foundation/6.2.4/foundation.min.js"></script>
-    <script src="//static.dpaw.wa.gov.au/static/libs/ol3/3.19.1/ol-debug.js"></script>
-    <script src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.5/js/foundation-datepicker.min.js"></script>
-    <script src="//static.dpaw.wa.gov.au/static/libs/awesomplete/1.1.1/awesomplete.js"></script>
-    <script>
-
-
-var debounce = function (func, wait, immediate) {
-    // Returns a function, that, as long as it continues to be invoked, will not
-    // be triggered. The function will be called after it stops being called for
-    // N milliseconds. If `immediate` is passed, trigger the function on the
-    // leading edge, instead of the trailing.
-    'use strict';
-    var timeout;
-    return function () {
-        var context = this;
-        var args = arguments;
-        var later = function () {
-            timeout = null;
-            if (!immediate) func.apply(context, args);
+export default {
+    name: 'parkfinder',
+    data: function () {
+        return {
+            defaultCenter: [13775786.985667605, -2871569.067879858], // [123.75, -24.966],
+            defaultLayers: [
+                ['dpaw:mapbox_outdoors', {}],
+                ['cddp:dpaw_tenure', {}],
+            ],
+            filterList: [
+                {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
+                {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
+                {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
+                {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
+                {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']},
+                {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
+                {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
+                {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
+                {name: 'Portable toilet disposal', symb: 'RF19', key: 'sullage', 'remoteKey': []},
+                {name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
+                {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
+                {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
+            ],
+            suggestions: {},
+            extentFeatures: [],
+            numAdults: 1,
+            numConcessions: 0,
+            numChildren: 0,
+            numInfants: 0,
+            gearType: 'tent',
+            filterParams: {
+            },
+            sitesOnline: 1,
+            sitesOnlineIcon: require('./assets/pin.svg'),
+            sitesInPerson: 1,
+            sitesInPersonIcon: require('./assets/pin_offline.svg'),
+            sitesAlt: 1,
+            sitesAltIcon: require('./assets/pin_alt.svg'),
+            paginate: ['filterResults']
         }
-        var callNow = immediate && !timeout;
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-        if (callNow) func.apply(context, args);
-    }
-}
-
-var pf = new Vue({
-    el: '#parkfinder',
-    data: {
-        defaultCenter: [13775786.985667605, -2871569.067879858], // [123.75, -24.966],
-        defaultLayers: [
-            ['dpaw:mapbox_outdoors', {}],
-            ['cddp:dpaw_tenure', {}],
-        ],
-        filterList: [
-            {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
-            {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
-            {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
-            {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
-            {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']},
-            {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
-            {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
-            {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
-            {name: 'Portable toilet disposal', symb: 'RF19', key: 'sullage', 'remoteKey': []},
-            {name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
-            {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
-            {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
-        ],
-        suggestions: {},
-        extentFeatures: [],
-        numAdults: 1,
-        numConcessions: 0,
-        numChildren: 0,
-        numInfants: 0,
-        gearType: 'tent',
-        filterParams: {
-        },
-        sitesOnline: 1,
-        sitesInPerson: 1,
-        sitesAlt: 1,
-        paginate: ['filterResults']
     },
     computed: {
         extent: {
@@ -626,6 +587,7 @@ var pf = new Vue({
             this.groundsData.forEach(function (el) {
                 // first pass filter against the list of IDs returned by searc
                 
+                //console.log(el);
                 var campgroundType = el.get('campground_type');
                 switch (campgroundType) {
                     case 0:
@@ -715,8 +677,9 @@ var pf = new Vue({
         var search = document.getElementById('searchInput');
         var autocomplete = new Awesomplete(search);
         autocomplete.autoFirst = true;
+
         $.ajax({
-            url: '/api/search_suggest',
+            url: PARKSTAY_URL+'/api/search_suggest',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
@@ -793,11 +756,6 @@ var pf = new Vue({
             })
         });
 
-        //this.groundsSource = new ol.source.Vector({
-        //    url: '/api/campground_map/?format=json',
-        //    format: new ol.format.GeoJSON()
-        //});
-
         this.geojson = new ol.format.GeoJSON({
             featureProjection: 'EPSG:3857'   
         });
@@ -806,7 +764,7 @@ var pf = new Vue({
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
         $.ajax({
-            url: '/api/campground_map/?format=json',
+            url: PARKSTAY_URL+'/api/campground_map/?format=json',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 var features = vm.geojson.readFeatures(response);
@@ -821,7 +779,7 @@ var pf = new Vue({
         });
         
         this.groundsSource.loadSource = function (onSuccess) {
-            var urlBase = '/api/campground_map_filter/?';
+            var urlBase = PARKSTAY_URL+'/api/campground_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
@@ -859,14 +817,14 @@ var pf = new Vue({
             style: function (feature) {
                 style = feature.get('style');
                 if (!style) {
-                    var icon = '/static/ps/img/pin_offline.svg';
+                    var icon = vm.sitesInPersonIcon;
                     var campgroundType = feature.get('campground_type');
                     switch (campgroundType) {
                         case 0:
-                        icon = '/static/ps/img/pin.svg';
+                        icon = vm.sitesOnlineIcon;
                         break;
                         case 2:
-                        icon = '/static/ps/img/pin_alt.svg';
+                        icon = vm.sitesAltIcon;
                         break;
                         default:
                         break;
@@ -973,9 +931,5 @@ var pf = new Vue({
 
         this.reload();
     }
-});
-
-
-    </script>
-</body>
-</html>
+};
+</script>
