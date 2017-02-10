@@ -14,7 +14,6 @@ from django.core.files import File
 from django.conf import settings
 
 from ledger.accounts.models import Document
-from wildlifelicensing.apps.applications.models import ApplicationCondition
 
 BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
                                    'bw_dpaw_header_logo.png')
@@ -183,7 +182,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         conditionList = ListFlowable(
-            [Paragraph(a.condition.text, styles['Left']) for a in ApplicationCondition.objects.filter(application=application).order_by('order')],#application.conditions.all()],
+            [Paragraph(a.condition.text, styles['Left']) for a in application.applicationcondition_set.order_by('order')],
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
         elements.append(conditionList)
 
