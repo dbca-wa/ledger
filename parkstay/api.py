@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
@@ -861,6 +862,7 @@ def create_class_booking(request, *args, **kwargs):
 
     if 'ps_booking' in request.session:
         # if there's already a booking in the current session, send bounce signal
+        messages.success(request, 'Booking already in progress, complete this first!')
         return HttpResponse(geojson.dumps({
             'status': 'success',
             'msg': 'Booking already in progress',

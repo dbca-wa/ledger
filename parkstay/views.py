@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from parkstay.forms import MakeBookingsForm
+from parkstay.forms import LoginForm, MakeBookingsForm
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -25,7 +25,6 @@ from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
 
 from parkstay.helpers import is_officer
-from parkstay.forms import LoginForm
 
 class CampsiteBookingSelector(TemplateView):
     template_name = 'ps/campsite_booking_selector.html'
@@ -88,7 +87,9 @@ class DashboardView(UserPassesTestMixin, TemplateView):
 def abort_booking_view(request, *args, **kwargs):
     if 'ps_booking' in request.session:
         booking = Booking.objects.get(pk=request.session['ps_booking'])
-        booking.delete()
+        # only ever delete a booking object if it's marked as temporary
+        if booking.booking_type == 3:
+            booking.delete()
         del request.session['ps_booking']
     return redirect('public_make_booking')
 
@@ -97,9 +98,15 @@ class MakeBookingsView(TemplateView):
     template_name = 'ps/booking/make_booking.html'
     def get(self, request, *args, **kwargs):
         # TODO: find campsites related to campground
-        form = MakeBookingsForm(args)
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
         expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
+        form_context = {
+            'num_adult': booking.details.get('num_adult', 0),
+            'num_concession': booking.details.get('num_concession', 0),
+            'num_child': booking.details.get('num_child', 0),
+            'num_infant': booking.details.get('num_infant', 0)
+        }
+        form = MakeBookingsForm(form_context)
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         campsite = booking.campsitebooking_set.all()[0].campsite if booking else None
@@ -109,6 +116,9 @@ class MakeBookingsView(TemplateView):
             'campsite': campsite,
             'expiry': expiry
         })
+
+    def post(self, request, *args, **kwargs):
+        form = MakeBookingsForm(request.POST)
 
 
 class MyBookingsView(LoginRequiredMixin, TemplateView):

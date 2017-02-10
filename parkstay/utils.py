@@ -54,6 +54,12 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
                         booking_type=3,
                         arrival=start_date,
                         departure=end_date,
+                        details={
+                            'num_adult': num_adult,
+                            'num_concession': num_concession,
+                            'num_child': num_child,
+                            'num_infant': num_infant
+                        },
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                         campground=campground
                     )
@@ -92,6 +98,12 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                         booking_type=3,
                         arrival=start_date,
                         departure=end_date,
+                        details={
+                            'num_adult': num_adult,
+                            'num_concession': num_concession,
+                            'num_child': num_child,
+                            'num_infant': num_infant
+                        },
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                         campground=campsite.campground
                     )
