@@ -229,7 +229,7 @@
 </template>
 
 <script>
-import {$,awesomplete,Moment,api_endpoints,validate,formValidate} from "../../hooks.js";
+import {$,awesomplete,Moment,api_endpoints,validate,formValidate,helpers} from "../../hooks.js";
 import loader from '../utils/loader.vue';
 export default {
     name:"addBooking",
@@ -357,7 +357,7 @@ export default {
                 vm.$http.get(api_endpoints.campsites_price_history(vm.selected_campsite)).then((response)=>{
                     var prices = response.body;
                     $.each(prices,function (i,price) {
-                        var arrival = Moment(vm.booking.arrival, "DD-MM-YYYY");
+                        var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD");
                         var priceStart = Moment(price.date_start);
                         var priceEnd = (price.date_end) ? Moment(price.date_end):null;
                         if (!priceEnd && priceStart.isSameOrBefore(arrival)) {
@@ -461,14 +461,14 @@ export default {
                 useCurrent: false,
             });
             arrivalPicker.on('dp.change', function(e){
-                vm.booking.arrival = arrivalPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+                vm.booking.arrival = arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_depature = "";
                 vm.booking.depature = "";
                 depaturePicker.data("DateTimePicker").minDate(e.date.add(1,'d'));
             });
             depaturePicker.on('dp.change', function(e){
-                vm.booking.depature = depaturePicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+                vm.booking.depature = depaturePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
                 vm.selected_depature= vm.booking.depature;
             });
         },
@@ -527,8 +527,8 @@ export default {
             let vm =this;
             var price = 0;
             if (vm.booking.arrival && vm.booking.depature) {
-                var depature = Moment(vm.booking.depature, "DD-MM-YYYY");
-                var arrival = Moment(vm.booking.arrival, "DD-MM-YYYY");
+                var depature = Moment(vm.booking.depature, "YYYY-MM-DD");
+                var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD");
                 var nights = depature.diff(arrival,'days');
                 if (vm.priceHistory) {
                     for (var guest in vm.booking.guests) {
@@ -569,7 +569,15 @@ export default {
         bookNow:function () {
             let vm = this;
             if (vm.isFormValid()) {
-                console.log(JSON.stringify(vm.booking));
+                vm.$http.post(api_endpoints.bookings,JSON.stringify(vm.booking),{
+                    emulateJSON:true,
+                    headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                }).then((success)=>{
+                    console.log(success);
+                },(error)=>{
+                    console.log(error);
+                });
+                //console.log(JSON.stringify(vm.booking));
             }
 
         },
