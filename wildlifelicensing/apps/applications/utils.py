@@ -363,8 +363,8 @@ def format_application(instance, attrs):
     attrs['returns_check_status'] = RETURNS_CHECK_STATUSES[attrs['returns_check_status']]
     attrs['character_check_status'] = CHARACTER_CHECK_STATUSES[attrs['character_check_status']]
     attrs['review_status'] = REVIEW_STATUSES[attrs['review_status']]
-
-    attrs['conditions'] = serialize([ap.condition for ap in instance.applicationcondition_set.all().order_by('order')])
+    attrs['licence_type']['default_conditions'] = serialize([ap.condition for ap in instance.licence_type.defaultcondition_set.order_by('order')])
+    attrs['conditions'] = serialize([ap.condition for ap in instance.applicationcondition_set.order_by('order')])
 
     return attrs
 

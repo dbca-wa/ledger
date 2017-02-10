@@ -5,6 +5,7 @@ from django.db.models.signals import post_save
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.validators import MinLengthValidator
 from django.core.exceptions import ValidationError
+from oscar.apps.order.models import Order
 import datetime
 
 class BpayFile(models.Model):
