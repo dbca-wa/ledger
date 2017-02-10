@@ -5,6 +5,8 @@ from django.views.generic.base import View, TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 from parkstay.forms import MakeBookingsForm
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -30,6 +32,11 @@ class CampsiteBookingSelector(TemplateView):
 
     def get(self, request, *args, **kwargs):
         return super(CampsiteBookingSelector, self).get(request, *args, **kwargs)
+
+    @method_decorator(ensure_csrf_cookie)
+    def dispatch(self, *args, **kwargs):
+        return super(CampsiteBookingSelector, self).dispatch(*args, **kwargs)
+
 
 class CampgroundFeed(ICalFeed):
     timezone = 'UTC+8'
