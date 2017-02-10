@@ -47,10 +47,14 @@
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
+                                    {% if request.user.is_staff %}
                                     <li><a href="{% url 'dash-campgrounds'%}">Campgrounds</a></li>
                                     <li><a href="{% url 'dash-campsite-types'%}">Campsite Types</a></li>
                                     <li><a href="{% url 'dash-bulkpricing'%}">Bulk Pricing</a></li>
                                     <li><a href="{% url 'dash-bookings'%}">Booking</a></li>
+                                    {% endif %}
+                                    <li><a href="">Contact Us</a></li>
+                                    <li><a href="">Further Information</a></li>
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">

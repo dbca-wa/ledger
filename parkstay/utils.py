@@ -16,8 +16,6 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     # get campground
     campground = Campground.objects.get(pk=campground_id)
 
-    # TODO: campground openness business logic
-    # TODO: campsite openness business logic
     # TODO: date range check business logic
     # TODO: number of people check? this might be modifiable later
 
@@ -34,14 +32,13 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         if not sites_qs.exists():
             raise ValidationError('No matching campsites found')
 
-        # fetch all of the single-day CampsiteBooking objects within the date range for the sites
-        bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__in=sites_qs,
-                            date__gte=start_date,
-                            date__lt=end_date
-                        ).order_by('date', 'campsite__name')
-
-        excluded_site_ids = set([x[0] for x in bookings_qs.values_list('campsite')])
+        # get availability for sites, filter out the non-clear runs
+        availability = get_campsite_availability(sites_qs, start_date, end_date)
+        excluded_site_ids = set()
+        for site_id, dates in availability.items():
+            if not all([v[0] == 'open' for k, v in dates.items()]):
+                excluded_site_ids.add(site_id)
+    
         # create a list of campsites without bookings for that period
         sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
 
@@ -75,25 +72,20 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
 def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
     """Create a new temporary booking in the system for a specific campsite."""
     # get campsite
-    campsite = Campsite.objects.get(pk=campsite_id)
+    sites_qs = Campsite.objects.filter(pk=campsite_id)
+    campsite = sites_qs.first()
 
-    # TODO: campground openness business logic
-    # TODO: campsite openness business logic
     # TODO: date range check business logic
     # TODO: number of people check? this might be modifiable later
 
     # the CampsiteBooking table runs the risk of a race condition,
     # wrap all this behaviour up in a transaction
     with transaction.atomic():
-        # check for single-day CampsiteBooking objects within the date range for the site
-        bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite=campsite,
-                            date__gte=start_date,
-                            date__lt=end_date
-                        ).order_by('date', 'campsite__name')
-
-        if bookings_qs.exists():
-            raise ValidationError('Campsite unavailable for specified time period')
+        # get availability for campsite, error out if booked/closed
+        availability = get_campsite_availability(sites_qs, start_date, end_date)
+        for site_id, dates in availability.items():
+            if not all([v[0] == 'open' for k, v in dates.items()]):
+                raise ValidationError('Campsite unavailable for specified time period')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
@@ -123,6 +115,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                         date__lt=end_date
                     ).order_by('date', 'campsite__name')
     
+    # prefill all slots as 'open'
     duration = (end_date-start_date).days
     results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
 
