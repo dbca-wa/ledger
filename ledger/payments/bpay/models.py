@@ -116,6 +116,11 @@ class BpayTransaction(models.Model):
         return False
 
     @property
+    def order(self):
+        from ledger.payments.models import Invoice
+        return Order.objects.get(number=Invoice.objects.get(reference=self.crn).order_number)
+
+    @property
     def system(self):
         pass
     

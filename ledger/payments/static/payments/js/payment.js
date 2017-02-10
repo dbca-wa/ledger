@@ -122,6 +122,14 @@ $(function(){
             updateBanner(status,amount_paid);
         });
     }
+    function redirectPage(){
+        var redirect_url = $('#payment_div').data('redirect');
+        window.location.replace(redirect_url);
+    }
+    $('.redirect_btn').click(function(e){
+        e.preventDefault();
+        redirectPage();
+    });
     function updateBanner(value,amount_paid) {
         $('#invoice_status').html(value);
         $('#invoice_paid').html(amount_paid);
@@ -281,7 +289,7 @@ $(function(){
                     success(invoice,'This BPAY transaction has been unlinked from this invoice.');
                 }
                 else{
-                    success(resp,invoice,'bpay');
+                    success(invoice,'Invoice #'+invoice+' successfully paid using '+'bpay');
                 }
                 reload_table();
             },

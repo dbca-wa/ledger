@@ -347,8 +347,8 @@ def sendBillerCodeEmail(summaries,monthly=False):
                 subject = 'BPAY Summary: Biller Code {} as at {}'.format(k,dt)
                 content = 'BPAY Transaction Summary File for Biller Code {} as at {}'.format(k,dt)
             else:
-                subject = 'Monthly BPAY Report: Biller Code {} as at {}'.format(k,dt)
-                content = 'Monthly BPAY Transaction Report for Biller Code {} as at {}'.format(k,dt)
+                subject = 'Monthly BPAY Report for unmatched payments for Biller Code {} as at {}'.format(k,dt)
+                content = 'Monthly BPAY Transaction Report for unmatched payments for Biller Code {} as at {}'.format(k,dt)
             
             email = EmailMessage(
                 subject,
