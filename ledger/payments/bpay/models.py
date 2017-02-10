@@ -117,7 +117,7 @@ class BpayTransaction(models.Model):
 
     @property
     def order(self):
-        from ledger.payments.models import Invoice
+        from ledger.payments.models import Invoice, Order
         return Order.objects.get(number=Invoice.objects.get(reference=self.crn).order_number)
 
     @property
