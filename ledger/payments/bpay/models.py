@@ -119,8 +119,18 @@ class BpayTransaction(models.Model):
     @property
     def order(self):
         from ledger.payments.models import Invoice
-        return Order.objects.get(number=Invoice.objects.get(reference=self.crn).order_number)
-
+        order = None
+        try:
+            order = Order.objects.get(number=Invoice.objects.get(reference=self.crn).order_number)
+        except Order.DoesNotExist:
+            pass
+        
+        try:    
+            order = Order.objects.get(InvoiceBPAY.objects.get(bpay=self).invoice.order_number)
+        except InvoiceBPAY.DoesNotExist:
+            pass
+        
+        return order
     @property
     def system(self):
         pass
