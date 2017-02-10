@@ -879,7 +879,7 @@ def create_class_booking(request, *args, **kwargs):
         return HttpResponse(geojson.dumps({
             'status': 'error',
             'msg': e.message
-        }), content_type='application/json')
+        }), status=400, content_type='application/json')
 
     # add the booking to the current session
     request.session['ps_booking'] = booking.pk
