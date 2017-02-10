@@ -142,7 +142,7 @@ table tbody tr.breakdown:nth-child(2n) > td.available {
                     <tr>
                         <th class="site">Campsite</th>
                         <th class="book">Book</th>
-                        <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i) }}</th>
+                        <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
                 </thead>
                 <tbody><template v-for="site in sites">
