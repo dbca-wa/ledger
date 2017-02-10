@@ -338,10 +338,12 @@ export default {
         selected_arrival:function () {
             let vm = this;
             vm.updatePrices();
+            vm.fetchCampsites();
         },
         selected_depature:function () {
             let vm = this;
             vm.updatePrices();
+            vm.fetchCampsites();
         }
     },
     methods:{
@@ -408,17 +410,19 @@ export default {
         },
         fetchCampsites:function () {
             let vm = this;
-            vm.loading.push('fetching campsites');
-            vm.$http.get(api_endpoints.campgroundCampsites(vm.booking.campground)).then((response)=>{
-                vm.campsites = response.body;
-                if (vm.campsites.length >0) {
-                    vm.selected_campsite =vm.campsites[0].id;
-                }
-                vm.loading.splice('fetching campsites',1);
-            },(response)=>{
-                console.log(response);
-                vm.loading.splice('fetching campsites',1);
-            });
+            if(vm.selected_arrival && vm.selected_depature){
+                vm.loading.push('fetching campsites');
+                vm.$http.get(api_endpoints.available_campsites(vm.booking.campground,vm.booking.arrival,vm.booking.depature)).then((response)=>{
+                    vm.campsites = response.body;
+                    if (vm.campsites.length >0) {
+                        vm.selected_campsite =vm.campsites[0].id;
+                    }
+                    vm.loading.splice('fetching campsites',1);
+                },(response)=>{
+                    console.log(response);
+                    vm.loading.splice('fetching campsites',1);
+                });
+            }
         },
         fetchCampground:function () {
             let vm =this;
@@ -577,7 +581,6 @@ export default {
                 },(error)=>{
                     console.log(error);
                 });
-                //console.log(JSON.stringify(vm.booking));
             }
 
         },

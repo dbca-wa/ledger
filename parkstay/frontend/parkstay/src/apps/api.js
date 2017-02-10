@@ -71,6 +71,9 @@ module.exports = {
     campsite_status_history_detail: function(id){
         return "/api/campsite_booking_ranges/"+ id +".json?original=true";
     },
+    available_campsites:function(campground,arrival,departure){
+      return "/api/campgrounds/"+campground+"/available_campsites.json?arrival="+arrival+"&departure="+departure;
+    },
     features:"/api/features.json",
     campsite_rate: "/api/campsite_rate.json",
     campsiterate_detail:function (id) {

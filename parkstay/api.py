@@ -20,7 +20,8 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
-
+import parkstay.utils
+from datetime import datetime
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -647,6 +648,26 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+    @detail_route(methods=['get'])
+    def available_campsites(self, request, format='json', pk=None):
+        try:
+            start_date = datetime.strptime(request.GET.get('arrival'),'%Y/%m/%d').date()
+            end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
+            campsite_qs = Campsite.objects.all().filter(campground_id=self.get_object().id)
+            http_status = status.HTTP_200_OK
+            campsites = parkstay.utils.get_campsite_availability(campsite_qs, start_date, end_date)
+            available = []
+            for camp in campsites:
+                av = [item for sublist in campsites[camp].values() for item in sublist]
+                if ('booked' not in av):
+                    if ('closed' not in av):
+                        available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
+
+            return Response(available,status=http_status)
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
 
 class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.all()
@@ -875,7 +896,7 @@ def create_class_booking(request, *args, **kwargs):
 
     # add the booking to the current session
     request.session['ps_booking'] = booking.pk
-    
+
     return HttpResponse(geojson.dumps({
         'status': 'success',
         'pk': booking.pk
@@ -1129,6 +1150,14 @@ class BookingViewSet(viewsets.ModelViewSet):
             ('recordsFiltered',recordsFiltered),
             ('results',data)
         ]),status=status.HTTP_200_OK)
+
+    def create(self, request, format=None):
+        from datetime import datetime
+        start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
+        end_date = datetime.strptime(request.data['depature'],'%Y/%m/%d').date()
+        data = parkstay.utils.create_booking_by_site(campsite_id= request.data['campsite'], start_date = start_date, end_date=end_date, num_adult=request.data.get('guests','adult'), num_concession=request.data.get('guests','adult'), num_child=request.data.get('guests','child'), num_infant=request.data.get('guests','infant'))
+        serializer = BookingSerializer(data)
+        return Response(serializer.data)
 
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
