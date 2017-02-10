@@ -80,7 +80,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     AccountsAddressSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
-from parkstay.utils import create_booking_by_class
+from parkstay.utils import create_booking_by_class, get_campsite_availability
 
 
 
@@ -678,6 +678,10 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         num_infant = serializer.validated_data['num_infant']
         gear_type = serializer.validated_data['gear_type']
 
+        # if campground doesn't support online bookings, abort!
+        if ground.campground_type != 0:
+            return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
+
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
         if length > settings.PS_MAX_BOOKING_LENGTH:
@@ -688,12 +692,8 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         sites_qs = Campsite.objects.filter(campground=ground).filter(**{gear_type: True})
         rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
 
-        # fetch all of the single-day CampsiteBooking objects within the date range for the sites
-        bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__in=sites_qs,
-                            date__gte=start_date,
-                            date__lt=end_date
-                        ).order_by('date', 'campsite__name')
+        # fetch availability map
+        availability = get_campsite_availability(sites_qs, start_date, end_date)
 
         # make a map of campsite class to cost
         rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
@@ -745,33 +745,37 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             # store number of campsites in each class
             class_sizes = {k: len(v) for k, v in class_sites_map.items()}
 
-            # strike out existing bookings
-            for b in bookings_qs:
-                offset = (b.date-start_date).days
-                key = b.campsite.campsite_class.pk
-                # clear the campsite from the class sites map
-                if b.campsite.pk in class_sites_map[key]:
-                    class_sites_map[key].remove(b.campsite.pk)
+            # update results based on availability map
+            for s in sites_qs:
+                # get campsite class key
+                key = s.campsite_class.pk
+                # if there's not a free run of slots
+                if not all([v[0] == 'open' for k, v in availability[s.pk].items()]):
+                    # clear the campsite from the campsite class map
+                    if s.pk in class_sites_map[key]:
+                        class_sites_map[key].remove(s.pk)
 
-                # update the per-site availability
-                classes_map[key]['breakdown'][b.campsite.name][offset][0] = False
-                classes_map[key]['breakdown'][b.campsite.name][offset][1] = 'Closed' if (b.booking_type == 2) else 'Sold'
+                    # update the days that are non-open
+                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                        # update the per-site availability
+                        classes_map[key]['breakdown'][s.name][offset][0] = False
+                        classes_map[key]['breakdown'][s.name][offset][1] = 'Closed' if (stat == 'closed') else 'Sold'
 
-                # update the class availability status
-                book_offset = 1 if (b.booking_type == 2) else 0
-                classes_map[key]['availability'][offset][3][book_offset] += 1
-                if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
-                    classes_map[key]['availability'][offset][1] = 'Fully Booked'
-                elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
-                    classes_map[key]['availability'][offset][1] = 'Closed'
-                elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
-                    classes_map[key]['availability'][offset][1] = 'Partially Booked'
-                else:
-                    classes_map[key]['availability'][offset][1] = 'Partially Closed'
+                        # update the class availability status
+                        book_offset = 1 if (stat == 'closed') else 0
+                        classes_map[key]['availability'][offset][3][book_offset] += 1
+                        if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Fully Booked'
+                        elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Closed'
+                        elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
+                            classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                        else:
+                            classes_map[key]['availability'][offset][1] = 'Partially Closed'
 
-                # tentatively flag campsite class as unavailable
-                classes_map[key]['availability'][offset][0] = False
-                classes_map[key]['price'] = False
+                        # tentatively flag campsite class as unavailable
+                        classes_map[key]['availability'][offset][0] = False
+                        classes_map[key]['price'] = False
 
             # convert breakdowns to a flat list
             for klass in classes_map.values():
@@ -814,13 +818,17 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
 
-            # strike out existing bookings
-            for b in bookings_qs:
-                offset = (b.date-start_date).days
-                bookings_map[b.campsite.name]['availability'][offset][0] = False
-                bookings_map[b.campsite.name]['availability'][offset][1] = 'Closed' if b.booking_type == 2 else 'Sold'
-                bookings_map[b.campsite.name]['price'] = False
 
+            # update results based on availability map
+            for s in sites_qs:
+                # if there's not a free run of slots
+                if not all([v[0] == 'open' for k, v in availability[s.pk].items()]):
+                    # update the days that are non-open
+                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                        bookings_map[s.name]['availability'][offset][0] = False
+                        bookings_map[s.name]['availability'][offset][1] = 'Closed' if (stat == 'closed') else 'Sold'
+                        bookings_map[s.name]['price'] = False
+         
             return Response(result)
 
 
