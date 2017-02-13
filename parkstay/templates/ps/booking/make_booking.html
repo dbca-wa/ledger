@@ -79,24 +79,27 @@
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label class="col-sm-4 control-label pull-left required">Guests: </label>
+                                        <label class="col-sm-4 control-label pull-left required">{{ form.num_adult.label_tag }} </label>
                                         <div class="col-sm-8">
-                                            <div class="row">
-                                                <div class="col-sm-6 text-right">{{ form.num_adult.label_tag }}</div>
-                                                <div class="col-sm-6">{{ form.num_adult }}</div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-6 text-right">{{ form.num_concession.label_tag }}</div>
-                                                <div class="col-sm-6">{{ form.num_concession }}</div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-6 text-right">{{ form.num_child.label_tag }}</div>
-                                                <div class="col-sm-6">{{ form.num_child }}</div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-6 text-right">{{ form.num_adult.label_tag }}</div>
-                                                <div class="col-sm-6">{{ form.num_infant }}</div>
-                                            </div>
+                                                {{ form.num_adult }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label pull-left required">{{ form.num_concession.label_tag }} </label>
+                                        <div class="col-sm-8">
+                                                {{ form.num_concession }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label pull-left required">{{ form.num_child.label_tag }} </label>
+                                        <div class="col-sm-8">
+                                                {{ form.num_child }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label pull-left required">{{ form.num_infant.label_tag }} </label>
+                                        <div class="col-sm-8">
+                                                {{ form.num_infant }}
                                         </div>
                                     </div>
                                 </div>

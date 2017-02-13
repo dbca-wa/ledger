@@ -15,10 +15,15 @@ class MakeBookingsForm(forms.Form):
     first_name = forms.CharField(label="First Name")
     surname = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
     phone = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
-    vehicle_rego = forms.CharField(label = "Vehicle Registration",required=False)
     postcode =forms.CharField(max_length=4, label="Post Code",widget=forms.TextInput(attrs={'required':True}))
     country = forms.ChoiceField(label="Country",widget=forms.TextInput(attrs={'required':True}))
+
+    
 
     def __init__(self, *args, **kwargs):
         super(MakeBookingsForm, self).__init__(*args, **kwargs)
         self.fields['first_name'].widget.attrs['required'] = True
+
+
+class VehicleInfoForm(forms.Form):
+    vehicle_rego = forms.CharField(label = "Vehicle Registration",required=False)
