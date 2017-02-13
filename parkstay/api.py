@@ -638,7 +638,16 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def stay_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            serializer = CampgroundStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
+            start = request.GET.get("start",False)
+            end = request.GET.get("end",False)
+            serializer = None
+            if (start) or (end):
+                start = datetime.strptime(start,"%Y-%m-%d").date()
+                end = datetime.strptime(end,"%Y-%m-%d").date()
+                queryset = CampgroundStayHistory.objects.filter(range_end__range = (start,end), range_start__range=(start,end) ).order_by("range_start")[:5]
+                serializer = CampgroundStayHistorySerializer(queryset,many=True,context={'request':request},method='get')
+            else:
+                serializer = CampgroundStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
             res = serializer.data
 
             return Response(res,status=http_status)
