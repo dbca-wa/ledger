@@ -5,7 +5,7 @@ from decimal import *
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q    
+from django.db.models import Q
 from django.utils import timezone
 
 from parkstay.models import (Campground, Campsite, CampsiteBooking, Booking, CampsiteBookingRange, CampgroundBookingRange)
@@ -38,7 +38,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         for site_id, dates in availability.items():
             if not all([v[0] == 'open' for k, v in dates.items()]):
                 excluded_site_ids.add(site_id)
-    
+
         # create a list of campsites without bookings for that period
         sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
 
@@ -67,7 +67,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
 
     # On success, return the temporary booking
     return booking
-    
+
 
 def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
     """Create a new temporary booking in the system for a specific campsite."""
@@ -114,7 +114,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                         date__gte=start_date,
                         date__lt=end_date
                     ).order_by('date', 'campsite__name')
-    
+
     # prefill all slots as 'open'
     duration = (end_date-start_date).days
     results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
@@ -122,7 +122,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     # strike out existing bookings
     for b in bookings_qs:
         results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
-    
+
     # generate a campground-to-campsite-list map
     campground_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.campground.pk == cg[0]] for cg in campsites_qs.distinct('campground').values_list('campground')}
 
@@ -152,3 +152,15 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
             results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
 
     return results
+
+def get_available_campsites_list(campsite_qs,request, start_date, end_date):
+    from parkstay.serialisers import CampsiteSerialiser
+    campsites = get_campsite_availability(campsite_qs, start_date, end_date)
+    available = []
+    for camp in campsites:
+        av = [item for sublist in campsites[camp].values() for item in sublist]
+        if ('booked' not in av):
+            if ('closed' not in av):
+                available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
+
+    return available

@@ -664,13 +664,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
             campsite_qs = Campsite.objects.all().filter(campground_id=self.get_object().id)
             http_status = status.HTTP_200_OK
-            campsites = parkstay.utils.get_campsite_availability(campsite_qs, start_date, end_date)
-            available = []
-            for camp in campsites:
-                av = [item for sublist in campsites[camp].values() for item in sublist]
-                if ('booked' not in av):
-                    if ('closed' not in av):
-                        available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
+            available = parkstay.utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
 
             return Response(available,status=http_status)
         except Exception as e:
@@ -858,7 +852,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         bookings_map[s.name]['availability'][offset][0] = False
                         bookings_map[s.name]['availability'][offset][1] = 'Closed' if (stat == 'closed') else 'Sold'
                         bookings_map[s.name]['price'] = False
-         
+
             return Response(result)
 
 
