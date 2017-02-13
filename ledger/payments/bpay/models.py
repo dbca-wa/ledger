@@ -129,7 +129,7 @@ class BpayTransaction(models.Model):
         
         if not order:
             try:    
-                order = Order.objects.get(InvoiceBPAY.objects.get(bpay=self).invoice.order_number)
+                order = Order.objects.get(number=InvoiceBPAY.objects.get(bpay=self).invoice.order_number)
             except InvoiceBPAY.DoesNotExist:
                 pass
         
