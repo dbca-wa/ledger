@@ -124,11 +124,14 @@ class BpayTransaction(models.Model):
             order = Order.objects.get(number=Invoice.objects.get(reference=self.crn).order_number)
         except Order.DoesNotExist:
             pass
-        
-        try:    
-            order = Order.objects.get(InvoiceBPAY.objects.get(bpay=self).invoice.order_number)
-        except InvoiceBPAY.DoesNotExist:
+        except Invoice.DoesNotExist:
             pass
+        
+        if not order:
+            try:    
+                order = Order.objects.get(InvoiceBPAY.objects.get(bpay=self).invoice.order_number)
+            except InvoiceBPAY.DoesNotExist:
+                pass
         
         return order
     @property
