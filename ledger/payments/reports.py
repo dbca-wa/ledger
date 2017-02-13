@@ -132,8 +132,8 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
         
             # Get all transactions
             if not district:
-                eftpos.extend([x for x in i.cash_transactions.filter(created__gte=start, created__lte=end, source='eftpos').exclude(district__isnull=True)])
-                banked_cash.extend([x for x in i.cash_transactions.filter(created__gte=banked_start, created__lte=banked_end).exclude(source='eftpos').exclude(district__isnull=True)])
+                eftpos.extend([x for x in i.cash_transactions.filter(created__gte=start, created__lte=end, source='eftpos').exclude(district__isnull=False)])
+                banked_cash.extend([x for x in i.cash_transactions.filter(created__gte=banked_start, created__lte=banked_end).exclude(source='eftpos').exclude(district__isnull=False)])
                 bpoint.extend([x for x in i.bpoint_transactions.filter(created__gte=start, created__lte=end)])
                 bpay.extend([x for x in i.bpay_transactions.filter(p_date__gte=start, p_date__lte=end)])
             else:
