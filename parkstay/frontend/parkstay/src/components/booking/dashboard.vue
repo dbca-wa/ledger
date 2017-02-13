@@ -146,7 +146,7 @@ export default {
                     },
                     {
                         mRender: function(data, type, full) {
-                            var status = (data == true) ? "Open" : "Temporarily Closed";
+                            var status = (data == true) ? "Paid" : "Unpaid";
                             var column = "<td >__Status__</td>";
                             return column.replace('__Status__', status);
                         },

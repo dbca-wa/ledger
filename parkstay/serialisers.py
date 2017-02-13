@@ -321,7 +321,7 @@ class CampgroundStayHistorySerializer(serializers.ModelSerializer):
         if method == 'get':
             self.fields['reason'] = serializers.CharField(source='reason.text')
 
-class CampsiteSerialiser(serializers.HyperlinkedModelSerializer):
+class CampsiteSerialiser(serializers.ModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
