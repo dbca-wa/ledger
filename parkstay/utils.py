@@ -8,7 +8,7 @@ from django.db import transaction
 from django.db.models import Q    
 from django.utils import timezone
 
-from parkstay.models import (Campground, Campsite, CampsiteBooking, Booking, CampsiteBookingRange, CampgroundBookingRange)
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, CampsiteBookingRange, CampgroundBookingRange)
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -17,7 +17,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     campground = Campground.objects.get(pk=campground_id)
 
     # TODO: date range check business logic
-    # TODO: number of people check? this might be modifiable later
+    # TODO: number of people check? this is modifiable later, don't bother
 
     # the CampsiteBooking table runs the risk of a race condition,
     # wrap all this behaviour up in a transaction
@@ -82,7 +82,7 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
     campsite = sites_qs.first()
 
     # TODO: date range check business logic
-    # TODO: number of people check? this might be modifiable later
+    # TODO: number of people check? this is modifiable later, don't bother
 
     # the CampsiteBooking table runs the risk of a race condition,
     # wrap all this behaviour up in a transaction
@@ -120,6 +120,7 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
 
 
 def get_campsite_availability(campsites_qs, start_date, end_date):
+    """Fetch the status of each campsite in a queryset over a range of visit dates."""
     # fetch all of the single-day CampsiteBooking objects within the date range for the sites
     bookings_qs =   CampsiteBooking.objects.filter(
                         campsite__in=campsites_qs,
@@ -142,7 +143,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     cgbr_qs =    CampgroundBookingRange.objects.filter(
         Q(campground__in=campground_map.keys()),
         Q(status=1),
-        Q(range_start__lt=end_date) & Q(range_end__gte=start_date)
+        Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
     )
     for closure in cgbr_qs:
         start = max(start_date, closure.range_start)
@@ -155,12 +156,47 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     csbr_qs =    CampsiteBookingRange.objects.filter(
         Q(campsite__in=campsites_qs),
         Q(status=1),
-        Q(range_start__lt=end_date) & Q(range_end__gte=start_date)
+        Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
     )
     for closure in csbr_qs:
         start = max(start_date, closure.range_start)
-        end = min(end_date, closure.range_end)
+        end = min(end_date, closure.range_end) if closure.range_end else end_date
         for i in range((end-start).days):
             results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
 
     return results
+
+
+def get_visit_rates(campsites_qs, start_date, end_date):
+    # fetch the applicable rates for the campsites
+    rates_qs = CampsiteRate.objects.filter(
+        Q(campsite__in=campsites_qs),
+        Q(date_start__lt=end_date) & (Q(date_end__gte=start_date)|Q(date_end__isnull=True))
+    ).prefetch_related('rate')
+
+    # prefill all slots
+    duration = (end_date-start_date).days
+    results = {
+        site.pk: {
+            start_date+timedelta(days=i): {
+                'adult': Decimal('0.00'), 
+                'child': Decimal('0.00'), 
+                'concession': Decimal('0.00'), 
+                'infant': Decimal('0.00')
+            } for i in range(duration)
+        } for site in campsites_qs
+    }
+
+    for rate in rates_qs:
+        start = max(start_date, rate.date_start)
+        end = min(end_date, rate.date_end) if rate.date_end else end_date
+        for i in range((end-start).days):
+            results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
+            results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
+            results[rate.campsite.pk][start+timedelta(days=i)]['child'] = rate.rate.child
+            results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
+
+    return results
+
+    
+    

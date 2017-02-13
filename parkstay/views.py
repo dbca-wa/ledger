@@ -101,10 +101,10 @@ class MakeBookingsView(TemplateView):
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
         expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
         form_context = {
-            'num_adult': booking.details.get('num_adult', 0),
-            'num_concession': booking.details.get('num_concession', 0),
-            'num_child': booking.details.get('num_child', 0),
-            'num_infant': booking.details.get('num_infant', 0)
+            'num_adult': booking.details.get('num_adult', 0) if booking else 0,
+            'num_concession': booking.details.get('num_concession', 0) if booking else 0,
+            'num_child': booking.details.get('num_child', 0) if booking else 0,
+            'num_infant': booking.details.get('num_infant', 0) if booking else 0
         }
         form = MakeBookingsForm(form_context)
         # for now, we can assume that there's only one campsite per booking.
