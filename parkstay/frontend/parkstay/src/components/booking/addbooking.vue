@@ -90,7 +90,7 @@
                                         <label for="Campsite" class="required">Campsite</label>
                                         <select class="form-control" name="campsite" v-model="selected_campsite">
                                             <option value=""></option>
-                                            <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}}</option>
+                                            <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}} - {{campsite.type}}</option>
                                         </select>
                                       </div>
                                   </div>
@@ -177,8 +177,28 @@
                                 <div class="row">
                                   <div class="col-md-12">
                                       <div class="form-group">
-                                        <label for="Phone" class="required">Number of Vehicles</label>
-                                        <input type="number" min="0" max="10" name="vehicles" class="form-control" v-model="booking.parkEntry.vehicles" @change="updatePrices()">
+                                          <label for="vehicles" class="required">Number of Vehicles</label>
+                                          <div class="dropdown guests">
+                                              <input type="number" min="0" max="10" name="vehicles" class="form-control dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" readonly="true" v-model="booking.parkEntry.vehicles" @change="updatePrices()">
+                                              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                                                  <li v-for="park_entry in parkEntryPicker">
+                                                      <div class="row">
+                                                          <div class="col-sm-8">
+                                                              <span class="item">
+                                                                  {{park_entry.amount}} {{park_entry.name}} <span style="color:#888;font-weight:300;font-size:12px;">{{park_entry.description}}</span>
+                                                              </span>
+                                                              <br/><a href="#" class="text-info" v-show="park_entry.helpText">{{park_entry.helpText}}</a>
+                                                          </div>
+                                                          <div class="pull-right">
+                                                              <div class="btn-group btn-group-sm">
+                                                                <button type="button" class="btn btn-guest" @click.prevent.stop="addVehicleCount(park_entry)"><span class="glyphicon glyphicon-plus"></span></button>
+                                                                <button type="button" class="btn btn-guest" @click.prevent.stop="removeVehicleCount(park_entry)"><span class="glyphicon glyphicon-minus"></span></button>
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                  </li>
+                                              </ul>
+                                          </div>
                                       </div>
                                   </div>
                                 </div>
@@ -296,6 +316,27 @@ export default {
                     amount:0,
                     description: "Ages 0-5"
                 },
+            ],
+            parkEntryPicker:[
+                {
+                    id:"vehicle",
+                    name:"Vehicle",
+                    amount:0,
+                    description: ""
+                },
+                {
+                    id:"concession",
+                    name:"Concession",
+                    amount:0,
+                    description: "",
+                    helpText:"accepted concession cards"
+                },
+                {
+                    id:"motorbike",
+                    name:"Motorbike",
+                    amount:0,
+                    description: ""
+                }
             ],
             users:[],
             usersEmail:[],
@@ -646,6 +687,23 @@ export default {
                     }
                 }
             });
+        },
+        addVehicleCount:function (park_entry) {
+
+            let vm = this;
+            var count = vm.booking.parkEntry.vehicles
+            if( park_entry.amount < 10 && count < 10){
+                park_entry.amount = (park_entry.amount < 10)?park_entry.amount+= 1:park_entry.amount;
+                vm.booking.parkEntry.vehicles++;
+            }
+        },
+        removeVehicleCount:function (park_entry) {
+            let vm = this;
+            var count = vm.booking.parkEntry.vehicles
+            if( park_entry.amount > 0 && count > 0){
+                park_entry.amount = (park_entry.amount > 0)?park_entry.amount-=1:park_entry.amount;
+                vm.booking.parkEntry.vehicles--;
+            }
         },
     },
     mounted:function () {
