@@ -5,7 +5,7 @@ from reversion.admin import VersionAdmin
 from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.main.forms import BetterJSONField
 
-from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.applications.models import Application, ApplicationCondition
 
 
 class ApplicationAdminForm(forms.ModelForm):
@@ -15,12 +15,17 @@ class ApplicationAdminForm(forms.ModelForm):
         model = Application
         exclude = []
 
+class ApplicationConditionInline(admin.TabularInline):
+    model = ApplicationCondition
+    extra = 1
+    ordering = ('order',)
 
 @admin.register(Application)
 class ApplicationAdmin(VersionAdmin):
     date_hierarchy = 'lodgement_date'
     list_display = ('licence_type', 'get_user', 'processing_status', 'lodgement_number', 'lodgement_date')
     form = ApplicationAdminForm
+    inlines = [ApplicationConditionInline,]
 
     def get_user(self, obj):
         return obj.applicant
