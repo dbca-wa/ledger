@@ -168,6 +168,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
 
 
 def get_visit_rates(campsites_qs, start_date, end_date):
+    """Fetch the per-day pricing for each visitor type over a range of visit dates."""
     # fetch the applicable rates for the campsites
     rates_qs = CampsiteRate.objects.filter(
         Q(campsite__in=campsites_qs),
@@ -187,7 +188,15 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         } for site in campsites_qs
     }
 
+    # make a record of the earliest CampsiteRate for each site
+    early_rates = {}
     for rate in rates_qs:
+        if rate.campsite.pk not in early_rates:
+            early_rates[rate.campsite.pk] = rate
+        elif early_rates[rate.campsite.pk].date_start > rate.date_start:
+            early_rates[rate.campsite.pk] = rate
+
+        # for the period of the visit overlapped by the rate, set the amounts
         start = max(start_date, rate.date_start)
         end = min(end_date, rate.date_end) if rate.date_end else end_date
         for i in range((end-start).days):
@@ -195,6 +204,21 @@ def get_visit_rates(campsites_qs, start_date, end_date):
             results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
             results[rate.campsite.pk][start+timedelta(days=i)]['child'] = rate.rate.child
             results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
+
+    # complain if there's a Campsite without a CampsiteRate
+    if len(early_rates) < rates_qs.count():
+        print('Missing CampsiteRate coverage!')
+    # for ease of testing against the old datasets, if the visit dates are before the first
+    # CampsiteRate date, use that CampsiteRate as the pricing model.
+    for site_pk, rate in early_rates.items():
+        if start_date < rate.date_start:
+            start = start_date
+            end = rate.date_start
+            for i in range((end-start).days):
+                results[site_pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
+                results[site_pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
+                results[site_pk][start+timedelta(days=i)]['child'] = rate.rate.child
+                results[site_pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
 
     return results
 
