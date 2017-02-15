@@ -185,7 +185,7 @@
                                                       <div class="row">
                                                           <div class="col-sm-8">
                                                               <span class="item">
-                                                                  {{park_entry.amount}} {{park_entry.name}} <span style="color:#888;font-weight:300;font-size:12px;">{{park_entry.description}}</span>
+                                                                  {{park_entry.amount}} {{park_entry.name}} <span style="color:#888;font-weight:300;font-size:12px;"></span>
                                                               </span>
                                                               <br/><a href="#" class="text-info" v-show="park_entry.helpText">{{park_entry.helpText}}</a>
                                                           </div>
@@ -202,11 +202,11 @@
                                       </div>
                                   </div>
                                 </div>
-                                <div class="row" v-for="v in maxEntryVehicles">
+                                <div class="row" v-for="v in parkEntryVehicles">
                                   <div class="col-md-12">
                                       <div class="form-group">
-                                        <label for="Phone" class="required">Vehicle Registration</label>
-                                        <input type="text" name="regos[]" class="form-control" required="required" v-model="booking.parkEntry.regos[v-1]" @change="validateRego">
+                                        <label for="Phone" class="required">{{v.description}}</label>
+                                        <input type="text" name="regos[]" class="form-control" required="required" v-model="v.rego" @change="validateRego">
                                       </div>
                                   </div>
                                 </div>
@@ -322,20 +322,26 @@ export default {
                     id:"vehicle",
                     name:"Vehicle",
                     amount:0,
-                    description: ""
+                    price:0,
+                    description: "Vehicle Regestration",
+                    rego:""
                 },
                 {
                     id:"concession",
                     name:"Concession",
                     amount:0,
-                    description: "",
-                    helpText:"accepted concession cards"
+                    price:0,
+                    description: "Concession Vehicle Regestration",
+                    helpText:"accepted concession cards",
+                    rego:""
                 },
                 {
                     id:"motorbike",
                     name:"Motorbike",
                     amount:0,
-                    description: ""
+                    price:0,
+                    description: "Motorbike Regestration",
+                    rego:""
                 }
             ],
             users:[],
@@ -343,7 +349,8 @@ export default {
             park:{
                 entry_fee_required:false,
                 entry_fee:0
-            }
+            },
+            parkEntryVehicles:[]
         };
     },
     components:{
@@ -695,14 +702,30 @@ export default {
             if( park_entry.amount < 10 && count < 10){
                 park_entry.amount = (park_entry.amount < 10)?park_entry.amount+= 1:park_entry.amount;
                 vm.booking.parkEntry.vehicles++;
+                vm.parkEntryVehicles.push(JSON.parse(JSON.stringify(park_entry)));
             }
         },
         removeVehicleCount:function (park_entry) {
             let vm = this;
             var count = vm.booking.parkEntry.vehicles
             if( park_entry.amount > 0 && count > 0){
-                park_entry.amount = (park_entry.amount > 0)?park_entry.amount-=1:park_entry.amount;
-                vm.booking.parkEntry.vehicles--;
+                var found = false;
+                for (var i = park_entry.amount-1; i >= 0; i--) {
+                    for (var j = vm.parkEntryVehicles.length-1; j >=0; j--) {
+                        if (park_entry.description == vm.parkEntryVehicles[j].description) {
+                            park_entry.amount = (park_entry.amount > 0)?park_entry.amount-=1:park_entry.amount;
+                            vm.parkEntryVehicles.splice(j,1);
+                            vm.booking.parkEntry.vehicles--;
+                            found =true;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        break;
+                    }
+
+                }
+
             }
         },
     },
