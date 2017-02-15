@@ -105,14 +105,11 @@
                     <div class="well">
                         <div class="row">
                             <div class="col-lg-6">
-                                <h3 class="text-primary">Personal Details</h3>
-                            </div>
-                            <div class="col-lg-6" v-if="park.entry_fee_required">
-                                <h3 class="text-primary">Park Entry Fees <small>(${{park.entry_fee|formatMoney(2)}}/per vehicle)</small></h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-6">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <h3 class="text-primary">Personal Details</h3>
+                                    </div>
+                                </div>
                                 <div class="row">
                                   <div class="col-md-12">
                                       <div class="form-group">
@@ -174,6 +171,11 @@
                             </div>
                             </div>
                             <div class="col-lg-6" v-if="park.entry_fee_required">
+                                <div class="row">
+                                    <div class="col-lg-12" v-if="park.entry_fee_required">
+                                        <h3 class="text-primary">Park Entry Fees <small>(${{park.entry_fee|formatMoney(2)}}/per vehicle)</small></h3>
+                                    </div>
+                                </div>
                                 <div class="row">
                                   <div class="col-md-12">
                                       <div class="form-group">
