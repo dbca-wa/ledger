@@ -8,7 +8,7 @@ from os import listdir
 from os.path import isfile, join
 from decimal import Decimal
 from django.db import IntegrityError, transaction
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, get_connection
 from django.conf import settings
 from ledger.payments.bpay.models import *
 from ledger.payments.bpay.crn import getCRN
@@ -102,6 +102,7 @@ def record_txn(row,_file):
         car = row[18],
         discount_ref = row[19],
         discount_method = row[20].replace('/',''),
+        biller_code = row[21],
         file = _file
     )
 
@@ -155,6 +156,15 @@ def validate_file(f):
         '98': 6,
         '99': 7
     }
+    steps_count = {
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+        6: 0,
+        7: 0
+    }
     step_column_length = {
         1: 9,
         2: 8,
@@ -168,27 +178,29 @@ def validate_file(f):
     current_step = 0
     error = None
     line = 1
+    row_count = 0
     try:
         reader = csv.reader(f)
         for row in reader:
             if row:
                 # Get current step value and check if it one step ahead of previous step.
                 current_step = steps.get(checkStepValue(row[0]))
-                # Check for multiple row record types.
-                if (current_step == prev_step) or (current_step == 7 and prev_step == 1):
-                    pass
-                elif (current_step - 1) == prev_step:
-                    prev_step = current_step
-                else:
-                    error = 'An error occured at line {0}: Ensure that the file contains all the record types.'.format(line)
-                    logger.error(error)
-                    raise Exception(error)
+                # Count the number of record in the file
+                steps_count[current_step] += 1
+                    
                 # Get current step valid column number
                 if len(row) != step_column_length.get(current_step):
                     error = 'An error occured at line {0}: Check this line and make sure that it meets the required length of {1}.'.format(line, step_column_length.get(current_step))
                     logger.error(error)
                     raise Exception(error)
             line += 1
+            row_count += 1
+        if row_count > 2:
+            for k,v in steps_count.items():
+                if v < 1:
+                    error = 'An error occured at line {0}: Ensure that the file contains all the record types.'.format(line)
+                    logger.error(error)
+                    raise Exception(error)
             
     except:
         raise
@@ -204,6 +216,7 @@ def parseFile(file_path):
     accountttrailer_list, grouptrailer_list = [], []
     bpay_file = None
     success = True
+    biller_code = None
     try:
         # Validate the file first
         validate_file(f)
@@ -218,12 +231,14 @@ def parseFile(file_path):
                     bpay_file.created = validate_datetime(row[3],row[4])
                     bpay_file.file_id = row[5]
                 elif checkStepValue(row[0]) == '02':
+                    biller_code = row[1]
                     group_rows.append(row)
                 elif checkStepValue(row[0]) == '03':
                     account_rows.append(row)
                 elif checkStepValue(row[0]) == '30':
                     if row[11] not in ['APF','LBX']:
                         #transaction_list.append(record_txn(row,bpay_file))
+                        row.append(biller_code)
                         transaction_rows.append(row)
                 elif checkStepValue(row[0]) == '49':
                     accountttrailer_rows.append(row)
@@ -309,7 +324,7 @@ def generateParserSummary(files):
     output.close()
     return contents
 
-def sendEmail(summary):
+def sendSummaryEmail(summary):
     dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
     email = EmailMessage(
         'BPAY Summary {}'.format(dt),
@@ -319,6 +334,92 @@ def sendEmail(summary):
     )
     email.attach('summary.txt', summary, 'text/plain')
     email.send()
+    
+def sendBillerCodeEmail(summaries,monthly=False):
+    emails = []
+    dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    for k,v in summaries.items():
+        try:
+            sys = BillerCodeSystem.objects.get(biller_code=k)
+            recipients = [x.email for x in sys.recipients.all()]
+            
+            if not monthly:
+                subject = 'BPAY Summary: Biller Code {} as at {}'.format(k,dt)
+                content = 'BPAY Transaction Summary File for Biller Code {} as at {}'.format(k,dt)
+            else:
+                subject = 'Monthly BPAY Report for unmatched payments for Biller Code {} as at {}'.format(k,dt)
+                content = 'Monthly BPAY Transaction Report for unmatched payments for Biller Code {} as at {}'.format(k,dt)
+            
+            email = EmailMessage(
+                subject,
+                content,
+                settings.DEFAULT_FROM_EMAIL,
+                to= recipients
+            )
+            email.attach('summary.txt', v, 'text/plain')
+            emails.append(email)
+        except BillerCodeSystem.DoesNotExist:
+            pass
+        
+    connection = get_connection()
+    connection.send_messages(emails)
+    
+
+def generateTransactionsSummary(files,unmatched_only=False):
+    try:
+        # Split transactions into biller codes
+        biller_codes = {}
+        biller_code_emails = {}
+        if unmatched_only:
+            for f in files:
+                for t in f.transactions.all():
+                    if t.biller_code in biller_codes:
+                        txns = list(biller_codes[t.biller_code])
+                        txns.append(t)
+                        biller_codes[t.biller_code] = txns
+                    else:
+                        biller_codes[t.biller_code] = [t]
+        else:
+            for n, f in files:
+                for t in f.transactions.all():
+                    if t.biller_code in biller_codes:
+                        txns = list(biller_codes[t.biller_code])
+                        txns.append(t)
+                        biller_codes[t.biller_code] = txns
+                    else:
+                        biller_codes[t.biller_code] = [t]
+        # Generate summaries per biller code
+        for k,v in biller_codes.items():
+            matched = []
+            unmatched = []
+            for t in v:
+                if t.matched:
+                    matched.append(t)
+                else:
+                    unmatched.append(t)
+            output = StringIO()
+            if not unmatched_only:
+                # Matched txns
+                output.write('Matched transactions:\n')
+                for m in matched:
+                    output.write('  CRN: {} Amount: ${}\n'.format(m.crn,m.amount))
+            # Unmatched txns
+            output.write('\nUnmatched transactions:\n')
+            for u in unmatched:
+                output.write('  CRN: {} Amount: ${}\n'.format(u.crn,u.amount))
+            
+            contents = output.getvalue()
+            output.close()
+            # Add the biller code email
+            biller_code_emails[k] = contents
+        return biller_code_emails
+    except Exception as e:
+        traceback.print_exc(e)
+        raise
+
+def monthlyReport():
+    files =  BpayFile.objects.all()
+    sendBillerCodeEmail(generateTransactionsSummary(files,unmatched_only=True),monthly=True)
 
 def bpayParser(path):
     files = getfiles(path)
@@ -347,7 +448,8 @@ def bpayParser(path):
                 'other': other_files,
                 'processed': processed_files
             })
-            sendEmail(summary)
+            sendSummaryEmail(summary)
+            sendBillerCodeEmail(generateTransactionsSummary(valid_files))
         else:
             raise Exception('NOTIFICATION_EMAIL is not set.')
     except:

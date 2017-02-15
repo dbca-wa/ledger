@@ -7,9 +7,10 @@ from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import list_route,detail_route
 
 from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollection
-from ledger.payments.invoice.models import Invoice
+from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
 from ledger.payments.utils import checkURL, createBasket, validSystem, systemid_check
@@ -63,7 +64,10 @@ class BpayTransactionSerializer(serializers.ModelSerializer):
             "car",
             "discount_ref",
             "discount_method",
-            "approved"
+            "approved",
+            "matched",
+            "linked",
+            "biller_code"
         )
         
     def get_type(self, obj):
@@ -89,6 +93,14 @@ class BpayTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = (
         '=crn',
     )
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        sorting = request.GET.get('sorting',None)
+        if sorting and sorting.lower() == 'unmatched':
+            queryset = [q for q in queryset if not q.matched]
+        serializer = self.get_serializer(queryset,many=True)
+        return Response(serializer.data)
     
 class BpayFileSerializer(serializers.ModelSerializer):
     #date_modifier = serializers.SerializerMethodField()
@@ -518,12 +530,78 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
             'id',
             'num_items'
         )
+
+class BpayLinkSerializer(serializers.Serializer):
+    bpay = serializers.IntegerField()
+    link = serializers.BooleanField(default=True)
+    
+    def validate_bpay(self,val):
+        try:
+            BpayTransaction.objects.get(id=val)
+        except BpayTransaction.DoesNotExist:
+            raise serializers.ValidationError('The bpay transaction entered does not exist.')
+        
+        return val
     
 class InvoiceTransactionViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceTransactionSerializer
     authentication_classes = []
     lookup_field = 'reference'
+    
+    @detail_route(methods=['get'])
+    def linked_bpay(self, request, *args, **kwargs):
+        try:
+            invoice = self.get_object()
+            
+            # Get all linked bpay transactions
+            linked = InvoiceBPAY.objects.filter(invoice=invoice).values('bpay')
+            txns = BpayTransaction.objects.filter(id__in=linked)
+            serializer = BpayTransactionSerializer(txns, many=True)
+            
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(e)
+        
+    @detail_route(methods=['post'])
+    def link(self, request, *args, **kwargs):
+        try:
+            invoice = self.get_object()
+            serializer = BpayLinkSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            bpay = BpayTransaction.objects.get(id=serializer.validated_data['bpay'])
+            
+            
+            link = serializer.validated_data['link']
+            if link:
+                if bpay.matched or bpay.linked:
+                    raise serializers.ValidationError('This BPAY transaction has already been linked to another invoice.')
+                # Create a link between invoice and bpay txn
+                try:
+                    InvoiceBPAY.objects.create(bpay=bpay,invoice=invoice)
+                except Exception:
+                    raise
+            else:
+                # Delete the link between invoice and txn
+                try:
+                    b= InvoiceBPAY.objects.get(bpay=bpay,invoice=invoice)
+                    b.delete()
+                except Exception:
+                    raise
+            
+            # Get all linked bpay transactions
+            linked = InvoiceBPAY.objects.filter(invoice=invoice).values('bpay')
+            txns = BpayTransaction.objects.filter(id__in=linked)
+            serializer = BpayTransactionSerializer(txns, many=True)
+            
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(e)
 
 #######################################################
 #                                                     #
@@ -742,7 +820,8 @@ class ReportCreateView(views.APIView):
                                             serializer.validated_data['start'],
                                             serializer.validated_data['end'],
                                             serializer.validated_data['banked_start'],
-                                            serializer.validated_data['banked_end'])
+                                            serializer.validated_data['banked_end'],
+                                            district = serializer.validated_data['district'])
             else:
                 report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
                                             ,serializer.validated_data['start'],

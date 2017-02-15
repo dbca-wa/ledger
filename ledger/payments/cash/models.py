@@ -86,7 +86,7 @@ class CashTransaction(models.Model):
     SOURCE_TYPES = (
         ('cash','cash'),
         ('cheque', 'cheque'),
-        ('eft','eft'),
+        ('eftpos','eftpos'),
         ('money_order','money_order')
     )
     invoice = models.ForeignKey(Invoice, related_name='cash_transactions', to_field='reference')

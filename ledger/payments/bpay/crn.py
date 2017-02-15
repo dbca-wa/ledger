@@ -3,7 +3,7 @@ from py4j.java_gateway import JavaGateway, GatewayParameters
 def  getCRN(number):
     gateway = JavaGateway()
     crn = gateway.entry_point.getCRN()
-    return crn.generateBPAYCrnWithMod10V01(str(number))
+    return crn.generateBPAYCrnWithMod10V05(str(number))
 
 def getICRN(number,amount,option='ICRNAMT'):
     gateway = JavaGateway()

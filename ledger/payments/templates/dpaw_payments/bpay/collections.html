@@ -31,7 +31,7 @@
 
 {% block dashboard_content %}
     {% verbatim %}
-    <script id="bpay_transactions" type="text/x-handlebars-template" data-url="/dpaw_payments/api/bpay/collections.json" data-onload="upgradeTable">
+    <script id="bpay_transactions" type="text/x-handlebars-template" data-url="/ledger/payments/api/bpay/collections.json" data-onload="upgradeTable">
         <table id="collections_table" class="hide table table-striped table-bordered responsive">
             <thead>
                 <tr>
@@ -53,7 +53,7 @@
                         <td>{{ this.debit_total }}</td>
                         <td>{{ this.total }}</td>
                         <td>
-                            <a href="/dashboard/dpaw_payments/bpay/collections/{{this.created}}" class="btn btn-info">View</a>
+                            <a href="/ledger/checkout/dashboard/payments/bpay/collections/{{this.created}}" class="btn btn-info">View</a>
                         </td>
                     </tr>
                     {{/each}}
