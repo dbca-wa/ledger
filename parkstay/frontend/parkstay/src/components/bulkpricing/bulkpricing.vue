@@ -183,7 +183,8 @@ import {
     $,
     api_endpoints,
     helpers,
-    select2
+    select2,
+    Moment
 }
 from '../../hooks.js'
 import alert from '../utils/alert.vue'
@@ -222,18 +223,18 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
-                /*ajax: {
-                    url: api_endpoints.campground_price_history(this.$route.params.id),
+                ajax: {
+                    url: api_endpoints.park_price_history(32),
                     dataSrc: ''
-                },*/
+                },
                 columns: [{
-                    data: 'date_start',
+                    data: 'period_start',
                     mRender: function(data, type, full) {
                         return Moment(data).format('MMMM Do, YYYY');
                     }
 
                 }, {
-                    data: 'date_end',
+                    data: 'period_end',
                     mRender: function(data, type, full) {
                         if (data) {
                             return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
@@ -244,13 +245,13 @@ export default {
                     }
 
                 }, {
-                    data: 'adult'
+                    data: 'rate.vehicle'
                 }, {
-                    data: 'concession'
+                    data: 'rate.concession'
                 }, {
-                    data: 'child'
+                    data: 'rate.moterbike'
                 }, {
-                    data: 'details',
+                    data: 'reason',
                     mRender: function(data, type, full) {
                         if (data){
                             return data;
@@ -261,17 +262,7 @@ export default {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
-                            var id = full.id;
-                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\">Edit</a><br/>"
-                            if (full.deletable){
-                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\">Delete</a></td>";
-                            }
-                            column = column.replace(/__START__/g, full.date_start)
-                            column = column.replace(/__END__/g, full.date_end)
-                            column = column.replace(/__RATE__/g, full.rate_id)
-                            column = column.replace(/__REASON__/g, full.reason)
-                            column = column.replace(/__DETAILS__/g, full.details)
-                            return column
+                            ""
                         }
                         else {
                             return "";
