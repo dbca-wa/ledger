@@ -864,6 +864,19 @@ class BookingVehicleRego(models.Model):
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
 
+class ParkPriceHistory(models.Model):
+    rate = models.ForeignKey("ParkEntryRate",on_delete=models.PROTECT, null=True)
+    reason = models.ForeignKey("PriceReason",on_delete=models.PROTECT)
+    park = models.ForeignKey(Park,on_delete=models.PROTECT)
+    period_start = models.DateField()
+    period_end = models.DateField(null=True)
+
+class ParkEntryRate(models.Model):
+
+    vehicle = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    concession = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    moterbike = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+
 # REASON MODELS
 # =====================================
 class Reason(models.Model):

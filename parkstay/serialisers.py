@@ -24,7 +24,9 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 OpenReason,
                                 PriceReason,
                                 MaximumStayReason,
-                                CampgroundStayHistory
+                                CampgroundStayHistory,
+                                ParkEntryRate,
+                                ParkPriceHistory
                             )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -481,6 +483,37 @@ class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
         super(CampsiteClassPriceHistorySerializer, self).__init__(*args, **kwargs)
         if method == 'post':
             self.fields['reason'] = serializers.IntegerField()
+
+class ParkEntryRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ParkEntryRate
+        fields = "__all__"
+
+class ParkPriceHistorySerializer(serializers.ModelSerializer):
+
+
+    class Meta:
+        model = ParkPriceHistory
+        fields = ("id","period_start","period_end","rate","reason","park")
+
+    def __init__(self, *args, **kwargs):
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = 'post'
+        try:
+            current = kwargs.pop('current_price')
+        except:
+            current = False
+        print(method)
+        super(ParkPriceHistorySerializer, self).__init__(*args, **kwargs)
+        if method == 'get':
+            if not current:
+                self.fields['park'] = ParkSerializer(read_only=True)
+                self.fields['rate']= ParkEntryRateSerializer(read_only=True)
+            else:
+                self.fields['rate']= ParkEntryRateSerializer(read_only=True)
+
 
 # Reasons
 # ============================
