@@ -13,7 +13,7 @@ from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollectio
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
-from ledger.payments.utils import checkURL, createBasket, validSystem, systemid_check
+from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv
 
@@ -625,6 +625,13 @@ class CheckoutProductSerializer(serializers.Serializer):
             raise serializers.ValidationError('{} (id={})'.format(str(e),value))
         return value
 
+class CheckoutCustomProductSerializer(serializers.Serializer):
+    ledger_description = serializers.CharField()
+    quantity = serializers.IntegerField(min_value=1,default=1)
+    price_excl_tax = serializers.DecimalField(max_digits=8, decimal_places=2, default=0)
+    price_incl_tax = serializers.DecimalField(max_digits=8, decimal_places=2, default=0)
+
+
 class VoucherSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=128)
 
@@ -649,8 +656,9 @@ class CheckoutSerializer(serializers.Serializer):
     checkoutWithToken = serializers.BooleanField(default=False)
     bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
-    products = CheckoutProductSerializer(many=True)
+    products = serializers.ListField()#CheckoutProductSerializer(many=True)
     vouchers = VoucherSerializer(many=True,required=False)
+    custom_basket = serializers.BooleanField(default=False)
 
     def validate(self, data):
         if data['proxy'] and not data['basket_owner']:
@@ -714,7 +722,8 @@ class CheckoutCreateView(generics.CreateAPIView):
         ]
         "vouchers": [ (optional)
             {"code": "<code>}
-        ]
+        ],
+        "custom_basket": "false" (optional, default=False)
     }
     '''
     serializer_class = CheckoutSerializer
@@ -732,11 +741,25 @@ class CheckoutCreateView(generics.CreateAPIView):
             #parse and validate data
             serializer = self.serializer_class(data=request.data)
             serializer.is_valid(raise_exception=True)
+            #Check if it is a custom basket
+            custom = serializer.validated_data.get('custom_basket')
+            # Validate Products
+            if custom:
+                product_serializer = CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'),many=True) 
+            else:
+                product_serializer = CheckoutProductSerializer(data=serializer.initial_data.get('products'),many=True)
+            product_serializer.is_valid(raise_exception=True)
             #create basket
             if serializer.validated_data.get('vouchers'):
-                createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
+                if custom:
+                    createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
+                else:
+                    createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
             else:
-                createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
+                if custom:
+                    createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
+                else:
+                    createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
             redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
                                                                                                 self.get_redirect_value(serializer,'card_method'),
                                                                                                 self.get_redirect_value(serializer,'basket_owner'),
@@ -750,6 +773,7 @@ class CheckoutCreateView(generics.CreateAPIView):
                                                                                                 self.get_redirect_value(serializer,'checkoutWithToken'),
                                                                                                 self.get_redirect_value(serializer,'bpay_format'),
                                                                                                 self.get_redirect_value(serializer,'icrn_format')))
+            print redirect
 
             return redirect
         except serializers.ValidationError:
