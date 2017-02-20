@@ -1,8 +1,11 @@
 from oscar.apps.order.utils import OrderCreator as CoreOrderCreator
 from django.conf import settings
-from oscar.core.loading import get_model
+from oscar.core.loading import get_model, get_class
 
 Line = get_model('order', 'Line')
+Order = get_model('order', 'Order')
+OrderDiscount = get_model('order', 'OrderDiscount')
+order_placed = get_class('order.signals', 'order_placed')
 
 class OrderCreator(CoreOrderCreator):
 
@@ -34,9 +37,11 @@ class OrderCreator(CoreOrderCreator):
             user, basket, shipping_address, shipping_method, shipping_charge,
             billing_address, total, order_number, status, **kwargs)
         for line in basket.all_lines():
-            self.create_line_models(order, line)
             if not basket.custom_ledger:
+                self.create_line_models(order, line)
                 self.update_stock_records(line)
+            else:
+                self.create_line_models(order,line,custom_ledger=True)
 
         # Record any discounts associated with this order
         for application in basket.offer_applications:
@@ -66,7 +71,7 @@ class OrderCreator(CoreOrderCreator):
 
         return order    
 
-    def create_line_models(self, order, basket_line, extra_line_fields=None):
+    def create_line_models(self, order, basket_line, extra_line_fields=None,custom_ledger=False):
         """
         Create the batch line model.
         You can set extra fields by passing a dictionary as the
@@ -74,10 +79,10 @@ class OrderCreator(CoreOrderCreator):
         """
         product = basket_line.product
         stockrecord = basket_line.stockrecord
-        if not stockrecord and not basket.custom_ledger:
+        if not stockrecord and not custom_ledger:
             raise exceptions.UnableToPlaceOrder(
                 "Baket line #%d has no stockrecord" % basket_line.id)
-        if not basket.custom_ledger:
+        if not custom_ledger:
             partner = stockrecord.partner
         else:
             partner = None
@@ -90,10 +95,10 @@ class OrderCreator(CoreOrderCreator):
             'stockrecord': stockrecord  if stockrecord else None,
             # Product details
             'product': product,
-            'title': product.get_title(),
-            'upc': product.upc,
+            'title': product.get_title() if not custom_ledger else basket_line.ledger_description,
+            'upc': product.upc if product else None,
             'quantity': basket_line.quantity,
-            'oracle_code': product.oracle_code,
+            'oracle_code': product.oracle_code if not custom_ledger else basket_line.oracle_code,
             # Price details
             'line_price_excl_tax':
             basket_line.line_price_excl_tax_incl_discounts,
@@ -110,7 +115,7 @@ class OrderCreator(CoreOrderCreator):
             'unit_retail_price': stockrecord.price_retail if stockrecord else basket_line.unit_price_incl_tax,
             # Shipping details
             'est_dispatch_date':
-            basket_line.purchase_info.availability.dispatch_date
+            basket_line.purchase_info.availability.dispatch_date if not custom_ledger else None
         }
         extra_line_fields = extra_line_fields or {}
         if hasattr(settings, 'OSCAR_INITIAL_LINE_STATUS'):
