@@ -212,3 +212,25 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
                 available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
 
     return available
+
+def set_session_booking(session, booking):
+    session['booking_id'] = booking.id
+
+    session.modified = True
+
+
+def get_session_booking(session):
+    if 'booking_id' in session:
+        booking_id = session['booking_id']
+    else:
+        raise Exception('Booking not in Session')
+
+    try:
+        return Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        raise Exception('Booking not found for booking_id {}'.format(booking_id))
+
+def delete_session_booking(session):
+    if 'booking_id' in session:
+        del session['booking_id']
+        session.modified = True
