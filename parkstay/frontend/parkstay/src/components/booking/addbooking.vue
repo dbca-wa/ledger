@@ -26,7 +26,7 @@
                                             <label class="col-md-2 control-label pull-left required"  for="Dates">Dates: </label>
                                             <div class="col-md-4">
                                                 <div class="input-group date" id="dateArrival">
-                                                    <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="selected_arrival" >
+                                                    <input type="text" class="form-control" name="arrival" placeholder="Arrival" >
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
@@ -34,7 +34,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="input-group date" id="dateDepature">
-                                                    <input type="text" class="form-control" name="depature" placeholder="Depature" v-model="selected_depature">
+                                                    <input type="text" class="form-control" name="depature" placeholder="Depature">
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
@@ -173,7 +173,7 @@
                             <div class="col-lg-6" v-if="park.entry_fee_required">
                                 <div class="row">
                                     <div class="col-lg-12" v-if="park.entry_fee_required">
-                                        <h3 class="text-primary">Park Entry Fees <small>(${{park.entry_fee|formatMoney(2)}}/per vehicle)</small></h3>
+                                        <h3 class="text-primary">Park Entry Fees <small>(${{parkPrices.vehicle|formatMoney(2)}}/per vehicle)</small></h3>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -352,7 +352,8 @@ export default {
                 entry_fee_required:false,
                 entry_fee:0
             },
-            parkEntryVehicles:[]
+            parkEntryVehicles:[],
+            parkPrices: {}
         };
     },
     components:{
@@ -495,6 +496,9 @@ export default {
             vm.loading.push('fetching park');
             vm.$http.get(api_endpoints.park(vm.campground.park)).then((response)=>{
                 vm.park = response.body;
+                if (vm.park.entry_fee_required){
+                    vm.fetchParkPrices();
+                }
                 vm.loading.splice('fetching park',1);
             },(error)=>{
                 console.log(error);
@@ -593,7 +597,23 @@ export default {
                     vm.booking.price = price*nights;
                 }
             }
-            vm.booking.price = vm.booking.price + (vm.park.entry_fee * vm.booking.parkEntry.vehicles);
+            var entry_fee = 0;
+            $.each(vm.parkEntryVehicles,function (i,entry) {
+                switch (entry.id) {
+                    case 'vehicle':
+                        entry_fee += parseInt(vm.parkPrices.vehicle);
+                        break;
+                    case 'motorbike':
+                        entry_fee +=  parseInt(vm.parkPrices.motorbike);
+                        break;
+                    case 'concession':
+                        entry_fee +=  parseInt(vm.parkPrices.concession);
+                        break;
+
+                }
+            });
+
+            vm.booking.price = vm.booking.price + entry_fee;
         },
         fetchUsers:function (event) {
             let vm = this;
@@ -603,6 +623,12 @@ export default {
                 $.each(vm.users,function (i,u) {
                     vm.usersEmail.push(u.email);
                 });
+            });
+        },
+        fetchParkPrices:function (event) {
+            let vm = this;
+            vm.$http.get(api_endpoints.park_current_price(vm.park.id)).then((response)=>{
+                vm.parkPrices = response.body;
             });
         },
         autofillUser:function (event) {
@@ -706,6 +732,7 @@ export default {
                 vm.booking.parkEntry.vehicles++;
                 vm.parkEntryVehicles.push(JSON.parse(JSON.stringify(park_entry)));
             }
+            vm.updatePrices();
         },
         removeVehicleCount:function (park_entry) {
             let vm = this;
@@ -729,6 +756,7 @@ export default {
                 }
 
             }
+            vm.updatePrices();
         },
     },
     mounted:function () {
