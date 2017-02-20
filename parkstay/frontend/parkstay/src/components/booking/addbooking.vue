@@ -287,7 +287,13 @@ export default {
                 price:"0",
                 parkEntry:{
                     vehicles:0,
-                    regos: new Array(10)
+                },
+                entryFees:{
+                    vehicles : 0,
+                    motorbike: 0,
+                    concession:0,
+                    entry_fee: 0,
+                    regos:[]
                 }
             },
             campsites:[],
@@ -599,23 +605,26 @@ export default {
                     vm.booking.price = price*nights;
                 }
             }
-            var entry_fee = 0;
             $.each(vm.parkEntryVehicles,function (i,entry) {
+                entry = JSON.parse(JSON.stringify(entry));
                 switch (entry.id) {
                     case 'vehicle':
-                        entry_fee += parseInt(vm.parkPrices.vehicle);
+                        vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
+                        vm.booking.entryFees.vehicle++;
                         break;
                     case 'motorbike':
-                        entry_fee +=  parseInt(vm.parkPrices.motorbike);
+                        vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.motorbike);
+                        vm.booking.entryFees.motorbike++;
                         break;
                     case 'concession':
-                        entry_fee +=  parseInt(vm.parkPrices.concession);
+                        vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.concession);
+                        vm.booking.entryFees.concession++;
                         break;
 
                 }
             });
 
-            vm.booking.price = vm.booking.price + entry_fee;
+            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
         },
         fetchUsers:function (event) {
             let vm = this;
@@ -651,6 +660,38 @@ export default {
         bookNow:function () {
             let vm = this;
             if (vm.isFormValid()) {
+                vm.booking.entryFees = {
+                    vehicles : 0,
+                    motorbike: 0,
+                    concession:0,
+                    entry_fee: 0,
+                    regos:[]
+                };
+                $.each(vm.parkEntryVehicles,function (i,entry) {
+                    entry = JSON.parse(JSON.stringify(entry));
+                    if (entry.rego != null) {
+                        vm.booking.entryFees.regos.push({
+                            type:entry.id,
+                            rego:entry.rego
+                        });
+                    }
+                    switch (entry.id) {
+                        case 'vehicle':
+                            vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
+                            vm.booking.entryFees.vehicle++;
+                            break;
+                        case 'motorbike':
+                            vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.motorbike);
+                            vm.booking.entryFees.motorbike++;
+                            break;
+                        case 'concession':
+                            vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.concession);
+                            vm.booking.entryFees.concession++;
+                            break;
+
+                    }
+                });
+                console.log(JSON.stringify(vm.booking));
                 vm.$http.post(api_endpoints.bookings,JSON.stringify(vm.booking),{
                     emulateJSON:true,
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
