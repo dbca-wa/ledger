@@ -55,6 +55,7 @@ class Line(CoreAbstractLine):
     stockrecord = models.ForeignKey('partner.StockRecord', on_delete=models.SET_NULL,related_name='basket_lines',blank=True, null=True)
     line_reference = SlugField(_("Line Reference"), max_length=128, db_index=True,blank=True,null=True)
     ledger_description = models.TextField(blank=True,null=True)
+    oracle_code = models.CharField("Oracle Code",max_length=50,null=True,blank=True)
 
 
     def __str__(self):
@@ -82,7 +83,7 @@ class Line(CoreAbstractLine):
             info.price.excl_tax = self.price_excl_tax
             info.price.incl_tax =  self.price_incl_tax
             info.price.tax = (self.price_incl_tax - self.price_excl_tax)
-            info.price.is_tax_known = True if info.price.tax > 0 else False
+            info.price.is_tax_known = True 
 
             self._info = info
             return self._info
