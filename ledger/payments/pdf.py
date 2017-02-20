@@ -166,8 +166,9 @@ class Remittance(Flowable):
         canvas.drawString((PAGE_WIDTH/3) * 2, current_y, '${}'.format(self.invoice.amount))
     
     def draw(self):
-        self.__logo_line()
-        self.__payment_line()
+        if settings.BPAY_ALLOWED:
+            self.__logo_line()
+            self.__payment_line()
         self.__footer_line()
 
 

@@ -154,7 +154,7 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         basket.strategy = selector.strategy(user=owner)
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
-        defaults = ('ledger_description','quantity','price_excl_tax','price_incl_tax')
+        defaults = ('ledger_description','quantity','price_excl_tax','price_incl_tax','oracle_code')
         for p in product_list:
             if not all(d in p for d in defaults):
                 raise ValidationError('Please make sure that the product format is valid')

@@ -50,23 +50,21 @@ class CheckoutSessionMixin(CoreCheckoutSessionMixin):
     def skip_unless_basket_requires_shipping(self, request):
         # Check to see that a shipping address is actually required.  It may
         # not be if the basket is purely downloads
-        if not request.basket.custom_ledger:
-            if not request.basket.is_shipping_required():
-                raise exceptions.PassedSkipCondition(
-                    url=reverse('checkout:shipping-method')
-                )
+        if not request.basket.is_shipping_required():
+            raise exceptions.PassedSkipCondition(
+                url=reverse('checkout:shipping-method')
+            )
 
     def check_shipping_data_is_captured(self, request):
-        if not request.basket.custom_ledger:
-            if not request.basket.is_shipping_required():
-                # Even without shipping being required, we still need to check that
-                # a shipping method code has been set.
-                if not self.checkout_session.is_shipping_method_set(
-                        self.request.basket):
-                    raise exceptions.FailedPreCondition(
-                        url=reverse('checkout:shipping-method'),
-                    )
-                return
+        if not request.basket.is_shipping_required():
+            # Even without shipping being required, we still need to check that
+            # a shipping method code has been set.
+            if not self.checkout_session.is_shipping_method_set(
+                    self.request.basket):
+                raise exceptions.FailedPreCondition(
+                    url=reverse('checkout:shipping-method'),
+                )
+            return
 
         # Basket requires shipping: check address and method are captured and
         # valid.
@@ -100,19 +98,16 @@ class CheckoutSessionMixin(CoreCheckoutSessionMixin):
         """
         basket = kwargs.get('basket', self.request.basket)
         shipping_address, billing_address, shipping_method, shipping_charge ,total = None, None, None, None, None
-        if not basket.custom_ledger:
-            shipping_address = self.get_shipping_address(basket)
-            shipping_method = self.get_shipping_method(
-                basket, shipping_address)
-            billing_address = self.get_billing_address(shipping_address)
-            if not shipping_method:
-                total = shipping_charge = None
-            else:
-                shipping_charge = shipping_method.calculate(basket)
-                total = self.get_order_totals(
-                    basket, shipping_charge=shipping_charge)
+        shipping_address = self.get_shipping_address(basket)
+        shipping_method = self.get_shipping_method(
+            basket, shipping_address)
+        billing_address = self.get_billing_address(shipping_address)
+        if not shipping_method:
+            total = shipping_charge = None
         else:
-            total = self.get_order_totals(basket,shipping_charge=shipping_charge)
+            shipping_charge = shipping_method.calculate(basket)
+            total = self.get_order_totals(
+                basket, shipping_charge=shipping_charge)
         submission = {
             'user': self.request.user,
             'basket': basket,
