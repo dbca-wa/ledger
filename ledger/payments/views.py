@@ -1,6 +1,7 @@
 import json
 from datetime import date
 from django.views import generic
+from django.conf import settings
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
@@ -25,6 +26,11 @@ class InvoiceDetailView(generic.DetailView):
     model = Invoice
     template_name = 'dpaw_payments/invoice/invoice.html'
     context_object_name = 'invoice'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(InvoiceDetailView,self).get_context_data(**kwargs)
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
+        return ctx 
 
     def get_object(self):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
@@ -57,6 +63,7 @@ class InvoicePaymentView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super(InvoicePaymentView, self).get_context_data(**kwargs)
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['months'] = self.month_choices
         ctx['years'] = self.year_choices
         ctx['regions'] = list(REGION_CHOICES)
