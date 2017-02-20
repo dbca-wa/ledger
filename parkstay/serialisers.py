@@ -285,7 +285,7 @@ class ParkSerializer(serializers.HyperlinkedModelSerializer):
     campgrounds = CampgroundSerializer(many=True)
     class Meta:
         model = Park
-        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds','entry_fee_required','entry_fee')
+        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds','entry_fee_required')
 
 class CampsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
