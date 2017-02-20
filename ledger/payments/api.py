@@ -717,9 +717,13 @@ class CheckoutCreateView(generics.CreateAPIView):
         "bpay_format": "crn", (optional, default='crn')
         "proxy": "true", (optional, default=False)
         "icrn_format": "ICRNAMT", (optional, default='ICRNAMT')
-        "products": [ (mandatory)
+        "products": [ (mandatory if custom_basket = False)
             {"id": 1}
         ]
+        "products": [ (mandatory if custom_basket = True)
+            {"ledger_description":"test","quantity":2,"price_excl_tax":50,"price_incl_tax":50,"oracle_code":"1236"},
+            {"ledger_description":"test123","quantity":1,"price_excl_tax":50,"price_incl_tax":50,"oracle_code":"3423"}
+        ],
         "vouchers": [ (optional)
             {"code": "<code>}
         ],
