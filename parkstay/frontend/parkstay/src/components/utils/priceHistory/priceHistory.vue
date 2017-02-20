@@ -8,7 +8,7 @@
         <div class="col-sm-4">
             <button v-show="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
         </div>
-        <datatable ref="history_dt" :dtHeaders ="ch_headers" :dtOptions="dt_options" id="ph_table"></datatable>
+        <datatable ref="history_dt" :dtHeaders ="dt_headers" :dtOptions="dt_options" id="ph_table"></datatable>
      </div>
     <confirmbox id="deleteHistory" :options="deleteHistoryPrompt"></confirmbox>
 </div>
@@ -40,8 +40,8 @@ export default {
         },
         level: {
             validator: function (value){
-                var levels = ['campground','campsite_class','campsite'];
-                return $.inArray(value,levels) > -1;   
+                var levels = ['campground','campsite_class','campsite','park_entry'];
+                return $.inArray(value,levels) > -1;
             },
             required: true
         },
@@ -56,6 +56,12 @@ export default {
         dt_options: {
             type: Object,
             required: true
+        },
+        dt_headers:{
+            type:Array,
+            default:function () {
+                return ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'];
+            }
         }
     },
     components: {
@@ -89,7 +95,7 @@ export default {
                 }],
                 id: 'deleteHistory'
             },
-            ch_headers: ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'],
+
         }
     },
     methods: {
@@ -166,8 +172,8 @@ export default {
             this.sendData(this.getAddURL(),'POST');
         },
         updateHistory: function() {
-            if (this.level == 'campsite'){ 
-                this.price.campsite = this.object_id; 
+            if (this.level == 'campsite'){
+                this.price.campsite = this.object_id;
                 this.sendData(this.getEditURL(),'PUT');
             }
             else{
@@ -216,7 +222,7 @@ export default {
                     vm.price.period_start = Moment(start).format('D/MM/YYYY');
                     vm.price.original = {
                         'date_start': start,
-                        'rate_id': rate, 
+                        'rate_id': rate,
                         'reason': reason,
                         'details': details
                     };
@@ -229,7 +235,7 @@ export default {
                         vm.price.id = data.id;
                         vm.$refs.historyModal.selected_rate = data.rate;
                         vm.showHistory();
-                    }); 
+                    });
                 }
             });
             vm.$refs.history_dt.vmDataTable.on('click','.deletePrice', function(e) {
@@ -244,7 +250,7 @@ export default {
                     vm.deleteHistory = data;
                 }
                 else{vm.deleteHistory = $(btn).data('rate');}
-        
+
                 bus.$emit('showAlert', 'deleteHistory');
             });
         },

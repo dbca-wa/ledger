@@ -50,7 +50,6 @@ class Park(models.Model):
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
     entry_fee_required = models.BooleanField(default=True)
-    entry_fee = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
@@ -863,6 +862,26 @@ class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
+
+class ParkEntryRate(models.Model):
+
+    vehicle = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    concession = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    motorbike = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    period_start = models.DateField()
+    period_end = models.DateField(null=True)
+    reason = models.ForeignKey("PriceReason",on_delete=models.PROTECT)
+    details = models.TextField(null = True, blank= True)
+
+    def clean(self,*args,**kwargs):
+        if self.reason.id == 1 and not self.details:
+            raise ValidationError("Details cannot be empty if reason is Other")
+        super(ParkEntryRate,self).clean(*args,**kwargs)
+
+    def save(self, *args,**kwargs):
+        self.full_clean()
+        super(ParkEntryRate,self).save(*args,**kwargs)
+
 
 # REASON MODELS
 # =====================================

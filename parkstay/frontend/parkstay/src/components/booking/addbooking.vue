@@ -26,7 +26,7 @@
                                             <label class="col-md-2 control-label pull-left required"  for="Dates">Dates: </label>
                                             <div class="col-md-4">
                                                 <div class="input-group date" id="dateArrival">
-                                                    <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="selected_arrival" >
+                                                    <input type="text" class="form-control" name="arrival" placeholder="Arrival" >
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
@@ -34,7 +34,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="input-group date" id="dateDepature">
-                                                    <input type="text" class="form-control" name="depature" placeholder="Depature" v-model="selected_depature">
+                                                    <input type="text" class="form-control" name="depature" placeholder="Depature">
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
@@ -105,14 +105,11 @@
                     <div class="well">
                         <div class="row">
                             <div class="col-lg-6">
-                                <h3 class="text-primary">Personal Details</h3>
-                            </div>
-                            <div class="col-lg-6" v-if="park.entry_fee_required">
-                                <h3 class="text-primary">Park Entry Fees <small>(${{park.entry_fee|formatMoney(2)}}/per vehicle)</small></h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-6">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <h3 class="text-primary">Personal Details</h3>
+                                    </div>
+                                </div>
                                 <div class="row">
                                   <div class="col-md-12">
                                       <div class="form-group">
@@ -175,6 +172,11 @@
                             </div>
                             <div class="col-lg-6" v-if="park.entry_fee_required">
                                 <div class="row">
+                                    <div class="col-lg-12" v-if="park.entry_fee_required">
+                                        <h3 class="text-primary">Park Entry Fees <small>(${{parkPrices.vehicle|formatMoney(2)}}/per vehicle)</small></h3>
+                                    </div>
+                                </div>
+                                <div class="row">
                                   <div class="col-md-12">
                                       <div class="form-group">
                                           <label for="vehicles" class="required">Number of Vehicles</label>
@@ -185,7 +187,7 @@
                                                       <div class="row">
                                                           <div class="col-sm-8">
                                                               <span class="item">
-                                                                  {{park_entry.amount}} {{park_entry.name}} <span style="color:#888;font-weight:300;font-size:12px;">{{park_entry.description}}</span>
+                                                                  {{park_entry.amount}} {{park_entry.name}} <span style="color:#888;font-weight:300;font-size:12px;"></span>
                                                               </span>
                                                               <br/><a href="#" class="text-info" v-show="park_entry.helpText">{{park_entry.helpText}}</a>
                                                           </div>
@@ -202,11 +204,11 @@
                                       </div>
                                   </div>
                                 </div>
-                                <div class="row" v-for="v in maxEntryVehicles">
+                                <div class="row" v-for="v in parkEntryVehicles">
                                   <div class="col-md-12">
                                       <div class="form-group">
-                                        <label for="Phone" class="required">Vehicle Registration</label>
-                                        <input type="text" name="regos[]" class="form-control" required="required" v-model="booking.parkEntry.regos[v-1]" @change="validateRego">
+                                        <label for="Phone" class="required">{{v.description}}</label>
+                                        <input type="text" name="regos[]" class="form-control" required="required" v-model="v.rego" @change="validateRego">
                                       </div>
                                   </div>
                                 </div>
@@ -322,20 +324,26 @@ export default {
                     id:"vehicle",
                     name:"Vehicle",
                     amount:0,
-                    description: ""
+                    price:0,
+                    description: "Vehicle Regestration",
+                    rego:""
                 },
                 {
                     id:"concession",
                     name:"Concession",
                     amount:0,
-                    description: "",
-                    helpText:"accepted concession cards"
+                    price:0,
+                    description: "Concession Vehicle Regestration",
+                    helpText:"accepted concession cards",
+                    rego:""
                 },
                 {
                     id:"motorbike",
                     name:"Motorbike",
                     amount:0,
-                    description: ""
+                    price:0,
+                    description: "Motorbike Regestration",
+                    rego:""
                 }
             ],
             users:[],
@@ -343,7 +351,9 @@ export default {
             park:{
                 entry_fee_required:false,
                 entry_fee:0
-            }
+            },
+            parkEntryVehicles:[],
+            parkPrices: {}
         };
     },
     components:{
@@ -486,6 +496,9 @@ export default {
             vm.loading.push('fetching park');
             vm.$http.get(api_endpoints.park(vm.campground.park)).then((response)=>{
                 vm.park = response.body;
+                if (vm.park.entry_fee_required){
+                    vm.fetchParkPrices();
+                }
                 vm.loading.splice('fetching park',1);
             },(error)=>{
                 console.log(error);
@@ -584,7 +597,23 @@ export default {
                     vm.booking.price = price*nights;
                 }
             }
-            vm.booking.price = vm.booking.price + (vm.park.entry_fee * vm.booking.parkEntry.vehicles);
+            var entry_fee = 0;
+            $.each(vm.parkEntryVehicles,function (i,entry) {
+                switch (entry.id) {
+                    case 'vehicle':
+                        entry_fee += parseInt(vm.parkPrices.vehicle);
+                        break;
+                    case 'motorbike':
+                        entry_fee +=  parseInt(vm.parkPrices.motorbike);
+                        break;
+                    case 'concession':
+                        entry_fee +=  parseInt(vm.parkPrices.concession);
+                        break;
+
+                }
+            });
+
+            vm.booking.price = vm.booking.price + entry_fee;
         },
         fetchUsers:function (event) {
             let vm = this;
@@ -594,6 +623,12 @@ export default {
                 $.each(vm.users,function (i,u) {
                     vm.usersEmail.push(u.email);
                 });
+            });
+        },
+        fetchParkPrices:function (event) {
+            let vm = this;
+            vm.$http.get(api_endpoints.park_current_price(vm.park.id)).then((response)=>{
+                vm.parkPrices = response.body;
             });
         },
         autofillUser:function (event) {
@@ -695,15 +730,33 @@ export default {
             if( park_entry.amount < 10 && count < 10){
                 park_entry.amount = (park_entry.amount < 10)?park_entry.amount+= 1:park_entry.amount;
                 vm.booking.parkEntry.vehicles++;
+                vm.parkEntryVehicles.push(JSON.parse(JSON.stringify(park_entry)));
             }
+            vm.updatePrices();
         },
         removeVehicleCount:function (park_entry) {
             let vm = this;
             var count = vm.booking.parkEntry.vehicles
             if( park_entry.amount > 0 && count > 0){
-                park_entry.amount = (park_entry.amount > 0)?park_entry.amount-=1:park_entry.amount;
-                vm.booking.parkEntry.vehicles--;
+                var found = false;
+                for (var i = park_entry.amount-1; i >= 0; i--) {
+                    for (var j = vm.parkEntryVehicles.length-1; j >=0; j--) {
+                        if (park_entry.description == vm.parkEntryVehicles[j].description) {
+                            park_entry.amount = (park_entry.amount > 0)?park_entry.amount-=1:park_entry.amount;
+                            vm.parkEntryVehicles.splice(j,1);
+                            vm.booking.parkEntry.vehicles--;
+                            found =true;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        break;
+                    }
+
+                }
+
             }
+            vm.updatePrices();
         },
     },
     mounted:function () {

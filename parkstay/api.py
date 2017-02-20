@@ -45,7 +45,8 @@ from parkstay.models import (Campground,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
-                                MaximumStayReason
+                                MaximumStayReason,
+                                ParkEntryRate,
                                 )
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
@@ -79,7 +80,8 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     MaximumStayReasonSerializer,
                                     BulkPricingSerializer,
                                     UsersSerializer,
-                                    AccountsAddressSerializer
+                                    AccountsAddressSerializer,
+                                    ParkEntryRateSerializer,
                                     )
 from parkstay.helpers import is_officer, is_customer
 from parkstay.utils import create_booking_by_class, get_campsite_availability
@@ -932,6 +934,35 @@ class ParkViewSet(viewsets.ModelViewSet):
             data = serializer.data
             cache.set('parks',data,3600)
         return Response(data)
+
+    @detail_route(methods=['get'])
+    def price_history(self, request, format='json', pk=None):
+        http_status = status.HTTP_200_OK
+        try:
+            price_history = ParkEntryRate.objects.all().order_by('-period_start')
+            serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request},method='get')
+            res = serializer.data
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+
+
+        return Response(res,status=http_status)
+
+    @detail_route(methods=['get'])
+    def current_price(self, request, format='json', pk=None):
+        http_status = status.HTTP_200_OK
+        res = None
+        try:
+            price_history = ParkEntryRate.objects.filter(period_start__lte = datetime.now().date()).order_by('-period_start')
+            serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
+            res = serializer.data[0]
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+        return Response(res,status=http_status)
 
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
