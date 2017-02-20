@@ -24,11 +24,6 @@ class MakeBookingsForm(forms.Form):
     
     vehicles = forms.formset_factory(VehicleInfoForm, extra=3)
 
-    cc_number = forms.CharField(max_length=16, widget=forms.TextInput(attrs={'required':True, 'placeholder': 'Card number'}))
-    cc_expiry = forms.CharField(max_length=7, widget=forms.TextInput(attrs={'required':True, 'placeholder': 'MM/YY'}))
-    cc_name = forms.CharField(max_length=128, widget=forms.TextInput(attrs={'required':True, 'placeholder': 'Name on card'}))
-    cc_cvc = forms.CharField(max_length=3, widget=forms.TextInput(attrs={'required':True, 'placeholder': 'CVC'}))
-
     def __init__(self, *args, **kwargs):
         super(MakeBookingsForm, self).__init__(*args, **kwargs)
         self.fields['first_name'].widget.attrs['required'] = True
