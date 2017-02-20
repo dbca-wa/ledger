@@ -864,18 +864,25 @@ class BookingVehicleRego(models.Model):
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
 
-class ParkPriceHistory(models.Model):
-    rate = models.ForeignKey("ParkEntryRate",on_delete=models.PROTECT, null=True)
-    reason = models.ForeignKey("PriceReason",on_delete=models.PROTECT)
-    park = models.ForeignKey(Park,on_delete=models.PROTECT)
-    period_start = models.DateField()
-    period_end = models.DateField(null=True)
-
 class ParkEntryRate(models.Model):
 
     vehicle = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     concession = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    moterbike = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    motorbike = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    period_start = models.DateField()
+    period_end = models.DateField(null=True)
+    reason = models.ForeignKey("PriceReason",on_delete=models.PROTECT)
+    details = models.TextField(null = True, blank= True)
+
+    def clean(self,*args,**kwargs):
+        if self.reason.id == 1 and not self.details:
+            raise ValidationError("Details cannot be empty if reason is Other")
+        super(ParkEntryRate,self).clean(*args,**kwargs)
+
+    def save(self, *args,**kwargs):
+        self.full_clean()
+        super(ParkEntryRate,self).save(*args,**kwargs)
+
 
 # REASON MODELS
 # =====================================

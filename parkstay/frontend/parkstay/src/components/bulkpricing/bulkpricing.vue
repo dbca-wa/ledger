@@ -245,18 +245,19 @@ export default {
                     }
 
                 }, {
-                    data: 'rate.vehicle'
+                    data: 'vehicle'
                 }, {
-                    data: 'rate.concession'
+                    data: 'concession'
                 }, {
-                    data: 'rate.moterbike'
+                    data: 'motorbike'
                 }, {
                     data: 'reason',
                     mRender: function(data, type, full) {
-                        if (data){
-                            return data;
+                        if (data.id == 1){
+                            return data.text +":"+ full.details;
+                        }else{
+                            return data.text
                         }
-                        return '';
                     }
                 }, {
                     data: 'editable',
