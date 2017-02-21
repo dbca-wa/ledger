@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 
 from decimal import *
-
+import json
+import requests
 from django.conf import settings
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -239,14 +241,47 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
 
     return available
 
-def internal_booking(booking = None):
+def internal_booking(request,user,booking):
+    lines = []
+    json_booking = request.data
     try:
         booking = Booking.objects.get(id = booking.id)
     except Booking.DoesNotExist:
         raise
     with transaction.atomic():
-        reservation = "Reservation for {}".format(booking.customer.name)
+        reservation = "Reservation for {} from {} to {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure)
+        # Create line items for booking
+        json_booking = dict(json_booking)
+        for k,v in json_booking.get('guests').items():
+            if int(v) > 0:
+                lines.append({'ledger_description':k,"quantity":v,"price_excl_tax":json_booking['costs']['campground'][k],"price_incl_tax":json_booking['costs']['campground'][k],"oracle_code":"1236"})
+        print(lines)
+        parameters = {
+            'system': 'S369',
+            'basket_owner': user.id,
+            'fallback_url': "http://mate-002.aws:8010/",
+            'return_url': "http://mate-002.aws:8010/",
+            'forceRedirect': True,
+            'proxy': True,
+            "products": lines,
+            "custom_basket": True,
+            "vouchers": []
+        }
 
+        JSON_REQUEST_HEADER_PARAMS = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRFToken": request.COOKIES.get('csrftoken')
+        }
+
+        url = request.build_absolute_uri(
+            reverse('payments:ledger-initial-checkout')
+        )
+
+        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
+                                 data=json.dumps(parameters))
+
+        print(response.__dict__)
 def set_session_booking(session, booking):
     session['booking_id'] = booking.id
 

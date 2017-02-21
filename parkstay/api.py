@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
-import parkstay.utils
+from parkstay import utils
 from datetime import datetime
 from parkstay.models import (Campground,
                                 CampsiteBooking,
@@ -666,7 +666,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
             campsite_qs = Campsite.objects.all().filter(campground_id=self.get_object().id)
             http_status = status.HTTP_200_OK
-            available = parkstay.utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
+            available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
 
             return Response(available,status=http_status)
         except Exception as e:
@@ -722,11 +722,11 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             siteid: {
                 date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
                 for date, info in dates.items()
-            } for siteid, dates in parkstay.utils.get_visit_rates(sites_qs, start_date, end_date).items()
+            } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
         }
 
         # fetch availability map
-        availability = parkstay.utils.get_campsite_availability(sites_qs, start_date, end_date)
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
 
         # create our result object, which will be returned as JSON
         result = {
@@ -909,7 +909,7 @@ def create_class_booking(request, *args, **kwargs):
 
     # try to create a temporary booking
     try:
-        booking = parkstay.utils.create_booking_by_class(
+        booking = utils.create_booking_by_class(
             campground, campsite_class,
             start_date, end_date,
             num_adult, num_concession,
@@ -1234,7 +1234,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             customer = EmailUser.objects.get(email = emailUser['email'])
         except EmailUser.DoesNotExist:
             raise
-        data = parkstay.utils.create_booking_by_site(campsite_id= request.data['campsite'], start_date = start_date, end_date=end_date, num_adult=guests['adult'], num_concession=guests['concession'], num_child=guests['child'], num_infant=guests['infant'],cost_total=costs['total'],customer=customer)
+        data = utils.create_booking_by_site(campsite_id= request.data['campsite'], start_date = start_date, end_date=end_date, num_adult=guests['adult'], num_concession=guests['concession'], num_child=guests['child'], num_infant=guests['infant'],cost_total=costs['total'],customer=customer)
+        utils.internal_booking(request,customer,data)
         serializer = BookingSerializer(data)
         return Response(serializer.data)
 
