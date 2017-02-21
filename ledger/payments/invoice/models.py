@@ -13,6 +13,7 @@ from ledger.payments.bpoint.models import BpointTransaction, TempBankCard, Bpoin
 
 class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
+    text = models.TextField(null=True,blank=True)
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     order_number = models.CharField(max_length=50,unique=True)
     reference = models.CharField(max_length=50, unique=True)

@@ -99,6 +99,20 @@ $(function(){
             $card_fieldset.removeClass('hide');
         }
     });
+    function getCookie(name) {
+        var value = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1).trim() === (name + '=')) {
+                    value = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return value;
+    }
     // Reset Forms
     function reset_forms() {
         $other_form[0].reset();
@@ -210,7 +224,28 @@ $(function(){
             payload['receipt'] = $('#receipt_number').val();
         }
         
-        $.post("/ledger/payments/api/cash.json",payload, function(resp){
+        // POST
+        $.ajax ({
+            beforeSend: function(xhrObj){
+              xhrObj.setRequestHeader("Content-Type","application/json");
+              xhrObj.setRequestHeader("Accept","application/json");
+            },
+            type: "POST",
+            url: "/ledger/payments/api/cash.json",
+            data: JSON.stringify(payload),
+            dataType: "json",
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function(resp){
+                success(resp,invoice,$('#other_source').val());
+            },
+            error: function(resp){
+                error(resp);
+            },
+            complete: function(resp){
+                checkInvoiceStatus();
+            }
+        });
+        /*$.post("/ledger/payments/api/cash.json",payload, function(resp){
             success(resp,invoice,$('#other_source').val());
         })
         .fail(function(resp){
@@ -218,7 +253,7 @@ $(function(){
         })
         .always(function(){
             checkInvoiceStatus()
-        });
+        });*/
     }
     /*
     *  Make card payments with either stored cards or new cards
@@ -295,6 +330,7 @@ $(function(){
             url: "/ledger/payments/api/invoices/"+invoice+"/link.json",
             data: JSON.stringify(payload),
             dataType: "json",
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function(resp){
                 if (!link) {
                     success(invoice,'This BPAY transaction has been unlinked from this invoice.');

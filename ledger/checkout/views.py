@@ -63,6 +63,9 @@ class IndexView(CoreIndexView):
         self.__validate_send_email(details.get('sendEmail'))
         # validate proxy
         self.__validate_proxy(details.get('proxy'))
+        # Add invoice text
+        if details.get('invoice_text'):
+            self.checkout_session.set_invoice_text(details.get('invoice_text'))
         return True
 
     def __validate_send_email(self, details):
@@ -199,7 +202,8 @@ class IndexView(CoreIndexView):
                     'bpay_format': request.GET.get('bpay_method','crn'),
                     'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
                     'icrn_date': request.GET.get('icrn_date', None),
-                }
+                },
+                'invoice_text': request.GET.get('invoice_text',None)
             }
             # Check if all the required parameters are set
             # and redirect to appropriate page if not
@@ -361,14 +365,17 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 order_number,
                 total.incl_tax,
                 crn_string,
-                system)
+                system,
+                self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '')
         elif method == 'icrn':
             return invoice_facade.create_invoice_icrn(
                 order_number,
                 total.incl_tax,
                 crn_string,
                 icrn_format,
-                system)
+                system,
+                self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '')
+
         else:
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
 
