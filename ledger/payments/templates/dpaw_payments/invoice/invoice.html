@@ -89,7 +89,13 @@
         </div>
     </div>
     <!-- /Address/Details -->
-    
+    {% if invoice.text %}
+        <!-- Optional Text -->
+        <div class="row">
+            <h5>{{invoice.text}}</h5>
+        </div>
+        <!-- /Optional Text -->
+    {% endif %}
     <!-- Items Row -->
     <div class="row">
         <table class="table table-striped table-bordered">
@@ -190,7 +196,9 @@
                 {% endblock order_total %}
             </tbody>
         </table>
-        <p>Your  application cannot be processed until payment is recieved.</p>
+        {% if invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid' %}
+            <p>Your  application cannot be processed until payment is recieved.</p>
+        {% endif %}
 
     </div>
     <!-- /Items -->
