@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -1116,11 +1116,26 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+class BookingPagination(PageNumberPagination):
+    page_size = 10
+    max_page_size = 100
+
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+    pagination_class = BookingPagination
 
     def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()[:10];
+        data =  cache.get('serializer_bookings')
+        if not data:
+            serializer = self.get_serializer(queryset,many=True)
+            data = serializer.data
+            cache.set('serializer_bookings',data,3600)
+        return Response(data,status.HTTP_200_OK)
+
+    @list_route()
+    def datatable_list(self, request, *args, **kwargs):
         from django.db import connection, transaction
         search = request.GET.get('search[value]')
         draw = request.GET.get('draw') if request.GET.get('draw') else 1
@@ -1198,8 +1213,16 @@ class BookingViewSet(viewsets.ModelViewSet):
     def create(self, request, format=None):
         from datetime import datetime
         start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
-        end_date = datetime.strptime(request.data['depature'],'%Y/%m/%d').date()
-        data = parkstay.utils.create_booking_by_site(campsite_id= request.data['campsite'], start_date = start_date, end_date=end_date, num_adult=request.data.get('guests','adult'), num_concession=request.data.get('guests','adult'), num_child=request.data.get('guests','child'), num_infant=request.data.get('guests','infant'))
+        end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
+        guests = request.data['guests']
+        costs = request.data['costs']
+
+        try:
+            emailUser = request.data['customer']
+            customer = EmailUser.objects.get(email = emailUser['email'])
+        except EmailUser.DoesNotExist:
+            raise
+        data = parkstay.utils.create_booking_by_site(campsite_id= request.data['campsite'], start_date = start_date, end_date=end_date, num_adult=guests['adult'], num_concession=guests['concession'], num_child=guests['child'], num_infant=guests['infant'],cost_total=costs['total'],customer=customer)
         serializer = BookingSerializer(data)
         return Response(serializer.data)
 
