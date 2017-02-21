@@ -743,7 +743,7 @@ class CampsiteBooking(models.Model):
 
     campsite = models.ForeignKey('Campsite', db_index=True, on_delete=models.PROTECT)
     date = models.DateField(db_index=True)
-    booking = models.ForeignKey('Booking', on_delete=models.CASCADE, null=True)
+    booking = models.ForeignKey('Booking',related_name="campsites", on_delete=models.CASCADE, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
 
     def __str__(self):

@@ -605,6 +605,7 @@ export default {
                     vm.booking.price = price*nights;
                 }
             }
+            vm.booking.entryFees.entry_fee = 0;
             $.each(vm.parkEntryVehicles,function (i,entry) {
                 entry = JSON.parse(JSON.stringify(entry));
                 switch (entry.id) {
@@ -661,7 +662,7 @@ export default {
             let vm = this;
             if (vm.isFormValid()) {
                 vm.booking.entryFees = {
-                    vehicles : 0,
+                    vehicle : 0,
                     motorbike: 0,
                     concession:0,
                     entry_fee: 0,
@@ -669,7 +670,7 @@ export default {
                 };
                 $.each(vm.parkEntryVehicles,function (i,entry) {
                     entry = JSON.parse(JSON.stringify(entry));
-                    if (entry.rego != null) {
+                    if (entry.rego != null || entry.rego != "null") {
                         vm.booking.entryFees.regos.push({
                             type:entry.id,
                             rego:entry.rego
@@ -691,8 +692,29 @@ export default {
 
                     }
                 });
-                console.log(JSON.stringify(vm.booking));
-                vm.$http.post(api_endpoints.bookings,JSON.stringify(vm.booking),{
+                var booking = {
+                    arrival:vm.booking.arrival,
+                    departure:vm.booking.depature,
+                    guests:vm.booking.guests,
+                    campsite:vm.booking.campsite,
+                    parkEntry:vm.booking.entryFees,
+                    costs:{
+                        campground:vm.priceHistory,
+                        parkEntry:vm.parkPrices,
+                        total:vm.booking.price
+                    },
+                    customer:{
+                        email:vm.booking.email,
+                        first_name:vm.booking.firstname,
+                        last_name:vm.booking.surname,
+                        phone:vm.booking.phone,
+                        country:vm.booking.country,
+                        postcode:vm.booking.postcode,
+                    }
+                }
+
+                console.log(JSON.stringify(booking));
+                vm.$http.post(api_endpoints.bookings,JSON.stringify(booking),{
                     emulateJSON:true,
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 }).then((success)=>{
