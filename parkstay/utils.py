@@ -75,7 +75,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
+def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,cost_total=0,customer=None):
     """Create a new temporary booking in the system for a specific campsite."""
     # get campsite
     sites_qs = Campsite.objects.filter(pk=campsite_id)
@@ -104,8 +104,10 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                             'num_child': num_child,
                             'num_infant': num_infant
                         },
+                        cost_total= Decimal(cost_total),
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                        campground=campsite.campground
+                        campground=campsite.campground,
+                        customer = customer
                     )
         for i in range((end_date-start_date).days):
             cb =    CampsiteBooking.objects.create(
@@ -179,9 +181,9 @@ def get_visit_rates(campsites_qs, start_date, end_date):
     results = {
         site.pk: {
             start_date+timedelta(days=i): {
-                'adult': Decimal('0.00'), 
-                'child': Decimal('0.00'), 
-                'concession': Decimal('0.00'), 
+                'adult': Decimal('0.00'),
+                'child': Decimal('0.00'),
+                'concession': Decimal('0.00'),
                 'infant': Decimal('0.00')
             } for i in range(duration)
         } for site in campsites_qs
@@ -198,8 +200,8 @@ def get_visit_rates(campsites_qs, start_date, end_date):
 
     return results
 
-    
-    
+
+
 
 def get_available_campsites_list(campsite_qs,request, start_date, end_date):
     from parkstay.serialisers import CampsiteSerialiser
@@ -212,6 +214,14 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
                 available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
 
     return available
+
+def internal_booking(booking = None):
+    try:
+        booking = Booking.objects.get(id = booking.id)
+    except Booking.DoesNotExist:
+        raise
+    with transaction.atomic():
+        reservation = "Reservation for {}".format(booking.customer.name)
 
 def set_session_booking(session, booking):
     session['booking_id'] = booking.id
