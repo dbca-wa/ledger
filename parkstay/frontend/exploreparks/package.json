@@ -16,7 +16,7 @@
     "jquery": "3.1.1",
     "jqueryui": "1.11.1",
     "moment": "2.17.1",
-    "openlayers": "3.20.1",
+    "openlayers": "4.0.1",
     "vue": "2.1.10",
     "vue-paginate": "3.4.0"
   },

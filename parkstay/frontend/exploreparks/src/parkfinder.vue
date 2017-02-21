@@ -455,9 +455,9 @@ export default {
             get: function() {
                 var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
                 if (count === 1) {
-                    return count +" person";
+                    return count +" person ▼";
                 } else {
-                    return count + " people";
+                    return count + " people ▼";
                 }
             }
         }
@@ -609,7 +609,7 @@ export default {
                     break;
                 }
                 
-                if (vm.groundsIds.has(el.id_)) {
+                if (vm.groundsIds.has(el.getId())) {
                     if (legit.size) { // if we have a feature filter list
                         // check that all parameters are present
                         var feats = new Set(el.get('features').map(function(x) {
@@ -679,7 +679,7 @@ export default {
         autocomplete.autoFirst = true;
 
         $.ajax({
-            url: PARKSTAY_URL+'/api/search_suggest',
+            url: process.env.PARKSTAY_URL+'/api/search_suggest',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
@@ -764,7 +764,7 @@ export default {
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
         $.ajax({
-            url: PARKSTAY_URL+'/api/campground_map/?format=json',
+            url: process.env.PARKSTAY_URL+'/api/campground_map/?format=json',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 var features = vm.geojson.readFeatures(response);
@@ -779,7 +779,7 @@ export default {
         });
         
         this.groundsSource.loadSource = function (onSuccess) {
-            var urlBase = PARKSTAY_URL+'/api/campground_map_filter/?';
+            var urlBase = process.env.PARKSTAY_URL+'/api/campground_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
@@ -815,7 +815,7 @@ export default {
         this.grounds = new ol.layer.Vector({
             source: this.groundsSource,
             style: function (feature) {
-                style = feature.get('style');
+                var style = feature.get('style');
                 if (!style) {
                     var icon = vm.sitesInPersonIcon;
                     var campgroundType = feature.get('campground_type');
@@ -841,6 +841,7 @@ export default {
                     });
                     feature.set('style', style);
                 }
+                //console.log(style);
                 return style;
             }
         });

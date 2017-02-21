@@ -38,9 +38,6 @@ module.exports = {
       $: 'jquery',
       jQuery: 'jquery',
       'window.jQuery': 'jquery'
-    }),
-    new webpack.DefinePlugin({
-      'PARKSTAY_URL': JSON.stringify(process.env.PARKSTAY_URL)
     })
   ],
   module: {
