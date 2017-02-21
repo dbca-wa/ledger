@@ -22,7 +22,7 @@ from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
 from parkstay import utils
-from datetime import datetime
+from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -637,6 +637,36 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
+    def current_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+
+            start_date = request.GET.get('arrival',False)
+            end_date = request.GET.get('departure',False)
+            res = []
+            if start_date and end_date:
+                start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+                end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
+                for single_date in utils.daterange(start_date, end_date):
+                    price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id,date_start__lte=single_date).order_by('-date_start')
+                    serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+                    res.append({
+                        "date" : single_date.strftime("%Y-%m-%d") ,
+                        "rate" : serializer.data[0]
+                    })
+            else:
+                res.append({
+                    "error":"Arrival and departure dates are required",
+                    "success":False
+                })
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
     def stay_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -716,7 +746,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch all the campsites and applicable rates for the campground
         sites_qs = Campsite.objects.filter(campground=ground).filter(**{gear_type: True})
-        
+
         # fetch rate map
         rates = {
             siteid: {

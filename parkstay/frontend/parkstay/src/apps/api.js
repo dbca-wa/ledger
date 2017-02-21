@@ -22,6 +22,9 @@ module.exports = {
     campground_price_history: function(id){
         return "/api/campgrounds/"+ id +"/price_history.json";
     },
+    campground_current_price:function (id,start,end) {
+       return "/api/campgrounds/"+ id +"/current_price.json?arrival="+start+"&departure="+end;
+    },
     campgroundStayHistory: function(id){
         return "/api/campgrounds/" + id + "/stay_history.json"
     },
