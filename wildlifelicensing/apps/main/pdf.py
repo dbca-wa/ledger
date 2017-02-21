@@ -182,7 +182,7 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         conditionList = ListFlowable(
-            [Paragraph(condition.text, styles['Left']) for condition in application.conditions.all()],
+            [Paragraph(a.condition.text, styles['Left']) for a in application.applicationcondition_set.order_by('order')],
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
         elements.append(conditionList)
 

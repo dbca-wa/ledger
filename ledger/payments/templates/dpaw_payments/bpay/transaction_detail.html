@@ -22,7 +22,7 @@
             BPAY <span class="divider"></span>
         </li>
         <li>
-            <a href="{% url 'bpay-collection-list' %}">{% trans "Collections" %}</a>
+            <a href="{% url 'payments:bpay-collection-list' %}">{% trans "Collections" %}</a>
             <span class="divider"></span>
         </li>
         <li class="active">{{ txn.reference }}</li>
@@ -37,7 +37,7 @@
 
 {% block dashboard_content %}
     
-    <script id="bpay_transactions" type="text/x-handlebars-template" data-url="/dpaw_payments/api/bpay/collections/{{collection.date|date:'Y-m-d'}}.json?transactions=True" data-onload="upgradeTable">
+    <script id="bpay_transactions" type="text/x-handlebars-template" data-url="/ledger/payments/api/bpay/collections/{{collection.date|date:'Y-m-d'}}.json?transactions=True" data-onload="upgradeTable">
         <table id="collections_table" class="hide table table-striped table-bordered">
             <thead>
                 <tr>

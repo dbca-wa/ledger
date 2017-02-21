@@ -13,6 +13,7 @@ from ledger.payments.bpoint.models import BpointTransaction, TempBankCard, Bpoin
 
 class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
+    text = models.TextField(null=True,blank=True)
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     order_number = models.CharField(max_length=50,unique=True)
     reference = models.CharField(max_length=50, unique=True)
@@ -61,7 +62,10 @@ class Invoice(models.Model):
     def bpay_transactions(self):
         ''' Get this invoice's bpay transactions.
         '''
-        return BpayTransaction.objects.filter(crn=self.reference)
+        txns = BpayTransaction.objects.filter(crn=self.reference)
+        linked_txns = BpayTransaction.objects.filter(id__in=InvoiceBPAY.objects.filter(invoice=self).values('bpay'))
+        
+        return txns | linked_txns
 
     @property
     def bpoint_transactions(self):
@@ -174,3 +178,21 @@ class Invoice(models.Model):
         except Exception as e:
             print(str(e))
             raise
+
+class InvoiceBPAY(models.Model):
+    ''' Link between unmatched bpay payments and invoices 
+    '''
+    invoice = models.ForeignKey(Invoice)
+    bpay = models.ForeignKey('bpay.BpayTransaction')
+
+    def __str__(self):
+        return 'Invoice No. {}: BPAY CRN {}'.format(self.invoice.reference,self.bpay.crn)
+
+
+    def clean(self, *args, **kwargs):
+        if (self.invoice.payment_status == 'paid' or self.invoice.payment_status == 'over_paid') and not self.pk:
+            raise ValidationError('This invoice has already been paid for.')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super(InvoiceBPAY,self).save(*args, **kwargs)

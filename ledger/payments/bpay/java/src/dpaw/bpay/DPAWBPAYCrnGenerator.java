@@ -15,9 +15,9 @@ public class DPAWBPAYCrnGenerator {
     }
     
     /** Method to generate BPAY CRN using MOD10V01 **/
-    public String generateBPAYCrnWithMod10V01(String aCRNWithoutCD){
+    public String generateBPAYCrnWithMod10V05(String aCRNWithoutCD){
         try{
-            return mCRNGeneratorHelper.generateCrn(aCRNWithoutCD, "MOD10V01");
+            return mCRNGeneratorHelper.generateCrn(aCRNWithoutCD, "MOD10V05");
         }
         catch (CRNGenerationException e){
             String errorCode = e.getCheckDigitErrorReturnCode();

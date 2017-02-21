@@ -1,169 +1,180 @@
-<template lang="html" id="bulkpricing">
-   <div class="panel panel-default" id="applications">
-     <div class="panel-heading" role="tab" id="applications-heading">
-         <h4 class="panel-title">
-             <a role="button" data-toggle="collapse" href="#applications-collapse"
-                aria-expanded="false" aria-controls="applications-collapse">
-                 <h3>Bulk Pricing</h3>
-             </a>
-         </h4>
-     </div>
-     <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel"
-          aria-labelledby="applications-heading">
-
-          <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
-        <div class="panel-body" v-show="!isLoading">
-                  <alert :show="showError" :duration="7000" type="danger">{{errorString}}</alert>
-                  <alert :show="showSuccess" :duration="7000" type="success"><strong>Bulk pricing was successfull </strong></alert>
-                  <div class="well well-sm">
-                      <div class="row">
-                          <div class="col-lg-12">
-                              <div class="col-md-3">
-                                  <div class="radio">
-                                    <label for="">Set price per : </label>
-                                  </div>
-                              </div>
-                              <!--<div class="col-md-3">
-                                  <div class="radio">
-                                    <label for="">
-                                        <input type="radio" :value="priceOptions[0]" v-model="setPrice">
-                                        Price Tariff
-                                    </label>
-                                  </div>
-                              </div>-->
-                              <div class="col-md-3">
-                                  <div class="radio">
-                                    <label for="">
-                                        <input type="radio" :value="priceOptions[1]" v-model="setPrice">
-                                        Park/Campground
-                                    </label>
-                                  </div>
-                              </div>
-                              <div class="col-md-3">
-                                  <div class="radio">
-                                    <label for="">
-                                        <input type="radio" :value="priceOptions[2]" v-model="setPrice">
-                                        Campsite Type
-                                    </label>
+<template lang="html" >
+    <div id="bulkpricing">
+       <div class="panel panel-default" id="applications">
+         <div class="panel-heading" role="tab" id="applications-heading">
+             <h4 class="panel-title">
+                 <a role="button" data-toggle="collapse" href="#applications-collapse"
+                    aria-expanded="false" aria-controls="applications-collapse">
+                     <h3>Bulk Pricing</h3>
+                 </a>
+             </h4>
+         </div>
+             <div id="applications-collapse" class="panel-collapse collapse in" role="tabpanel"
+                  aria-labelledby="applications-heading">
+                  <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
+                <div class="panel-body" v-show="!isLoading">
+                          <alert :show="showError" :duration="7000" type="danger">{{errorString}}</alert>
+                          <alert :show="showSuccess" :duration="7000" type="success"><strong>Bulk pricing was successfull </strong></alert>
+                          <div class="well well-sm">
+                              <div class="row">
+                                  <div class="col-lg-12">
+                                      <div class="col-md-3">
+                                          <div class="radio">
+                                            <label for="">Set price per : </label>
+                                          </div>
+                                      </div>
+                                      <div class="col-md-3">
+                                          <div class="radio">
+                                            <label for="">
+                                                <input type="radio" :value="priceOptions[1]" v-model="setPrice">
+                                                Park/Campground
+                                            </label>
+                                          </div>
+                                      </div>
+                                      <div class="col-md-3">
+                                          <div class="radio">
+                                            <label for="">
+                                                <input type="radio" :value="priceOptions[2]" v-model="setPrice">
+                                                Campsite Type
+                                            </label>
+                                          </div>
+                                      </div>
                                   </div>
                               </div>
                           </div>
-                      </div>
-                  </div>
-                  <div class="well well-sm">
-                      <div class="row">
-                        <div class="col-lg-12">
-                            <h3>Add new Pricing Period For {{setPrice}}</h3><br/>
-                            <form name="bulkpricingForm" class="form-horizontal">
-                              <div class="form-group">
-                                  <div class="col-md-2">
-                                      <label class="control-label" >{{setPrice}}</label>
-                                  </div>
-                                  <div class="col-md-4" v-show="setPrice == priceOptions[0]">
-                                      <select class="form-control" >
-                                          <option >Price Tarriff</option>
-                                      </select>
-                                  </div>
-                                  <div class="col-md-4" v-show="setPrice == priceOptions[1]">
-                                      <select name="tmpPark" v-show="!parks.length > 0" class="form-control" >
-                                          <option >Loading...</option>
-                                      </select>
-                                      <select name="park" v-if="parks.length > 0" class="form-control" v-model="bulkpricing.park">
-                                          <option v-for="park in parks" :value="park.id">{{ park.name }}</option>
-                                      </select>
-                                  </div>
-                                  <div class="col-md-4" v-show="setPrice == priceOptions[2]">
-                                      <select name="tmpCampsiteType" v-show="!campsiteTypes.length > 0" class="form-control" >
-                                          <option >Loading...</option>
-                                      </select>
-                                      <select name="campsiteType" v-if="campsiteTypes.length > 0" @change="selectCampsiteType" class="form-control" v-model="bulkpricing.campsiteType">
-                                          <option v-for="ct  in campsiteTypes" :value="ct.id">{{ ct.name }}</option>
-                                      </select>
-                                  </div>
-                              </div>
-                              <div class="form-group" v-show="setPrice != priceOptions[2] && campgrounds.length > 0">
-                                  <div class="col-md-2">
-                                      <label class="control-label" >Campground</label>
-                                  </div>
-                                  <div class="col-md-4">
-                                      <select name="tmpCampground" v-show="!parks.length > 0" class="form-control" >
-                                          <option >Loading...</option>
-                                      </select>
-                                      <select name="campground" id="bulkpricingCampgrounds" v-if="parks.length > 0" class="form-control" v-model="bulkpricing.campgrounds" multiple="multiple">
-                                          <option v-for="campground in campgrounds" :value="campground.id">{{ campground.name }}</option>
-                                      </select>
-                                  </div>
-                              </div>
-                              <div class="form-group">
-                                  <div class="col-md-2">
-                                      <label><i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom" title="Select a rate to prefill the price fields otherwise use the manual entry">&nbsp;</i>Select Rate: </label>
+                          <div class="well well-sm">
+                              <div class="row">
+                                <div class="col-lg-12">
+                                    <h3>Add New Pricing Period For {{setPrice}}</h3><br/>
+                                    <form name="bulkpricingForm" class="form-horizontal">
+                                      <div class="form-group">
+                                          <div class="col-md-2">
+                                              <label class="control-label" >{{setPrice}}</label>
+                                          </div>
+                                          <div class="col-md-4" v-show="setPrice == priceOptions[0]">
+                                              <select class="form-control" >
+                                                  <option >Price Tarriff</option>
+                                              </select>
+                                          </div>
+                                          <div class="col-md-4" v-show="setPrice == priceOptions[1]">
+                                              <select name="tmpPark" v-show="!parks.length > 0" class="form-control" >
+                                                  <option >Loading...</option>
+                                              </select>
+                                              <select name="park" v-if="parks.length > 0" class="form-control" v-model="bulkpricing.park">
+                                                  <option v-for="park in parks" :value="park.id">{{ park.name }}</option>
+                                              </select>
+                                          </div>
+                                          <div class="col-md-4" v-show="setPrice == priceOptions[2]">
+                                              <select name="tmpCampsiteType" v-show="!campsiteTypes.length > 0" class="form-control" >
+                                                  <option >Loading...</option>
+                                              </select>
+                                              <select name="campsiteType" v-if="campsiteTypes.length > 0" @change="selectCampsiteType" class="form-control" v-model="bulkpricing.campsiteType">
+                                                  <option v-for="ct  in campsiteTypes" :value="ct.id">{{ ct.name }}</option>
+                                              </select>
+                                          </div>
+                                      </div>
+                                      <div class="form-group" v-show="setPrice != priceOptions[2] && campgrounds.length > 0">
+                                          <div class="col-md-2">
+                                              <label class="control-label" >Campground</label>
+                                          </div>
+                                          <div class="col-md-4">
+                                              <select name="tmpCampground" v-show="!parks.length > 0" class="form-control" >
+                                                  <option >Loading...</option>
+                                              </select>
+                                              <select name="campground" id="bulkpricingCampgrounds" v-if="parks.length > 0" class="form-control" v-model="bulkpricing.campgrounds" multiple="multiple">
+                                                  <option v-for="campground in campgrounds" :value="campground.id">{{ campground.name }}</option>
+                                              </select>
+                                          </div>
+                                      </div>
+                                      <div class="form-group">
+                                          <div class="col-md-2">
+                                              <label><i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom" title="Select a rate to prefill the price fields otherwise use the manual entry">&nbsp;</i>Select Rate: </label>
 
-                                  </div>
-                                  <div class="col-sm-4">
-                                      <select name="rate" v-model="selected_rate" class="form-control" title="testing">
-                                          <option value="">Manual Entry</option>
-                                          <option v-for="r in rates":value="r.id">{{r.name}}</option>
-                                      </select>
-                                  </div>
-                              </div>
-                              <div class="form-group">
-                                  <div class="col-md-2">
-                                      <label>Adult Price: </label>
-                                  </div>
-                                  <div class="col-md-4">
-                                      <input :readonly="selected_rate != ''" name="adult"  v-model="bulkpricing.adult" type='text' class="form-control" required="true" />
-                                  </div>
-                              </div>
-                              <div class="form-group">
-                                  <div class="col-md-2">
-                                      <label>Concession Price: </label>
-                                  </div>
-                                  <div class="col-md-4">
-                                      <input :readonly="selected_rate != ''" name="concession"  v-model="bulkpricing.concession" type='text' class="form-control" required="true" />
-                                  </div>
-                              </div>
-                              <div class="form-group">
-                                  <div class="col-md-2">
-                                      <label>Child Price: </label>
-                                  </div>
-                                  <div class="col-md-4">
-                                      <input :readonly="selected_rate != ''" name="child"  v-model="bulkpricing.child" type='text' class="form-control" required="true"/>
-                                  </div>
-                              </div>
-                              <div class="form-group">
-                                  <div class="col-md-2">
-                                      <label>Period start: </label>
-                                  </div>
-                                  <div class="col-md-4">
-                                      <div class='input-group date'>
-                                          <input  name="period_start"  v-model="bulkpricing.period_start" type='text' class="form-control" required="true" />
-                                          <span class="input-group-addon">
-                                              <span class="glyphicon glyphicon-calendar"></span>
-                                          </span>
+                                          </div>
+                                          <div class="col-sm-4">
+                                              <select name="rate" v-model="selected_rate" class="form-control" title="testing">
+                                                  <option value="">Manual Entry</option>
+                                                  <option v-for="r in rates":value="r.id">{{r.name}}</option>
+                                              </select>
+                                          </div>
                                       </div>
-                                  </div>
-                              </div>
-                              <reason type="price" v-model="bulkpricing.reason" style="margin:0px 0px;" required="true"></reason>
-                              <div v-show="requireDetails">
-                                  <div class="form-group">
-                                      <div class="col-md-2">
-                                          <label>Details: </label>
+                                      <div class="form-group">
+                                          <div class="col-md-2">
+                                              <label>Adult Price: </label>
+                                          </div>
+                                          <div class="col-md-4">
+                                              <input :readonly="selected_rate != ''" name="adult"  v-model="bulkpricing.adult" type='text' class="form-control" required="true" />
+                                          </div>
                                       </div>
-                                      <div class="col-md-5">
-                                          <textarea name="details" v-model="bulkpricing.details" class="form-control" :required="requireDetails"></textarea>
+                                      <div class="form-group">
+                                          <div class="col-md-2">
+                                              <label>Concession Price: </label>
+                                          </div>
+                                          <div class="col-md-4">
+                                              <input :readonly="selected_rate != ''" name="concession"  v-model="bulkpricing.concession" type='text' class="form-control" required="true" />
+                                          </div>
                                       </div>
-                                  </div>
+                                      <div class="form-group">
+                                          <div class="col-md-2">
+                                              <label>Child Price: </label>
+                                          </div>
+                                          <div class="col-md-4">
+                                              <input :readonly="selected_rate != ''" name="child"  v-model="bulkpricing.child" type='text' class="form-control" required="true"/>
+                                          </div>
+                                      </div>
+                                      <div class="form-group">
+                                          <div class="col-md-2">
+                                              <label>Period start: </label>
+                                          </div>
+                                          <div class="col-md-4">
+                                              <div class='input-group date'>
+                                                  <input  name="period_start"  v-model="bulkpricing.period_start" type='text' class="form-control" required="true" />
+                                                  <span class="input-group-addon">
+                                                      <span class="glyphicon glyphicon-calendar"></span>
+                                                  </span>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <reason type="price" v-model="bulkpricing.reason" style="margin:0px 0px;" required="true"></reason>
+                                      <div v-show="requireDetails">
+                                          <div class="form-group">
+                                              <div class="col-md-2">
+                                                  <label>Details: </label>
+                                              </div>
+                                              <div class="col-md-5">
+                                                  <textarea name="details" v-model="bulkpricing.details" class="form-control" :required="requireDetails"></textarea>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div class="btn-group btn-group-sm">
+                                          <button type="button" class="btn btn-primary" style="margin-right:10px;" @click.prevent="sendData()">Save</button>
+                                          <button type="button" class="btn btn-default" @click="goBack()" >Cancel</button>
+                                      </div>
+                                </div>
                               </div>
-                              <div class="btn-group btn-group-sm">
-                                  <button type="button" class="btn btn-primary" style="margin-right:10px;" @click.prevent="sendData()">Save</button>
-                                  <button type="button" class="btn btn-default" @click="goBack()" >Cancel</button>
-                              </div>
-                        </div>
-                      </div>
-                    </form>
-                  </div>
+                            </form>
+                          </div>
+                </div>
+            </div>
         </div>
-    </div>
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="parkentry-heading">
+                <h4 class="panel-title">
+                    <a role="button" data-toggle="collapse" href="#parkentry-collapse"
+                       aria-expanded="false" aria-controls="parkentry-collapse">
+                        <h3>Park Entry</h3>
+                    </a>
+                </h4>
+            </div>
+            <div id="parkentry-collapse" class="panel-collapse collapse in" role="tabpanel"
+                 aria-labelledby="parkentry-heading">
+              <div class="panel-body" >
+                  <div class="col-lg-12">
+                      <price-history level="park_entry" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" ></price-history>
+                  </div>
+              </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -172,12 +183,14 @@ import {
     $,
     api_endpoints,
     helpers,
-    select2
+    select2,
+    Moment
 }
 from '../../hooks.js'
 import alert from '../utils/alert.vue'
 import reason from '../utils/reasons.vue'
 import loader from '../utils/loader.vue'
+import priceHistory from '../utils/priceHistory/priceHistory.vue'
 export default {
     name:"bulkpricing",
     data: function() {
@@ -205,7 +218,66 @@ export default {
             selectedPark: {},
             campgrounds: [],
             campsiteTypes:[],
-            showSuccess:false
+            showSuccess:false,
+            priceHistoryDt:{
+                responsive: true,
+                processing: true,
+                deferRender: true,
+                ajax: {
+                    url: api_endpoints.park_price_history(32),
+                    dataSrc: ''
+                },
+                columns: [{
+                    data: 'period_start',
+                    mRender: function(data, type, full) {
+                        return Moment(data).format('MMMM Do, YYYY');
+                    }
+
+                }, {
+                    data: 'period_end',
+                    mRender: function(data, type, full) {
+                        if (data) {
+                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
+                        }
+                        else {
+                            return '';
+                        }
+                    }
+
+                }, {
+                    data: 'vehicle'
+                }, {
+                    data: 'concession'
+                }, {
+                    data: 'motorbike'
+                }, {
+                    data: 'reason',
+                    mRender: function(data, type, full) {
+                        if (data.id == 1){
+                            return data.text +":"+ full.details;
+                        }else{
+                            return data.text
+                        }
+                    }
+                }, {
+                    data: 'editable',
+                    mRender: function(data, type, full) {
+                        if (data) {
+                            ""
+                        }
+                        else {
+                            return "";
+                        }
+                    }
+                }],
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+            },
+            priceHistoryDtHeaders:[
+                "Period Start","Period End", "Vehicle","Concession","Motorbike","Comment","Action"
+            ]
+
         }
     },
     computed: {
@@ -292,7 +364,8 @@ export default {
     components: {
         alert,
         reason,
-        loader
+        loader,
+        'price-history':priceHistory
     },
     methods: {
         sendData: function(){
@@ -419,6 +492,12 @@ export default {
                 $.each(data,function(i,el){
                     el.can_add_rate ? vm.campsiteTypes.push(el): '';
                 });
+                if (vm.campsiteTypes.length == 0) {
+                    vm.campsiteTypes.push({
+                        id:"",
+                        name:""
+                    });
+                }
                 vm.loading.splice('Loading CampsiteTypes',1);
             });
         },

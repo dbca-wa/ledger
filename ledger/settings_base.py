@@ -1,3 +1,4 @@
+from django.core.exceptions import ImproperlyConfigured
 from confy import env, database
 from oscar.defaults import *
 from oscar import get_core_apps, OSCAR_MAIN_TEMPLATE_DIR
@@ -266,6 +267,7 @@ LEDGER_PASS=env('LEDGER_PASS')
 NOTIFICATION_EMAIL=env('NOTIFICATION_EMAIL')
 
 # BPAY settings
+BPAY_ALLOWED = env('BPAY_ALLOWED',True)
 BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
 # BPOINT settings
 BPOINT_CURRENCY='AUD'
@@ -274,6 +276,19 @@ BPOINT_USERNAME=env('BPOINT_USERNAME')
 BPOINT_PASSWORD=env('BPOINT_PASSWORD')
 BPOINT_MERCHANT_NUM=env('BPOINT_MERCHANT_NUM')
 BPOINT_TEST=env('BPOINT_TEST',True)
+# Custom Email Settings
+EMAIL_BACKEND = 'ledger.ledger_email.LedgerEmailBackend'
+PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', False)
+#print PRODUCTION_EMAIL
+EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
+NON_PROD_EMAIL = env('NON_PROD_EMAIL')
+if not PRODUCTION_EMAIL:
+    if not NON_PROD_EMAIL:
+        raise ImproperlyConfigured('NON_PROD_EMAIL must not be empty if PRODUCTION_EMAIL is set to False')
+    if EMAIL_INSTANCE not in ['PROD','DEV','TEST','UAT']:
+        raise ImproperlyConfigured('EMAIL_INSTANCE must be either "PROD","DEV","TEST","UAT"')
+    if EMAIL_INSTANCE == 'PROD':
+        raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PROD\' if PRODUCTION_EMAIL is set to False')
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True

@@ -5,6 +5,12 @@ module.exports = {
     },
     regions:"/api/regions.json",
     parks:"/api/parks.json",
+    park_price_history:function (id) {
+       return "/api/parks/"+id+"/price_history.json"
+    },
+    park_current_price:function (id) {
+      return "/api/parks/"+id+"/current_price.json"
+    },
     park:function (id) {
        return "/api/parks/"+id+".json"
     },

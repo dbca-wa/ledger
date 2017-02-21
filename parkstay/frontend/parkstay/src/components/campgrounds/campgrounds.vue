@@ -116,7 +116,7 @@ module.exports = {
                 }, {
                     "mRender": function(data, type, full) {
                         var id = full.id;
-                        var addBooking = (full.campground_type != 1)?"<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>":"";
+                        var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
                         if (full.active) {
                             var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>\
                             "+addBooking+"</td>";
