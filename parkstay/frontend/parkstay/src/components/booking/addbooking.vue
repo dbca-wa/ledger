@@ -17,7 +17,7 @@
                                   </p>
                                   <p class="pricing" v-else>
                                       <strong >${{0|formatMoney(2)}}</strong>
-                                      <br> <span class="text-muted">Per adult per night</span>
+                                       <span class="text-muted">Per adult per night</span><br>
                                       Select campsite for pricing details
                                   </p>
                             </div>
