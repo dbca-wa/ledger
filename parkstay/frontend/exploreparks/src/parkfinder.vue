@@ -95,7 +95,7 @@
                     <div id="mapPopupContent">
                         <h5 id="mapPopupName"></h5>
                         <p>Pic goes here</p>
-                        <p>Description goes here</p>
+                        <div id="mapPopupDescription"/>
                         <button id="mapPopupInfo" class="button formButton">More info</button>
                         <button id="mapPopupBook" class="button formButton">Book now</button>
                     </div>
@@ -111,7 +111,7 @@
                     <p>Pic goes here</p> 
                 </div>
                 <div class="small-12 medium-9 large-9 columns">
-                    <p>Description goes here</p>
+                    <div v-html="f.description"/>
                     <button class="button">More info</button>
                     <button v-if="f.campground_type == 0" class="button">Book now</button>
                 </div>
@@ -474,14 +474,18 @@ export default {
             });
             if (target) {
                 //console.log('Search suggestion!')
-                // pan to the spot
-                vm.animatePan(ol.proj.fromLonLat(target['coordinates']));
+                var view = this.olmap.getView();
                 // zoom slightly closer in for campgrounds
+                var resolution = vm.resolutions[10];
                 if (target['properties']['type'] == 'Campground') {
-                    vm.animateZoom(vm.resolutions[12]);
-                } else {
-                    vm.animateZoom(vm.resolutions[10]);
+                    resolution = vm.resolutions[12];
                 }
+                // pan to the spot, zoom slightly closer in for campgrounds
+                view.animate({
+                    center: ol.proj.fromLonLat(target['coordinates']),
+                    resolution: resolution,
+                    duration: 1000
+                });
                 return;
             }
 
@@ -499,27 +503,17 @@ export default {
                     if (data.features && data.features.length > 0) {
                         //console.log('Mapbox!');
                         //console.log(data.features[0]);
-                        vm.animatePan(ol.proj.fromLonLat(data.features[0].geometry.coordinates));
-                        vm.animateZoom(vm.resolutions[12]);
+                        var view = this.olmap.getView();
+                        view.animate({
+                            center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
+                            resolution: vm.resolutions[12],
+                            duration: 1000
+                        });
 
                     }
                 }
             })
 
-        },
-        animatePan: function(location) {
-            var pan = ol.animation.pan({
-                source: this.center
-            });
-            this.olmap.beforeRender(pan);
-            this.olmap.getView().setCenter(location);
-        },
-        animateZoom: function(resolution) {
-            var zoom = ol.animation.zoom({
-                resolution: this.olmap.getView().getResolution()
-            });
-            this.olmap.beforeRender(zoom);
-            this.olmap.getView().setResolution(resolution);
         },
         groundFilter: function(feature) {
             return true;
@@ -911,7 +905,7 @@ export default {
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
-                //$("#mapPopupInfo")[0].innerHTML = feature.get('name');
+                $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
                 } else {
