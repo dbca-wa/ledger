@@ -17,6 +17,9 @@
             font-size: 18px;
 
         }
+        [v-cloak] {
+            display: none;
+        }
     </style>
 {% endblock %}
 {% block content %}
@@ -47,7 +50,7 @@
                             <h3 class="text-primary">Booking information</h3>
                         </div>
                         <div class="col-md-2">
-                              <img src="https://placeholdit.imgix.net/~text?txtsize=33&txt=Campground&w=128&h=128" alt="campground"  class="img-thumbnail img-responsive">
+                              <img style="width: 128px; height: 128px;" alt="campground"  class="img-thumbnail img-responsive">
                               <p class="pricing" >
                                   <strong >$12.00</strong>
                                   <br> <span class="text-muted">Per adult per night</span>
@@ -166,12 +169,6 @@
                               {{ form.phone|class:'form-control'}}
                           </div>
                       </div>
-                      <div class="col-md-3">
-                          <div class="form-group">
-                              {{form.vehicle_rego.label_tag}}
-                              {{ form.vehicle_rego|class:'form-control'}}
-                          </div>
-                      </div>
                     </div>
                 </div>
             </div>
@@ -182,14 +179,15 @@
                     <div class="row">
                       <div class="col-md-6">
                           <div class="form-group">
-                            <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.Park entry fee(where applicable) not included.)</span></label>
+                            <label for="Total Price">Total Price <span class="text-muted">(GST inclusive. Park entry fee (where applicable) not included.)</span></label>
                             <div class="input-group">
                               <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
-                              <input type="text" class="form-control" :placeholder="0|formatMoney(2)" value="12" readonly="true">
+                              <input type="text" class="form-control" :value="total|formatMoney(2)" readonly="true">
                             </div>
                           </div>
                       </div>
                     </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <p class="text-muted">
@@ -197,7 +195,7 @@
                             </p>
                         </div>
                         <div class="col-md-6">
-                          <button type="submit" class="btn btn-primary btn-lg pull-right">Pay Now</button>
+                          <button type="submit" class="btn btn-primary btn-lg pull-right">Proceed to payment</button>
                         </div>
                     </div>
                 </div>
@@ -217,7 +215,14 @@
     var book = new Vue({
         el: '#addBooking',
         data: {
-            timer: {{ expiry }}
+            timer: {{ expiry }},
+            pricing: {
+                adult: {{ pricing.adult }},
+                concession: {{ pricing.concession }},
+                child: {{ pricing.child }},
+                infant: {{ pricing.infant }}
+            },
+            total: 0,
         },
         filters:{
             formatMoney:function(n,c, d, t){
@@ -257,6 +262,16 @@
             }
         },
         methods:{
+            calculateTotal: function () {
+                var vm = this;
+                var form = document.forms.addBookingForm;
+                vm.total = 0;
+                vm.total += (parseInt(form.num_adult.value) || 0)*vm.pricing.adult;
+                vm.total += (parseInt(form.num_concession.value) || 0)*vm.pricing.concession;
+                vm.total += (parseInt(form.num_child.value) || 0)*vm.pricing.child;
+                vm.total += (parseInt(form.num_infant.value) || 0)*vm.pricing.infant;
+                return;
+            },
             validate:function (e) {
                 var isValid = true;
                 var form = document.forms.addBookingForm;
@@ -279,7 +294,6 @@
                          }
                     }
                 });
-                console.log(isValid);
                 if (isValid) {
                     form.submit();
                 }
@@ -287,6 +301,8 @@
         },
         mounted: function () {
             var vm = this;
+
+            // update the countdown timer every second
             var timer = setInterval(function (ev) {
                 if (vm.timer > 0) {
                     vm.timer -= 1;
@@ -295,6 +311,17 @@
                     location.reload();
                 }
             }, 1000);
+
+            // wire up events to the form controls
+            var cbCalc = function (ev) {
+                vm.calculateTotal();
+            };
+
+            document.forms.addBookingForm.num_adult.addEventListener('change', cbCalc);
+            document.forms.addBookingForm.num_concession.addEventListener('change', cbCalc);
+            document.forms.addBookingForm.num_child.addEventListener('change', cbCalc);
+            document.forms.addBookingForm.num_infant.addEventListener('change', cbCalc);
+            vm.calculateTotal();
         }
     });
 </script>

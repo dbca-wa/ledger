@@ -23,8 +23,10 @@ from parkstay.models import (Campground,
                                 )
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
+from decimal import *
 
 from parkstay.helpers import is_officer
+from parkstay import utils
 
 class CampsiteBookingSelector(TemplateView):
     template_name = 'ps/campsite_booking_selector.html'
@@ -110,11 +112,26 @@ class MakeBookingsView(TemplateView):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         campsite = booking.campsitebooking_set.all()[0].campsite if booking else None
+        pricing = {
+            'adult': Decimal('0.00'),
+            'concession': Decimal('0.00'),
+            'child': Decimal('0.00'),
+            'infant': Decimal('0.00'),
+        }
+        if booking:
+            pricing_list = utils.get_visit_rates(Campsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
+            pricing['adult'] = sum([x['adult'] for x in pricing_list.values()])
+            pricing['concession'] = sum([x['concession'] for x in pricing_list.values()])
+            pricing['child'] = sum([x['child'] for x in pricing_list.values()])
+            pricing['infant'] = sum([x['infant'] for x in pricing_list.values()])
+
+
         return render(request, self.template_name, {
             'form': form, 
             'booking': booking,
             'campsite': campsite,
-            'expiry': expiry
+            'expiry': expiry,
+            'pricing': pricing
         })
 
     def post(self, request, *args, **kwargs):

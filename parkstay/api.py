@@ -84,7 +84,6 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     ParkEntryRateSerializer,
                                     )
 from parkstay.helpers import is_officer, is_customer
-from parkstay.utils import create_booking_by_class, get_campsite_availability
 
 
 
@@ -717,13 +716,17 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch all the campsites and applicable rates for the campground
         sites_qs = Campsite.objects.filter(campground=ground).filter(**{gear_type: True})
-        rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
+        
+        # fetch rate map
+        rates = {
+            siteid: {
+                date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
+                for date, info in dates.items()
+            } for siteid, dates in parkstay.utils.get_visit_rates(sites_qs, start_date, end_date).items()
+        }
 
         # fetch availability map
-        availability = get_campsite_availability(sites_qs, start_date, end_date)
-
-        # make a map of campsite class to cost
-        rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
+        availability = parkstay.utils.get_campsite_availability(sites_qs, start_date, end_date)
 
         # create our result object, which will be returned as JSON
         result = {
@@ -745,6 +748,20 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             classes_map = {}
             bookings_map = {}
 
+            # create a rough mapping of rates to campsite classes
+            # (it doesn't matter if this isn't a perfect match, the correct
+            # pricing will show up on the booking page)
+            rates_map = {}
+
+            class_sites_map = {}
+            for s in sites_qs:
+                if s.campsite_class.pk not in class_sites_map:
+                    class_sites_map[s.campsite_class.pk] = set()
+                    rates_map[s.campsite_class.pk] = rates[s.pk]
+
+                class_sites_map[s.campsite_class.pk].add(s.pk)
+
+
             # make an entry under sites for each campsite class
             for c in classes:
                 rate = rates_map[c[1]]
@@ -752,22 +769,17 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'name': c[2],
                     'id': None,
                     'type': c[1],
-                    'price': '${}'.format(rate*length),
-                    'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
+                    'price': '${}'.format(sum(rate.values())),
+                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
                     'breakdown': OrderedDict()
                 }
                 result['sites'].append(site)
                 classes_map[c[1]] = site
 
             # make a map of class IDs to site IDs
-            class_sites_map = {}
             for s in sites_qs:
-                if s.campsite_class.pk not in class_sites_map:
-                    class_sites_map[s.campsite_class.pk] = set()
-
-                class_sites_map[s.campsite_class.pk].add(s.pk)
                 rate = rates_map[s.campsite_class.pk]
-                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate), rate] for i in range(length)]
+                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)]] for i in range(length)]
 
             # store number of campsites in each class
             class_sizes = {k: len(v) for k, v in class_sites_map.items()}
@@ -815,8 +827,8 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     rate = rates_map[k]
                     classes_map[k].update({
                         'id': v.pop(),
-                        'price': '${}'.format(rate*length),
-                        'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
+                        'price': '${}'.format(sum(rate.values())),
+                        'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
                         'breakdown': []
                     })
 
@@ -827,7 +839,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         # don't group by class, list individual sites
         else:
             # from our campsite queryset, generate a digest for each site
-            sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates_map[s.campsite_class_id])) for s in sites_qs])
+            sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk])) for s in sites_qs])
             bookings_map = {}
 
             # make an entry under sites for each site
@@ -837,8 +849,8 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'id': v[0],
                     'type': ground.campground_type,
                     'class': v[1].pk,
-                    'price': '${}'.format(v[2]*length),
-                    'availability': [[True, '${}'.format(v[2]), v[2]] for i in range(length)]
+                    'price': '${}'.format(sum(v[2].values())),
+                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)]
                 }
                 result['sites'].append(site)
                 bookings_map[k] = site
@@ -897,7 +909,7 @@ def create_class_booking(request, *args, **kwargs):
 
     # try to create a temporary booking
     try:
-        booking = create_booking_by_class(
+        booking = parkstay.utils.create_booking_by_class(
             campground, campsite_class,
             start_date, end_date,
             num_adult, num_concession,
