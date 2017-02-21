@@ -12,9 +12,10 @@ from ledger.payments.utils import checkURL
 from ledger.payments.cash.models import REGION_CHOICES
 #
 from ledger.payments.models import Invoice
+from ledger.payments.mixins import InvoiceOwnerMixin 
 #
 
-class InvoicePDFView(generic.View):
+class InvoicePDFView(InvoiceOwnerMixin,generic.View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         response = HttpResponse(content_type='application/pdf')
@@ -22,7 +23,7 @@ class InvoicePDFView(generic.View):
 
         return response
 
-class InvoiceDetailView(generic.DetailView):
+class InvoiceDetailView(InvoiceOwnerMixin,generic.DetailView):
     model = Invoice
     template_name = 'dpaw_payments/invoice/invoice.html'
     context_object_name = 'invoice'
@@ -43,7 +44,7 @@ class InvoiceSearchView(generic.TemplateView):
 
     template_name = 'dpaw_payments/invoice/invoice_search.html'
 
-class InvoicePaymentView(generic.DetailView):
+class InvoicePaymentView(InvoiceOwnerMixin,generic.DetailView):
     template_name = 'dpaw_payments/invoice/payment.html'
     num_years = 10
     context_object_name = 'invoice'
