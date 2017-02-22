@@ -119,7 +119,7 @@
                                 </p>
                             </td>
                             <td>{{ line.quantity }}</td>
-                            <td>${{ line.line_price_before_discounts_excl_tax}}</td>
+                            <td>${{ line.unit_price_excl_tax }}</td>
                             <td>${{ line.line_price_before_discounts_incl_tax|subtract:line.line_price_before_discounts_excl_tax }}</td>
                             <td>${{ line.line_price_before_discounts_incl_tax }}</td>
                             
