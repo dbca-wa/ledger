@@ -270,13 +270,10 @@ def internal_booking(request,user,booking):
                     lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
         # Create line items for vehicles
         for k,v in json_booking['parkEntry'].items():
-            print k
             if k != 'regos' and k != 'entry_fee':
-                print 'here'
                 if int(v) > 0:
                     price =  json_booking['costs']['parkEntry'][k]
                     lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
-        print (lines)
         parameters = {
             'system': 'S369',
             'basket_owner': user.id,
@@ -303,7 +300,11 @@ def internal_booking(request,user,booking):
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
 
-        print(response.__dict__)
+
+        booking.invoice_reference = response.history[-1].url.split('=')[1]
+        booking.save()
+
+        return booking
 def set_session_booking(session, booking):
     session['booking_id'] = booking.id
 

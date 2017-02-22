@@ -1277,7 +1277,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         except EmailUser.DoesNotExist:
             raise
         data = utils.create_booking_by_site(campsite_id= request.data['campsite'], start_date = start_date, end_date=end_date, num_adult=guests['adult'], num_concession=guests['concession'], num_child=guests['child'], num_infant=guests['infant'],cost_total=costs['total'],customer=customer)
-        utils.internal_booking(request,customer,data)
+        data = utils.internal_booking(request,customer,data)
         serializer = BookingSerializer(data)
         return Response(serializer.data)
 
