@@ -422,9 +422,6 @@ export default {
                     vm.$http.get(api_endpoints.campground_current_price(vm.campground.id,arrival.format("YYYY-MM-DD"),departure.format("YYYY-MM-DD"))).then((response)=>{
                         vm.priceHistory = null;
                         vm.priceHistory = response.body;
-                        if (vm.park.entry_fee_required){
-                            vm.fetchParkPrices();
-                        }
                         vm.generateBookingPrice();
                         vm.loading.splice('updating prices',1);
                     },(error)=>{
@@ -502,9 +499,6 @@ export default {
             vm.loading.push('fetching park');
             vm.$http.get(api_endpoints.park(vm.campground.park)).then((response)=>{
                 vm.park = response.body;
-                if (vm.park.entry_fee_required){
-                    vm.fetchParkPrices();
-                }
                 vm.loading.splice('fetching park',1);
             },(error)=>{
                 console.log(error);
@@ -596,36 +590,43 @@ export default {
         generateBookingPrice:function () {
             let vm =this;
             vm.booking.price = 0;
-            $.each(vm.priceHistory,function (i,price) {
-                for (var guest in vm.booking.guests) {
-                    if (vm.booking.guests.hasOwnProperty(guest)) {
-                        vm.booking.price += vm.booking.guests[guest] * price.rate[guest];
-                    }
-                }
+            if (vm.park.entry_fee_required){
+                vm.fetchParkPrices(function(){
 
-            });
-            vm.booking.entryFees.entry_fee = 0;
-            $.each(vm.parkEntryVehicles,function (i,entry) {
-                if (vm.parkPrices.length > 0) {
-                    switch (entry.id) {
-                        case 'vehicle':
-                            vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
-                            vm.booking.entryFees.vehicle++;
-                            break;
-                        case 'motorbike':
-                            vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.motorbike);
-                            vm.booking.entryFees.motorbike++;
-                            break;
-                        case 'concession':
-                            vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.concession);
-                            vm.booking.entryFees.concession++;
-                            break;
+                    $.each(vm.priceHistory,function (i,price) {
+                        for (var guest in vm.booking.guests) {
+                            if (vm.booking.guests.hasOwnProperty(guest)) {
+                                vm.booking.price += vm.booking.guests[guest] * price.rate[guest];
+                            }
+                        }
 
-                    }
-                }
-            });
+                    });
+                    vm.booking.entryFees.entry_fee = 0;
+                    $.each(vm.parkEntryVehicles,function (i,entry) {
+                        entry = JSON.parse(JSON.stringify(entry));
+                        if (vm.parkPrices) {
+                            switch (entry.id) {
+                                case 'vehicle':
+                                    vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
+                                    vm.booking.entryFees.vehicle++;
+                                    break;
+                                case 'motorbike':
+                                    vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.motorbike);
+                                    vm.booking.entryFees.motorbike++;
+                                    break;
+                                case 'concession':
+                                    vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.concession);
+                                    vm.booking.entryFees.concession++;
+                                    break;
 
-            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+                            }
+                        }
+                    });
+
+                    vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+                    
+                });
+            }
         },
         fetchUsers:function (event) {
             let vm = this;
@@ -637,17 +638,19 @@ export default {
                 });
             });
         },
-        fetchParkPrices:function (event) {
+        fetchParkPrices:function (calcprices) {
             let vm = this;
             if (vm.booking.arrival) {
                 var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY-MM-DD");
-                console.log(arrival);
                 vm.$http.get(api_endpoints.park_current_price(vm.park.id,arrival)).then((response)=>{
                     vm.parkPrices = response.body;
+                    calcprices();
                 });
             }else{
-                vm.parkPrices = [];
+                vm.parkPrices = {};
+                calcprices();
             }
+
         },
         autofillUser:function (event) {
             let vm =this;
@@ -719,7 +722,6 @@ export default {
                     }
                 }
 
-                console.log(JSON.stringify(booking));
                 vm.$http.post(api_endpoints.bookings,JSON.stringify(booking),{
                     emulateJSON:true,
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},

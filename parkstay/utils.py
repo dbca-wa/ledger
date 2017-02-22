@@ -270,9 +270,12 @@ def internal_booking(request,user,booking):
                     lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_excl_tax":price,"price_incl_tax":price,"oracle_code":"1236"})
         # Create line items for vehicles
         for k,v in json_booking['parkEntry'].items():
-            if int(v) > 0:
-                price =  json_booking['costs']['parkEntry'][k]
-                lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_excl_tax":price,"price_incl_tax":price,"oracle_code":"1236"})
+            print k
+            if k != 'regos' and k != 'entry_fee':
+                print 'here'
+                if int(v) > 0:
+                    price =  json_booking['costs']['parkEntry'][k]
+                    lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_excl_tax":price,"price_incl_tax":price,"oracle_code":"1236"})
         print (lines)
         parameters = {
             'system': 'S369',
