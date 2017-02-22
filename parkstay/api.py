@@ -1001,18 +1001,17 @@ class ParkViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['get'])
     def current_price(self, request, format='json', pk=None):
-        http_status = status.HTTP_200_OK
-        res = None
         try:
-            price_history = ParkEntryRate.objects.filter(period_start__lte = datetime.now().date()).order_by('-period_start')
-            if price_history:
-                serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
-                res = serializer.data[0]
-            else:
-                res = {
-                    "error":"There is no park entry set for this park",
-                    "success":False
-                }
+            http_status = status.HTTP_200_OK
+            start_date = request.GET.get('arrival',False)
+            res = []
+            if start_date:
+                start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+                price_history = ParkEntryRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+                if price_history:
+                    serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
+                    res = serializer.data[0]
+
         except Exception as e:
             res ={
                 "Error": str(e)
