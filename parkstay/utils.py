@@ -303,3 +303,7 @@ def delete_session_booking(session):
     if 'booking_id' in session:
         del session['booking_id']
         session.modified = True
+
+def daterange(start_date, end_date):
+    for n in range(int ((end_date - start_date).days)):
+        yield start_date + timedelta(n)
