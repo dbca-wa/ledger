@@ -649,11 +649,17 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
                 for single_date in utils.daterange(start_date, end_date):
                     price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id,date_start__lte=single_date).order_by('-date_start')
-                    serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
-                    res.append({
-                        "date" : single_date.strftime("%Y-%m-%d") ,
-                        "rate" : serializer.data[0]
-                    })
+                    if price_history:
+                        serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+                        res.append({
+                            "date" : single_date.strftime("%Y-%m-%d") ,
+                            "rate" : serializer.data[0]
+                        })
+                    else:
+                        res.append({
+                            "error":"There is no park entry set",
+                            "success":False
+                        })
             else:
                 res.append({
                     "error":"Arrival and departure dates are required",
@@ -662,6 +668,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
+            traceback.print_exc()
             raise
         except Exception as e:
             raise serializers.ValidationError(str(e))
@@ -998,8 +1005,14 @@ class ParkViewSet(viewsets.ModelViewSet):
         res = None
         try:
             price_history = ParkEntryRate.objects.filter(period_start__lte = datetime.now().date()).order_by('-period_start')
-            serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
-            res = serializer.data[0]
+            if price_history:
+                serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
+                res = serializer.data[0]
+            else:
+                res = {
+                    "error":"There is no park entry set for this park",
+                    "success":False
+                }
         except Exception as e:
             res ={
                 "Error": str(e)
