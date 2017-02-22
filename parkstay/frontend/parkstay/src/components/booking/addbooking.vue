@@ -636,7 +636,9 @@ export default {
         fetchParkPrices:function (event) {
             let vm = this;
             vm.$http.get(api_endpoints.park_current_price(vm.park.id)).then((response)=>{
-                vm.parkPrices = response.body;
+                var res = response.body;
+                console.log(res);
+                vm.parkPrices = (res.hasOwnProperty('success')) ? [] : res ;
             });
         },
         autofillUser:function (event) {

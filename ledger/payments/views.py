@@ -23,6 +23,10 @@ class InvoicePDFView(InvoiceOwnerMixin,generic.View):
 
         return response
 
+    def get_object(self):
+        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        return invoice
+
 class InvoiceDetailView(InvoiceOwnerMixin,generic.DetailView):
     model = Invoice
     template_name = 'dpaw_payments/invoice/invoice.html'
