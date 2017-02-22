@@ -1170,26 +1170,12 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-class BookingPagination(PageNumberPagination):
-    page_size = 10
-    max_page_size = 100
 
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
-    pagination_class = BookingPagination
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()[:10];
-        data =  cache.get('serializer_bookings')
-        if not data:
-            serializer = self.get_serializer(queryset,many=True)
-            data = serializer.data
-            cache.set('serializer_bookings',data,3600)
-        return Response(data,status.HTTP_200_OK)
-
-    @list_route()
-    def datatable_list(self, request, *args, **kwargs):
         from django.db import connection, transaction
         search = request.GET.get('search[value]')
         draw = request.GET.get('draw') if request.GET.get('draw') else 1
