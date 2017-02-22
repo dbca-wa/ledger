@@ -289,6 +289,15 @@ if not PRODUCTION_EMAIL:
         raise ImproperlyConfigured('EMAIL_INSTANCE must be either "PROD","DEV","TEST","UAT"')
     if EMAIL_INSTANCE == 'PROD':
         raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PROD\' if PRODUCTION_EMAIL is set to False')
+# GST Settings
+LEDGER_GST = env('LEDGER_GST',10)
+try:
+    if not float(LEDGER_GST).is_integer():
+        raise ImproperlyConfigured('LEDGER_GST must be an integer')
+except Exception as e:
+    raise ImproperlyConfigured('LEDGER_GST must be an integer')
+if LEDGER_GST < 0 or LEDGER_GST > 99:
+    raise ImproperlyConfigured('LEDGER_GST must be between 0 and 100')
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True

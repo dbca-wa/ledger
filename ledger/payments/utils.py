@@ -1,5 +1,6 @@
 import requests
 import json
+from decimal import Decimal as D
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -56,6 +57,10 @@ def validSystem(system_id):
         return True
     except:
         raise
+
+def calculate_excl_gst(amount):
+    percentage = D(100 - settings.LEDGER_GST)/ D(100.0)
+    return percentage * D(amount)
 
 def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
     ''' Create a basket so that a user can check it out.
@@ -154,10 +159,11 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         basket.strategy = selector.strategy(user=owner)
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
-        defaults = ('ledger_description','quantity','price_excl_tax','price_incl_tax','oracle_code')
+        defaults = ('ledger_description','quantity','price_incl_tax','oracle_code')
         for p in product_list:
             if not all(d in p for d in defaults):
                 raise ValidationError('Please make sure that the product format is valid')
+            p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
         # Save the basket
         basket.save()
         # Add the valid products to the basket

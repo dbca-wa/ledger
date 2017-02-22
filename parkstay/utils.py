@@ -267,7 +267,7 @@ def internal_booking(request,user,booking):
                     start = datetime.strptime(r['start'],"%Y-%m-%d").date()
                     num_days = int ((end - start).days) + 1
                     price = str((num_days * Decimal(r[k])))
-                    lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_excl_tax":price,"price_incl_tax":price,"oracle_code":"1236"})
+                    lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
         # Create line items for vehicles
         for k,v in json_booking['parkEntry'].items():
             print k
@@ -275,7 +275,7 @@ def internal_booking(request,user,booking):
                 print 'here'
                 if int(v) > 0:
                     price =  json_booking['costs']['parkEntry'][k]
-                    lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_excl_tax":price,"price_incl_tax":price,"oracle_code":"1236"})
+                    lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
         print (lines)
         parameters = {
             'system': 'S369',
