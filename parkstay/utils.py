@@ -249,13 +249,31 @@ def internal_booking(request,user,booking):
     except Booking.DoesNotExist:
         raise
     with transaction.atomic():
-        reservation = "Reservation for {} from {} to {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure)
+        reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
         # Create line items for booking
         json_booking = dict(json_booking)
+        rate_list = {}
+        # Create line items for customers
+        for c in json_booking['costs']['campground']:
+            if c['rate']['rate_id'] not in rate_list.keys():
+                rate_list[c['rate']['rate_id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
+            else:
+                rate_list[c['rate']['rate_id']]['end'] = c['date']
         for k,v in json_booking.get('guests').items():
             if int(v) > 0:
-                lines.append({'ledger_description':k,"quantity":v,"price_excl_tax":json_booking['costs']['campground'][k],"price_incl_tax":json_booking['costs']['campground'][k],"oracle_code":"1236"})
-        print(lines)
+                for i,r in rate_list.items():
+                    price = Decimal(0)
+                    end = datetime.strptime(r['end'],"%Y-%m-%d").date()
+                    start = datetime.strptime(r['start'],"%Y-%m-%d").date()
+                    num_days = int ((end - start).days) + 1
+                    price = str((num_days * Decimal(r[k])))
+                    lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_excl_tax":price,"price_incl_tax":price,"oracle_code":"1236"})
+        # Create line items for vehicles
+        for k,v in json_booking['parkEntry'].items():
+            if int(v) > 0:
+                price =  json_booking['costs']['parkEntry'][k]
+                lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_excl_tax":price,"price_incl_tax":price,"oracle_code":"1236"})
+        print (lines)
         parameters = {
             'system': 'S369',
             'basket_owner': user.id,
@@ -265,6 +283,7 @@ def internal_booking(request,user,booking):
             'proxy': True,
             "products": lines,
             "custom_basket": True,
+            "invoice_text": reservation,
             "vouchers": []
         }
 
