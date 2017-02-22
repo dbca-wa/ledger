@@ -526,7 +526,7 @@ export default {
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
-                departurePicker.data("DateTimePicker").minDate(e.date.add(1,'d'));
+                departurePicker.data("DateTimePicker").minDate(e.date);
                 departurePicker.data("DateTimePicker").date(null);
             });
             departurePicker.on('dp.change', function(e){
@@ -592,6 +592,7 @@ export default {
         },
         generateBookingPrice:function () {
             let vm =this;
+            vm.booking.price = 0;
             $.each(vm.priceHistory,function (i,price) {
                 for (var guest in vm.booking.guests) {
                     if (vm.booking.guests.hasOwnProperty(guest)) {
