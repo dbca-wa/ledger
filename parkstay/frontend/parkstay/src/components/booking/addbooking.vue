@@ -624,7 +624,7 @@ export default {
                     });
 
                     vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
-                    
+
                 });
             }
         },
@@ -670,6 +670,7 @@ export default {
         bookNow:function () {
             let vm = this;
             if (vm.isFormValid()) {
+                vm.loading.push('processing booking');
                 vm.booking.entryFees = {
                     vehicle : 0,
                     motorbike: 0,
@@ -726,9 +727,10 @@ export default {
                     emulateJSON:true,
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 }).then((success)=>{
-                    console.log(success);
+                    location.reload();
                 },(error)=>{
                     console.log(error);
+                    vm.loading.splice('processing booking',1);
                 });
             }
 
@@ -745,11 +747,6 @@ export default {
                     isValid = false;
                 }
             }
-            /** Move this to submit **
-            *if (vm.booking.parkEntry.regos.length > vm.booking.parkEntry.vehicles  ) {
-            *    vm.booking.parkEntry.regos.splice((vm.booking.parkEntry.vehicles-1),(vm.booking.parkEntry.regos.length - vm.booking.parkEntry.vehicles));
-            *}
-            */
             return isValid;
         },
         addFormValidations: function() {
