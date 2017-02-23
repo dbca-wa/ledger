@@ -850,13 +850,24 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
-
+    
+    # Properties
+    # =================================
     @property
     def num_days(self):
         return (self.departure-self.arrival).days
 
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if self.arrival > today <= self.departure:
+            return True
+        return False
+    # Methods
+    # =================================
     def __str__(self):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
+
 
 class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""

@@ -1,4 +1,3 @@
-from django.core.exceptions import ImproperlyConfigured
 from confy import env, database
 from oscar.defaults import *
 from oscar import get_core_apps, OSCAR_MAIN_TEMPLATE_DIR
@@ -265,7 +264,9 @@ CMS_URL=env('CMS_URL',None)
 LEDGER_USER=env('LEDGER_USER',None)
 LEDGER_PASS=env('LEDGER_PASS')
 NOTIFICATION_EMAIL=env('NOTIFICATION_EMAIL')
-
+BPAY_GATEWAY = env('BPAY_GATEWAY','127.0.0.1')
+# GST Settings
+LEDGER_GST = env('LEDGER_GST',10)
 # BPAY settings
 BPAY_ALLOWED = env('BPAY_ALLOWED',True)
 BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
@@ -282,22 +283,6 @@ PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', False)
 #print PRODUCTION_EMAIL
 EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
 NON_PROD_EMAIL = env('NON_PROD_EMAIL')
-if not PRODUCTION_EMAIL:
-    if not NON_PROD_EMAIL:
-        raise ImproperlyConfigured('NON_PROD_EMAIL must not be empty if PRODUCTION_EMAIL is set to False')
-    if EMAIL_INSTANCE not in ['PROD','DEV','TEST','UAT']:
-        raise ImproperlyConfigured('EMAIL_INSTANCE must be either "PROD","DEV","TEST","UAT"')
-    if EMAIL_INSTANCE == 'PROD':
-        raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PROD\' if PRODUCTION_EMAIL is set to False')
-# GST Settings
-LEDGER_GST = env('LEDGER_GST',10)
-try:
-    if not float(LEDGER_GST).is_integer():
-        raise ImproperlyConfigured('LEDGER_GST must be an integer')
-except Exception as e:
-    raise ImproperlyConfigured('LEDGER_GST must be an integer')
-if LEDGER_GST < 0 or LEDGER_GST > 99:
-    raise ImproperlyConfigured('LEDGER_GST must be between 0 and 100')
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True
