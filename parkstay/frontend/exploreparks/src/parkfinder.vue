@@ -379,6 +379,7 @@ div.awesomplete > input {
 <script>
 import Awesomplete from 'awesomplete';
 import ol from 'openlayers';
+//var ol = require('openlayers/dist/ol-debug');
 import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
