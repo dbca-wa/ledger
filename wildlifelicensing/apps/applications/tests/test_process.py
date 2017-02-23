@@ -1,14 +1,18 @@
 import json
+import datetime
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django_dynamic_fixture import G
 
 from wildlifelicensing.apps.applications.models import IDRequest
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, is_login_page, \
     get_or_create_default_officer, get_or_create_default_assessor_group, is_email, get_email, clear_mailbox, upload_id, \
     clear_all_id_files, is_client_authenticated
-from wildlifelicensing.apps.applications.tests.helpers import create_and_lodge_application, get_or_create_assessment
+from wildlifelicensing.apps.applications.tests.helpers import create_and_lodge_application, get_or_create_assessment, \
+    get_or_create_condition
 from wildlifelicensing.apps.applications.emails import ApplicationIDUpdateRequestedEmail
+from wildlifelicensing.apps.main.models import Region
 
 
 class TestStatusLifeCycle(TestCase):
@@ -69,6 +73,53 @@ class TestStatusLifeCycle(TestCase):
         self.assertEqual('updated', application.id_check_status)
         self.assertEqual('under_review', application.customer_status)
         self.assertEqual('ready_for_action', application.processing_status)
+
+    def test_issued_status_after_entering_condition(self):
+        """
+        Test that if an application has been issued, entering condition leave the status has issued
+        @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2736&project_id=24
+        """
+        application = create_and_lodge_application(self.user)
+        # set some conditions
+        url = reverse('wl_applications:enter_conditions', args=[application.pk])
+        condition = get_or_create_condition('0001', {"text": "For unit test"})
+        data = {
+            'conditionID': [condition.pk]
+        }
+        self.client.login(self.officer.email)
+        self.assertTrue(is_client_authenticated(self.client))
+        resp = self.client.post(url, data=data, follow=True)
+        self.assertEquals(200, resp.status_code)
+        application.refresh_from_db()
+        self.assertEquals(application.processing_status, 'ready_to_issue')
+        # issue licence
+        url = reverse('wl_applications:issue_licence', args=[application.pk])
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        data = {
+            'regions': [G(Region).pk],
+            'return_frequency': -1,
+            'issue_date': str(today),
+            'start_date': str(today),
+            'end_date': str(tomorrow)
+        }
+        resp = self.client.post(url, data=data, follow=True)
+        self.assertEquals(200, resp.status_code)
+        application.refresh_from_db()
+        self.assertEquals(application.processing_status, 'issued')
+
+        # now repost conditions
+        url = reverse('wl_applications:enter_conditions', args=[application.pk])
+        condition = get_or_create_condition('0001', {"text": "For unit test"})
+        data = {
+            'conditionID': [condition.pk]
+        }
+        resp = self.client.post(url, data=data, follow=True)
+        self.assertEquals(200, resp.status_code)
+        application.refresh_from_db()
+        # status should not be 'ready_to_issue' but 'issued'
+        expected_status = 'issued'
+        self.assertEquals(application.processing_status, expected_status)
 
 
 class TestViewAccess(TestCase):
