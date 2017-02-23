@@ -1,18 +1,18 @@
 
 module.exports = {
     status_history:function(id){
-        return "/api/campgrounds/" + id + "/status_history.json?closures=True"
+        return "/api/campgrounds/" + id + "/status_history.json?closures=True";
     },
     regions:"/api/regions.json",
     parks:"/api/parks.json",
     park_price_history:function (id) {
-       return "/api/parks/"+id+"/price_history.json"
+       return "/api/parks/"+id+"/price_history.json";
     },
-    park_current_price:function (id) {
-      return "/api/parks/"+id+"/current_price.json"
+    park_current_price:function (id,arrival) {
+      return "/api/parks/"+id+"/current_price.json?arrival="+arrival;
     },
     park:function (id) {
-       return "/api/parks/"+id+".json"
+       return "/api/parks/"+id+".json";
     },
     // Campgrounds
     campgrounds:"/api/campgrounds.json",
@@ -21,6 +21,9 @@ module.exports = {
     },
     campground_price_history: function(id){
         return "/api/campgrounds/"+ id +"/price_history.json";
+    },
+    campground_current_price:function (id,start,end) {
+       return "/api/campgrounds/"+ id +"/current_price.json?arrival="+start+"&departure="+end;
     },
     campgroundStayHistory: function(id){
         return "/api/campgrounds/" + id + "/stay_history.json"

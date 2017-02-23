@@ -239,7 +239,7 @@ def _create_invoice(invoice_buffer, invoice):
         elements.append(Paragraph(invoice.text, styles['Left']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     data = [
-        ['Item','Product', 'Quantity','Unit Price','GST', 'Amount']
+        ['Item','Product', 'Quantity','Unit Price','GST', 'Total']
     ]
     val = 1
     for item in items:
@@ -248,7 +248,7 @@ def _create_invoice(invoice_buffer, invoice):
                 val,
                 Paragraph(item.description, styles['Normal']),
                 item.quantity,
-                '${}'.format(item.line_price_before_discounts_excl_tax),
+                '${}'.format(item.unit_price_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax)
             ]

@@ -59,6 +59,10 @@ class Invoice(models.Model):
         return self.order.num_items
 
     @property
+    def shipping_required(self):
+        return self.order.basket.is_shipping_required() if self.order else False
+    
+    @property
     def bpay_transactions(self):
         ''' Get this invoice's bpay transactions.
         '''

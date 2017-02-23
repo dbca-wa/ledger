@@ -105,7 +105,7 @@
                     <th>{% trans 'Qty' %}</th>
                     <th>{% trans 'Unit Price' %}</th>
                     <th>{% trans 'GST' %}</th>
-                    <th>{% trans 'Amount' %}</th>
+                    <th>{% trans 'Total' %}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -119,7 +119,7 @@
                                 </p>
                             </td>
                             <td>{{ line.quantity }}</td>
-                            <td>${{ line.line_price_before_discounts_excl_tax}}</td>
+                            <td>${{ line.unit_price_excl_tax }}</td>
                             <td>${{ line.line_price_before_discounts_incl_tax|subtract:line.line_price_before_discounts_excl_tax }}</td>
                             <td>${{ line.line_price_before_discounts_incl_tax }}</td>
                             
@@ -153,38 +153,44 @@
                                 <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
                             </tr>
                         {% else %}
-                            <tr>
-                                <th colspan="4">{% trans "Basket total" %}</th>
-                                <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
-                            </tr>
+                            {% if invoice.order.shipping_required %}
+                                <tr>
+                                    <th colspan="4">{% trans "Items total" %}</th>
+                                    <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
+                                </tr>
+                            {% endif %}
                         {% endif %}
                     {% endblock basket_total %}
                 {% endwith %}
     
                 {% block shipping_totals %}
-                    {% if invoice.order.has_shipping_discounts %}
-                        <tr>
-                            <td colspan="4">{% trans "Shipping total (excl. discounts)" %}</td>
-                            <td colspan="2">${{ invoice.order.shipping_before_discounts_incl_tax }}</td>
-                        </tr>
-                        {% for discount in invoice.order.shipping_discounts %}
-                        <tr>
-                            <td colspan="4">
-                                <span class="label label-success">{% trans "Discount" %}</span>
-                                {{ discount.offer_name }}
-                            </td>
-                            <td colspan="2">- ${{ discount.amount }}</td>
-                        </tr>
-                        {% endfor %}
-                        <tr>
-                            <th colspan="4">{% trans "Shipping total (inc. discounts)" %}</th>
-                            <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
-                        </tr>
+                    {% if invoice.order.shipping_required %}
+                        {% if invoice.order.has_shipping_discounts %}
+                            <tr>
+                                <td colspan="4">{% trans "Shipping total (excl. discounts)" %}</td>
+                                <td colspan="2">${{ invoice.order.shipping_before_discounts_incl_tax }}</td>
+                            </tr>
+                            {% for discount in invoice.order.shipping_discounts %}
+                            <tr>
+                                <td colspan="4">
+                                    <span class="label label-success">{% trans "Discount" %}</span>
+                                    {{ discount.offer_name }}
+                                </td>
+                                <td colspan="2">- ${{ discount.amount }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <th colspan="4">{% trans "Shipping total (inc. discounts)" %}</th>
+                                <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <th colspan="4">{% trans "Shipping total" %}</th>
+                                <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
+                            </tr>
+                        {% endif %}
                     {% else %}
-                        <tr>
-                            <th colspan="4">{% trans "Shipping total" %}</th>
-                            <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
-                        </tr>
+                        <tr rowspan="7"><td  ></td></tr>
                     {% endif %}
                 {% endblock %}
     

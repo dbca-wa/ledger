@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 
 from decimal import *
-
+import json
+import requests
 from django.conf import settings
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -239,13 +241,91 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
 
     return available
 
-def internal_booking(booking = None):
+def internal_booking(request,user,booking_details):
+    lines = []
+    json_booking = request.data
     try:
-        booking = Booking.objects.get(id = booking.id)
-    except Booking.DoesNotExist:
+        with transaction.atomic():
+            booking = create_booking_by_site(campsite_id= booking_details['campsite_id'],
+                start_date = booking_details['start_date'],
+                end_date=booking_details['end_date'],
+                num_adult=booking_details['num_adult'],
+                num_concession=booking_details['num_concession'],
+                num_child=booking_details['num_child'],
+                num_infant=booking_details['num_infant'],
+                cost_total=booking_details['cost_total'],
+                customer=booking_details['customer'])
+            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
+            # Create line items for booking
+            json_booking = dict(json_booking)
+            rate_list = {}
+            # Create line items for customers
+            for c in json_booking['costs']['campground']:
+                if c['rate']['rate_id'] not in rate_list.keys():
+                    rate_list[c['rate']['rate_id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
+                else:
+                    rate_list[c['rate']['rate_id']]['end'] = c['date']
+            for k,v in json_booking.get('guests').items():
+                if int(v) > 0:
+                    for i,r in rate_list.items():
+                        price = Decimal(0)
+                        end = datetime.strptime(r['end'],"%Y-%m-%d").date()
+                        start = datetime.strptime(r['start'],"%Y-%m-%d").date()
+                        num_days = int ((end - start).days) + 1
+                        price = str((num_days * Decimal(r[k])))
+                        lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+            # Create line items for vehicles
+            for k,v in json_booking['parkEntry'].items():
+                if k != 'regos' and k != 'entry_fee':
+                    if int(v) > 0:
+                        price =  json_booking['costs']['parkEntry'][k]
+                        lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+            parameters = {
+                'system': 'S369',
+                'basket_owner': user.id,
+                'fallback_url': request.build_absolute_uri('/'),
+                'return_url': request.build_absolute_uri('/'),
+                'forceRedirect': True,
+                'proxy': True,
+                "products": lines,
+                "custom_basket": True,
+                "invoice_text": reservation,
+                "vouchers": []
+            }
+
+            JSON_REQUEST_HEADER_PARAMS = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-CSRFToken": request.COOKIES.get('csrftoken')
+            }
+
+            url = request.build_absolute_uri(
+                reverse('payments:ledger-initial-checkout')
+            )
+
+            response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
+                                     data=json.dumps(parameters))
+
+
+            response.raise_for_status()
+
+            last_redirect = response.history[-1]
+            booking.invoice_reference = last_redirect.url.split('=')[1]
+            booking.save()
+
+            return booking
+    except requests.exceptions.HTTPError as e:
+        if 400 <= e.response.status_code < 500:
+            http_error_msg = '{} Client Error: {} for url: {} > {}'.format(e.response.status_code, e.response.reason, e.response.url,e.response._content)
+
+        elif 500 <= e.response.status_code < 600:
+            http_error_msg = '{} Server Error: {} for url: {}'.format(e.response.status_code, e.response.reason, e.response.url)
+        e.message = http_error_msg
+
+        e.args = (http_error_msg,)
         raise
-    with transaction.atomic():
-        reservation = "Reservation for {}".format(booking.customer.name)
+    except Exception as e:
+        raise
 
 def set_session_booking(session, booking):
     session['booking_id'] = booking.id
@@ -268,3 +348,7 @@ def delete_session_booking(session):
     if 'booking_id' in session:
         del session['booking_id']
         session.modified = True
+
+def daterange(start_date, end_date):
+    for n in range(int ((end_date - start_date).days)):
+        yield start_date + timedelta(n)

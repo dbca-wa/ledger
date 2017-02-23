@@ -385,7 +385,7 @@ class BookingSerializer(serializers.ModelSerializer):
     campsites = serializers.SerializerMethodField()
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoice_reference')
 
     def get_campsites(self,obj):
         return [c.campsite.name for c in obj.campsites.all()]
