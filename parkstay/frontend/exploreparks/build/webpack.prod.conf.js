@@ -12,7 +12,8 @@ var webpackConfig = merge(baseWebpackConfig, {
   module: {
     rules: utils.styleLoaders({
       sourceMap: config.build.productionSourceMap,
-      extract: true
+      //extract: true
+      extract: false
     })
   },
   devtool: config.build.productionSourceMap ? '#source-map' : false,
@@ -34,10 +35,10 @@ var webpackConfig = merge(baseWebpackConfig, {
       }
     }),
     // extract css into its own file
-    new ExtractTextPlugin({
-      //filename: utils.assetsPath('css/[name].[contenthash].css')
-      filename: utils.assetsPath('css/[name].css')
-    }),
+    //new ExtractTextPlugin({
+    //  //filename: utils.assetsPath('css/[name].[contenthash].css')
+    //  filename: utils.assetsPath('css/[name].css')
+    //}),
     // generate dist index.html with correct asset hash for caching.
     // you can customize output by editing /index.html
     // see https://github.com/ampedandwired/html-webpack-plugin

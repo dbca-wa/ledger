@@ -248,7 +248,7 @@
             </div>
         </form>
         <loader :isLoading="isLoading" >{{loading.join(' , ')}}...</loader>
-        <modal :large="true" @cancel="isModalOpen=false">
+        <modal :large="true" @cancel="finishBooking()" :force="true">
             <h1 slot="title">Tax Invoice</h1>
             <div class="row" height="500px">
                 <div class="col-lg-12">
@@ -256,7 +256,7 @@
                 </div>
             </div>
             <div slot="footer">
-                <button id="okBtn" type="button" class="btn btn-default" @click="finishBooking()">Close</button>
+                <button id="okBtn" type="button" class="btn btn-default" @click="finishBooking()">Finalize Booking</button>
             </div>
         </modal>
     </div>

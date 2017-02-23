@@ -168,7 +168,7 @@ export default {
                             var status = (data == true) ? "Open" : "Temporarily Closed";
                             var booking = JSON.stringify(full);
                             var invoice = "/ledger/payments/invoice/"+full.invoice_reference;
-                            var invoice_link= (full.invoice_reference)?"<a href='"+invoice+"' class='text-primary' data-change = '"+booking+"' >Invoice</a><br/>":"";
+                            var invoice_link= (full.invoice_reference)?"<a href='"+invoice+"' target='_blank' class='text-primary'>Invoice</a><br/>":"";
                             var column = "<td > \
                                             <a href='#' class='text-primary' data-rec-payment='' > Record Payment</a><br/>\
                                             <a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>\
