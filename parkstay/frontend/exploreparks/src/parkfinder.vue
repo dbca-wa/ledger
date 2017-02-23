@@ -95,7 +95,7 @@
                     <div id="mapPopupContent">
                         <h5 id="mapPopupName"></h5>
                         <p>Pic goes here</p>
-                        <p>Description goes here</p>
+                        <div id="mapPopupDescription"/>
                         <button id="mapPopupInfo" class="button formButton">More info</button>
                         <button id="mapPopupBook" class="button formButton">Book now</button>
                     </div>
@@ -111,7 +111,7 @@
                     <p>Pic goes here</p> 
                 </div>
                 <div class="small-12 medium-9 large-9 columns">
-                    <p>Description goes here</p>
+                    <div v-html="f.description"/>
                     <button class="button">More info</button>
                     <button v-if="f.campground_type == 0" class="button">Book now</button>
                 </div>
@@ -379,6 +379,7 @@ div.awesomplete > input {
 <script>
 import Awesomplete from 'awesomplete';
 import ol from 'openlayers';
+//var ol = require('openlayers/dist/ol-debug');
 import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
@@ -455,9 +456,9 @@ export default {
             get: function() {
                 var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
                 if (count === 1) {
-                    return count +" person";
+                    return count +" person ▼";
                 } else {
-                    return count + " people";
+                    return count + " people ▼";
                 }
             }
         }
@@ -474,14 +475,18 @@ export default {
             });
             if (target) {
                 //console.log('Search suggestion!')
-                // pan to the spot
-                vm.animatePan(ol.proj.fromLonLat(target['coordinates']));
+                var view = this.olmap.getView();
                 // zoom slightly closer in for campgrounds
+                var resolution = vm.resolutions[10];
                 if (target['properties']['type'] == 'Campground') {
-                    vm.animateZoom(vm.resolutions[12]);
-                } else {
-                    vm.animateZoom(vm.resolutions[10]);
+                    resolution = vm.resolutions[12];
                 }
+                // pan to the spot, zoom slightly closer in for campgrounds
+                view.animate({
+                    center: ol.proj.fromLonLat(target['coordinates']),
+                    resolution: resolution,
+                    duration: 1000
+                });
                 return;
             }
 
@@ -499,27 +504,17 @@ export default {
                     if (data.features && data.features.length > 0) {
                         //console.log('Mapbox!');
                         //console.log(data.features[0]);
-                        vm.animatePan(ol.proj.fromLonLat(data.features[0].geometry.coordinates));
-                        vm.animateZoom(vm.resolutions[12]);
+                        var view = this.olmap.getView();
+                        view.animate({
+                            center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
+                            resolution: vm.resolutions[12],
+                            duration: 1000
+                        });
 
                     }
                 }
             })
 
-        },
-        animatePan: function(location) {
-            var pan = ol.animation.pan({
-                source: this.center
-            });
-            this.olmap.beforeRender(pan);
-            this.olmap.getView().setCenter(location);
-        },
-        animateZoom: function(resolution) {
-            var zoom = ol.animation.zoom({
-                resolution: this.olmap.getView().getResolution()
-            });
-            this.olmap.beforeRender(zoom);
-            this.olmap.getView().setResolution(resolution);
         },
         groundFilter: function(feature) {
             return true;
@@ -609,7 +604,7 @@ export default {
                     break;
                 }
                 
-                if (vm.groundsIds.has(el.id_)) {
+                if (vm.groundsIds.has(el.getId())) {
                     if (legit.size) { // if we have a feature filter list
                         // check that all parameters are present
                         var feats = new Set(el.get('features').map(function(x) {
@@ -679,7 +674,7 @@ export default {
         autocomplete.autoFirst = true;
 
         $.ajax({
-            url: PARKSTAY_URL+'/api/search_suggest',
+            url: process.env.PARKSTAY_URL+'/api/search_suggest',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
@@ -764,7 +759,7 @@ export default {
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
         $.ajax({
-            url: PARKSTAY_URL+'/api/campground_map/?format=json',
+            url: process.env.PARKSTAY_URL+'/api/campground_map/?format=json',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 var features = vm.geojson.readFeatures(response);
@@ -779,7 +774,7 @@ export default {
         });
         
         this.groundsSource.loadSource = function (onSuccess) {
-            var urlBase = PARKSTAY_URL+'/api/campground_map_filter/?';
+            var urlBase = process.env.PARKSTAY_URL+'/api/campground_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
@@ -815,7 +810,7 @@ export default {
         this.grounds = new ol.layer.Vector({
             source: this.groundsSource,
             style: function (feature) {
-                style = feature.get('style');
+                var style = feature.get('style');
                 if (!style) {
                     var icon = vm.sitesInPersonIcon;
                     var campgroundType = feature.get('campground_type');
@@ -841,6 +836,7 @@ export default {
                     });
                     feature.set('style', style);
                 }
+                //console.log(style);
                 return style;
             }
         });
@@ -910,7 +906,7 @@ export default {
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
-                //$("#mapPopupInfo")[0].innerHTML = feature.get('name');
+                $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
                 } else {

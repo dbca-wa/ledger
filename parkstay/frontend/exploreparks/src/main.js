@@ -8,7 +8,6 @@ import Vue from 'vue';
 import VuePaginate from 'vue-paginate';
 import ParkFinder from './parkfinder.vue';
 
-
 Vue.use(VuePaginate);
 
 global.parkfinder = new Vue({

@@ -11,6 +11,7 @@ function resolve (dir) {
 
 module.exports = {
   entry: {
+//    poly: 'babel-polyfill',
     map: './src/main.js'
   },
   output: {
@@ -38,9 +39,6 @@ module.exports = {
       $: 'jquery',
       jQuery: 'jquery',
       'window.jQuery': 'jquery'
-    }),
-    new webpack.DefinePlugin({
-      'PARKSTAY_URL': JSON.stringify(process.env.PARKSTAY_URL)
     })
   ],
   module: {
@@ -67,7 +65,7 @@ module.exports = {
         test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
         loader: 'url-loader',
         query: {
-          limit: 10000,
+          limit: 100000,
           name: utils.assetsPath('fonts/[name].[ext]')
         }
       }
