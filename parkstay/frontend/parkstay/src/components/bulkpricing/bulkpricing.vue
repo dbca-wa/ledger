@@ -170,7 +170,7 @@
                  aria-labelledby="parkentry-heading">
               <div class="panel-body" >
                   <div class="col-lg-12">
-                      <price-history level="park_entry" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" ></price-history>
+                      <price-history level="park" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" :level='park' ></price-history>
                   </div>
               </div>
             </div>
