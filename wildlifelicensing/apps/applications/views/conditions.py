@@ -51,9 +51,8 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        current_status = application.processing_status
-        next_status = 'ready_to_issue' if current_status not in ['issued'] else current_status
-        application.processing_status = next_status
+        if application.processing_status not in ['issued', 'declined']:
+            application.processing_status = 'ready_to_issue'
 
         # remove existing conditions as there may be new conditions and/or changes of order
         application.conditions.clear()
