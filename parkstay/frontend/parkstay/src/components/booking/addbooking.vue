@@ -248,6 +248,14 @@
             </div>
         </form>
         <loader :isLoading="isLoading" >{{loading.join(' , ')}}...</loader>
+        <modal :large="true" @ok="isModalOpen=false" @cancel="isModalOpen=false">
+            <h1 slot="title">Tax Invoice</h1>
+            <div class="row" height="500px">
+                <div class="col-lg-12">
+                    <iframe src="http://10.6.209.19:8888/ledger/payments/invoice/03691000085" width="100%" height="700px" class="embed-responsive-item" frameborder="0"></iframe>
+                </div>
+            </div>
+        </modal>
     </div>
 
 </template>
@@ -255,11 +263,13 @@
 <script>
 import {$,awesomplete,Moment,api_endpoints,validate,formValidate,helpers} from "../../hooks.js";
 import loader from '../utils/loader.vue';
+import modal from '../utils/bootstrap-modal.vue';
 export default {
     name:"addBooking",
     data:function () {
         let vm =this;
         return{
+            isModalOpen:true,
             bookingForm:null,
             countries:[],
             selected_campsite:"",
@@ -365,7 +375,8 @@ export default {
         };
     },
     components:{
-        loader
+        loader,
+        modal
     },
     computed:{
         isLoading:function () {
@@ -726,8 +737,8 @@ export default {
                 vm.$http.post(api_endpoints.bookings,JSON.stringify(booking),{
                     emulateJSON:true,
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
-                }).then((success)=>{
-                    location.reload();
+                }).then((response)=>{
+                    location.assign('/ledger/payments/invoice/'+response.body.invoice_reference);
                 },(error)=>{
                     console.log(error);
                     vm.loading.splice('processing booking',1);
