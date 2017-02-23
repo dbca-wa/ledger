@@ -300,7 +300,7 @@ def internal_booking(request,user,booking):
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
 
-
+        print (response.history)
         booking.invoice_reference = response.history[-1].url.split('=')[1]
         booking.save()
 
