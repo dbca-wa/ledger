@@ -117,6 +117,7 @@ class TestStatusLifeCycle(TestCase):
         resp = self.client.post(url, data=data, follow=True)
         self.assertEquals(200, resp.status_code)
         application.refresh_from_db()
+        # status should not be 'ready_to_issue' but 'issued'
         expected_status = 'issued'
         self.assertEquals(application.processing_status, expected_status)
 
