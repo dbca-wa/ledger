@@ -1252,20 +1252,38 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def create(self, request, format=None):
         from datetime import datetime
-        start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
-        end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
-        guests = request.data['guests']
-        costs = request.data['costs']
-
         try:
-            emailUser = request.data['customer']
-            customer = EmailUser.objects.get(email = emailUser['email'])
-        except EmailUser.DoesNotExist:
+            start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
+            guests = request.data['guests']
+            costs = request.data['costs']
+
+            try:
+                emailUser = request.data['customer']
+                customer = EmailUser.objects.get(email = emailUser['email'])
+            except EmailUser.DoesNotExist:
+                raise
+            booking_details = {
+                'campsite_id':request.data['campsite'],
+                'start_date' : start_date,
+                'end_date' : end_date,
+                'num_adult' : guests['adult'],
+                'num_concession' : guests['concession'],
+                'num_child' : guests['child'],
+                'num_infant' : guests['infant'],
+                'cost_total' : costs['total'],
+                'customer' : customer
+            }
+
+            data = utils.internal_booking(request,customer,booking_details)
+            serializer = BookingSerializer(data)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
             raise
-        data = utils.create_booking_by_site(campsite_id= request.data['campsite'], start_date = start_date, end_date=end_date, num_adult=guests['adult'], num_concession=guests['concession'], num_child=guests['child'], num_infant=guests['infant'],cost_total=costs['total'],customer=customer)
-        data = utils.internal_booking(request,customer,data)
-        serializer = BookingSerializer(data)
-        return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
