@@ -16,7 +16,7 @@ env:
         - SECRET_KEY=SecretKeyForTravis
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
         - PRODUCTION_EMAIL=False
-        - EMAIL_INSTANCE="Travis"
+        - EMAIL_INSTANCE="TEST"
         - NON_PROD_EMAIL="travis@dpaw.wa.gov.au"
 install:
     - pip install -r requirements.txt
