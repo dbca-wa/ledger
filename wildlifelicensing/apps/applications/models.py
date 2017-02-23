@@ -183,7 +183,8 @@ class AmendmentRequest(ApplicationRequest):
 
 
 class Assessment(ApplicationRequest):
-    STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'))
+    STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'),
+                      ('assessment_expired', 'Assessment Period Expired'))
     assessor_group = models.ForeignKey(AssessorGroup)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     date_last_reminded = models.DateField(null=True, blank=True)
