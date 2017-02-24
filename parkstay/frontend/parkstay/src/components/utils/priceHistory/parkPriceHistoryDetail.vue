@@ -10,7 +10,7 @@
                         <label>Vehicle : </label>
                     </div>
                     <div class="col-md-4">
-                        <input :readonly="selected_rate != ''" name="adult"  v-model="priceHistory.adult" type='text' class="form-control" />
+                        <input :readonly="selected_rate != ''" name="vehicle"  v-model="priceHistory.vehicle" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                         <label>Motorbike : </label>
                     </div>
                     <div class="col-md-4">
-                        <input :readonly="selected_rate != ''" name="child"  v-model="priceHistory.child" type='text' class="form-control" />
+                        <input :readonly="selected_rate != ''" name="motorbike"  v-model="priceHistory.motorbike" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -118,18 +118,18 @@ module.exports = {
                 $.each(vm.rates, function(i, rate) {
                     if (rate.id== vm.selected_rate){
                         vm.priceHistory.rate = rate.id;
-                        vm.priceHistory.adult = rate.adult;
+                        vm.priceHistory.vehicle = rate.vehicle;
                         vm.priceHistory.concession = rate.concession;
-                        vm.priceHistory.child = rate.child;
+                        vm.priceHistory.motorbike = rate.motorbike;
                         vm.priceHistory.infant = rate.infant;
                     }
                 });
             }
             else{
                 delete vm.priceHistory.rate;
-                vm.priceHistory.adult = '';
+                vm.priceHistory.vehicle = '';
                 vm.priceHistory.concession = '';
-                vm.priceHistory.child = '';
+                vm.priceHistory.motorbike = '';
                 vm.priceHistory.infant = '';
             }
         }
@@ -153,9 +153,9 @@ module.exports = {
         addHistory: function() {
             if ($(this.form).valid()){
                 if (this.priceHistory.id || this.priceHistory.original){
-                    this.$emit('updatePriceHistory');
+                    this.$emit('updateParkPriceHistory');
                 }else {
-                    this.$emit('addPriceHistory');
+                    this.$emit('addParkPriceHistory');
                 }
             }
         },
@@ -169,9 +169,9 @@ module.exports = {
             let vm = this;
             $(vm.form).validate({
                 rules: {
-                    adult: "required",
+                    vehicle: "required",
                     concession: "required",
-                    child: "required",
+                    motorbike: "required",
                     infant:"required",
                     period_start: "required",
                     details: {
@@ -183,9 +183,9 @@ module.exports = {
                     }
                 },
                 messages: {
-                    adult: "Enter an adult rate",
+                    vehicle: "Enter an vehicle rate",
                     concession: "Enter a concession rate",
-                    child: "Enter a child rate",
+                    motorbike: "Enter a motorbike rate",
                     infant: "Enter a infant rate",
                     period_start: "Enter a start date",
                     details: "Details required if Other reason is selected"

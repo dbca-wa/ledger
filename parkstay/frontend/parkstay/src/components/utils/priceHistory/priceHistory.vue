@@ -1,6 +1,7 @@
 <template id="priceHistory">
 <div class="row">
-    <PriceHistoryDetail ref="historyModal" @addPriceHistory="addHistory()" @updatePriceHistory="updateHistory()" :priceHistory="price"></PriceHistoryDetail>
+    <parkPriceHistory v-if="addParkPrice" ref="historyModal" @addParkPriceHistory="addParkHistory()" @updateParkPriceHistory="updateParkHistory()" :priceHistory="parkPrice"/>
+    <PriceHistoryDetail v-else ref="historyModal" @addPriceHistory="addHistory()" @updatePriceHistory="updateHistory()" :priceHistory="price"></PriceHistoryDetail>
     <div class="well">
         <div class="col-sm-8">
             <h1>Price History</h1>
@@ -18,6 +19,7 @@
 import datatable from '../datatable.vue'
 import confirmbox from '../confirmbox.vue'
 import PriceHistoryDetail from './priceHistoryDetail.vue'
+import parkPriceHistory from './parkPriceHistoryDetail.vue'
 import {bus} from '../eventBus.js'
 import {
     $,
@@ -38,9 +40,15 @@ export default {
             type: Boolean,
             default: true
         },
+        addParkPrice:{
+            type: Boolean,
+            default: function () {
+                return false;
+            }
+        },
         level: {
             validator: function (value){
-                var levels = ['campground','campsite_class','campsite','park_entry'];
+                var levels = ['campground','campsite_class','campsite','park'];
                 return $.inArray(value,levels) > -1;
             },
             required: true
@@ -67,7 +75,8 @@ export default {
     components: {
         datatable,
         confirmbox,
-        PriceHistoryDetail
+        PriceHistoryDetail,
+        parkPriceHistory
     },
     computed: {
     },
@@ -77,6 +86,9 @@ export default {
             campground: {},
             campsite:{},
             price: {
+                reason:''
+            },
+            parkPrice: {
                 reason:''
             },
             deleteHistory: null,
@@ -169,20 +181,25 @@ export default {
         },
         addHistory: function() {
             if (this.level == 'campsite'){ this.price.campsite = this.object_id; }
-            this.sendData(this.getAddURL(),'POST');
+            this.sendData(this.getAddURL(),'POST',JSON.stringify(vm.price));
         },
         updateHistory: function() {
             if (this.level == 'campsite'){
                 this.price.campsite = this.object_id;
-                this.sendData(this.getEditURL(),'PUT');
+                this.sendData(this.getEditURL(),'PUT',JSON.stringify(vm.price));
             }
             else{
-                this.sendData(this.getEditURL(),'POST');
+                this.sendData(this.getEditURL(),'POST',JSON.stringify(vm.price));
             }
         },
-        sendData: function(url,method) {
+        addParkHistory: function() {
+            this.sendData(this.api_endpoints.park_price_history,'POST',JSON.stringify(vm.parkPrice));
+        },
+        updateParkHistory: function() {
+            this.sendData(this.api_endpoints.park_price_history,'PUT',JSON.stringify(vm.parkPrice));
+        },
+        sendData: function(url,method,data) {
             let vm = this;
-            var data = vm.price;
             data.reason = parseInt(data.reason);
             $.ajax({
                 beforeSend: function(xhrObj) {
@@ -192,7 +209,7 @@ export default {
                 url: url,
                 method: method,
                 xhrFields: { withCredentials:true },
-                data: JSON.stringify(data),
+                data: data,
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
