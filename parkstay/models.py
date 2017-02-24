@@ -849,7 +849,6 @@ class Booking(models.Model):
     expiry_time = models.DateTimeField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
-    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
     
     # Properties
     # =================================
@@ -868,11 +867,23 @@ class Booking(models.Model):
     def __str__(self):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
 
+class BookingInvoice(models.Model):
+    booking = models.ForeignKey(Booking, related_name='invoices')
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    def __str__(self):
+        return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
 
 class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""
+    VEHICLE_CHOICES = (
+        ('vehicle','vehicle'),
+        ('motorbike','motorbike'),
+        ('concession','concession')
+    )
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
+    type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
 
 class ParkEntryRate(models.Model):
 

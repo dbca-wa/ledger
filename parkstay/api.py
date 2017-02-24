@@ -1190,7 +1190,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
             parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,parkstay_booking.invoice_reference'
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
         sqlCount = 'select count(*)'
 
         sqlFrom = ' from parkstay_booking\
@@ -1244,6 +1244,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             dict(zip(columns, row))
             for row in cursor.fetchall()
         ]
+        for bk in data:
+            bk['invoices'] = [ i.invoice_reference for i in Booking.objects.get(id =bk['id']).invoices.all()]
         return Response(OrderedDict([
             ('recordsTotal', recordsTotal),
             ('recordsFiltered',recordsFiltered),
@@ -1275,7 +1277,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'customer' : customer
             }
 
-            data = utils.internal_booking(request,customer,booking_details)
+            data = utils.internal_booking(request,booking_details)
             serializer = BookingSerializer(data)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1293,7 +1295,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             rate = None
-            print(request.data)
             rate_serializer = RateDetailSerializer(data=request.data)
             rate_serializer.is_valid(raise_exception=True)
             rate_id = rate_serializer.validated_data.get('rate',None)
