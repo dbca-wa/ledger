@@ -92,6 +92,7 @@ class TestStatusLifeCycle(TestCase):
         self.assertEquals(200, resp.status_code)
         application.refresh_from_db()
         self.assertEquals(application.processing_status, 'ready_to_issue')
+
         # issue licence
         url = reverse('wl_applications:issue_licence', args=[application.pk])
         today = datetime.date.today()
@@ -120,6 +121,55 @@ class TestStatusLifeCycle(TestCase):
         # status should not be 'ready_to_issue' but 'issued'
         expected_status = 'issued'
         self.assertEquals(application.processing_status, expected_status)
+
+
+    def test_issued_declined_licences_cannot_be_assessed(self):
+        """
+        Test that if a licence has been issued, assessments can no longer be done.
+        @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2743&project_id=24
+        """
+        # create application to issue
+        application = create_and_lodge_application(self.user)
+
+        # send out assessment
+        assessment = get_or_create_assessment(application)
+        self.assertEquals(assessment.status, 'awaiting_assessment')
+
+        self.client.login(self.officer.email)
+
+        # issue licence
+        url = reverse('wl_applications:issue_licence', args=[application.pk])
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        data = {
+            'regions': [G(Region).pk],
+            'return_frequency': -1,
+            'issue_date': str(today),
+            'start_date': str(today),
+            'end_date': str(tomorrow)
+        }
+        resp = self.client.post(url, data=data, follow=True)
+        self.assertEquals(200, resp.status_code)
+        application.refresh_from_db()
+        self.assertEquals(application.processing_status, 'issued')
+
+        assessment.refresh_from_db()
+        self.assertEquals(assessment.status, 'assessment_expired')
+
+        # create application to decline
+        application = create_and_lodge_application(self.user)
+
+        # send out assessment
+        assessment = get_or_create_assessment(application)
+        self.assertEquals(assessment.status, 'awaiting_assessment')
+
+        # decline licence
+        resp = self.client.post(reverse('wl_applications:process', args=[application.pk]), data={'decline': True},
+                                follow=True)
+        self.assertEquals(200, resp.status_code)
+
+        assessment.refresh_from_db()
+        self.assertEquals(assessment.status, 'assessment_expired')
 
 
 class TestViewAccess(TestCase):
