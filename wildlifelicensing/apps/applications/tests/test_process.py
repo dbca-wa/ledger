@@ -125,7 +125,7 @@ class TestStatusLifeCycle(TestCase):
 
     def test_issued_declined_licences_cannot_be_assessed(self):
         """
-        Test that if a licence has been issued, assessments can no longer be done.
+        Test that if a licence has been issued or application declined, assessments can no longer be done.
         @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2743&project_id=24
         """
         # create application to issue
@@ -170,6 +170,27 @@ class TestStatusLifeCycle(TestCase):
 
         assessment.refresh_from_db()
         self.assertEquals(assessment.status, 'assessment_expired')
+
+
+    def test_declined_applications_status(self):
+        """
+        Test that if an application has been declined, the officer and customer will both have a declined status
+        @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2741&project_id=24
+        """
+        # create application to decline
+        application = create_and_lodge_application(self.user)
+
+        self.client.login(self.officer.email)
+
+        # decline licence
+        resp = self.client.post(reverse('wl_applications:process', args=[application.pk]), data={'decline': True},
+                                follow=True)
+        self.assertEquals(200, resp.status_code)
+
+        application.refresh_from_db()
+
+        self.assertEquals(application.customer_status, 'declined')
+        self.assertEquals(application.processing_status, 'declined')
 
 
 class TestViewAccess(TestCase):
