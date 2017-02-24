@@ -8,7 +8,8 @@ from ledger.accounts.models import EmailUser, Document, Address, Profile
 
 from wildlifelicensing.apps.main.models import WildlifeLicenceType
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
-    create_random_customer, is_login_page
+    create_random_customer, is_login_page, clear_mailbox, is_client_authenticated, get_response_messages, \
+    has_response_error_messages, has_response_messages
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.applications.tests import helpers
 
@@ -428,3 +429,107 @@ class ApplicationEntrySecurity(TransactionTestCase):
         response = self.client.get(reverse('wl_applications:edit_application', args=[application.pk]), follow=True)
         self.assertEqual(200, response.status_code)
         self.assertTrue(is_login_page(response))
+
+
+class TestApplicationDiscardView(TestCase):
+    """
+    External person must be able to discard application pushed back .
+    @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2743&project_id=24
+    """
+    fixtures = ['licences.json', 'catalogue.json', 'partner.json']
+
+    def setUp(self):
+        self.client = SocialClient()
+        self.officer = helpers.get_or_create_default_officer()
+        self.applicant = get_or_create_default_customer()
+        self.assertNotEqual(self.officer, self.applicant)
+
+    def tearDown(self):
+        self.client.logout()
+        clear_mailbox()
+
+    def test_cannot_discard(self):
+        """
+        Test that an application cannot be discarded if it hasn't been pushed back to the applicant.
+        Formally its processing status must be in the list of Application.CUSTOMER_DISCARDABLE_STATE
+        :return:
+        """
+        # lodge application
+        application = helpers.create_and_lodge_application(self.applicant)
+        self.assertNotIn(application.processing_status, Application.CUSTOMER_DISCARDABLE_STATE)
+
+        # try to discard with get or post
+        previous_processing_status = application.processing_status
+        previous_customer_status = application.customer_status
+        url = reverse('wl_applications:discard_application', args=[application.pk])
+        self.client.login(self.applicant.email)
+        self.assertTrue(is_client_authenticated(self.client))
+        resp = self.client.get(url, follow=True)
+        application.refresh_from_db()
+        # status should be unchanged
+        self.assertNotEqual(application.processing_status, 'discarded')
+        self.assertNotEqual(application.customer_status, 'discarded')
+        self.assertEqual(application.processing_status, previous_processing_status)
+        self.assertEqual(application.customer_status, previous_customer_status)
+        # the response should have an error message
+        self.assertTrue(has_response_error_messages(resp))
+
+        # same with post method
+        resp = self.client.post(url, follow=True)
+        application.refresh_from_db()
+        # status should be unchanged
+        self.assertNotEqual(application.processing_status, 'discarded')
+        self.assertNotEqual(application.customer_status, 'discarded')
+        self.assertEqual(application.processing_status, previous_processing_status)
+        self.assertEqual(application.customer_status, previous_customer_status)
+        # the response should have an error message
+        self.assertTrue(has_response_error_messages(resp))
+
+    def test_discard_happy_path(self):
+        # lodge application
+        application = helpers.create_and_lodge_application(self.applicant)
+        self.assertNotIn(application.processing_status, Application.CUSTOMER_DISCARDABLE_STATE)
+        # officer request amendment
+        url = reverse('wl_applications:amendment_request')
+        self.client.login(self.officer.email)
+        resp = self.client.post(url, data={
+            'application': application.pk,
+            'officer': self.officer.pk,
+            'reason': 'missing_information'
+        })
+        self.assertEquals(resp.status_code, 200)
+        application.refresh_from_db()
+        # application should now be discardable
+        self.assertIn(application.processing_status, Application.CUSTOMER_DISCARDABLE_STATE)
+
+        # discard
+        self.client.logout()
+        clear_mailbox()
+        self.client.login(self.applicant.email)
+        self.assertTrue(is_client_authenticated(self.client))
+        url = reverse('wl_applications:discard_application', args=[application.pk])
+        # the get should not discard but return a confirm page
+        previous_processing_status = application.processing_status
+        previous_customer_status = application.customer_status
+        resp = self.client.get(url)
+        self.assertEquals(resp.status_code, 200)
+        # test that there's a cancel_url in the context of the response and an action_url that is set to the proper url
+        self.assertTrue('cancel_url' in resp.context)
+        self.assertTrue('action_url' in resp.context)
+        self.assertEquals(resp.context['action_url'], url)
+        application.refresh_from_db()
+        # status should be unchanged
+        self.assertNotEqual(application.processing_status, 'discarded')
+        self.assertNotEqual(application.customer_status, 'discarded')
+        self.assertEqual(application.processing_status, previous_processing_status)
+        self.assertEqual(application.customer_status, previous_customer_status)
+
+        resp = self.client.post(url, data=None, follow=True)
+        self.assertEquals(resp.status_code, 200)
+        application.refresh_from_db()
+        self.assertEqual(application.processing_status, 'discarded')
+        self.assertEqual(application.customer_status, 'discarded')
+        # there should be a message
+        self.assertTrue(has_response_messages(resp))
+        self.assertFalse(has_response_error_messages(resp))
+
