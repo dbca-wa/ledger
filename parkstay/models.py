@@ -849,7 +849,7 @@ class Booking(models.Model):
     expiry_time = models.DateTimeField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
-    
+
     # Properties
     # =================================
     @property
@@ -891,7 +891,7 @@ class ParkEntryRate(models.Model):
     concession = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     motorbike = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     period_start = models.DateField()
-    period_end = models.DateField(null=True)
+    period_end = models.DateField(null=True,blank=True)
     reason = models.ForeignKey("PriceReason",on_delete=models.PROTECT)
     details = models.TextField(null = True, blank= True)
 

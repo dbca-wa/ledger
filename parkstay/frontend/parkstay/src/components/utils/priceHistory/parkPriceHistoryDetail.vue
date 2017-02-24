@@ -10,7 +10,7 @@
                         <label>Vehicle : </label>
                     </div>
                     <div class="col-md-4">
-                        <input :readonly="selected_rate != ''" name="vehicle"  v-model="priceHistory.vehicle" type='text' class="form-control" />
+                        <input name="vehicle"  v-model="priceHistory.vehicle" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -20,7 +20,7 @@
                         <label>Concession : </label>
                     </div>
                     <div class="col-md-4">
-                        <input :readonly="selected_rate != ''" name="concession"  v-model="priceHistory.concession" type='text' class="form-control" />
+                        <input name="concession"  v-model="priceHistory.concession" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                         <label>Motorbike : </label>
                     </div>
                     <div class="col-md-4">
-                        <input :readonly="selected_rate != ''" name="motorbike"  v-model="priceHistory.motorbike" type='text' class="form-control" />
+                        <input name="motorbike"  v-model="priceHistory.motorbike" type='text' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -76,16 +76,14 @@ module.exports = {
     props: {
         priceHistory: {
             type: Object,
-            required: true
+            required: true,
         },
     },
     data: function() {
         let vm = this;
         return {
             id:'',
-            selected_rate: '',
             title: '',
-            rates: [],
             current_closure: '',
             closeStartPicker: '',
             showDetails: false,
@@ -112,27 +110,6 @@ module.exports = {
         },
     },
     watch: {
-        selected_rate: function() {
-            let vm = this;
-            if (vm.selected_rate != ''){
-                $.each(vm.rates, function(i, rate) {
-                    if (rate.id== vm.selected_rate){
-                        vm.priceHistory.rate = rate.id;
-                        vm.priceHistory.vehicle = rate.vehicle;
-                        vm.priceHistory.concession = rate.concession;
-                        vm.priceHistory.motorbike = rate.motorbike;
-                        vm.priceHistory.infant = rate.infant;
-                    }
-                });
-            }
-            else{
-                delete vm.priceHistory.rate;
-                vm.priceHistory.vehicle = '';
-                vm.priceHistory.concession = '';
-                vm.priceHistory.motorbike = '';
-                vm.priceHistory.infant = '';
-            }
-        }
     },
     components: {
         bootstrapModal,
@@ -152,18 +129,12 @@ module.exports = {
         },
         addHistory: function() {
             if ($(this.form).valid()){
-                if (this.priceHistory.id || this.priceHistory.original){
+                if (this.priceHistory.id){
                     this.$emit('updateParkPriceHistory');
                 }else {
                     this.$emit('addParkPriceHistory');
                 }
             }
-        },
-        fetchRates: function() {
-            let vm = this;
-            $.get(api_endpoints.rates,function(data){
-                vm.rates = data;
-            });
         },
         addFormValidations: function() {
             let vm = this;
@@ -172,7 +143,6 @@ module.exports = {
                     vehicle: "required",
                     concession: "required",
                     motorbike: "required",
-                    infant:"required",
                     period_start: "required",
                     details: {
                         required: {
@@ -186,7 +156,6 @@ module.exports = {
                     vehicle: "Enter an vehicle rate",
                     concession: "Enter a concession rate",
                     motorbike: "Enter a motorbike rate",
-                    infant: "Enter a infant rate",
                     period_start: "Enter a start date",
                     details: "Details required if Other reason is selected"
                 },
@@ -231,7 +200,6 @@ module.exports = {
             vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
         vm.addFormValidations();
-        vm.fetchRates();
     }
 };
 </script>

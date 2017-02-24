@@ -6,7 +6,10 @@ module.exports = {
     regions:"/api/regions.json",
     parks:"/api/parks.json",
     park_price_history:function (id) {
-       return "/api/parks/"+id+"/price_history.json";
+       return "/api/parks/price_history.json";
+    },
+    park_add_price:function () {
+       return "/api/parks/add_price.json";
     },
     park_current_price:function (id,arrival) {
       return "/api/parks/"+id+"/current_price.json?arrival="+arrival;

@@ -51,7 +51,7 @@ export default {
                 var levels = ['campground','campsite_class','campsite','park'];
                 return $.inArray(value,levels) > -1;
             },
-            required: true
+            //required: true
         },
         historyDeleteURL: {
             type: String,
@@ -89,7 +89,12 @@ export default {
                 reason:''
             },
             parkPrice: {
-                reason:''
+                vehicle:'',
+                concession:'',
+                motorbike:'',
+                reason:{id:1},
+                period_start:'',
+                details:''
             },
             deleteHistory: null,
             deleteHistoryPrompt: {
@@ -193,14 +198,15 @@ export default {
             }
         },
         addParkHistory: function() {
-            this.sendData(this.api_endpoints.park_price_history,'POST',JSON.stringify(vm.parkPrice));
+            this.sendData(api_endpoints.park_add_price,'POST',JSON.stringify(this.parkPrice));
         },
         updateParkHistory: function() {
-            this.sendData(this.api_endpoints.park_price_history,'PUT',JSON.stringify(vm.parkPrice));
+            this.sendData(api_endpoints.park_add_price,'POST',JSON.stringify(this.parkPrice));
         },
         sendData: function(url,method,data) {
             let vm = this;
-            data.reason = parseInt(data.reason);
+            //data.reason = parseInt(data.reason);
+            console.log(data);
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");

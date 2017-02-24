@@ -984,7 +984,7 @@ class ParkViewSet(viewsets.ModelViewSet):
             cache.set('parks',data,3600)
         return Response(data)
 
-    @detail_route(methods=['get'])
+    @list_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
         http_status = status.HTTP_200_OK
         try:
@@ -1017,6 +1017,20 @@ class ParkViewSet(viewsets.ModelViewSet):
                 "Error": str(e)
             }
         return Response(res,status=http_status)
+
+    @list_route(methods=['post'],)
+    def add_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer =  ParkEntryRateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save();
+            res = serializer.data
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
 
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
