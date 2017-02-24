@@ -359,7 +359,6 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         application.applicant.save()
 
         # update any other applications for this user that are awaiting ID upload
-        #       for application in Application.objects.filter(applicant_profile__user=applicant):
         for app in Application.objects.filter(applicant=application.applicant):
             if app.id_check_status == 'awaiting_update':
                 app.id_check_status = 'updated'
@@ -562,13 +561,13 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             return redirect('wl_applications:new_application')
 
         kwargs['is_payment_required'] = not is_licence_free(generate_product_title(application)) and \
-                                        not application.invoice_reference and is_customer(self.request.user)
+            not application.invoice_reference and is_customer(self.request.user)
 
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')
 
         if application.hard_copy is not None:
-            application.licence_type.application_schema, application.data = utils. \
+            application.licence_type.application_schema, application.data = utils.\
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
         else:

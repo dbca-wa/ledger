@@ -495,8 +495,7 @@ class TestApplicationDiscardView(TestCase):
         resp = self.client.post(url, data={
             'application': application.pk,
             'officer': self.officer.pk,
-            'reason': 'missing_information',
-            'text': 'You cannot kill wombats!'
+            'reason': 'missing_information'
         })
         self.assertEquals(resp.status_code, 200)
         application.refresh_from_db()
@@ -525,7 +524,6 @@ class TestApplicationDiscardView(TestCase):
         self.assertEqual(application.processing_status, previous_processing_status)
         self.assertEqual(application.customer_status, previous_customer_status)
 
-        # post! Like clicking on confirm
         resp = self.client.post(url, data=None, follow=True)
         self.assertEquals(resp.status_code, 200)
         application.refresh_from_db()
