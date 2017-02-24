@@ -36,12 +36,20 @@ class FeatureAdmin(admin.ModelAdmin):
     ordering = ('name',)
     search_fields = ('name',)
 
+class BookingInvoiceInline(admin.StackedInline):
+    model = models.BookingInvoice
+    extra = 0
+
 @admin.register(models.Booking)
 class BookingAdmin(admin.ModelAdmin):
     list_display = ('arrival','departure','campground','legacy_id','legacy_name','cost_total')
     ordering = ('-arrival',)
     search_fileds = ('arrival','departure')
     list_filter = ('arrival','departure')
+    inlines = [BookingInvoiceInline,]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 @admin.register(models.CampsiteBooking)
 class CampsiteBookingAdmin(admin.ModelAdmin):

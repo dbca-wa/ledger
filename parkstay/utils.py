@@ -10,7 +10,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, CampsiteBookingRange, CampgroundBookingRange, CampgroundPriceHistory, ParkEntryRate)
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, CampgroundBookingRange, CampgroundPriceHistory, ParkEntryRate)
 from parkstay.serialisers import BookingRegoSerializer, CampgroundPriceHistorySerializer, ParkEntryRateSerializer
 
 
@@ -376,8 +376,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             if not response.history:
                 raise Exception('There was a problem retrieving the invoice for this booking')
             last_redirect = response.history[-1]
-            booking.invoice_reference = last_redirect.url.split('=')[1]
-            booking.save()
+            BookingInvoice.objects.create(booking=booking,invoice_reference=last_redirect.url.split('=')[1])
 
             return booking
     except requests.exceptions.HTTPError as e:
