@@ -431,7 +431,7 @@ class ApplicationEntrySecurity(TransactionTestCase):
         self.assertTrue(is_login_page(response))
 
 
-class ApplicationDiscardView(TestCase):
+class TestApplicationDiscardView(TestCase):
     """
     External person must be able to discard application pushed back .
     @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2743&project_id=24
