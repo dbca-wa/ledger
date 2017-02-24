@@ -309,8 +309,6 @@ def _layout_extracted_fields(extracted_fields):
             if field['help_text']:
                 elements.append(Paragraph(field['help_text'], styles['ItalicLeft']))
 
-            print field['children']
-
             table_data = []
             for index, group in enumerate(field['children']):
                 if index == 0:
