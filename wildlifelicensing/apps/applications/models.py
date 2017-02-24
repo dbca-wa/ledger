@@ -21,7 +21,10 @@ class Application(RevisionedMixin):
                                ('id_and_returns_required', 'Identification/Returns Required'),
                                ('returns_and_amendment_required', 'Returns/Amendments Required'),
                                ('id_and_returns_and_amendment_required', 'Identification/Returns/Amendments Required'),
-                               ('approved', 'Approved'), ('declined', 'Declined'))
+                               ('approved', 'Approved'),
+                               ('declined', 'Declined'),
+                               ('discarded', 'Discarded'),
+                               )
 
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = ['temp', 'draft', 'amendment_required', 'id_and_amendment_required',
@@ -37,7 +40,13 @@ class Application(RevisionedMixin):
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'),
                                  ('ready_for_conditions', 'Ready for Conditions'),
-                                 ('ready_to_issue', 'Ready to Issue'), ('issued', 'Issued'), ('declined', 'Declined'))
+                                 ('ready_to_issue', 'Ready to Issue'),
+                                 ('issued', 'Issued'),
+                                 ('declined', 'Declined'),
+                                 ('discarded', 'Discarded'),
+                                 )
+    # List of statuses from processing list above that allow a customer to discard an application
+    CUSTOMER_DISCARDABLE_STATE = ['awaiting_applicant_response']
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
@@ -233,6 +242,7 @@ class ApplicationUserAction(UserAction):
     ACTION_ENTER_CONDITIONS = "Enter Conditions"
     ACTION_CREATE_CONDITION_ = "Create condition {}"
     ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
+    ACTION_DISCARD_APPLICATION = "Discard application {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"

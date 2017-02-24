@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.views.generic.base import View, TemplateView
-from django.views.generic.edit import FormView
+from django.views.generic.edit import FormView, DeleteView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -10,14 +10,14 @@ from django.utils.http import urlencode
 from ledger.accounts.models import EmailUser, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
 
-from wildlifelicensing.apps.main.models import WildlifeLicenceType,\
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, \
     WildlifeLicenceCategory, Variant
 from wildlifelicensing.apps.main.forms import IdentificationForm, SeniorCardForm
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest,\
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, \
     ApplicationVariantLink, ApplicationUserAction
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
-from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin,\
+from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, \
     UserCanViewApplicationMixin, UserCanRenewApplicationMixin, UserCanAmendApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
@@ -98,6 +98,36 @@ class DeleteApplicationView(View, UserCanViewApplicationMixin):
             messages.error(self.request, 'Unable to find application')
 
         return redirect('wl_dashboard:home')
+
+
+class DiscardApplicationView(View, UserCanViewApplicationMixin):
+    def get_object(self, request, *args):
+        application = get_object_or_404(Application, pk=args[0])
+        if application.processing_status not in Application.CUSTOMER_DISCARDABLE_STATE:
+            raise Exception('Application cannot be discarded at this stage: {}'
+                            .format(application.processing_status))
+
+    def get(self, request, *args, **kwargs):
+        try:
+            application = Application.objects.get(id=args[0])
+            if application.processing_status in Application.CUSTOMER_DISCARDABLE_STATE:
+                application.customer_status = application.processing_status = 'discarded'
+                application.save()
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_DISCARD_APPLICATION.format(application),
+                    request
+                )
+                messages.success(self.request, 'Application discarded')
+            else:
+                messages.warning(self.request, 'Application cannot be discarded at this stage: {}'
+                                 .format(application.processing_status))
+        except Application.DoesNotExist:
+            messages.error(self.request, 'Unable to find application')
+
+        return redirect('wl_dashboard:home')
+
+    def post(self, request, *args, **kwargs):
+        pass
 
 
 class RenewLicenceView(UserCanRenewApplicationMixin, View):
@@ -312,7 +342,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         application.applicant.save()
 
         # update any other applications for this user that are awaiting ID upload
-#       for application in Application.objects.filter(applicant_profile__user=applicant):
+        #       for application in Application.objects.filter(applicant_profile__user=applicant):
         for app in Application.objects.filter(applicant=application.applicant):
             if app.id_check_status == 'awaiting_update':
                 app.id_check_status = 'updated'
@@ -515,13 +545,13 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             return redirect('wl_applications:new_application')
 
         kwargs['is_payment_required'] = not is_licence_free(generate_product_title(application)) and \
-            not application.invoice_reference and is_customer(self.request.user)
+                                        not application.invoice_reference and is_customer(self.request.user)
 
         if application.data:
             utils.convert_documents_to_url(application.data, application.documents.all(), '')
 
         if application.hard_copy is not None:
-            application.licence_type.application_schema, application.data = utils.\
+            application.licence_type.application_schema, application.data = utils. \
                 append_app_document_to_schema_data(application.licence_type.application_schema, application.data,
                                                    application.hard_copy.file.url)
         else:
@@ -591,7 +621,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
         context['application'] = application
 
         context['show_invoice'] = not is_licence_free(generate_product_title(application)) and \
-            not application.is_licence_amendment
+                                  not application.is_licence_amendment
 
         delete_session_application(request.session)
 
