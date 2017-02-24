@@ -10,8 +10,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, CampsiteBookingRange, CampgroundBookingRange)
-from parkstay.serialisers import BookingRegoSerializer
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, CampsiteBookingRange, CampgroundBookingRange, CampgroundPriceHistory, ParkEntryRate)
+from parkstay.serialisers import BookingRegoSerializer, CampgroundPriceHistorySerializer, ParkEntryRateSerializer
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -242,74 +242,127 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
 
     return available
 
-def internal_booking(request,user,booking_details):
+def get_campground_current_rates(request,campground_id,start_date,end_date):
+    res = []
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
+        for single_date in daterange(start_date, end_date):
+            price_history = CampgroundPriceHistory.objects.filter(id=campground_id,date_start__lte=single_date).order_by('-date_start')
+            if price_history:
+                serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+                res.append({
+                    "date" : single_date.strftime("%Y-%m-%d") ,
+                    "rate" : serializer.data[0]
+                })
+    return res
+
+def get_park_entry_rate(request,start_date):
+    res = []
+    if start_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        price_history = ParkEntryRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+        if price_history:
+            serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
+            res = serializer.data[0]
+    return res
+
+def create_booking_invoice_items(request,booking):
     lines = []
+    # Create line items for booking
+    rate_list = {}
+    # Create line items for customers
+    daily_rates = get_campground_current_rates(request,booking.campground.id,booking.arrival.strftime('%Y-%m-%d'),booking.departure.strftime('%Y-%m-%d'))
+    if not daily_rates:
+        raise Exception('There was an error while trying to get the daily rates')
+    for c in daily_rates:
+        if c['rate']['rate_id'] not in rate_list.keys():
+            rate_list[c['rate']['rate_id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
+        else:
+            rate_list[c['rate']['rate_id']]['end'] = c['date']
+    # Get Guest Details
+    guests = {}
+    for k,v in booking.details.items():
+        if 'num_' in k:
+            guests[k.split('num_')[1]] = v
+    for k,v in guests.items():
+        if int(v) > 0:
+            for i,r in rate_list.items():
+                price = Decimal(0)
+                end = datetime.strptime(r['end'],"%Y-%m-%d").date()
+                start = datetime.strptime(r['start'],"%Y-%m-%d").date()
+                num_days = int ((end - start).days) + 1
+                price = str((num_days * Decimal(r[k])))
+                lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+    # Create line items for vehicles
+    vehicles = booking.regos.all()
+    if vehicles:
+        park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
+        vehicle_dict = {
+            'vehicle': vehicles.filter(type='vehicle').count(),
+            'motorbike': vehicles.filter(type='motorbike').count(),
+            'concession': vehicles.filter(type='concession').count()
+        }
+
+        for k,v in vehicle_dict.items():
+            if int(v) > 0:
+                price =  park_entry_rate[k]
+                lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+
+    return lines
+
+def create_or_update_booking(request,booking_details,updating=False):
+    booking = None
+    if not updating:
+        booking = create_booking_by_site(campsite_id= booking_details['campsite_id'],
+            start_date = booking_details['start_date'],
+            end_date=booking_details['end_date'],
+            num_adult=booking_details['num_adult'],
+            num_concession=booking_details['num_concession'],
+            num_child=booking_details['num_child'],
+            num_infant=booking_details['num_infant'],
+            cost_total=booking_details['cost_total'],
+            customer=booking_details['customer'])
+
+        # Add booking regos
+        if request.data.get('parkEntry').get('regos'):
+            regos = request.data['parkEntry'].pop('regos')
+            for r in regos:
+                r[u'booking'] = booking.id
+            regos_serializers = [BookingRegoSerializer(data=r) for r in regos]
+            for r in regos_serializers:
+                r.is_valid(raise_exception=True)
+                r.save()
+    return booking
+
+def internal_booking(request,booking_details,internal=True,updating=False):
     json_booking = request.data
+    JSON_REQUEST_HEADER_PARAMS = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRFToken": request.COOKIES.get('csrftoken')
+    }
     try:
         with transaction.atomic():
-            booking = create_booking_by_site(campsite_id= booking_details['campsite_id'],
-                start_date = booking_details['start_date'],
-                end_date=booking_details['end_date'],
-                num_adult=booking_details['num_adult'],
-                num_concession=booking_details['num_concession'],
-                num_child=booking_details['num_child'],
-                num_infant=booking_details['num_infant'],
-                cost_total=booking_details['cost_total'],
-                customer=booking_details['customer'])
-
-            # Add booking regos
-            if request.data.get('parkEntry').get('regos'):
-                regos = request.data['parkEntry'].pop('regos')
-                for r in regos:
-                    r[u'booking'] = booking.id
-                regos_serializers = [BookingRegoSerializer(data=r) for r in regos]
-                for r in regos_serializers:
-                    r.is_valid(raise_exception=True)
-                    r.save()
-
+            booking = create_or_update_booking(request,booking_details,updating)
+            # Invoice Items
             reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
-            # Create line items for booking
-            json_booking = dict(json_booking)
-            rate_list = {}
-            # Create line items for customers
-            for c in json_booking['costs']['campground']:
-                if c['rate']['rate_id'] not in rate_list.keys():
-                    rate_list[c['rate']['rate_id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
-                else:
-                    rate_list[c['rate']['rate_id']]['end'] = c['date']
-            for k,v in json_booking.get('guests').items():
-                if int(v) > 0:
-                    for i,r in rate_list.items():
-                        price = Decimal(0)
-                        end = datetime.strptime(r['end'],"%Y-%m-%d").date()
-                        start = datetime.strptime(r['start'],"%Y-%m-%d").date()
-                        num_days = int ((end - start).days) + 1
-                        price = str((num_days * Decimal(r[k])))
-                        lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
-            # Create line items for vehicles
-            for k,v in json_booking['parkEntry'].items():
-                if k != 'regos' and k != 'entry_fee':
-                    if int(v) > 0:
-                        price =  json_booking['costs']['parkEntry'][k]
-                        lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+            lines = create_booking_invoice_items(request,booking)
+
             parameters = {
                 'system': 'S369',
-                'basket_owner': user.id,
                 'fallback_url': request.build_absolute_uri('/'),
                 'return_url': request.build_absolute_uri('/'),
                 'forceRedirect': True,
-                'proxy': True,
+                'proxy': True if internal else False,
                 "products": lines,
                 "custom_basket": True,
                 "invoice_text": reservation,
                 "vouchers": []
             }
+            if internal:
+                parameters['basket_owner'] = booking.customer.id
 
-            JSON_REQUEST_HEADER_PARAMS = {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "X-CSRFToken": request.COOKIES.get('csrftoken')
-            }
 
             url = request.build_absolute_uri(
                 reverse('payments:ledger-initial-checkout')
@@ -320,7 +373,8 @@ def internal_booking(request,user,booking_details):
 
 
             response.raise_for_status()
-
+            if not response.history:
+                raise Exception('There was a problem retrieving the invoice for this booking')
             last_redirect = response.history[-1]
             booking.invoice_reference = last_redirect.url.split('=')[1]
             booking.save()

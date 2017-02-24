@@ -1275,7 +1275,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'customer' : customer
             }
 
-            data = utils.internal_booking(request,customer,booking_details)
+            data = utils.internal_booking(request,booking_details)
             serializer = BookingSerializer(data)
             return Response(serializer.data)
         except serializers.ValidationError:
