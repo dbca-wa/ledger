@@ -197,7 +197,7 @@ module.exports = {
             minDate: tomorrow
         });
         picker.on('dp.change', function(e){
-            vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('YYYY-MM-DD');
         });
         vm.addFormValidations();
     }
