@@ -868,7 +868,7 @@ class Booking(models.Model):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
 
 class BookingInvoice(models.Model):
-    booking = models.ForeignKey(Booking)
+    booking = models.ForeignKey(Booking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
     def __str__(self):
