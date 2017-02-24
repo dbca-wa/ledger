@@ -74,7 +74,7 @@ class WildlifeLicenceType(LicenceType):
         if missing_product_variants:
             msg = mark_safe("The payments products with titles matching the below list of product codes were not "
                             "found. Note: You must create a payment product(s) for a new licence type and all its "
-                            "variants, even if the licence is free. <ul><li>{}</li></ul>".
+                            "variants, even if the licence has no fee. <ul><li>{}</li></ul>".
                             format('</li><li>'.join(missing_product_variants)))
 
             raise ValidationError(msg)
