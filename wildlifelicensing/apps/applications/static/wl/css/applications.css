@@ -202,3 +202,11 @@ th.action-status {
 .application-sections-heading {
     padding-left: 15px;
 }
+
+.applicant-contact {
+    margin-bottom: 10px;
+}
+
+.applicant-contact .email{
+    font-size: 95%;
+}
