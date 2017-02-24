@@ -101,33 +101,50 @@ class DeleteApplicationView(View, UserCanViewApplicationMixin):
 
 
 class DiscardApplicationView(View, UserCanViewApplicationMixin):
-    def get_object(self, request, *args):
+
+    def get_and_check_application(self, request, *args):
+        """
+        Warning! Don't call this method get_application or it will clash with the one in the UserCanViewApplicationMixin
+        """
         application = get_object_or_404(Application, pk=args[0])
         if application.processing_status not in Application.CUSTOMER_DISCARDABLE_STATE:
             raise Exception('Application cannot be discarded at this stage: {}'
                             .format(application.processing_status))
+        return application
 
     def get(self, request, *args, **kwargs):
         try:
-            application = Application.objects.get(id=args[0])
-            if application.processing_status in Application.CUSTOMER_DISCARDABLE_STATE:
-                application.customer_status = application.processing_status = 'discarded'
-                application.save()
-                application.log_user_action(
-                    ApplicationUserAction.ACTION_DISCARD_APPLICATION.format(application),
-                    request
-                )
-                messages.success(self.request, 'Application discarded')
-            else:
-                messages.warning(self.request, 'Application cannot be discarded at this stage: {}'
-                                 .format(application.processing_status))
-        except Application.DoesNotExist:
-            messages.error(self.request, 'Unable to find application')
+            application = self.get_and_check_application(request, *args)
+            # confirmation page context
+            message = """You are about to discard an application.
+            Please confirm your action."""
+            ctx = {
+                'action_url': reverse('wl_applications:discard_application', args=[application.pk]),
+                'cancel_url': reverse('wl_dashboard:home'),
+                'message': message
+            }
+            return render(request,
+                          template_name='wl/entry/confirm_discard.html',
+                          context=ctx)
 
-        return redirect('wl_dashboard:home')
+        except Exception as e:
+            messages.error(self.request, str(e))
+            return redirect('wl_dashboard:home')
 
     def post(self, request, *args, **kwargs):
-        pass
+        try:
+            application = self.get_and_check_application(request, *args)
+            application.customer_status = application.processing_status = 'discarded'
+            application.save()
+            application.log_user_action(
+                ApplicationUserAction.ACTION_DISCARD_APPLICATION.format(application),
+                request
+            )
+            messages.success(self.request, 'Application {} discarded'.format(application))
+        except Exception as e:
+            messages.error(self.request, str(e))
+
+        return redirect('wl_dashboard:home')
 
 
 class RenewLicenceView(UserCanRenewApplicationMixin, View):

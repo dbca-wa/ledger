@@ -251,7 +251,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
                 'View application (read-only)'
             )
 
-        # Add discard (not delete)
+        # Add discard action (not delete)
         if obj.processing_status in Application.CUSTOMER_DISCARDABLE_STATE and status != 'draft':
             result += ' / <a href="{}">{}</a>'.format(
                 reverse('wl_applications:discard_application', args=[obj.pk]),
