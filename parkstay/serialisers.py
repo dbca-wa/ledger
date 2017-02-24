@@ -26,6 +26,7 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 MaximumStayReason,
                                 CampgroundStayHistory,
                                 ParkEntryRate,
+                                BookingVehicleRego,
                             )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -377,6 +378,11 @@ class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
 
     def get_booking_type(self, obj):
         return dict(CampsiteBooking.BOOKING_TYPE_CHOICES).get(obj.booking_type)
+
+class BookingRegoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingVehicleRego
+        fields = ('rego','type','booking')
 
 class BookingSerializer(serializers.ModelSerializer):
     campground_name = serializers.CharField(source='campground.name',read_only=True)

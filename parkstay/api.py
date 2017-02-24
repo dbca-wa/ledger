@@ -1293,7 +1293,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             rate = None
-            print(request.data)
             rate_serializer = RateDetailSerializer(data=request.data)
             rate_serializer.is_valid(raise_exception=True)
             rate_id = rate_serializer.validated_data.get('rate',None)

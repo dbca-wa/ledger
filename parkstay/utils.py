@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, CampsiteBookingRange, CampgroundBookingRange)
+from parkstay.serialisers import BookingRegoSerializer
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -255,6 +256,17 @@ def internal_booking(request,user,booking_details):
                 num_infant=booking_details['num_infant'],
                 cost_total=booking_details['cost_total'],
                 customer=booking_details['customer'])
+
+            # Add booking regos
+            if request.data.get('parkEntry').get('regos'):
+                regos = request.data['parkEntry'].pop('regos')
+                for r in regos:
+                    r[u'booking'] = booking.id
+                regos_serializers = [BookingRegoSerializer(data=r) for r in regos]
+                for r in regos_serializers:
+                    r.is_valid(raise_exception=True)
+                    r.save()
+
             reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
             # Create line items for booking
             json_booking = dict(json_booking)
