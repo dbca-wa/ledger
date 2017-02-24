@@ -198,10 +198,10 @@ export default {
             }
         },
         addParkHistory: function() {
-            this.sendData(api_endpoints.park_add_price,'POST',JSON.stringify(this.parkPrice));
+            this.sendData(api_endpoints.park_add_price(),'POST',JSON.stringify(this.parkPrice));
         },
         updateParkHistory: function() {
-            this.sendData(api_endpoints.park_add_price,'POST',JSON.stringify(this.parkPrice));
+            this.sendData(api_endpoints.park_add_price(),'POST',JSON.stringify(this.parkPrice));
         },
         sendData: function(url,method,data) {
             let vm = this;
