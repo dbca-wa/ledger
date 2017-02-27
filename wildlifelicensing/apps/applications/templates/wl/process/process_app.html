@@ -52,7 +52,7 @@
 {% block intro_subtitle %}
     <h4 class="inline">
         {{ data.application.licence_type.name }}
-    </h4> 
+    </h4>
 {% endblock %}
 
 {% block content %}
@@ -90,7 +90,23 @@
                                                 {% endif %}
                                             </span>
                                         </p>
-                                        <p>{{ applicant.postal_address.search_text }}</p>
+                                        <div>{{ applicant.postal_address.search_text }}</div>
+                                        <div class="applicant-contact">
+                                            <div>
+                                                <span class="fa fa-envelope"></span>
+                                                <span class="email"> {{ applicant.email }}</span>
+                                            </div>
+                                            {% if applicant.user.phone_number %}
+                                                <div>
+                                                    <span class="fa fa-phone phone"></span> {{ applicant.user.phone_number }}
+                                                </div>
+                                            {% endif %}
+                                            {% if applicant.user.mobile_number %}
+                                                <div>
+                                                    <span class="fa fa-mobile mobile"></span> {{ applicant.user.mobile_number }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
                                     {% endwith %}
                                     <div class="row">
                                         <div class="col-md-5">
