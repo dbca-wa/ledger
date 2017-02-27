@@ -1,5 +1,5 @@
 <template id="ParkPriceHistoryDetail">
-<bootstrapModal title="Add Park Price History" :large=true @ok="addHistory()" @close="close()">
+<bootstrapModal title="Add Park Price History" :large=true @ok="addHistory()" @cancel="close()" @close="close()">
 
     <div class="modal-body">
         <form name="priceForm" class="form-horizontal">
@@ -126,6 +126,7 @@ module.exports = {
 
             this.errorString = '';
             this.isOpen = false;
+            this.$emit("cancel");
         },
         addHistory: function() {
             if ($(this.form).valid()){
