@@ -170,7 +170,7 @@
                  aria-labelledby="parkentry-heading">
               <div class="panel-body" >
                   <div class="col-lg-12">
-                      <price-history level="park" :addParkPrice="true" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" :level='park' ></price-history>
+                      <price-history  :addParkPrice="true" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" level='park' ></price-history>
                   </div>
               </div>
             </div>
@@ -222,9 +222,10 @@ export default {
             priceHistoryDt:{
                 responsive: true,
                 processing: true,
+                ordering:false,
                 deferRender: true,
                 ajax: {
-                    url: api_endpoints.park_price_history(32),
+                    url: api_endpoints.park_price_history(),
                     dataSrc: ''
                 },
                 columns: [{
@@ -237,7 +238,7 @@ export default {
                     data: 'period_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
+                            return Moment(data).format('MMMM Do, YYYY');
                         }
                         else {
                             return '';
@@ -263,7 +264,11 @@ export default {
                     data: 'editable',
                     mRender: function(data, type, full) {
                         if (data) {
-                            ""
+                            var id = full.id;
+                            var column = "<td ><a href='#' class='editPrice' data-rate=\"__RATE__\" >Edit</a><br/>"
+                            column += "<a href='#' class='deletePrice' data-rate=\"__RATE__\" >Delete</a></td>";
+                            column = column.replace(/__RATE__/g, id);
+                            return column;
                         }
                         else {
                             return "";
