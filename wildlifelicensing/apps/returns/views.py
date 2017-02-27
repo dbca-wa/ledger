@@ -223,9 +223,8 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                 for table in context['tables']:
                     table['data'] = _get_validated_rows_from_post(ret, table.get('name'), request.POST)
                     if len(table['data']) == 0:
-                        # no data entered
                         messages.warning(request,
-                                       "You must enter data for {} or submit a Nil Return".format(table.get('name')))
+                                         "You must enter data for {} or submit a Nil Return".format(table.get('name')))
                     else:
                         messages.error(request,
                                        "Your return contains some errors. See below.")
