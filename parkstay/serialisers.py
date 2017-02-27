@@ -501,7 +501,8 @@ class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
 class ParkEntryRateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParkEntryRate
-        fields = ("id","period_start","period_end","reason","details","vehicle","concession","motorbike")
+        fields = ("id","period_start","period_end","reason","details","vehicle","concession","motorbike","editable")
+        read_only_fields =('editable',)
     def __init__(self, *args, **kwargs):
         from parkstay.serialisers import PriceReasonSerializer
         try:
