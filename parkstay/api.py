@@ -1036,6 +1036,10 @@ class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
     serializer_class = FeatureSerializer
 
+class ParkEntryRateViewSet(viewsets.ModelViewSet):
+    queryset = ParkEntryRate.objects.all()
+    serializer_class = ParkEntryRateSerializer
+    
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all()
     serializer_class = RegionSerializer
