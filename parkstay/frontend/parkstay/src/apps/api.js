@@ -14,6 +14,9 @@ module.exports = {
     park_current_price:function (id,arrival) {
       return "/api/parks/"+id+"/current_price.json?arrival="+arrival;
     },
+    park_entry_rate:function (id) {
+      return "/api/parkentryrate/"+id+".json";
+    },
     park:function (id) {
        return "/api/parks/"+id+".json";
     },
