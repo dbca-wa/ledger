@@ -123,8 +123,42 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
     return booking
 
 
+def get_open_campgrounds(campsites_qs, start_date, end_date):
+    """Fetch the set of campgrounds (from a set of campsites) with spaces open over a range of visit dates."""
+    # remove from the campsite list any entries with bookings
+    campsites_qs = campsites_qs.exclude(
+        campsitebooking__date__range=(start_date, end_date-timedelta(days=1))
+    )
+    
+    # get closures at campsite and campground level
+    cgbr_qs =    CampgroundBookingRange.objects.filter(
+        Q(campground__in=[x[0] for x in campsites_qs.distinct('campground').values_list('campground')]),
+        Q(status=1),
+        Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
+    )
+    cgbr = set([x[0] for x in cgbr_qs.values_list('campground')])
+
+    csbr_qs =    CampsiteBookingRange.objects.filter(
+        Q(campsite__in=campsites_qs),
+        Q(status=1),
+        Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
+    )
+    csbr = set([x[0] for x in csbr_qs.values_list('campsite')])
+
+    # generate a campground-to-campsite-list map with closures removed
+    campground_map = {}
+    for cs in campsites_qs:
+        if (cs.pk in csbr) or (cs.campground.pk in cgbr):
+            continue
+        if cs.campground.pk not in campground_map:
+            campground_map[cs.campground.pk] = []
+        campground_map[cs.campground.pk].append(cs.pk)
+
+    return set(campground_map.keys())
+
+
 def get_campsite_availability(campsites_qs, start_date, end_date):
-    """Fetch the status of each campsite in a queryset over a range of visit dates."""
+    """Fetch the availability of each campsite in a queryset over a range of visit dates."""
     # fetch all of the single-day CampsiteBooking objects within the date range for the sites
     bookings_qs =   CampsiteBooking.objects.filter(
                         campsite__in=campsites_qs,
