@@ -8,7 +8,8 @@ from django.http.response import HttpResponse
 
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.dashboard.views import base
-from wildlifelicensing.apps.dashboard.views.customer import DataTableReturnsCustomerView
+from wildlifelicensing.apps.dashboard.views.customer import DataTableReturnsCustomerView, \
+    DataTableApplicationCustomerView
 from wildlifelicensing.apps.main.helpers import get_all_officers
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.models import WildlifeLicence
@@ -474,28 +475,8 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
 
     @staticmethod
     def _render_action_column(obj):
-        status = obj.customer_status
-        if status == 'draft':
-            return '<a href="{0}">{1}</a> / <a href="{2}">{3}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.pk]),
-                'Continue',
-                reverse('wl_applications:delete_application', args=[obj.pk]),
-                'Discard'
-            )
-        elif status == 'amendment_required' or status == 'id_and_amendment_required':
-            return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.pk]),
-                'Amend application'
-            )
-        elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
-            return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_main:identification'),
-                'Update ID')
-        else:
-            return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:view_application', args=[obj.pk]),
-                'View application (read-only)'
-            )
+        # same as a customer
+        return DataTableApplicationCustomerView.render_action_column(obj)
 
     @staticmethod
     def _get_proxy_applications(user):

@@ -45,8 +45,6 @@ class Application(RevisionedMixin):
                                  ('declined', 'Declined'),
                                  ('discarded', 'Discarded'),
                                  )
-    # List of statuses from processing list above that allow a customer to discard an application
-    CUSTOMER_DISCARDABLE_STATE = ['awaiting_applicant_response']
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
@@ -138,6 +136,23 @@ class Application(RevisionedMixin):
         return self.licence_type.senior_applicable and \
             self.applicant.is_senior and \
             bool(self.applicant.senior_card)
+
+    @property
+    def is_discardable(self):
+        """
+        An application can be discarded by a customer if:
+        1 - It is a draft
+        2- or if the application has been pushed back to the user
+        """
+        return self.customer_status == 'draft' or self.processing_status == 'awaiting_applicant_response'
+
+    @property
+    def is_deletable(self):
+        """
+        An application can be deleted only if it is a draft and it hasn't been lodged yet
+        :return:
+        """
+        return self.customer_status == 'draft' and not self.lodgement_number
 
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)

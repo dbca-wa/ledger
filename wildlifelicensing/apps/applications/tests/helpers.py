@@ -79,6 +79,12 @@ def get_or_create_condition(code, defaults):
     return Condition.objects.get_or_create(code=code, defaults=defaults)[0]
 
 
+def set_application_session(client, application):
+    session = client.session
+    session['application_id'] = application.pk
+    session.save()
+
+
 class HelpersTest(TestCase):
     def test_create_profile(self):
         user = create_random_customer()
