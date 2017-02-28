@@ -10,8 +10,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, CampgroundBookingRange, CampgroundPriceHistory, ParkEntryRate)
-from parkstay.serialisers import BookingRegoSerializer, CampgroundPriceHistorySerializer, ParkEntryRateSerializer
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate)
+from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -242,18 +242,18 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
 
     return available
 
-def get_campground_current_rates(request,campground_id,start_date,end_date):
+def get_campsite_current_rate(request,campsite_id,start_date,end_date):
     res = []
     if start_date and end_date:
         start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
         end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
         for single_date in daterange(start_date, end_date):
-            price_history = CampgroundPriceHistory.objects.filter(id=campground_id,date_start__lte=single_date).order_by('-date_start')
+            price_history = CampsiteRate.objects.filter(id=campsite_id,date_start__lte=single_date).order_by('-date_start')
             if price_history:
-                serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
+                rate = RateSerializer(price_history[0].rate,context={'request':request}).data
                 res.append({
                     "date" : single_date.strftime("%Y-%m-%d") ,
-                    "rate" : serializer.data[0]
+                    "rate" : rate
                 })
     return res
 
