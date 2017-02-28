@@ -149,7 +149,7 @@ class Application(RevisionedMixin):
     @property
     def is_deletable(self):
         """
-        An application can be deleted only if it is a draft and it hasn't been lodge yet
+        An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
         return self.customer_status == 'draft' and not self.lodgement_number
