@@ -230,11 +230,9 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
     def render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
-            result = '<a href="{0}">{1}</a> / <a href="{2}">{3}</a>'.format(
+            result = '<a href="{0}">{1}</a>'.format(
                 reverse('wl_applications:edit_application', args=[obj.pk]),
-                'Continue',
-                reverse('wl_applications:delete_application', args=[obj.pk]),
-                'Discard'
+                'Continue'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
             result = '<a href="{0}">{1}</a>'.format(
@@ -250,9 +248,8 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
                 reverse('wl_applications:view_application', args=[obj.pk]),
                 'View application (read-only)'
             )
-
-        # Add discard action (not delete)
-        if obj.processing_status in Application.CUSTOMER_DISCARDABLE_STATE and status != 'draft':
+        # Add discard action
+        if obj.is_discardable:
             result += ' / <a href="{}">{}</a>'.format(
                 reverse('wl_applications:discard_application', args=[obj.pk]),
                 'Discard'
