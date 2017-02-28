@@ -314,10 +314,11 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
 
-            if replacing_application.is_licence_amendment:
-                return 'Amended'
-            else:
-                return 'Renewed'
+            if replacing_application.licence is not None:
+                if replacing_application.is_licence_amendment:
+                    return 'Amended'
+                else:
+                    return 'Renewed'
         except Application.DoesNotExist:
             pass
 
@@ -333,7 +334,13 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
     def _render_action(instance):
         try:
             application = Application.objects.get(licence=instance)
-            if Application.objects.filter(previous_application=application).exists():
+            replacing_application = Application.objects.get(previous_application=application)
+            if replacing_application.licence is None:
+                if replacing_application.is_licence_amendment:
+                    return 'Amendment Pending'
+                else:
+                    return 'Renewal Pending'
+            else:
                 return 'N/A'
         except Application.DoesNotExist:
             pass
