@@ -14,6 +14,16 @@ MAX_SUBJECT_LENGTH = 76
 logger = logging.getLogger(__name__)
 
 
+def _format_application_email_subject(subject, application):
+    subject = subject.format(application.reference, application.applicant.get_full_name())
+
+    # subject can be no longer than MAX_SUBJECT_LENGTH
+    if len(subject) > MAX_SUBJECT_LENGTH:
+        subject = '{}..'.format(subject[:MAX_SUBJECT_LENGTH - 2])
+
+    return subject
+
+
 class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
     subject = 'An amendment to your wildlife licensing application is required.'
     html_template = 'wl/emails/application_amendment_requested.html'
@@ -50,11 +60,8 @@ class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_assessment_requested.txt'
 
     def __init__(self, application):
-        self.subject = self.subject.format(application.reference, application.applicant.get_full_name())
+        self.subject = _format_application_email_subject(self.subject, application)
 
-        # subject can be no longer than MAX_SUBJECT_LENGTH
-        if len(self.subject) > MAX_SUBJECT_LENGTH:
-            self.subject = (self.subject[:MAX_SUBJECT_LENGTH - 2] + '..')
 
 def send_assessment_requested_email(assessment, request):
     application = assessment.application
@@ -78,11 +85,8 @@ class ApplicationAssessmentReminderEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_assessment_reminder.txt'
 
     def __init__(self, application):
-        self.subject = self.subject.format(application.reference, application.applicant.get_full_name())
+        self.subject = _format_application_email_subject(self.subject, application)
 
-        # subject can be no longer than MAX_SUBJECT_LENGTH
-        if len(self.subject) > MAX_SUBJECT_LENGTH:
-            self.subject = (self.subject[:MAX_SUBJECT_LENGTH - 2] + '..')
 
 def send_assessment_reminder_email(assessment, request=None):
     application = assessment.application
@@ -112,11 +116,8 @@ class ApplicationAssessmentDoneEmail(TemplateEmailBase):
     txt_template = 'wl/emails/application_assessment_done.txt'
 
     def __init__(self, application):
-        self.subject = self.subject.format(application.reference, application.applicant.get_full_name())
+        self.subject = _format_application_email_subject(self.subject, application)
 
-        # subject can be no longer than MAX_SUBJECT_LENGTH
-        if len(self.subject) > MAX_SUBJECT_LENGTH:
-            self.subject = (self.subject[:MAX_SUBJECT_LENGTH - 2] + '..')
 
 def send_assessment_done_email(assessment, request):
     application = assessment.application
