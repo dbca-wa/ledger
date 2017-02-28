@@ -28,9 +28,6 @@ module.exports = {
     campground_price_history: function(id){
         return "/api/campgrounds/"+ id +"/price_history.json";
     },
-    campground_current_price:function (id,start,end) {
-       return "/api/campgrounds/"+ id +"/current_price.json?arrival="+start+"&departure="+end;
-    },
     campgroundStayHistory: function(id){
         return "/api/campgrounds/" + id + "/stay_history.json"
     },
@@ -67,6 +64,9 @@ module.exports = {
     },
     campsites_price_history: function(id){
         return "/api/campsites/"+ id +"/price_history.json";
+    },
+    campsite_current_price:function (id,start,end) {
+       return "/api/campsites/"+ id +"/current_price.json?arrival="+start+"&departure="+end;
     },
     campsites_status_history:function(id){
         return "/api/campsites/" + id + "/status_history.json?closures=True"
