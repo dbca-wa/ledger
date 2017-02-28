@@ -177,13 +177,17 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 for _file in request.FILES.getlist('attachments'):
                     doc = Document.objects.create(file=_file, name=_file.name)
                     attachments.append(doc)
-            if application.proxy_applicant is None:
-                # customer applied online
+
+            # check we have an email address to send to
+            if licence.profile.email and not licence.profile.user.is_dummy_user:
+                to = [licence.profile.email]
                 messages.success(request, 'The licence has now been issued and sent as an email attachment to the '
-                                 'licencee.')
-                send_licence_issued_email(licence, application, request, bcc=ccs, additional_attachments=attachments)
+                                 'licencee: {}.'.format(licence.profile.email))
+                send_licence_issued_email(licence, application, request,
+                                          to=to,
+                                          bcc=ccs, additional_attachments=attachments)
             else:
-                # customer applied offline
+                # no email
                 messages.success(request, 'The licence has now been issued and must be posted to the licencee. Click '
                                  'this link to show the licence <a href="{0}" target="_blank">Licence PDF'
                                  '</a><img height="20px" src="{1}"></img> and this link to show the cover letter '
