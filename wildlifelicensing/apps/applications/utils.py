@@ -366,6 +366,9 @@ def format_application(instance, attrs):
     attrs['licence_type']['default_conditions'] = serialize([ap.condition for ap in instance.licence_type.defaultcondition_set.order_by('order')])
     attrs['conditions'] = serialize([ap.condition for ap in instance.applicationcondition_set.order_by('order')])
 
+    if instance.applicant.identification is not None and instance.applicant.identification.file is not None: 
+        attrs['applicant']['identification']['url'] = instance.applicant.identification.file.url
+
     return attrs
 
 
