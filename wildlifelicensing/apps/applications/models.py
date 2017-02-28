@@ -195,6 +195,7 @@ class Assessment(ApplicationRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'),
                       ('assessment_expired', 'Assessment Period Expired'))
     assessor_group = models.ForeignKey(AssessorGroup)
+    assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     date_last_reminded = models.DateField(null=True, blank=True)
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
@@ -239,6 +240,8 @@ class ApplicationUserAction(UserAction):
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
+    ACTION_ASSESSMENT_ASSIGN_TO_ = "Assign Assessment to {}"
+    ACTION_ASSESSMENT_UNASSIGN = "Unassign Assessment"
     ACTION_DECLINE_APPLICATION = "Decline application"
     ACTION_ENTER_CONDITIONS = "Enter Conditions"
     ACTION_CREATE_CONDITION_ = "Create condition {}"
