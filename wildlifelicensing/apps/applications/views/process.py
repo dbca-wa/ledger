@@ -117,7 +117,10 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
             return redirect('wl_applications:enter_conditions', *args, **kwargs)
         elif 'decline' in request.POST:
+            application.customer_status = 'declined'
             application.processing_status = 'declined'
+            Assessment.objects.filter(application=application, status='awaiting_assessment').\
+                update(status='assessment_expired')
             application.save()
             application.log_user_action(
                 ApplicationUserAction.ACTION_DECLINE_APPLICATION,

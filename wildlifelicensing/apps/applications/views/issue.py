@@ -146,6 +146,9 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             application.customer_status = 'approved'
             application.processing_status = 'issued'
+            Assessment.objects.filter(application=application, status='awaiting_assessment').\
+                update(status='assessment_expired')
+
             application.licence = licence
 
             application.save()

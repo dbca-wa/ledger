@@ -26,7 +26,7 @@ class SearchCustomersView(OfficerRequiredMixin, View):
         query = request.GET.get('q')
 
         if query is not None:
-            q = Q(first_name__icontains=query) | Q(last_name__icontains=query) & Q(groups=None)
+            q = (Q(first_name__icontains=query) | Q(last_name__icontains=query)) & Q(groups__isnull=True)
             qs = EmailUser.objects.filter(q)
         else:
             qs = EmailUser.objects.none()

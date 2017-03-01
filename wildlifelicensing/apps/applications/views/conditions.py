@@ -51,7 +51,8 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        application.processing_status = 'ready_to_issue'
+        if application.processing_status not in ['issued', 'declined']:
+            application.processing_status = 'ready_to_issue'
 
         # remove existing conditions as there may be new conditions and/or changes of order
         application.conditions.clear()
@@ -99,12 +100,22 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
+    def _check_read_only(self, assessment, request):
+        if assessment.status == 'assessed':
+            messages.warning(request, """This assessment has already been concluded and may only be viewed in
+            read-only mode.""")
+            return True
+        elif assessment.status == 'assessment_expired':
+            messages.warning(request, """The assessment period for this application has expired, likely due to the
+                application having been issued or declined. The assessment may only be viewed in read-only mode""")
+            return True
+
+        return False
+
     def get(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=args[1])
 
-        if assessment.status == 'assessed':
-            messages.warning(request,
-                             'This assessment has already been concluded and may only be viewed in read-only mode.')
+        if self._check_read_only(assessment, request):
             return redirect('wl_applications:view_assessment', *args)
 
         return super(EnterConditionsAssessorView, self).get(*args, **kwargs)
@@ -112,6 +123,9 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
         assessment = get_object_or_404(Assessment, pk=self.args[1])
+
+        if self._check_read_only(assessment, request):
+            return redirect('wl_applications:view_assessment', *args)
 
         assessment.assessmentcondition_set.all().delete()
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):

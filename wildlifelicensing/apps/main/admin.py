@@ -135,7 +135,7 @@ class VariantGroupAdminForm(forms.ModelForm):
             if missing_product_variants:
                 msg = mark_safe("The payments products with titles matching the below list of product codes were not "
                                 "found. Note: You must create a payment product(s) for variants of each licence type linked "
-                                "to this variant group, even if the licence is free. <ul><li>{}</li></ul>".
+                                "to this variant group, even if the licence has no fee. <ul><li>{}</li></ul>".
                                 format('</li><li>'.join(missing_product_variants)))
 
                 if hasattr(self.instance, 'variants'):
