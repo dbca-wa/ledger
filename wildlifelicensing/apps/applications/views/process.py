@@ -98,7 +98,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         return data
 
-    def _process_decline(self, request, application):
+    def _process_decline(self, application):
+        request = self.request
         form = ApplicationDeclinedDetailsForm(request.POST)
         if form.is_valid():
             details = form.save()
@@ -139,7 +140,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
             return redirect('wl_applications:enter_conditions', *args, **kwargs)
         elif 'decline' in request.POST:
-            success, message = self._process_decline(request, application)
+            success, message = self._process_decline(application)
             if success:
                 messages.warning(request, message)
                 return redirect('wl_dashboard:tables_applications_officer')
