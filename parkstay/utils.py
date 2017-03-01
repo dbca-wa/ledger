@@ -268,12 +268,15 @@ def get_park_entry_rate(request,start_date):
             res = serializer.data[0]
     return res
 
-def create_booking_invoice_items(request,booking):
-    lines = []
-    # Create line items for booking
+
+def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
+    total_price = Decimal(0)
     rate_list = {}
+    invoice_lines = []
+    if not lines and not old_booking:
+        raise Exception('An old booking is required if lines is set to false')
     # Create line items for customers
-    daily_rates = [get_campsite_current_rate(request,c,booking.arrival.strftime('%Y-%m-%d'),booking.departure.strftime('%Y-%m-%d')) for c in booking.campsite_id_list]
+    daily_rates = [get_campsite_current_rate(request,c,booking.arrival.strftime('%Y-%m-%d'),booking.departure.strftime('%Y-%m-%d')) for c in campsite_list]
     if not daily_rates:
         raise Exception('There was an error while trying to get the daily rates')
     for rates in daily_rates:
@@ -298,11 +301,18 @@ def create_booking_invoice_items(request,booking):
                     end = datetime.strptime(r['end'],"%Y-%m-%d").date()
                     start = datetime.strptime(r['start'],"%Y-%m-%d").date()
                     num_days = int ((end - start).days) + 1
-                    price = str((num_days * Decimal(r[k])))
                     campsite = Campsite.objects.get(id=c)
-                    lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                    if lines:
+                        price = str((num_days * Decimal(r[k])))
+                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                    else:
+                        price = (num_days * Decimal(r[k])) * v
+                        total_price += price
     # Create line items for vehicles
-    vehicles = booking.regos.all()
+    if lines:
+        vehicles = booking.regos.all()
+    else:
+        vehicles = old_booking.regos.all()
     if vehicles:
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
@@ -313,83 +323,70 @@ def create_booking_invoice_items(request,booking):
 
         for k,v in vehicle_dict.items():
             if int(v) > 0:
-                price =  park_entry_rate[k]
-                lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
-    return lines
+                if lines:
+                    price =  park_entry_rate[k]
+                    invoice_lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                else:
+                    price =  park_entry_rate[k] * v
+                    total_price += price
 
-def update_booking(request,old_booking,start,end):
+    if lines:
+        return invoice_lines
+    else:
+        return total_price
 
-    total_price = 0.0
-    old_booking_days = daterange(booking.start_date,booking.end_date)
-    # Check difference of dates in booking
-    start = datetime.strptime(start,"%Y-%m-%d").date()
-    end = datetime.strptime(end,"%Y-%m-%d").date()
-    new_days = daterange(start,date)
+def check_date_diff(old_booking,new_booking):
+    if old_booking.arrival == new_booking.arrival:
+        old_booking_days = int((old_booking.departure - old_booking.arrival).days)
+        new_days = int((new_booking.departure - new_booking.arrival).days)
+        if new_days > old_booking_days:
+            return 1 #additional days
+        else:
+            return 2 #reduced days
+    else:
+        return 3 # different days
 
-    # Get price of new booking
-    details = {
-        num_adult : booking_details['num_adult'],
-        num_concession : booking_details['num_concession'],
-        num_child : booking_details['num_child'],
-        num_infant : booking_details['num_infant'],
-    }
-    booking = Booking(
-        start_date = booking_details['start_date'],
-        end_date=booking_details['end_date'],
-        details = json.dumps(details),
-        #cost_total=booking_details['cost_total'],
-        customer=booking_details['customer'])
+def update_booking(request,old_booking,booking_details):
+    same_dates = False
+    same_campsites = False
 
-    rate_list = {}
-    daily_rates = [get_campsite_current_rate(request,c,booking.arrival.strftime('%Y-%m-%d'),booking.departure.strftime('%Y-%m-%d')) for c in booking.campsite_id_list]
-    if not daily_rates:
-        raise Exception('There was an error while trying to get the daily rates')
-    for rates in daily_rates:
-        for c in rates:
-            if c['rate']['id'] not in rate_list.keys():
-                rate_list[c['rate']['id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
-            else:
-                rate_list[c['rate']['id']]['end'] = c['date']
-    # Get Guest Details
-    guests = {}
-    for k,v in booking.details.items():
-        if 'num_' in k:
-            guests[k.split('num_')[1]] = v
-    for k,v in guests.items():
-        if int(v) > 0:
-            for i,r in rate_list.items():
-                price = Decimal(0)
-                end = datetime.strptime(r['end'],"%Y-%m-%d").date()
-                start = datetime.strptime(r['start'],"%Y-%m-%d").date()
-                num_days = int ((end - start).days) + 1
-                price = (num_days * Decimal(r[k])) * v
-                total_price += price
-                #lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
-    # Create line items for vehicles
-    vehicles = old_booking.regos.all()
-    if vehicles:
-        park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
-        vehicle_dict = {
-            'vehicle': vehicles.filter(type='vehicle').count(),
-            'motorbike': vehicles.filter(type='motorbike').count(),
-            'concession': vehicles.filter(type='concession').count()
-        }
+    try:
+        booking = Booking(
+            arrival = booking_details['start_date'],
+            departure =booking_details['end_date'],
+            details = old_booking.details,
+            customer=old_booking.customer)
+        # Check if dates are the same
+        if (old_booking.arrival == booking.arrival) and (old_booking.departure == booking.departure):
+            same_dates = True
+        # Check if the campsite is the same
+        if old_booking.campsite_id_list.sort() == booking_details['campsites'].sort():
+            same_campsites = True
+        
+        if same_campsites and same_dates:
+            return old_booking
+        # Check difference of dates in booking
+        old_booking_days = int((old_booking.departure - old_booking.arrival).days)
+        new_days = int((booking_details['end_date'] - booking_details['start_date']).days)
 
-        for k,v in vehicle_dict.items():
-            if int(v) > 0:
-                price =  park_entry_rate[k] * v
-                #lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
-                total_price += price
+        total_price = price_or_lineitems(request,booking,booking_details['campsites'],lines=False,old_booking=old_booking)
 
-    price_diff = False
-    if old_booking.cost_total != total_price:
-        price_diff = True
-
-    if price_diff:
-        if total_price > old_booking.cost_total:
-            print 'more'
-        elif total_price < old_booking.cost_total:
-            print 'less'
+        price_diff = False
+        if old_booking.cost_total != total_price:
+            price_diff = True
+        if price_diff:
+            if total_price > old_booking.cost_total:
+                print 'hererere' 
+                if new_days > old_booking_days:
+                    # Create booking for extra days
+                    
+                #if new_days > old_booking_days
+            elif total_price < old_booking.cost_total:
+                print 'less'
+        else:
+            print('same')
+    except:
+        raise
 
 def create_or_update_booking(request,booking_details,updating=False):
     booking = None
@@ -427,7 +424,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             booking = create_or_update_booking(request,booking_details,updating)
             # Invoice Items
             reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
-            lines = create_booking_invoice_items(request,booking)
+            lines = price_or_lineitems(request,booking,booking.campsite_id_list)
             parameters = {
                 'system': 'S369',
                 'fallback_url': request.build_absolute_uri('/'),
