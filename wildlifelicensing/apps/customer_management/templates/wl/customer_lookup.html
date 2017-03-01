@@ -21,8 +21,6 @@
             logs.initCommunicationLog({
                 showLogPopoverSelector: null,
                 showLogEntryModalSelector: '#addLogEntry',
-                logEntryModalSelector: '#logEntryModal',
-                logEntryFormSelector: '#addLogEntryForm',
                 logTableSelector: '#communicationsLogTable',
                 logListURL: "{% url 'wl_main:log_list' customer.id %}",
                 addLogEntryURL: "{% url 'wl_main:add_log_entry' customer.id %}"
