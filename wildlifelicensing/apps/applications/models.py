@@ -45,8 +45,6 @@ class Application(RevisionedMixin):
                                  ('declined', 'Declined'),
                                  ('discarded', 'Discarded'),
                                  )
-    # List of statuses from processing list above that allow a customer to discard an application
-    CUSTOMER_DISCARDABLE_STATE = ['awaiting_applicant_response']
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
@@ -139,6 +137,23 @@ class Application(RevisionedMixin):
             self.applicant.is_senior and \
             bool(self.applicant.senior_card)
 
+    @property
+    def is_discardable(self):
+        """
+        An application can be discarded by a customer if:
+        1 - It is a draft
+        2- or if the application has been pushed back to the user
+        """
+        return self.customer_status == 'draft' or self.processing_status == 'awaiting_applicant_response'
+
+    @property
+    def is_deletable(self):
+        """
+        An application can be deleted only if it is a draft and it hasn't been lodged yet
+        :return:
+        """
+        return self.customer_status == 'draft' and not self.lodgement_number
+
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)
 
@@ -195,6 +210,7 @@ class Assessment(ApplicationRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'),
                       ('assessment_expired', 'Assessment Period Expired'))
     assessor_group = models.ForeignKey(AssessorGroup)
+    assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     date_last_reminded = models.DateField(null=True, blank=True)
     conditions = models.ManyToManyField(Condition, through='AssessmentCondition')
@@ -239,6 +255,8 @@ class ApplicationUserAction(UserAction):
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
+    ACTION_ASSESSMENT_ASSIGN_TO_ = "Assign Assessment to {}"
+    ACTION_ASSESSMENT_UNASSIGN = "Unassign Assessment"
     ACTION_DECLINE_APPLICATION = "Decline application"
     ACTION_ENTER_CONDITIONS = "Enter Conditions"
     ACTION_CREATE_CONDITION_ = "Create condition {}"

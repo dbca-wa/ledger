@@ -8,8 +8,10 @@ from django.core.urlresolvers import reverse_lazy
 
 from preserialize.serialize import serialize
 
+from ledger.accounts.models import EmailUser
+
 from wildlifelicensing.apps.payments import utils as payment_utils
-from wildlifelicensing.apps.main.models import Condition
+from wildlifelicensing.apps.main.models import Condition, AssessorGroup
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, \
@@ -94,6 +96,12 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
                                                 exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
+
+        assessors = [{'id': assessor.id, 'text': assessor.get_full_name()} for assessor in
+                     assessment.assessor_group.members.all().order_by('first_name')]
+        assessors.insert(0, {'id': 0, 'text': 'Unassigned'})
+
+        kwargs['assessors'] = assessors
 
         kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
                                                            fromm=self.request.user.get_full_name())
@@ -210,3 +218,30 @@ class SetAssessmentConditionState(OfficerRequiredMixin, View):
         response = ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES[assessment_condition.acceptance_status]
 
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
+
+
+class AssignAssessorView(OfficerOrAssessorRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        assessment = get_object_or_404(Assessment, pk=request.POST['assessmentID'])
+
+        try:
+            assessment.assigned_assessor = EmailUser.objects.get(pk=request.POST['userID'])
+        except EmailUser.DoesNotExist:
+            assessment.assigned_assessor = None
+
+        assessment.save()
+
+        if assessment.assigned_assessor is not None:
+            name = assessment.assigned_assessor.get_full_name()
+            assigned_assessor = {'id': assessment.assigned_assessor.id, 'text': name}
+            assessment.application.log_user_action(
+                ApplicationUserAction.ACTION_ASSESSMENT_ASSIGN_TO_.format(name),
+                request)
+        else:
+            assigned_assessor = {'id': 0, 'text': 'Unassigned'}
+            assessment.application.log_user_action(
+                ApplicationUserAction.ACTION_ASSESSMENT_UNASSIGN,
+                request)
+
+        return JsonResponse({'assigned_assessor': assigned_assessor},
+                            safe=False, encoder=WildlifeLicensingJSONEncoder)

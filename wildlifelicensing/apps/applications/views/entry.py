@@ -85,21 +85,6 @@ class EditApplicationView(UserCanEditApplicationMixin, View):
         return redirect('wl_applications:enter_details')
 
 
-class DeleteApplicationView(View, UserCanViewApplicationMixin):
-    def get(self, request, *args, **kwargs):
-        try:
-            application = Application.objects.get(id=args[0])
-            if application.customer_status == 'draft':
-                application.delete()
-                messages.success(self.request, 'Draft application was deleted')
-            else:
-                messages.warning(self.request, 'Application can only be deleted if it is a draft')
-        except Application.DoesNotExist:
-            messages.error(self.request, 'Unable to find application')
-
-        return redirect('wl_dashboard:home')
-
-
 class DiscardApplicationView(View, UserCanViewApplicationMixin):
 
     def get_and_check_application(self, request, *args):
@@ -107,21 +92,17 @@ class DiscardApplicationView(View, UserCanViewApplicationMixin):
         Warning! Don't call this method get_application or it will clash with the one in the UserCanViewApplicationMixin
         """
         application = get_object_or_404(Application, pk=args[0])
-        if application.processing_status not in Application.CUSTOMER_DISCARDABLE_STATE:
-            raise Exception('Application cannot be discarded at this stage: {}'
-                            .format(application.processing_status))
+        if not application.is_discardable:
+            raise Exception('Application cannot be discarded at this stage')
         return application
 
     def get(self, request, *args, **kwargs):
         try:
             application = self.get_and_check_application(request, *args)
             # confirmation page context
-            message = """You are about to discard an application.
-            Please confirm your action."""
             ctx = {
                 'action_url': reverse('wl_applications:discard_application', args=[application.pk]),
-                'cancel_url': reverse('wl_dashboard:home'),
-                'message': message
+                'cancel_url': reverse('wl_dashboard:home')
             }
             return render(request,
                           template_name='wl/entry/confirm_discard.html',
@@ -132,15 +113,27 @@ class DiscardApplicationView(View, UserCanViewApplicationMixin):
             return redirect('wl_dashboard:home')
 
     def post(self, request, *args, **kwargs):
+        """
+        Two cases:
+         1- If an application has been lodged/submitted its state becomes 'discarded'
+         2- If it is a first time draft (not submitted) it is deleted.
+        """
         try:
             application = self.get_and_check_application(request, *args)
-            application.customer_status = application.processing_status = 'discarded'
-            application.save()
-            application.log_user_action(
-                ApplicationUserAction.ACTION_DISCARD_APPLICATION.format(application),
-                request
-            )
-            messages.success(self.request, 'Application {} discarded'.format(application))
+            if application.is_deletable:
+                application.delete()
+            else:
+                application.customer_status = application.processing_status = 'discarded'
+                application.save()
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_DISCARD_APPLICATION.format(application),
+                    request
+                )
+            if application.lodgement_number:
+                message = 'Application {} discarded'.format(application)
+            else:
+                message = 'Application discarded'
+            messages.success(self.request, message)
         except Exception as e:
             messages.error(self.request, str(e))
 
@@ -534,7 +527,8 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         if 'draft' in request.POST or 'draft_continue' in request.POST:
             application.customer_status = 'draft'
 
-            if application.processing_status != 'renewal':
+            # The processing status should only be set to 'draft' if the application hasn't been lodged
+            if not application.lodgement_number:
                 application.processing_status = 'draft'
 
             application.save()
