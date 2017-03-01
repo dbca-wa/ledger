@@ -57,7 +57,7 @@
                                         Welcome
                                         <strong>
                                             {% if request.user.first_name %}
-                                                {{ request.user.first_name }}
+                                                {{ request.user.get_short_name }}
                                             {% elif request.user.last_name %}
                                                 {{ request.user.last_name }}
                                             {% else %}
