@@ -399,7 +399,7 @@ class BookingSerializer(serializers.ModelSerializer):
         return [i.invoice_reference for i in obj.invoices.all()]
 
     def get_campsites(self,obj):
-        return [c.campsite.name for c in obj.campsites.all()]
+        return obj.campsite_id_list
 
     def __init__(self,*args,**kwargs):
         try:
