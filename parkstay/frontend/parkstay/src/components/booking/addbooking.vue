@@ -433,7 +433,7 @@ export default {
                     var departure = Moment(vm.booking.departure, "YYYY-MM-DD");
                     var nights = departure.diff(arrival,'days');
                     vm.loading.push('updating prices');
-                    vm.$http.get(api_endpoints.campground_current_price(vm.campground.id,arrival.format("YYYY-MM-DD"),departure.format("YYYY-MM-DD"))).then((response)=>{
+                    vm.$http.get(api_endpoints.campsite_current_price(vm.booking.campsite,arrival.format("YYYY-MM-DD"),departure.format("YYYY-MM-DD"))).then((response)=>{
                         vm.priceHistory = null;
                         vm.priceHistory = response.body;
                         vm.generateBookingPrice();

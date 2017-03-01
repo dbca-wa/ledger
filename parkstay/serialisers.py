@@ -463,7 +463,7 @@ class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
 
     def validate(self,obj):
         if obj.get('reason') == 1 and not obj.get('details'):
-            raise serializers.ValidationError('Details is rtequired if the reason is other.')
+            raise serializers.ValidationError('Details is required if the reason is other.')
         return obj
 
 
@@ -501,7 +501,8 @@ class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
 class ParkEntryRateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParkEntryRate
-        fields = ("id","period_start","period_end","reason","details","vehicle","concession","motorbike")
+        fields = ("id","period_start","period_end","reason","details","vehicle","concession","motorbike","editable")
+        read_only_fields =('editable',)
     def __init__(self, *args, **kwargs):
         from parkstay.serialisers import PriceReasonSerializer
         try:
