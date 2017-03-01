@@ -364,10 +364,12 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):
     @property
     def applications_filters(self):
         status_filter_values = \
-            [(
+            [('all', 'All'),
+             (
                 TablesApplicationsOfficerView.STATUS_PENDING,
-                TablesApplicationsOfficerView.STATUS_PENDING.capitalize())] + \
-            [('all', 'All')] + \
+                TablesApplicationsOfficerView.STATUS_PENDING.capitalize()
+             ),
+             ] + \
             [s for s in Application.PROCESSING_STATUS_CHOICES]
 
         return {
@@ -427,9 +429,11 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):
 
     @property
     def returns_filters(self):
-        status_filter_values = [(TablesReturnsOfficerView.OVERDUE_FILTER,
-                                 TablesReturnsOfficerView.OVERDUE_FILTER.capitalize())] + \
-                               [('all', 'All')] + list(Return.STATUS_CHOICES)
+        status_filter_values = \
+            [
+                (TablesReturnsOfficerView.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
+                (TablesReturnsOfficerView.OVERDUE_FILTER, TablesReturnsOfficerView.OVERDUE_FILTER.capitalize())
+            ] + list(Return.STATUS_CHOICES)
         return {
             'licence_type': self.get_licence_types_values(),
             'status': status_filter_values,
