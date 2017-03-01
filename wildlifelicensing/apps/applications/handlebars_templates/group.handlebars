@@ -10,12 +10,8 @@
             <a class="collapse-link-top pull-right"><span class="glyphicon glyphicon-chevron-down"></a>
             <div class="children-anchor-point collapse in" style="padding-left: 0px">
             </div>
-            {{#unless isPreviewMode }}
-                {{#if isRepeatable }}
-                    <a id="copy_{{name}}">Copy {{label}}</a>
-                {{/if}}
+            {{#unless isPreviewMode}}
                 <span class="{{#unless isRemovable}}hidden{{/unless}}">
-                    <span class="margin-left margin-right">|</span>
                     <a id="remove_{{name}}" ">Remove {{label}}</a>
                 </span>
             {{/unless}}
