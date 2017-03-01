@@ -211,7 +211,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     Password and email are required. Other fields are optional.
     """
     email = models.EmailField(unique=True, blank=False)
-    first_name = models.CharField(max_length=128, blank=False)
+    first_name = models.CharField(max_length=128, blank=False, verbose_name='Given name(s)')
     last_name = models.CharField(max_length=128, blank=False)
     is_staff = models.BooleanField(
         default=False,
@@ -294,7 +294,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         if self.first_name:
-            return self.first_name
+            return self.first_name.split(' ')[0]
         return self.email
 
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
@@ -630,12 +630,12 @@ class AddressListener(object):
 class EmailUserReport(models.Model):
     hash = models.TextField(primary_key=True)
     occurence = models.IntegerField()
-    first_name = models.CharField(max_length=128, blank=False)
+    first_name = models.CharField(max_length=128, blank=False, verbose_name='Given name(s)')
     last_name = models.CharField(max_length=128, blank=False)
     dob = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=False,verbose_name="date of birth", help_text='')
 
     def __str__(self):
-        return 'First Name: {}, Last Name: {}, DOB: {}, Occurence: {}'.format(self.first_name,self.last_name,self.dob,self.occurence)
+        return 'Given Name(s): {}, Last Name: {}, DOB: {}, Occurence: {}'.format(self.first_name,self.last_name,self.dob,self.occurence)
 
     class Meta:
         managed = False
