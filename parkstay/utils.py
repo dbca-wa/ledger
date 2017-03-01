@@ -251,6 +251,7 @@ def get_campsite_current_rate(request,campsite_id,start_date,end_date):
             price_history = CampsiteRate.objects.filter(id=campsite_id,date_start__lte=single_date).order_by('-date_start')
             if price_history:
                 rate = RateSerializer(price_history[0].rate,context={'request':request}).data
+                rate['campsite'] = campsite_id
                 res.append({
                     "date" : single_date.strftime("%Y-%m-%d") ,
                     "rate" : rate
@@ -277,10 +278,13 @@ def create_booking_invoice_items(request,booking):
         raise Exception('There was an error while trying to get the daily rates')
     for rates in daily_rates:
         for c in rates:
-            if c['rate']['id'] not in rate_list.keys():
-                rate_list[c['rate']['id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
+            if c['rate']['campsite'] not in rate_list.keys():
+                rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
             else:
-                rate_list[c['rate']['id']]['end'] = c['date']
+                if c['rate']['id'] not in rate_list[c['rate']['campsite']].keys():
+                    rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
+                else:
+                    rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
     # Get Guest Details
     guests = {}
     for k,v in booking.details.items():
@@ -288,13 +292,15 @@ def create_booking_invoice_items(request,booking):
             guests[k.split('num_')[1]] = v
     for k,v in guests.items():
         if int(v) > 0:
-            for i,r in rate_list.items():
-                price = Decimal(0)
-                end = datetime.strptime(r['end'],"%Y-%m-%d").date()
-                start = datetime.strptime(r['start'],"%Y-%m-%d").date()
-                num_days = int ((end - start).days) + 1
-                price = str((num_days * Decimal(r[k])))
-                lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+            for c,p in rate_list.items():
+                for i,r in p.items():
+                    price = Decimal(0)
+                    end = datetime.strptime(r['end'],"%Y-%m-%d").date()
+                    start = datetime.strptime(r['start'],"%Y-%m-%d").date()
+                    num_days = int ((end - start).days) + 1
+                    price = str((num_days * Decimal(r[k])))
+                    campsite = Campsite.objects.get(id=c)
+                    lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
     # Create line items for vehicles
     vehicles = booking.regos.all()
     if vehicles:
