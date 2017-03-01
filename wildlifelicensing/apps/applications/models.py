@@ -277,6 +277,12 @@ class ApplicationUserAction(UserAction):
     application = models.ForeignKey(Application)
 
 
+class ApplicationDeclinedDetails(models.Model):
+    application = models.ForeignKey(Application)
+    officer = models.ForeignKey(EmailUser, null=False)
+    reason = models.TextField(blank=True)
+
+
 @receiver(pre_delete, sender=Application)
 def delete_documents(sender, instance, *args, **kwargs):
     for document in instance.documents.all():

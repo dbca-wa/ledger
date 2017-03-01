@@ -260,6 +260,37 @@ def send_user_name_change_notification_email(licence):
     email.send(licence.issuer.email, context=context)
 
 
+class ApplicationDeclinedEmail(TemplateEmailBase):
+    subject = 'Wildlife licensing [{} {}]: application declined'
+    html_template = 'wl/emails/application_declined.html'
+    txt_template = 'wl/emails/application_declined.txt'
+
+    def __init__(self, application):
+        self.subject = _format_application_email_subject(self.subject, application)
+
+
+def send_application_declined_email(declined_details, request):
+    application = declined_details.application
+    email = ApplicationAmendmentRequestedEmail()
+    url = request.build_absolute_uri(
+        reverse('wl_applications:edit_application', args=[application.pk])
+    )
+
+    context = {
+        'details': declined_details,
+        'url': url
+    }
+
+    if application.proxy_applicant is None:
+        recipient_email = application.applicant_profile.email
+    else:
+        recipient_email = application.proxy_applicant.email
+
+    msg = email.send(recipient_email, context=context)
+    _log_email(msg, application=application, sender=request.user)
+    return recipient_email
+
+
 def _log_email(email_message, application, sender=None):
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
         # TODO this will log the plain text body, should we log the html instead
