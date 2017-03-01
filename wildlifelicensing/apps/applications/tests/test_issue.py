@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from six.moves.urllib.parse import urlparse
+
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
@@ -31,10 +33,18 @@ class TestViewsAccess(TestCase):
         self.licence = app_helpers.issue_licence(self.issued_application, self.officer)
         self.assertIsNotNone(self.licence)
         self.issue_urls_get = [
-            reverse('wl_applications:issue_licence', args=[self.lodged_application.pk]),
-            reverse('wl_applications:reissue_licence', args=[self.licence.pk]),
-            # TODO: why this URL doesn't work
-            # reverse('wl_applications:preview_licence', args=[self.issued_application.pk]),
+            {
+                'url': reverse('wl_applications:issue_licence', args=[self.lodged_application.pk]),
+                'data': None
+            },
+            {
+                'url': reverse('wl_applications:reissue_licence', args=[self.licence.pk]),
+                'data': None
+            },
+            {
+                'url': reverse('wl_applications:preview_licence', args=[self.issued_application.pk]),
+                'data': app_helpers.get_minimum_data_for_issuing_licence()
+            },
         ]
 
         self.issue_urls_post = [
@@ -53,7 +63,7 @@ class TestViewsAccess(TestCase):
         """
         # not logged-in
         for url in self.issue_urls_get:
-            response = self.client.get(url, follow=True)
+            response = self.client.get(url['url'], data=url['data'], follow=True)
             self.assertTrue(main_helpers.is_login_page(response))
 
         for url in self.issue_urls_post:
@@ -63,7 +73,7 @@ class TestViewsAccess(TestCase):
         # logged-in. Should redirect to dashboard
         self.client.login(self.user.email)
         for url in self.issue_urls_get:
-            response = self.client.get(url, follow=True)
+            response = self.client.get(url['url'], data=url['data'], follow=True)
             self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
                                  target_status_code=200)
         for url in self.issue_urls_post:
@@ -77,7 +87,7 @@ class TestViewsAccess(TestCase):
         """
         self.client.login(self.assessor.email)
         for url in self.issue_urls_get:
-            response = self.client.get(url, follow=True)
+            response = self.client.get(url['url'], data=url['data'], follow=True)
             self.assertRedirects(response, reverse('wl_dashboard:tables_assessor'), status_code=302,
                                  target_status_code=200)
         for url in self.issue_urls_post:
@@ -92,7 +102,7 @@ class TestViewsAccess(TestCase):
         """
         self.client.login(self.officer.email)
         for url in self.issue_urls_get:
-            response = self.client.get(url, follow=True)
+            response = self.client.get(url['url'], data=url['data'], follow=True)
             self.assertEqual(200, response.status_code)
         for url in self.issue_urls_post:
             response = self.client.post(url['url'], data=url['data'], follow=True)
