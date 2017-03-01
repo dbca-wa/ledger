@@ -26,7 +26,7 @@
                         <div class="form-group">
                             <label class="col-md-2 control-label pull-left"  for="Campground">Campground: </label>
                             <div class="col-md-4">
-                                <select class="form-control" name="campground" v-model="selectedCampground">
+                                <select class="form-control" name="campground" v-model="booking.campground_id">
                                     <option value="">Select Campground</option>
                                     <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
                                 </select>
@@ -76,9 +76,13 @@ export default {
         let vm = this;
         return {
             isModalOpen:false,
-            selectedCampground:"",
             campsites:[],
             form:null
+        }
+    },
+    computed: {
+        selectedCampground: function(){
+            return this.booking.campground_id;
         }
     },
     watch:{
