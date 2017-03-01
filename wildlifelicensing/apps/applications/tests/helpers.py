@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from django.test import TestCase
 from django_dynamic_fixture import G
@@ -11,6 +11,7 @@ from wildlifelicensing.apps.applications.views.entry import LICENCE_TYPE_NUM_CHA
 from wildlifelicensing.apps.applications.models import Application, Assessment, Condition
 from wildlifelicensing.apps.main.tests.helpers import create_random_customer, get_or_create_licence_type, \
     SocialClient, get_or_create_default_assessor_group, get_or_create_default_officer, create_default_country
+from wildlifelicensing.apps.main.models import Region
 
 
 def create_profile(user):
@@ -61,6 +62,25 @@ def create_and_lodge_application(user=None, **kwargs):
     return application
 
 
+def issue_licence(application=None, user=None, licence_data=None):
+    if application is None:
+        application = create_and_lodge_application(user)
+    if user is None:
+        user = get_or_create_default_officer()
+    client = SocialClient()
+    client.login(user.email)
+    if licence_data is None:
+        licence_data = {}
+    data = get_minimum_data_for_issuing_licence()
+    data.update(licence_data)
+    url = reverse('wl_applications:issue_licence', args=[application.pk])
+    client.post(url, data=data, follow=True)
+    client.logout()
+    application.refresh_from_db()
+    assert application.licence
+    return application.licence
+
+
 def get_or_create_assessment(application):
     """
     First assessment for the given application or create one
@@ -83,6 +103,18 @@ def set_application_session(client, application):
     session = client.session
     session['application_id'] = application.pk
     session.save()
+
+
+def get_minimum_data_for_issuing_licence():
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+    return {
+        'regions': [G(Region).pk],
+        'return_frequency': -1,
+        'issue_date': str(today),
+        'start_date': str(today),
+        'end_date': str(tomorrow)
+    }
 
 
 class HelpersTest(TestCase):
