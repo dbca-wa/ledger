@@ -8,7 +8,8 @@ from django.http.response import HttpResponse
 
 from wildlifelicensing.apps.applications.models import Application
 from wildlifelicensing.apps.dashboard.views import base
-from wildlifelicensing.apps.dashboard.views.customer import DataTableReturnsCustomerView
+from wildlifelicensing.apps.dashboard.views.customer import DataTableReturnsCustomerView, \
+    DataTableApplicationCustomerView
 from wildlifelicensing.apps.main.helpers import get_all_officers
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin
 from wildlifelicensing.apps.main.models import WildlifeLicence
@@ -291,6 +292,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
     def _render_action_column(obj):
         issued = obj.processing_status == 'issued' and obj.licence is not None and obj.licence.licence_document is not None
         discarded = obj.processing_status == 'discarded'
+        declined = obj.processing_status == 'declined'
 
         if obj.processing_status == 'ready_for_conditions':
             return '<a href="{0}">Enter Conditions</a>'.format(
@@ -300,7 +302,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             return '<a href="{0}">Issue Licence</a>'.format(
                 reverse('wl_applications:issue_licence', args=[obj.pk]),
             )
-        elif any([issued, discarded]):
+        elif any([issued, discarded, declined]):
             return '<a href="{0}">{1}</a>'.format(
                 reverse('wl_applications:view_application_officer', args=[obj.pk]),
                 'View application (read-only)'
@@ -362,10 +364,12 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):
     @property
     def applications_filters(self):
         status_filter_values = \
-            [(
+            [('all', 'All'),
+             (
                 TablesApplicationsOfficerView.STATUS_PENDING,
-                TablesApplicationsOfficerView.STATUS_PENDING.capitalize())] + \
-            [('all', 'All')] + \
+                TablesApplicationsOfficerView.STATUS_PENDING.capitalize()
+             ),
+             ] + \
             [s for s in Application.PROCESSING_STATUS_CHOICES]
 
         return {
@@ -425,9 +429,11 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):
 
     @property
     def returns_filters(self):
-        status_filter_values = [(TablesReturnsOfficerView.OVERDUE_FILTER,
-                                 TablesReturnsOfficerView.OVERDUE_FILTER.capitalize())] + \
-                               [('all', 'All')] + list(Return.STATUS_CHOICES)
+        status_filter_values = \
+            [
+                (TablesReturnsOfficerView.STATUS_FILTER_ALL_BUT_DRAFT_OR_FUTURE, 'All (but draft or future)'),
+                (TablesReturnsOfficerView.OVERDUE_FILTER, TablesReturnsOfficerView.OVERDUE_FILTER.capitalize())
+            ] + list(Return.STATUS_CHOICES)
         return {
             'licence_type': self.get_licence_types_values(),
             'status': status_filter_values,
@@ -474,28 +480,8 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
 
     @staticmethod
     def _render_action_column(obj):
-        status = obj.customer_status
-        if status == 'draft':
-            return '<a href="{0}">{1}</a> / <a href="{2}">{3}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.pk]),
-                'Continue',
-                reverse('wl_applications:delete_application', args=[obj.pk]),
-                'Discard'
-            )
-        elif status == 'amendment_required' or status == 'id_and_amendment_required':
-            return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:edit_application', args=[obj.pk]),
-                'Amend application'
-            )
-        elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
-            return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_main:identification'),
-                'Update ID')
-        else:
-            return '<a href="{0}">{1}</a>'.format(
-                reverse('wl_applications:view_application', args=[obj.pk]),
-                'View application (read-only)'
-            )
+        # same as a customer
+        return DataTableApplicationCustomerView.render_action_column(obj)
 
     @staticmethod
     def _get_proxy_applications(user):

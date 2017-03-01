@@ -41,7 +41,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                               Assessment.objects.filter(application=application)]
 
         ass_groups = [{'id': ass_group.id, 'text': ass_group.name} for ass_group in
-                      AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups])]
+                      AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups]).
+                      order_by('name')]
 
         # extract and format the previous lodgements of the application
         previous_lodgements = []

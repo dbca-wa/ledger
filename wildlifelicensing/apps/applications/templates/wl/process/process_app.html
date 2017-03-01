@@ -352,7 +352,7 @@
         </div>
     </div>
     {% block modals %}
-        {% with user=data.application.applicant_profile.user %}
+        {% with user=data.application.applicant %}
             {% if user.identification %}
                 <div class="modal fade" id="idModal" tabindex="-1">
                     <div class="modal-dialog" role="document">
@@ -363,16 +363,14 @@
                                     {{ user.last_name }}</h4>
                             </div>
                             <div class="modal-body center">
-                                {% if user.identification.file.url|slice:'-3:' == 'pdf' %}
-                                    <a href="{{ user.identification.file.url }}" target="_blank">
+                                <a href="{{ user.identification.url }}" target="_blank">
+                                    {% if user.identification.url|lower|slice:'-3:' == 'pdf' %}
                                         <img src="{% static 'wl/img/pdf.png' %}">
                                         <p>View PDF</p>
-                                    </a>
-                                {% else %}
-                                    <a href="{{ user.identification.file.url }}" target="_blank">
-                                        <img width="100%" src="{{ user.identification.file.url }}"/>
-                                    </a>
-                                {% endif %}
+                                    {% else %}
+                                        <img width="100%" src="{{ user.identification.url }}"/>
+                                    {% endif %}
+                                </a>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
