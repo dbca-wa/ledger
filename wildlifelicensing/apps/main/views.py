@@ -31,7 +31,12 @@ class SearchCustomersView(OfficerRequiredMixin, View):
         else:
             qs = EmailUser.objects.none()
 
-        users = [{'id': email_user.id, 'text': email_user.get_full_name_dob()} for email_user in qs]
+        users = []
+        for email_user in qs:
+            users.append({
+                'id': email_user.id,
+                'text': email_user.get_full_name_dob() if email_user.dob is not None else email_user.get_full_name()
+            })
 
         return JsonResponse(users, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
