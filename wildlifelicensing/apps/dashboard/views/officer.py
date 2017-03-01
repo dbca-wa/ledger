@@ -292,6 +292,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
     def _render_action_column(obj):
         issued = obj.processing_status == 'issued' and obj.licence is not None and obj.licence.licence_document is not None
         discarded = obj.processing_status == 'discarded'
+        declined = obj.processing_status == 'declined'
 
         if obj.processing_status == 'ready_for_conditions':
             return '<a href="{0}">Enter Conditions</a>'.format(
@@ -301,7 +302,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             return '<a href="{0}">Issue Licence</a>'.format(
                 reverse('wl_applications:issue_licence', args=[obj.pk]),
             )
-        elif any([issued, discarded]):
+        elif any([issued, discarded, declined]):
             return '<a href="{0}">{1}</a>'.format(
                 reverse('wl_applications:view_application_officer', args=[obj.pk]),
                 'View application (read-only)'
