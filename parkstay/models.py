@@ -862,6 +862,11 @@ class Booking(models.Model):
         if self.arrival > today <= self.departure:
             return True
         return False
+
+    @property
+    def campsite_id_list(self):
+        return list(set([x['campsite'] for x in self.campsites.all().values('campsite')]))
+
     # Methods
     # =================================
     def __str__(self):
