@@ -231,6 +231,30 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['get'])
+    def current_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            start_date = request.GET.get('arrival',False)
+            end_date = request.GET.get('departure',False)
+            res = []
+            if start_date and end_date:
+                res = utils.get_campsite_current_rate(request,self.get_object().id,start_date,end_date)
+            else:
+                res.append({
+                    "error":"Arrival and departure dates are required",
+                    "success":False
+                })
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
+
 class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
     queryset = CampsiteStayHistory.objects.all()
     serializer_class = CampsiteStayHistorySerializer
@@ -634,43 +658,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
-    def current_price(self, request, format='json', pk=None):
-        try:
-            http_status = status.HTTP_200_OK
-
-            start_date = request.GET.get('arrival',False)
-            end_date = request.GET.get('departure',False)
-            res = []
-            if start_date and end_date:
-                start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
-                end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
-                for single_date in utils.daterange(start_date, end_date):
-                    price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id,date_start__lte=single_date).order_by('-date_start')
-                    if price_history:
-                        serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
-                        res.append({
-                            "date" : single_date.strftime("%Y-%m-%d") ,
-                            "rate" : serializer.data[0]
-                        })
-                    else:
-                        res.append({
-                            "error":"There is no park entry set",
-                            "success":False
-                        })
-            else:
-                res.append({
-                    "error":"Arrival and departure dates are required",
-                    "success":False
-                })
-
-            return Response(res,status=http_status)
-        except serializers.ValidationError:
-            traceback.print_exc()
-            raise
-        except Exception as e:
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['get'])
     def stay_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
@@ -1006,7 +993,7 @@ class ParkViewSet(viewsets.ModelViewSet):
             cache.set('parks',data,3600)
         return Response(data)
 
-    @detail_route(methods=['get'])
+    @list_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
         http_status = status.HTTP_200_OK
         try:
@@ -1040,9 +1027,27 @@ class ParkViewSet(viewsets.ModelViewSet):
             }
         return Response(res,status=http_status)
 
+    @list_route(methods=['post'],)
+    def add_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer =  ParkEntryRateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save();
+            res = serializer.data
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
     serializer_class = FeatureSerializer
+
+class ParkEntryRateViewSet(viewsets.ModelViewSet):
+    queryset = ParkEntryRate.objects.all()
+    serializer_class = ParkEntryRateSerializer
 
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all()
@@ -1192,7 +1197,6 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
@@ -1212,7 +1216,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
             parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,parkstay_booking.invoice_reference'
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
         sqlCount = 'select count(*)'
 
         sqlFrom = ' from parkstay_booking\
@@ -1266,6 +1270,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             dict(zip(columns, row))
             for row in cursor.fetchall()
         ]
+        for bk in data:
+            bk['invoices'] = [ i.invoice_reference for i in Booking.objects.get(id =bk['id']).invoices.all()]
         return Response(OrderedDict([
             ('recordsTotal', recordsTotal),
             ('recordsFiltered',recordsFiltered),
@@ -1297,7 +1303,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'customer' : customer
             }
 
-            data = utils.internal_booking(request,customer,booking_details)
+            data = utils.internal_booking(request,booking_details)
             serializer = BookingSerializer(data)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1307,6 +1313,32 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+
+            instance = self.get_object()
+            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
+
+            booking_details = {
+                'campsites':request.data['campsites'],
+                'start_date' : start_date,
+                'campground' : request.data['campground'],
+                'end_date' : end_date
+            }
+            data = utils.update_booking(request,instance,booking_details)
+            serializer = BookingSerializer(data)
+
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))    
+
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
@@ -1315,7 +1347,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             rate = None
-            print(request.data)
             rate_serializer = RateDetailSerializer(data=request.data)
             rate_serializer.is_valid(raise_exception=True)
             rate_id = rate_serializer.validated_data.get('rate',None)

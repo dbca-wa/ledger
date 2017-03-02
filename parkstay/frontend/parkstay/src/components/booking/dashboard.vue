@@ -52,7 +52,7 @@
             </div>
           </div>
       </div>
-      <changebooking ref="changebooking" :booking="selected_booking" :campgrounds="campgrounds"/>
+      <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
    <confirmbox id="cancelBooking" :options="cancelBookingOptions"></confirmbox>
@@ -193,7 +193,7 @@ export default {
             loading:[],
             regions:[],
             campgrounds:[],
-            selected_booking:{},
+            selected_booking:-1,
             filterCampground:"All",
             filterRegion:"All",
             filterDateFrom:"",
@@ -252,8 +252,9 @@ export default {
         addEventListeners:function () {
             let vm =this;
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
-                vm.selected_booking = JSON.parse($(this).attr('data-change'));
-                vm.$refs.changebooking.isModalOpen = true;
+                var selected_booking = JSON.parse($(this).attr('data-change'));
+                vm.selected_booking = selected_booking.id;
+                vm.$refs.changebooking.fetchBooking(vm.selected_booking);
             });
 
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-cancel]',function (e) {

@@ -10,7 +10,9 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, CampsiteBookingRange, CampgroundBookingRange)
+from ledger.payments.invoice.models import Invoice
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate)
+from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -275,79 +277,326 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
 
     return available
 
-def internal_booking(request,user,booking_details):
-    lines = []
-    json_booking = request.data
-    try:
-        with transaction.atomic():
-            booking = create_booking_by_site(campsite_id= booking_details['campsite_id'],
-                start_date = booking_details['start_date'],
-                end_date=booking_details['end_date'],
-                num_adult=booking_details['num_adult'],
-                num_concession=booking_details['num_concession'],
-                num_child=booking_details['num_child'],
-                num_infant=booking_details['num_infant'],
-                cost_total=booking_details['cost_total'],
-                customer=booking_details['customer'])
-            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
-            # Create line items for booking
-            json_booking = dict(json_booking)
-            rate_list = {}
-            # Create line items for customers
-            for c in json_booking['costs']['campground']:
-                if c['rate']['rate_id'] not in rate_list.keys():
-                    rate_list[c['rate']['rate_id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
+def get_campsite_current_rate(request,campsite_id,start_date,end_date):
+    res = []
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
+        for single_date in daterange(start_date, end_date):
+            price_history = CampsiteRate.objects.filter(id=campsite_id,date_start__lte=single_date).order_by('-date_start')
+            if price_history:
+                rate = RateSerializer(price_history[0].rate,context={'request':request}).data
+                rate['campsite'] = campsite_id
+                res.append({
+                    "date" : single_date.strftime("%Y-%m-%d") ,
+                    "rate" : rate
+                })
+    return res
+
+def get_park_entry_rate(request,start_date):
+    res = []
+    if start_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        price_history = ParkEntryRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+        if price_history:
+            serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
+            res = serializer.data[0]
+    return res
+
+
+def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
+    total_price = Decimal(0)
+    rate_list = {}
+    invoice_lines = []
+    if not lines and not old_booking:
+        raise Exception('An old booking is required if lines is set to false')
+    # Create line items for customers
+    daily_rates = [get_campsite_current_rate(request,c,booking.arrival.strftime('%Y-%m-%d'),booking.departure.strftime('%Y-%m-%d')) for c in campsite_list]
+    if not daily_rates:
+        raise Exception('There was an error while trying to get the daily rates')
+    for rates in daily_rates:
+        for c in rates:
+            if c['rate']['campsite'] not in rate_list.keys():
+                rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
+            else:
+                if c['rate']['id'] not in rate_list[c['rate']['campsite']].keys():
+                    rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
                 else:
-                    rate_list[c['rate']['rate_id']]['end'] = c['date']
-            for k,v in json_booking.get('guests').items():
-                if int(v) > 0:
-                    for i,r in rate_list.items():
-                        price = Decimal(0)
-                        end = datetime.strptime(r['end'],"%Y-%m-%d").date()
-                        start = datetime.strptime(r['start'],"%Y-%m-%d").date()
-                        num_days = int ((end - start).days) + 1
+                    rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
+    # Get Guest Details
+    guests = {}
+    for k,v in booking.details.items():
+        if 'num_' in k:
+            guests[k.split('num_')[1]] = v
+    for k,v in guests.items():
+        if int(v) > 0:
+            for c,p in rate_list.items():
+                for i,r in p.items():
+                    price = Decimal(0)
+                    end = datetime.strptime(r['end'],"%Y-%m-%d").date()
+                    start = datetime.strptime(r['start'],"%Y-%m-%d").date()
+                    num_days = int ((end - start).days) + 1
+                    campsite = Campsite.objects.get(id=c)
+                    if lines:
                         price = str((num_days * Decimal(r[k])))
-                        lines.append({'ledger_description':'{} ({} - {})'.format(k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
-            # Create line items for vehicles
-            for k,v in json_booking['parkEntry'].items():
-                if k != 'regos' and k != 'entry_fee':
-                    if int(v) > 0:
-                        price =  json_booking['costs']['parkEntry'][k]
-                        lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
-            parameters = {
-                'system': 'S369',
-                'basket_owner': user.id,
-                'fallback_url': request.build_absolute_uri('/'),
-                'return_url': request.build_absolute_uri('/'),
-                'forceRedirect': True,
-                'proxy': True,
-                "products": lines,
-                "custom_basket": True,
-                "invoice_text": reservation,
-                "vouchers": []
-            }
+                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                    else:
+                        price = (num_days * Decimal(r[k])) * v
+                        total_price += price
+    # Create line items for vehicles
+    if lines:
+        vehicles = booking.regos.all()
+    else:
+        vehicles = old_booking.regos.all()
+    if vehicles:
+        park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
+        vehicle_dict = {
+            'vehicle': vehicles.filter(type='vehicle').count(),
+            'motorbike': vehicles.filter(type='motorbike').count(),
+            'concession': vehicles.filter(type='concession').count()
+        }
 
-            JSON_REQUEST_HEADER_PARAMS = {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "X-CSRFToken": request.COOKIES.get('csrftoken')
-            }
+        for k,v in vehicle_dict.items():
+            if int(v) > 0:
+                if lines:
+                    price =  park_entry_rate[k]
+                    invoice_lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                else:
+                    price =  Decimal(park_entry_rate[k]) * v
+                    total_price += price
 
-            url = request.build_absolute_uri(
-                reverse('payments:ledger-initial-checkout')
-            )
+    if lines:
+        return invoice_lines
+    else:
+        return total_price
 
-            response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
-                                     data=json.dumps(parameters))
+def check_date_diff(old_booking,new_booking):
+    if old_booking.arrival == new_booking.arrival:
+        old_booking_days = int((old_booking.departure - old_booking.arrival).days)
+        new_days = int((new_booking.departure - new_booking.arrival).days)
+        if new_days > old_booking_days:
+            return 1 #additional days
+        else:
+            return 2 #reduced days
+    elif old_booking.departure == new_booking.departure:
+        old_booking_days = int((old_booking.departure - old_booking.arrival).days)
+        new_days = int((new_booking.departure - new_booking.arrival).days)
+        if new_days > old_booking_days:
+            return 1 #additional days
+        else:
+            return 2 #reduced days
+    else:
+        return 3 # different days
+
+def get_diff_days(old_booking,new_booking,additional=True):
+    if additional:
+        return int((new_booking.departure - old_booking.departure).days)
+    return int((old_booking.departure - new_booking.departure).days)
+
+def create_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price,void_invoices=False):
+    booking = create_booking_by_site(booking_details['campsites'][0],
+            start_date = arrival,
+            end_date = departure,
+            num_adult = old_booking.details['num_adult'],
+            num_concession= old_booking.details['num_concession'],
+            num_child= old_booking.details['num_child'],
+            num_infant= old_booking.details['num_infant'],
+            cost_total = total_price,
+            customer = old_booking.customer
+    )
+    lines = price_or_lineitems(request,booking,booking.campsite_id_list)
+    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
+    # Proceed to generate invoice
+    checkout(request,booking,lines,invoice_text=reservation,internal=True)
+    # Attach new invoices to old booking
+    if void_invoices:
+        for i in old_booking.invoices.all():
+            inv = Invoice.objects.get(reference=i.invoice_reference)
+            inv.voided = True
+            inv.save()
+    for i in booking.invoices.all():
+        i.booking = old_booking
+        i.save()
+
+    return booking
+
+def update_booking(request,old_booking,booking_details):
+    same_dates = False
+    same_campsites = False
+    same_campground = False
+    with transaction.atomic():
+        try:
+            booking = Booking(
+                arrival = booking_details['start_date'],
+                departure =booking_details['end_date'],
+                details = old_booking.details,
+                customer=old_booking.customer,
+                campground = Campground.objects.get(id=booking_details['campground']))
+            # Check that the departure is not less than the arrival
+            if booking.departure < booking.arrival:
+                raise Exception('The departure date cannot be before the arrival date')
+            
+            # Check if it is the same campground
+            if old_booking.campground.id == booking.campground.id:
+                same_campground = True
+            # Check if dates are the same
+            if (old_booking.arrival == booking.arrival) and (old_booking.departure == booking.departure):
+                same_dates = True
+            # Check if the campsite is the same
+            if old_booking.campsite_id_list.sort() == booking_details['campsites'].sort():
+                same_campsites = True
+            
+            if same_campsites and same_dates:
+                return old_booking
+
+            # Check difference of dates in booking
+            old_booking_days = int((old_booking.departure - old_booking.arrival).days)
+            new_days = int((booking_details['end_date'] - booking_details['start_date']).days)
+            date_diff = check_date_diff(old_booking,booking)
+            
+            total_price = price_or_lineitems(request,booking,booking_details['campsites'],lines=False,old_booking=old_booking)
+            price_diff = False
+            if old_booking.cost_total != total_price:
+                price_diff = True
+
+            if price_diff:
+                if total_price > old_booking.cost_total:
+                    if date_diff == 1: # Additional days
+                        if same_campsites:
+                            new_arrival = old_booking.departure
+                            new_departure = new_arrival + timedelta(days=get_diff_days(old_booking,booking))
+
+                            booking = create_temp_bookingupdate(request,new_arrival,new_departure,booking_details,old_booking,total_price)
+
+                        else:
+                            booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
+                            old_booking.campsites.all().delete()
+
+                        # Attach campsite booking objects to old booking
+                        for c in booking.campsites.all():
+                            c.booking = old_booking
+                            c.save()
+                        old_booking.cost_total = booking.cost_total
+                        old_booking.departure = booking.departure
+                        if not same_campground:
+                            old_booking.campground = booking.campground
+                        old_booking.save()
+                        booking.delete()
+                elif total_price < old_booking.cost_total:
+                    if date_diff == 2: # Less days
+                        if same_campsites:
+                            old_booking.cost_total = total_price 
+                            # Remove extra campsite bookings
+                            if booking.departure < old_booking.departure:
+                                old_booking.campsites.filter(date__gte=booking.departure).delete()
+                            elif booking.arrival > old_booking.arrival:
+                                old_booking.campsites.filter(date__lte=booking.arrival).delete()
+                            for i in old_booking.invoices.all():
+                                inv = Invoice.objects.get(reference=i.invoice_reference)
+                                inv.voided = True
+                                inv.save()
+                            # Generate New Invoice
+                            lines = price_or_lineitems(request,old_booking,old_booking.campsite_id_list)
+                            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(old_booking.customer.first_name,old_booking.customer.last_name),old_booking.arrival,booking.departure,old_booking.campground.name)
+                            # Proceed to generate invoice
+                            checkout(request,old_booking,lines,invoice_text=reservation,internal=True)
+                        else:
+                            booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
+                            old_booking.campsites.all().delete()
+                            # Attach campsite booking objects to old booking
+                            for c in booking.campsites.all():
+                                c.booking = old_booking
+                                c.save()
+                        
+                            old_booking.cost_total = booking.cost_total
+                        old_booking.departure = booking.departure
+                        old_booking.arrival = booking.arrival
+                        if not same_campground:
+                            old_booking.campground = booking.campground
+                        old_booking.save()
+                        if not same_campsites:
+                            booking.delete()
+
+            if date_diff == 3: # Different Days
+                booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price,void_invoices=True)
+                old_booking.campsites.all().delete()
+                # Attach campsite booking objects to old booking
+                for c in booking.campsites.all():
+                    c.booking = old_booking
+                    c.save()
+
+                old_booking.cost_total = booking.cost_total
+                old_booking.departure = booking.departure
+                old_booking.arrival = booking.arrival
+                if not same_campground:
+                    old_booking.campground = booking.campground
+                old_booking.save()
+                booking.delete()
+
+            return old_booking
+        except:
+            raise
+
+def create_or_update_booking(request,booking_details,updating=False):
+    booking = None
+    if not updating:
+        booking = create_booking_by_site(campsite_id= booking_details['campsite_id'],
+            start_date = booking_details['start_date'],
+            end_date=booking_details['end_date'],
+            num_adult=booking_details['num_adult'],
+            num_concession=booking_details['num_concession'],
+            num_child=booking_details['num_child'],
+            num_infant=booking_details['num_infant'],
+            cost_total=booking_details['cost_total'],
+            customer=booking_details['customer'])
+
+        # Add booking regos
+        if request.data.get('parkEntry').get('regos'):
+            regos = request.data['parkEntry'].pop('regos')
+            for r in regos:
+                r[u'booking'] = booking.id
+            regos_serializers = [BookingRegoSerializer(data=r) for r in regos]
+            for r in regos_serializers:
+                r.is_valid(raise_exception=True)
+                r.save()
+    return booking
+
+def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False):
+    JSON_REQUEST_HEADER_PARAMS = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRFToken": request.COOKIES.get('csrftoken')
+    }
+    try:
+        parameters = {
+            'system': 'S369',
+            'fallback_url': request.build_absolute_uri('/'),
+            'return_url': request.build_absolute_uri('/'),
+            'forceRedirect': True,
+            'proxy': True if internal else False,
+            "products": lines,
+            "custom_basket": True,
+            "invoice_text": invoice_text,
+            "vouchers": vouchers
+        }
+        if internal:
+            parameters['basket_owner'] = booking.customer.id
 
 
-            response.raise_for_status()
+        url = request.build_absolute_uri(
+            reverse('payments:ledger-initial-checkout')
+        )
 
-            last_redirect = response.history[-1]
-            booking.invoice_reference = last_redirect.url.split('=')[1]
-            booking.save()
+        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
+                                 data=json.dumps(parameters))
 
-            return booking
+
+        response.raise_for_status()
+        if not response.history:
+            raise Exception('There was a problem retrieving the invoice for this booking')
+        last_redirect = response.history[-1]
+        BookingInvoice.objects.create(booking=booking,invoice_reference=last_redirect.url.split('=')[1])
+
     except requests.exceptions.HTTPError as e:
         if 400 <= e.response.status_code < 500:
             http_error_msg = '{} Client Error: {} for url: {} > {}'.format(e.response.status_code, e.response.reason, e.response.url,e.response._content)
@@ -358,7 +607,23 @@ def internal_booking(request,user,booking_details):
 
         e.args = (http_error_msg,)
         raise
-    except Exception as e:
+    
+
+def internal_booking(request,booking_details,internal=True,updating=False):
+    json_booking = request.data
+    try:
+        with transaction.atomic():
+            booking = create_or_update_booking(request,booking_details,updating)
+
+            # Get line items
+            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
+            lines = price_or_lineitems(request,booking,booking.campsite_id_list)
+
+            # Proceed to generate invoice
+            checkout(request,booking,lines,invoice_text=reservation,internal=True)
+
+            return booking
+    except:
         raise
 
 def set_session_booking(session, booking):
