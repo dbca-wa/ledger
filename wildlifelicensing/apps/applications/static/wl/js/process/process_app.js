@@ -621,7 +621,6 @@ define([
         });
 
         $($decline).click(function() {
-            console.log("click!");
             $buttonClicked = $(this);
             declineApplication();
         });
