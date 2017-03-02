@@ -55,7 +55,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
                                     CampgroundCampsiteFilterSerializer,
-                                    CampsiteClassBookingSerializer,
+                                    CampsiteBookingSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     FeatureSerializer,
@@ -906,7 +906,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @require_http_methods(['POST'])
-def create_class_booking(request, *args, **kwargs):
+def create_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
 
     data = {
@@ -916,15 +916,17 @@ def create_class_booking(request, *args, **kwargs):
         'num_concession': request.POST.get('num_concession', 0),
         'num_child': request.POST.get('num_child', 0),
         'num_infant': request.POST.get('num_infant', 0),
-        'campground': request.POST.get('campground'),
-        'campsite_class': request.POST.get('campsite_class')
+        'campground': request.POST.get('campground', 0),
+        'campsite_class': request.POST.get('campsite_class', 0),
+        'campsite': request.POST.get('campsite', 0)
     }
 
-    serializer = CampsiteClassBookingSerializer(data=data)
+    serializer = CampsiteBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
 
     campground = serializer.validated_data['campground']
     campsite_class = serializer.validated_data['campsite_class']
+    campsite = serializer.validated_data['campsite']
     start_date = serializer.validated_data['arrival']
     end_date = serializer.validated_data['departure']
     num_adult = serializer.validated_data['num_adult']
@@ -941,14 +943,37 @@ def create_class_booking(request, *args, **kwargs):
             'pk': request.session['ps_booking']
         }), content_type='application/json')
 
+    # for a manually-specified campsite, do a sanity check 
+    # ensure that the campground supports per-site bookings and bomb out if it doesn't
+    if campsite:
+        campsite_obj = Campsite.objects.prefetch_related('campground').get(pk=campsite)
+        if campsite_obj.campground.site_type != 0:
+            return HttpResponse(geojson.dumps({
+                'status': 'error',
+                'msg': 'Campground doesn\'t support per-site bookings'
+            }), status=400, content_type='application/json')
+    # for the rest, check that both campsite_class and campground are provided
+    elif (not campsite_class) or (not campground):
+        return HttpResponse(geojson.dumps({
+            'status': 'error',
+            'msg': 'Must specify campsite_class and campground'
+        }), status=400, content_type='application/json')
+
     # try to create a temporary booking
     try:
-        booking = utils.create_booking_by_class(
-            campground, campsite_class,
-            start_date, end_date,
-            num_adult, num_concession,
-            num_child, num_infant
-        )
+        if campsite:
+            booking = utils.create_booking_by_site(
+                campsite, start_date, end_date,
+                num_adult, num_concession,
+                num_child, num_infant
+            )
+        else:
+            booking = utils.create_booking_by_class(
+                campground, campsite_class,
+                start_date, end_date,
+                num_adult, num_concession,
+                num_child, num_infant
+            )
     except ValidationError as e:
         return HttpResponse(geojson.dumps({
             'status': 'error',

@@ -36,7 +36,7 @@ router.register(r'users',api.UsersViewSet)
 api_patterns = [
     url(r'api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
     url(r'api/search_suggest', api.search_suggest, name='search_suggest'),
-    url(r'api/create_class_booking', api.create_class_booking, name='create_class_booking'),
+    url(r'api/create_booking', api.create_booking, name='create_booking'),
     url(r'api/',include(router.urls))
 ]
 
