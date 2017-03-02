@@ -118,7 +118,6 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             recipient = send_application_declined_email(details, request)
             return True, "Application declined and email sent to {}".format(recipient)
         else:
-            print('not valid', form.errors, request.POST)
             return False, str(form.errors)
 
     def get_context_data(self, **kwargs):
