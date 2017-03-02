@@ -46,7 +46,8 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
             message = "This application has been declined."
             details = ApplicationDeclinedDetails.objects.filter(application=application).first()
             if details and details.reason:
-                message += "<br/>Reason(s):<br/>{}".format(details.reason.replace('\n', '<br/>'))
+                message += "<br/>Reason:<br/>{}".format(details.reason.replace('\n', '<br/>'))
+                kwargs['application']['declined_reason'] = details.reason
             messages.error(self.request, message)
 
         return super(ViewReadonlyView, self).get_context_data(**kwargs)
@@ -77,12 +78,9 @@ class ViewReadonlyOfficerView(UserCanViewApplicationMixin, TemplateView):
                                                            fromm=self.request.user.get_full_name())
 
         if application.processing_status == 'declined':
-            message = "This application has been declined."
             details = ApplicationDeclinedDetails.objects.filter(application=application).first()
             if details and details.reason:
-                message += "<br/>Reason(s):<br/>{}".format(details.reason.replace('\n', '<br/>'))
-            messages.error(self.request, message)
-
+                kwargs['application']['declined_reason'] = details.reason
         return super(ViewReadonlyOfficerView, self).get_context_data(**kwargs)
 
 
@@ -116,7 +114,8 @@ class ViewReadonlyAssessorView(CanPerformAssessmentMixin, TemplateView):
             message = "This application has been declined."
             details = ApplicationDeclinedDetails.objects.filter(application=application).first()
             if details and details.reason:
-                message += "<br/>Reason(s):<br/>{}".format(details.reason.replace('\n', '<br/>'))
+                message += "<br/>Reason:<br/>{}".format(details.reason.replace('\n', '<br/>'))
+                kwargs['application']['declined_reason'] = details.reason
             messages.error(self.request, message)
 
         return super(ViewReadonlyAssessorView, self).get_context_data(**kwargs)
