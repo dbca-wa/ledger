@@ -164,6 +164,8 @@ class Facade(object):
                     raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
                 if inv.payment_status == 'paid' and action == 'payment':
                     raise ValidationError('This invoice has already been paid for.')
+                if inv.voided:
+                    raise ValidationError('You cannot make a payment for an invoice that has been voided.')
                 if (decimal.Decimal(total) > inv.balance) and action == 'payment':
                     raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
 

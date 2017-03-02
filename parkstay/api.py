@@ -326,22 +326,19 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
         scrubbed = serializer.validated_data
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
-            sites = Campsite.objects.exclude(
-                campsitebooking__date__range=(
-                    scrubbed['arrival'],
-                    scrubbed['departure']-timedelta(days=1)
-                )
-            ).filter(**{scrubbed['gear_type']: True})
-            ground_ids = set([s.campground.id for s in sites])
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+            sites = Campsite.objects.filter(**{scrubbed['gear_type']: True})
+            ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
+
         else:
             ground_ids = set((x[0] for x in Campsite.objects.filter(**{scrubbed['gear_type']: True}).values_list('campground')))
-            # we need to be tricky here. for the default search (tent, no timestamps),
-            # we want to include all of the "campgrounds" that don't have any campsites in the model!
-            if scrubbed['gear_type'] == 'tent':
-                ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
+        
 
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+        # we need to be tricky here. for the default search (tent, any timestamps)
+        # we want to include all of the "campgrounds" that don't have any campsites in the model! (i.e. non-P&W)
+        if scrubbed['gear_type'] == 'tent':
+            ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
+
+        queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -1295,6 +1292,32 @@ class BookingViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+
+            instance = self.get_object()
+            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
+
+            booking_details = {
+                'campsites':request.data['campsites'],
+                'start_date' : start_date,
+                'campground' : request.data['campground'],
+                'end_date' : end_date
+            }
+            data = utils.update_booking(request,instance,booking_details)
+            serializer = BookingSerializer(data)
+
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))    
 
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()

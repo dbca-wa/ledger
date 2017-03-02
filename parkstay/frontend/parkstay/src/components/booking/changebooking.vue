@@ -3,6 +3,7 @@
         <modal @ok="ok()" @cancel="cancel()" title="Change Booking" large>
             <form class="form-horizontal" name="changebookingForm">
                 <div class="row">
+                    <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                     <div class="col-lg-12">
                         <div class="form-group">
                             <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
@@ -26,7 +27,7 @@
                         <div class="form-group">
                             <label class="col-md-2 control-label pull-left"  for="Campground">Campground: </label>
                             <div class="col-md-4">
-                                <select class="form-control" name="campground" v-model="selectedCampground">
+                                <select class="form-control" name="campground" v-model="booking.campground">
                                     <option value="">Select Campground</option>
                                     <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
                                 </select>
@@ -35,7 +36,10 @@
                         <div class="form-group" v-show="selectedCampground">
                             <label class="col-md-2 control-label pull-left"  for="Campsite">Campsite: </label>
                             <div class="col-md-4">
-                                <select class="form-control" name="campsite" v-model="booking.campsite" >
+                                <select class="form-control"  v-show="campsites.length < 1" >
+                                    <option selected value="">Loading...</option>
+                                </select>
+                                <select class="form-control" name="campsite" v-if="campsites.length > 0" v-model="booking.campsites[0]" >
                                     <option value="">Select Campsite</option>
                                     <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}}</option>
                                 </select>
@@ -50,20 +54,17 @@
 
 <script>
 import modal from '../utils/bootstrap-modal.vue'
-import {$,api_endpoints,datetimepicker} from "../../hooks.js"
+import alert from '../utils/alert.vue'
+import {$,api_endpoints,helpers,datetimepicker} from "../../hooks.js"
 export default {
     name:'change-booking',
     components:{
-        modal
+        modal,
+        alert
     },
     props:{
-            booking:{
-                type:Object,
-                default:function () {
-                    return{
-
-                    }
-                }
+            booking_id:{
+                type:Number,
             },
             campgrounds:{
                 type:Array,
@@ -76,9 +77,25 @@ export default {
         let vm = this;
         return {
             isModalOpen:false,
-            selectedCampground:"",
             campsites:[],
-            form:null
+            form:null,
+            booking: {
+                campsites: []
+            },
+            errors: false,
+            errorString: ''
+        }
+    },
+    computed: {
+        selectedCampground: function(){
+            return this.booking.campground;
+        },
+        selectedCampsite: function(){
+            return this.booking.campsites[0];
+        },
+        showError: function() {
+            var vm = this;
+            return vm.errors;
         }
     },
     watch:{
@@ -99,13 +116,35 @@ export default {
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){
-                vm.close();
+                vm.sendData();
             }
         },
         cancel:function () {
         },
         close:function () {
             this.isModalOpen = false;
+        },
+        fetchBooking: function(id){
+            let vm = this;
+            vm.$http.get(api_endpoints.booking(id)).then((response) => {vm.booking = response.body; vm.isModalOpen = true;},(error) => {console.log(error);} );
+        },
+        sendData:function(){
+            let vm = this;
+            vm.errors = false;
+            var booking = vm.booking;
+            vm.$parent.loading.push('processing booking');
+            vm.$http.put(api_endpoints.booking(booking.id),JSON.stringify(booking),{
+                    emulateJSON:true,
+                    headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                }).then((response)=>{
+                    vm.$parent.loading.splice('processing booking',1);
+                    vm.close();
+                },(error)=>{
+                    console.log(error);
+                    vm.errors = true;
+                    vm.errorString = helpers.apiVueResourceError(error);
+                    vm.$parent.loading.splice('processing booking',1);
+                });
         },
         addFormValidations: function() {
             let vm = this;

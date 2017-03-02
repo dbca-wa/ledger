@@ -131,6 +131,9 @@ module.exports = {
     },
     //bookings
     bookings:"/api/booking.json",
+    booking: function(id){
+        return "/api/booking/"+id+".json";
+    },
     //other
     countries:"https://restcountries.eu/rest/v1/?fullText=true",
     users: "/api/users.json",

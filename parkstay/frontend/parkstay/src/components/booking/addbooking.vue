@@ -743,7 +743,7 @@ export default {
                 }).then((response)=>{
                     vm.loading.splice('processing booking',1);
                     var frame = $('#invoice_frame');
-                    frame[0].src = '/ledger/payments/invoice/'+response.body.invoice_reference;
+                    frame[0].src = '/ledger/payments/invoice/'+response.body.invoices[0];
                     vm.isModalOpen=true;
                 },(error)=>{
                     console.log(error);
