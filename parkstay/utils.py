@@ -383,7 +383,6 @@ def update_booking(request,old_booking,booking_details):
     same_dates = False
     same_campsites = False
     same_campground = False
-
     with transaction.atomic():
         try:
             booking = Booking(
@@ -472,6 +471,22 @@ def update_booking(request,old_booking,booking_details):
                         old_booking.save()
                         if not same_campsites:
                             booking.delete()
+            else:
+                if date_diff == 3: # Different Days
+                    booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price,void_invoices=True)
+                    old_booking.campsites.all().delete()
+                    # Attach campsite booking objects to old booking
+                    for c in booking.campsites.all():
+                        c.booking = old_booking
+                        c.save()
+
+                    old_booking.cost_total = booking.cost_total
+                    old_booking.departure = booking.departure
+                    old_booking.arrival = booking.arrival
+                    if not same_campground:
+                        old_booking.campground = booking.campground
+                    old_booking.save()
+                    booking.delete()
 
             return old_booking
         except:
