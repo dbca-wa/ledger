@@ -3,6 +3,7 @@
         <modal @ok="ok()" @cancel="cancel()" title="Change Booking" large>
             <form class="form-horizontal" name="changebookingForm">
                 <div class="row">
+                    <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                     <div class="col-lg-12">
                         <div class="form-group">
                             <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
@@ -53,11 +54,13 @@
 
 <script>
 import modal from '../utils/bootstrap-modal.vue'
+import alert from '../utils/alert.vue'
 import {$,api_endpoints,helpers,datetimepicker} from "../../hooks.js"
 export default {
     name:'change-booking',
     components:{
-        modal
+        modal,
+        alert
     },
     props:{
             booking_id:{
@@ -78,7 +81,9 @@ export default {
             form:null,
             booking: {
                 campsites: []
-            }
+            },
+            errors: false,
+            errorString: ''
         }
     },
     computed: {
@@ -87,6 +92,10 @@ export default {
         },
         selectedCampsite: function(){
             return this.booking.campsites[0];
+        },
+        showError: function() {
+            var vm = this;
+            return vm.errors;
         }
     },
     watch:{
@@ -121,7 +130,9 @@ export default {
         },
         sendData:function(){
             let vm = this;
+            vm.errors = false;
             var booking = vm.booking;
+            vm.$parent.loading.push('processing booking');
             vm.$http.put(api_endpoints.booking(booking.id),JSON.stringify(booking),{
                     emulateJSON:true,
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
@@ -130,7 +141,9 @@ export default {
                     vm.close();
                 },(error)=>{
                     console.log(error);
-                    vm.loading.splice('processing booking',1);
+                    vm.errors = true;
+                    vm.errorString = helpers.apiVueResourceError(error);
+                    vm.$parent.loading.splice('processing booking',1);
                 });
         },
         addFormValidations: function() {
