@@ -59,7 +59,7 @@ def get_user_assessor_groups(user):
 
 def render_user_name(user, first_name_first=True):
     """
-    Last name, First name or Last name, First name or just email if there are no first or last name
+    Last name, Given name(s) or Last name, Given name(s) or just email if there are no given or last name
     :param first_name_first:
     :param user:
     :return:
