@@ -162,7 +162,7 @@ import debounce from 'debounce';
 import moment from 'moment';
 
 var parkstayUrl = global.parkstayUrl || process.env.PARKSTAY_URL;
-var ground_id = 115;
+var parkstayGroundId = global.parkstayGroundId || '1';
 var nowTemp = new Date();
 var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
@@ -190,7 +190,7 @@ function getCookie(name) {
 };
 
 export default {
-    el: '#sites-cal',
+    el: '#availability',
     data: function () {
         return {
             arrivalDate: moment.utc(now),
@@ -243,7 +243,7 @@ export default {
                 num_child: vm.numChildren,
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
-                campground: ground_id,
+                campground: parkstayGroundId,
                 campsite_class: site.type
             };
             console.log(site);
@@ -264,7 +264,7 @@ export default {
         update: function() {
             var vm = this;
             debounce(function() {
-                var url = '/api/availability/'+ ground_id +'/?'+$.param({
+                var url = '/api/availability/'+ parkstayGroundId +'/?'+$.param({
                     arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                     departure: moment(vm.departureDate).format('YYYY/MM/DD'),
                     num_adult: vm.numAdults,
