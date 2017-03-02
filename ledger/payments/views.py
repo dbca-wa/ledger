@@ -53,6 +53,9 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.DetailView):
     num_years = 10
     context_object_name = 'invoice'
 
+    def check_owner(self, user):
+        return self.is_payment_admin(user)
+
     def get_object(self):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         return invoice

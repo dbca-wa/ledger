@@ -433,7 +433,7 @@ export default {
                     var departure = Moment(vm.booking.departure, "YYYY-MM-DD");
                     var nights = departure.diff(arrival,'days');
                     vm.loading.push('updating prices');
-                    vm.$http.get(api_endpoints.campground_current_price(vm.campground.id,arrival.format("YYYY-MM-DD"),departure.format("YYYY-MM-DD"))).then((response)=>{
+                    vm.$http.get(api_endpoints.campsite_current_price(vm.booking.campsite,arrival.format("YYYY-MM-DD"),departure.format("YYYY-MM-DD"))).then((response)=>{
                         vm.priceHistory = null;
                         vm.priceHistory = response.body;
                         vm.generateBookingPrice();
@@ -743,7 +743,7 @@ export default {
                 }).then((response)=>{
                     vm.loading.splice('processing booking',1);
                     var frame = $('#invoice_frame');
-                    frame[0].src = '/ledger/payments/invoice/'+response.body.invoice_reference;
+                    frame[0].src = '/ledger/payments/invoice/'+response.body.invoices[0];
                     vm.isModalOpen=true;
                 },(error)=>{
                     console.log(error);

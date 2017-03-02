@@ -6,10 +6,16 @@ module.exports = {
     regions:"/api/regions.json",
     parks:"/api/parks.json",
     park_price_history:function (id) {
-       return "/api/parks/"+id+"/price_history.json";
+       return "/api/parks/price_history.json";
+    },
+    park_add_price:function () {
+       return "/api/parks/add_price.json";
     },
     park_current_price:function (id,arrival) {
       return "/api/parks/"+id+"/current_price.json?arrival="+arrival;
+    },
+    park_entry_rate:function (id) {
+      return "/api/parkentryrate/"+id+".json";
     },
     park:function (id) {
        return "/api/parks/"+id+".json";
@@ -21,9 +27,6 @@ module.exports = {
     },
     campground_price_history: function(id){
         return "/api/campgrounds/"+ id +"/price_history.json";
-    },
-    campground_current_price:function (id,start,end) {
-       return "/api/campgrounds/"+ id +"/current_price.json?arrival="+start+"&departure="+end;
     },
     campgroundStayHistory: function(id){
         return "/api/campgrounds/" + id + "/stay_history.json"
@@ -61,6 +64,9 @@ module.exports = {
     },
     campsites_price_history: function(id){
         return "/api/campsites/"+ id +"/price_history.json";
+    },
+    campsite_current_price:function (id,start,end) {
+       return "/api/campsites/"+ id +"/current_price.json?arrival="+start+"&departure="+end;
     },
     campsites_status_history:function(id){
         return "/api/campsites/" + id + "/status_history.json?closures=True"
@@ -125,6 +131,9 @@ module.exports = {
     },
     //bookings
     bookings:"/api/booking.json",
+    booking: function(id){
+        return "/api/booking/"+id+".json";
+    },
     //other
     countries:"https://restcountries.eu/rest/v1/?fullText=true",
     users: "/api/users.json",

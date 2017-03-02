@@ -19,6 +19,7 @@ class Invoice(models.Model):
     reference = models.CharField(max_length=50, unique=True)
     system = models.CharField(max_length=4,blank=True,null=True)
     token = models.CharField(max_length=25,null=True,blank=True)
+    voided = models.BooleanField(default=False)
 
     def __unicode__(self):
         return 'Invoice #{0}'.format(self.reference)

@@ -849,8 +849,7 @@ class Booking(models.Model):
     expiry_time = models.DateTimeField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
-    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
-    
+
     # Properties
     # =================================
     @property
@@ -863,16 +862,33 @@ class Booking(models.Model):
         if self.arrival > today <= self.departure:
             return True
         return False
+
+    @property
+    def campsite_id_list(self):
+        return list(set([x['campsite'] for x in self.campsites.all().values('campsite')]))
+
     # Methods
     # =================================
     def __str__(self):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
 
+class BookingInvoice(models.Model):
+    booking = models.ForeignKey(Booking, related_name='invoices')
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    def __str__(self):
+        return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
 
 class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""
+    VEHICLE_CHOICES = (
+        ('vehicle','vehicle'),
+        ('motorbike','motorbike'),
+        ('concession','concession')
+    )
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
+    type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
 
 class ParkEntryRate(models.Model):
 
@@ -880,7 +896,7 @@ class ParkEntryRate(models.Model):
     concession = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     motorbike = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     period_start = models.DateField()
-    period_end = models.DateField(null=True)
+    period_end = models.DateField(null=True,blank=True)
     reason = models.ForeignKey("PriceReason",on_delete=models.PROTECT)
     details = models.TextField(null = True, blank= True)
 
@@ -892,6 +908,11 @@ class ParkEntryRate(models.Model):
     def save(self, *args,**kwargs):
         self.full_clean()
         super(ParkEntryRate,self).save(*args,**kwargs)
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        return (self.period_start > today and not self.period_end) or ( self.period_start > today <= self.period_end)
 
 
 # REASON MODELS
@@ -1265,3 +1286,53 @@ class CampgroundStayHistoryListener(object):
     def _post_delete(sender, instance, **kwargs):
         if not instance.range_end:
             CampgroundStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campground=instance.campground).update(range_end=None)
+
+class ParkEntryRateListener(object):
+    """
+    Event listener for ParkEntryRate
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=ParkEntryRate)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = ParkEntryRate.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+            price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+            if price_before:
+                price_before = price_before[0]
+                price_before.period_end = instance.period_start
+                instance.period_start = instance.period_start + timedelta(days=1)
+                price_before.save()
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+                if price_before:
+                    price_before = price_before[0]
+                    price_before.period_end = instance.period_start
+                    price_before.save()
+                    instance.period_start = instance.period_start + timedelta(days=1)
+                price_after = ParkEntryRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+                if price_after:
+                    price_after = price_after[0]
+                    instance.period_end = price_after.period_start - timedelta(days=1)
+            except Exception as e:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=ParkEntryRate)
+    def _post_delete(sender, instance, **kwargs):
+        price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+        price_after = ParkEntryRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+        if price_after:
+            price_after = price_after[0]
+            if price_before:
+                price_before = price_before[0]
+                price_before.period_end =  price_after.period_start - timedelta(days=1)
+                price_before.save()
+        elif price_before:
+            price_before = price_before[0]
+            price_before.period_end = None
+            price_before.save()

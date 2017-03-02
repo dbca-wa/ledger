@@ -116,6 +116,8 @@ class CashTransaction(models.Model):
         if self.type == 'refund' and (self.invoice.payment_amount < decimal.Decimal(self.amount)):
             raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
         if self.pk is None:
+            if self.invoice.voided:
+                raise ValidationError('You cannot make a payment to voided invoice')
             if self.invoice.payment_status == 'paid' and self.type == 'payment':
                 raise ValidationError('This invoice has already been paid for.')
             if (decimal.Decimal(self.amount) > self.invoice.balance) and self.type == 'payment':
