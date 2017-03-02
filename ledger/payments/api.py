@@ -775,7 +775,7 @@ class CheckoutCreateView(generics.CreateAPIView):
                                                                                                 self.get_redirect_value(serializer,'bpay_format'),
                                                                                                 self.get_redirect_value(serializer,'icrn_format'),
                                                                                                 self.get_redirect_value(serializer,'invoice_text')))
-            print redirect
+            print(redirect)
 
             return redirect
         except serializers.ValidationError:

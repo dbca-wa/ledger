@@ -2,12 +2,11 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import 'foundation-sites/dist/css/foundation-flex.css';
 import 'foundation-datepicker/css/foundation-datepicker.css';
-import 'awesomplete/awesomplete.css';
 
 import Vue from 'vue';
-import VuePaginate from 'vue-paginate';
-import ParkFinder from './parkfinder.vue';
+import availability from './availability';
 
-Vue.use(VuePaginate);
+Vue.config.productionTip = false;
 
-global.parkfinder = new Vue(ParkFinder);
+/* eslint-disable no-new */
+new Vue(availability);
