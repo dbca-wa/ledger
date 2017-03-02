@@ -621,7 +621,9 @@ define([
         });
 
         $($decline).click(function() {
+            console.log("click!");
             $buttonClicked = $(this);
+            declineApplication();
         });
 
         $submissionForm.submit(function(e) {
@@ -637,6 +639,11 @@ define([
             $approve.addClass('disabled');
             $approve.tooltip({});
         }
+    }
+
+    function declineApplication() {
+        var $modal =  $('#declinedDetailsModal');
+        $modal.modal('show');
     }
 
     return {

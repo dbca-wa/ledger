@@ -271,14 +271,14 @@ class ApplicationDeclinedEmail(TemplateEmailBase):
 
 def send_application_declined_email(declined_details, request):
     application = declined_details.application
-    email = ApplicationAmendmentRequestedEmail()
+    email = ApplicationDeclinedEmail(application)
     url = request.build_absolute_uri(
-        reverse('wl_applications:edit_application', args=[application.pk])
+        reverse('wl_home')
     )
 
     context = {
-        'details': declined_details,
-        'url': url
+        'reason': declined_details.reason,
+        'wl_home': url
     }
 
     if application.proxy_applicant is None:

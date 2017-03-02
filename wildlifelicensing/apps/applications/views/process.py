@@ -142,7 +142,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         elif 'decline' in request.POST:
             success, message = self._process_decline(application)
             if success:
-                messages.warning(request, message)
+                messages.success(request, message)
                 return redirect('wl_dashboard:tables_applications_officer')
             else:
                 messages.error(request, "Error while declining application: " + message)

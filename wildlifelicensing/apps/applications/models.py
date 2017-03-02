@@ -32,7 +32,7 @@ class Application(RevisionedMixin):
                                'id_and_returns_and_amendment_required']
 
     # List of statuses from above that allow a customer to view an application (read-only)
-    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved']
+    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
     PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'),
                                  ('licence_amendment', 'Licence Amendment'), ('ready_for_action', 'Ready for Action'),
