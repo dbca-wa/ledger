@@ -272,12 +272,14 @@ class ApplicationDeclinedEmail(TemplateEmailBase):
 def send_application_declined_email(declined_details, request):
     application = declined_details.application
     email = ApplicationDeclinedEmail(application)
-    url = request.build_absolute_uri(
-        reverse('wl_home')
-    )
+    url = request.build_absolute_uri(reverse('wl_home')) if request else None
+
+    reason_text = declined_details.reason or ''
+    reason_html = reason_text.replace('\n', '<br/>')
 
     context = {
-        'reason': declined_details.reason,
+        'reason_text': reason_text,
+        'reason_html': reason_html,
         'wl_home': url
     }
 
@@ -287,7 +289,8 @@ def send_application_declined_email(declined_details, request):
         recipient_email = application.proxy_applicant.email
 
     msg = email.send(recipient_email, context=context)
-    _log_email(msg, application=application, sender=request.user)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_email(msg, application=application, sender=sender)
     return recipient_email
 
 

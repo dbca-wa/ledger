@@ -1,12 +1,13 @@
 from django.http import JsonResponse
 from django.views.generic.base import TemplateView, View
 from django.shortcuts import get_object_or_404
+from django.contrib import messages
 
 from preserialize.serialize import serialize
 
 from wildlifelicensing.apps.payments import utils as payment_utils
 from wildlifelicensing.apps.applications.models import Application, Assessment, ApplicationLogEntry, \
-    ApplicationUserAction
+    ApplicationUserAction, ApplicationDeclinedDetails
 from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMixin, CanPerformAssessmentMixin
 from wildlifelicensing.apps.applications.utils import convert_documents_to_url, append_app_document_to_schema_data, \
     get_log_entry_to, format_application, format_assessment
@@ -41,6 +42,12 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
         else:
             kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                           get_application_payment_status(application))
+        if application.processing_status == 'declined':
+            message = "This application has been declined."
+            details = ApplicationDeclinedDetails.objects.filter(application=application).first()
+            if details and details.reason:
+                message += "<br/>Reason(s):<br/>{}".format(details.reason.replace('\n', '<br/>'))
+            messages.error(self.request, message)
 
         return super(ViewReadonlyView, self).get_context_data(**kwargs)
 
@@ -68,6 +75,13 @@ class ViewReadonlyOfficerView(UserCanViewApplicationMixin, TemplateView):
 
         kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
                                                            fromm=self.request.user.get_full_name())
+
+        if application.processing_status == 'declined':
+            message = "This application has been declined."
+            details = ApplicationDeclinedDetails.objects.filter(application=application).first()
+            if details and details.reason:
+                message += "<br/>Reason(s):<br/>{}".format(details.reason.replace('\n', '<br/>'))
+            messages.error(self.request, message)
 
         return super(ViewReadonlyOfficerView, self).get_context_data(**kwargs)
 
@@ -97,6 +111,13 @@ class ViewReadonlyAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
                                                            fromm=self.request.user.get_full_name())
+
+        if application.processing_status == 'declined':
+            message = "This application has been declined."
+            details = ApplicationDeclinedDetails.objects.filter(application=application).first()
+            if details and details.reason:
+                message += "<br/>Reason(s):<br/>{}".format(details.reason.replace('\n', '<br/>'))
+            messages.error(self.request, message)
 
         return super(ViewReadonlyAssessorView, self).get_context_data(**kwargs)
 

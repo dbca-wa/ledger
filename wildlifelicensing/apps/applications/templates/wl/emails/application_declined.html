@@ -8,10 +8,12 @@
         Your Wildlife Licensing application has been declined.
     {% endif %}
 
-    {% if reason %}
+    {% if reason_html %}
         <p>
-            <span>Reason: {{ reason }}</span>
+            Reason(s):<br/>
+            {{ reason_html|safe }}
         </p>
+
     {% endif %}
 
     {% if wl_home %}
