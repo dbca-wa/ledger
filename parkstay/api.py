@@ -1193,15 +1193,20 @@ class BookingViewSet(viewsets.ModelViewSet):
         sql = ''
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
-            parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
+            parkstay_booking.legacy_id,parkstay_campsiteclass.name as campground_site_type,\
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,accounts_emailuser.first_name as firstname,\
+            accounts_emailuser.last_name as lastname'
         sqlCount = 'select count(*)'
 
         sqlFrom = ' from parkstay_booking\
             join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
             join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
             join parkstay_district on parkstay_park.district_id = parkstay_district.id\
-            join parkstay_region on parkstay_district.region_id = parkstay_region.id'
+            join parkstay_region on parkstay_district.region_id = parkstay_region.id\
+            join accounts_emailuser on accounts_emailuser.id = parkstay_booking.customer_id\
+            join parkstay_campsitebooking on parkstay_campsitebooking.booking_id = parkstay_booking.id\
+            join parkstay_campsite on parkstay_campsite.id = parkstay_campsitebooking.campsite_id\
+            join parkstay_campsiteclass on parkstay_campsite.campsite_class_id =  parkstay_campsiteclass.id'
 
         sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
         sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom

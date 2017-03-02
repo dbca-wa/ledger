@@ -36,8 +36,7 @@ module.exports = {
             $(this).popover('show');
             $(this).on('mouseout',function () {
                 $(this).popover('hide');
-            })
-
+            });
         });
     }
 };

@@ -60,7 +60,7 @@
 </template>
 
 <script>
-import {$,bus,datetimepicker,api_endpoints} from "../../hooks.js"
+import {$,bus,datetimepicker,api_endpoints,helpers} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import confirmbox from '../utils/confirmbox.vue'
@@ -130,17 +130,30 @@ export default {
                         searchable:false
                     },
                     {
-                        data:"legacy_name",
+                        mRender: function(data, type, full) {
+                            var name = full.firstname +" "+full.lastname;
+                            var column = "<td >__NAME__</td>";
+                            return column.replace('__NAME__', name);
+                        },
                         orderable:false,
                         searchable:false
                     },
                     {
-                        data:"legacy_id",
+                        data:"id",
                         orderable:false,
                         searchable:false
                     },
                     {
                         data:"campground_site_type",
+                        mRender:function (data,type,full) {
+                            if (data){
+                                var max_length = 25;
+                                var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
+                                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                                return column.replace('__NAME__', data);
+                            }
+                            return '';
+                        },
                         orderable:false,
                         searchable:false
                     },
@@ -278,6 +291,7 @@ export default {
                 }
 
             });
+            helpers.namePopover($,vm.$refs.bookings_table.vmDataTable);
         }
     },
     mounted:function () {
