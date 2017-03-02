@@ -1302,10 +1302,11 @@ class BookingViewSet(viewsets.ModelViewSet):
             booking_details = {
                 'campsites':request.data['campsites'],
                 'start_date' : start_date,
+                'campground' : request.data['campground'],
                 'end_date' : end_date
             }
-            print booking_details
-            utils.update_booking(request,instance,booking_details)
+            data = utils.update_booking(request,instance,booking_details)
+            serializer = BookingSerializer(data)
 
             return Response(serializer.data, status=http_status)
 
