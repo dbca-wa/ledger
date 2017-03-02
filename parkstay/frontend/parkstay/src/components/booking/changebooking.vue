@@ -137,7 +137,7 @@ export default {
                     emulateJSON:true,
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 }).then((response)=>{
-                    console.log(response); 
+                    vm.$parent.loading.splice('processing booking',1);
                     vm.close();
                 },(error)=>{
                     console.log(error);
