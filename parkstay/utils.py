@@ -344,6 +344,13 @@ def check_date_diff(old_booking,new_booking):
             return 1 #additional days
         else:
             return 2 #reduced days
+    elif old_booking.departure == new_booking.departure:
+        old_booking_days = int((old_booking.departure - old_booking.arrival).days)
+        new_days = int((new_booking.departure - new_booking.arrival).days)
+        if new_days > old_booking_days:
+            return 1 #additional days
+        else:
+            return 2 #reduced days
     else:
         return 3 # different days
 
@@ -446,7 +453,10 @@ def update_booking(request,old_booking,booking_details):
                         if same_campsites:
                             old_booking.cost_total = total_price 
                             # Remove extra campsite bookings
-                            old_booking.campsites.filter(date__gte=booking.departure).delete()
+                            if booking.departure < old_booking.departure:
+                                old_booking.campsites.filter(date__gte=booking.departure).delete()
+                            elif booking.arrival > old_booking.arrival:
+                                old_booking.campsites.filter(date__lte=booking.arrival).delete()
                             for i in old_booking.invoices.all():
                                 inv = Invoice.objects.get(reference=i.invoice_reference)
                                 inv.voided = True
@@ -466,27 +476,28 @@ def update_booking(request,old_booking,booking_details):
                         
                             old_booking.cost_total = booking.cost_total
                         old_booking.departure = booking.departure
+                        old_booking.arrival = booking.arrival
                         if not same_campground:
                             old_booking.campground = booking.campground
                         old_booking.save()
                         if not same_campsites:
                             booking.delete()
-            else:
-                if date_diff == 3: # Different Days
-                    booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price,void_invoices=True)
-                    old_booking.campsites.all().delete()
-                    # Attach campsite booking objects to old booking
-                    for c in booking.campsites.all():
-                        c.booking = old_booking
-                        c.save()
 
-                    old_booking.cost_total = booking.cost_total
-                    old_booking.departure = booking.departure
-                    old_booking.arrival = booking.arrival
-                    if not same_campground:
-                        old_booking.campground = booking.campground
-                    old_booking.save()
-                    booking.delete()
+            if date_diff == 3: # Different Days
+                booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price,void_invoices=True)
+                old_booking.campsites.all().delete()
+                # Attach campsite booking objects to old booking
+                for c in booking.campsites.all():
+                    c.booking = old_booking
+                    c.save()
+
+                old_booking.cost_total = booking.cost_total
+                old_booking.departure = booking.departure
+                old_booking.arrival = booking.arrival
+                if not same_campground:
+                    old_booking.campground = booking.campground
+                old_booking.save()
+                booking.delete()
 
             return old_booking
         except:
