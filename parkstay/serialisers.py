@@ -361,7 +361,11 @@ class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
             method = kwargs.pop('method')
         except:
             method = 'post'
-        print(method)
+        try:
+            campsite_ids = kwargs.pop('campsite_ids')
+        except:
+            campsite_ids = False
+    
         super(CampsiteClassSerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
@@ -369,6 +373,11 @@ class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
             self.fields['features'] = serializers.HyperlinkedRelatedField(required=False,many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
         elif method == 'put':
             self.fields['features'] = serializers.HyperlinkedRelatedField(required=False,many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
+        if campsite_ids:
+            self.fields['campsites'] = serializers.SerializerMethodField()
+
+    def get_campsites(self,obj):
+        return [c.id for c in obj.campsites.all()]
 
 class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
     booking_type = serializers.SerializerMethodField()

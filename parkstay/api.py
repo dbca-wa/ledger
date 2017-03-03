@@ -693,6 +693,27 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['get'])
+    def available_campsite_classes(self, request, format='json', pk=None):
+        try:
+            start_date = datetime.strptime(request.GET.get('arrival'),'%Y/%m/%d').date()
+            end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
+            http_status = status.HTTP_200_OK
+            available = utils.get_available_campsitetypes(self.get_object().id,start_date, end_date,_list=False)
+            available_serializers = []
+            for k,v in available.items():
+                s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
+                s['campsites'] = [c.id for c in v]
+                available_serializers.append(s)
+            data = available_serializers 
+
+            return Response(data,status=http_status)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
 
 
 class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):

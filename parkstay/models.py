@@ -162,6 +162,10 @@ class Campground(models.Model):
         except Feature.DoesNotExist:
             return True
 
+    @property
+    def campsite_classes(self):
+        return list(set([c.campsite_class.id for c in self.campsites.all()]))
+
     # Methods
     # =======================================
     def _is_open(self,period):

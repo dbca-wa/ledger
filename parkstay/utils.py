@@ -262,7 +262,44 @@ def get_visit_rates(campsites_qs, start_date, end_date):
 
     return results
 
+def get_available_campsitetypes(campground_id,start_date,end_date,_list=True):
+    try:
+        cg = Campground.objects.get(id=campground_id)
 
+        if _list:
+            available_campsiteclasses = []
+        else:
+            available_campsiteclasses = {}
+
+        for _class in cg.campsite_classes:
+            sites_qs =  Campsite.objects.filter(
+                            campground=campground_id,
+                            campsite_class=_class
+                        )
+
+            if sites_qs.exists():
+
+                # get availability for sites, filter out the non-clear runs
+                availability = get_campsite_availability(sites_qs, start_date, end_date)
+                excluded_site_ids = set()
+                for site_id, dates in availability.items():
+                    if not all([v[0] == 'open' for k, v in dates.items()]):
+                        excluded_site_ids.add(site_id)
+
+                # create a list of campsites without bookings for that period
+                sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
+
+                if sites:
+                    if not _list:
+                        available_campsiteclasses[_class] = sites
+                    else:
+                        available_campsiteclasses.append(_class)
+
+        return available_campsiteclasses
+    except Campground.DoesNotExist:
+        raise Exception('The campsite you are searching does not exist')
+    except:
+        raise
 
 
 def get_available_campsites_list(campsite_qs,request, start_date, end_date):
