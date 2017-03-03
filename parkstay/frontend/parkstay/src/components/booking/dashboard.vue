@@ -132,8 +132,12 @@ export default {
                     {
                         mRender: function(data, type, full) {
                             var name = full.firstname +" "+full.lastname;
-                            var column = "<td >__NAME__</td>";
-                            return column.replace('__NAME__', name);
+                            var max_length = 15;
+                            var short_name = (name.length > max_length) ? name.substring(0,max_length-1)+'...' : name;
+                            var column = '<td ><div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
+                            column.replace(/__SHNAME__/g, short_name);
+                            return column.replace(/__NAME__/g, name);
+
                         },
                         orderable:false,
                         searchable:false
@@ -147,7 +151,7 @@ export default {
                         data:"campground_site_type",
                         mRender:function (data,type,full) {
                             if (data){
-                                var max_length = 25;
+                                var max_length = 10;
                                 var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
                                 var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
                                 return column.replace('__NAME__', data);
@@ -182,12 +186,18 @@ export default {
                             var booking = JSON.stringify(full);
                             var invoice = "/ledger/payments/invoice/"+full.invoice_reference;
                             var invoice_link= (full.invoice_reference)?"<a href='"+invoice+"' target='_blank' class='text-primary'>Invoice</a><br/>":"";
-                            var column = "<td > \
-                                            <a href='#' class='text-primary' data-rec-payment='' > Record Payment</a><br/>\
-                                            <a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>\
-                                            <a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>"
-                                            +invoice_link+"\
-                                        </td>";
+                            var column = "<td >";
+                            if (!full.paid){
+                                var record_payment = "<a href='#' class='text-primary' data-rec-payment='' > Record Payment</a><br/>";
+                                column += record_payment;
+                            }
+                            if (full.editable){
+                                var change_booking = "<a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>";
+                                var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>";
+                                column += cancel_booking;
+                                column += change_booking;
+                            }
+                            column += "</td>";
                             return column.replace('__Status__', status);
                         },
                         orderable:false,
