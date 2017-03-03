@@ -177,9 +177,6 @@ class AccountsTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         # update customer
-        self.customer = EmailUser.objects.get(email=self.customer.email)
+        self.customer.refresh_from_db()
 
         self.assertIsNotNone(self.customer.identification)
-
-        # assert image url is the customer ID's url path
-        self.assertEqual(response.context['existing_id_image_url'], self.customer.identification.file.url)
