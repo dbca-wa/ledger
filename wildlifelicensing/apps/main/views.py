@@ -163,6 +163,8 @@ class IdentificationView(LoginRequiredMixin, TemplateView):
                 if bool(previous_id):
                     previous_id.delete()
                 identification_uploaded.send(sender=self.__class__, request=self.request)
+                
+                messages.success(request, 'ID was successfully uploaded')
         if 'senior_card' in request.POST:
             form = SeniorCardForm(request.POST, files=request.FILES)
             ctx['form_senior'] = form
@@ -172,8 +174,9 @@ class IdentificationView(LoginRequiredMixin, TemplateView):
                 self.request.user.save()
                 if bool(previous_senior_card):
                     previous_senior_card.delete()
-        # back to the same page with an updated ctx with forms
-        return self.get(request, **ctx)
+                messages.success(request, 'Seniors card was successfully uploaded')
+
+        return redirect('wl_home')
 
 
 class EditAccountView(LoginRequiredMixin, TemplateView):
