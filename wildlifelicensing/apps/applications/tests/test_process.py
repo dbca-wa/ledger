@@ -76,7 +76,7 @@ class TestStatusLifeCycle(TestCase):
 
     def test_issued_status_after_entering_condition(self):
         """
-        Test that if an application has been issued, entering condition leave the status has issued
+        Test that if an application has been issued, entering condition leave the status as issued
         @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2736&project_id=24
         """
         application = create_and_lodge_application(self.user)
