@@ -161,8 +161,7 @@ import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
 
-var parkstayUrl = global.parkstayUrl || process.env.PARKSTAY_URL;
-var parkstayGroundId = global.parkstayGroundId || '1';
+
 var nowTemp = new Date();
 var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
@@ -195,6 +194,8 @@ export default {
         return {
             arrivalDate: moment.utc(now),
             departureDate: moment.utc(now).add(5, 'days'),
+            parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
+            parkstayGroundId: global.parkstayGroundId || '1',
             days: 5,
             numAdults: 1,
             numChildren: 0,
@@ -213,9 +214,9 @@ export default {
             get: function() {
                 var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
                 if (count === 1) {
-                    return count +" person";
+                    return count +" person ▼";
                 } else {
-                    return count + " people";
+                    return count + " people ▼";
                 }
             }
         },
@@ -247,13 +248,13 @@ export default {
             if (site.type == 0) { // per site listing
                 submitData.campsite = site.id;
             } else {
-                submitData.campground = parkstayGroundId;
+                submitData.campground = vm.parkstayGroundId;
                 submitData.campsite_class = site.type;
             }
             console.log(site);
             console.log(submitData);
             $.ajax({
-                url: '/api/create_booking',
+                url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
                 data: submitData,
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
@@ -268,7 +269,7 @@ export default {
         update: function() {
             var vm = this;
             debounce(function() {
-                var url = '/api/availability/'+ parkstayGroundId +'/?'+$.param({
+                var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
                     arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                     departure: moment(vm.departureDate).format('YYYY/MM/DD'),
                     num_adult: vm.numAdults,
@@ -294,6 +295,7 @@ export default {
         }
     },
     mounted: function () {
+        var vm = this;
         $(document).foundation();
 
         var arrivalEl = $('#date-arrival');
@@ -314,10 +316,10 @@ export default {
                 departureEl.trigger('changeDate');
             }
             arrivalData.hide();
-            sitesCal.arrivalDate = moment(arrivalData.date);
-            sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
-            sitesCal.sites = [];
-            sitesCal.update();
+            vm.arrivalDate = moment(arrivalData.date);
+            vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
+            vm.sites = [];
+            vm.update();
         }).data('datepicker');
 
         var departureEl = $('#date-departure');
@@ -329,10 +331,10 @@ export default {
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
             departureData.hide();
-            sitesCal.departureDate = moment(departureData.date);
-            sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
-            sitesCal.sites = [];
-            sitesCal.update();
+            vm.departureDate = moment(departureData.date);
+            vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
+            vm.sites = [];
+            vm.update();
         }).data('datepicker');
 
 

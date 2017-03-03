@@ -385,13 +385,13 @@ import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
 
-var parkstayUrl = global.parkstayUrl || process.env.PARKSTAY_URL;
 
 export default {
     name: 'parkfinder',
     el: '#parkfinder',
     data: function () {
         return {
+            parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
             defaultCenter: [13775786.985667605, -2871569.067879858], // [123.75, -24.966],
             defaultLayers: [
                 ['dpaw:mapbox_outdoors', {}],
@@ -677,7 +677,7 @@ export default {
         autocomplete.autoFirst = true;
 
         $.ajax({
-            url: parkstayUrl+'/api/search_suggest',
+            url: vm.parkstayUrl+'/api/search_suggest',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
@@ -762,7 +762,7 @@ export default {
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
         $.ajax({
-            url: parkstayUrl+'/api/campground_map/?format=json',
+            url: vm.parkstayUrl+'/api/campground_map/?format=json',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 var features = vm.geojson.readFeatures(response);
@@ -777,7 +777,7 @@ export default {
         });
         
         this.groundsSource.loadSource = function (onSuccess) {
-            var urlBase = parkstayUrl+'/api/campground_map_filter/?';
+            var urlBase = vm.parkstayUrl+'/api/campground_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
