@@ -120,6 +120,10 @@ class WildlifeLicence(Licence):
     def reference(self):
         return '{}-{}'.format(self.licence_number, self.licence_sequence)
 
+    @property
+    def is_issued(self):
+        return self.licence_number is not None and len(self.licence_number) > 0
+
 
 class DefaultCondition(models.Model):
     condition = models.ForeignKey(Condition)

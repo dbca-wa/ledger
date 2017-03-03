@@ -311,7 +311,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
 
-            if replacing_application.licence is not None:
+            if replacing_application.licence is not None and replacing_application.licence.is_issued:
                 if replacing_application.is_licence_amendment:
                     return 'Amended'
                 else:
@@ -332,7 +332,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         try:
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
-            if replacing_application.licence is None:
+            if replacing_application.licence is None or not replacing_application.licence.is_issued:
                 if replacing_application.is_licence_amendment:
                     return 'Amendment Pending'
                 else:
