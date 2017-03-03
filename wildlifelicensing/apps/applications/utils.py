@@ -368,6 +368,8 @@ def format_application(instance, attrs):
 
     if instance.applicant.identification is not None and instance.applicant.identification.file is not None: 
         attrs['applicant']['identification']['url'] = instance.applicant.identification.file.url
+    if instance.applicant.senior_card is not None and instance.applicant.senior_card.file is not None: 
+        attrs['applicant']['senior_card']['url'] = instance.applicant.senior_card.file.url
 
     return attrs
 

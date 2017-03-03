@@ -388,15 +388,13 @@
                                     {{ user.last_name }}</h4>
                             </div>
                             <div class="modal-body center">
-                                {% if user.senior_card.file.url|slice:'-3:' == 'pdf' %}
-                                    <a href="{{ user.senior_card.file.url }}" target="_blank">
+                                {% if user.senior_card.url|lower|slice:'-3:' == 'pdf' %}
+                                    <a href="{{ user.senior_card.url }}" target="_blank">
                                         <img src="{% static 'wl/img/pdf.png' %}">
                                         <p>View PDF</p>
                                     </a>
                                 {% else %}
-                                    <a href="{{ user.senior_card.file.url }}" target="_blank">
-                                        <img width="100%" src="{{ user.senior_card.file.url }}"/>
-                                    </a>
+                                    <img width="100%" src="{{ user.senior_card.url }}"/>
                                 {% endif %}
                             </div>
                             <div class="modal-footer">
