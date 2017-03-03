@@ -17,9 +17,10 @@ from wildlifelicensing.apps.main.helpers import get_all_officers, render_user_na
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, Assessment, ApplicationUserAction
 from wildlifelicensing.apps.applications.forms import IDRequestForm, ReturnsRequestForm, AmendmentRequestForm, \
-    ApplicationLogEntryForm
+    ApplicationLogEntryForm, ApplicationDeclinedDetailsForm
 from wildlifelicensing.apps.applications.emails import send_amendment_requested_email, send_assessment_requested_email, \
-    send_id_update_request_email, send_returns_request_email, send_assessment_reminder_email
+    send_id_update_request_email, send_returns_request_email, send_assessment_reminder_email, \
+    send_application_declined_email
 from wildlifelicensing.apps.main.models import AssessorGroup
 from wildlifelicensing.apps.returns.models import Return
 
@@ -42,7 +43,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         ass_groups = [{'id': ass_group.id, 'text': ass_group.name} for ass_group in
                       AssessorGroup.objects.all().exclude(id__in=[ass_group.pk for ass_group in current_ass_groups]).
-                      order_by('name')]
+                          order_by('name')]
 
         # extract and format the previous lodgements of the application
         previous_lodgements = []
@@ -97,6 +98,28 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         return data
 
+    def _process_decline(self, application):
+        request = self.request
+        request.POST['application'] = application.pk
+        if 'officer' not in request.POST:
+            request.POST['officer'] = request.user.pk
+        form = ApplicationDeclinedDetailsForm(request.POST)
+        if form.is_valid():
+            details = form.save()
+            application.customer_status = 'declined'
+            application.processing_status = 'declined'
+            Assessment.objects.filter(application=application, status='awaiting_assessment'). \
+                update(status='assessment_expired')
+            application.save()
+            application.log_user_action(
+                ApplicationUserAction.ACTION_DECLINE_APPLICATION,
+                request
+            )
+            recipient = send_application_declined_email(details, request)
+            return True, "Application declined and email sent to {}".format(recipient)
+        else:
+            return False, str(form.errors)
+
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
         if 'data' not in kwargs:
@@ -104,8 +127,10 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         kwargs['id_request_form'] = IDRequestForm(application=application, officer=self.request.user)
         kwargs['returns_request_form'] = ReturnsRequestForm(application=application, officer=self.request.user)
         kwargs['amendment_request_form'] = AmendmentRequestForm(application=application, officer=self.request.user)
-
-        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application), fromm=self.request.user.get_full_name())
+        kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
+                                                           fromm=self.request.user.get_full_name())
+        kwargs['application_declined_details_form'] = \
+            ApplicationDeclinedDetailsForm(application=application, officer=self.request.user)
 
         return super(ProcessView, self).get_context_data(**kwargs)
 
@@ -118,19 +143,13 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
             return redirect('wl_applications:enter_conditions', *args, **kwargs)
         elif 'decline' in request.POST:
-            application.customer_status = 'declined'
-            application.processing_status = 'declined'
-            Assessment.objects.filter(application=application, status='awaiting_assessment').\
-                update(status='assessment_expired')
-            application.save()
-            application.log_user_action(
-                ApplicationUserAction.ACTION_DECLINE_APPLICATION,
-                request
-            )
-
-            messages.warning(request, 'The application was declined.')
-
-            return redirect('wl_dashboard:tables_applications_officer')
+            success, message = self._process_decline(application)
+            if success:
+                messages.success(request, message)
+                return redirect('wl_dashboard:tables_applications_officer')
+            else:
+                messages.error(request, "Error while declining application: " + message)
+                return redirect('wl_applications:process', application.pk, **kwargs)
         else:
             return redirect('wl_applications:process', application.pk, **kwargs)
 

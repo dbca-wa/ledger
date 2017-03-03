@@ -1,9 +1,5 @@
 from __future__ import unicode_literals
 
-import datetime
-
-from six.moves.urllib.parse import urlparse
-
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
