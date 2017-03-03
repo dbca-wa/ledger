@@ -21,11 +21,31 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
         $viewAssessorsComments.popover({container: 'body', content: $contentContainer, html: true});
     }
 
+    function initDeclineStatus(reason) {
+        var $declinedReasonContainer = $('<div>'),
+            $status = $('#status');
+
+        if ($status) {
+            if (!reason) {
+                $declinedReasonContainer.append($('<p>').html("No reason"))
+            } else {
+                reason.split('\n').forEach(function (reason) {
+                    $declinedReasonContainer.append($('<p>').html(reason));
+                });
+            }
+            $status.html('').append('<a>Declined</a>');
+            $status.popover({container: 'body', content: $declinedReasonContainer, html: true});
+        }
+    }
+
     return {
         init: function(application, assessments) {
             applicationPreview.layoutPreviewItems('#applicationContainer', application.licence_type.application_schema,
                     application.data);
             initAssessorsCommentsPopover(assessments);
+            if (application['processing_status'].toLowerCase() === 'declined') {
+                initDeclineStatus(application['declined_reason'] || '')
+            }
         }
     }
 });

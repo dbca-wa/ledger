@@ -78,6 +78,23 @@ define([
         });
     }
 
+    function initDeclineStatus(reason) {
+        var $declinedReasonContainer = $('<div>'),
+            $status = $('#status');
+
+        if ($status) {
+            if (!reason) {
+                $declinedReasonContainer.append($('<p>').html("No reason"))
+            } else {
+                reason.split('\n').forEach(function (reason) {
+                    $declinedReasonContainer.append($('<p>').html(reason));
+                });
+            }
+            $status.html('').append('<a>Declined</a>');
+            $status.popover({container: 'body', content: $declinedReasonContainer, html: true});
+        }
+    }
+
     return {
         init: function (assessment, application, formStructure, otherAssessments) {
             initApplicationDetailsPopover(application, formStructure);
@@ -85,6 +102,9 @@ define([
             initDefaultConditions(application.licence_type.default_conditions);
             initAdditionalConditions(assessment);
             initForm();
+            if (application['processing_status'].toLowerCase() === 'declined') {
+                initDeclineStatus(application['declined_reason'] || '')
+            }
         }
     }
 });
