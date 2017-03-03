@@ -212,7 +212,7 @@ export default {
         numPeople: {
             cache: false,
             get: function() {
-                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
+                var count = parseInt(this.numAdults) + parseInt(this.numConcessions) + parseInt(this.numChildren) + parseInt(this.numInfants);
                 if (count === 1) {
                     return count +" person ▼";
                 } else {
