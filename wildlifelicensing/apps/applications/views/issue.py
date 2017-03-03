@@ -50,7 +50,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence.licence_number = '%s-%s' % (str(licence.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
                                                 str(licence.id).zfill(LICENCE_NUMBER_NUM_CHARS))
 
-        # for re-issuing/renewing
+        # for re-issuing
         original_issue_date = application.licence.issue_date if application.licence.is_issued else None
 
         licence.licence_sequence += 1
