@@ -51,7 +51,7 @@ class CampgroundCampsiteFilterSerializer(serializers.Serializer):
     gear_type = serializers.ChoiceField(choices=('tent', 'caravan', 'campervan'))
 
 
-class CampsiteClassBookingSerializer(serializers.Serializer):
+class CampsiteBookingSerializer(serializers.Serializer):
     """Serializer used by the booking creation process."""
     arrival = serializers.DateField(input_formats=['%Y/%m/%d'])
     departure = serializers.DateField(input_formats=['%Y/%m/%d'])
@@ -61,6 +61,7 @@ class CampsiteClassBookingSerializer(serializers.Serializer):
     num_infant = serializers.IntegerField(default=0)
     campground = serializers.IntegerField(default=0)
     campsite_class = serializers.IntegerField(default=0)
+    campsite = serializers.IntegerField(default=0)
 
 
 class BookingRangeSerializer(serializers.ModelSerializer):

@@ -76,7 +76,7 @@ class CampgroundFeed(ICalFeed):
 
     def item_location(self, item):
         return '{} - {}'.format(item.campground.name, ', '.join([
-            x[0] for x in item.campsitebooking_set.values_list('campsite__name').distinct()
+            x[0] for x in item.campsites.values_list('campsite__name').distinct()
         ] ))
 
 class DashboardView(UserPassesTestMixin, TemplateView):
@@ -111,7 +111,7 @@ class MakeBookingsView(TemplateView):
         form = MakeBookingsForm(form_context)
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
-        campsite = booking.campsitebooking_set.all()[0].campsite if booking else None
+        campsite = booking.campsites.all()[0].campsite if booking else None
         pricing = {
             'adult': Decimal('0.00'),
             'concession': Decimal('0.00'),
