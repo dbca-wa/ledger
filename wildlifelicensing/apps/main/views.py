@@ -19,6 +19,7 @@ from wildlifelicensing.apps.main.signals import identification_uploaded
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
 from wildlifelicensing.apps.main.pdf import create_licence_renewal_pdf_bytes, bulk_licence_renewal_pdf_bytes
+from wildlifelicensing.apps.applications.models import Application
 
 
 class SearchCustomersView(OfficerRequiredMixin, View):
@@ -180,6 +181,13 @@ class EditAccountView(LoginRequiredMixin, TemplateView):
     login_url = '/'
     identification_url = reverse_lazy('wl_main:identification')
 
+    def _process_discontinue(self, emailuser):
+        # delete user but with a double-check security:
+        # don't delete if there's any applications tied to this user
+        if Application.objects.filter(applicant=emailuser).count() == 0:
+            emailuser.delete()
+        return redirect('wl_home')
+
     def get(self, request, *args, **kwargs):
         emailuser = get_object_or_404(EmailUser, pk=request.user.id)
         # if user doesn't choose a identification, display a warning message
@@ -190,23 +198,44 @@ class EditAccountView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         emailuser = get_object_or_404(EmailUser, pk=request.user.pk)
-        # Save the original user data.
-        original_first_name = emailuser.first_name
-        original_last_name = emailuser.last_name
-        emailuser_form = EmailUserForm(request.POST, instance=emailuser)
-        if emailuser_form.is_valid():
-            emailuser = emailuser_form.save()
-            is_name_changed = any([original_first_name != emailuser.first_name, original_last_name != emailuser.last_name])
-
-            # send signal if either first name or last name is changed
-            if is_name_changed:
-                messages.warning(request, "Please upload new identification after you changed your name.")
-                return redirect(self.identification_url)
-            else:
-                messages.success(request, "User account was saved.")
-                return redirect('wl_home')
-
-        return render(request, self.template_name, {'emailuser_form': emailuser_form,})
+        new_user = not (emailuser.first_name or emailuser.last_name or emailuser.dob)
+        if 'discontinue' in request.POST:
+            return self._process_discontinue(emailuser)
+        else:
+            allow_discontinue = False
+            # Save the original user data.
+            original_first_name = emailuser.first_name
+            original_last_name = emailuser.last_name
+            emailuser_form = EmailUserForm(request.POST, instance=emailuser)
+            if emailuser_form.is_valid():
+                emailuser = emailuser_form.save(commit=False)
+                # New user test case. Check the uniqueness of the user (first, last, dob).
+                # https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2994&project_id=24
+                # TODO: This should be done at the ledger level !!!
+                unique = EmailUser.objects.filter(
+                    first_name=emailuser.first_name,
+                    last_name=emailuser.last_name,
+                    dob=emailuser.dob
+                ).count() == 0
+                emailuser.save()
+                if new_user and not unique:
+                    message = """This combination of given name(s), last name and date of birth is not unique.
+                    If you already have a Parks and Wildlife customer account under another email address, please discontinue this registration and sign in with your existing account and add any additional email addresses as new profiles."""
+                    messages.error(request, message)
+                    allow_discontinue = True
+                else:
+                    is_name_changed = any([original_first_name != emailuser.first_name, original_last_name != emailuser.last_name])
+                    # send signal if either first name or last name is changed
+                    if is_name_changed:
+                        messages.warning(request, "Please upload new identification after you changed your name.")
+                        return redirect(self.identification_url)
+                    else:
+                        messages.success(request, "User account was saved.")
+                        return redirect('wl_home')
+            return render(request, self.template_name, {
+                'emailuser_form': emailuser_form,
+                'allow_discontinue': allow_discontinue
+            })
 
 
 class ListDocumentView(CustomerRequiredMixin, TemplateView):
