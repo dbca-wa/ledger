@@ -22,6 +22,7 @@ from wildlifelicensing.apps.applications.utils import get_log_entry_to, format_a
 from wildlifelicensing.apps.applications.emails import send_licence_issued_email
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
 from wildlifelicensing.apps.payments import utils as payment_utils
+from wildlifelicensing.apps.payments.exceptions import PaymentException
 
 
 LICENCE_TYPE_NUM_CHARS = 2
@@ -32,6 +33,14 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
     template_name = 'wl/issue/issue_licence.html'
 
     def _issue_licence(self, request, application, issue_licence_form):
+        # do credit card payment if required
+        payment_status = payment_utils.PAYMENT_STATUSES.get(payment_utils.get_application_payment_status(application))
+
+        if payment_status == payment_utils.PAYMENT_STATUS_AWAITING:
+            raise PaymentException('Payment is required before licence can be issued')
+        elif payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+            payment_utils.invoke_credit_card_payment(application)
+
         licence = application.licence
 
         licence.issuer = request.user
@@ -75,13 +84,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             previous_licence.replaced_by = licence
             previous_licence.save()
 
-        licence.variants.clear()
-        for index, avl in enumerate(application.variants.through.objects.filter(application=application).
-                                    order_by('order')):
-            WildlifeLicenceVariantLink.objects.create(licence=licence, variant=avl.variant, order=index)
-
-        issue_licence_form.save_m2m()
-
         licence_issued.send(sender=self.__class__, wildlife_licence=licence)
 
         # update statuses
@@ -91,12 +93,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             update(status='assessment_expired')
 
         application.save()
-
-        payment_status = payment_utils.PAYMENT_STATUSES.get(payment_utils.get_application_payment_status(application))
-
-        # do credit card payment if required
-        if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
-            payment_utils.invoke_credit_card_payment(application)
 
         # The licence should be emailed to the customer if they applied for it online. If an officer entered
         # the application on their behalf, the licence needs to be posted to the user.
@@ -203,6 +199,15 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence.extracted_fields = extracted_fields
             licence.save()
 
+            # clear re-form variants from application
+            licence.variants.clear()
+            for index, avl in enumerate(application.variants.through.objects.filter(application=application).
+                                        order_by('order')):
+                WildlifeLicenceVariantLink.objects.create(licence=licence, variant=avl.variant, order=index)
+
+            # save m2m fields of licence (must be done after licence saved)
+            issue_licence_form.save_m2m()
+
             application.licence = licence
             application.save()
 
@@ -217,12 +222,11 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                     'log_entry_form': log_entry_form
                 })
             else:
-                if payment_status == payment_utils.PAYMENT_STATUS_AWAITING:
-                    messages.error(request, 'Payment is required before licence can be issued')
-
+                try:
+                    self._issue_licence(request, application, issue_licence_form)
+                except PaymentException as pe:
+                    messages.error(request, pe.message)
                     return redirect(request.get_full_path())
-
-                self._issue_licence(request, application, issue_licence_form)
 
                 return redirect('wl_dashboard:home')
         else:

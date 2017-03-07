@@ -58,7 +58,7 @@
 {% endblock %}
 
 {% block intro_title %}
-    {% if application.licence and application.licence.licence_number%}
+    {% if application.licence and application.licence.licence_number %}
         <h3>Reissue Licence</h3>
     {% else %}
         <h3>Issue Licence</h3>
@@ -151,7 +151,11 @@
                 </div>
                 {% include 'wl/logs_panel.html' %}
                 <a class="btn btn-sm btn-default" href="{% url 'wl_applications:enter_conditions' application.id %}" role="button">Conditions</a>
-                <button id="save" name="save" type="button" class="btn btn-sm btn-info left-buffer-xxxl">Save</button>
+                {% if payment_status == 'Credit Card Ready' %}
+                    <button id="save" name="save" type="button" class="btn btn-sm btn-info left-buffer-m">Save</button>
+                {% else %}
+                    <button id="save" name="save" type="button" class="btn btn-sm btn-info left-buffer-xxxl">Save</button>
+                {% endif %}
                 {% if payment_status == 'Awaiting Payment' %}
                     <button id="issue" name="issue" type="button" class="btn btn-sm btn-success pull-right disabled"
                             data-title="Payment must be received before licence can be issued">
