@@ -88,6 +88,7 @@
     "jquery": "^3.1.1",
     "jquery-validation": "^1.15.1",
     "moment": "^2.15.2",
+    "moment-range": "^3.0.3",
     "quill": "^1.1.5",
     "quill-render": "^1.0.5",
     "select2": "^4.0.3",
