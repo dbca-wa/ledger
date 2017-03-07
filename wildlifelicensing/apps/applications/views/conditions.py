@@ -53,7 +53,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        if application.processing_status not in ['issued', 'declined']:
+        if application.processing_status not in ['issued', 'declined'] and request.POST.get('submissionType') != 'save':
             application.processing_status = 'ready_to_issue'
 
         # remove existing conditions as there may be new conditions and/or changes of order
@@ -70,8 +70,11 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 
         if request.POST.get('submissionType') == 'backToProcessing':
             return redirect('wl_applications:process', *args)
+        elif request.POST.get('submissionType') == 'save':
+            messages.success(request, 'Conditions saved')
+            return render(request, self.template_name, self.get_context_data())
         else:
-            return redirect('wl_applications:issue_licence', *self.args, **self.kwargs)
+            return redirect('wl_applications:issue_licence', *args, **kwargs)
 
 
 class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):

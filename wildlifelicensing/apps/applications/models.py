@@ -32,7 +32,7 @@ class Application(RevisionedMixin):
                                'id_and_returns_and_amendment_required']
 
     # List of statuses from above that allow a customer to view an application (read-only)
-    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved']
+    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
     PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'),
                                  ('licence_amendment', 'Licence Amendment'), ('ready_for_action', 'Ready for Action'),
@@ -275,6 +275,12 @@ class ApplicationUserAction(UserAction):
         )
 
     application = models.ForeignKey(Application)
+
+
+class ApplicationDeclinedDetails(models.Model):
+    application = models.ForeignKey(Application)
+    officer = models.ForeignKey(EmailUser, null=False)
+    reason = models.TextField(blank=True)
 
 
 @receiver(pre_delete, sender=Application)
