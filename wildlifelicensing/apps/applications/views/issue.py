@@ -75,6 +75,13 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             messages.error(request, 'Payment is required before licence can be issued')
 
             return redirect(request.get_full_path())
+        elif payment_status == payment_utils.PAYMENT_STATUS_CC_READY:# do credit card payment if required
+            txn = payment_utils.invoke_credit_card_payment(application)
+            payment_status = payment_utils.get_application_payment_status(application)
+            if payment_status != payment_utils.PAYMENT_STATUS_PAID:
+                messages.error(request, 'Payment was unsuccessful. Reason({})'.format(txn.response_txt))
+
+                return redirect(request.get_full_path())
 
         original_issue_date = None
         if application.licence is not None:
@@ -158,9 +165,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 request
             )
 
-            # do credit card payment if required
-            if payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
-                payment_utils.invoke_credit_card_payment(application)
 
             # The licence should be emailed to the customer if they applied for it online. If an officer entered
             # the application on their behalf, the licence needs to be posted to the user.
