@@ -117,6 +117,9 @@ class MakeBookingsView(TemplateView):
             'concession': Decimal('0.00'),
             'child': Decimal('0.00'),
             'infant': Decimal('0.00'),
+            'vehicle': settings.PS_PARK_ENTRY_VEHICLE,
+            'vehicle_conc': settings.PS_PARK_ENTRY_VEHICLE_CONC,
+            'motorcycle': settings.PS_PARK_ENTRY_MOTORCYCLE
         }
         if booking:
             pricing_list = utils.get_visit_rates(Campsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]

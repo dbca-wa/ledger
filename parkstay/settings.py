@@ -1,4 +1,5 @@
 from ledger.settings_base import *
+from decimal import Decimal
 
 ROOT_URLCONF = 'parkstay.urls'
 SITE_ID = 1
@@ -20,6 +21,13 @@ MIDDLEWARE_CLASSES += [
 
 # maximum number of days allowed for a booking
 PS_MAX_BOOKING_LENGTH = 90
+
+# pricing constants for park entry fees
+# TODO: check if these need to be stored in a timeline model?
+PS_PARK_ENTRY_VEHICLE = Decimal('12.00')
+PS_PARK_ENTRY_VEHICLE_CONC = Decimal('6.00')
+PS_PARK_ENTRY_MOTORCYCLE = Decimal('6.00')
+
 
 WSGI_APPLICATION = 'parkstay.wsgi.application'
 
