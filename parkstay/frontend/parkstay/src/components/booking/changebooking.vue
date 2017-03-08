@@ -9,15 +9,15 @@
                         <div class="form-group">
                             <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
                             <div class="col-md-4">
-                                <div class="input-group">
+                                <div class="input-group arrivalPicker date">
                                     <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY" v-model="booking.arrival">
                                     <span class="input-group-addon">
-                                        <span class="glyphicon glyphicon-calendar"></span>
+                                        <span class="glyphicon glyphicon-calendar "></span>
                                     </span>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="input-group">
+                                <div class="input-group departurePicker date">
                                     <input type="text" class="form-control" name="departure" placeholder="DD/MM/YYYY" v-model="booking.departure">
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar"></span>
@@ -202,8 +202,8 @@ export default {
                format: 'YYYY-MM-DD',
                showClear:true
            };
-           var arrival = $(vm.form.arrival);
-           var departure = $(vm.form.departure);
+           var arrival = $('.arrivalPicker');
+           var departure = $('.departurePicker');
 
            arrival.datetimepicker(datepickerOptions);
            departure.datetimepicker(datepickerOptions);
