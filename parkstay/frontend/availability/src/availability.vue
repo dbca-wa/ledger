@@ -197,7 +197,7 @@ export default {
             parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
             parkstayGroundId: global.parkstayGroundId || '1',
             days: 5,
-            numAdults: 1,
+            numAdults: 2,
             numChildren: 0,
             numConcessions: 0,
             numInfants: 0,
