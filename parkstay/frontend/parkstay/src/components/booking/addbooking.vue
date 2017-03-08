@@ -374,7 +374,10 @@ export default {
                 entry_fee:0
             },
             parkEntryVehicles:[],
-            parkPrices: {}
+            parkPrices: {},
+            stayHistory:[],
+            arrivalPicker: {},
+            departurePickere: {},
         };
     },
     components:{
@@ -410,6 +413,16 @@ export default {
         },
         selected_arrival:function () {
             let vm = this;
+            if (vm.booking.arrival) {
+                $.each(vm.stayHistory,function (i,his) {
+                    var range = Moment.range(Moment(his.range_start,"DD/MM/YYYY"),Moment(his.range_end,"DD/MM/YYYY"));
+                    var arrival = Moment(vm.booking.arrival,"YYYY/MM/DD");
+                    if (range.contains(arrival)) {
+                        vm.departurePicker.data("DateTimePicker").maxDate(arrival.clone().add(his.max_days,'days'));
+                        vm.departurePicker.data("DateTimePicker").date(null);
+                    }
+                });
+            }
             vm.updatePrices();
             vm.fetchCampsites();
         },
@@ -452,7 +465,7 @@ export default {
                 vm.countries = response.body;
                 var list = [];
                 $.each(vm.countries,function (i,c) {
-                    list.push(c.name);
+                    list.push(c.alpha2Code);
                 });
                 vm.$nextTick(function () {
                     var input = vm.bookingForm.country;
@@ -499,6 +512,7 @@ export default {
             vm.$http.get(api_endpoints.campground(cgId)).then((response)=>{
                 vm.campground = response.body;
                 vm.booking.campground = vm.campground.id;
+                vm.fetchStayHistory();
                 vm.fetchCampsites();
                 vm.fetchPark();
                 vm.addEventListeners();
@@ -507,6 +521,20 @@ export default {
                 console.log(error);
                 vm.loading.splice('fetching campground',1);
             });
+        },
+        fetchStayHistory:function () {
+            let vm =this;
+            vm.loading.push('fetching stay history');
+            vm.$http.get(api_endpoints.campgroundStayHistory(vm.campground.id)).then((response)=>{
+                if(response.body.length > 0){
+                    vm.stayHistory = response.body;
+                }
+                vm.loading.splice('fetching stay history',1);
+            },(error)=>{
+                console.log(error);
+                vm.loading.splice('fetching stay history',1);
+            });
+
         },
         fetchPark:function () {
             let vm =this;
@@ -521,28 +549,30 @@ export default {
         },
         addEventListeners:function(){
             let vm = this;
-            var arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
-            var departurePicker = $(vm.bookingForm.departure).closest('.date');
-            arrivalPicker.datetimepicker({
+            vm.arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
+            vm.departurePicker = $(vm.bookingForm.departure).closest('.date');
+            vm.arrivalPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
                 minDate: new Date(),
                 maxDate: Moment().add(parseInt(vm.campground.max_advance_booking),'days')
             });
-            departurePicker.datetimepicker({
+            vm.departurePicker.datetimepicker({
                 format: 'DD/MM/YYYY',
                 useCurrent: false,
             });
-            arrivalPicker.on('dp.change', function(e){
-                vm.booking.arrival = arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+            vm.arrivalPicker.on('dp.change', function(e){
+                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
-                departurePicker.data("DateTimePicker").minDate(e.date);
-                departurePicker.data("DateTimePicker").date(null);
+                var selected_date = e.date
+                vm.departurePicker.data("DateTimePicker").minDate(selected_date.clone().add(1,'days'));
+                vm.departurePicker.data("DateTimePicker").maxDate(selected_date.clone().add(28,'days'));
+                vm.departurePicker.data("DateTimePicker").date(null);
             });
-            departurePicker.on('dp.change', function(e){
-                if (departurePicker.data('DateTimePicker').date()) {
-                    vm.booking.departure = departurePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+            vm.departurePicker.on('dp.change', function(e){
+                if (vm.departurePicker.data('DateTimePicker').date()) {
+                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
                     vm.selected_departure= vm.booking.departure;
                 }else{
                     vm.booking.departure = null;
