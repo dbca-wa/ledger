@@ -19,7 +19,8 @@ from parkstay.models import (Campground,
                                 Region,
                                 CampsiteClass,
                                 Booking,
-                                CampsiteRate
+                                CampsiteRate,
+                                ParkEntryRate
                                 )
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
@@ -112,14 +113,15 @@ class MakeBookingsView(TemplateView):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         campsite = booking.campsites.all()[0].campsite if booking else None
+        entry_fees = ParkEntryRate.objects.filter(period_start__lte = booking.arrival, period_end__gt=booking.arrival).order_by('-period_start').first()
         pricing = {
             'adult': Decimal('0.00'),
             'concession': Decimal('0.00'),
             'child': Decimal('0.00'),
             'infant': Decimal('0.00'),
-            'vehicle': settings.PS_PARK_ENTRY_VEHICLE,
-            'vehicle_conc': settings.PS_PARK_ENTRY_VEHICLE_CONC,
-            'motorcycle': settings.PS_PARK_ENTRY_MOTORCYCLE
+            'vehicle': entry_fees.vehicle if entry_fees else Decimal('0.00'),
+            'vehicle_conc': entry_fees.concession if entry_fees else Decimal('0.00'),
+            'motorcycle': entry_fees.motorbike if entry_fees else Decimal('0.00')
         }
         if booking:
             pricing_list = utils.get_visit_rates(Campsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
