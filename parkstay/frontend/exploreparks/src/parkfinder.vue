@@ -26,7 +26,14 @@
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_concessions" class="text-right">Concessions<label>
+                                    <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
+- Seniors Card
+- Age Pension
+- Disability Support
+- Carer Payment
+- Carer Allowance
+- Companion Card
+- Department of Veterans' Affairs">Concessions</span></label>
                                 </div><div class="small-6 columns">
                                     <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
                                 </div>
