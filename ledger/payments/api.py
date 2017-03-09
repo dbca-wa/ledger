@@ -7,13 +7,14 @@ from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import list_route,detail_route
 
 from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollection
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
-from ledger.payments.utils import checkURL, createBasket, validSystem, systemid_check
+from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv
 
@@ -89,7 +90,6 @@ class BpayTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = BpayTransaction.objects.all()
     serializer_class = BpayTransactionSerializer
     renderer_classes = (JSONRenderer,)
-    authentication_classes = []
     search_fields = (
         '=crn',
     )
@@ -167,7 +167,6 @@ class BpayCollectionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = BpayCollection.objects.all()
     serializer_class = BpayCollectionSerializer
     renderer_classes = (JSONRenderer,)
-    authentication_classes = []
     lookup_field = 'created'
 
     def retrieve(self, request, created=None, format=None):
@@ -186,7 +185,6 @@ class BpayFileList(viewsets.ReadOnlyModelViewSet):
     queryset = BpayFile.objects.all()
     serializer_class = BpayFileSerializer
     renderer_classes = (JSONRenderer,)
-    authentication_classes = []
 
 #######################################################
 #                                                     #
@@ -233,7 +231,6 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
     queryset = BpointTransaction.objects.all()
     serializer_class = BpointTransactionSerializer
     renderer_classes = (JSONRenderer,)
-    authentication_classes = []
     
     def create(self,request):
         pass
@@ -296,7 +293,6 @@ class BpointPaymentCreateView(generics.CreateAPIView):
     '''
     serializer_class = BpointPaymentSerializer
     renderer_classes = (JSONRenderer,)
-    authentication_classes = []
 
     class Bankcard(object):
         def __init__(self,number,cvn,expiry,name=None):
@@ -432,7 +428,6 @@ class CashViewSet(viewsets.ModelViewSet):
     '''
     queryset = CashTransaction.objects.all()
     serializer_class = CashSerializer
-    authentication_classes = []
     
     def create(self,request,format=None):
         try:
@@ -546,7 +541,6 @@ class BpayLinkSerializer(serializers.Serializer):
 class InvoiceTransactionViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceTransactionSerializer
-    authentication_classes = []
     lookup_field = 'reference'
     
     @detail_route(methods=['get'])
@@ -625,6 +619,13 @@ class CheckoutProductSerializer(serializers.Serializer):
             raise serializers.ValidationError('{} (id={})'.format(str(e),value))
         return value
 
+class CheckoutCustomProductSerializer(serializers.Serializer):
+    ledger_description = serializers.CharField()
+    quantity = serializers.IntegerField(min_value=1,default=1)
+    price_excl_tax = serializers.DecimalField(max_digits=8, decimal_places=2, default=0)
+    price_incl_tax = serializers.DecimalField(max_digits=8, decimal_places=2, default=0)
+
+
 class VoucherSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=128)
 
@@ -649,8 +650,10 @@ class CheckoutSerializer(serializers.Serializer):
     checkoutWithToken = serializers.BooleanField(default=False)
     bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
-    products = CheckoutProductSerializer(many=True)
+    products = serializers.ListField()#CheckoutProductSerializer(many=True)
     vouchers = VoucherSerializer(many=True,required=False)
+    custom_basket = serializers.BooleanField(default=False)
+    invoice_text = serializers.CharField(required=False)
 
     def validate(self, data):
         if data['proxy'] and not data['basket_owner']:
@@ -709,17 +712,24 @@ class CheckoutCreateView(generics.CreateAPIView):
         "bpay_format": "crn", (optional, default='crn')
         "proxy": "true", (optional, default=False)
         "icrn_format": "ICRNAMT", (optional, default='ICRNAMT')
-        "products": [ (mandatory)
+        "products": [ (mandatory if custom_basket = False)
             {"id": 1}
         ]
+        "products": [ (mandatory if custom_basket = True)
+            {"ledger_description":"test","quantity":2,"price_excl_tax":50,"price_incl_tax":50,"oracle_code":"1236"},
+            {"ledger_description":"test123","quantity":1,"price_excl_tax":50,"price_incl_tax":50,"oracle_code":"3423"}
+        ],
         "vouchers": [ (optional)
             {"code": "<code>}
-        ]
+        ],
+        "custom_basket": "false" (optional, default=False),
+        "invoice_text" : "" (optional)
     }
     '''
     serializer_class = CheckoutSerializer
     renderer_classes = (JSONRenderer,)
-    authentication_classes = [CsrfExemptSessionAuthentication]
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get_redirect_value(self,serializer,value):
         if serializer.validated_data.get(value) is not None:
@@ -732,12 +742,26 @@ class CheckoutCreateView(generics.CreateAPIView):
             #parse and validate data
             serializer = self.serializer_class(data=request.data)
             serializer.is_valid(raise_exception=True)
+            #Check if it is a custom basket
+            custom = serializer.validated_data.get('custom_basket')
+            # Validate Products
+            if custom:
+                product_serializer = CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'),many=True) 
+            else:
+                product_serializer = CheckoutProductSerializer(data=serializer.initial_data.get('products'),many=True)
+            product_serializer.is_valid(raise_exception=True)
             #create basket
             if serializer.validated_data.get('vouchers'):
-                createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
+                if custom:
+                    createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
+                else:
+                    createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
             else:
-                createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
-            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
+                if custom:
+                    createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
+                else:
+                    createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
+            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
                                                                                                 self.get_redirect_value(serializer,'card_method'),
                                                                                                 self.get_redirect_value(serializer,'basket_owner'),
                                                                                                 self.get_redirect_value(serializer,'template'),
@@ -749,7 +773,9 @@ class CheckoutCreateView(generics.CreateAPIView):
                                                                                                 self.get_redirect_value(serializer,'proxy'),
                                                                                                 self.get_redirect_value(serializer,'checkoutWithToken'),
                                                                                                 self.get_redirect_value(serializer,'bpay_format'),
-                                                                                                self.get_redirect_value(serializer,'icrn_format')))
+                                                                                                self.get_redirect_value(serializer,'icrn_format'),
+                                                                                                self.get_redirect_value(serializer,'invoice_text')))
+            print(redirect)
 
             return redirect
         except serializers.ValidationError:
@@ -793,7 +819,6 @@ class ReportSerializer(serializers.Serializer):
         return data
 
 class ReportCreateView(views.APIView):
-    authentication_classes = [SessionAuthentication]
     renderer_classes = (JSONRenderer,)
 
     def get(self,request,format=None):

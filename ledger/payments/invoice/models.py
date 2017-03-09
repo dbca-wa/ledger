@@ -13,11 +13,13 @@ from ledger.payments.bpoint.models import BpointTransaction, TempBankCard, Bpoin
 
 class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
+    text = models.TextField(null=True,blank=True)
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     order_number = models.CharField(max_length=50,unique=True)
     reference = models.CharField(max_length=50, unique=True)
     system = models.CharField(max_length=4,blank=True,null=True)
     token = models.CharField(max_length=25,null=True,blank=True)
+    voided = models.BooleanField(default=False)
 
     def __unicode__(self):
         return 'Invoice #{0}'.format(self.reference)
@@ -57,6 +59,10 @@ class Invoice(models.Model):
         '''
         return self.order.num_items
 
+    @property
+    def shipping_required(self):
+        return self.order.basket.is_shipping_required() if self.order else False
+    
     @property
     def bpay_transactions(self):
         ''' Get this invoice's bpay transactions.

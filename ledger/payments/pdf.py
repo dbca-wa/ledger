@@ -166,8 +166,9 @@ class Remittance(Flowable):
         canvas.drawString((PAGE_WIDTH/3) * 2, current_y, '${}'.format(self.invoice.amount))
     
     def draw(self):
-        self.__logo_line()
-        self.__payment_line()
+        if settings.BPAY_ALLOWED:
+            self.__logo_line()
+            self.__payment_line()
         self.__footer_line()
 
 
@@ -234,8 +235,11 @@ def _create_invoice(invoice_buffer, invoice):
         ])
     items = invoice.order.lines.all()
     discounts = invoice.order.basket_discounts
+    if invoice.text:
+        elements.append(Paragraph(invoice.text, styles['Left']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     data = [
-        ['Item','Product', 'Quantity','Unit Price','GST', 'Amount']
+        ['Item','Product', 'Quantity','Unit Price','GST', 'Total']
     ]
     val = 1
     for item in items:
@@ -244,7 +248,7 @@ def _create_invoice(invoice_buffer, invoice):
                 val,
                 Paragraph(item.description, styles['Normal']),
                 item.quantity,
-                '${}'.format(item.line_price_before_discounts_excl_tax),
+                '${}'.format(item.unit_price_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax)
             ]
@@ -285,7 +289,8 @@ def _create_invoice(invoice_buffer, invoice):
     elements.append(t)
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     # /Products Table
-    elements.append(Paragraph('Your application cannot be processed until payment is received.', styles['Left']))
+    if invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid':
+        elements.append(Paragraph('Your application cannot be processed until payment is received.', styles['Left']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 6))
     

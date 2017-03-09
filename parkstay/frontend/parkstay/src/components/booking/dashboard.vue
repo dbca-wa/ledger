@@ -52,7 +52,7 @@
             </div>
           </div>
       </div>
-      <changebooking ref="changebooking" :booking="selected_booking" :campgrounds="campgrounds"/>
+      <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
    <confirmbox id="cancelBooking" :options="cancelBookingOptions"></confirmbox>
@@ -167,10 +167,13 @@ export default {
                         mRender: function(data, type, full) {
                             var status = (data == true) ? "Open" : "Temporarily Closed";
                             var booking = JSON.stringify(full);
+                            var invoice = "/ledger/payments/invoice/"+full.invoice_reference;
+                            var invoice_link= (full.invoice_reference)?"<a href='"+invoice+"' target='_blank' class='text-primary'>Invoice</a><br/>":"";
                             var column = "<td > \
                                             <a href='#' class='text-primary' data-rec-payment='' > Record Payment</a><br/>\
                                             <a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>\
-                                            <a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>\
+                                            <a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>"
+                                            +invoice_link+"\
                                         </td>";
                             return column.replace('__Status__', status);
                         },
@@ -190,7 +193,7 @@ export default {
             loading:[],
             regions:[],
             campgrounds:[],
-            selected_booking:{},
+            selected_booking:-1,
             filterCampground:"All",
             filterRegion:"All",
             filterDateFrom:"",
@@ -249,8 +252,9 @@ export default {
         addEventListeners:function () {
             let vm =this;
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
-                vm.selected_booking = JSON.parse($(this).attr('data-change'));
-                vm.$refs.changebooking.isModalOpen = true;
+                var selected_booking = JSON.parse($(this).attr('data-change'));
+                vm.selected_booking = selected_booking.id;
+                vm.$refs.changebooking.fetchBooking(vm.selected_booking);
             });
 
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-cancel]',function (e) {

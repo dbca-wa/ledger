@@ -10,9 +10,10 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -21,8 +22,8 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
-import parkstay.utils
-from datetime import datetime
+from parkstay import utils
+from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -45,7 +46,8 @@ from parkstay.models import (Campground,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
-                                MaximumStayReason
+                                MaximumStayReason,
+                                ParkEntryRate,
                                 )
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
@@ -54,7 +56,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
                                     CampgroundCampsiteFilterSerializer,
-                                    CampsiteClassBookingSerializer,
+                                    CampsiteBookingSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     FeatureSerializer,
@@ -79,10 +81,10 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     MaximumStayReasonSerializer,
                                     BulkPricingSerializer,
                                     UsersSerializer,
-                                    AccountsAddressSerializer
+                                    AccountsAddressSerializer,
+                                    ParkEntryRateSerializer,
                                     )
 from parkstay.helpers import is_officer, is_customer
-from parkstay.utils import create_booking_by_class, get_campsite_availability
 
 
 
@@ -230,6 +232,30 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['get'])
+    def current_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            start_date = request.GET.get('arrival',False)
+            end_date = request.GET.get('departure',False)
+            res = []
+            if start_date and end_date:
+                res = utils.get_campsite_current_rate(request,self.get_object().id,start_date,end_date)
+            else:
+                res.append({
+                    "error":"Arrival and departure dates are required",
+                    "success":False
+                })
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
+
 class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
     queryset = CampsiteStayHistory.objects.all()
     serializer_class = CampsiteStayHistorySerializer
@@ -301,22 +327,19 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
         scrubbed = serializer.validated_data
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
-            sites = Campsite.objects.exclude(
-                campsitebooking__date__range=(
-                    scrubbed['arrival'],
-                    scrubbed['departure']-timedelta(days=1)
-                )
-            ).filter(**{scrubbed['gear_type']: True})
-            ground_ids = set([s.campground.id for s in sites])
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+            sites = Campsite.objects.filter(**{scrubbed['gear_type']: True})
+            ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
+
         else:
             ground_ids = set((x[0] for x in Campsite.objects.filter(**{scrubbed['gear_type']: True}).values_list('campground')))
-            # we need to be tricky here. for the default search (tent, no timestamps),
-            # we want to include all of the "campgrounds" that don't have any campsites in the model!
-            if scrubbed['gear_type'] == 'tent':
-                ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
+        
 
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+        # we need to be tricky here. for the default search (tent, any timestamps)
+        # we want to include all of the "campgrounds" that don't have any campsites in the model! (i.e. non-P&W)
+        if scrubbed['gear_type'] == 'tent':
+            ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
+
+        queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -639,7 +662,16 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def stay_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            serializer = CampgroundStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
+            start = request.GET.get("start",False)
+            end = request.GET.get("end",False)
+            serializer = None
+            if (start) or (end):
+                start = datetime.strptime(start,"%Y-%m-%d").date()
+                end = datetime.strptime(end,"%Y-%m-%d").date()
+                queryset = CampgroundStayHistory.objects.filter(range_end__range = (start,end), range_start__range=(start,end) ).order_by("range_start")[:5]
+                serializer = CampgroundStayHistorySerializer(queryset,many=True,context={'request':request},method='get')
+            else:
+                serializer = CampgroundStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
             res = serializer.data
 
             return Response(res,status=http_status)
@@ -656,13 +688,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
             campsite_qs = Campsite.objects.all().filter(campground_id=self.get_object().id)
             http_status = status.HTTP_200_OK
-            campsites = parkstay.utils.get_campsite_availability(campsite_qs, start_date, end_date)
-            available = []
-            for camp in campsites:
-                av = [item for sublist in campsites[camp].values() for item in sublist]
-                if ('booked' not in av):
-                    if ('closed' not in av):
-                        available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
+            available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
 
             return Response(available,status=http_status)
         except Exception as e:
@@ -712,13 +738,17 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch all the campsites and applicable rates for the campground
         sites_qs = Campsite.objects.filter(campground=ground).filter(**{gear_type: True})
-        rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
+
+        # fetch rate map
+        rates = {
+            siteid: {
+                date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
+                for date, info in dates.items()
+            } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
+        }
 
         # fetch availability map
-        availability = get_campsite_availability(sites_qs, start_date, end_date)
-
-        # make a map of campsite class to cost
-        rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
 
         # create our result object, which will be returned as JSON
         result = {
@@ -740,6 +770,20 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             classes_map = {}
             bookings_map = {}
 
+            # create a rough mapping of rates to campsite classes
+            # (it doesn't matter if this isn't a perfect match, the correct
+            # pricing will show up on the booking page)
+            rates_map = {}
+
+            class_sites_map = {}
+            for s in sites_qs:
+                if s.campsite_class.pk not in class_sites_map:
+                    class_sites_map[s.campsite_class.pk] = set()
+                    rates_map[s.campsite_class.pk] = rates[s.pk]
+
+                class_sites_map[s.campsite_class.pk].add(s.pk)
+
+
             # make an entry under sites for each campsite class
             for c in classes:
                 rate = rates_map[c[1]]
@@ -747,22 +791,17 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'name': c[2],
                     'id': None,
                     'type': c[1],
-                    'price': '${}'.format(rate*length),
-                    'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
+                    'price': '${}'.format(sum(rate.values())),
+                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
                     'breakdown': OrderedDict()
                 }
                 result['sites'].append(site)
                 classes_map[c[1]] = site
 
             # make a map of class IDs to site IDs
-            class_sites_map = {}
             for s in sites_qs:
-                if s.campsite_class.pk not in class_sites_map:
-                    class_sites_map[s.campsite_class.pk] = set()
-
-                class_sites_map[s.campsite_class.pk].add(s.pk)
                 rate = rates_map[s.campsite_class.pk]
-                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate), rate] for i in range(length)]
+                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)]] for i in range(length)]
 
             # store number of campsites in each class
             class_sizes = {k: len(v) for k, v in class_sites_map.items()}
@@ -810,8 +849,8 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     rate = rates_map[k]
                     classes_map[k].update({
                         'id': v.pop(),
-                        'price': '${}'.format(rate*length),
-                        'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
+                        'price': '${}'.format(sum(rate.values())),
+                        'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
                         'breakdown': []
                     })
 
@@ -822,7 +861,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         # don't group by class, list individual sites
         else:
             # from our campsite queryset, generate a digest for each site
-            sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates_map[s.campsite_class_id])) for s in sites_qs])
+            sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk])) for s in sites_qs])
             bookings_map = {}
 
             # make an entry under sites for each site
@@ -832,8 +871,8 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'id': v[0],
                     'type': ground.campground_type,
                     'class': v[1].pk,
-                    'price': '${}'.format(v[2]*length),
-                    'availability': [[True, '${}'.format(v[2]), v[2]] for i in range(length)]
+                    'price': '${}'.format(sum(v[2].values())),
+                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)]
                 }
                 result['sites'].append(site)
                 bookings_map[k] = site
@@ -850,12 +889,13 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         bookings_map[s.name]['availability'][offset][0] = False
                         bookings_map[s.name]['availability'][offset][1] = 'Closed' if (stat == 'closed') else 'Sold'
                         bookings_map[s.name]['price'] = False
-         
+
             return Response(result)
 
 
+@csrf_exempt
 @require_http_methods(['POST'])
-def create_class_booking(request, *args, **kwargs):
+def create_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
 
     data = {
@@ -865,15 +905,17 @@ def create_class_booking(request, *args, **kwargs):
         'num_concession': request.POST.get('num_concession', 0),
         'num_child': request.POST.get('num_child', 0),
         'num_infant': request.POST.get('num_infant', 0),
-        'campground': request.POST.get('campground'),
-        'campsite_class': request.POST.get('campsite_class')
+        'campground': request.POST.get('campground', 0),
+        'campsite_class': request.POST.get('campsite_class', 0),
+        'campsite': request.POST.get('campsite', 0)
     }
 
-    serializer = CampsiteClassBookingSerializer(data=data)
+    serializer = CampsiteBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
 
     campground = serializer.validated_data['campground']
     campsite_class = serializer.validated_data['campsite_class']
+    campsite = serializer.validated_data['campsite']
     start_date = serializer.validated_data['arrival']
     end_date = serializer.validated_data['departure']
     num_adult = serializer.validated_data['num_adult']
@@ -890,14 +932,37 @@ def create_class_booking(request, *args, **kwargs):
             'pk': request.session['ps_booking']
         }), content_type='application/json')
 
+    # for a manually-specified campsite, do a sanity check 
+    # ensure that the campground supports per-site bookings and bomb out if it doesn't
+    if campsite:
+        campsite_obj = Campsite.objects.prefetch_related('campground').get(pk=campsite)
+        if campsite_obj.campground.site_type != 0:
+            return HttpResponse(geojson.dumps({
+                'status': 'error',
+                'msg': 'Campground doesn\'t support per-site bookings'
+            }), status=400, content_type='application/json')
+    # for the rest, check that both campsite_class and campground are provided
+    elif (not campsite_class) or (not campground):
+        return HttpResponse(geojson.dumps({
+            'status': 'error',
+            'msg': 'Must specify campsite_class and campground'
+        }), status=400, content_type='application/json')
+
     # try to create a temporary booking
     try:
-        booking = create_booking_by_class(
-            campground, campsite_class,
-            start_date, end_date,
-            num_adult, num_concession,
-            num_child, num_infant
-        )
+        if campsite:
+            booking = utils.create_booking_by_site(
+                campsite, start_date, end_date,
+                num_adult, num_concession,
+                num_child, num_infant
+            )
+        else:
+            booking = utils.create_booking_by_class(
+                campground, campsite_class,
+                start_date, end_date,
+                num_adult, num_concession,
+                num_child, num_infant
+            )
     except ValidationError as e:
         return HttpResponse(geojson.dumps({
             'status': 'error',
@@ -930,9 +995,61 @@ class ParkViewSet(viewsets.ModelViewSet):
             cache.set('parks',data,3600)
         return Response(data)
 
+    @list_route(methods=['get'])
+    def price_history(self, request, format='json', pk=None):
+        http_status = status.HTTP_200_OK
+        try:
+            price_history = ParkEntryRate.objects.all().order_by('-period_start')
+            serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request},method='get')
+            res = serializer.data
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+
+
+        return Response(res,status=http_status)
+
+    @detail_route(methods=['get'])
+    def current_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            start_date = request.GET.get('arrival',False)
+            res = []
+            if start_date:
+                start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+                price_history = ParkEntryRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+                if price_history:
+                    serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
+                    res = serializer.data[0]
+
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+        return Response(res,status=http_status)
+
+    @list_route(methods=['post'],)
+    def add_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer =  ParkEntryRateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save();
+            res = serializer.data
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
     serializer_class = FeatureSerializer
+
+class ParkEntryRateViewSet(viewsets.ModelViewSet):
+    queryset = ParkEntryRate.objects.all()
+    serializer_class = ParkEntryRateSerializer
 
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all()
@@ -1101,7 +1218,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         http_status = status.HTTP_200_OK
         sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
             parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,parkstay_booking.invoice_reference'
+            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
         sqlCount = 'select count(*)'
 
         sqlFrom = ' from parkstay_booking\
@@ -1155,6 +1272,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             dict(zip(columns, row))
             for row in cursor.fetchall()
         ]
+        for bk in data:
+            bk['invoices'] = [ i.invoice_reference for i in Booking.objects.get(id =bk['id']).invoices.all()]
         return Response(OrderedDict([
             ('recordsTotal', recordsTotal),
             ('recordsFiltered',recordsFiltered),
@@ -1163,11 +1282,64 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def create(self, request, format=None):
         from datetime import datetime
-        start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
-        end_date = datetime.strptime(request.data['depature'],'%Y/%m/%d').date()
-        data = parkstay.utils.create_booking_by_site(campsite_id= request.data['campsite'], start_date = start_date, end_date=end_date, num_adult=request.data.get('guests','adult'), num_concession=request.data.get('guests','adult'), num_child=request.data.get('guests','child'), num_infant=request.data.get('guests','infant'))
-        serializer = BookingSerializer(data)
-        return Response(serializer.data)
+        try:
+            start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
+            guests = request.data['guests']
+            costs = request.data['costs']
+
+            try:
+                emailUser = request.data['customer']
+                customer = EmailUser.objects.get(email = emailUser['email'])
+            except EmailUser.DoesNotExist:
+                raise
+            booking_details = {
+                'campsite_id':request.data['campsite'],
+                'start_date' : start_date,
+                'end_date' : end_date,
+                'num_adult' : guests['adult'],
+                'num_concession' : guests['concession'],
+                'num_child' : guests['child'],
+                'num_infant' : guests['infant'],
+                'cost_total' : costs['total'],
+                'customer' : customer
+            }
+
+            data = utils.internal_booking(request,booking_details)
+            serializer = BookingSerializer(data)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+
+            instance = self.get_object()
+            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
+
+            booking_details = {
+                'campsites':request.data['campsites'],
+                'start_date' : start_date,
+                'campground' : request.data['campground'],
+                'end_date' : end_date
+            }
+            data = utils.update_booking(request,instance,booking_details)
+            serializer = BookingSerializer(data)
+
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))    
 
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
@@ -1177,7 +1349,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             rate = None
-            print(request.data)
             rate_serializer = RateDetailSerializer(data=request.data)
             rate_serializer.is_valid(raise_exception=True)
             rate_id = rate_serializer.validated_data.get('rate',None)

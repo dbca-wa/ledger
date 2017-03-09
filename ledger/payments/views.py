@@ -1,6 +1,7 @@
 import json
 from datetime import date
 from django.views import generic
+from django.conf import settings
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
@@ -11,9 +12,10 @@ from ledger.payments.utils import checkURL
 from ledger.payments.cash.models import REGION_CHOICES
 #
 from ledger.payments.models import Invoice
+from ledger.payments.mixins import InvoiceOwnerMixin 
 #
 
-class InvoicePDFView(generic.View):
+class InvoicePDFView(InvoiceOwnerMixin,generic.View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         response = HttpResponse(content_type='application/pdf')
@@ -21,10 +23,19 @@ class InvoicePDFView(generic.View):
 
         return response
 
-class InvoiceDetailView(generic.DetailView):
+    def get_object(self):
+        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        return invoice
+
+class InvoiceDetailView(InvoiceOwnerMixin,generic.DetailView):
     model = Invoice
     template_name = 'dpaw_payments/invoice/invoice.html'
     context_object_name = 'invoice'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(InvoiceDetailView,self).get_context_data(**kwargs)
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
+        return ctx 
 
     def get_object(self):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
@@ -37,10 +48,13 @@ class InvoiceSearchView(generic.TemplateView):
 
     template_name = 'dpaw_payments/invoice/invoice_search.html'
 
-class InvoicePaymentView(generic.DetailView):
+class InvoicePaymentView(InvoiceOwnerMixin,generic.DetailView):
     template_name = 'dpaw_payments/invoice/payment.html'
     num_years = 10
     context_object_name = 'invoice'
+
+    def check_owner(self, user):
+        return self.is_payment_admin(user)
 
     def get_object(self):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
@@ -57,6 +71,7 @@ class InvoicePaymentView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super(InvoicePaymentView, self).get_context_data(**kwargs)
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['months'] = self.month_choices
         ctx['years'] = self.year_choices
         ctx['regions'] = list(REGION_CHOICES)
