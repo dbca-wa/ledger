@@ -93,7 +93,10 @@
                                 <div class="tab-content">
                                     <div id="campsite-booking" class="tab-pane fade in active">
                                         <div class="row">
-                                          <div class="col-md-6">
+                                            <div v-show="campsites.length < 1" class="col-lg-12 text-center">
+                                                <h2>No Campsites Available</h2>
+                                            </div>
+                                          <div v-show="campsites.length > 0" class="col-md-6">
                                               <div class="form-group">
                                                 <label for="Campsite" class="required">Campsite</label>
                                                 <select class="form-control" name="campsite" v-model="selected_campsite">
@@ -107,7 +110,7 @@
                                     <div id="campsite-class-booking" class="tab-pane fade in">
                                         <div class="row">
                                             <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
-                                                <h2>No Camsites Available</h2>
+                                                <h2>No Campsites Available</h2>
                                             </div>
                                           <div v-for="c in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
                                               <div class="radio">
