@@ -82,21 +82,41 @@
                     <div class="well">
                         <div class="row">
                             <div class="col-lg-12">
-                                <h3 class="text-primary">Camp Site</h3>
+                                <h3 class="text-primary">Campsite Booking</h3>
                                 <p>
                                     Click <a href="#">here</a> to open the map of the campground to help you select the preferred campsite
                                 </p>
-                                <div class="row">
-                                  <div class="col-md-6">
-                                      <div class="form-group">
-                                        <label for="Campsite" class="required">Campsite</label>
-                                        <select class="form-control" name="campsite" v-model="selected_campsite">
-                                            <option value=""></option>
-                                            <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}} - {{campsite.type}}</option>
-                                        </select>
-                                      </div>
-                                  </div>
+                                <ul class="nav nav-tabs">
+                                    <li class="active"><a data-toggle="tab" href="#campsite-booking">Campsite</a></li>
+                                    <li><a data-toggle="tab" href="#campsite-class-booking">Campsite Type </a></li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div id="campsite-booking" class="tab-pane fade in active">
+                                        <div class="row">
+                                          <div class="col-md-6">
+                                              <div class="form-group">
+                                                <label for="Campsite" class="required">Campsite</label>
+                                                <select class="form-control" name="campsite" v-model="selected_campsite">
+                                                    <option value=""></option>
+                                                    <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}} - {{campsite.type}}</option>
+                                                </select>
+                                              </div>
+                                          </div>
+                                        </div>
+                                    </div>
+                                    <div id="campsite-class-booking" class="tab-pane fade in">
+                                        <div class="row">
+                                          <div class="col-md-6">
+                                              <div class="radio">
+                                              <label>
+                                                <input type="radio" name="campsite-type" value="" checked>
+                                                Campsite Type 1
+                                              </label>
+                                          </div>
+                                        </div>
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -934,5 +954,11 @@ export default {
     .required::after{
         content: '*';
         color:red;
+    }
+    .tab-content{
+        padding:15px 0px;
+    }
+    .nav-tabs{
+        margin-top: 15px;
     }
 </style>

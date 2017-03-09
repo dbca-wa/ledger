@@ -1238,7 +1238,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         sql = sql + ' limit {} '.format(length)
         sql = sql + ' offset {} ;'.format(start)
-        print sql
+
         cursor = connection.cursor()
         cursor.execute("Select count(*) from parkstay_booking ");
         recordsTotal = cursor.fetchone()[0]
