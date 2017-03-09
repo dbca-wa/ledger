@@ -243,13 +243,17 @@ export default {
                 num_child: vm.numChildren,
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
-                campground: parkstayGroundId,
-                campsite_class: site.type
             };
+            if (site.type == 0) { // per site listing
+                submitData.campsite = site.id;
+            } else {
+                submitData.campground = parkstayGroundId;
+                submitData.campsite_class = site.type;
+            }
             console.log(site);
             console.log(submitData);
             $.ajax({
-                url: '/api/create_class_booking',
+                url: '/api/create_booking',
                 method: 'POST',
                 data: submitData,
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
