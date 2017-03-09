@@ -37,6 +37,9 @@ module.exports = {
     campground_stay_history_detail: function(id){
         return "/api/campground_stay_history/"+ id +".json";
     },
+    available_campsite_classes:function (id,start,end) {
+        return "/api/campgrounds/" + id + "/available_campsite_classes.json?arrival="+start+"&departure="+end;
+    },
     campground_stay_history: "/api/campground_stay_history.json",
     addPrice: function(id){
         return "/api/campgrounds/"+ id +"/addPrice.json";

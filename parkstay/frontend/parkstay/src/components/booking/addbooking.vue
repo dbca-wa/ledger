@@ -87,8 +87,8 @@
                                     Click <a href="#">here</a> to open the map of the campground to help you select the preferred campsite
                                 </p>
                                 <ul class="nav nav-tabs">
-                                    <li class="active"><a data-toggle="tab" href="#campsite-booking">Campsite</a></li>
-                                    <li><a data-toggle="tab" href="#campsite-class-booking">Campsite Type </a></li>
+                                    <li class="active"><a data-toggle="tab" href="#campsite-booking" @click.prevent="booking_type=booking_types.CAMPSITE">Campsite</a></li>
+                                    <li><a data-toggle="tab" href="#campsite-class-booking" @click.prevent="booking_type=booking_types.CLASS">Campsite Type </a></li>
                                 </ul>
                                 <div class="tab-content">
                                     <div id="campsite-booking" class="tab-pane fade in active">
@@ -106,11 +106,14 @@
                                     </div>
                                     <div id="campsite-class-booking" class="tab-pane fade in">
                                         <div class="row">
-                                          <div class="col-md-6">
+                                            <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
+                                                <h2>No Camsites Available</h2>
+                                            </div>
+                                          <div v-for="c in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
                                               <div class="radio">
                                               <label>
-                                                <input type="radio" name="campsite-type" value="" checked>
-                                                Campsite Type 1
+                                                <input type="radio" name="campsite-type" :value="c.id" v-model="selected_campsite_class">
+                                                {{c.name}}
                                               </label>
                                           </div>
                                         </div>
@@ -398,6 +401,13 @@ export default {
             stayHistory:[],
             arrivalPicker: {},
             departurePickere: {},
+            campsite_classes:[],
+            selected_campsite_class:-1,
+            booking_type:"campsite",
+            booking_types:{
+                CAMPSITE: "campsite",
+                CLASS:"class"
+            }
         };
     },
     components:{
@@ -443,16 +453,29 @@ export default {
                     }
                 });
             }
+            vm.fetchSites();
             vm.updatePrices();
-            vm.fetchCampsites();
         },
         selected_departure:function () {
             let vm = this;
+            vm.fetchSites();
             vm.updatePrices();
-            vm.fetchCampsites();
+        },
+        booking_type:function () {
+            let vm =this;
+            vm.fetchSites();
         }
     },
     methods:{
+        fetchSites:function () {
+            let vm =this;
+            if (vm.booking_type == vm.booking_types.CAMPSITE) {
+                vm.fetchCampsites();
+            }
+            if (vm.booking_type == vm.booking_types.CLASS) {
+                vm.fetchCampsiteClasses();
+            }
+        },
         validateRego:function (e) {
             formValidate.isNotEmpty(e.target);
         },
@@ -522,6 +545,23 @@ export default {
                 },(response)=>{
                     console.log(response);
                     vm.loading.splice('fetching campsites',1);
+                });
+            }
+        },
+        fetchCampsiteClasses:function () {
+            let vm = this;
+            if(vm.selected_arrival && vm.selected_departure){
+                vm.loading.push('fetching campsite classes');
+                vm.$http.get(api_endpoints. available_campsite_classes(vm.booking.campground,vm.booking.arrival,vm.booking.departure)).then((response)=>{
+                    vm.campsite_classes = response.body;
+                    if (vm.campsite_classes.length >0) {
+                        vm.selected_campsite =vm.campsite_classes[0].campsites[0];
+                        vm.selected_campsite_class = vm.campsite_classes[0].id;
+                    }
+                    vm.loading.splice('fetching campsite classes',1);
+                },(response)=>{
+                    console.log(response);
+                    vm.loading.splice('fetching campsite classes',1);
                 });
             }
         },
