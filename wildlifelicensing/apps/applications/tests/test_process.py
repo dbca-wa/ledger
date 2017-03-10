@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django_dynamic_fixture import G
 
-from wildlifelicensing.apps.applications.models import IDRequest
+from wildlifelicensing.apps.applications.models import IDRequest, ApplicationDeclinedDetails
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, is_login_page, \
     get_or_create_default_officer, get_or_create_default_assessor_group, is_email, get_email, clear_mailbox, upload_id, \
     clear_all_id_files, is_client_authenticated
@@ -76,7 +76,7 @@ class TestStatusLifeCycle(TestCase):
 
     def test_issued_status_after_entering_condition(self):
         """
-        Test that if an application has been issued, entering condition leave the status has issued
+        Test that if an application has been issued, entering condition leave the status as issued
         @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2736&project_id=24
         """
         application = create_and_lodge_application(self.user)
@@ -183,7 +183,8 @@ class TestStatusLifeCycle(TestCase):
         self.client.login(self.officer.email)
 
         # decline licence
-        resp = self.client.post(reverse('wl_applications:process', args=[application.pk]), data={'decline': True},
+        resp = self.client.post(reverse('wl_applications:process', args=[application.pk]),
+                                data={'decline': True, 'reason': 'N/A'},
                                 follow=True)
         self.assertEquals(200, resp.status_code)
 
@@ -191,6 +192,13 @@ class TestStatusLifeCycle(TestCase):
 
         self.assertEquals(application.customer_status, 'declined')
         self.assertEquals(application.processing_status, 'declined')
+
+        # Test that the reason is stored
+        details = ApplicationDeclinedDetails.objects.filter(application=application).first()
+        self.assertIsNotNone(details)
+        self.assertEqual(application, details.application)
+        self.assertEqual(self.officer, details.officer)
+        self.assertEquals('N/A', details.reason)
 
 
 class TestViewAccess(TestCase):

@@ -20,11 +20,16 @@ define([
                 });
             });
 
-            $issueButton.click(function(e) {
+            function _submitForm(e) {
                 if(!$(this).hasClass('disabled')) {
+                    $issueLicenceForm.append($('<input>').attr('type', 'hidden').attr('name', 'submissionType').val(this.id));
                     $issueLicenceForm.submit();
                 }
-            });
+            }
+
+            $('#save').click(_submitForm);
+
+            $issueButton.click(_submitForm);
 
             if($issueButton.hasClass('disabled')) {
                 $issueButton.tooltip({});
