@@ -48,17 +48,13 @@ class InvoiceSearchView(generic.TemplateView):
 
     template_name = 'dpaw_payments/invoice/invoice_search.html'
 
-class InvoicePaymentView(InvoiceOwnerMixin,generic.DetailView):
+class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
     template_name = 'dpaw_payments/invoice/payment.html'
     num_years = 10
-    context_object_name = 'invoice'
+    #context_object_name = 'invoice'
 
     def check_owner(self, user):
         return self.is_payment_admin(user)
-
-    def get_object(self):
-        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        return invoice
 
     def month_choices(self):
         return ["%.2d" %x for x in range(1,13)]
@@ -71,10 +67,13 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super(InvoicePaymentView, self).get_context_data(**kwargs)
+        invoices = []
         ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['months'] = self.month_choices
         ctx['years'] = self.year_choices
         ctx['regions'] = list(REGION_CHOICES)
+        invoices = Invoice.objects.filter(reference__in=self.request.GET.getlist('invoice'))
+        ctx['invoices'] = invoices
         if self.request.GET.get('amountProvided') == 'true':
             ctx['amountProvided'] = True
         if self.request.GET.get('redirect_url'):

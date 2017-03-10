@@ -1,3 +1,4 @@
+import json
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
@@ -514,6 +515,8 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
             'amount',
             'reference',
             'created',
+            'balance',
+            'refundable',
             'payment_amount',
             'payment_status',
             'cash_transactions',
@@ -557,6 +560,55 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             raise
         except Exception as e:
+            raise serializers.ValidationError(e)
+
+    @detail_route(methods=['get'])
+    def payments(self, request, *args, **kwargs):
+        try:
+            invoice = self.get_object()
+            
+            # Get all linked bpay transactions
+            payments = []
+            #cash
+            cash = invoice.cash_transactions.all()
+            for c in cash:
+                payments.append(
+                    {
+                        'date':c.created.strftime('%d/%m/%Y'),
+                        'type':c.get_source_display().lower().title(),
+                        'details':c.get_type_display().lower().title(),
+                        'amount':str(c.amount)
+                    })
+            #bpay
+            bpay = invoice.bpay_transactions
+            for b in bpay:
+                payments.append(
+                    {
+                        'date':b.p_date.strftime('%d/%m/%Y'),
+                        'type': 'Bpay',
+                        'details':b.get_p_instruction_code_display().lower().title(),
+                        'amount':str(b.amount)
+                    }
+                )
+            #bpoint
+            bpoint = invoice.bpoint_transactions
+            for b in bpoint:
+                payments.append(
+                    {
+                        'date':b.processed.strftime('%d/%m/%Y'),
+                        'type': 'Credit Card',
+                        'details':b.get_action_display().lower().title(),
+                        'amount':str(b.amount)
+                    }
+                )
+
+            
+            return Response(payments)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except Exception as e:
+            traceback.print_exc()
             raise serializers.ValidationError(e)
         
     @detail_route(methods=['post'])

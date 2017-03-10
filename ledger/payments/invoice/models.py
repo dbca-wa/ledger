@@ -54,6 +54,12 @@ class Invoice(models.Model):
         return None
 
     @property
+    def refundable(self):
+        if self.payment_status == 'paid' or self.payment_status == 'over_paid':
+            return True
+        return False
+
+    @property
     def num_items(self):
         ''' Get the number of items in this invoice.
         '''
@@ -63,6 +69,12 @@ class Invoice(models.Model):
     def shipping_required(self):
         return self.order.basket.is_shipping_required() if self.order else False
     
+    @property
+    def linked_bpay_transactions(self):
+        linked = InvoiceBPAY.objects.filter(invoice=self).values('bpay')
+        txns = BpayTransaction.objects.filter(id__in=linked)
+        return txns
+
     @property
     def bpay_transactions(self):
         ''' Get this invoice's bpay transactions.
@@ -86,7 +98,10 @@ class Invoice(models.Model):
 
     @property
     def balance(self):
-        return self.amount - self.payment_amount
+        amount = decimal.Decimal(self.amount - self.payment_amount)
+        if amount < 0:
+            amount =  decimal.Decimal(0)
+        return amount
 
     @property
     def payment_status(self):
@@ -137,6 +152,15 @@ class Invoice(models.Model):
 
         return payments - reversals    
 
+    def __calculate_refundable_amount(self):
+        ''' Calcluate the amount of bpay payments made
+            less the reversals for this invoice.
+        '''
+        payments = 0
+        if self.bpay_transactions:
+            payments = payments + dict(self.bpay_transactions.filter(p_instruction_code='05', type=399).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+
+        return payments - reversals    
     # Functions
     # =============================================
     def save(self,*args,**kwargs):
@@ -181,7 +205,6 @@ class Invoice(models.Model):
             else:
                 raise ValidationError('This invoice doesn\'t have any tokens attached to it.')
         except Exception as e:
-            print(str(e))
             raise
 
 class InvoiceBPAY(models.Model):

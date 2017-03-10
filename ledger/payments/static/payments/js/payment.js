@@ -1,3 +1,9 @@
+function hideBanner(){
+    $('#paymentBanner').addClass('hide');  
+}
+function showBanner(){
+    $('#paymentBanner').removeClass('hide');  
+}
 $(function(){
     $(document).foundation();
     var $other_form = $('#other_form');
@@ -9,7 +15,8 @@ $(function(){
     var $location_fieldset = $('#location_fieldset');
     var $card_fieldset = $('#card_fieldset');
     var $storedcard_fieldset = $('#storedcard_fieldset');
-    var invoice = $('#payment_div').data('reference');
+    var invoice = $('#invoice_selector').val(); 
+    var invoice_obj = null;
     var $regions = $('#regions');
     
     
@@ -61,6 +68,28 @@ $(function(){
             }
         ]
     });
+    
+    var receivedPaymentsTable = $('#received_payments_table').DataTable({
+        "ajax":{
+            "url":'/ledger/payments/api/invoices/'+invoice+'/payments.json',
+            "dataSrc":""
+        },
+        "processing":true,
+        "columns":[
+            {
+                data: "date"
+            },
+            {
+                data: "type"
+            },
+            {
+                data: "details"
+            },
+            {
+                data: "amount"
+            },
+        ]
+    });
     // BPAY Buttons
     unlinkedBPAYTable.on('click','.bpay_link_btn',function(e){
         e.preventDefault();
@@ -78,6 +107,22 @@ $(function(){
             linkedBPAYTable.ajax.reload();
             unlinkedBPAYTable.ajax.reload();
         });
+    });
+
+    $('#invoice_selector').on('change',function(){
+        var reference = $(this).val();
+        if (reference){
+            $.get('/ledger/payments/api/invoices/'+reference+'.json',function(resp){
+                set_invoice(resp);
+                // Received Payments
+                receivedPaymentsTable.ajax.url('/ledger/payments/api/invoices/'+reference+'/payments.json');
+                // Linked BPAY Payments
+                linkedBPAYTable.ajax.url('/ledger/payments/api/invoices/'+reference+'/linked_bpay.json');
+                linkedBPAYTable.ajax.reload();
+                invoice = resp.reference;
+                updateBanner();
+            });
+        }
     });
     // Display for the external cash payment feature
     $('#other_external').click('on',function(){
@@ -113,6 +158,9 @@ $(function(){
         }
         return value;
     }
+    function set_invoice(invoice){
+        invoice_obj = invoice; 
+    }
     // Reset Forms
     function reset_forms() {
         $other_form[0].reset();
@@ -128,12 +176,11 @@ $(function(){
         var amount_paid = '';
         var redirect_url = $('#payment_div').data('redirect');
         $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
-            status = resp.payment_status;
-            amount_paid = '$'+resp.payment_amount;
+            invoice_obj = resp;
             if (status === 'paid' && redirect_url) {
                 window.location.replace(redirect_url);
             }
-            updateBanner(status,amount_paid);
+            updateBanner();
         });
     }
     function checkInvoiceStatusNoRedirect(){
@@ -141,10 +188,8 @@ $(function(){
         var amount_paid = '';
         var redirect_url = $('#payment_div').data('redirect');
         $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
-            status = resp.payment_status;
-            amount_paid = '$'+resp.payment_amount;
-            
-            updateBanner(status,amount_paid);
+            invoice_obj = resp;
+            updateBanner();
         });
     }
     function redirectPage(){
@@ -155,11 +200,41 @@ $(function(){
         e.preventDefault();
         redirectPage();
     });
-    function updateBanner(value,amount_paid) {
-        $('#invoice_status').html(value);
+    function formatMoney(n,c, d, t){
+        c = isNaN(c = Math.abs(c)) ? 2 : c;
+        d = d == undefined ? "." : d;
+        t = t == undefined ? "," : t;
+        var s = n < 0 ? "-" : "";
+        var i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c)));
+        var j = (j = i.length) > 3 ? j % 3 : 0;
+        return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+    }
+    function updateBanner() {
+        var status = invoice_obj.payment_status;
+        var balance = '$'+formatMoney(invoice_obj.balance);
+        var amount_paid = '$'+formatMoney(invoice_obj.payment_amount);
+        // Top banner
+        $('#invoice_status').html(status);
+        $('#invoice_balance').html(balance);
         $('#invoice_paid').html(amount_paid);
+        // Individual Invoice
+        $("strong.invoice_status[data-reference='"+invoice+"']").html(status);
+        $("strong.invoice_balance[data-reference='"+invoice+"']").html(balance);
+        $("strong.invoice_paid[data-reference='"+invoice+"']").html(amount_paid);
         if (!$success_div.hasClass('hide')) {
             setTimeout(function(){$success_div.addClass('hide');},3000);
+        }
+        showRecordPayment();
+        receivedPaymentsTable.ajax.reload();
+    }
+    function showRecordPayment(){
+        if (invoice_obj.payment_status != 'paid' && invoice_obj.payment_status != 'over_paid'){
+            if ($other_form.hasClass('hide')){
+                $other_form.removeClass('hide');
+            }
+        }
+        else{
+            $other_form.addClass('hide');
         }
     }
     /*
