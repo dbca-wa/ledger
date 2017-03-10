@@ -56,22 +56,25 @@
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
    <confirmbox id="cancelBooking" :options="cancelBookingOptions"></confirmbox>
+   <confirmbox id="printBooking" :options="printBookingOptions"></confirmbox>
 </div>
 </template>
 
 <script>
-import {$,bus,datetimepicker,api_endpoints,helpers} from "../../hooks.js"
+import {$,bus,datetimepicker,api_endpoints,helpers,Moment} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import changebooking from "./changebooking.vue"
+import modal from '../utils/bootstrap-modal.vue'
 export default {
     name:'booking-dashboard',
     components:{
         datatable,
         loader,
         changebooking,
-        confirmbox
+        confirmbox,
+        modal
     },
     data:function () {
         let vm =this;
@@ -85,11 +88,36 @@ export default {
                     bsColor: "btn-warning",
                     handler: function() {
                         vm.cancelBooking(vm.selected_booking);
-                        vm.selected_booking = {};
+                        vm.selected_booking = -1;
                     },
                     autoclose: true
                 }],
                 id: 'cancelBooking'
+            },
+            printBookingOptions: {
+                icon: "<i class='fa fa-exclamation-circle fa-2x text-primary' aria-hidden='true'></i>",
+                message: "Please use the CSV button below for a better formarted document.",
+                buttons: [
+                    {
+                    text: "<i class=\"fa fa-file-excel-o\" aria-hidden=\"true\"></i> CSV",
+                    event: "dcsvevent",
+                    bsColor: "btn-default",
+                    handler: function() {
+                        vm.printCsv();
+                    },
+                    autoclose: true
+                    },
+                    {
+                        text: "<i class=\"fa fa-print\" aria-hidden=\"true\"></i> Print",
+                        event: "printevent",
+                        bsColor: "btn-default",
+                        handler: function() {
+                            window.print();
+                        },
+                        autoclose: true
+                    }
+                ],
+                id: 'printBooking'
             },
             dtOptions:{
                 language: {
@@ -303,6 +331,72 @@ export default {
 
             });
             helpers.namePopover($,vm.$refs.bookings_table.vmDataTable);
+            $(document).on('keydown', function(e) {
+                if(e.ctrlKey && (e.key == "p" || e.charCode == 16 || e.charCode == 112 || e.keyCode == 80) ){
+                    e.preventDefault();
+                    bus.$emit('showAlert', 'printBooking');
+                    e.stopImmediatePropagation();
+                }
+            });
+        },
+        printCsv:function () {
+            let vm =this;
+            var json2csv = require('json2csv');
+            var fields = JSON.parse(JSON.stringify(vm.dtHeaders));
+            fields.splice(fields.length-1,1);
+            var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
+            var bookings = [];
+            $.each(data,function (i,booking) {
+                var bk = {};
+                $.each(fields,function (j,field) {
+                    switch (j) {
+                        case 0:
+                        bk[field] = booking.campground_name;
+                        break;
+                        case 1:
+                            bk[field] = booking.campground_region;
+                        break;
+                        case 2:
+                            bk[field] = booking.firstname + booking.lastname;
+                        break;
+                        case 3:
+                            bk[field] = booking.id;
+                        break;
+                        case 4:
+                            bk[field] = booking.campground_site_type;
+                        break;
+                        case 5:
+                            bk[field] = (booking.editable)? "Paid":"Unpaid";
+                        break;
+                        case 6:
+                            bk[field] = Moment(booking.arrival).format("dddd, MMMM Do YYYY");
+                        break;
+                        case 7:
+                            bk[field] = Moment(booking.departure).format("dddd, MMMM Do YYYY");
+                        break;
+
+                    }
+                });
+                bookings.push(bk);
+            });
+            var csv = json2csv({ data:bookings, fields: fields });
+            var a = document.createElement("a"),
+            file = new Blob([csv], {type: 'text/csv'});
+
+            var filename = vm.filterCampground +  " Campground " + vm.filterRegion + " Region From " + vm.filterDateFrom+" To "+vm.filterDateTo+ "_print.csv";
+            if (window.navigator.msSaveOrOpenBlob) // IE10+
+                window.navigator.msSaveOrOpenBlob(file, filename);
+            else { // Others
+                var url = URL.createObjectURL(file);
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+            }
         }
     },
     mounted:function () {
