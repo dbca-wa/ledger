@@ -119,6 +119,7 @@
     "exorcist": "^0.4.0",
     "http-server": "^0.9.0",
     "jasmine-core": "^2.4.1",
+    "json2csv": "^3.7.3",
     "karma": "^1.2.0",
     "karma-browserify": "^5.1.0",
     "karma-jasmine": "^1.0.2",
