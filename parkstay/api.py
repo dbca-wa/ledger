@@ -1357,6 +1357,20 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    def destroy(self, request, *args, **kwargs):
+
+        http_status = status.HTTP_200_OK
+        try:
+            booking  = self.get_object()
+            booking.is_canceled = True
+            booking.campsites.all().delete()
+            booking.save()
+            serializer = self.get_serializer(booking)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
