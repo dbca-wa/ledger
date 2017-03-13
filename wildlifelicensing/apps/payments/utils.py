@@ -124,7 +124,7 @@ def invoke_credit_card_payment(application):
     txn = invoice.make_payment()
 
     if get_application_payment_status(application) != PAYMENT_STATUS_PAID:
-        PaymentException('Payment was unsuccessful. Reason({})'.format(txn.response_txt))
+        raise PaymentException('Payment was unsuccessful. Reason({})'.format(txn.response_txt))
 
 
 def get_voucher(voucher_code):
