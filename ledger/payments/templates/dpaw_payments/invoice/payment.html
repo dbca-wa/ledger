@@ -219,7 +219,7 @@
                             <div class="tabs-panel" id="other">
                                 <div class="row">
                                     <div class="columns large-12">
-                                        <form id="other_form" class="hide">
+                                        <form id="other_form" class="{% if invoices.0.payment_status == 'paid' or invoices.0.payment_status == 'over_paid' %}hide{% endif %}">
                                             <h3> Record Payment</h3>
                                             <label>
                                                 Amount
@@ -285,6 +285,7 @@
                                         <h3>Received Payments</h3>
                                         <div class="card">
                                             <div class="card-divider">
+                                                    <p class="text-center">Refundable Amount: <strong id="refundable_amount">${{invoices.0.refundable_amount}}</strong></p>
                                             </div>
                                             <div class="card-section">
                                                 <table class="table table-striped table-bordered" id="received_payments_table" width="100%">
@@ -300,6 +301,11 @@
                                                         
                                                     </tbody>
                                                 </table>
+                                                <div class="row align-right">
+                                                    <div class="large-4 columns">
+                                                        <button id="refund_btn" class="{% if not invoices.0.refundable%}hide{% endif %} button float-right">Refund</button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

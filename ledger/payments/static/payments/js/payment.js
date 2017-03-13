@@ -19,6 +19,11 @@ $(function(){
     var invoice_obj = null;
     var $regions = $('#regions');
     
+    // Update Status format
+    $('#invoice_status').html(formatStatus($('#invoice_status').html()));
+    $('.invoice_status').each(function(){
+        $(this).html(formatStatus($(this).html()));
+    });
     
     //Datatables
     var unlinkedBPAYTable = $('#unlinkedBpayTable').DataTable({
@@ -209,16 +214,33 @@ $(function(){
         var j = (j = i.length) > 3 ? j % 3 : 0;
         return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
     }
+    function formatStatus(status){
+        var parts = [];
+        var res = '';
+        parts = status.split('_');
+        if (parts.length > 1){
+            for(i=0;i < parts.length; i++){
+                res += capitalizeFirstLetter(parts[i]) + ' ';
+            } 
+        }
+        else{ res = capitalizeFirstLetter(status);}
+        return res
+    }
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
     function updateBanner() {
         var status = invoice_obj.payment_status;
         var balance = '$'+formatMoney(invoice_obj.balance);
         var amount_paid = '$'+formatMoney(invoice_obj.payment_amount);
+        var refundable_amount = '$'+formatMoney(invoice_obj.refundable_amount);
         // Top banner
-        $('#invoice_status').html(status);
+        $('#invoice_status').html(formatStatus(status));
         $('#invoice_balance').html(balance);
         $('#invoice_paid').html(amount_paid);
+        $('#refundable_amount').html(refundable_amount);
         // Individual Invoice
-        $("strong.invoice_status[data-reference='"+invoice+"']").html(status);
+        $("strong.invoice_status[data-reference='"+invoice+"']").html(formatStatus(status));
         $("strong.invoice_balance[data-reference='"+invoice+"']").html(balance);
         $("strong.invoice_paid[data-reference='"+invoice+"']").html(amount_paid);
         if (!$success_div.hasClass('hide')) {

@@ -517,6 +517,8 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
             'created',
             'balance',
             'refundable',
+            'refundable_amount',
+            'single_card_payment',
             'payment_amount',
             'payment_status',
             'cash_transactions',

@@ -54,8 +54,12 @@ class Invoice(models.Model):
         return None
 
     @property
+    def refundable_amount(self):
+        return self.__calculate_refundable_amount()
+
+    @property
     def refundable(self):
-        if self.payment_status == 'paid' or self.payment_status == 'over_paid':
+        if self.refundable_amount > 0:
             return True
         return False
 
@@ -118,6 +122,19 @@ class Invoice(models.Model):
         else:
             return 'over_paid'
 
+    @property
+    def single_card_payment(self):
+        card = self.bpoint_transactions.count()
+        bpay = self.bpay_transactions
+        cash = self.cash_transactions
+    
+        if bpay or cash:
+            return False
+        
+        if card > 1:
+            return False
+        return True
+
     # Helper Functions
     # =============================================
     def __calculate_cash_payments(self):
@@ -156,11 +173,13 @@ class Invoice(models.Model):
         ''' Calcluate the amount of bpay payments made
             less the reversals for this invoice.
         '''
-        payments = 0
-        if self.bpay_transactions:
-            payments = payments + dict(self.bpay_transactions.filter(p_instruction_code='05', type=399).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        refunds = 0
+        cash_refunds = dict(self.cash_transactions.filter(type='refund').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        card_refunds = dict(self.bpoint_transactions.filter(action='refund', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
 
-        return payments - reversals    
+        refunds = cash_refunds + card_refunds
+        return self.payment_amount - refunds
+
     # Functions
     # =============================================
     def save(self,*args,**kwargs):
