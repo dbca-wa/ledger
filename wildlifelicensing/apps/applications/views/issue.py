@@ -38,7 +38,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         if payment_status == payment_utils.PAYMENT_STATUS_AWAITING:
             raise PaymentException('Payment is required before licence can be issued')
-        elif payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+        elif payment_status == payment_utils.PAYMENT_STATUSES.get(payment_utils.PAYMENT_STATUS_CC_READY):
             payment_utils.invoke_credit_card_payment(application)
 
         licence = application.licence
