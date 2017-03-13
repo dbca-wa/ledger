@@ -345,22 +345,6 @@ export default {
                     e.stopImmediatePropagation();
                 }
             });
-            if ("onbeforeprint" in window) {
-                window.addEventListener('beforeprint',function () {
-                     bus.$emit('showAlert', 'printBooking')
-                     event.stopImmediatePropagation();
-                });
-            }
-            // Chrome 9+, Firefox 6+, IE 10+, Opera 12.1+, Safari 5.1+
-            else if (window.matchMedia) {
-                var mqList = window.matchMedia("print");
-
-                mqList.addListener(function (mql) {
-                    if (mql.matches){
-                         bus.$emit('showAlert', 'printBooking');
-                    };
-                });
-            }
         },
         print:function () {
             bus.$emit('showAlert', 'printBooking')
