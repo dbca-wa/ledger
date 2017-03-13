@@ -304,8 +304,15 @@ export default {
             });
         },
         cancelBooking:function (booking) {
-            //TODO cancelbooking logic
-            console.log('cancelling booking');
+            let vm =this;
+            vm.$http.delete(api_endpoints.booking(booking.id),{
+                emulateJSON:true,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
+            }).then((response)=>{
+                vm.$refs.bookings_table.vmDataTable.ajax.reload();
+            },(error) =>{
+                console.log(error);
+            });
         },
         addEventListeners:function () {
             let vm =this;
