@@ -9,7 +9,7 @@
                   <select v-show="isLoading" class="form-control" >
                       <option value="">Loading...</option>
                   </select>
-                  <select v-if="!isLoading" class="form-control" v-model="filterCampground">
+                  <select v-if="!isLoading" class="form-control" v-model="filterCampground" id="filterCampground">
                       <option value="All">All</option>
                       <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
                   </select>
@@ -21,7 +21,7 @@
                   <select v-show="isLoading" class="form-control" name="">
                         <option value="">Loading...</option>
                   </select>
-                  <select v-if="!isLoading" class="form-control" v-model="filterRegion">
+                  <select v-if="!isLoading" class="form-control" v-model="filterRegion" id="filterRegion">
                         <option value="All">All</option>
                         <option v-for="region in regions" :value="region.id">{{region.name}}</option>
                   </select>
@@ -382,8 +382,10 @@ export default {
             var csv = json2csv({ data:bookings, fields: fields });
             var a = document.createElement("a"),
             file = new Blob([csv], {type: 'text/csv'});
-
-            var filename = vm.filterCampground +  " Campground " + vm.filterRegion + " Region From " + vm.filterDateFrom+" To "+vm.filterDateTo+ "_print.csv";
+            var filterCampground = (vm.filterCampground == 'All') ? "All Campgrounds " : $('#filterCampground')[0].selectedOptions[0].text;
+            var filterRegion = (vm.filterCampground == 'All') ? (vm.filterRegion == 'All')? "All Regions" : $('#filterRegion')[0].selectedOptions[0].text : "";
+            var filterDates = (vm.filterDateFrom) ? (vm.filterDateTo) ? "From "+vm.filterDateFrom + " To "+vm.filterDateTo: "From "+vm.filterDateFrom : (vm.filterDateTo) ? " To "+vm.filterDateTo : "" ;
+            var filename =  filterCampground +  "_" + filterRegion + "_" +filterDates+ ".csv";
             if (window.navigator.msSaveOrOpenBlob) // IE10+
                 window.navigator.msSaveOrOpenBlob(file, filename);
             else { // Others
