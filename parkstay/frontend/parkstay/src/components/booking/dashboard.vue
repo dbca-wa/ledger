@@ -3,6 +3,13 @@
   <div class="col-lg-12" v-show="!isLoading">
       <div class="well">
           <div class="row">
+              <div class="col-lg-12">
+                  <button type="button" class="btn btn-default pull-right" @click="print()">
+                      <i class="fa fa-print" aria-hidden="true"></i> Print
+                  </button>
+              </div>
+          </div>
+          <div class="row">
             <div class="col-md-3">
                 <div class="form-group">
                   <label for="">Campground</label>
@@ -96,7 +103,7 @@ export default {
             },
             printBookingOptions: {
                 icon: "<i class='fa fa-exclamation-circle fa-2x text-primary' aria-hidden='true'></i>",
-                message: "Please use the CSV button below for a better formarted document.",
+                message: "Please use the CSV button below for a better formarted document, otherwise use the print button to print the current page.",
                 buttons: [
                     {
                     text: "<i class=\"fa fa-file-excel-o\" aria-hidden=\"true\"></i> CSV",
@@ -338,6 +345,25 @@ export default {
                     e.stopImmediatePropagation();
                 }
             });
+            if ("onbeforeprint" in window) {
+                window.addEventListener('beforeprint',function () {
+                     bus.$emit('showAlert', 'printBooking')
+                     event.stopImmediatePropagation();
+                });
+            }
+            // Chrome 9+, Firefox 6+, IE 10+, Opera 12.1+, Safari 5.1+
+            else if (window.matchMedia) {
+                var mqList = window.matchMedia("print");
+
+                mqList.addListener(function (mql) {
+                    if (mql.matches){
+                         bus.$emit('showAlert', 'printBooking');
+                    };
+                });
+            }
+        },
+        print:function () {
+            bus.$emit('showAlert', 'printBooking')
         },
         printCsv:function () {
             let vm =this;
