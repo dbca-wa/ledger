@@ -120,8 +120,11 @@ def invoke_credit_card_payment(application):
 
     if not invoice.token:
         raise PaymentException('Application invoice does have a credit payment token')
-
-    txn = invoice.make_payment()
+    
+    try:
+        txn = invoice.make_payment()
+    except Exception as e:
+        raise PaymentException('Payment was unsuccessful. Reason({})'.format(e.message))
 
     if get_application_payment_status(application) != PAYMENT_STATUS_PAID:
         raise PaymentException('Payment was unsuccessful. Reason({})'.format(txn.response_txt))
