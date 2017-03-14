@@ -1,3 +1,9 @@
+function hideBanner(){
+    $('#paymentBanner').addClass('hide');  
+}
+function showBanner(){
+    $('#paymentBanner').removeClass('hide');  
+}
 $(function(){
     $(document).foundation();
     var $other_form = $('#other_form');
@@ -9,9 +15,15 @@ $(function(){
     var $location_fieldset = $('#location_fieldset');
     var $card_fieldset = $('#card_fieldset');
     var $storedcard_fieldset = $('#storedcard_fieldset');
-    var invoice = $('#payment_div').data('reference');
+    var invoice = $('#invoice_selector').val(); 
+    var invoice_obj = null;
     var $regions = $('#regions');
     
+    // Update Status format
+    $('#invoice_status').html(formatStatus($('#invoice_status').html()));
+    $('.invoice_status').each(function(){
+        $(this).html(formatStatus($(this).html()));
+    });
     
     //Datatables
     var unlinkedBPAYTable = $('#unlinkedBpayTable').DataTable({
@@ -61,6 +73,28 @@ $(function(){
             }
         ]
     });
+    
+    var receivedPaymentsTable = $('#received_payments_table').DataTable({
+        "ajax":{
+            "url":'/ledger/payments/api/invoices/'+invoice+'/payments.json',
+            "dataSrc":""
+        },
+        "processing":true,
+        "columns":[
+            {
+                data: "date"
+            },
+            {
+                data: "type"
+            },
+            {
+                data: "details"
+            },
+            {
+                data: "amount"
+            },
+        ]
+    });
     // BPAY Buttons
     unlinkedBPAYTable.on('click','.bpay_link_btn',function(e){
         e.preventDefault();
@@ -78,6 +112,29 @@ $(function(){
             linkedBPAYTable.ajax.reload();
             unlinkedBPAYTable.ajax.reload();
         });
+    });
+
+    $('#invoice_selector').on('change',function(){
+        var reference = $(this).val();
+        if (reference){
+            $.get('/ledger/payments/api/invoices/'+reference+'.json',function(resp){
+                set_invoice(resp);
+                // Received Payments
+                receivedPaymentsTable.ajax.url('/ledger/payments/api/invoices/'+reference+'/payments.json');
+                // Linked BPAY Payments
+                linkedBPAYTable.ajax.url('/ledger/payments/api/invoices/'+reference+'/linked_bpay.json');
+                linkedBPAYTable.ajax.reload();
+                invoice = resp.reference;
+                updateBanner();
+            });
+        }
+    });
+    // Refund Button
+    $("#refund_btn").click(function(e){
+        e.preventDefault();
+        var modal = $('#refundModal');
+        console.log('here');
+        modal.foundation('open');
     });
     // Display for the external cash payment feature
     $('#other_external').click('on',function(){
@@ -113,6 +170,9 @@ $(function(){
         }
         return value;
     }
+    function set_invoice(invoice){
+        invoice_obj = invoice; 
+    }
     // Reset Forms
     function reset_forms() {
         $other_form[0].reset();
@@ -128,12 +188,11 @@ $(function(){
         var amount_paid = '';
         var redirect_url = $('#payment_div').data('redirect');
         $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
-            status = resp.payment_status;
-            amount_paid = '$'+resp.payment_amount;
+            invoice_obj = resp;
             if (status === 'paid' && redirect_url) {
                 window.location.replace(redirect_url);
             }
-            updateBanner(status,amount_paid);
+            updateBanner();
         });
     }
     function checkInvoiceStatusNoRedirect(){
@@ -141,10 +200,8 @@ $(function(){
         var amount_paid = '';
         var redirect_url = $('#payment_div').data('redirect');
         $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
-            status = resp.payment_status;
-            amount_paid = '$'+resp.payment_amount;
-            
-            updateBanner(status,amount_paid);
+            invoice_obj = resp;
+            updateBanner();
         });
     }
     function redirectPage(){
@@ -155,11 +212,58 @@ $(function(){
         e.preventDefault();
         redirectPage();
     });
-    function updateBanner(value,amount_paid) {
-        $('#invoice_status').html(value);
+    function formatMoney(n,c, d, t){
+        c = isNaN(c = Math.abs(c)) ? 2 : c;
+        d = d == undefined ? "." : d;
+        t = t == undefined ? "," : t;
+        var s = n < 0 ? "-" : "";
+        var i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c)));
+        var j = (j = i.length) > 3 ? j % 3 : 0;
+        return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+    }
+    function formatStatus(status){
+        var parts = [];
+        var res = '';
+        parts = status.split('_');
+        if (parts.length > 1){
+            for(i=0;i < parts.length; i++){
+                res += capitalizeFirstLetter(parts[i]) + ' ';
+            } 
+        }
+        else{ res = capitalizeFirstLetter(status);}
+        return res
+    }
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+    function updateBanner() {
+        var status = invoice_obj.payment_status;
+        var balance = '$'+formatMoney(invoice_obj.balance);
+        var amount_paid = '$'+formatMoney(invoice_obj.payment_amount);
+        var refundable_amount = '$'+formatMoney(invoice_obj.refundable_amount);
+        // Top banner
+        $('#invoice_status').html(formatStatus(status));
+        $('#invoice_balance').html(balance);
         $('#invoice_paid').html(amount_paid);
+        $('.refundable_amount').html(refundable_amount);
+        // Individual Invoice
+        $("strong.invoice_status[data-reference='"+invoice+"']").html(formatStatus(status));
+        $("strong.invoice_balance[data-reference='"+invoice+"']").html(balance);
+        $("strong.invoice_paid[data-reference='"+invoice+"']").html(amount_paid);
         if (!$success_div.hasClass('hide')) {
             setTimeout(function(){$success_div.addClass('hide');},3000);
+        }
+        showRecordPayment();
+        receivedPaymentsTable.ajax.reload();
+    }
+    function showRecordPayment(){
+        if (invoice_obj.payment_status != 'paid' && invoice_obj.payment_status != 'over_paid'){
+            if ($other_form.hasClass('hide')){
+                $other_form.removeClass('hide');
+            }
+        }
+        else{
+            $other_form.addClass('hide');
         }
     }
     /*
@@ -196,20 +300,22 @@ $(function(){
         var type,source,payload,ref;
         var amount, orig_txn = null;
         var external = false;
-        
+        var amount = $('#other_amount').val();
+
         // Hide div if not hidden
         if (!$errors_div.hasClass('hide')) {
             $errors_div.addClass('hide');
         }
+        if(!amount){
+            formError('An amount has not been specified for the payment'); 
+            return
+        }        
         // Get payload
         payload = {
             "invoice": invoice,
-            "type": $('#other_type').val(),
+            "amount": $('#other_amount').val(),
+            "type": 'payment',
             "source": $('#other_source').val()
-        }
-        // Check if the amount field is there and has a value
-        if ($('#other_amount').val()) {
-            payload["amount"] = $('#other_amount').val();
         }
         // Check if the original transaction field is there and has a value
         if ($('#other_orig_txn').val()) {
@@ -245,15 +351,6 @@ $(function(){
                 checkInvoiceStatus();
             }
         });
-        /*$.post("/ledger/payments/api/cash.json",payload, function(resp){
-            success(resp,invoice,$('#other_source').val());
-        })
-        .fail(function(resp){
-            error(resp);
-        })
-        .always(function(){
-            checkInvoiceStatus()
-        });*/
     }
     /*
     *  Make card payments with either stored cards or new cards
@@ -407,6 +504,14 @@ $(function(){
         }
         error_html = '<div class="columns small-12"><div class="alert callout" data-closable="slide-out-right"> \
             <p class="text-center">'+error_str+'</p> \
+        </div></div>';
+        $errors_row.html(error_html);
+        $errors_div.removeClass('hide');
+    }
+    function formError(error){
+        // Show Errors
+        error_html = '<div class="columns small-12"><div class="alert callout" data-closable="slide-out-right"> \
+            <p class="text-center">'+error+'</p> \
         </div></div>';
         $errors_row.html(error_html);
         $errors_div.removeClass('hide');

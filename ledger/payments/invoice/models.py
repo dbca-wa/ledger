@@ -54,6 +54,16 @@ class Invoice(models.Model):
         return None
 
     @property
+    def refundable_amount(self):
+        return self.payment_amount - self.__calculate_total_refunds()
+
+    @property
+    def refundable(self):
+        if self.refundable_amount > 0:
+            return True
+        return False
+
+    @property
     def num_items(self):
         ''' Get the number of items in this invoice.
         '''
@@ -63,6 +73,12 @@ class Invoice(models.Model):
     def shipping_required(self):
         return self.order.basket.is_shipping_required() if self.order else False
     
+    @property
+    def linked_bpay_transactions(self):
+        linked = InvoiceBPAY.objects.filter(invoice=self).values('bpay')
+        txns = BpayTransaction.objects.filter(id__in=linked)
+        return txns
+
     @property
     def bpay_transactions(self):
         ''' Get this invoice's bpay transactions.
@@ -86,7 +102,10 @@ class Invoice(models.Model):
 
     @property
     def balance(self):
-        return self.amount - self.payment_amount
+        amount = decimal.Decimal(self.amount - self.payment_amount)
+        if amount < 0:
+            amount =  decimal.Decimal(0)
+        return amount
 
     @property
     def payment_status(self):
@@ -102,6 +121,19 @@ class Invoice(models.Model):
             return 'paid'
         else:
             return 'over_paid'
+
+    @property
+    def single_card_payment(self):
+        card = self.bpoint_transactions.count()
+        bpay = self.bpay_transactions
+        cash = self.cash_transactions
+    
+        if bpay or cash:
+            return False
+        
+        if card > 1:
+            return False
+        return True
 
     # Helper Functions
     # =============================================
@@ -136,6 +168,18 @@ class Invoice(models.Model):
             reversals = dict(self.bpay_transactions.filter(p_instruction_code='25', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
 
         return payments - reversals    
+
+    def __calculate_total_refunds(self):
+        ''' Calcluate the total amount of refunds
+            for this invoice.
+        '''
+        refunds = 0
+        cash_refunds = dict(self.cash_transactions.filter(type='refund').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        card_refunds = dict(self.bpoint_transactions.filter(action='refund', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        bpay_refunds = dict(self.bpay_transactions.filter(p_instruction_code='15', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+
+        refunds = cash_refunds + card_refunds + bpay_refunds
+        return refunds
 
     # Functions
     # =============================================
@@ -181,7 +225,6 @@ class Invoice(models.Model):
             else:
                 raise ValidationError('This invoice doesn\'t have any tokens attached to it.')
         except Exception as e:
-            print(str(e))
             raise
 
 class InvoiceBPAY(models.Model):
