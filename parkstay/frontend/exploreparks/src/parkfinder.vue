@@ -78,12 +78,6 @@
                             <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
                         </div>
                     </template>
-                </div><div class="row">
-                    <hr/>
-                </div><div class="row">
-                    <div class="small-12 medium-12 large-12 columns">
-                        <label>Booking Type</label>
-                    </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online</label>
                     </div>
@@ -736,9 +730,9 @@ export default {
         this.projectionExtent = this.projection.getExtent();
         var size = ol.extent.getWidth(this.projectionExtent) / 256;
         this.matrixSet = 'mercator';
-        this.resolutions = new Array(14);
-        this.matrixIds = new Array(14);
-        for (var z = 0; z < 14; ++z) {
+        this.resolutions = new Array(21);
+        this.matrixIds = new Array(21);
+        for (var z = 0; z < 21; ++z) {
             // generate resolutions and matrixIds arrays for this WMTS
             this.resolutions[z] = size / Math.pow(2, z);
             this.matrixIds[z] = this.matrixSet + ':' + z;
@@ -966,6 +960,10 @@ export default {
                     return layer === vm.grounds;
                 }
             });
+            // if just single-clicking the map, hide the popup
+            if (!result) {
+                vm.popup.setPosition(undefined);
+            }
         });
 
         // hook to update the visible feature list on viewport change
