@@ -420,7 +420,7 @@ export default {
             ],
             suggestions: {},
             extentFeatures: [],
-            numAdults: 1,
+            numAdults: 2,
             numConcessions: 0,
             numChildren: 0,
             numInfants: 0,

@@ -14,27 +14,32 @@ exports.cssLoaders = function (options) {
   // generate loader string to be used with extract text plugin
   function generateLoaders (loaders) {
     var sourceLoader = loaders.map(function (loader) {
-      var extraParamChar
-      if (/\?/.test(loader)) {
-        loader = loader.replace(/\?/, '-loader?')
-        extraParamChar = '&'
+      if (typeof loader === 'string') {
+        var extraParamChar
+        if (/\?/.test(loader)) {
+          loader = loader.replace(/\?/, '-loader?')
+          extraParamChar = '&'
+        } else {
+          loader = loader + '-loader'
+          extraParamChar = '?'
+        }
+        return loader + (options.sourceMap ? extraParamChar + 'sourceMap' : '')
       } else {
-        loader = loader + '-loader'
-        extraParamChar = '?'
+        return loader
       }
-      return loader + (options.sourceMap ? extraParamChar + 'sourceMap' : '')
-    }).join('!')
-
-    // Extract CSS when that option is specified
-    // (which is the case during production build)
-    if (options.extract) {
-      return ExtractTextPlugin.extract({
-        use: sourceLoader,
-        fallback: 'vue-style-loader'
-      })
-    } else {
-      return ['vue-style-loader', sourceLoader].join('!')
+    })
+    
+    if (typeof loader === 'string') {
+      // Extract CSS when that option is specified
+      // (which is the case during production build)
+      if (options.extract) {
+        return ExtractTextPlugin.extract({
+          use: sourceLoader,
+          fallback: 'vue-style-loader'
+        })
+      }
     }
+    return ['vue-style-loader'].concat(sourceLoader)
   }
 
   // http://vuejs.github.io/vue-loader/en/configurations/extract-css.html
@@ -43,7 +48,12 @@ exports.cssLoaders = function (options) {
     postcss: generateLoaders(['css']),
     less: generateLoaders(['css', 'less']),
     sass: generateLoaders(['css', 'sass?indentedSyntax']),
-    scss: generateLoaders(['css', 'sass']),
+    scss: generateLoaders(['css', {
+        loader: 'sass-loader',
+        options: {
+            includePaths: [path.resolve('node_modules/foundation-sites/scss')]
+        }
+    }]),
     stylus: generateLoaders(['css', 'stylus']),
     styl: generateLoaders(['css', 'stylus'])
   }
@@ -57,7 +67,7 @@ exports.styleLoaders = function (options) {
     var loader = loaders[extension]
     output.push({
       test: new RegExp('\\.' + extension + '$'),
-      loader: loader
+      use: loader
     })
   }
   return output
