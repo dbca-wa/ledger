@@ -221,6 +221,10 @@
     content: "q";
 }
 
+.symb.LOC:before {
+    content: "r";
+}
+
 .fa-chevron-left:before {
     font-style: normal;
     content: "«";
@@ -381,6 +385,12 @@ div.awesomplete {
 div.awesomplete > input {
     display: table-cell;
 }
+
+/* hacks to make openlayers widgets more accessible */
+.ol-control button {
+    height: 2em;
+    width: 2em;
+}
 </style>
 
 <script>
@@ -433,6 +443,7 @@ export default {
             sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAlt: 1,
             sitesAltIcon: require('./assets/pin_alt.svg'),
+            locationIcon: require('./assets/location.svg'),
             paginate: ['filterResults']
         }
     },
@@ -865,7 +876,24 @@ export default {
         });
 
 
+        this.posFeature = new ol.Feature();
+        this.posFeature.setStyle(new ol.style.Style({
+            image: new ol.style.Icon({
+                src: vm.locationIcon,
+                snapToPixel: true,
+                anchor: [0.5, 0.5],
+                anchorXUnits: 'fraction',
+                anchorYUnits: 'fraction'
+            })
+        }));
 
+        this.posLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [this.posFeature]
+            })
+        });
+
+        // create OpenLayers map object, prefill with all the stuff we made
         this.olmap = new ol.Map({
             logo: false,
             renderer: 'canvas',
@@ -888,11 +916,21 @@ export default {
             layers: [
                 this.streets,
                 this.tenure,
-                this.grounds
+                this.grounds,
+                this.posLayer
             ],
             overlays: [this.popup]
         });
 
+        // spawn geolocation tracker
+        this.geolocation = new ol.Geolocation({
+            tracking: true,
+            projection: this.olmap.getView().getProjection()
+        });
+        this.geolocation.on('change:position', function() {
+            var coords = vm.geolocation.getPosition();
+            vm.posFeature.setGeometry(coords ? new ol.geom.Point(coords) : null);
+        });
     
         // sad loop to change the pointer when mousing over a vector layer
         this.olmap.on('pointermove', function(ev) {
