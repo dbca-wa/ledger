@@ -4,7 +4,7 @@
       <div class="well">
           <div class="row">
               <div class="col-lg-12">
-                  <button type="button" class="btn btn-default pull-right" @click="print()">
+                  <button type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
                       <i class="fa fa-print" aria-hidden="true"></i> Print
                   </button>
               </div>
@@ -433,5 +433,19 @@ export default {
 <style lang="css">
     .text-warning{
         color:#f0ad4e;
+    }
+    @media print {
+        .col-md-3 {
+            width: 25%;
+            float:left;
+        }
+
+        a[href]:after {
+           content: none !important;
+        }
+
+        #print-btn {
+            display: none !important;
+        }
     }
 </style>
