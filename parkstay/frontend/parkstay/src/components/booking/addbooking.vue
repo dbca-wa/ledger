@@ -82,21 +82,47 @@
                     <div class="well">
                         <div class="row">
                             <div class="col-lg-12">
-                                <h3 class="text-primary">Camp Site</h3>
+                                <h3 class="text-primary">Campsite Booking</h3>
                                 <p>
                                     Click <a href="#">here</a> to open the map of the campground to help you select the preferred campsite
                                 </p>
-                                <div class="row">
-                                  <div class="col-md-6">
-                                      <div class="form-group">
-                                        <label for="Campsite" class="required">Campsite</label>
-                                        <select class="form-control" name="campsite" v-model="selected_campsite">
-                                            <option value=""></option>
-                                            <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}} - {{campsite.type}}</option>
-                                        </select>
-                                      </div>
-                                  </div>
+                                <ul class="nav nav-tabs">
+                                    <li class="active"><a data-toggle="tab" href="#campsite-booking" @click.prevent="booking_type=booking_types.CAMPSITE">Campsite</a></li>
+                                    <li><a data-toggle="tab" href="#campsite-class-booking" @click.prevent="booking_type=booking_types.CLASS">Campsite Type </a></li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div id="campsite-booking" class="tab-pane fade in active">
+                                        <div class="row">
+                                            <div v-show="campsites.length < 1" class="col-lg-12 text-center">
+                                                <h2>No Campsites Available</h2>
+                                            </div>
+                                          <div v-show="campsites.length > 0" class="col-md-6">
+                                              <div class="form-group">
+                                                <label for="Campsite" class="required">Campsite</label>
+                                                <select class="form-control" name="campsite" v-model="selected_campsite">
+                                                    <option value=""></option>
+                                                    <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}} - {{campsite.type}}</option>
+                                                </select>
+                                              </div>
+                                          </div>
+                                        </div>
+                                    </div>
+                                    <div id="campsite-class-booking" class="tab-pane fade in">
+                                        <div class="row">
+                                            <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
+                                                <h2>No Campsites Available</h2>
+                                            </div>
+                                          <div v-for="c in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
+                                              <div class="radio">
+                                              <label>
+                                                <input type="radio" name="campsite-type" :value="c.id" v-model="selected_campsite_class">
+                                                {{c.name}}
+                                              </label>
+                                          </div>
+                                        </div>
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -374,7 +400,17 @@ export default {
                 entry_fee:0
             },
             parkEntryVehicles:[],
-            parkPrices: {}
+            parkPrices: {},
+            stayHistory:[],
+            arrivalPicker: {},
+            departurePickere: {},
+            campsite_classes:[],
+            selected_campsite_class:-1,
+            booking_type:"campsite",
+            booking_types:{
+                CAMPSITE: "campsite",
+                CLASS:"class"
+            }
         };
     },
     components:{
@@ -410,16 +446,39 @@ export default {
         },
         selected_arrival:function () {
             let vm = this;
+            if (vm.booking.arrival) {
+                $.each(vm.stayHistory,function (i,his) {
+                    var range = Moment.range(Moment(his.range_start,"DD/MM/YYYY"),Moment(his.range_end,"DD/MM/YYYY"));
+                    var arrival = Moment(vm.booking.arrival,"YYYY/MM/DD");
+                    if (range.contains(arrival)) {
+                        vm.departurePicker.data("DateTimePicker").maxDate(arrival.clone().add(his.max_days,'days'));
+                        vm.departurePicker.data("DateTimePicker").date(null);
+                    }
+                });
+            }
+            vm.fetchSites();
             vm.updatePrices();
-            vm.fetchCampsites();
         },
         selected_departure:function () {
             let vm = this;
+            vm.fetchSites();
             vm.updatePrices();
-            vm.fetchCampsites();
+        },
+        booking_type:function () {
+            let vm =this;
+            vm.fetchSites();
         }
     },
     methods:{
+        fetchSites:function () {
+            let vm =this;
+            if (vm.booking_type == vm.booking_types.CAMPSITE) {
+                vm.fetchCampsites();
+            }
+            if (vm.booking_type == vm.booking_types.CLASS) {
+                vm.fetchCampsiteClasses();
+            }
+        },
         validateRego:function (e) {
             formValidate.isNotEmpty(e.target);
         },
@@ -452,7 +511,7 @@ export default {
                 vm.countries = response.body;
                 var list = [];
                 $.each(vm.countries,function (i,c) {
-                    list.push(c.name);
+                    list.push(c.alpha2Code);
                 });
                 vm.$nextTick(function () {
                     var input = vm.bookingForm.country;
@@ -492,6 +551,23 @@ export default {
                 });
             }
         },
+        fetchCampsiteClasses:function () {
+            let vm = this;
+            if(vm.selected_arrival && vm.selected_departure){
+                vm.loading.push('fetching campsite classes');
+                vm.$http.get(api_endpoints. available_campsite_classes(vm.booking.campground,vm.booking.arrival,vm.booking.departure)).then((response)=>{
+                    vm.campsite_classes = response.body;
+                    if (vm.campsite_classes.length >0) {
+                        vm.selected_campsite =vm.campsite_classes[0].campsites[0];
+                        vm.selected_campsite_class = vm.campsite_classes[0].id;
+                    }
+                    vm.loading.splice('fetching campsite classes',1);
+                },(response)=>{
+                    console.log(response);
+                    vm.loading.splice('fetching campsite classes',1);
+                });
+            }
+        },
         fetchCampground:function () {
             let vm =this;
             vm.loading.push('fetching campground');
@@ -499,6 +575,7 @@ export default {
             vm.$http.get(api_endpoints.campground(cgId)).then((response)=>{
                 vm.campground = response.body;
                 vm.booking.campground = vm.campground.id;
+                vm.fetchStayHistory();
                 vm.fetchCampsites();
                 vm.fetchPark();
                 vm.addEventListeners();
@@ -507,6 +584,20 @@ export default {
                 console.log(error);
                 vm.loading.splice('fetching campground',1);
             });
+        },
+        fetchStayHistory:function () {
+            let vm =this;
+            vm.loading.push('fetching stay history');
+            vm.$http.get(api_endpoints.campgroundStayHistory(vm.campground.id)).then((response)=>{
+                if(response.body.length > 0){
+                    vm.stayHistory = response.body;
+                }
+                vm.loading.splice('fetching stay history',1);
+            },(error)=>{
+                console.log(error);
+                vm.loading.splice('fetching stay history',1);
+            });
+
         },
         fetchPark:function () {
             let vm =this;
@@ -521,28 +612,30 @@ export default {
         },
         addEventListeners:function(){
             let vm = this;
-            var arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
-            var departurePicker = $(vm.bookingForm.departure).closest('.date');
-            arrivalPicker.datetimepicker({
+            vm.arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
+            vm.departurePicker = $(vm.bookingForm.departure).closest('.date');
+            vm.arrivalPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
                 minDate: new Date(),
                 maxDate: Moment().add(parseInt(vm.campground.max_advance_booking),'days')
             });
-            departurePicker.datetimepicker({
+            vm.departurePicker.datetimepicker({
                 format: 'DD/MM/YYYY',
                 useCurrent: false,
             });
-            arrivalPicker.on('dp.change', function(e){
-                vm.booking.arrival = arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+            vm.arrivalPicker.on('dp.change', function(e){
+                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
-                departurePicker.data("DateTimePicker").minDate(e.date);
-                departurePicker.data("DateTimePicker").date(null);
+                var selected_date = e.date
+                vm.departurePicker.data("DateTimePicker").minDate(selected_date.clone().add(1,'days'));
+                vm.departurePicker.data("DateTimePicker").maxDate(selected_date.clone().add(28,'days'));
+                vm.departurePicker.data("DateTimePicker").date(null);
             });
-            departurePicker.on('dp.change', function(e){
-                if (departurePicker.data('DateTimePicker').date()) {
-                    vm.booking.departure = departurePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+            vm.departurePicker.on('dp.change', function(e){
+                if (vm.departurePicker.data('DateTimePicker').date()) {
+                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
                     vm.selected_departure= vm.booking.departure;
                 }else{
                     vm.booking.departure = null;
@@ -904,5 +997,11 @@ export default {
     .required::after{
         content: '*';
         color:red;
+    }
+    .tab-content{
+        padding:15px 0px;
+    }
+    .nav-tabs{
+        margin-top: 15px;
     }
 </style>

@@ -10,7 +10,7 @@
                         <label>Vehicle : </label>
                     </div>
                     <div class="col-md-4">
-                        <input name="vehicle"  v-model="priceHistory.vehicle" type='text' class="form-control" />
+                        <input name="vehicle"  v-model="priceHistory.vehicle" type='number' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -20,7 +20,7 @@
                         <label>Concession : </label>
                     </div>
                     <div class="col-md-4">
-                        <input name="concession"  v-model="priceHistory.concession" type='text' class="form-control" />
+                        <input name="concession"  v-model="priceHistory.concession" type='number' class="form-control" />
                     </div>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                         <label>Motorbike : </label>
                     </div>
                     <div class="col-md-4">
-                        <input name="motorbike"  v-model="priceHistory.motorbike" type='text' class="form-control" />
+                        <input name="motorbike"  v-model="priceHistory.motorbike" type='number' class="form-control" />
                     </div>
                 </div>
             </div>
