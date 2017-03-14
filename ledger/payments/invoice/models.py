@@ -55,7 +55,7 @@ class Invoice(models.Model):
 
     @property
     def refundable_amount(self):
-        return self.__calculate_refundable_amount()
+        return self.payment_amount - self.__calculate_total_refunds()
 
     @property
     def refundable(self):
@@ -169,16 +169,17 @@ class Invoice(models.Model):
 
         return payments - reversals    
 
-    def __calculate_refundable_amount(self):
-        ''' Calcluate the amount of bpay payments made
-            less the reversals for this invoice.
+    def __calculate_total_refunds(self):
+        ''' Calcluate the total amount of refunds
+            for this invoice.
         '''
         refunds = 0
         cash_refunds = dict(self.cash_transactions.filter(type='refund').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
         card_refunds = dict(self.bpoint_transactions.filter(action='refund', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        bpay_refunds = dict(self.bpay_transactions.filter(p_instruction_code='15', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
 
-        refunds = cash_refunds + card_refunds
-        return self.payment_amount - refunds
+        refunds = cash_refunds + card_refunds + bpay_refunds
+        return refunds
 
     # Functions
     # =============================================

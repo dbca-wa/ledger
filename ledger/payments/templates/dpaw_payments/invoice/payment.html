@@ -225,13 +225,6 @@
                                                 Amount
                                                 <input id="other_amount" name="other_amount" type="number" value=""/>
                                             </label>
-                                            <label>Action
-                                                <select id="other_type" name="other_type">
-                                                    <option value="payment">Record Payment</option>
-                                                    <option value="refund">Refund</option>
-                                                    <option value="reversal">Reverse Payment</option>
-                                                </select>
-                                            </label>
                                             <label>Payment Type
                                                 <select id="other_source" name="other_source">
                                                     <option value="cash">Cash</option>
@@ -280,12 +273,53 @@
                                         </form>
                                     </div>
                                 </div>
+                                <div class="large reveal" id="refundModal" data-reveal>
+                                    <div class="row">
+                                        <div class="medium-12 columns">
+                                            <h3 class="text-center">Refund</h3>
+                                            <p> Refundable Amount: <strong class="refundable_amount">${{invoices.0.refundable_amount}}</strong></p>
+                                        </div>
+                                        <div class="medium-12 columns">
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Amount: </label> 
+                                                </div>
+                                                <div class="medium-6 columns">
+                                                    <input name="refundAmount" id="refundAmount" type="number" value=""/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="medium-12 columns">
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Refund Option: </label>
+                                                </div>
+                                                <div class="medium-6 columns">
+                                                    <select id="other_source" name="other_source">
+                                                        <option value="cash">Cash</option>
+                                                        <option value="eftpos">EFTPOS</option>
+                                                        <option value="cheque">Cheque</option>
+                                                        <option value="money_order">Money Order</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row align-right">
+                                            <div class="columns medium-3">
+                                                <input id="" type="submit" class="pay_btn float-right button" value="Make Refund"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="close-button" data-close aria-label="Close modal" type="button">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
                                 <div class="row">
                                     <div class="large-12 columns">
                                         <h3>Received Payments</h3>
                                         <div class="card">
                                             <div class="card-divider">
-                                                    <p class="text-center">Refundable Amount: <strong id="refundable_amount">${{invoices.0.refundable_amount}}</strong></p>
+                                                    <p class="text-center">Refundable Amount: <strong class="refundable_amount">${{invoices.0.refundable_amount}}</strong></p>
                                             </div>
                                             <div class="card-section">
                                                 <table class="table table-striped table-bordered" id="received_payments_table" width="100%">

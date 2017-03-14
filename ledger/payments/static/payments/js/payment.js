@@ -129,6 +129,13 @@ $(function(){
             });
         }
     });
+    // Refund Button
+    $("#refund_btn").click(function(e){
+        e.preventDefault();
+        var modal = $('#refundModal');
+        console.log('here');
+        modal.foundation('open');
+    });
     // Display for the external cash payment feature
     $('#other_external').click('on',function(){
         if (this.checked) {
@@ -238,7 +245,7 @@ $(function(){
         $('#invoice_status').html(formatStatus(status));
         $('#invoice_balance').html(balance);
         $('#invoice_paid').html(amount_paid);
-        $('#refundable_amount').html(refundable_amount);
+        $('.refundable_amount').html(refundable_amount);
         // Individual Invoice
         $("strong.invoice_status[data-reference='"+invoice+"']").html(formatStatus(status));
         $("strong.invoice_balance[data-reference='"+invoice+"']").html(balance);
@@ -293,20 +300,22 @@ $(function(){
         var type,source,payload,ref;
         var amount, orig_txn = null;
         var external = false;
-        
+        var amount = $('#other_amount').val();
+
         // Hide div if not hidden
         if (!$errors_div.hasClass('hide')) {
             $errors_div.addClass('hide');
         }
+        if(!amount){
+            formError('An amount has not been specified for the payment'); 
+            return
+        }        
         // Get payload
         payload = {
             "invoice": invoice,
-            "type": $('#other_type').val(),
+            "amount": $('#other_amount').val(),
+            "type": 'payment',
             "source": $('#other_source').val()
-        }
-        // Check if the amount field is there and has a value
-        if ($('#other_amount').val()) {
-            payload["amount"] = $('#other_amount').val();
         }
         // Check if the original transaction field is there and has a value
         if ($('#other_orig_txn').val()) {
@@ -342,15 +351,6 @@ $(function(){
                 checkInvoiceStatus();
             }
         });
-        /*$.post("/ledger/payments/api/cash.json",payload, function(resp){
-            success(resp,invoice,$('#other_source').val());
-        })
-        .fail(function(resp){
-            error(resp);
-        })
-        .always(function(){
-            checkInvoiceStatus()
-        });*/
     }
     /*
     *  Make card payments with either stored cards or new cards
@@ -504,6 +504,14 @@ $(function(){
         }
         error_html = '<div class="columns small-12"><div class="alert callout" data-closable="slide-out-right"> \
             <p class="text-center">'+error_str+'</p> \
+        </div></div>';
+        $errors_row.html(error_html);
+        $errors_div.removeClass('hide');
+    }
+    function formError(error){
+        // Show Errors
+        error_html = '<div class="columns small-12"><div class="alert callout" data-closable="slide-out-right"> \
+            <p class="text-center">'+error+'</p> \
         </div></div>';
         $errors_row.html(error_html);
         $errors_div.removeClass('hide');
