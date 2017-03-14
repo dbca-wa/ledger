@@ -79,13 +79,13 @@
                         </div>
                     </template>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online</label>
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Book online</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> In-person</label>
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> Book in-person</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Non-P&amp;W site</label>
+                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Third-party site</label>
                     </div>
                 </div>
             </div>
@@ -410,10 +410,10 @@ export default {
             ],
             filterList: [
                 {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
-                {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
                 {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
-                {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
                 {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']},
+                {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
+                {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
                 {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
                 {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
                 {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
