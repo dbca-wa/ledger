@@ -366,7 +366,7 @@ class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
             campsite_ids = kwargs.pop('campsite_ids')
         except:
             campsite_ids = False
-    
+
         super(CampsiteClassSerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
@@ -402,7 +402,7 @@ class BookingSerializer(serializers.ModelSerializer):
     invoices = serializers.SerializerMethodField()
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled')
 
 
     def get_invoices(self,obj):

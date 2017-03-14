@@ -853,6 +853,7 @@ class Booking(models.Model):
     expiry_time = models.DateTimeField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
+    is_canceled = models.BooleanField(default=False)
 
     # Properties
     # =================================
