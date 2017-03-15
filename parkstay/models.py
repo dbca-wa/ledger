@@ -895,7 +895,7 @@ class Booking(models.Model):
             status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
-                    return 'Canceled - Payment ({}0'.format(status)
+                    return 'Canceled - Payment ({})'.format(status)
                 else:
                     return 'Canceled'
             else:
@@ -926,6 +926,19 @@ class Booking(models.Model):
         elif self.cost_total > amount:
             return 'partially_paid'
         else:return "paid"
+
+    def cancelBooking(self):
+
+        self.is_canceled = True
+        self.campsites.all().delete()
+        self.save()
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                i = Invoice.objects.get(reference=r.get("invoice_reference"))
+                i.voided = True
+            except Invoice.DoesNotExist:
+                pass
 
 
 

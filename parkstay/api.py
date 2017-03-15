@@ -1251,21 +1251,21 @@ class BookingViewSet(viewsets.ModelViewSet):
                 full outer join accounts_emailuser on parkstay_booking.customer_id = accounts_emailuser.id\
                 join parkstay_region on parkstay_district.region_id = parkstay_region.id'
 
-            sql = sqlSelect + sqlFrom + " where parkstay_booking.is_canceled =False "
-            sqlCount = sqlCount + sqlFrom + " where parkstay_booking.is_canceled = False "
+            sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
+            sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
 
             if campground :
-                sqlCampground = ' and parkstay_campground.id = {}'.format(campground)
+                sqlCampground = ' parkstay_campground.id = {}'.format(campground)
                 sql += sqlCampground
                 sqlCount += sqlCampground
             if region:
-                sqlRegion = " and parkstay_region.id = {}".format(region)
-                sql = sql+" "+ sqlRegion if campground else sql + sqlRegion
-                sqlCount = sqlCount +" "+ sqlRegion if campground else sqlCount + sqlRegion
+                sqlRegion = " parkstay_region.id = {}".format(region)
+                sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
+                sqlCount = sqlCount +" and "+ sqlRegion if campground else sqlCount + sqlRegion
             if arrival:
-                sqlArrival= ' and parkstay_booking.arrival >= \'{}\''.format(arrival)
-                sqlCount = sqlCount + " "+ sqlArrival if campground or region else sqlCount + sqlArrival
-                sql = sql + " "+ sqlArrival if campground or region else sql + sqlArrival
+                sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
+                sqlCount = sqlCount + " and "+ sqlArrival if campground or region else sqlCount + sqlArrival
+                sql = sql + " and "+ sqlArrival if campground or region else sql + sqlArrival
                 if departure:
                     sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
                     sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
@@ -1279,15 +1279,15 @@ class BookingViewSet(viewsets.ModelViewSet):
                     sql += " and ( "+ sqlsearch +" )"
                     sqlCount +=  " and  ( "+ sqlsearch +" )"
                 else:
-                    sql += ' and ' + sqlsearch
-                    sqlCount += ' and ' + sqlsearch
+                    sql += ' where' + sqlsearch
+                    sqlCount += ' where ' + sqlsearch
 
 
             sql = sql + ' limit {} '.format(length)
             sql = sql + ' offset {} ;'.format(start)
 
             cursor = connection.cursor()
-            cursor.execute("Select count(*) from parkstay_booking where parkstay_booking.is_canceled = False");
+            cursor.execute("Select count(*) from parkstay_booking ");
             recordsTotal = cursor.fetchone()[0]
             cursor.execute(sqlCount);
             recordsFiltered = cursor.fetchone()[0]
@@ -1371,9 +1371,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         http_status = status.HTTP_200_OK
         try:
             booking  = self.get_object()
-            booking.is_canceled = True
-            booking.campsites.all().delete()
-            booking.save()
+            booking.cancelBooking()
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
         except Exception as e:
