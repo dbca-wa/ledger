@@ -4,7 +4,7 @@
       <div class="well">
           <div class="row">
               <div class="col-lg-12">
-                  <button type="button" class="btn btn-default pull-right" @click="print()">
+                  <button type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
                       <i class="fa fa-print" aria-hidden="true"></i> Print
                   </button>
               </div>
@@ -218,13 +218,14 @@ export default {
                             var invoice = "/ledger/payments/invoice/"+full.invoice_reference;
                             var invoice_link= (full.invoice_reference)?"<a href='"+invoice+"' target='_blank' class='text-primary'>Invoice</a><br/>":"";
                             var column = "<td >";
-                            var invoice_string = '/ledger/payments/invoice/payment?';
-                            $.each(full.invoices,function(i,n){
-                                invoice_string += 'invoice='+n+'&';
-                            });
-                            invoice_string.trim('&');
-                            if (!full.paid){
-                                var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > Record Payment</a><br/>";
+                            if (full.invoices.length > 0) {
+                                var invoice_string = '/ledger/payments/invoice/payment?';
+                                $.each(full.invoices,function(i,n){
+                                    invoice_string += 'invoice='+n+'&';
+                                });
+                                invoice_string = invoice_string.slice(0,-1);
+                                var payment = (full.paid) ? "View" : "Record"
+                                var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
                                 column += record_payment;
                             }
                             if (full.editable){
@@ -434,5 +435,19 @@ export default {
 <style lang="css">
     .text-warning{
         color:#f0ad4e;
+    }
+    @media print {
+        .col-md-3 {
+            width: 25%;
+            float:left;
+        }
+
+        a[href]:after {
+           content: none !important;
+        }
+
+        #print-btn {
+            display: none !important;
+        }
     }
 </style>
