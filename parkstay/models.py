@@ -867,7 +867,9 @@ class Booking(models.Model):
     def editable(self):
         today = datetime.now().date()
         if self.arrival > today <= self.departure:
-            return True
+            if not self.is_canceled:
+                if self.status != "Paid":
+                    return True
         return False
 
     @property

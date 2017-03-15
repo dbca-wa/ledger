@@ -224,11 +224,11 @@ export default {
                                     invoice_string += 'invoice='+n+'&';
                                 });
                                 invoice_string = invoice_string.slice(0,-1);
-                                var payment = (full.paid) ? "View" : "Record"
+                                var payment = (full.paid) ? "View" :  (full.editable) ?"Record":"View";
                                 var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
                                 column += record_payment;
                             }
-                            if (full.editable){
+                            if (full.editable && !full.paid){
                                 var change_booking = "<a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>";
                                 var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>";
                                 column += cancel_booking;
