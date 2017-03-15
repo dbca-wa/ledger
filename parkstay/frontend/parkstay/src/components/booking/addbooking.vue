@@ -343,7 +343,7 @@ export default {
                 {
                     id:"adult",
                     name:"Adults (no concession)",
-                    amount:0,
+                    amount:2,
                     description: ""
                 },
                 {
@@ -950,6 +950,7 @@ export default {
         vm.fetchCampground();
         vm.fetchCountries();
         vm.addFormValidations();
+        vm.generateGuestCountText();
     }
 }
 
