@@ -897,7 +897,7 @@ class Booking(models.Model):
                 if payment_status == 'over_paid' or payment_status == 'paid':
                     return 'Canceled - Payment ({}0'.format(status)
                 else:
-                    return 'Canceled' 
+                    return 'Canceled'
             else:
                 return status
         return 'Paid'
@@ -909,11 +909,11 @@ class Booking(models.Model):
 
     def __check_payment_status(self):
         invoices = []
-        amount = D('0.0') 
+        amount = D('0.0')
         references = self.invoices.all().values('invoice_reference')
         for r in references:
             try:
-                invoices.append(Invoice.objects.get(reference=r))
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
             except Invoice.DoesNotExist:
                 pass
         for i in invoices:
@@ -925,7 +925,9 @@ class Booking(models.Model):
             return 'over_paid'
         elif self.cost_total > amount:
             return 'partially_paid'
-        
+        else:return "paid"
+
+
 
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
