@@ -714,7 +714,18 @@ export default {
                         }
 
                     });
-                    vm.booking.entryFees.entry_fee = 0;
+
+                    vm.updateParkEntryPrices()
+                    vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+
+                });
+            }
+        },
+        updateParkEntryPrices:function () {
+            let vm =this;
+            vm.booking.entryFees.entry_fee = 0;
+            if (vm.selected_campsite) {
+                if (vm.booking.arrival && vm.booking.departure) {
                     $.each(vm.parkEntryVehicles,function (i,entry) {
                         entry = JSON.parse(JSON.stringify(entry));
                         if (vm.parkPrices) {
@@ -731,14 +742,10 @@ export default {
                                     vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.concession);
                                     vm.booking.entryFees.concession++;
                                     break;
-
                             }
                         }
                     });
-
-                    vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
-
-                });
+                }
             }
         },
         fetchUsers:function (event) {
@@ -923,7 +930,10 @@ export default {
                 vm.booking.parkEntry.vehicles++;
                 vm.parkEntryVehicles.push(JSON.parse(JSON.stringify(park_entry)));
             }
-            vm.updatePrices();
+            vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
+            vm.updateParkEntryPrices();
+            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+
         },
         removeVehicleCount:function (park_entry) {
             let vm = this;
@@ -947,7 +957,9 @@ export default {
                 }
 
             }
-            vm.updatePrices();
+            vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
+            vm.updateParkEntryPrices();
+            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
         },
     },
     mounted:function () {
