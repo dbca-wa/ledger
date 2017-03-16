@@ -202,6 +202,8 @@ class Invoice(models.Model):
                     card_details[0],
                     card_details[1]
                 )
+                if len(card_details) == 3:
+                    card.last_digits = card_details[2]
                 txn = bpoint_facade.pay_with_temptoken(
                         'payment',
                         'telephoneorder',
