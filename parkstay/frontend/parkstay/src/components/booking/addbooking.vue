@@ -309,7 +309,7 @@ export default {
                 arrival:"",
                 departure:"",
                 guests:{
-                    adult:0,
+                    adult:2,
                     concession:0,
                     child:0,
                     infant:0
