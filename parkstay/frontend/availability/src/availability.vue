@@ -1,5 +1,10 @@
 <template>
     <div id="sites-cal">
+        <div class="row" v-if="name">
+            <div class="columns small-12">
+                <h1>Book a campsite at {{ name }}</h1>
+            </div>
+        </div>
         <div class="row">
             <div class="columns small-6 medium-6 large-3">
                 <label>Arrival
@@ -25,7 +30,14 @@
                         </div>
                     </div><div class="row">
                         <div class="small-6 columns">
-                            <label for="num_concessions" class="text-right">Concessions</label>
+                            <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
+- Seniors Card
+- Age Pension
+- Disability Support
+- Carer Payment
+- Carer Allowance
+- Companion Card
+- Department of Veterans' Affairs">Concessions</span></label>
                         </div><div class="small-6 columns">
                             <input type="number" id="numConcessions" name="num_concessions" @change="update()" v-model="numConcessions" min="0" max="16"/>
                         </div>
@@ -87,6 +99,22 @@
 </template>
 
 <style>
+
+.fa-chevron-left:before {
+    font-style: normal;
+    content: "«";
+}
+
+.fa-chevron-right:before {
+    font-style: normal;    
+    content: "»";
+}
+
+.fa-remove:before {
+    font-style: normal;    
+    content: "×";
+}
+
 th.site {
     width: 30%;
     min-width: 200px;
@@ -161,8 +189,7 @@ import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
 
-var parkstayUrl = global.parkstayUrl || process.env.PARKSTAY_URL;
-var parkstayGroundId = global.parkstayGroundId || '1';
+
 var nowTemp = new Date();
 var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
@@ -193,10 +220,13 @@ export default {
     el: '#availability',
     data: function () {
         return {
+            name: '',
             arrivalDate: moment.utc(now),
             departureDate: moment.utc(now).add(5, 'days'),
+            parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
+            parkstayGroundId: global.parkstayGroundId || '1',
             days: 5,
-            numAdults: 1,
+            numAdults: 2,
             numChildren: 0,
             numConcessions: 0,
             numInfants: 0,
@@ -211,11 +241,11 @@ export default {
         numPeople: {
             cache: false,
             get: function() {
-                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
+                var count = parseInt(this.numAdults) + parseInt(this.numConcessions) + parseInt(this.numChildren) + parseInt(this.numInfants);
                 if (count === 1) {
-                    return count +" person";
+                    return count +" person ▼";
                 } else {
-                    return count + " people";
+                    return count + " people ▼";
                 }
             }
         },
@@ -247,13 +277,13 @@ export default {
             if (site.type == 0) { // per site listing
                 submitData.campsite = site.id;
             } else {
-                submitData.campground = parkstayGroundId;
+                submitData.campground = vm.parkstayGroundId;
                 submitData.campsite_class = site.type;
             }
             console.log(site);
             console.log(submitData);
             $.ajax({
-                url: '/api/create_booking',
+                url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
                 data: submitData,
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
@@ -268,7 +298,7 @@ export default {
         update: function() {
             var vm = this;
             debounce(function() {
-                var url = '/api/availability/'+ parkstayGroundId +'/?'+$.param({
+                var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
                     arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                     departure: moment(vm.departureDate).format('YYYY/MM/DD'),
                     num_adult: vm.numAdults,
@@ -282,6 +312,7 @@ export default {
                     url: url,
                     dataType: 'json',
                     success: function(data, stat, xhr) {
+                        vm.name = data.name;
                         vm.days = data.days;
                         vm.classes = data.classes;
                         data.sites.forEach(function(el) {
@@ -294,6 +325,7 @@ export default {
         }
     },
     mounted: function () {
+        var vm = this;
         $(document).foundation();
 
         var arrivalEl = $('#date-arrival');
@@ -314,10 +346,10 @@ export default {
                 departureEl.trigger('changeDate');
             }
             arrivalData.hide();
-            sitesCal.arrivalDate = moment(arrivalData.date);
-            sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
-            sitesCal.sites = [];
-            sitesCal.update();
+            vm.arrivalDate = moment(arrivalData.date);
+            vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
+            vm.sites = [];
+            vm.update();
         }).data('datepicker');
 
         var departureEl = $('#date-departure');
@@ -329,10 +361,10 @@ export default {
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
             departureData.hide();
-            sitesCal.departureDate = moment(departureData.date);
-            sitesCal.days = Math.floor(moment.duration(sitesCal.departureDate.diff(sitesCal.arrivalDate)).asDays());
-            sitesCal.sites = [];
-            sitesCal.update();
+            vm.departureDate = moment(departureData.date);
+            vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
+            vm.sites = [];
+            vm.update();
         }).data('datepicker');
 
 

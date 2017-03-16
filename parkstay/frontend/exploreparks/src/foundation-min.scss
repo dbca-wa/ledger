@@ -1,0 +1,17 @@
+// reduced subset of Foundation 6
+// used to avoid full-on nuclear war with other CSS themes
+@import 'foundation.scss';
+
+//@include foundation-grid;
+@include foundation-flex-grid;
+@include foundation-flex-classes;
+
+@include foundation-global-styles;
+@include foundation-forms;
+@include foundation-button;
+@include foundation-callout;
+@include foundation-dropdown;
+@include foundation-reveal;
+@include foundation-table;
+@include foundation-visibility-classes;
+@include foundation-pagination;

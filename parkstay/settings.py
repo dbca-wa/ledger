@@ -1,4 +1,5 @@
 from ledger.settings_base import *
+from decimal import Decimal
 
 ROOT_URLCONF = 'parkstay.urls'
 SITE_ID = 1

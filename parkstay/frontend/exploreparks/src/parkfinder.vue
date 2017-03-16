@@ -26,7 +26,14 @@
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_concessions" class="text-right">Concessions<label>
+                                    <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
+- Seniors Card
+- Age Pension
+- Disability Support
+- Carer Payment
+- Carer Allowance
+- Companion Card
+- Department of Veterans' Affairs">Concessions</span></label>
                                 </div><div class="small-6 columns">
                                     <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
                                 </div>
@@ -71,20 +78,14 @@
                             <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
                         </div>
                     </template>
-                </div><div class="row">
-                    <hr/>
-                </div><div class="row">
-                    <div class="small-12 medium-12 large-12 columns">
-                        <label>Booking Type</label>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Book online</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online</label>
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> Book in-person</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> In-person</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Non-P&amp;W site</label>
+                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Third-party site</label>
                     </div>
                 </div>
             </div>
@@ -212,6 +213,10 @@
 
 .symb.RC3:before {
     content: "q";
+}
+
+.symb.LOC:before {
+    content: "r";
 }
 
 .fa-chevron-left:before {
@@ -374,6 +379,12 @@ div.awesomplete {
 div.awesomplete > input {
     display: table-cell;
 }
+
+/* hacks to make openlayers widgets more accessible */
+.ol-control button {
+    height: 2em;
+    width: 2em;
+}
 </style>
 
 <script>
@@ -385,13 +396,13 @@ import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
 
-var parkstayUrl = global.parkstayUrl || process.env.PARKSTAY_URL;
 
 export default {
     name: 'parkfinder',
     el: '#parkfinder',
     data: function () {
         return {
+            parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
             defaultCenter: [13775786.985667605, -2871569.067879858], // [123.75, -24.966],
             defaultLayers: [
                 ['dpaw:mapbox_outdoors', {}],
@@ -399,10 +410,10 @@ export default {
             ],
             filterList: [
                 {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
-                {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
                 {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
-                {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
                 {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']},
+                {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
+                {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
                 {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
                 {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
                 {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
@@ -413,7 +424,7 @@ export default {
             ],
             suggestions: {},
             extentFeatures: [],
-            numAdults: 1,
+            numAdults: 2,
             numConcessions: 0,
             numChildren: 0,
             numInfants: 0,
@@ -426,6 +437,7 @@ export default {
             sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAlt: 1,
             sitesAltIcon: require('./assets/pin_alt.svg'),
+            locationIcon: require('./assets/location.svg'),
             paginate: ['filterResults']
         }
     },
@@ -677,7 +689,7 @@ export default {
         autocomplete.autoFirst = true;
 
         $.ajax({
-            url: parkstayUrl+'/api/search_suggest',
+            url: vm.parkstayUrl+'/api/search_suggest',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
@@ -718,9 +730,9 @@ export default {
         this.projectionExtent = this.projection.getExtent();
         var size = ol.extent.getWidth(this.projectionExtent) / 256;
         this.matrixSet = 'mercator';
-        this.resolutions = new Array(14);
-        this.matrixIds = new Array(14);
-        for (var z = 0; z < 14; ++z) {
+        this.resolutions = new Array(21);
+        this.matrixIds = new Array(21);
+        for (var z = 0; z < 21; ++z) {
             // generate resolutions and matrixIds arrays for this WMTS
             this.resolutions[z] = size / Math.pow(2, z);
             this.matrixIds[z] = this.matrixSet + ':' + z;
@@ -762,7 +774,7 @@ export default {
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
         $.ajax({
-            url: parkstayUrl+'/api/campground_map/?format=json',
+            url: vm.parkstayUrl+'/api/campground_map/?format=json',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 var features = vm.geojson.readFeatures(response);
@@ -777,7 +789,7 @@ export default {
         });
         
         this.groundsSource.loadSource = function (onSuccess) {
-            var urlBase = parkstayUrl+'/api/campground_map_filter/?';
+            var urlBase = vm.parkstayUrl+'/api/campground_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
@@ -858,7 +870,24 @@ export default {
         });
 
 
+        this.posFeature = new ol.Feature();
+        this.posFeature.setStyle(new ol.style.Style({
+            image: new ol.style.Icon({
+                src: vm.locationIcon,
+                snapToPixel: true,
+                anchor: [0.5, 0.5],
+                anchorXUnits: 'fraction',
+                anchorYUnits: 'fraction'
+            })
+        }));
 
+        this.posLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [this.posFeature]
+            })
+        });
+
+        // create OpenLayers map object, prefill with all the stuff we made
         this.olmap = new ol.Map({
             logo: false,
             renderer: 'canvas',
@@ -881,11 +910,21 @@ export default {
             layers: [
                 this.streets,
                 this.tenure,
-                this.grounds
+                this.grounds,
+                this.posLayer
             ],
             overlays: [this.popup]
         });
 
+        // spawn geolocation tracker
+        this.geolocation = new ol.Geolocation({
+            tracking: true,
+            projection: this.olmap.getView().getProjection()
+        });
+        this.geolocation.on('change:position', function() {
+            var coords = vm.geolocation.getPosition();
+            vm.posFeature.setGeometry(coords ? new ol.geom.Point(coords) : null);
+        });
     
         // sad loop to change the pointer when mousing over a vector layer
         this.olmap.on('pointermove', function(ev) {
@@ -921,6 +960,10 @@ export default {
                     return layer === vm.grounds;
                 }
             });
+            // if just single-clicking the map, hide the popup
+            if (!result) {
+                vm.popup.setPosition(undefined);
+            }
         });
 
         // hook to update the visible feature list on viewport change

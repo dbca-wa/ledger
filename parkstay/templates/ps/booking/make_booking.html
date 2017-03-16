@@ -51,9 +51,11 @@
                         </div>
                         <div class="col-md-2">
                               <img style="width: 128px; height: 128px;" alt="campground"  class="img-thumbnail img-responsive">
-                              <p class="pricing" >
-                                  <strong >$12.00</strong>
-                                  <br> <span class="text-muted">Per adult per night</span>
+                              <p class="pricing" v-cloak >
+                            {% verbatim %}
+                                  <strong>${{ perDayFee|formatMoney(2) }}</strong>
+                            {% endverbatim %}
+                                  <br> <span class="text-muted">Per night</span>
                               </p>
                         </div>
                         <div class="col-md-10">
@@ -62,7 +64,7 @@
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label pull-left required">Campground: </label>
                                         <div class="col-sm-8">
-                                            {{ booking.campground.name }}
+                                            {{ booking.campground.name }}, {{ booking.campground.park.name }}
                                         </div>
                                     </div>
 
@@ -108,12 +110,24 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-12" v-cloak v-if="concessionWarning">
+                            Please note, only holders of the following Australian-issued cards are entitled to concessions:
+                            <ul>
+                                <li>Seniors Card</li>
+                                <li>Age Pension</li>
+                                <li>Disability Support</li>
+                                <li>Carer Payment</li>
+                                <li>Carer Allowance</li>
+                                <li>Companion Card</li>
+                                <li>Department of Veterans' Affairs</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-lg-6">
                 <div class="well">
                     <div class="row">
                         <div class="col-lg-12">
@@ -121,13 +135,13 @@
                         </div>
                     </div>
                     <div class="row">
-                      <div class="col-md-3">
+                      <div class="col-md-6">
                           <div class="form-group">
                             {{form.email.label_tag}}
                             {{ form.email|class:'form-control'}}
                           </div>
                       </div>
-                      <div class="col-md-3" >
+                      <div class="col-md-6" >
                           <div class="form-group">
                               {{form.confirm_email.label_tag}}
                               {{ form.confirm_email|class:'form-control'}}
@@ -135,13 +149,13 @@
                       </div>
                     </div>
                     <div class="row">
-                      <div class="col-md-3">
+                      <div class="col-md-6">
                           <div class="form-group">
                             {{form.first_name.label_tag}}
                             {{ form.first_name|class:'form-control'}}
                           </div>
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-6">
                           <div class="form-group">
                               {{form.surname.label_tag}}
                               {{ form.surname|class:'form-control'}}
@@ -149,13 +163,13 @@
                       </div>
                     </div>
                     <div class="row">
-                      <div class="col-md-3">
+                      <div class="col-md-6">
                           <div class="form-group">
                               {{form.postcode.label_tag}}
                               {{ form.postcode|class:'form-control'}}
                           </div>
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-6">
                           <div class="form-group">
                               {{form.country.label_tag}}
                               {{ form.country|class:'form-control'}}
@@ -163,13 +177,66 @@
                       </div>
                     </div>
                     <div class="row">
-                      <div class="col-md-3">
+                      <div class="col-md-6">
                           <div class="form-group">
                               {{form.phone.label_tag}}
                               {{ form.phone|class:'form-control'}}
                           </div>
                       </div>
                     </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="well">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h3 class="text-primary">Park Entry Fees</h3>
+                        </div>
+                    </div>
+                    {# Manual rendering of the 'vehicles' formset. #}
+                    {# Django 1.11 will move form rendering junk into proper templates, #}
+                    {# so there should be a cleaner way of doing this in future. #}
+                    <template v-if="pricing.vehicle">
+                        <div class="row" v-cloak>
+                            <div class="col-lg-12">
+                                <div class="form-group">
+                                    <label>Number of vehicles:
+                                        <input class="form-control" name="form-TOTAL_FORMS" max="8" min="0" value="1" v-model="vehicleCount" v-on:change="updateVehicles" type="number"/>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row form-group" v-for="vehicle in vehicles">
+                            <div class="col-md-6">
+                                <select v-on:change="calculateTotal" v-bind:name="'form-'+(vehicle-1)+'-vehicle_type'" class="form-control" v-model="vehicle[0]">
+                                    <option value="0">Vehicle</option>
+                                    <option value="1">Vehicle (concession)</option>
+                                    <option value="2">Motorcycle</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <input class="form-control" v-bind:name="'form-'+(vehicle-1)+'-vehicle_rego'" type="text" placeholder="Registration" v-model="vehicle[1]"/>
+                            </div>
+                        </div>
+                        <div class="row" v-cloak>
+                            <div class="col-md-12">
+                        {% verbatim %}
+                                Entry fee total: <strong>${{ entryFee|formatMoney(2) }}</strong>
+                        {% endverbatim %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid <a href="https://shop.dpaw.wa.gov.au/park-passes">Park Pass</a>.
+                            </div>
+                        </div>
+                    </template><template v-else>
+                        <div class="row">
+                            <div class="col-md-12">
+                                No entry fees are required for this park.
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -179,7 +246,7 @@
                     <div class="row">
                       <div class="col-md-6">
                           <div class="form-group">
-                            <label for="Total Price">Total Price <span class="text-muted">(GST inclusive. Park entry fee (where applicable) not included.)</span></label>
+                            <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.)</span></label>
                             <div class="input-group">
                               <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
                               <input type="text" class="form-control" :value="total|formatMoney(2)" readonly="true">
@@ -220,9 +287,19 @@
                 adult: {{ pricing.adult }},
                 concession: {{ pricing.concession }},
                 child: {{ pricing.child }},
-                infant: {{ pricing.infant }}
+                infant: {{ pricing.infant }},
+                vehicle: {{ pricing.vehicle }},
+                vehicleConc: {{ pricing.vehicle_conc }},
+                motorcycle: {{ pricing.motorcycle }}
             },
+            vehicles: [
+                [0, '']
+            ],
+            perDayFee: 0,
+            entryFee: 0,
             total: 0,
+            concessionWarning: false,
+            vehicleCount: 1
         },
         filters:{
             formatMoney:function(n,c, d, t){
@@ -262,17 +339,59 @@
             }
         },
         methods:{
+            updateVehicles: function () {
+                var vm = this;
+                var diff = vm.vehicles.length - vm.vehicleCount
+                if (diff < 0) {
+                    for (var i=0; i<-diff; i++) {
+                        vm.vehicles.push([0, '']);
+                    }
+                } else if (diff > 0) {
+                    for (var i=0; i<diff; i++) {
+                        vm.vehicles.pop();
+                    }
+                }
+                vm.calculateTotal();
+            },
             calculateTotal: function () {
                 var vm = this;
                 var form = document.forms.addBookingForm;
+
+                vm.entryFee = 0;
                 vm.total = 0;
+
+                // add per-person fees
                 vm.total += (parseInt(form.num_adult.value) || 0)*vm.pricing.adult;
                 vm.total += (parseInt(form.num_concession.value) || 0)*vm.pricing.concession;
                 vm.total += (parseInt(form.num_child.value) || 0)*vm.pricing.child;
                 vm.total += (parseInt(form.num_infant.value) || 0)*vm.pricing.infant;
+
+                // generate per night rate the ugly way
+                // (price can vary based on date, so this is an approximate measure)
+                vm.perDayFee = vm.total/{{ booking.num_days }};
+
+                // generate + add park entry fees
+                vm.vehicles.forEach(function (el) {
+                    switch(el[0]) {
+                        case '1':
+                            vm.entryFee += vm.pricing.vehicleConc;
+                            break;
+                        case '2':
+                            vm.entryFee += vm.pricing.motorcycle;
+                            break;
+                        case '0':
+                        default:
+                            vm.entryFee += vm.pricing.vehicle;
+                            break;
+                    }
+                });
+                vm.total += vm.entryFee;
+
+                // show concession warning text if the number > 0
+                vm.concessionWarning = (parseInt(form.num_concession.value) > 0);
                 return;
             },
-            validate:function (e) {
+            validate: function (e) {
                 var isValid = true;
                 var form = document.forms.addBookingForm;
                 var fields = $(form).find(':input');
@@ -313,6 +432,8 @@
             }, 1000);
 
             // wire up events to the form controls
+            // TODO: for django 1.11 replace python form controls with templates;
+            // should be easier to inject vue stuff
             var cbCalc = function (ev) {
                 vm.calculateTotal();
             };
