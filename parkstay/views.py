@@ -113,7 +113,7 @@ class MakeBookingsView(TemplateView):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         campsite = booking.campsites.all()[0].campsite if booking else None
-        entry_fees = ParkEntryRate.objects.filter(period_start__lte = booking.arrival, period_end__gt=booking.arrival).order_by('-period_start').first() if booking else None
+        entry_fees = ParkEntryRate.objects.filter(period_start__lte = booking.arrival, period_end__gt=booking.arrival).order_by('-period_start').first() if (booking and campsite.campground.park.entry_fee_required) else None
         pricing = {
             'adult': Decimal('0.00'),
             'concession': Decimal('0.00'),
