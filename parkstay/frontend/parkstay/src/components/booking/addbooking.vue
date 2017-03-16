@@ -632,9 +632,11 @@ export default {
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
-                var selected_date = e.date
-                vm.departurePicker.data("DateTimePicker").minDate(selected_date.clone().add(1,'days'));
-                vm.departurePicker.data("DateTimePicker").maxDate(selected_date.clone().add(28,'days'));
+                var selected_date =  e.date.clone();//Object.assign({},e.date);
+                var minDate = selected_date.clone().add(1,'days');
+                var maxDate = minDate.clone().add(28,'days');
+                vm.departurePicker.data("DateTimePicker").maxDate(maxDate);
+                vm.departurePicker.data("DateTimePicker").minDate(minDate);
                 vm.departurePicker.data("DateTimePicker").date(null);
             });
             vm.departurePicker.on('dp.change', function(e){
