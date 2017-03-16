@@ -1,13 +1,14 @@
 from __future__ import unicode_literals
 
 import os
+import datetime
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from ledger.accounts.models import EmailUser, Profile
-from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
-    get_or_create_default_officer, TestData, upload_id, create_default_country
+from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_user, add_to_group, \
+    get_or_create_default_customer, get_or_create_default_officer, TestData, upload_id, create_default_country
 
 TEST_ID_PATH = TestData.TEST_ID_PATH
 
@@ -26,6 +27,45 @@ class AccountsTestCase(TestCase):
         # clean id file
         if self.customer.identification:
             os.remove(self.customer.identification.path)
+
+    def test_search_customers(self):
+        """Testing that searching customers will return the right customer(s) and only customers"""
+        self.client.login(self.officer.email)
+
+        user_1, _ = get_or_create_user({
+            'first_name': 'Some',
+            'last_name': 'Guy',
+            'email': 'some_email@test.net',
+            'dob': datetime.date(1989, 8, 12),
+        })
+
+        user_2, _ = get_or_create_user({
+            'first_name': 'Some Other',
+            'last_name': 'Guy',
+            'email': 'some_other_email@test.net',
+            'dob': datetime.date(1998, 8, 12),
+        })
+
+        # search for users by common part of first name - both users should be found
+        response = self.client.get('{}?q={}'.format(reverse('wl_main:search_customers'), 'some'))
+        self.assertEqual(200, response.status_code)
+
+        json_response = response.json()
+
+        self.assertEqual(len(json_response), 2)
+
+        # make user_2 an officer and check that only user_1 is found by search for common part of first name
+        add_to_group(user_2, 'officers')
+
+        response = self.client.get('{}?q={}'.format(reverse('wl_main:search_customers'), 'some'))
+        self.assertEqual(200, response.status_code)
+
+        json_response = response.json()
+
+        self.assertEqual(len(json_response), 1)
+
+        self.assertEqual(json_response[0]['id'], user_1.id)
+        self.assertEqual(json_response[0]['text'], user_1.get_full_name_dob())
 
     def test_profile_list(self):
         """Testing that a user can display the profile list if they are a customer"""
@@ -137,9 +177,6 @@ class AccountsTestCase(TestCase):
         self.assertEqual(200, response.status_code)
 
         # update customer
-        self.customer = EmailUser.objects.get(email=self.customer.email)
+        self.customer.refresh_from_db()
 
         self.assertIsNotNone(self.customer.identification)
-
-        # assert image url is the customer ID's url path
-        self.assertEqual(response.context['existing_id_image_url'], self.customer.identification.file.url)

@@ -17,6 +17,48 @@ define([
         $viewApplicationDetails.popover({container: 'body', content: $contentContainer, html: true});
     }
 
+    function initAssignee(assessment, csrfToken, assessorsList, userID) {
+        var $assignee = $('#assignee');
+
+        $assignee.select2({
+            data: assessorsList,
+            initSelection: function (element, callback) {
+                if (assessment.assigned_assessor) {
+                    callback({
+                        id: assessment.assigned_assessor.id, text: assessment.assigned_assessor.first_name + ' ' +
+                        assessment.assigned_assessor.last_name
+                    });
+                } else {
+                    callback({id: 0, text: 'Unassigned'});
+                }
+            }
+        });
+
+        $assignee.on('change', function (e) {
+            $.post('/applications/assign-assessor/', {
+                assessmentID: assessment.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    userID: e.val
+                },
+                function (data) {
+                    $assignee.select2('data', data.assigned_assessor);
+                }
+            );
+        });
+
+        $('#assignToMe').click(function () {
+            $.post('/applications/assign-assessor/', {
+                    assessmentID: assessment.id,
+                    csrfmiddlewaretoken: csrfToken,
+                    userID: userID
+                },
+                function (data) {
+                    $assignee.select2('data', data.assigned_assessor);
+                }
+            );
+        });
+    }
+
     function initOtherAssessorsCommentsPopover(assessments) {
         var $contentContainer = $('<div>'),
             $viewOtherAssessorsComments = $('#viewOtherAssessorsComments');
@@ -172,8 +214,9 @@ define([
     }
 
     return {
-        init: function (assessment, application, formStructure, otherAssessments) {
+        init: function (assessment, application, formStructure, otherAssessments, csrfToken, assessors, userID) {
             initApplicationDetailsPopover(application, formStructure);
+            initAssignee(assessment, csrfToken, assessors, userID);
             initOtherAssessorsCommentsPopover(otherAssessments);
             initDefaultConditions(application.licence_type.default_conditions);
             initAdditionalConditions(assessment);

@@ -9,8 +9,19 @@ from wildlifelicensing.apps.emails.emails import TemplateEmailBase, host_reverse
 from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
+MAX_SUBJECT_LENGTH = 76
 
 logger = logging.getLogger(__name__)
+
+
+def _format_application_email_subject(subject, application):
+    subject = subject.format(application.reference, application.applicant.get_full_name())
+
+    # subject can be no longer than MAX_SUBJECT_LENGTH
+    if len(subject) > MAX_SUBJECT_LENGTH:
+        subject = '{}..'.format(subject[:MAX_SUBJECT_LENGTH - 2])
+
+    return subject
 
 
 class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
@@ -44,15 +55,18 @@ def send_amendment_requested_email(amendment_request, request):
 
 
 class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
-    subject = 'An assessment to a wildlife licensing application is required.'
+    subject = 'Wildlife licensing [{} {}]: assessment required'
     html_template = 'wl/emails/application_assessment_requested.html'
     txt_template = 'wl/emails/application_assessment_requested.txt'
+
+    def __init__(self, application):
+        self.subject = _format_application_email_subject(self.subject, application)
 
 
 def send_assessment_requested_email(assessment, request):
     application = assessment.application
 
-    email = ApplicationAssessmentRequestedEmail()
+    email = ApplicationAssessmentRequestedEmail(application)
     url = request.build_absolute_uri(
         reverse('wl_applications:enter_conditions_assessor',
                 args=[application.pk, assessment.pk])
@@ -66,15 +80,18 @@ def send_assessment_requested_email(assessment, request):
 
 
 class ApplicationAssessmentReminderEmail(TemplateEmailBase):
-    subject = 'Reminder: An assessment to a wildlife licensing application is required.'
+    subject = 'Wildlife licensing [{} {}]: Reminder - assessment required'
     html_template = 'wl/emails/application_assessment_reminder.html'
     txt_template = 'wl/emails/application_assessment_reminder.txt'
+
+    def __init__(self, application):
+        self.subject = _format_application_email_subject(self.subject, application)
 
 
 def send_assessment_reminder_email(assessment, request=None):
     application = assessment.application
 
-    email = ApplicationAssessmentReminderEmail()
+    email = ApplicationAssessmentReminderEmail(application)
     if request is not None:
         url = request.build_absolute_uri(
             reverse('wl_applications:enter_conditions_assessor',
@@ -94,15 +111,18 @@ def send_assessment_reminder_email(assessment, request=None):
 
 
 class ApplicationAssessmentDoneEmail(TemplateEmailBase):
-    subject = 'An assessment to a wildlife licensing application has been done.'
+    subject = 'Wildlife licensing [{} {}]: assessment complete'
     html_template = 'wl/emails/application_assessment_done.html'
     txt_template = 'wl/emails/application_assessment_done.txt'
+
+    def __init__(self, application):
+        self.subject = _format_application_email_subject(self.subject, application)
 
 
 def send_assessment_done_email(assessment, request):
     application = assessment.application
 
-    email = ApplicationAssessmentDoneEmail()
+    email = ApplicationAssessmentDoneEmail(application)
     url = request.build_absolute_uri(
         reverse('wl_applications:enter_conditions',
                 args=[application.pk])
@@ -112,7 +132,8 @@ def send_assessment_done_email(assessment, request):
         'assessor_group': assessment.assessor_group,
         'url': url
     }
-    to_email = application.assigned_officer.email if application.assigned_officer else settings.WILDLIFELICENSING_EMAIL_CATCHALL
+    to_email = application.assigned_officer.email if application.assigned_officer else \
+        settings.WILDLIFELICENSING_EMAIL_CATCHALL
     msg = email.send(to_email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
@@ -237,6 +258,40 @@ def send_user_name_change_notification_email(licence):
         'url': url
     }
     email.send(licence.issuer.email, context=context)
+
+
+class ApplicationDeclinedEmail(TemplateEmailBase):
+    subject = 'Wildlife licensing [{} {}]: application declined'
+    html_template = 'wl/emails/application_declined.html'
+    txt_template = 'wl/emails/application_declined.txt'
+
+    def __init__(self, application):
+        self.subject = _format_application_email_subject(self.subject, application)
+
+
+def send_application_declined_email(declined_details, request):
+    application = declined_details.application
+    email = ApplicationDeclinedEmail(application)
+    url = request.build_absolute_uri(reverse('wl_home')) if request else None
+
+    reason_text = declined_details.reason or ''
+    reason_html = reason_text.replace('\n', '<br/>')
+
+    context = {
+        'reason_text': reason_text,
+        'reason_html': reason_html,
+        'wl_home': url
+    }
+
+    if application.proxy_applicant is None:
+        recipient_email = application.applicant_profile.email
+    else:
+        recipient_email = application.proxy_applicant.email
+
+    msg = email.send(recipient_email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_email(msg, application=application, sender=sender)
+    return recipient_email
 
 
 def _log_email(email_message, application, sender=None):

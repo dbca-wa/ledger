@@ -40,6 +40,9 @@ class TableAssessorView(AssessorRequiredMixin, base.TablesBaseView):
                 'title': 'Assigned Officer'
             },
             {
+                'title': 'Assigned Assessor'
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -82,6 +85,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
         'status',
         'application.lodgement_date',
         'application.assigned_officer',
+        'assigned_assessor',
         'action'
     ]
     order_columns = [
@@ -92,7 +96,9 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
         'status',
         'application.lodgement_date',
         ['application.assigned_officer.first_name', 'application.assigned_officer.last_name',
-         'application.assigned_officer.email'], ''
+         'application.assigned_officer.email'],
+        ['assigned_assessor.first_name', 'assigned_assessor.last_name', 'assigned_assessor.email'],
+        ''
     ]
 
     columns_helpers = dict(**{
@@ -119,6 +125,13 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
             'search': lambda self, search: base.build_field_query(
                 ['application__assigned_officer__last_name', 'application__assigned_officer__first_name',
                  'application__assigned_officer__email'],
+                search
+            ),
+        },
+        'assigned_assessor': {
+            'render': lambda self, instance: render_user_name(instance.assigned_assessor),
+            'search': lambda self, search: base.build_field_query(
+                ['assigned_assessor__last_name', 'assigned_assessor__first_name', 'assigned_assessor__email'],
                 search
             ),
         },

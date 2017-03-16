@@ -258,6 +258,14 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 def _layout_extracted_fields(extracted_fields):
     elements = []
 
+    def __children_have_data(field):
+        for group in field.get('children', []):
+            for child_field in group:
+                if child_field.get('data'):
+                    return True
+
+        return False
+
     # information extracted from application
     for field in extracted_fields:
         if 'children' not in field:
@@ -292,6 +300,9 @@ def _layout_extracted_fields(extracted_fields):
                                                         if option.get('data', 'off') == 'on']),
                                     styles['Left']))
         else:
+            if not __children_have_data(field):
+                continue
+
             elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
             elements.append(Paragraph(field['label'], styles['BoldLeft']))
 
