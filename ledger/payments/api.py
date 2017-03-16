@@ -577,7 +577,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                 payments.append(
                     {
                         'date':c.created.strftime('%d/%m/%Y'),
-                        'type':c.get_source_display().lower().title(),
+                        'type':c.get_source_display().lower().title() if c.type != 'refund' else 'Manual',
                         'details':c.get_type_display().lower().title(),
                         'amount':str(c.amount)
                     })
