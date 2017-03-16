@@ -112,10 +112,10 @@
                                             <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
                                                 <h2>No Campsites Available</h2>
                                             </div>
-                                          <div v-for="c in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
+                                          <div v-for="(c,i) in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
                                               <div class="radio">
                                               <label>
-                                                <input type="radio" name="campsite-type" :value="c.id" v-model="selected_campsite_class">
+                                                <input type="radio" name="campsite-type" :value="i" v-model="selected_campsite_class">
                                                 {{c.name}}
                                               </label>
                                           </div>
@@ -444,6 +444,10 @@ export default {
             let vm = this;
             vm.updatePrices();
         },
+        selected_campsite_class:function () {
+            let vm =this;
+            vm.selected_campsite =vm.campsite_classes[vm.selected_campsite_class].campsites[0];
+        },
         selected_arrival:function () {
             let vm = this;
             if (vm.booking.arrival) {
@@ -559,7 +563,7 @@ export default {
                     vm.campsite_classes = response.body;
                     if (vm.campsite_classes.length >0) {
                         vm.selected_campsite =vm.campsite_classes[0].campsites[0];
-                        vm.selected_campsite_class = vm.campsite_classes[0].id;
+                        vm.selected_campsite_class = 0;
                     }
                     vm.loading.splice('fetching campsite classes',1);
                 },(response)=>{

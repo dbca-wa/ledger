@@ -228,7 +228,7 @@ export default {
                                 var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
                                 column += record_payment;
                             }
-                            if (full.editable && !full.paid){
+                            if (full.editable){
                                 var change_booking = "<a href='#' class='text-primary' data-change = '"+booking+"' > Change</a><br/>";
                                 var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>";
                                 column += cancel_booking;
