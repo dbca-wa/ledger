@@ -1304,7 +1304,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['status'] = booking.status
                 bk['paid'] = booking.paid
                 try:
-                    bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
+                    if booking.is_canceled:
+                        bk['campground_site_type'] = ""
+                    else:
+                        bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
                 except:
                     pass
                 bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
