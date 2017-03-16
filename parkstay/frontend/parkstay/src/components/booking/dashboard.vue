@@ -62,7 +62,7 @@
       <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
-   <confirmbox id="cancelBooking" :options="cancelBookingOptions"></confirmbox>
+   <confirmbox id="cancelBooking" :options="cancelBookingOptions" cancelText="Close"></confirmbox>
    <confirmbox id="printBooking" :options="printBookingOptions"></confirmbox>
 </div>
 </template>
@@ -90,7 +90,7 @@ export default {
                 icon: "<i class='fa fa-exclamation-triangle fa-2x text-warning' aria-hidden='true'></i>",
                 message: "Are you sure you want to cancel this booking ?",
                 buttons: [{
-                    text: "Cancel",
+                    text: "Cancel Booking",
                     event: "cbevent",
                     bsColor: "btn-warning",
                     handler: function() {
@@ -224,7 +224,7 @@ export default {
                                     invoice_string += 'invoice='+n+'&';
                                 });
                                 invoice_string = invoice_string.slice(0,-1);
-                                var payment = (full.paid) ? "View" : "Record"
+                                var payment = (full.paid) ? "View" :  (full.editable) ?"Record":"View";
                                 var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
                                 column += record_payment;
                             }

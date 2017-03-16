@@ -867,7 +867,9 @@ class Booking(models.Model):
     def editable(self):
         today = datetime.now().date()
         if self.arrival > today <= self.departure:
-            return True
+            if not self.is_canceled:
+                if self.status != "Paid":
+                    return True
         return False
 
     @property
@@ -895,7 +897,7 @@ class Booking(models.Model):
             status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
-                    return 'Canceled - Payment ({}0'.format(status)
+                    return 'Canceled - Payment ({})'.format(status)
                 else:
                     return 'Canceled'
             else:
@@ -927,6 +929,19 @@ class Booking(models.Model):
             return 'partially_paid'
         else:return "paid"
 
+    def cancelBooking(self):
+        self.is_canceled = True
+        self.campsites.all().delete()
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                i = Invoice.objects.get(reference=r.get("invoice_reference"))
+                i.voided = True
+                i.save()
+            except Invoice.DoesNotExist:
+                pass
+
+        self.save()
 
 
 class BookingInvoice(models.Model):

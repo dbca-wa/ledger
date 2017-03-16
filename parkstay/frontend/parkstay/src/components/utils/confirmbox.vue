@@ -68,6 +68,11 @@ var confirmModal = module.exports = {
         },
         id:{
             required:true
+        },
+        cancelText:{
+            default:function () {
+                return "Cancel";
+            }
         }
     },
     methods:{
@@ -104,7 +109,7 @@ var confirmModal = module.exports = {
                    })
                });
             }
-            $(buttons).append("<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-default\" style='margin-bottom:10px;'>Cancel</button>");
+            $(buttons).append("<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-default\" style='margin-bottom:10px;'>"+vm.cancelText+"</button>");
         }
    },
    mounted:function () {

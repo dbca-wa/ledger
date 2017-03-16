@@ -112,10 +112,10 @@
                                             <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
                                                 <h2>No Campsites Available</h2>
                                             </div>
-                                          <div v-for="c in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
+                                          <div v-for="(c,i) in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
                                               <div class="radio">
                                               <label>
-                                                <input type="radio" name="campsite-type" :value="c.id" v-model="selected_campsite_class">
+                                                <input type="radio" name="campsite-type" :value="i" v-model="selected_campsite_class">
                                                 {{c.name}}
                                               </label>
                                           </div>
@@ -309,7 +309,7 @@ export default {
                 arrival:"",
                 departure:"",
                 guests:{
-                    adult:0,
+                    adult:2,
                     concession:0,
                     child:0,
                     infant:0
@@ -343,7 +343,7 @@ export default {
                 {
                     id:"adult",
                     name:"Adults (no concession)",
-                    amount:0,
+                    amount:2,
                     description: ""
                 },
                 {
@@ -443,6 +443,10 @@ export default {
         selected_campsite:function () {
             let vm = this;
             vm.updatePrices();
+        },
+        selected_campsite_class:function () {
+            let vm =this;
+            vm.selected_campsite =vm.campsite_classes[vm.selected_campsite_class].campsites[0];
         },
         selected_arrival:function () {
             let vm = this;
@@ -559,7 +563,7 @@ export default {
                     vm.campsite_classes = response.body;
                     if (vm.campsite_classes.length >0) {
                         vm.selected_campsite =vm.campsite_classes[0].campsites[0];
-                        vm.selected_campsite_class = vm.campsite_classes[0].id;
+                        vm.selected_campsite_class = 0;
                     }
                     vm.loading.splice('fetching campsite classes',1);
                 },(response)=>{
@@ -628,9 +632,11 @@ export default {
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
-                var selected_date = e.date
-                vm.departurePicker.data("DateTimePicker").minDate(selected_date.clone().add(1,'days'));
-                vm.departurePicker.data("DateTimePicker").maxDate(selected_date.clone().add(28,'days'));
+                var selected_date =  e.date.clone();//Object.assign({},e.date);
+                var minDate = selected_date.clone().add(1,'days');
+                var maxDate = minDate.clone().add(28,'days');
+                vm.departurePicker.data("DateTimePicker").maxDate(maxDate);
+                vm.departurePicker.data("DateTimePicker").minDate(minDate);
                 vm.departurePicker.data("DateTimePicker").date(null);
             });
             vm.departurePicker.on('dp.change', function(e){
@@ -708,7 +714,18 @@ export default {
                         }
 
                     });
-                    vm.booking.entryFees.entry_fee = 0;
+
+                    vm.updateParkEntryPrices()
+                    vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+
+                });
+            }
+        },
+        updateParkEntryPrices:function () {
+            let vm =this;
+            vm.booking.entryFees.entry_fee = 0;
+            if (vm.selected_campsite) {
+                if (vm.booking.arrival && vm.booking.departure) {
                     $.each(vm.parkEntryVehicles,function (i,entry) {
                         entry = JSON.parse(JSON.stringify(entry));
                         if (vm.parkPrices) {
@@ -725,14 +742,10 @@ export default {
                                     vm.booking.entryFees.entry_fee +=  parseInt(vm.parkPrices.concession);
                                     vm.booking.entryFees.concession++;
                                     break;
-
                             }
                         }
                     });
-
-                    vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
-
-                });
+                }
             }
         },
         fetchUsers:function (event) {
@@ -917,7 +930,10 @@ export default {
                 vm.booking.parkEntry.vehicles++;
                 vm.parkEntryVehicles.push(JSON.parse(JSON.stringify(park_entry)));
             }
-            vm.updatePrices();
+            vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
+            vm.updateParkEntryPrices();
+            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+
         },
         removeVehicleCount:function (park_entry) {
             let vm = this;
@@ -941,7 +957,9 @@ export default {
                 }
 
             }
-            vm.updatePrices();
+            vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
+            vm.updateParkEntryPrices();
+            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
         },
     },
     mounted:function () {
@@ -950,6 +968,7 @@ export default {
         vm.fetchCampground();
         vm.fetchCountries();
         vm.addFormValidations();
+        vm.generateGuestCountText();
     }
 }
 
