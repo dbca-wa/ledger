@@ -52,6 +52,8 @@ class BpointTransaction(models.Model):
     original_txn = models.ForeignKey('self', to_field='txn_number', blank=True, null=True, help_text='Transaction number stored \
                                            if current transaction depends on a previous transaction \
                                            in the case where the action is a refund, reversal or capture')
+    dvtoken = models.CharField(max_length=128,null=True,blank=True,help_text='Stored card dv token')
+    last_digits = models.CharField(max_length=4,blank=True,null=True,help_text='Last four digits of card used during checkout')
     
     class Meta:
         ordering = ('-created',)

@@ -407,7 +407,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         except BpointToken.DoesNotExist:
                             raise ValueError('This stored card does not exist.')
                         if self.checkout_session.invoice_association():
-                            invoice.token = '{}|{}'.format(token.DVToken,token.expiry_date.strftime("%m%y"))
+                            invoice.token = '{}|{}|{}'.format(token.DVToken,token.expiry_date.strftime("%m%y"),token.last_digits)
                             invoice.save()
                         else:
                             bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
@@ -419,14 +419,18 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 invoice.token = resp
                                 invoice.save()
                             else:
-                                resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
+                                bankcard = kwargs['bankcard']
+                                bankcard.last_digits = bankcard.number[:-4]
+                                resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
                         else:
                             if self.checkout_session.invoice_association():
                                 resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'])
                                 invoice.token = resp
                                 invoice.save()
                             else:
-                                resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
+                                bankcard = kwargs['bankcard']
+                                bankcard.last_digits = bankcard.number[:-4]
+                                resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
                     if not self.checkout_session.invoice_association():
                         # Record payment source and event
                         source_type, is_created = models.SourceType.objects.get_or_create(
