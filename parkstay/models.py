@@ -930,18 +930,18 @@ class Booking(models.Model):
         else:return "paid"
 
     def cancelBooking(self):
-
         self.is_canceled = True
         self.campsites.all().delete()
-        self.save()
         references = self.invoices.all().values('invoice_reference')
         for r in references:
             try:
                 i = Invoice.objects.get(reference=r.get("invoice_reference"))
                 i.voided = True
+                i.save()
             except Invoice.DoesNotExist:
                 pass
 
+        self.save()
 
 
 class BookingInvoice(models.Model):
