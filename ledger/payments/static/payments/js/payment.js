@@ -19,11 +19,17 @@ $(function(){
     var invoice_obj = null;
     var $regions = $('#regions');
     
+    // Money Inputs
+    var cfgCulture = 'en-AU';
+    $.preferCulture(cfgCulture);
+    $('.money').maskMoney();
+
     // Update Status format
     $('#invoice_status').html(formatStatus($('#invoice_status').html()));
     $('.invoice_status').each(function(){
         $(this).html(formatStatus($(this).html()));
     });
+    $('#mainTabLoader').hide();
     
     //Datatables
     var unlinkedBPAYTable = $('#unlinkedBpayTable').DataTable({
@@ -116,6 +122,8 @@ $(function(){
 
     $('#invoice_selector').on('change',function(){
         var reference = $(this).val();
+        $('#payment_div').hide();
+        $('#mainTabLoader').show();
         if (reference){
             $.get('/ledger/payments/api/invoices/'+reference+'.json',function(resp){
                 set_invoice(resp);
@@ -133,7 +141,6 @@ $(function(){
     $("#refund_btn").click(function(e){
         e.preventDefault();
         var modal = $('#refundModal');
-        console.log('here');
         modal.foundation('open');
     });
     // Display for the external cash payment feature
@@ -253,6 +260,9 @@ $(function(){
         if (!$success_div.hasClass('hide')) {
             setTimeout(function(){$success_div.addClass('hide');},3000);
         }
+        rf.updateRefundModal();
+        $('#payment_div').show();
+        $('#mainTabLoader').hide();
         showRecordPayment();
         receivedPaymentsTable.ajax.reload();
     }
@@ -530,4 +540,118 @@ $(function(){
         e.preventDefault();
         cardPayment();
     });*/
+    
+    /*****************************
+        REFUNDS
+    *****************************/
+
+    var rf = {
+        refund_option: $('div[data-refund-option]'),
+        refund_cards: $('div[data-refund-cards'),
+        refund_manual: $('div[data-refund-manual'),
+        refund_btn: $('#refund_btn'),
+        radios: $('#refundable_cards_radio'),
+        refund_option_select: $('#refund_option'),
+        refund_loader: $("#refundLoader"),
+        init: function(){
+            var form = $(document.forms.refundForm).hide(100);
+            $.get('/ledger/payments/api/invoices/'+$('#invoice_selector').val()+'.json',function(resp){
+                set_invoice(resp);
+                rf.updateRefundModal();
+                rf.refund_loader.fadeOut(100);
+                rf.displayOption();
+                form.fadeIn(2000);
+                rf.refund_btn.on('click',function(e){
+                    rf.updateRefundModal();
+                });
+                rf.refund_option_select.on("change",function(){
+                    rf.displayOption();
+                });
+            });
+            form.submit(function(e){
+                e.preventDefault();
+                if (invoice_obj.refundable_cards.length > 0 && rf.refund_option_select.val() == 1){
+                    rf.cardRefund();
+                }
+                else{
+                    rf.manualRefund();
+                }
+            });
+        },
+        displayOption: function(){
+            if (invoice_obj.refundable_cards.length > 0 && rf.refund_option_select.val() == 1){
+                rf.hide(rf.refund_manual);
+                rf.show(rf.refund_cards);
+            }
+            else{ 
+                rf.hide(rf.refund_cards);
+                rf.show(rf.refund_manual);
+            }
+        },
+        updateRefundModal:function(){
+            invoice_obj.refundable ? rf.refund_btn.removeClass('hide'): rf.refund_btn.addClass('hide');
+            if(invoice_obj.refundable_cards.length > 0){
+                rf.radios.html('');
+                $.each(invoice_obj.refundable_cards,function(i,c){
+                    var input = '<label><input type="radio" name="refund_cards" value="'+c.id+'"/>';
+                    input += c.cardtype+' ending in '+c.last_digits + ' - Refundable Amount ($'+c.refundable_amount+')</label>';
+                    rf.radios.append(input);    
+                });
+                rf.show(rf.refund_option); 
+            } 
+        },
+        validateAmount: function(){
+            var amount = $('#refundAmount').val();
+            if(!amount){
+                formError('An amount has not been specified for the refund'); 
+                return
+            }        
+        },
+        cardRefund: function(){
+            console.log('card');
+        },
+        manualRefund: function(){
+            console.log('manual');
+            rf.validateAmount();
+            // Get payload
+            payload = {
+                "invoice": invoice,
+                "amount": $('#refundAmount').val(),
+                "type": 'refund',
+                "source": 'cash' 
+            }
+            // POST
+            $.ajax ({
+                beforeSend: function(xhrObj){
+                  xhrObj.setRequestHeader("Content-Type","application/json");
+                  xhrObj.setRequestHeader("Accept","application/json");
+                },
+                type: "POST",
+                url: "/ledger/payments/api/cash.json",
+                data: JSON.stringify(payload),
+                dataType: "json",
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                success: function(resp){
+                    success(resp,invoice,$('#other_source').val());
+                },
+                error: function(resp){
+                    error(resp);
+                },
+                complete: function(resp){
+                    checkInvoiceStatus();
+                }
+            });
+            console.log($('#refundAmount').val());
+        },
+        show:function(field){
+            field.removeClass('hide',100);
+        },
+        hide:function(field){
+            field.addClass('hide',100);
+        },
+        refresh:function(){
+            
+        }
+    };
+    rf.init();
 });

@@ -20,7 +20,9 @@
     <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.3.0/css/foundation-flex.css">
     <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
     <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/css/dataTables.foundation.css" /> {% block extra_css %}
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/css/dataTables.foundation.css" /> 
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/font-awesome/4.7.0/css/font-awesome.min.css" /> 
+    {% block extra_css %}
     <style>
         .voided_invoice {
             -ms-transform: rotate(20deg);
@@ -209,7 +211,7 @@
                                         <h3> Record Payment</h3>
                                         <label>
                                                 Amount
-                                                <input id="other_amount" name="other_amount" type="number" value=""/>
+                                                <input class="money" id="other_amount" name="other_amount" type="text" value=""/>
                                             </label>
                                         <label>Payment Type
                                                 <select id="other_source" name="other_source">
@@ -260,43 +262,57 @@
                                 </div>
                             </div>
                             <div class="large reveal" id="refundModal" data-reveal>
-                                <div class="row">
-                                    <div class="medium-12 columns">
-                                        <h3 class="text-center">Refund</h3>
-                                        <p> Refundable Amount: <strong class="refundable_amount">${{invoices.0.refundable_amount}}</strong></p>
-                                    </div>
-                                    <div class="medium-12 columns">
-                                        <div class="row">
-                                            <div class="medium-4 columns">
-                                                <label>Amount: </label>
-                                            </div>
-                                            <div class="medium-6 columns">
-                                                <input name="refundAmount" id="refundAmount" type="number" value="" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="medium-12 columns">
-                                        <div class="row">
-                                            <div class="medium-4 columns">
-                                                <label>Refund Option: </label>
-                                            </div>
-                                            <div class="medium-6 columns">
-                                                <select id="refund_option" name="refund_option">
-                                                    <option value="1">Card</option>
-                                                    <option value="2">Manual</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="medium-12 columns">
-                                        <strong>Please Contact Financial Services Branch</strong>
-                                    </div>
-                                    <div class="row align-right">
-                                        <div class="columns medium-3">
-                                            <input id="" type="submit" class="pay_btn float-right button" value="Make Refund"/>
-                                        </div>
-                                    </div>
+                                <div id="refundLoader">
+                                    <p class="text-center"><i class="fa fa-spin fa-spinner fa-2x"></i><br />Loading...</p> 
                                 </div>
+                                <form name="refundForm">
+                                    <div class="row">
+                                        <div class="medium-12 columns">
+                                            <h3 class="text-center">Refund</h3>
+                                            <p> Refundable Amount: <strong class="refundable_amount">${{invoices.0.refundable_amount}}</strong></p>
+                                        </div>
+                                        <div class="medium-12 columns">
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Amount: </label>
+                                                </div>
+                                                <div class="medium-6 columns">
+                                                    <input class="money" name="refundAmount" id="refundAmount" type="text" value="" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="medium-12 columns hide" data-refund-option>
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Refund Option: </label>
+                                                </div>
+                                                <div class="medium-6 columns">
+                                                    <select id="refund_option" name="refund_option">
+                                                        <option value="1">Card</option>
+                                                        <option value="2">Manual</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="medium-12 columns hide" data-refund-cards>
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Select Card: </label>
+                                                </div>
+                                                <div class="medium-6 columns" id="refundable_cards_radio">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="medium-12 columns hide" data-refund-manual>
+                                            <strong>Please Contact Financial Services Branch</strong>
+                                        </div>
+                                        <div class="row align-right">
+                                            <div class="columns medium-3">
+                                                <input id="" type="submit" class="pay_btn float-right button" value="Make Refund"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
                                 <button class="close-button" data-close aria-label="Close modal" type="button">
                                         <span aria-hidden="true">&times;</span>
                                     </button>
@@ -479,6 +495,9 @@
                         </div>
                         <!-- /BPAY -->
                     </div>
+                    <div id="mainTabLoader">
+                        <p class="text-center"><i class="fa fa-spin fa-spinner fa-2x"></i><br />Updating Invoice</p>
+                    </div>
                 </div>
             </div>
             <div class="footer">
@@ -492,6 +511,9 @@
     </div>
     <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/dataTables.foundation.min.js"></script>
+    <script type="text/javascript" src="{% static 'payments/js/jquery.glob.js'%}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/jQuery.glob.en-AU.js'%}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/moneyInput.js'%}"></script>
     <script type="text/javascript" src="{% static 'payments/js/payment.js'%}"></script>
 </body>
 

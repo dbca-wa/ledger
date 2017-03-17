@@ -420,7 +420,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 invoice.save()
                             else:
                                 bankcard = kwargs['bankcard']
-                                bankcard.last_digits = bankcard.number[:-4]
+                                bankcard.last_digits = bankcard.number[-4:]
                                 resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
                         else:
                             if self.checkout_session.invoice_association():
@@ -447,6 +447,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         self.add_payment_source(source)
                         self.add_payment_event('Paid', total.incl_tax)
                 except Exception as e:
+                    traceback.print_exc()
                     raise
             else:
                 #Generate Invoice

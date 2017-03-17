@@ -52,8 +52,8 @@ class Facade(object):
             card_details = self._get_card_details(bank_card)
         if amount:
             amount = int(amount*100)
-        if bankcard.last_digits:
-            bankcard_lastdigits = bankcard.last_digits
+        if bank_card.last_digits:
+            bank_card_last_digits = bank_card.last_digits
         # Handle any other exceptions that occur that are not from bpoint
         try:
             res = self.gateway.handle_txn(order_number,reference,action,amount,card_details,
@@ -80,7 +80,7 @@ class Facade(object):
             res.settlement_date,
             res.txn_number,
             res.dvtoken,
-            bankcard_lastdigits
+            bank_card.last_digits
         )
 
     def _create_txn(self,action,crn1,amount,amount_original,amount_surcharge,
@@ -210,9 +210,9 @@ class Facade(object):
             except IntegrityError as e:
                 if 'unique constraint' in e.message:
                     pass
-            return '{}|{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date,bankcard.obfuscated_number[:-4])
+            return '{}|{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date,bankcard.obfuscated_number[-4:])
         else:
-            return '{}|{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date,bankcard.obfuscated_number[:-4])
+            return '{}|{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date,bankcard.obfuscated_number[-4:])
 
     def pay_with_storedtoken(self,action,_type,sub_type,token_id,order_number=None,reference=None,total=None,orig_txn_number=None):
         ''' Make a payment using a stored card
