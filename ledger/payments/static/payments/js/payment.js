@@ -451,7 +451,7 @@ $(function(){
                 error(resp);
             },
             complete: function(resp){
-                checkInvoiceStatusNoRedirect();  
+                checkInvoiceStatusNoRedirect();
             }
         });
     }
@@ -460,13 +460,13 @@ $(function(){
      */
     function success(resp,reference,source){
         var success_str = '';
-                         
+
         success_str = 'Invoice #'+reference+' successfully paid using '+source;
-        
+
         success_html = '<div class="columns small-12"><div class="success callout" data-closable="slide-out-right"> \
             <p class="text-center">'+success_str+'</p> \
         </div></div>';
-        
+
         $success_row.html(success_html);
         $success_div.removeClass('hide');
         if (!$location_fieldset.hasClass('hide')) {
@@ -480,13 +480,13 @@ $(function(){
     }
     function success(reference,msg){
         var success_str = '';
-                         
+
         success_str = msg;
-        
+
         success_html = '<div class="columns small-12"><div class="success callout" data-closable="slide-out-right"> \
             <p class="text-center">'+success_str+'</p> \
         </div></div>';
-        
+
         $success_row.html(success_html);
         $success_div.removeClass('hide');
         if (!$location_fieldset.hasClass('hide')) {
@@ -530,7 +530,7 @@ $(function(){
         e.preventDefault();
         otherPayment();
     });
-    
+
     $regions.change(function(){
         updateDistricts($(this).val());
     });
@@ -540,7 +540,7 @@ $(function(){
         e.preventDefault();
         cardPayment();
     });*/
-    
+
     /*****************************
         REFUNDS
     *****************************/
@@ -553,6 +553,8 @@ $(function(){
         radios: $('#refundable_cards_radio'),
         refund_option_select: $('#refund_option'),
         refund_loader: $("#refundLoader"),
+        modal_alert: $('#modal_alert'),
+        modal_alert_text: $('#modal_alert > .callout-text'),
         init: function(){
             var form = $(document.forms.refundForm).hide(100);
             $.get('/ledger/payments/api/invoices/'+$('#invoice_selector').val()+'.json',function(resp){
@@ -583,7 +585,7 @@ $(function(){
                 rf.hide(rf.refund_manual);
                 rf.show(rf.refund_cards);
             }
-            else{ 
+            else{
                 rf.hide(rf.refund_cards);
                 rf.show(rf.refund_manual);
             }
@@ -595,17 +597,17 @@ $(function(){
                 $.each(invoice_obj.refundable_cards,function(i,c){
                     var input = '<label><input type="radio" name="refund_cards" value="'+c.id+'"/>';
                     input += c.cardtype+' ending in '+c.last_digits + ' - Refundable Amount ($'+c.refundable_amount+')</label>';
-                    rf.radios.append(input);    
+                    rf.radios.append(input);
                 });
-                rf.show(rf.refund_option); 
-            } 
+                rf.show(rf.refund_option);
+            }
         },
         validateAmount: function(){
             var amount = $('#refundAmount').val();
             if(!amount){
-                formError('An amount has not been specified for the refund'); 
+                formError('An amount has not been specified for the refund');
                 return
-            }        
+            }
         },
         cardRefund: function(){
             console.log('card');
@@ -618,7 +620,7 @@ $(function(){
                 "invoice": invoice,
                 "amount": $('#refundAmount').val(),
                 "type": 'refund',
-                "source": 'cash' 
+                "source": 'cash'
             }
             // POST
             $.ajax ({
@@ -632,10 +634,10 @@ $(function(){
                 dataType: "json",
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function(resp){
-                    success(resp,invoice,$('#other_source').val());
+                    rf.displaySuccess(resp);
                 },
                 error: function(resp){
-                    error(resp);
+                    rf.displayError(resp);
                 },
                 complete: function(resp){
                     checkInvoiceStatus();
@@ -649,8 +651,21 @@ $(function(){
         hide:function(field){
             field.addClass('hide',100);
         },
-        refresh:function(){
-            
+        displayError:function(resp){
+           rf.modal_alert.removeClass('success');
+           rf.modal_alert.addClass('alert');
+           rf.updateAlert(resp);
+        },
+        displaySuccess:function(resp){
+           rf.modal_alert.removeClass('alert');
+           rf.modal_alert.addClass('success');
+           rf.updateAlert(resp);
+        },
+        updateAlert:function (resp) {
+           var error_str = resp.responseText.replace(/[\[\]"]/g,'');
+           rf.modal_alert_text.text(error_str);
+           rf.show(rf.modal_alert);
+           setTimeout(function(){rf.hide(rf.modal_alert)},5000);
         }
     };
     rf.init();
