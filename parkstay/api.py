@@ -1303,25 +1303,24 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
                 bk['paid'] = booking.paid
-                try:
-                    if booking.is_canceled:
-                        bk['campground_site_type'] = ""
-                    else:
-                        bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
-                except:
-                    pass
                 bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
                 if not bk['legacy_id']:
                     try:
                         customer = EmailUser.objects.get(id=bk['customer_id'])
                         bk['firstname'] = customer.first_name
                         bk['lastname'] = customer.last_name
+                        if booking.is_canceled:
+                            bk['campground_site_type'] = ""
+                        else:
+                            print Campsite.objects.get(id=booking.campsite_id_list[0])
+                            bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
                     except EmailUser.DoesNotExist:
                         bk['firstname'] =  ""
                         bk['lastname'] = ""
                 else:
                     bk['firstname'] =  bk['legacy_name']
                     bk['lastname'] = ""
+                    bk['campground_site_type'] = ""
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),
