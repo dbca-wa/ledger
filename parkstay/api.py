@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route, list_route
@@ -775,6 +776,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # create our result object, which will be returned as JSON
         result = {
+            'name': ground.name,
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
             'adults': 1,
@@ -916,6 +918,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(result)
 
 
+@csrf_exempt
 @require_http_methods(['POST'])
 def create_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""

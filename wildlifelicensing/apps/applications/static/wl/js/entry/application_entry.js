@@ -78,7 +78,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
 
         if(item.isRepeatable) {
-            _setupCopyRemoveEvents(item, $itemContainer, suffix);
+            _setupRemoveEvents(item, $itemContainer, suffix);
         }
 
         return $itemContainer;
@@ -232,69 +232,7 @@ define(['jQuery', 'handlebars.runtime', 'parsley', 'bootstrap', 'bootstrap-datet
         }
     }
 
-    function _setupCopyRemoveEvents(item, itemSelector, suffix) {
-        itemSelector.find('[id^="copy_' + item.name + '"]').first().click(function(e) {
-            var itemCopy = itemSelector.clone(true, true),
-                groupInput = $('[name^="' + item.name + suffix + '"]'),
-                groupCount = parseInt(groupInput.val());
-
-            // clone doesn't copy selected item in select elements, so need to do it manually
-            itemSelector.find('select').each(function(index) {
-                $(itemCopy).find('select').eq(index).val($(this).val());
-            });
-
-            // update field names to have correct suffix
-            itemCopy.find('input, select, textarea').each(function() {
-                var name = $(this).attr('name'),
-                    namePrefix = name.substring(0, name.indexOf(suffix) + suffix.length),
-                    nameSuffix = name.substring(namePrefix.length);
-
-                // cut out first section of nameSuffix to be replaced with current index
-                nameSuffix = nameSuffix.substring(nameSuffix.indexOf('-', 1));
-
-                $(this).attr('name', namePrefix + '-' + groupCount + nameSuffix);
-            });
-
-            // need to replace date inputs with clones of themselves without event binding
-            // which causes the datetime picker to inadvertantly show on the original date input
-            itemCopy.find('.date').each(function() {
-                $(this).replaceWith($(this).clone(false));
-            })
-
-            // need to replace species inputs with clones of themselves without event binding
-            // which causes the typeahead to show on original species input
-            itemCopy.find('.species').each(function() {
-                var speciesClone = $(this).clone(false),
-                    species_type_arg = '';
-
-                if(speciesClone.attr('data-species-type')) {
-                    species_type_arg = '&type=' + speciesClone.attr('data-species-type');
-                }
-                speciesClone.typeahead({
-                    minLength: 3,
-                    items: 'all',
-                    source: function (query, process) {
-                        return $.get('/taxonomy/species_name?search=' + query + species_type_arg, function (data) {
-                            return process(data);
-                        });
-                    }
-                });
-
-                $(this).replaceWith(speciesClone);
-            });
-
-            itemCopy.find('[id^="copy_' + item.name + '"]').off('click');
-            itemCopy.find('[id^="remove_' + item.name + '"]').parent().removeClass('hidden');
-            itemCopy.find('[id^="description_' + item.name + '"]').addClass('hidden');
-
-            itemSelector.after(itemCopy);
-
-            _initCollapsible(itemCopy, true);
-
-            groupInput.val(groupCount + 1);
-            _setupCopyRemoveEvents(item, itemCopy, suffix);
-        });
-
+    function _setupRemoveEvents(item, itemSelector, suffix) {
         itemSelector.find('[id^="remove_' + item.name + '"]').off('click').click(function(e) {
             var groupInput = $('[name^="' + item.name + suffix + '"]');
             itemSelector.remove();

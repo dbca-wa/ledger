@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
+import traceback
 import decimal
 from django.db import models
+from django.db.models import Q 
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.conf import settings
@@ -18,7 +20,7 @@ class Invoice(models.Model):
     order_number = models.CharField(max_length=50,unique=True)
     reference = models.CharField(max_length=50, unique=True)
     system = models.CharField(max_length=4,blank=True,null=True)
-    token = models.CharField(max_length=25,null=True,blank=True)
+    token = models.CharField(max_length=80,null=True,blank=True)
     voided = models.BooleanField(default=False)
 
     def __unicode__(self):
@@ -135,6 +137,17 @@ class Invoice(models.Model):
             return False
         return True
 
+    @property
+    def refundable_cards(self):
+        cards = []
+        refunds = self.bpoint_transactions.filter(Q(action='payment') | Q(action='capture'),dvtoken__isnull=False)
+        for r in refunds:
+            if r.refundable_amount > 0:
+                cards.append(r)
+        print cards
+        return cards
+        
+
     # Helper Functions
     # =============================================
     def __calculate_cash_payments(self):
@@ -202,6 +215,8 @@ class Invoice(models.Model):
                     card_details[0],
                     card_details[1]
                 )
+                if len(card_details) == 3:
+                    card.last_digits = card_details[2]
                 txn = bpoint_facade.pay_with_temptoken(
                         'payment',
                         'telephoneorder',
@@ -225,6 +240,7 @@ class Invoice(models.Model):
             else:
                 raise ValidationError('This invoice doesn\'t have any tokens attached to it.')
         except Exception as e:
+            traceback.print_exc()
             raise
 
 class InvoiceBPAY(models.Model):

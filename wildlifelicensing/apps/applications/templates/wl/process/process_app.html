@@ -52,7 +52,7 @@
 {% block intro_subtitle %}
     <h4 class="inline">
         {{ data.application.licence_type.name }}
-    </h4> 
+    </h4>
 {% endblock %}
 
 {% block content %}
@@ -90,7 +90,23 @@
                                                 {% endif %}
                                             </span>
                                         </p>
-                                        <p>{{ applicant.postal_address.search_text }}</p>
+                                        <div>{{ applicant.postal_address.search_text }}</div>
+                                        <div class="applicant-contact">
+                                            <div>
+                                                <span class="fa fa-envelope"></span>
+                                                <span class="email"> {{ applicant.email }}</span>
+                                            </div>
+                                            {% if applicant.user.phone_number %}
+                                                <div>
+                                                    <span class="fa fa-phone phone"></span> {{ applicant.user.phone_number }}
+                                                </div>
+                                            {% endif %}
+                                            {% if applicant.user.mobile_number %}
+                                                <div>
+                                                    <span class="fa fa-mobile mobile"></span> {{ applicant.user.mobile_number }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
                                     {% endwith %}
                                     <div class="row">
                                         <div class="col-md-5">
@@ -317,8 +333,7 @@
                                         data-title="You must complete all the processing steps above to proceed to conditions">
                                     Enter Conditions
                                 </button>
-                                <button id="decline" type="submit" name="decline" type="button"
-                                        class="btn btn-sm btn-danger">Decline Application
+                                <button id="decline" type="button" class="btn btn-sm btn-danger">Decline Application
                                 </button>
                             </form>
                         </div>
@@ -336,7 +351,7 @@
         </div>
     </div>
     {% block modals %}
-        {% with user=data.application.applicant_profile.user %}
+        {% with user=data.application.applicant %}
             {% if user.identification %}
                 <div class="modal fade" id="idModal" tabindex="-1">
                     <div class="modal-dialog" role="document">
@@ -347,16 +362,14 @@
                                     {{ user.last_name }}</h4>
                             </div>
                             <div class="modal-body center">
-                                {% if user.identification.file.url|slice:'-3:' == 'pdf' %}
-                                    <a href="{{ user.identification.file.url }}" target="_blank">
+                                <a href="{{ user.identification.url }}" target="_blank">
+                                    {% if user.identification.url|lower|slice:'-3:' == 'pdf' %}
                                         <img src="{% static 'wl/img/pdf.png' %}">
                                         <p>View PDF</p>
-                                    </a>
-                                {% else %}
-                                    <a href="{{ user.identification.file.url }}" target="_blank">
-                                        <img width="100%" src="{{ user.identification.file.url }}"/>
-                                    </a>
-                                {% endif %}
+                                    {% else %}
+                                        <img width="100%" src="{{ user.identification.url }}"/>
+                                    {% endif %}
+                                </a>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -375,15 +388,13 @@
                                     {{ user.last_name }}</h4>
                             </div>
                             <div class="modal-body center">
-                                {% if user.senior_card.file.url|slice:'-3:' == 'pdf' %}
-                                    <a href="{{ user.senior_card.file.url }}" target="_blank">
+                                {% if user.senior_card.url|lower|slice:'-3:' == 'pdf' %}
+                                    <a href="{{ user.senior_card.url }}" target="_blank">
                                         <img src="{% static 'wl/img/pdf.png' %}">
                                         <p>View PDF</p>
                                     </a>
                                 {% else %}
-                                    <a href="{{ user.senior_card.file.url }}" target="_blank">
-                                        <img width="100%" src="{{ user.senior_card.file.url }}"/>
-                                    </a>
+                                    <img width="100%" src="{{ user.senior_card.url }}"/>
                                 {% endif %}
                             </div>
                             <div class="modal-footer">
@@ -451,6 +462,28 @@
                         </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-default">Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="declinedDetailsModal" tabindex="-1">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                        <h4 class="modal-title">Please provide the reason why this application is declined.</h4>
+                    </div>
+                    <form id="declinedDetailsForm" method="post"
+                          action="{% url 'wl_applications:process' data.application.id %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="modal-body">
+                                {% bootstrap_form application_declined_details_form %}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" name="decline" class="btn btn-default">Decline</button>
                         </div>
                     </form>
                 </div>

@@ -78,8 +78,13 @@ class BpointTransactionAdmin(admin.ModelAdmin):
                         'response_txt',
                         'processed',
                         'settlement_date',
+                        'dvtoken',
+                        'last_digits'
                     )
     list_display = ('txn_number','receipt_number','action','amount','approved')
+    
+    def has_delete_permission(self,*args,**kwargs):
+        return False
     
     def approved(self,obj):
         if obj.approved:

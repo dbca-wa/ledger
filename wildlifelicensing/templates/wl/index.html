@@ -48,6 +48,7 @@
                             Access Wildlife Licensing
                         </h3>
                         {% bootstrap_messages %}
+                        <p><strong>If you already have a Parks and Wildlife customer account under another email address, please sign in with that account and add any additional email addresses as new profiles.</strong></p>
                         <form method="post" action="{% url "social:complete" backend="email" %}">
                             {% csrf_token %}
                             {% bootstrap_form form %}

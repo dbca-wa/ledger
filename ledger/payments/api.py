@@ -205,12 +205,17 @@ class BpointTransactionSerializer(serializers.ModelSerializer):
     settlement_date = serializers.DateField(format='%B, %d %Y')
     source = serializers.CharField(source='type')
     crn = serializers.CharField(source='crn1')
+    last_digits = serializers.SerializerMethodField()
     def get_cardtype(self, obj):
         return dict(BpointTransaction.CARD_TYPES).get(obj.cardtype)
-        
+
+    def get_last_digits(self,obj):
+        return obj.last_digits
+
     class Meta:
         model = BpointTransaction
         fields = (
+            'id',
             'action',
             'crn',
             'source',
@@ -225,7 +230,9 @@ class BpointTransactionSerializer(serializers.ModelSerializer):
             'response_txt',
             'processed',
             'settlement_date',
-            'approved'
+            'approved',
+            'last_digits',
+            'refundable_amount'
         )
     
 class BpointTransactionViewSet(viewsets.ModelViewSet):
@@ -505,6 +512,7 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
     bpoint_transactions=BpointTransactionSerializer(many=True)
     created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     owner = serializers.CharField(source='owner.email')
+    refundable_cards=BpointTransactionSerializer(many=True)
     class Meta:
         model = Invoice
         fields = (
@@ -523,7 +531,8 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
             'payment_status',
             'cash_transactions',
             'bpay_transactions',
-            'bpoint_transactions'
+            'bpoint_transactions',
+            'refundable_cards'
         )
         read_only_fields=(
             'created',
@@ -577,7 +586,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                 payments.append(
                     {
                         'date':c.created.strftime('%d/%m/%Y'),
-                        'type':c.get_source_display().lower().title(),
+                        'type':c.get_source_display().lower().title() if c.type != 'refund' else 'Manual',
                         'details':c.get_type_display().lower().title(),
                         'amount':str(c.amount)
                     })

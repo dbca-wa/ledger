@@ -18,7 +18,9 @@ from wildlifelicensing.apps.payments.forms import PaymentsReportForm
 
 
 def to_string(obj):
-    return str(obj) if obj else ''
+    if isinstance(obj,unicode):
+        return str(obj.encode('utf-8')) if obj else ''
+    return str(obj).encode('utf-8') if obj else ''
 
 
 class ReportHelper:

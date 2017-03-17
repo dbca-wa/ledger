@@ -1,6 +1,9 @@
 from __future__ import unicode_literals
 import datetime
+from decimal import Decimal as D
 from django.db import models
+from django.db.models import Q
+from django.core.exceptions import ValidationError
 from ledger.payments.bpoint import settings as bpoint_settings
 from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.order.models import Order
@@ -10,6 +13,7 @@ class BpointTransaction(models.Model):
     ACTION_TYPES = (
         ('payment','payment'),
         ('refund','refund'),
+        ('unmatched_refund','unmatched_refund'),
         ('reversal','reversal'),
         ('preauth', 'preauth'),
         ('capture','capture')
@@ -52,6 +56,8 @@ class BpointTransaction(models.Model):
     original_txn = models.ForeignKey('self', to_field='txn_number', blank=True, null=True, help_text='Transaction number stored \
                                            if current transaction depends on a previous transaction \
                                            in the case where the action is a refund, reversal or capture')
+    dvtoken = models.CharField(max_length=128,null=True,blank=True,help_text='Stored card dv token')
+    last_digits = models.CharField(max_length=4,blank=True,null=True,help_text='Last four digits of card used during checkout')
     
     class Meta:
         ordering = ('-created',)
@@ -67,6 +73,46 @@ class BpointTransaction(models.Model):
     def order(self):
         from ledger.payments.models import Invoice
         return Order.objects.get(number=Invoice.objects.get(reference=self.crn1).order_number)
+
+    @property
+    def refundable_amount(self):
+        amount = D('0.0')
+        if self.action== 'payment' or self.action== 'capture':
+            refunds  = BpointTransaction.objects.filter(Q(action='refund') | Q(action='unnmatched_refund'),original_txn=self.txn_number)
+            for r in refunds:
+                amount += r.amount
+        return self.amount - amount
+
+    # Methods
+    # ==============================
+    def refund(self,amount,matched=True):
+        from ledger.payments.bpoint.facade import bpoint_facade 
+        try:
+            txn = None
+            if self.action != 'payment' or self.action != 'capture':
+                raise ValidationError('The transaction has to be either a payment or capture in order to make a refund.')
+
+            if self.approved:
+                txn = bpoint_facade.pay_with_temptoken(
+                            'refund' if matched else 'unmatched_refund',
+                            'telephoneorder',
+                            'single',
+                            card,
+                            self.order_number,
+                            self.reference,
+                            amount,
+                            self.txn_number 
+                        )
+                if txn.approved:
+                    try:
+                        BpointToken.objects.get(DVToken=txn.dvtoken)
+                    except BpointToken.DoesNotExist:
+                        UsedBpointToken.objects.create(DVToken=txn.dvtoken)
+            else:
+                raise ValidationError('A refund cannot be made to an unnapproved tranascation.')
+            return txn 
+        except:
+            raise
 
 class TempBankCard(object):
     def __init__(self,card_number,expiry_date,ccv=None):

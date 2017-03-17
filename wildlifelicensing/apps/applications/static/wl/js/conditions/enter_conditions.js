@@ -298,17 +298,16 @@ define(['jQuery', 'lodash', 'js/entry/application_preview', 'select2'], function
     }
 
     function initForm() {
-        $('#issueLicence').click(function(e) {
-            var $conditionsForm = $('#conditionsForm');
-            $conditionsForm.append($('<input>').attr('type', 'hidden').attr('name', 'submissionType').val(this.id));
-            $conditionsForm.submit();
-        });
+        var $conditionsForm = $('#conditionsForm');
 
-        $('#backToProcessing').click(function(e) {
-            var $conditionsForm = $('#conditionsForm');
+        function _submitForm(e) {
             $conditionsForm.append($('<input>').attr('type', 'hidden').attr('name', 'submissionType').val(this.id));
             $conditionsForm.submit();
-        });
+        }
+
+        $('#issueLicence').click(_submitForm);
+        $('#save').click(_submitForm);
+        $('#backToProcessing').click(_submitForm);
     }
 
     return {

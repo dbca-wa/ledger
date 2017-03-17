@@ -17,12 +17,14 @@ define(['jQuery'], function($) {
                 return;
             };
 
+            // Note: You cannot change the custom message for onbeforeunload in Chrome / Firefox
+            
             // for IE6-8 and Firefox prior to version 4
             if (e) {
                 e.returnValue = message;
             }
 
-            // for Chrome, Safari, IE8+ and Opera 12+
+            // for Safari, IE8+ and Opera 12+
             return message;
         };
     }}
