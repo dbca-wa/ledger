@@ -596,6 +596,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
             raise Exception('There was a problem retrieving the invoice for this booking')
         last_redirect = response.history[-1]
         BookingInvoice.objects.create(booking=booking,invoice_reference=last_redirect.url.split('=')[1])
+        return response
 
     except requests.exceptions.HTTPError as e:
         if 400 <= e.response.status_code < 500:

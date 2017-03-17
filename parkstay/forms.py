@@ -5,9 +5,9 @@ class LoginForm(forms.Form):
     email = forms.EmailField(max_length=254)
 
 VEHICLE_TYPES = (
-    (0, 'Vehicle'),
-    (1, 'Vehicle (concession)'),
-    (2, 'Motorcycle')
+    ('0', 'Vehicle'),
+    ('1', 'Vehicle (concession)'),
+    ('2', 'Motorcycle')
 )
 
 class VehicleInfoForm(forms.Form):

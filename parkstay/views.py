@@ -21,9 +21,11 @@ from parkstay.models import (Campground,
                                 Region,
                                 CampsiteClass,
                                 Booking,
+                                BookingVehicleRego,
                                 CampsiteRate,
                                 ParkEntryRate
                                 )
+from ledger.accounts.models import EmailUser
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
 from decimal import *
@@ -105,8 +107,8 @@ class MakeBookingsView(TemplateView):
     def render_page(self, request, booking, form, vehicles):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
-        campsite = booking.campsites.all()[0].campsite if booking else None
         expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
+        campsite = booking.campsites.all()[0].campsite if booking else None
         entry_fees = ParkEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.campground.park.entry_fee_required) else None
         pricing = {
             'adult': Decimal('0.00'),
@@ -153,12 +155,63 @@ class MakeBookingsView(TemplateView):
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
         form = MakeBookingsForm(request.POST)
         vehicles = VehicleInfoFormset(request.POST)   
+        
+        # re-render the page if there's no booking in the session
+        if not booking:
+            return self.render_page(request, booking, form, vehicles)
     
         # re-render the page if the form doesn't validate
         if (not form.is_valid()) or (not vehicles.is_valid()):
             return self.render_page(request, booking, form, vehicles)
 
-        return
+        # update the booking object with information from the form
+        if not booking.details:
+            booking.details = {}
+        booking.details['num_adult'] = form.cleaned_data.get('num_adult')
+        booking.details['num_concession'] = form.cleaned_data.get('num_concession')
+        booking.details['num_child'] = form.cleaned_data.get('num_child')
+        booking.details['num_infant'] = form.cleaned_data.get('num_infant')
+
+        # update vehicle registrations from form
+        VEHICLE_CHOICES = {'0': 'vehicle', '1': 'concession', '2': 'motorbike'}
+        BookingVehicleRego.objects.filter(booking=booking).delete()
+        for vehicle in vehicles:
+            BookingVehicleRego.objects.create(
+                    booking=booking, 
+                    rego=vehicle.cleaned_data.get('vehicle_rego'), 
+                    type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')]
+            )
+
+        # generate final pricing
+        lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+        print(lines)
+        total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
+
+        # get the customer object
+        # FIXME: get feedback on whether to overwrite personal info if the EmailUser
+        # already exists
+        try:
+            customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
+        except EmailUser.DoesNotExist:
+            customer = EmailUser.objects.create(
+                    email=form.cleaned_data.get('email'), 
+                    first_name=form.cleaned_data.get('first_name'),
+                    last_name=form.cleaned_data.get('last_name'),
+                    phone_number=form.cleaned_data.get('phone')
+            )
+
+        
+        # finalise the booking object
+        booking.customer = customer
+        booking.cost_total = total
+        booking.save()
+
+        # generate invoice
+        reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
+        
+
+        response = utils.checkout(request, booking, lines, invoice_text=reservation)
+        return HttpResponse(response.content)
 
 
 class MyBookingsView(LoginRequiredMixin, TemplateView):
