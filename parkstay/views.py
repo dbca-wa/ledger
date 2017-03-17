@@ -8,7 +8,8 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from parkstay.forms import LoginForm, MakeBookingsForm
+from django import forms
+from parkstay.forms import LoginForm, MakeBookingsForm, VehicleInfoFormset
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -100,20 +101,12 @@ def abort_booking_view(request, *args, **kwargs):
 
 class MakeBookingsView(TemplateView):
     template_name = 'ps/booking/make_booking.html'
-    def get(self, request, *args, **kwargs):
-        # TODO: find campsites related to campground
-        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
-        form_context = {
-            'num_adult': booking.details.get('num_adult', 0) if booking else 0,
-            'num_concession': booking.details.get('num_concession', 0) if booking else 0,
-            'num_child': booking.details.get('num_child', 0) if booking else 0,
-            'num_infant': booking.details.get('num_infant', 0) if booking else 0
-        }
-        form = MakeBookingsForm(form_context)
+
+    def render_page(self, request, booking, form, vehicles):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         campsite = booking.campsites.all()[0].campsite if booking else None
+        expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
         entry_fees = ParkEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.campground.park.entry_fee_required) else None
         pricing = {
             'adult': Decimal('0.00'),
@@ -134,14 +127,38 @@ class MakeBookingsView(TemplateView):
 
         return render(request, self.template_name, {
             'form': form, 
+            'vehicles': vehicles,
             'booking': booking,
             'campsite': campsite,
             'expiry': expiry,
             'pricing': pricing
         })
 
+
+    def get(self, request, *args, **kwargs):
+        # TODO: find campsites related to campground
+        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        form_context = {
+            'num_adult': booking.details.get('num_adult', 0) if booking else 0,
+            'num_concession': booking.details.get('num_concession', 0) if booking else 0,
+            'num_child': booking.details.get('num_child', 0) if booking else 0,
+            'num_infant': booking.details.get('num_infant', 0) if booking else 0
+        }
+        form = MakeBookingsForm(form_context)
+        vehicles = VehicleInfoFormset()
+        return self.render_page(request, booking, form, vehicles)
+
+
     def post(self, request, *args, **kwargs):
+        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
         form = MakeBookingsForm(request.POST)
+        vehicles = VehicleInfoFormset(request.POST)   
+    
+        # re-render the page if the form doesn't validate
+        if (not form.is_valid()) or (not vehicles.is_valid()):
+            return self.render_page(request, booking, form, vehicles)
+
+        return
 
 
 class MyBookingsView(LoginRequiredMixin, TemplateView):
