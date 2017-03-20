@@ -107,7 +107,7 @@ class MakeBookingsView(TemplateView):
     def render_page(self, request, booking, form, vehicles):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
-        expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
+        expiry = booking.expiry_time.isoformat() if booking else ''
         campsite = booking.campsites.all()[0].campsite if booking else None
         entry_fees = ParkEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.campground.park.entry_fee_required) else None
         pricing = {

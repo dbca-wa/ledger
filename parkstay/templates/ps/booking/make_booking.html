@@ -278,15 +278,16 @@
 {% endblock %}
 
 {% block custom_js %}
-<script src="//static.dpaw.wa.gov.au/static/libs/vue/2.1.6/vue.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/libs/vue/2.2.4/vue.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.18.0/moment.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script type="text/javascript">
     var book = new Vue({
         el: '#addBooking',
         data: {
-            timer: {{ expiry }},
+            expiry: moment('{{ expiry|escapejs }}'),
+            timer: 1200,
             pricing: {
                 adult: {{ pricing.adult }},
                 concession: {{ pricing.concession }},
@@ -427,9 +428,8 @@
 
             // update the countdown timer every second
             var timer = setInterval(function (ev) {
-                if (vm.timer > 0) {
-                    vm.timer -= 1;
-                } else if (vm.timer == 0) {
+                vm.timer = Math.floor((vm.expiry - moment.now())/1000);
+                if (vm.timer <= 0) {
                     clearInterval(timer);
                     var loc = window.location;
                     window.location = loc.protocol + '//' + loc.host + loc.pathname;
