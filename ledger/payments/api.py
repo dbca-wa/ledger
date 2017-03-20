@@ -235,6 +235,9 @@ class BpointTransactionSerializer(serializers.ModelSerializer):
             'refundable_amount'
         )
     
+class AmountSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+
 class BpointTransactionViewSet(viewsets.ModelViewSet):
     queryset = BpointTransaction.objects.all()
     serializer_class = BpointTransactionSerializer
@@ -242,6 +245,24 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
     
     def create(self,request):
         pass
+
+    @detail_route(methods=['POST'])
+    def refund(self,request,*args,**kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            instance = self.get_object()
+            serializer = AmountSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            refund = instance.refund(serializer.validated_data['amount']) 
+            serializer = BpointTransactionSerializer(refund)
+            return Response(serializer.data,status=http_status)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+        
     
 class CardSerializer(serializers.Serializer):
     cardholdername = serializers.CharField(required=False,max_length=50)

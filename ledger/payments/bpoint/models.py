@@ -76,40 +76,57 @@ class BpointTransaction(models.Model):
 
     @property
     def refundable_amount(self):
+        from ledger.payments.models import Invoice
         amount = D('0.0')
+        invoice = Invoice.objects.get(reference=self.crn1)
         if self.action== 'payment' or self.action== 'capture':
             refunds  = BpointTransaction.objects.filter(Q(action='refund') | Q(action='unnmatched_refund'),original_txn=self.txn_number)
             for r in refunds:
                 amount += r.amount
-        return self.amount - amount
+        refundable_amount = D(self.amount) - amount
+        if refundable_amount >= invoice.refundable_amount:
+            return invoice.refundable_amount
+        else:
+            return refundable_amount
+        
 
     # Methods
     # ==============================
     def refund(self,amount,matched=True):
-        from ledger.payments.bpoint.facade import bpoint_facade 
+        from ledger.payments.facade import bpoint_facade 
         try:
             txn = None
-            if self.action != 'payment' or self.action != 'capture':
-                raise ValidationError('The transaction has to be either a payment or capture in order to make a refund.')
+            if self.action == 'payment' or self.action == 'capture':
 
-            if self.approved:
-                txn = bpoint_facade.pay_with_temptoken(
-                            'refund' if matched else 'unmatched_refund',
-                            'telephoneorder',
-                            'single',
-                            card,
-                            self.order_number,
-                            self.reference,
-                            amount,
-                            self.txn_number 
-                        )
-                if txn.approved:
-                    try:
-                        BpointToken.objects.get(DVToken=txn.dvtoken)
-                    except BpointToken.DoesNotExist:
-                        UsedBpointToken.objects.create(DVToken=txn.dvtoken)
+                card_details = self.dvtoken.split('|')
+                card = TempBankCard(
+                    self.dvtoken,
+                    None 
+                )
+                card.last_digits = self.last_digits
+                if self.approved:
+                    if amount <= self.refundable_amount:
+                        txn = bpoint_facade.pay_with_temptoken(
+                                    'refund' if matched else 'unmatched_refund',
+                                    'telephoneorder',
+                                    'single',
+                                    card,
+                                    self.order, 
+                                    self.crn1,
+                                    amount,
+                                    self.txn_number 
+                                )
+                        if txn.approved:
+                            try:
+                                BpointToken.objects.get(DVToken=txn.dvtoken)
+                            except BpointToken.DoesNotExist:
+                                UsedBpointToken.objects.create(DVToken=txn.dvtoken)
+                    else:
+                        raise ValidationError('The refund amount is greater than the amount refundable on this card.')
+                else:
+                    raise ValidationError('A refund cannot be made to an unnapproved tranascation.')
             else:
-                raise ValidationError('A refund cannot be made to an unnapproved tranascation.')
+                raise ValidationError('The transaction has to be either a payment or capture in order to make a refund.')
             return txn 
         except:
             raise
@@ -117,7 +134,7 @@ class BpointTransaction(models.Model):
 class TempBankCard(object):
     def __init__(self,card_number,expiry_date,ccv=None):
         self.number=card_number
-        self.expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date()
+        self.expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date() if expiry_date else None
         self.ccv=ccv
 
 class BpointToken(models.Model):

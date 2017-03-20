@@ -122,6 +122,8 @@ class CashTransaction(models.Model):
                 raise ValidationError('This invoice has already been paid for.')
             if (decimal.Decimal(self.amount) > self.invoice.balance) and self.type == 'payment':
                 raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
+            if (decimal.Decimal(self.amount) > self.invoice.refundable_amount) and self.type == 'refund':
+                raise ValidationError('The amount to be refunded is more than the amount refundable for this invoice.')
         else:
             orig = CashTransaction.objects.get(pk=self.pk)
             if orig.amount != self.amount:
