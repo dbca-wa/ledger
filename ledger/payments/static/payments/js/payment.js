@@ -572,11 +572,18 @@ $(function(){
             });
             form.submit(function(e){
                 e.preventDefault();
-                if (invoice_obj.refundable_cards.length > 0 && rf.refund_option_select.val() == 1){
-                    rf.cardRefund();
-                }
-                else{
-                    rf.manualRefund();
+                var amount = rf.validateAmount();
+                if (amount) {
+                    if (invoice_obj.refundable_cards.length > 0 && rf.refund_option_select.val() == 1){
+                        rf.cardRefund();
+                    }
+                    else{
+                        if(amount <= invoice_obj.refundable_amount){
+                            rf.manualRefund();
+                        }else{
+                            rf.displayError("The amount you are trying to refund is greater than the refundable amount.")
+                        }
+                    }
                 }
             });
         },
@@ -606,8 +613,9 @@ $(function(){
             var amount = $('#refundAmount').val();
             if(!amount){
                rf.displayError("An amount has not been specified for the refund");
-               return
-            }
+               return false
+           }
+           return amount;
         },
         cardRefund: function(){
             console.log('card');
