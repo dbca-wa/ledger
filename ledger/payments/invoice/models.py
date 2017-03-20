@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import traceback
 import decimal
 from django.db import models
-from django.db.models import Q 
+from django.db.models import Q
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.conf import settings
@@ -74,7 +74,7 @@ class Invoice(models.Model):
     @property
     def shipping_required(self):
         return self.order.basket.is_shipping_required() if self.order else False
-    
+
     @property
     def linked_bpay_transactions(self):
         linked = InvoiceBPAY.objects.filter(invoice=self).values('bpay')
@@ -87,7 +87,7 @@ class Invoice(models.Model):
         '''
         txns = BpayTransaction.objects.filter(crn=self.reference)
         linked_txns = BpayTransaction.objects.filter(id__in=InvoiceBPAY.objects.filter(invoice=self).values('bpay'))
-        
+
         return txns | linked_txns
 
     @property
@@ -129,10 +129,10 @@ class Invoice(models.Model):
         card = self.bpoint_transactions.count()
         bpay = self.bpay_transactions
         cash = self.cash_transactions
-    
+
         if bpay or cash:
             return False
-        
+
         if card > 1:
             return False
         return True
@@ -144,9 +144,8 @@ class Invoice(models.Model):
         for r in refunds:
             if r.refundable_amount > 0:
                 cards.append(r)
-        print cards
         return cards
-        
+
 
     # Helper Functions
     # =============================================
@@ -163,7 +162,7 @@ class Invoice(models.Model):
         ''' Calcluate the total amount of bpoint payments and
             captures made less the reversals for this invoice.
         '''
-        payments = reversals = 0 
+        payments = reversals = 0
         payments = payments + dict(self.bpoint_transactions.filter(action='payment', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
         payments = payments + dict(self.bpoint_transactions.filter(action='capture', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
         reversals = dict(self.bpoint_transactions.filter(action='reversal', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
@@ -180,7 +179,7 @@ class Invoice(models.Model):
             payments = payments + dict(self.bpay_transactions.filter(p_instruction_code='05', type=399).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
             reversals = dict(self.bpay_transactions.filter(p_instruction_code='25', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
 
-        return payments - reversals    
+        return payments - reversals
 
     def __calculate_total_refunds(self):
         ''' Calcluate the total amount of refunds
@@ -244,7 +243,7 @@ class Invoice(models.Model):
             raise
 
 class InvoiceBPAY(models.Model):
-    ''' Link between unmatched bpay payments and invoices 
+    ''' Link between unmatched bpay payments and invoices
     '''
     invoice = models.ForeignKey(Invoice)
     bpay = models.ForeignKey('bpay.BpayTransaction')
