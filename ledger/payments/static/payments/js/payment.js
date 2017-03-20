@@ -1,8 +1,8 @@
 function hideBanner(){
-    $('#paymentBanner').addClass('hide');  
+    $('#paymentBanner').addClass('hide');
 }
 function showBanner(){
-    $('#paymentBanner').removeClass('hide');  
+    $('#paymentBanner').removeClass('hide');
 }
 $(function(){
     $(document).foundation();
@@ -15,10 +15,10 @@ $(function(){
     var $location_fieldset = $('#location_fieldset');
     var $card_fieldset = $('#card_fieldset');
     var $storedcard_fieldset = $('#storedcard_fieldset');
-    var invoice = $('#invoice_selector').val(); 
+    var invoice = $('#invoice_selector').val();
     var invoice_obj = null;
     var $regions = $('#regions');
-    
+
     // Money Inputs
     var cfgCulture = 'en-AU';
     $.preferCulture(cfgCulture);
@@ -30,7 +30,7 @@ $(function(){
         $(this).html(formatStatus($(this).html()));
     });
     $('#mainTabLoader').hide();
-    
+
     //Datatables
     var unlinkedBPAYTable = $('#unlinkedBpayTable').DataTable({
         "ajax":{
@@ -55,7 +55,7 @@ $(function(){
             }
         ]
     });
-    
+
     var linkedBPAYTable = $('#linkedBpayTable').DataTable({
         "ajax":{
             "url":'/ledger/payments/api/invoices/'+invoice+'/linked_bpay.json',
@@ -79,7 +79,7 @@ $(function(){
             }
         ]
     });
-    
+
     var receivedPaymentsTable = $('#received_payments_table').DataTable({
         "ajax":{
             "url":'/ledger/payments/api/invoices/'+invoice+'/payments.json',
@@ -109,7 +109,7 @@ $(function(){
             unlinkedBPAYTable.ajax.reload();
             linkedBPAYTable.ajax.reload();
         });
-        
+
     });
     linkedBPAYTable.on('click','.bpay_unlink_btn',function(e){
         e.preventDefault();
@@ -178,7 +178,7 @@ $(function(){
         return value;
     }
     function set_invoice(invoice){
-        invoice_obj = invoice; 
+        invoice_obj = invoice;
     }
     // Reset Forms
     function reset_forms() {
@@ -235,7 +235,7 @@ $(function(){
         if (parts.length > 1){
             for(i=0;i < parts.length; i++){
                 res += capitalizeFirstLetter(parts[i]) + ' ';
-            } 
+            }
         }
         else{ res = capitalizeFirstLetter(status);}
         return res
@@ -317,9 +317,9 @@ $(function(){
             $errors_div.addClass('hide');
         }
         if(!amount){
-            formError('An amount has not been specified for the payment'); 
+            formError('An amount has not been specified for the payment');
             return
-        }        
+        }
         // Get payload
         payload = {
             "invoice": invoice,
@@ -331,7 +331,7 @@ $(function(){
         if ($('#other_orig_txn').val()) {
             payload["orig_txn"] = invoice;
         }
-        
+
         // Check if the external checkbox is selected
         if ($('#other_external').is(':checked')){
             payload['external'] = true;
@@ -339,7 +339,7 @@ $(function(){
             payload['district'] = $('#districts').val();
             payload['receipt'] = $('#receipt_number').val();
         }
-        
+
         // POST
         $.ajax ({
             beforeSend: function(xhrObj){
@@ -366,7 +366,7 @@ $(function(){
     *  Make card payments with either stored cards or new cards
     */
     function cardPayment(){
-        
+
         // Hide div if not hidden
         if (!$errors_div.hasClass('hide')) {
             $errors_div.addClass('hide');
@@ -411,7 +411,7 @@ $(function(){
                 error(resp);
             },
             complete: function(resp){
-                checkInvoiceStatus();  
+                checkInvoiceStatus();
             }
         });
     }
@@ -426,7 +426,7 @@ $(function(){
             "link": link,
             "bpay": txn
         }
-        
+
         // POST
         $.ajax ({
             beforeSend: function(xhrObj){
@@ -605,8 +605,8 @@ $(function(){
         validateAmount: function(){
             var amount = $('#refundAmount').val();
             if(!amount){
-                formError('An amount has not been specified for the refund');
-                return
+               rf.displayError("An amount has not been specified for the refund");
+               return
             }
         },
         cardRefund: function(){
@@ -637,7 +637,9 @@ $(function(){
                     rf.displaySuccess(resp);
                 },
                 error: function(resp){
-                    rf.displayError(resp);
+                    var str = resp.responseText.replace(/[\[\]"]/g,'');
+                    str = str.replace(/[\{\}"]/g,'');
+                    rf.displayError(str);
                 },
                 complete: function(resp){
                     checkInvoiceStatus();
@@ -651,21 +653,21 @@ $(function(){
         hide:function(field){
             field.addClass('hide',100);
         },
-        displayError:function(resp){
+        displayError:function(msg){
            rf.modal_alert.removeClass('success');
            rf.modal_alert.addClass('alert');
-           rf.updateAlert(resp);
+           rf.updateAlert(msg);
         },
         displaySuccess:function(resp){
            rf.modal_alert.removeClass('alert');
            rf.modal_alert.addClass('success');
-           rf.updateAlert(resp);
+           rf.updateAlert("Refunded successfully.");
         },
-        updateAlert:function (resp) {
-           var error_str = resp.responseText.replace(/[\[\]"]/g,'');
-           rf.modal_alert_text.text(error_str);
+        updateAlert:function (msg) {
+
+           rf.modal_alert_text.text(msg);
            rf.show(rf.modal_alert);
-           setTimeout(function(){rf.hide(rf.modal_alert)},5000);
+           //setTimeout(function(){rf.hide(rf.modal_alert)},5000);
         }
     };
     rf.init();

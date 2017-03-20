@@ -20,8 +20,8 @@
     <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.3.0/css/foundation-flex.css">
     <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
     <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/css/dataTables.foundation.css" /> 
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/font-awesome/4.7.0/css/font-awesome.min.css" /> 
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/css/dataTables.foundation.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
     {% block extra_css %}
     <style>
         .voided_invoice {
@@ -36,6 +36,11 @@
         .logo {
             margin: 20px 0;
         }
+        @media only screen and (min-width: 35.61111em) {
+             .status{
+                margin-top: 30px;
+             }
+         }
     </style>
     {% endblock %}
 </head>
@@ -86,7 +91,7 @@
                                                 {% endfor %}
                                             </select>
                                     </div>
-                                    <div class="float-right"> Status: <strong id="invoice_status">{{invoices.0.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Outstanding: <strong id="invoice_balance">${{invoices.0.balance}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount
+                                    <div class="float-right status"> Status: <strong id="invoice_status">{{invoices.0.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Outstanding: <strong id="invoice_balance">${{invoices.0.balance}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount
                                         Paid: <strong id="invoice_paid">${{invoices.0.payment_amount}}</strong></div>
                                 </div>
                             </div>
@@ -268,8 +273,10 @@
                                 <form name="refundForm">
                                    <div class="columns large-12">
                                       <div  id="modal_alert" class="callout small text-center hide">
-                                          <h5>An Error Occured</h5>
                                           <p class="callout-text"></p>
+                                          <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+                                              <span aria-hidden="true">&times;</span>
+                                           </button>
                                        </div>
                                    </div>
                                     <div class="row">
