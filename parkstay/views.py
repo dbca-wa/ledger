@@ -207,7 +207,12 @@ class MakeBookingsView(TemplateView):
         booking.save()
 
         # generate invoice
-        reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
+        reservation = "Reservation for {} from {} to {} at {}".format(
+                '{} {}'.format(booking.customer.first_name, booking.customer.last_name),
+                booking.arrival,
+                booking.departure,
+                booking.campground.name
+        )
         
 
         response = utils.checkout(request, booking, lines, invoice_text=reservation)
