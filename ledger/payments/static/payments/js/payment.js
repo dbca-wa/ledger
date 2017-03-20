@@ -555,6 +555,9 @@ $(function(){
         refund_loader: $("#refundLoader"),
         modal_alert: $('#modal_alert'),
         modal_alert_text: $('#modal_alert > .callout-text'),
+        refund_form : document.forms.refundForm,
+        cancel_refund_btn: $("#cancel_refund"),
+        refund_modal : $('#refundModal'),
         init: function(){
             var form = $(document.forms.refundForm).hide(100);
             $.get('/ledger/payments/api/invoices/'+$('#invoice_selector').val()+'.json',function(resp){
@@ -569,13 +572,20 @@ $(function(){
                 rf.refund_option_select.on("change",function(){
                     rf.displayOption();
                 });
+                rf.cancel_refund_btn.on("click",function(){
+                    rf.refund_modal.foundation('close');
+                });
+                rf.refund_modal.on("closed.zf.reveal",function(){
+                    rf.refund_form.reset();
+                    rf.hide(rf.modal_alert);
+                });
             });
             form.submit(function(e){
                 e.preventDefault();
                 var amount = rf.validateAmount();
                 if (amount) {
                     if (invoice_obj.refundable_cards.length > 0 && rf.refund_option_select.val() == 1){
-                        rf.cardRefund();
+                        rf.cardRefund(amount);
                     }
                     else{
                         if(amount <= invoice_obj.refundable_amount){
@@ -617,12 +627,36 @@ $(function(){
            }
            return amount;
         },
-        cardRefund: function(){
-            console.log('card');
+        cardRefund: function(amount){
+            payload = {
+                "amount": amount 
+            }
+            // POST
+            $.ajax ({
+                beforeSend: function(xhrObj){
+                  xhrObj.setRequestHeader("Content-Type","application/json");
+                  xhrObj.setRequestHeader("Accept","application/json");
+                },
+                type: "POST",
+                url: "/ledger/payments/api/bpoint/"+rf.refund_form.refund_cards.value+"/refund.json",
+                data: JSON.stringify(payload),
+                dataType: "json",
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                success: function(resp){
+                    rf.displaySuccess(resp);
+                    rf.refund_form.reset();
+                },
+                error: function(resp){
+                    var str = resp.responseText.replace(/[\[\]"]/g,'');
+                    str = str.replace(/[\{\}"]/g,'');
+                    rf.displayError(str);
+                },
+                complete: function(resp){
+                    checkInvoiceStatus();
+                }
+            });
         },
         manualRefund: function(){
-            console.log('manual');
-            rf.validateAmount();
             // Get payload
             payload = {
                 "invoice": invoice,
@@ -643,6 +677,7 @@ $(function(){
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function(resp){
                     rf.displaySuccess(resp);
+                    rf.refund_form.reset();
                 },
                 error: function(resp){
                     var str = resp.responseText.replace(/[\[\]"]/g,'');
@@ -672,10 +707,9 @@ $(function(){
            rf.updateAlert("Refunded successfully.");
         },
         updateAlert:function (msg) {
-
            rf.modal_alert_text.text(msg);
            rf.show(rf.modal_alert);
-           //setTimeout(function(){rf.hide(rf.modal_alert)},5000);
+           setTimeout(function(){rf.hide(rf.modal_alert)},5000);
         }
     };
     rf.init();

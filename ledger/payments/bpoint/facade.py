@@ -39,7 +39,7 @@ class Facade(object):
         return CardDetails(
             card_number=bankcard.number,
             cvn=bankcard.ccv,
-            expiry_date=bankcard.expiry_date.strftime("%m%y")
+            expiry_date=bankcard.expiry_date.strftime("%m%y") if bankcard.expiry_date else None
         )
 
     def _submit_info(self,order_number,reference,amount,action,_type,sub_type,bank_card=None,orig_txn_number=None):
@@ -166,7 +166,7 @@ class Facade(object):
                 inv = Invoice.objects.get(reference=reference)
                 if action in ['reversal','refund'] and inv.payment_status == 'unpaid':
                     raise ValidationError("A {} cannot be made for an unpaid invoice.".format(action))
-                if action == 'refund' and (inv.payment_amount < decimal.Decimal(amount)):
+                if action == 'refund' and (inv.payment_amount < decimal.Decimal(total)):
                     raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
                 if inv.payment_status == 'paid' and action == 'payment':
                     raise ValidationError('This invoice has already been paid for.')
