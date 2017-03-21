@@ -222,6 +222,16 @@ class MakeBookingsView(TemplateView):
 class MyBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/my_bookings.html'
 
+    def get(self, request, *args, **kwargs):
+        bookings = Booking.objects.filter(customer=request.user)
+        today = timezone.now().date()
+
+        context = {
+            'current_bookings': bookings.filter(departure__gte=today).order_by('arrival'),
+            'past_bookings': bookings.filter(departure__lt=today).order_by('-arrival')
+        }
+        return render(request, self.template_name, context)
+
 
 class ParkstayRoutingView(TemplateView):
     template_name = 'ps/index.html'
@@ -230,7 +240,7 @@ class ParkstayRoutingView(TemplateView):
         if self.request.user.is_authenticated():
             if is_officer(self.request.user):
                 return redirect('dash-campgrounds')
-            return redirect('my-bookings')
+            return redirect('public_my_bookings')
         kwargs['form'] = LoginForm
         return super(ParkstayRoutingView, self).get(*args, **kwargs)
 
