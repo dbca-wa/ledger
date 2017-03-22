@@ -114,7 +114,7 @@
                 </div>
             </div>
         </div>
-        <paginate name="filterResults" :list="extentFeatures" :per="10">
+        <paginate name="filterResults" class="resultList" :list="extentFeatures" :per="10">
             <div class="row" v-for="f in paginated('filterResults')">
                 <div class="small-12 columns">
                     <span class="searchTitle">{{ f.name }}</span>
@@ -310,13 +310,22 @@ input:checked + .symb {
 }
 
 .pagination {
+    padding: 0;
     text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1em;
 }
 
 .pagination .active {
     background: #2199e8;
     color: #fefefe;
     cursor: default;
+}
+
+.pagination li {
+    display: inline-block;
+    cursor: pointer;
 }
 
 .tooltip {
@@ -391,6 +400,10 @@ input:checked + .symb {
 .searchTitle {
     font-size: 150%;
     font-weight: bold;
+}
+
+.resultList {
+    padding: 0;
 }
 
 [v-cloak] {
