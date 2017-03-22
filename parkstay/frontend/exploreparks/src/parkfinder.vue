@@ -105,11 +105,11 @@
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
                     <div id="mapPopupContent">
-                        <h5 id="mapPopupName"></h5>
-                        <p>Pic goes here</p>
-                        <div id="mapPopupDescription"/>
-                        <button id="mapPopupInfo" class="button formButton">More info</button>
-                        <button id="mapPopupBook" class="button formButton">Book now</button>
+                        <p><b id="mapPopupName"></b></p>
+                        <img class="thumbnail" id="mapPopupImage" />
+                        <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
+                        <button id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;">More info</button>
+                        <button id="mapPopupBook" class="button formButton" style="margin-bottom: 0;">Book now</button>
                     </div>
                 </div>
             </div>
@@ -119,12 +119,12 @@
                 <div class="small-12 columns">
                     <span class="searchTitle">{{ f.name }}</span>
                 </div>
-                <div class="small-12 medium-3 large-3 columns">
-                    <p>Pic goes here</p> 
+                <div class="small-12 medium-3 large-3 columns" v-if="f.images">
+                    <img class="thumbnail" v-bind:src="f.images[0].image"/> 
                 </div>
                 <div class="small-12 medium-9 large-9 columns">
                     <div v-html="f.description"/>
-                    <button class="button">More info</button>
+                    <a class="button" v-bind:src="f.info_url">More info</a>
                     <button v-if="f.campground_type == 0" class="button">Book now</button>
                 </div>
             </div>
@@ -994,6 +994,14 @@ export default {
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
+                console.log(feature);
+                if (feature.get('images')) {
+                    console.log(feature.get('images')[0].image);
+                    $("#mapPopupImage").attr('src', feature.get('images')[0].image);
+                    $("#mapPopupImage").show();
+                } else {
+                    $("#mapPopupImage").hide();
+                }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
