@@ -52,6 +52,9 @@
                             </div>
                         </div>
                     </div>
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label><input type="checkbox" v-model="bookableOnly"/> Show bookable campsites only</label>
+                    </div>
                 </div><div class="row"><div class="small-12 columns">
                     <hr/>
                 </div></div><div class="row">
@@ -458,17 +461,29 @@ export default {
             gearType: 'tent',
             filterParams: {
             },
-            sitesOnline: 1,
+            sitesOnline: true,
             sitesOnlineIcon: require('./assets/pin.svg'),
-            sitesInPerson: 1,
+            sitesInPerson: true,
             sitesInPersonIcon: require('./assets/pin_offline.svg'),
-            sitesAlt: 1,
+            sitesAlt: true,
             sitesAltIcon: require('./assets/pin_alt.svg'),
             locationIcon: require('./assets/location.svg'),
             paginate: ['filterResults']
         }
     },
     computed: {
+        bookableOnly: {
+            cache: false,
+            get: function() {
+                return this.sitesOnline && (!this.sitesInPerson) && (!this.sitesAlt);
+            },
+            set: function(val) {
+                this.sitesOnline = true;
+                this.sitesInPerson = !val;
+                this.sitesAlt = !val;
+                this.reload();
+            }
+        },
         extent: {
             cache: false,
             get: function() {
