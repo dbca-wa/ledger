@@ -23,9 +23,9 @@ def _render(template, context):
 
 class EmailBase(object):
     subject = ''
-    html_template = 'wl/emails/base_email.html'
+    html_template = 'email/base_email.html'
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
-    txt_template = 'wl/emails/base-email.txt'
+    txt_template = 'email/base-email.txt'
 
     def send_to_user(self, user, context=None):
         return self.send(user.email, context=context)

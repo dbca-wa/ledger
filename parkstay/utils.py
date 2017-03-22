@@ -407,7 +407,9 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     lines = price_or_lineitems(request,booking,booking.campsite_id_list)
     reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
     # Proceed to generate invoice
-    checkout(request,booking,lines,invoice_text=reservation,internal=True)
+    checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+    internal_create_booking_invoice(booking, checkout_response)
+
     # Attach new invoices to old booking
     if void_invoices:
         for i in old_booking.invoices.all():
@@ -499,7 +501,8 @@ def update_booking(request,old_booking,booking_details):
                             lines = price_or_lineitems(request,old_booking,old_booking.campsite_id_list)
                             reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(old_booking.customer.first_name,old_booking.customer.last_name),old_booking.arrival,booking.departure,old_booking.campground.name)
                             # Proceed to generate invoice
-                            checkout(request,old_booking,lines,invoice_text=reservation,internal=True)
+                            checkout_response = checkout(request,old_booking,lines,invoice_text=reservation,internal=True)
+                            internal_create_booking_invoice(booking, checkout_response)
                         else:
                             booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
                             old_booking.campsites.all().delete()
@@ -569,7 +572,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
     }
     try:
         parameters = {
-            'system': 'S369',
+            'system': 'S019',
             'fallback_url': request.build_absolute_uri('/'),
             'return_url': request.build_absolute_uri('/'),
             'forceRedirect': True,
@@ -590,12 +593,8 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
 
-
         response.raise_for_status()
-        if not response.history:
-            raise Exception('There was a problem retrieving the invoice for this booking')
-        last_redirect = response.history[-1]
-        BookingInvoice.objects.create(booking=booking,invoice_reference=last_redirect.url.split('=')[1])
+        return response
 
     except requests.exceptions.HTTPError as e:
         if 400 <= e.response.status_code < 500:
@@ -607,7 +606,15 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
 
         e.args = (http_error_msg,)
         raise
-    
+
+
+def internal_create_booking_invoice(booking, checkout_response):
+    if not checkout_response.history:
+        raise Exception('There was a problem retrieving the invoice for this booking')
+    last_redirect = checkout_response.history[-1]
+    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=last_redirect.url.split('=')[1])
+    return book_inv
+
 
 def internal_booking(request,booking_details,internal=True,updating=False):
     json_booking = request.data
@@ -620,7 +627,8 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             lines = price_or_lineitems(request,booking,booking.campsite_id_list)
 
             # Proceed to generate invoice
-            checkout(request,booking,lines,invoice_text=reservation,internal=True)
+            checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+            internal_create_booking_invoice(booking, checkout_response)
 
             return booking
     except:

@@ -1,0 +1,52 @@
+<div class="well">
+    <div class="col-sm-12">
+        <h3 class="text-primary">{{ booking.campground.name }}, {{ booking.campground.park.name }}</h3>
+    </div>
+    <div class="row">
+        <div class="col-sm-3">
+            <img class="img-thumbnail img-responsive" alt=""/>
+        </div>
+        <div class="col-sm-9">
+            <div class="row">
+                <div class="col-sm-4">
+                    <b>Campsite</b>
+                </div>
+                <div class="col-sm-8">
+                    {{ booking.first_campsite.name }} ({{ booking.first_campsite.type }})
+                </div>
+            </div><div class="row">
+                <div class="col-sm-4">
+                    <b>Dates</b>
+                </div>
+                <div class="col-sm-8">
+                    {{ booking.arrival }} to {{ booking.departure }} ({{ booking.num_days }} days)
+                </div>
+            </div><div class="row">
+                <div class="col-sm-4">
+                    <b>Number of guests</b>
+                </div>
+                <div class="col-sm-8">
+                    {{ booking.num_guests }}
+                </div>
+            </div><div class="row">
+                <div class="col-sm-4">
+                    <b>Booking confirmation number</b>
+                </div>
+                <div class="col-sm-8">
+                    uh
+                </div>
+            </div><div class="row">
+                <div class="col-sm-4">
+                    <b>Payment status</b>
+                </div>
+                <div class="col-sm-8">
+                    uh
+                </div>
+            </div><div class="row"> 
+                <p style="margin-top: 1em;"><a href="#" class="btn btn-info btn-lg" >Print</a></p>
+                <p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the campground.</p>
+            </div>
+        </div>
+    </div>
+</div>
+

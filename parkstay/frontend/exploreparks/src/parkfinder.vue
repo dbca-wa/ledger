@@ -52,9 +52,12 @@
                             </div>
                         </div>
                     </div>
-                </div><div class="row">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label><input type="checkbox" v-model="bookableOnly"/> Show bookable campsites only</label>
+                    </div>
+                </div><div class="row"><div class="small-12 columns">
                     <hr/>
-                </div><div class="row">
+                </div></div><div class="row">
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Equipment</label>
                     </div>
@@ -67,9 +70,9 @@
                     <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
                     </div>
-                </div><div class="row">
+                </div><div class="row"><div class="small-12 columns">
                     <hr class="search"/>
-                </div><div class="row">
+                </div></div><div class="row">
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Features</label>
                     </div>
@@ -78,14 +81,22 @@
                             <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
                         </div>
                     </template>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <template v-for="filt in extraFilterList">
+                        <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
+                            <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
+                        </div>
+                    </template>
+                    <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
                         <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Book online</label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
                         <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> Book in-person</label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
                         <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Third-party site</label>
+                    </div>
+                    <div class="small-12 medium-12 large-12 columns filter-button">
+                        <button class="button expanded" v-on:click="toggleShowFilters"><span v-if="hideExtraFilters">Show more filters ▼</span><span v-else>Hide filters ▲</span></button>
                     </div>
                 </div>
             </div>
@@ -94,26 +105,26 @@
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
                     <div id="mapPopupContent">
-                        <h5 id="mapPopupName"></h5>
-                        <p>Pic goes here</p>
-                        <div id="mapPopupDescription"/>
-                        <button id="mapPopupInfo" class="button formButton">More info</button>
-                        <button id="mapPopupBook" class="button formButton">Book now</button>
+                        <p><b id="mapPopupName"></b></p>
+                        <img class="thumbnail" id="mapPopupImage" />
+                        <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
+                        <button id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;">More info</button>
+                        <button id="mapPopupBook" class="button formButton" style="margin-bottom: 0;">Book now</button>
                     </div>
                 </div>
             </div>
         </div>
-        <paginate name="filterResults" :list="extentFeatures" :per="10">
+        <paginate name="filterResults" class="resultList" :list="extentFeatures" :per="10">
             <div class="row" v-for="f in paginated('filterResults')">
                 <div class="small-12 columns">
                     <span class="searchTitle">{{ f.name }}</span>
                 </div>
-                <div class="small-12 medium-3 large-3 columns">
-                    <p>Pic goes here</p> 
+                <div class="small-12 medium-3 large-3 columns" v-if="f.images">
+                    <img class="thumbnail" v-bind:src="f.images[0].image"/> 
                 </div>
                 <div class="small-12 medium-9 large-9 columns">
                     <div v-html="f.description"/>
-                    <button class="button">More info</button>
+                    <a class="button" v-bind:src="f.info_url">More info</a>
                     <button v-if="f.campground_type == 0" class="button">Book now</button>
                 </div>
             </div>
@@ -219,6 +230,10 @@
     content: "r";
 }
 
+.symb.RW3:before {
+    content: "s";
+}
+
 .fa-chevron-left:before {
     font-style: normal;
     content: "«";
@@ -234,7 +249,18 @@
     content: "×";
 }
 
+/* filter hiding on small screens */
+@media print, screen and (max-width: 63.9375em) {
+    .filter-hide {
+        display: none;
+    }
+}
 
+@media print, screen and (min-width: 64em) {
+    .filter-button {
+        display: none; 
+    }
+}
 
 #map {
     height: 75vh;
@@ -284,13 +310,22 @@ input:checked + .symb {
 }
 
 .pagination {
+    padding: 0;
     text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1em;
 }
 
 .pagination .active {
     background: #2199e8;
     color: #fefefe;
     cursor: default;
+}
+
+.pagination li {
+    display: inline-block;
+    cursor: pointer;
 }
 
 .tooltip {
@@ -367,6 +402,10 @@ input:checked + .symb {
     font-weight: bold;
 }
 
+.resultList {
+    padding: 0;
+}
+
 [v-cloak] {
     display: none;
 }
@@ -411,17 +450,21 @@ export default {
             filterList: [
                 {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
                 {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
-                {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']},
+                {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']}
+            ],
+            extraFilterList: [
                 {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
                 {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
                 {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
                 {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
                 {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
-                {name: 'Portable toilet disposal', symb: 'RF19', key: 'sullage', 'remoteKey': []},
+                //{name: 'Portable toilet disposal', symb: 'RF19', key: 'sullage', 'remoteKey': []},
                 {name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
                 {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
                 {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
+                {name: 'Walk trail', symb: 'RW3', key: 'walktrail', 'remoteKey': ['WALK TRAIL']},
             ],
+            hideExtraFilters: true,
             suggestions: {},
             extentFeatures: [],
             numAdults: 2,
@@ -431,17 +474,29 @@ export default {
             gearType: 'tent',
             filterParams: {
             },
-            sitesOnline: 1,
+            sitesOnline: true,
             sitesOnlineIcon: require('./assets/pin.svg'),
-            sitesInPerson: 1,
+            sitesInPerson: true,
             sitesInPersonIcon: require('./assets/pin_offline.svg'),
-            sitesAlt: 1,
+            sitesAlt: true,
             sitesAltIcon: require('./assets/pin_alt.svg'),
             locationIcon: require('./assets/location.svg'),
             paginate: ['filterResults']
         }
     },
     computed: {
+        bookableOnly: {
+            cache: false,
+            get: function() {
+                return this.sitesOnline && (!this.sitesInPerson) && (!this.sitesAlt);
+            },
+            set: function(val) {
+                this.sitesOnline = true;
+                this.sitesInPerson = !val;
+                this.sitesAlt = !val;
+                this.reload();
+            }
+        },
         extent: {
             cache: false,
             get: function() {
@@ -479,6 +534,9 @@ export default {
         }
     },
     methods: {
+        toggleShowFilters: function() {
+            this.hideExtraFilters = !this.hideExtraFilters;
+        },
         search: function(place) {
             if (!place) {
                 return;
@@ -585,19 +643,20 @@ export default {
             var vm = this;
             // make a lookup table of campground features to filter on
             var legit = new Set();
-            this.filterList.forEach(function (el) {
+            var filterCb = function (el) {
                 if (vm.filterParams[el.key] === true) {
                     el.remoteKey.forEach(function (fl) {
                         legit.add(fl);
                     });
                 }
-            });
-            
+            };
+            this.filterList.forEach(filterCb);
+            this.extraFilterList.forEach(filterCb);
+
             this.groundsFilter.clear();
             this.groundsData.forEach(function (el) {
-                // first pass filter against the list of IDs returned by searc
+                // first pass filter against the list of IDs returned by search
                 
-                //console.log(el);
                 var campgroundType = el.get('campground_type');
                 switch (campgroundType) {
                     case 0:
@@ -948,6 +1007,14 @@ export default {
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
+                console.log(feature);
+                if (feature.get('images')) {
+                    console.log(feature.get('images')[0].image);
+                    $("#mapPopupImage").attr('src', feature.get('images')[0].image);
+                    $("#mapPopupImage").show();
+                } else {
+                    $("#mapPopupImage").hide();
+                }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();

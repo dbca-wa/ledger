@@ -752,6 +752,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # create our result object, which will be returned as JSON
         result = {
+            'name': ground.name,
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
             'adults': 1,

@@ -1,5 +1,10 @@
 <template>
     <div id="sites-cal">
+        <div class="row" v-if="name">
+            <div class="columns small-12">
+                <h1>Book a campsite at {{ name }}</h1>
+            </div>
+        </div>
         <div class="row">
             <div class="columns small-6 medium-6 large-3">
                 <label>Arrival
@@ -94,6 +99,22 @@
 </template>
 
 <style>
+
+.fa-chevron-left:before {
+    font-style: normal;
+    content: "«";
+}
+
+.fa-chevron-right:before {
+    font-style: normal;    
+    content: "»";
+}
+
+.fa-remove:before {
+    font-style: normal;    
+    content: "×";
+}
+
 th.site {
     width: 30%;
     min-width: 200px;
@@ -199,6 +220,7 @@ export default {
     el: '#availability',
     data: function () {
         return {
+            name: '',
             arrivalDate: moment.utc(now),
             departureDate: moment.utc(now).add(5, 'days'),
             parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
@@ -290,6 +312,7 @@ export default {
                     url: url,
                     dataType: 'json',
                     success: function(data, stat, xhr) {
+                        vm.name = data.name;
                         vm.days = data.days;
                         vm.classes = data.classes;
                         data.sites.forEach(function(el) {
