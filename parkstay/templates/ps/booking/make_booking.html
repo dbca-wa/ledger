@@ -287,7 +287,7 @@
         el: '#addBooking',
         data: {
             expiry: moment('{{ expiry|escapejs }}'),
-            timer: 1200,
+            timer: {{ timer }},
             pricing: {
                 adult: {{ pricing.adult }},
                 concession: {{ pricing.concession }},
@@ -426,14 +426,26 @@
         mounted: function () {
             var vm = this;
 
+            // check that expiry is in a sane range
+            var saneTz = (0 < Math.floor((vm.expiry - moment.now())/1000) < vm.timer);
+
             // update the countdown timer every second
             var timer = setInterval(function (ev) {
-                vm.timer = Math.floor((vm.expiry - moment.now())/1000);
-                if (vm.timer <= 0) {
+                // fall back to the pre-encoded timer
+                if (!saneTz) {
+                    vm.timer -= 1;
+                } else {
+                    // if the timezone is sane, do live updates 
+                    // this way unloaded tabs won't cache the wrong time.
+                    var newTimer = Math.floor((vm.expiry - moment.now())/1000);
+                    vm.timer = newTimer;
+                }
+
+                if ((vm.timer <= 0)) {
                     clearInterval(timer);
                     var loc = window.location;
                     window.location = loc.protocol + '//' + loc.host + loc.pathname;
-                }
+                } 
             }, 1000);
 
             // wire up events to the form controls
