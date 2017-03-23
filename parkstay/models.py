@@ -902,9 +902,9 @@ class BookingInvoice(models.Model):
 class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""
     VEHICLE_CHOICES = (
-        ('vehicle','vehicle'),
-        ('motorbike','motorbike'),
-        ('concession','concession')
+        ('vehicle','Vehicle'),
+        ('motorbike','Motorcycle'),
+        ('concession','Vehicle (concession)')
     )
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
