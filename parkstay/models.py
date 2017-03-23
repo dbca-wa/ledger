@@ -162,6 +162,13 @@ class Campground(models.Model):
         except Feature.DoesNotExist:
             return True
 
+    @property
+    def first_image(self):
+        images = self.images.all()
+        if images.count():
+            return images[0]
+        return None
+
     # Methods
     # =======================================
     def _is_open(self,period):

@@ -34,7 +34,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
                     )
 
         if not sites_qs.exists():
-            raise ValidationError('No matching campsites found')
+            raise ValidationError('No matching campsites found.')
 
         # get availability for sites, filter out the non-clear runs
         availability = get_campsite_availability(sites_qs, start_date, end_date)
@@ -47,7 +47,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
 
         if not sites:
-            raise ValidationError('Campsite class unavailable for specified time period')
+            raise ValidationError('Campsite class unavailable for specified time period.')
 
         # TODO: add campsite sorting logic based on business requirements
         # for now, pick the first campsite in the list
@@ -95,7 +95,7 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         availability = get_campsite_availability(sites_qs, start_date, end_date)
         for site_id, dates in availability.items():
             if not all([v[0] == 'open' for k, v in dates.items()]):
-                raise ValidationError('Campsite unavailable for specified time period')
+                raise ValidationError('Campsite unavailable for specified time period.')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(

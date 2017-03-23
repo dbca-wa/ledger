@@ -929,7 +929,7 @@ def create_booking(request, *args, **kwargs):
         messages.success(request, 'Booking already in progress, complete this first!')
         return HttpResponse(geojson.dumps({
             'status': 'success',
-            'msg': 'Booking already in progress',
+            'msg': 'Booking already in progress.',
             'pk': request.session['ps_booking']
         }), content_type='application/json')
 
@@ -940,13 +940,13 @@ def create_booking(request, *args, **kwargs):
         if campsite_obj.campground.site_type != 0:
             return HttpResponse(geojson.dumps({
                 'status': 'error',
-                'msg': 'Campground doesn\'t support per-site bookings'
+                'msg': 'Campground doesn\'t support per-site bookings.'
             }), status=400, content_type='application/json')
     # for the rest, check that both campsite_class and campground are provided
     elif (not campsite_class) or (not campground):
         return HttpResponse(geojson.dumps({
             'status': 'error',
-            'msg': 'Must specify campsite_class and campground'
+            'msg': 'Must specify campsite_class and campground.'
         }), status=400, content_type='application/json')
 
     # try to create a temporary booking
