@@ -100,7 +100,10 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
     def _process_decline(self, application):
         request = self.request
+        mutable = request.POST._mutable
+        request.POST._mutable = True
         request.POST['application'] = application.pk
+        request.POST._mutable = mutable
         if 'officer' not in request.POST:
             request.POST['officer'] = request.user.pk
         form = ApplicationDeclinedDetailsForm(request.POST)

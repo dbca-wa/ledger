@@ -327,12 +327,8 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
         scrubbed = serializer.validated_data
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
-            sites = Campsite.objects.exclude(
-                campsitebooking__date__range=(
-                    scrubbed['arrival'],
-                    scrubbed['departure']-timedelta(days=1)
-                )
-            ).filter(**{scrubbed['gear_type']: True})
+            sites = Campsite.objects.filter(**{scrubbed['gear_type']: True})
+            ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
             ground_ids = set([s.campground.id for s in sites])
             queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
         else:
