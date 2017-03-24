@@ -1,5 +1,11 @@
+import re
+
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from parkstay.models import Booking
+
+CHECKOUT_PATH = re.compile('^/ledger/checkout/checkout')
 
 class BookingTimerMiddleware(object):
     def process_request(self, request):
@@ -17,4 +23,9 @@ class BookingTimerMiddleware(object):
                 # expiry time has been hit, destroy the Booking then ditch it
                 booking.delete()
                 del request.session['ps_booking']
+
+        # force a redirect if in the checkout
+        if ('ps_booking' not in request.session) and CHECKOUT_PATH.match(request.path):
+            return HttpResponseRedirect(reverse('public_make_booking'))
+
         return

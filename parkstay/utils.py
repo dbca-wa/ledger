@@ -34,7 +34,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
                     )
 
         if not sites_qs.exists():
-            raise ValidationError('No matching campsites found')
+            raise ValidationError('No matching campsites found.')
 
         # get availability for sites, filter out the non-clear runs
         availability = get_campsite_availability(sites_qs, start_date, end_date)
@@ -47,7 +47,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
 
         if not sites:
-            raise ValidationError('Campsite class unavailable for specified time period')
+            raise ValidationError('Campsite class unavailable for specified time period.')
 
         # TODO: add campsite sorting logic based on business requirements
         # for now, pick the first campsite in the list
@@ -95,7 +95,7 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         availability = get_campsite_availability(sites_qs, start_date, end_date)
         for site_id, dates in availability.items():
             if not all([v[0] == 'open' for k, v in dates.items()]):
-                raise ValidationError('Campsite unavailable for specified time period')
+                raise ValidationError('Campsite unavailable for specified time period.')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
@@ -388,18 +388,24 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     if vehicles:
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
-            'vehicle': vehicles.filter(type='vehicle').count(),
-            'motorbike': vehicles.filter(type='motorbike').count(),
-            'concession': vehicles.filter(type='concession').count()
+            'vehicle': vehicles.filter(type='vehicle'),
+            'motorbike': vehicles.filter(type='motorbike'),
+            'concession': vehicles.filter(type='concession')
         }
 
         for k,v in vehicle_dict.items():
-            if int(v) > 0:
+            if v.count() > 0:
                 if lines:
                     price =  park_entry_rate[k]
-                    invoice_lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                    regos = ', '.join([x[0] for x in v.values_list('rego')])
+                    invoice_lines.append({
+                        'ledger_description': 'Park Entry - {}'.format(k),
+                        'quantity': v.count(),
+                        'price_incl_tax': price,
+                        'oracle_code': '1236'
+                    })
                 else:
-                    price =  Decimal(park_entry_rate[k]) * v
+                    price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
 
     if lines:
@@ -444,7 +450,9 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     lines = price_or_lineitems(request,booking,booking.campsite_id_list)
     reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
     # Proceed to generate invoice
-    checkout(request,booking,lines,invoice_text=reservation,internal=True)
+    checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+    internal_create_booking_invoice(booking, checkout_response)
+
     # Attach new invoices to old booking
     if void_invoices:
         for i in old_booking.invoices.all():
@@ -536,7 +544,8 @@ def update_booking(request,old_booking,booking_details):
                             lines = price_or_lineitems(request,old_booking,old_booking.campsite_id_list)
                             reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(old_booking.customer.first_name,old_booking.customer.last_name),old_booking.arrival,booking.departure,old_booking.campground.name)
                             # Proceed to generate invoice
-                            checkout(request,old_booking,lines,invoice_text=reservation,internal=True)
+                            checkout_response = checkout(request,old_booking,lines,invoice_text=reservation,internal=True)
+                            internal_create_booking_invoice(booking, checkout_response)
                         else:
                             booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
                             old_booking.campsites.all().delete()
@@ -606,7 +615,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
     }
     try:
         parameters = {
-            'system': 'S369',
+            'system': 'S019',
             'fallback_url': request.build_absolute_uri('/'),
             'return_url': request.build_absolute_uri('/'),
             'forceRedirect': True,
@@ -627,12 +636,8 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
 
-
         response.raise_for_status()
-        if not response.history:
-            raise Exception('There was a problem retrieving the invoice for this booking')
-        last_redirect = response.history[-1]
-        BookingInvoice.objects.create(booking=booking,invoice_reference=last_redirect.url.split('=')[1])
+        return response
 
     except requests.exceptions.HTTPError as e:
         if 400 <= e.response.status_code < 500:
@@ -644,7 +649,15 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
 
         e.args = (http_error_msg,)
         raise
-    
+
+
+def internal_create_booking_invoice(booking, checkout_response):
+    if not checkout_response.history:
+        raise Exception('There was a problem retrieving the invoice for this booking')
+    last_redirect = checkout_response.history[-1]
+    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=last_redirect.url.split('=')[1])
+    return book_inv
+
 
 def internal_booking(request,booking_details,internal=True,updating=False):
     json_booking = request.data
@@ -657,7 +670,8 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             lines = price_or_lineitems(request,booking,booking.campsite_id_list)
 
             # Proceed to generate invoice
-            checkout(request,booking,lines,invoice_text=reservation,internal=True)
+            checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+            internal_create_booking_invoice(booking, checkout_response)
 
             return booking
     except:

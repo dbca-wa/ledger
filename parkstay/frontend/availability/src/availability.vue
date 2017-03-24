@@ -1,11 +1,26 @@
 <template>
     <div id="sites-cal">
+        <div class="row" v-if="status == 'offline'">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Sorry, this campground doesn't yet support online bookings. Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
+                </div>
+            </div>
+        </div>
+        <div class="row" v-if="errorMsg">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Sorry, there was an error placing the booking ({{ errorMsg }}). Please try again.
+                </div>
+            </div>
+        </div>
+
         <div class="row" v-if="name">
             <div class="columns small-12">
                 <h1>Book a campsite at {{ name }}</h1>
             </div>
         </div>
-        <div class="row">
+        <div class="row" v-show="status == 'online'">
             <div class="columns small-6 medium-6 large-3">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy"/>
@@ -66,7 +81,7 @@
                 </label>
             </div>
         </div>
-        <div class="row"><div class="columns table-scroll">
+        <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
             <table class="hover">
                 <thead>
                     <tr>
@@ -233,6 +248,8 @@ export default {
             maxAdults: 30,
             maxChildren: 30,
             gearType: 'tent',
+            status: null,
+            errorMsg: null,
             classes: {},
             sites: []
         };
@@ -292,6 +309,12 @@ export default {
                     if (data.status == 'success') {
                         window.location.href = '/booking';
                     }
+                },
+                error: function(data, stat, xhr) {
+                    console.log('POST error');
+                    console.log(data);
+                    vm.errorMsg = data.responseJSON.msg;
+                    vm.update();
                 }
             });
         },
@@ -307,7 +330,7 @@ export default {
                     num_infant: vm.numInfants,
                     gear_type: vm.gearType
                 });
-                console.log('AJAX '+url)
+                console.log('AJAX '+url);
                 $.ajax({
                     url: url,
                     dataType: 'json',
@@ -319,6 +342,10 @@ export default {
                             el.showBreakdown = false;
                         });
                         vm.sites = data.sites;
+                        vm.status = 'online';
+                    },
+                    error: function(data, stat, xhr) {
+                        vm.status = 'offline';
                     }
                 });
             }, 500)();

@@ -7,6 +7,7 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 District,
                                 CampsiteBooking,
                                 BookingRange,
+                                CampgroundImage,
                                 CampsiteBookingRange,
                                 CampgroundBookingRange,
                                 Campsite,
@@ -171,9 +172,15 @@ class CampgroundMapFilterSerializer(serializers.HyperlinkedModelSerializer):
         model = Campground
         fields = ('id',)
 
+class CampgroundMapImageSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = CampgroundImage
+        fields = ('image',)
+
 class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
     features = CampgroundMapFeatureSerializer(read_only=True, many=True)
     park = CampgroundMapParkSerializer(read_only=True)
+    images = CampgroundMapImageSerializer(read_only=True, many=True)
 
     class Meta:
         model = Campground
@@ -185,6 +192,8 @@ class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'features',
             'campground_type',
             'park',
+            'info_url',
+            'images'
         )
 
 class CampgroundImageSerializer(serializers.ModelSerializer):

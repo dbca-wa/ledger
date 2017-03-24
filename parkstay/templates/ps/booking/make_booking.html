@@ -3,7 +3,6 @@
 {% load forms %}
 {% block extra_css %}
     {{ block.super }}
-    <link href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet"/>
     <style>
         #guest-dropdown{
             min-width:200px;
@@ -29,13 +28,14 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-12"><div class="well">
-                <h3>You have not yet selected a campsite to book, or your session has expired.</h3>
-                <p>Please visit the Explore Parks website to start a new campground booking session.</p>
+                <h3>Your session has expired, or you have not yet selected a campsite to book.</h3>
+                <p>Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/park-stay">Explore Parks website</a> to start a new campground booking session.</p>
             </div></div>
         </div>
     </div>
 {% else %}
-    <form name="addBookingForm" @submit.prevent="validate()" novalidate><div class="container">
+    <form method="POST" name="addBookingForm" @submit.prevent="validate()" novalidate><div class="container">
+        {% csrf_token %}
         <div class="row">
             <div class="col-lg-12">
                 <div class="well">
@@ -47,10 +47,11 @@
                             {% endverbatim %}
                                 <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel</a>
                             </p>
+                            {{ form.non_field_errors }}
                             <h3 class="text-primary">Booking information</h3>
                         </div>
                         <div class="col-md-2">
-                              <img style="width: 128px; height: 128px;" alt="campground"  class="img-thumbnail img-responsive">
+                              <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}">
                               <p class="pricing" v-cloak >
                             {% verbatim %}
                                   <strong>${{ perDayFee|formatMoney(2) }}</strong>
@@ -202,20 +203,23 @@
                                 <div class="form-group">
                                     <label>Number of vehicles:
                                         <input class="form-control" name="form-TOTAL_FORMS" max="8" min="0" value="1" v-model="vehicleCount" v-on:change="updateVehicles" type="number"/>
+                                        <input id="id_form-INITIAL_FORMS" name="form-INITIAL_FORMS" type="hidden" value="1" />
+                                        <input id="id_form-MIN_NUM_FORMS" name="form-MIN_NUM_FORMS" type="hidden" value="0" />
+                                        <input id="id_form-MAX_NUM_FORMS" name="form-MAX_NUM_FORMS" type="hidden" value="8" />
                                     </label>
                                 </div>
                             </div>
                         </div>
-                        <div class="row form-group" v-for="vehicle in vehicles">
+                        <div class="row form-group" v-for="(vehicle, index) in vehicles">
                             <div class="col-md-6">
-                                <select v-on:change="calculateTotal" v-bind:name="'form-'+(vehicle-1)+'-vehicle_type'" class="form-control" v-model="vehicle[0]">
+                                <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]">
                                     <option value="0">Vehicle</option>
                                     <option value="1">Vehicle (concession)</option>
                                     <option value="2">Motorcycle</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <input class="form-control" v-bind:name="'form-'+(vehicle-1)+'-vehicle_rego'" type="text" placeholder="Registration" v-model="vehicle[1]"/>
+                                <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" placeholder="Registration" v-model="vehicle[1]" required/>
                             </div>
                         </div>
                         <div class="row" v-cloak>
@@ -248,7 +252,7 @@
                           <div class="form-group">
                             <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.)</span></label>
                             <div class="input-group">
-                              <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
+                              <span class="input-group-addon">AUD $</span>
                               <input type="text" class="form-control" :value="total|formatMoney(2)" readonly="true">
                             </div>
                           </div>
@@ -274,15 +278,16 @@
 {% endblock %}
 
 {% block custom_js %}
-<script src="//static.dpaw.wa.gov.au/static/libs/vue/2.1.6/vue.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/libs/vue/2.2.4/vue.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.9.0/moment.min.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.18.0/moment.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script type="text/javascript">
     var book = new Vue({
         el: '#addBooking',
         data: {
-            timer: {{ expiry }},
+            expiry: moment('{{ expiry|escapejs }}'),
+            timer: {{ timer }},
             pricing: {
                 adult: {{ pricing.adult }},
                 concession: {{ pricing.concession }},
@@ -421,14 +426,26 @@
         mounted: function () {
             var vm = this;
 
+            // check that expiry is in a sane range
+            var saneTz = (0 < Math.floor((vm.expiry - moment.now())/1000) < vm.timer);
+
             // update the countdown timer every second
             var timer = setInterval(function (ev) {
-                if (vm.timer > 0) {
+                // fall back to the pre-encoded timer
+                if (!saneTz) {
                     vm.timer -= 1;
-                } else if (vm.timer == 0) {
-                    clearInterval(timer);
-                    location.reload();
+                } else {
+                    // if the timezone is sane, do live updates 
+                    // this way unloaded tabs won't cache the wrong time.
+                    var newTimer = Math.floor((vm.expiry - moment.now())/1000);
+                    vm.timer = newTimer;
                 }
+
+                if ((vm.timer <= 0)) {
+                    clearInterval(timer);
+                    var loc = window.location;
+                    window.location = loc.protocol + '//' + loc.host + loc.pathname;
+                } 
             }, 1000);
 
             // wire up events to the form controls
