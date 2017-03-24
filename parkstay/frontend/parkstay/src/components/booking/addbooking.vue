@@ -36,7 +36,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="input-group date" id="datedeparture">
-                                                    <input type="text" class="form-control" name="departure" placeholder="departure">
+                                                    <input type="text" class="form-control" name="departure" placeholder="Departure">
                                                     <span class="input-group-addon">
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
