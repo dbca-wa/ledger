@@ -1,4 +1,5 @@
 
+from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic.base import View, TemplateView
@@ -7,7 +8,8 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from parkstay.forms import LoginForm, MakeBookingsForm
+from django import forms
+from parkstay.forms import LoginForm, MakeBookingsForm, VehicleInfoFormset
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -19,9 +21,11 @@ from parkstay.models import (Campground,
                                 Region,
                                 CampsiteClass,
                                 Booking,
+                                BookingVehicleRego,
                                 CampsiteRate,
                                 ParkEntryRate
                                 )
+from ledger.accounts.models import EmailUser
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
 from decimal import *
@@ -99,21 +103,14 @@ def abort_booking_view(request, *args, **kwargs):
 
 class MakeBookingsView(TemplateView):
     template_name = 'ps/booking/make_booking.html'
-    def get(self, request, *args, **kwargs):
-        # TODO: find campsites related to campground
-        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        expiry = (booking.expiry_time - timezone.now()).seconds if booking else -1
-        form_context = {
-            'num_adult': booking.details.get('num_adult', 0) if booking else 0,
-            'num_concession': booking.details.get('num_concession', 0) if booking else 0,
-            'num_child': booking.details.get('num_child', 0) if booking else 0,
-            'num_infant': booking.details.get('num_infant', 0) if booking else 0
-        }
-        form = MakeBookingsForm(form_context)
+
+    def render_page(self, request, booking, form, vehicles):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
+        expiry = booking.expiry_time.isoformat() if booking else ''
+        timer = (booking.expiry_time-timezone.now()).seconds if booking else -1
         campsite = booking.campsites.all()[0].campsite if booking else None
-        entry_fees = ParkEntryRate.objects.filter(period_start__lte = booking.arrival, period_end__gt=booking.arrival).order_by('-period_start').first() if (booking and campsite.campground.park.entry_fee_required) else None
+        entry_fees = ParkEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.campground.park.entry_fee_required) else None
         pricing = {
             'adult': Decimal('0.00'),
             'concession': Decimal('0.00'),
@@ -133,18 +130,109 @@ class MakeBookingsView(TemplateView):
 
         return render(request, self.template_name, {
             'form': form, 
+            'vehicles': vehicles,
             'booking': booking,
             'campsite': campsite,
             'expiry': expiry,
+            'timer': timer,
             'pricing': pricing
         })
 
+
+    def get(self, request, *args, **kwargs):
+        # TODO: find campsites related to campground
+        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        form_context = {
+            'num_adult': booking.details.get('num_adult', 0) if booking else 0,
+            'num_concession': booking.details.get('num_concession', 0) if booking else 0,
+            'num_child': booking.details.get('num_child', 0) if booking else 0,
+            'num_infant': booking.details.get('num_infant', 0) if booking else 0
+        }
+        form = MakeBookingsForm(form_context)
+        vehicles = VehicleInfoFormset()
+        return self.render_page(request, booking, form, vehicles)
+
+
     def post(self, request, *args, **kwargs):
+        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
         form = MakeBookingsForm(request.POST)
+        vehicles = VehicleInfoFormset(request.POST)   
+        
+        # re-render the page if there's no booking in the session
+        if not booking:
+            return self.render_page(request, booking, form, vehicles)
+    
+        # re-render the page if the form doesn't validate
+        if (not form.is_valid()) or (not vehicles.is_valid()):
+            return self.render_page(request, booking, form, vehicles)
+
+        # update the booking object with information from the form
+        if not booking.details:
+            booking.details = {}
+        booking.details['num_adult'] = form.cleaned_data.get('num_adult')
+        booking.details['num_concession'] = form.cleaned_data.get('num_concession')
+        booking.details['num_child'] = form.cleaned_data.get('num_child')
+        booking.details['num_infant'] = form.cleaned_data.get('num_infant')
+
+        # update vehicle registrations from form
+        VEHICLE_CHOICES = {'0': 'vehicle', '1': 'concession', '2': 'motorbike'}
+        BookingVehicleRego.objects.filter(booking=booking).delete()
+        for vehicle in vehicles:
+            BookingVehicleRego.objects.create(
+                    booking=booking, 
+                    rego=vehicle.cleaned_data.get('vehicle_rego'), 
+                    type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')]
+            )
+
+        # generate final pricing
+        lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+        print(lines)
+        total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
+
+        # get the customer object
+        # FIXME: get feedback on whether to overwrite personal info if the EmailUser
+        # already exists
+        try:
+            customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
+        except EmailUser.DoesNotExist:
+            customer = EmailUser.objects.create(
+                    email=form.cleaned_data.get('email'), 
+                    first_name=form.cleaned_data.get('first_name'),
+                    last_name=form.cleaned_data.get('last_name'),
+                    phone_number=form.cleaned_data.get('phone')
+            )
+
+        
+        # finalise the booking object
+        booking.customer = customer
+        booking.cost_total = total
+        booking.save()
+
+        # generate invoice
+        reservation = "Reservation for {} from {} to {} at {}".format(
+                '{} {}'.format(booking.customer.first_name, booking.customer.last_name),
+                booking.arrival,
+                booking.departure,
+                booking.campground.name
+        )
+        
+
+        response = utils.checkout(request, booking, lines, invoice_text=reservation)
+        return HttpResponse(response.content)
 
 
 class MyBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/my_bookings.html'
+
+    def get(self, request, *args, **kwargs):
+        bookings = Booking.objects.filter(customer=request.user)
+        today = timezone.now().date()
+
+        context = {
+            'current_bookings': bookings.filter(departure__gte=today).order_by('arrival'),
+            'past_bookings': bookings.filter(departure__lt=today).order_by('-arrival')
+        }
+        return render(request, self.template_name, context)
 
 
 class ParkstayRoutingView(TemplateView):
@@ -154,7 +242,7 @@ class ParkstayRoutingView(TemplateView):
         if self.request.user.is_authenticated():
             if is_officer(self.request.user):
                 return redirect('dash-campgrounds')
-            return redirect('my-bookings')
+            return redirect('public_my_bookings')
         kwargs['form'] = LoginForm
         return super(ParkstayRoutingView, self).get(*args, **kwargs)
 

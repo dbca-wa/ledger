@@ -554,6 +554,7 @@ $(function(){
         refund_option_select: $('#refund_option'),
         refund_loader: $("#refundLoader"),
         modal_alert: $('#modal_alert'),
+        modal_alert_btn: $("#refund_alert_btn"),
         modal_alert_text: $('#modal_alert > .callout-text'),
         refund_form : document.forms.refundForm,
         cancel_refund_btn: $("#cancel_refund"),
@@ -577,6 +578,9 @@ $(function(){
                 });
                 rf.refund_modal.on("closed.zf.reveal",function(){
                     rf.refund_form.reset();
+                    rf.hide(rf.modal_alert);
+                });
+                rf.modal_alert_btn.on("click",function(e){
                     rf.hide(rf.modal_alert);
                 });
             });

@@ -11,6 +11,9 @@ from ledger.basket.models import Basket
 from ledger.catalogue.models import Product
 from oscar.core.loading import get_class
 from oscar.apps.voucher.models import Voucher
+import logging
+logger = logging.getLogger(__name__)
+
 
 OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
@@ -48,15 +51,20 @@ def validSystem(system_id):
     ''' Check if the system is in the itsystems register.
     :return: Boolean
     '''
-    res = requests.get('{}?system_id={}'.format(settings.CMS_URL,system_id), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
-    try:
-        res.raise_for_status()
-        res = json.loads(res.content).get('objects')
-        if not res:
-            return False
+    if settings.CMS_URL:
+        # TODO: prefetch whole systems register list, store in django cache, use that instead of doing a GET request every time
+        res = requests.get('{}?system_id={}'.format(settings.CMS_URL,system_id), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
+        try:
+            res.raise_for_status()
+            res = json.loads(res.content).get('objects')
+            if not res:
+                return False
+            return True
+        except:
+            raise
+    else:
+        logger.warn('CMS_URL not set, ledger.payments.utils.validSystem will always return true')
         return True
-    except:
-        raise
 
 def calculate_excl_gst(amount):
     percentage = D(100 - settings.LEDGER_GST)/ D(100.0)

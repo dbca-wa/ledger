@@ -55,7 +55,7 @@ urlpatterns = [
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
     url(r'^booking/abort$', views.abort_booking_view, name='public_abort_booking'),
     url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
-    url(r'^mybooking/', views.MyBookingsView.as_view(), name='public_my_booking'),
+    url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),
     url(r'^map/', views.MapView.as_view(), name='map'),
 ] + ledger_patterns
 
