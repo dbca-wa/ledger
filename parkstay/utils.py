@@ -664,7 +664,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     try:
         with transaction.atomic():
             booking = create_or_update_booking(request,booking_details,updating)
-
+            set_session_booking(request.session,booking)
             # Get line items
             reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
             lines = price_or_lineitems(request,booking,booking.campsite_id_list)
@@ -678,14 +678,14 @@ def internal_booking(request,booking_details,internal=True,updating=False):
         raise
 
 def set_session_booking(session, booking):
-    session['booking_id'] = booking.id
+    session['ps_booking'] = booking.id
 
     session.modified = True
 
 
 def get_session_booking(session):
-    if 'booking_id' in session:
-        booking_id = session['booking_id']
+    if 'ps_booking' in session:
+        booking_id = session['ps_booking']
     else:
         raise Exception('Booking not in Session')
 
@@ -695,8 +695,8 @@ def get_session_booking(session):
         raise Exception('Booking not found for booking_id {}'.format(booking_id))
 
 def delete_session_booking(session):
-    if 'booking_id' in session:
-        del session['booking_id']
+    if 'ps_booking' in session:
+        del session['ps_booking']
         session.modified = True
 
 def daterange(start_date, end_date):
