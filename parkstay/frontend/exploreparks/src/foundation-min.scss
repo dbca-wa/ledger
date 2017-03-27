@@ -16,7 +16,7 @@ html {
     font-weight: $global-weight-normal;
     line-height: $global-lineheight;
     color: $body-font-color;
-     
+    
     // apply rest of global styles
     @include foundation-global-styles;
 
@@ -34,3 +34,21 @@ html {
     @include foundation-tooltip;
     @include foundation-thumbnail;
 }
+
+
+// Overrides for F6 datepicker so we don't need to drag in Font Awesome
+.fa-chevron-left:before {
+    font-style: normal;
+    content: "«";
+}
+
+.fa-chevron-right:before {
+    font-style: normal;    
+    content: "»";
+}
+
+.fa-remove:before {
+    font-style: normal;    
+    content: "×";
+}
+
