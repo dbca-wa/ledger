@@ -166,7 +166,9 @@
         background-color: #656869;
         color: white;
     }
-    table tbody tr.breakdown:nth-child(2n), table tbody tr.breakdown:nth-child(2n):hover {
+    table tbody tr.breakdown:nth-child(2n), 
+    table tbody tr.breakdown:nth-child(2n):hover, 
+    table.hover:not(.unstriped) tr.breakdown:nth-of-type(2n):hover {
         background-color: #454d50;
         color: white;
     }

@@ -125,7 +125,7 @@
                 <div class="small-12 medium-9 large-9 columns">
                     <div v-html="f.description"/>
                     <a class="button" v-bind:src="f.info_url">More info</a>
-                    <button v-if="f.campground_type == 0" class="button">Book now</button>
+                    <a v-if="f.campground_type == 0" class="button" v-bind:src="f.info_url+bookingParam">Book now</a>
                 </div>
             </div>
         </paginate>
@@ -456,6 +456,8 @@ export default {
             hideExtraFilters: true,
             suggestions: {},
             extentFeatures: [],
+            arrivalDate: null,
+            departureDate: null,
             numAdults: 2,
             numConcessions: 0,
             numChildren: 0,
@@ -519,6 +521,22 @@ export default {
                 } else {
                     return count + " people ▼";
                 }
+            }
+        },
+        bookingParam: {
+            cache: false,
+            get: function() {
+                var params = {
+                    'num_adult': this.numAdults,
+                    'num_concession': this.numConcessions,
+                    'num_children': this.numChildren,
+                    'num_infants': this.numInfants
+                };
+                if (this.arrivalDate && this.departureDate) {
+                    params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
+                    params['departure'] = this.departureDate.format('YYYY/MM/DD');
+                }
+                return '#makebooking?' + $.param(params);
             }
         }
     },
@@ -717,6 +735,7 @@ export default {
                 vm.departureEl.trigger('changeDate');
             }
             vm.arrivalData.hide();
+            vm.arrivalDate = moment(vm.arrivalData.date);
             vm.reload();
         }).data('datepicker');
 
@@ -728,6 +747,7 @@ export default {
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
             vm.departureData.hide();
+            vm.departureDate = moment(vm.departureData.date);
             vm.reload();
         }).data('datepicker');
 
