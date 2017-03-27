@@ -312,7 +312,6 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
 
 
     def list(self, request, *args, **kwargs):
-        print(request.GET)
         data = {
             "arrival" : request.GET.get('arrival', None),
             "departure" : request.GET.get('departure', None),
@@ -329,8 +328,6 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
             sites = Campsite.objects.filter(**{scrubbed['gear_type']: True})
             ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
-            ground_ids = set([s.campground.id for s in sites])
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
         else:
             ground_ids = set((x[0] for x in Campsite.objects.filter(**{scrubbed['gear_type']: True}).values_list('campground')))
             # we need to be tricky here. for the default search (tent, no timestamps),
