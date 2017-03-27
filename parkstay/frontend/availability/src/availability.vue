@@ -1,5 +1,5 @@
 <template>
-    <div id="sites-cal">
+    <div id="sites-cal" class="f6inject">
         <div class="row" v-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
@@ -113,8 +113,7 @@
     </div>
 </template>
 
-<style>
-
+<style lang="scss">
 .fa-chevron-left:before {
     font-style: normal;
     content: "«";
@@ -130,69 +129,71 @@
     content: "×";
 }
 
-th.site {
-    width: 30%;
-    min-width: 200px;
-}
-th.book {
-    min-width: 100px;
-}
-th.date {
-    min-width: 60px;
-}
-td.site {
-    font-size: 0.8em;
-}
-.date, .book {
-    text-align: center;
-}
-td .button {
-    margin: 0;
-}
-.table-scroll table {
-    width: 100%;
-}
+.f6inject {
+    th.site {
+        width: 30%;
+        min-width: 200px;
+    }
+    th.book {
+        min-width: 100px;
+    }
+    th.date {
+        min-width: 60px;
+    }
+    td.site {
+        font-size: 0.8em;
+    }
+    .date, .book {
+        text-align: center;
+    }
+    td .button {
+        margin: 0;
+    }
+    .table-scroll table {
+        width: 100%;
+    }
 
-td.available {
-    color: #082d15;
-}
-table tbody tr > td.available {
-    background-color: #edfbf3;
-}
-table tbody tr:hover > td.available {
-    background-color: #ddf8e8;
-}
-table tbody tr:nth-child(2n) > td.available {
-    background-color: #cef5dd;
-}
-table tbody tr:nth-child(2n):hover > td.available {
-    background-color: #b8f0cd;
-}
+    td.available {
+        color: #082d15;
+    }
+    table tbody tr > td.available {
+        background-color: #edfbf3;
+    }
+    table tbody tr:hover > td.available {
+        background-color: #ddf8e8;
+    }
+    table tbody tr:nth-child(2n) > td.available {
+        background-color: #cef5dd;
+    }
+    table tbody tr:nth-child(2n):hover > td.available {
+        background-color: #b8f0cd;
+    }
 
-table tbody tr.breakdown, table tbody tr.breakdown:hover  {
-    background-color: #656869;
-    color: white;
-}
-table tbody tr.breakdown:nth-child(2n), table tbody tr.breakdown:nth-child(2n):hover {
-    background-color: #454d50;
-    color: white;
-}
-table tbody tr.breakdown > td.available {
-    background-color: #468a05;
-    color: white;
-}
-table tbody tr.breakdown:nth-child(2n) > td.available {
-    background-color: #305e04;
-    color: white;
-}
+    table tbody tr.breakdown, table tbody tr.breakdown:hover  {
+        background-color: #656869;
+        color: white;
+    }
+    table tbody tr.breakdown:nth-child(2n), table tbody tr.breakdown:nth-child(2n):hover {
+        background-color: #454d50;
+        color: white;
+    }
+    table tbody tr.breakdown > td.available {
+        background-color: #468a05;
+        color: white;
+    }
+    table tbody tr.breakdown:nth-child(2n) > td.available {
+        background-color: #305e04;
+        color: white;
+    }
 
-.button.formButton {
-    display: block;
-    width: 100%;
-}
+    .button.formButton {
+        display: block;
+        width: 100%;
+    }
 
-.dropdown-pane {
-    width: auto;
+    .dropdown-pane {
+        width: auto;
+    }
 }
 
 </style>
