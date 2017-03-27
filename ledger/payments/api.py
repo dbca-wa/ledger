@@ -609,7 +609,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                         'date':c.created.strftime('%d/%m/%Y'),
                         'type':c.get_source_display().lower().title() if c.type != 'refund' else 'Manual',
                         'details':c.get_type_display().lower().title(),
-                        'amount':str(c.amount)
+                        'amount':str(c.amount) if c.type != 'refund' else '-{}'.format(c.amount)
                     })
             #bpay
             bpay = invoice.bpay_transactions
@@ -630,7 +630,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                         'date':b.processed.strftime('%d/%m/%Y'),
                         'type': 'Credit Card',
                         'details':b.get_action_display().lower().title(),
-                        'amount':str(b.amount)
+                        'amount':str(b.amount) if b.action != 'refund' else '-{}'.format(b.amount)
                     }
                 )
 
