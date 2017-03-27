@@ -1,5 +1,6 @@
 <template>
     <div id="sites-cal" class="f6inject">
+        <a name="makebooking" />
         <div class="row" v-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
@@ -208,6 +209,15 @@ var siteType = {
     OTHER: 3
 };
 
+function getQueryParam(name, fallback) {
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+    var results = regex.exec(window.location.href);
+    if (!results) return fallback;
+    if (!results[2]) return fallback;
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+};
+
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie != '') {
@@ -229,18 +239,18 @@ export default {
     data: function () {
         return {
             name: '',
-            arrivalDate: moment.utc(now),
-            departureDate: moment.utc(now).add(5, 'days'),
+            arrivalDate: moment.utc(getQueryParam('arrival', moment.utc(now).format('YYYY/MM/DD')), 'YYYY/MM/DD'),
+            departureDate:  moment.utc(getQueryParam('departure', moment.utc(now).add(5, 'days').format('YYYY/MM/DD')), 'YYYY/MM/DD'),
             parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
             parkstayGroundId: global.parkstayGroundId || '1',
             days: 5,
-            numAdults: 2,
-            numChildren: 0,
-            numConcessions: 0,
-            numInfants: 0,
+            numAdults: parseInt(getQueryParam('num_adult', 2)),
+            numChildren: parseInt(getQueryParam('num_children', 0)),
+            numConcessions: parseInt(getQueryParam('num_concession', 0)),
+            numInfants: parseInt(getQueryParam('num_infants', 0)),
             maxAdults: 30,
             maxChildren: 30,
-            gearType: 'tent',
+            gearType: getQueryParam('gear_type', 'tent'),
             status: null,
             errorMsg: null,
             classes: {},
