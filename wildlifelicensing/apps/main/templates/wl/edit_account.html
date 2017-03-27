@@ -32,6 +32,9 @@
                     {% csrf_token %}
                     {% bootstrap_form_errors emailuser_form %}
                     {% bootstrap_form emailuser_form %}
+                    {% if allow_discontinue %}
+                        <button type="submit" name="discontinue" class="btn btn-danger pull-left">Discontinue Registration</button>
+                    {% endif %}
                     <button type="submit" class="btn btn-primary pull-right">Save</button>
                 </form>
             </div>

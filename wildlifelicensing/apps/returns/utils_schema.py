@@ -195,6 +195,8 @@ class SchemaField:
         if isinstance(value, six.string_types) and not isinstance(value, six.text_type):
             # the StringType accepts only unicode
             value = six.u(value)
+        elif isinstance(value,six.integer_types):
+            value = '{}'.format(value)
         return self.type.cast(value)
 
     def validate(self, value):

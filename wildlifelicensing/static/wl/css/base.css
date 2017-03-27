@@ -46,8 +46,16 @@
     margin-bottom: 20px;
 }
 
+.left-buffer-xxxl {
+    margin-left: 40px;
+}
+
 .left-buffer {
     margin-left: 20px;
+}
+
+.left-buffer-m {
+    margin-left: 15px;
 }
 
 .right-buffer {

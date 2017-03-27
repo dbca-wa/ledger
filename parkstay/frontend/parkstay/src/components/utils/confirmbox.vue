@@ -68,6 +68,11 @@ var confirmModal = module.exports = {
         },
         id:{
             required:true
+        },
+        cancelText:{
+            default:function () {
+                return "Cancel";
+            }
         }
     },
     methods:{
@@ -88,11 +93,14 @@ var confirmModal = module.exports = {
                $.each(Obj.buttons, function (i, btn)
                {
                    var eventHandler = (typeof btn.eventHandler != "undefined") ? btn.eventHandler : "@click";
-                   $(buttons).append("<button type=\"button\" data-click="+btn.event+"\" class=\"btn " + btn.bsColor + "\">" + btn.text + "</button>");
+                   $(buttons).append("<button type=\"button\" data-click="+btn.event+" class=\"btn " + btn.bsColor + "\" style='margin-bottom:10px;'>" + btn.text + "</button>");
                    $(function () {
                           if(passed_id === vm.id){
                                $('button[data-click]').on('click',function () {
-                                   btn.handler();
+
+                                   if ($(this).attr('data-click') ==  btn.event) {
+                                      btn.handler();
+                                   }
                                    if(autoclose){
                                        $(confirmModal).modal('hide');
                                    }
@@ -101,7 +109,7 @@ var confirmModal = module.exports = {
                    })
                });
             }
-            $(buttons).append("<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-default\" style='margin-bottom:10px;'>Cancel</button>");
+            $(buttons).append("<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-default\" style='margin-bottom:10px;'>"+vm.cancelText+"</button>");
         }
    },
    mounted:function () {

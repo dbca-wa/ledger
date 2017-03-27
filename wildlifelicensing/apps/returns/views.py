@@ -177,6 +177,9 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                             table_data = excel.TableData(worksheet)
                             schema = Schema(ret.return_type.get_schema_by_name(table.get('name')))
                             excel_rows = list(table_data.rows_by_col_header_it())
+                            has_errors = not schema.is_all_valid(excel_rows)
+                            if has_errors:
+                                messages.error(request, "Your return contains some errors. See below.")
                             validated_rows = list(schema.rows_validator(excel_rows))
                             # We want to stringify the datetime/date that might have been created by the excel parser
                             for vr in validated_rows:
@@ -222,6 +225,10 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
                     if len(table['data']) == 0:
                         messages.warning(request,
                                          "You must enter data for {} or submit a Nil Return".format(table.get('name')))
+                    else:
+                        messages.error(request,
+                                       "Your return contains some errors. See below.")
+
         elif 'nil' in request.POST:
             form = NilReturnForm(request.POST)
             if form.is_valid():

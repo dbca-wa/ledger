@@ -1,11 +1,26 @@
 <template>
-    <div id="sites-cal">
+    <div id="sites-cal" class="f6inject">
+        <div class="row" v-if="status == 'offline'">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Sorry, this campground doesn't yet support online bookings. Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
+                </div>
+            </div>
+        </div>
+        <div class="row" v-if="errorMsg">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Sorry, there was an error placing the booking ({{ errorMsg }}). Please try again.
+                </div>
+            </div>
+        </div>
+
         <div class="row" v-if="name">
             <div class="columns small-12">
                 <h1>Book a campsite at {{ name }}</h1>
             </div>
         </div>
-        <div class="row">
+        <div class="row" v-show="status == 'online'">
             <div class="columns small-6 medium-6 large-3">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy"/>
@@ -66,7 +81,7 @@
                 </label>
             </div>
         </div>
-        <div class="row"><div class="columns table-scroll">
+        <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
             <table class="hover">
                 <thead>
                     <tr>
@@ -98,8 +113,7 @@
     </div>
 </template>
 
-<style>
-
+<style lang="scss">
 .fa-chevron-left:before {
     font-style: normal;
     content: "«";
@@ -115,69 +129,71 @@
     content: "×";
 }
 
-th.site {
-    width: 30%;
-    min-width: 200px;
-}
-th.book {
-    min-width: 100px;
-}
-th.date {
-    min-width: 60px;
-}
-td.site {
-    font-size: 0.8em;
-}
-.date, .book {
-    text-align: center;
-}
-td .button {
-    margin: 0;
-}
-.table-scroll table {
-    width: 100%;
-}
+.f6inject {
+    th.site {
+        width: 30%;
+        min-width: 200px;
+    }
+    th.book {
+        min-width: 100px;
+    }
+    th.date {
+        min-width: 60px;
+    }
+    td.site {
+        font-size: 0.8em;
+    }
+    .date, .book {
+        text-align: center;
+    }
+    td .button {
+        margin: 0;
+    }
+    .table-scroll table {
+        width: 100%;
+    }
 
-td.available {
-    color: #082d15;
-}
-table tbody tr > td.available {
-    background-color: #edfbf3;
-}
-table tbody tr:hover > td.available {
-    background-color: #ddf8e8;
-}
-table tbody tr:nth-child(2n) > td.available {
-    background-color: #cef5dd;
-}
-table tbody tr:nth-child(2n):hover > td.available {
-    background-color: #b8f0cd;
-}
+    td.available {
+        color: #082d15;
+    }
+    table tbody tr > td.available {
+        background-color: #edfbf3;
+    }
+    table tbody tr:hover > td.available {
+        background-color: #ddf8e8;
+    }
+    table tbody tr:nth-child(2n) > td.available {
+        background-color: #cef5dd;
+    }
+    table tbody tr:nth-child(2n):hover > td.available {
+        background-color: #b8f0cd;
+    }
 
-table tbody tr.breakdown, table tbody tr.breakdown:hover  {
-    background-color: #656869;
-    color: white;
-}
-table tbody tr.breakdown:nth-child(2n), table tbody tr.breakdown:nth-child(2n):hover {
-    background-color: #454d50;
-    color: white;
-}
-table tbody tr.breakdown > td.available {
-    background-color: #468a05;
-    color: white;
-}
-table tbody tr.breakdown:nth-child(2n) > td.available {
-    background-color: #305e04;
-    color: white;
-}
+    table tbody tr.breakdown, table tbody tr.breakdown:hover  {
+        background-color: #656869;
+        color: white;
+    }
+    table tbody tr.breakdown:nth-child(2n), table tbody tr.breakdown:nth-child(2n):hover {
+        background-color: #454d50;
+        color: white;
+    }
+    table tbody tr.breakdown > td.available {
+        background-color: #468a05;
+        color: white;
+    }
+    table tbody tr.breakdown:nth-child(2n) > td.available {
+        background-color: #305e04;
+        color: white;
+    }
 
-.button.formButton {
-    display: block;
-    width: 100%;
-}
+    .button.formButton {
+        display: block;
+        width: 100%;
+    }
 
-.dropdown-pane {
-    width: auto;
+    .dropdown-pane {
+        width: auto;
+    }
 }
 
 </style>
@@ -233,6 +249,8 @@ export default {
             maxAdults: 30,
             maxChildren: 30,
             gearType: 'tent',
+            status: null,
+            errorMsg: null,
             classes: {},
             sites: []
         };
@@ -292,6 +310,12 @@ export default {
                     if (data.status == 'success') {
                         window.location.href = '/booking';
                     }
+                },
+                error: function(data, stat, xhr) {
+                    console.log('POST error');
+                    console.log(data);
+                    vm.errorMsg = data.responseJSON.msg;
+                    vm.update();
                 }
             });
         },
@@ -307,7 +331,7 @@ export default {
                     num_infant: vm.numInfants,
                     gear_type: vm.gearType
                 });
-                console.log('AJAX '+url)
+                console.log('AJAX '+url);
                 $.ajax({
                     url: url,
                     dataType: 'json',
@@ -319,6 +343,10 @@ export default {
                             el.showBreakdown = false;
                         });
                         vm.sites = data.sites;
+                        vm.status = 'online';
+                    },
+                    error: function(data, stat, xhr) {
+                        vm.status = 'offline';
                     }
                 });
             }, 500)();

@@ -5,6 +5,7 @@ import uuid
 import base64
 import binascii
 import hashlib
+from decimal import Decimal as D
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -19,6 +20,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_delete, pre_save, post_save
 from parkstay.exceptions import BookingRangeWithinException
 from django.core.cache import cache
+from ledger.payments.models import Invoice
 
 # Create your models here.
 
@@ -161,6 +163,17 @@ class Campground(models.Model):
             return False
         except Feature.DoesNotExist:
             return True
+
+    @property
+    def campsite_classes(self):
+        return list(set([c.campsite_class.id for c in self.campsites.all()]))
+
+    @property
+    def first_image(self):
+        images = self.images.all()
+        if images.count():
+            return images[0]
+        return None
 
     # Methods
     # =======================================
@@ -849,6 +862,7 @@ class Booking(models.Model):
     expiry_time = models.DateTimeField(null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
+    is_canceled = models.BooleanField(default=False)
 
     # Properties
     # =================================
@@ -873,17 +887,82 @@ class Booking(models.Model):
     def editable(self):
         today = datetime.now().date()
         if self.arrival > today <= self.departure:
-            return True
+            if not self.is_canceled:
+                if self.status != "Paid":
+                    return True
         return False
 
     @property
     def campsite_id_list(self):
         return list(set([x['campsite'] for x in self.campsites.all().values('campsite')]))
 
+    @property
+    def paid(self):
+        if self.legacy_id:
+            return True
+        else:
+            payment_status = self.__check_payment_status()
+            if payment_status == 'paid' or payment_status == 'over_paid':
+                return True
+        return False
+
+    @property
+    def status(self):
+        if not self.legacy_id:
+            payment_status = self.__check_payment_status()
+            status =  ''
+            parts = payment_status.split('_')
+            for p in parts:
+                status += '{} '.format(p.title())
+            status.strip()
+            if self.is_canceled:
+                if payment_status == 'over_paid' or payment_status == 'paid':
+                    return 'Canceled - Payment ({})'.format(status)
+                else:
+                    return 'Canceled'
+            else:
+                return status
+        return 'Paid'
+
     # Methods
     # =================================
     def __str__(self):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
+
+    def __check_payment_status(self):
+        invoices = []
+        amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            amount += i.payment_amount
+
+        if amount == 0:
+            return 'unpaid'
+        if self.cost_total < amount:
+            return 'over_paid'
+        elif self.cost_total > amount:
+            return 'partially_paid'
+        else:return "paid"
+
+    def cancelBooking(self):
+        self.is_canceled = True
+        self.campsites.all().delete()
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                i = Invoice.objects.get(reference=r.get("invoice_reference"))
+                i.voided = True
+                i.save()
+            except Invoice.DoesNotExist:
+                pass
+
+        self.save()
+
 
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
@@ -895,9 +974,9 @@ class BookingInvoice(models.Model):
 class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""
     VEHICLE_CHOICES = (
-        ('vehicle','vehicle'),
-        ('motorbike','motorbike'),
-        ('concession','concession')
+        ('vehicle','Vehicle'),
+        ('motorbike','Motorcycle'),
+        ('concession','Vehicle (concession)')
     )
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
@@ -1012,6 +1091,20 @@ class CampsiteClassPriceHistory(ViewPriceHistory):
         managed = False
         db_table = 'parkstay_campsiteclass_pricehistory_v'
         ordering = ['-date_start',]
+
+# Oracle Integration
+# ======================================
+class OracleInterface(models.Model):
+    receipt_number = models.IntegerField()
+    receipt_date = models.DateField()
+    activity_name = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    customer_name = models.CharField(max_length=128)
+    description = models.TextField()
+    comments = models.TextField()
+    status = models.CharField(max_length=15)
+    line_item = models.TextField(blank=True,null=True)
+    status_date = models.DateField()
 
 # LISTENERS
 # ======================================

@@ -9,7 +9,7 @@ from ledger.catalogue.models import Product
 from ledger.payments.invoice.models import Invoice
 
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
-
+from wildlifelicensing.apps.payments.exceptions import PaymentException
 
 PAYMENT_STATUS_PAID = 'paid'
 PAYMENT_STATUS_CC_READY = 'cc_ready'
@@ -119,9 +119,15 @@ def invoke_credit_card_payment(application):
     invoice = get_object_or_404(Invoice, reference=application.invoice_reference)
 
     if not invoice.token:
-        raise Exception('Application invoice does have a credit payment token')
+        raise PaymentException('Application invoice does have a credit payment token')
+    
+    try:
+        txn = invoice.make_payment()
+    except Exception as e:
+        raise PaymentException('Payment was unsuccessful. Reason({})'.format(e.message))
 
-    invoice.make_payment()
+    if get_application_payment_status(application) != PAYMENT_STATUS_PAID:
+        raise PaymentException('Payment was unsuccessful. Reason({})'.format(txn.response_txt))
 
 
 def get_voucher(voucher_code):

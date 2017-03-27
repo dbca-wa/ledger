@@ -11,7 +11,7 @@
     {{ form.non_field_errors }}
     <div class="row">
         <div class="medium-6 columns">
-            <label>First name: <input name="first_name" type="text" value="{{ form.first_name.value }}"/></label>
+            <label>Given name(s): <input name="first_name" type="text" value="{{ form.first_name.value }}"/></label>
             {% for error in form.first_name.errors %}<p class="help-text">{{ error }}</p>{% endfor %}
         </div>
         <div class="medium-6 columns">

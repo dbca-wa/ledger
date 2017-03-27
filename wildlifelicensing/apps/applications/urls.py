@@ -1,16 +1,16 @@
 from django.conf.urls import url
 
 from wildlifelicensing.apps.applications.views.entry import NewApplicationView, SelectLicenceTypeView, \
-    CreateSelectCustomer, EditApplicationView, DeleteApplicationView, CheckIdentificationRequiredView, \
+    CreateSelectCustomer, EditApplicationView, CheckIdentificationRequiredView, \
     CreateSelectProfileView, EnterDetailsView, PreviewView, ApplicationCompleteView, RenewLicenceView, \
-    AmendLicenceView, CheckSeniorCardView
+    AmendLicenceView, CheckSeniorCardView, DiscardApplicationView
 
 from wildlifelicensing.apps.applications.views.process import ProcessView, AssignOfficerView, SetIDCheckStatusView, \
     IDRequestView, ReturnsRequestView, SetReturnsCheckStatusView, SetCharacterCheckStatusView, \
     SetReviewStatusView, AmendmentRequestView, SendForAssessmentView, RemindAssessmentView
 
 from wildlifelicensing.apps.applications.views.conditions import EnterConditionsView, SearchConditionsView, \
-    CreateConditionView, SetAssessmentConditionState, EnterConditionsAssessorView
+    CreateConditionView, SetAssessmentConditionState, EnterConditionsAssessorView, AssignAssessorView
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
@@ -25,7 +25,7 @@ urlpatterns = [
     url('^select-licence-type/([0-9]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^create-select-customer/$', CreateSelectCustomer.as_view(), name='create_select_customer'),
     url('^edit-application/([0-9]+)/$', EditApplicationView.as_view(), name='edit_application'),
-    url('^delete-application/([0-9]+)/$', DeleteApplicationView.as_view(), name='delete_application'),
+    url('^discard-application/([0-9]+)/$', DiscardApplicationView.as_view(), name='discard_application'),
     url('^check-identification/$', CheckIdentificationRequiredView.as_view(), name='check_identification'),
     url('^check-senior-card/$', CheckSeniorCardView.as_view(), name='check_senior_card'),
     url('^profile/$', CreateSelectProfileView.as_view(), name='create_select_profile'),
@@ -61,7 +61,9 @@ urlpatterns = [
         name='enter_conditions_assessor'),
     url('^search-conditions/$', SearchConditionsView.as_view(), name='search_conditions'),
     url('^create-condition/([0-9]+)/$', CreateConditionView.as_view(), name='create_condition'),
+    url('^enter-conditions/([0-9]+)/assign-officer/$', AssignOfficerView.as_view(), name='assign_officer'),
     url('^set-assessment-condition-state/$', SetAssessmentConditionState.as_view(), name='set_assessment_condition_state'),
+    url('^assign-assessor/$', AssignAssessorView.as_view(), name='assign_assessor'),
 
     # issue
     url('^issue-licence/([0-9]+)/$', IssueLicenceView.as_view(), name='issue_licence'),

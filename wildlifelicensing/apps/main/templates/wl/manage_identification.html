@@ -46,7 +46,7 @@
                 <div class="col-md-4">
                     <h3>Current identification</h3>
                     <div class="center">
-                       {% if existing_id_image_url|slice:'-3:' == 'pdf' %}
+                        {% if existing_id_image_url|slice:'-3:' == 'pdf' %}
                             <a href="{{ existing_id_image_url }}" target="_blank">
                                 <img src="{% static 'wl/img/pdf.png' %}">
                                 <p>View PDF</p>

@@ -1,3 +1,4 @@
+import json
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
@@ -204,12 +205,17 @@ class BpointTransactionSerializer(serializers.ModelSerializer):
     settlement_date = serializers.DateField(format='%B, %d %Y')
     source = serializers.CharField(source='type')
     crn = serializers.CharField(source='crn1')
+    last_digits = serializers.SerializerMethodField()
     def get_cardtype(self, obj):
         return dict(BpointTransaction.CARD_TYPES).get(obj.cardtype)
-        
+
+    def get_last_digits(self,obj):
+        return obj.last_digits
+
     class Meta:
         model = BpointTransaction
         fields = (
+            'id',
             'action',
             'crn',
             'source',
@@ -224,9 +230,14 @@ class BpointTransactionSerializer(serializers.ModelSerializer):
             'response_txt',
             'processed',
             'settlement_date',
-            'approved'
+            'approved',
+            'last_digits',
+            'refundable_amount'
         )
     
+class AmountSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+
 class BpointTransactionViewSet(viewsets.ModelViewSet):
     queryset = BpointTransaction.objects.all()
     serializer_class = BpointTransactionSerializer
@@ -234,6 +245,24 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
     
     def create(self,request):
         pass
+
+    @detail_route(methods=['POST'])
+    def refund(self,request,*args,**kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            instance = self.get_object()
+            serializer = AmountSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            refund = instance.refund(serializer.validated_data['amount']) 
+            serializer = BpointTransactionSerializer(refund)
+            return Response(serializer.data,status=http_status)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+        
     
 class CardSerializer(serializers.Serializer):
     cardholdername = serializers.CharField(required=False,max_length=50)
@@ -504,6 +533,7 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
     bpoint_transactions=BpointTransactionSerializer(many=True)
     created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     owner = serializers.CharField(source='owner.email')
+    refundable_cards=BpointTransactionSerializer(many=True)
     class Meta:
         model = Invoice
         fields = (
@@ -514,11 +544,16 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
             'amount',
             'reference',
             'created',
+            'balance',
+            'refundable',
+            'refundable_amount',
+            'single_card_payment',
             'payment_amount',
             'payment_status',
             'cash_transactions',
             'bpay_transactions',
-            'bpoint_transactions'
+            'bpoint_transactions',
+            'refundable_cards'
         )
         read_only_fields=(
             'created',
@@ -557,6 +592,55 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             raise
         except Exception as e:
+            raise serializers.ValidationError(e)
+
+    @detail_route(methods=['get'])
+    def payments(self, request, *args, **kwargs):
+        try:
+            invoice = self.get_object()
+            
+            # Get all linked bpay transactions
+            payments = []
+            #cash
+            cash = invoice.cash_transactions.all()
+            for c in cash:
+                payments.append(
+                    {
+                        'date':c.created.strftime('%d/%m/%Y'),
+                        'type':c.get_source_display().lower().title() if c.type != 'refund' else 'Manual',
+                        'details':c.get_type_display().lower().title(),
+                        'amount':'$ {}'.format(c.amount) if c.type != 'refund' else '$ -{}'.format(c.amount)
+                    })
+            #bpay
+            bpay = invoice.bpay_transactions
+            for b in bpay:
+                payments.append(
+                    {
+                        'date':b.p_date.strftime('%d/%m/%Y'),
+                        'type': 'Bpay',
+                        'details':b.get_p_instruction_code_display().lower().title(),
+                        'amount':'$ {}'.format(b.amount)
+                    }
+                )
+            #bpoint
+            bpoint = invoice.bpoint_transactions
+            for b in bpoint:
+                payments.append(
+                    {
+                        'date':b.processed.strftime('%d/%m/%Y'),
+                        'type': 'Credit Card',
+                        'details':b.get_action_display().lower().title(),
+                        'amount':'$ {}'.format(b.amount) if b.action != 'refund' else '$ -{}'.format(b.amount)
+                    }
+                )
+
+            
+            return Response(payments)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except Exception as e:
+            traceback.print_exc()
             raise serializers.ValidationError(e)
         
     @detail_route(methods=['post'])

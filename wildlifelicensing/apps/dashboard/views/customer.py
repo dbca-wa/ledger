@@ -12,7 +12,7 @@ from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_du
 
 
 def _get_user_applications(user):
-    return Application.objects.filter(applicant_profile__user=user).exclude(customer_status='temp')
+    return Application.objects.filter(applicant_profile__user=user).exclude(customer_status__in=['temp', 'discarded'])
 
 
 class TableCustomerView(LoginRequiredMixin, base.TablesBaseView):
@@ -230,26 +230,31 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
     def render_action_column(obj):
         status = obj.customer_status
         if status == 'draft':
-            return '<a href="{0}">{1}</a> / <a href="{2}">{3}</a>'.format(
+            result = '<a href="{0}">{1}</a>'.format(
                 reverse('wl_applications:edit_application', args=[obj.pk]),
-                'Continue',
-                reverse('wl_applications:delete_application', args=[obj.pk]),
-                'Discard'
+                'Continue'
             )
         elif status == 'amendment_required' or status == 'id_and_amendment_required':
-            return '<a href="{0}">{1}</a>'.format(
+            result = '<a href="{0}">{1}</a>'.format(
                 reverse('wl_applications:edit_application', args=[obj.pk]),
                 'Amend application'
             )
         elif status == 'id_required' and obj.id_check_status == 'awaiting_update':
-            return '<a href="{0}">{1}</a>'.format(
+            result = '<a href="{0}">{1}</a>'.format(
                 reverse('wl_main:identification'),
                 'Update ID')
         else:
-            return '<a href="{0}"">{1}</a>'.format(
+            result = '<a href="{0}"">{1}</a>'.format(
                 reverse('wl_applications:view_application', args=[obj.pk]),
                 'View application (read-only)'
             )
+        # Add discard action
+        if obj.is_discardable:
+            result += ' / <a href="{}">{}</a>'.format(
+                reverse('wl_applications:discard_application', args=[obj.pk]),
+                'Discard'
+            )
+        return result
 
     def get_initial_queryset(self):
         return _get_user_applications(self.request.user)
@@ -306,10 +311,11 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
 
-            if replacing_application.is_licence_amendment:
-                return 'Amended'
-            else:
-                return 'Renewed'
+            if replacing_application.licence is not None and replacing_application.licence.is_issued:
+                if replacing_application.is_licence_amendment:
+                    return 'Amended'
+                else:
+                    return 'Renewed'
         except Application.DoesNotExist:
             pass
 
@@ -325,7 +331,13 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
     def _render_action(instance):
         try:
             application = Application.objects.get(licence=instance)
-            if Application.objects.filter(previous_application=application).exists():
+            replacing_application = Application.objects.get(previous_application=application)
+            if replacing_application.licence is None or not replacing_application.licence.is_issued:
+                if replacing_application.is_licence_amendment:
+                    return 'Amendment Pending'
+                else:
+                    return 'Renewal Pending'
+            else:
                 return 'N/A'
         except Application.DoesNotExist:
             pass

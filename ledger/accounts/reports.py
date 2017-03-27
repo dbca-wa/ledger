@@ -15,14 +15,14 @@ def user_report():
     users = EmailUserReport.objects.filter(occurence__gt=1)
     if users:
         strIO = StringIO()
-        fieldnames = ['Occurence', 'First Name','Last Name','DOB']
+        fieldnames = ['Occurence', 'Given Name(s)','Last Name','DOB']
         writer = csv.DictWriter(strIO, fieldnames=fieldnames)
         writer.writeheader()
 
         for u in users:
             info = {
                 'Occurence': u.occurence,
-                'First Name': u.first_name,
+                'Given Name(s)': u.first_name,
                 'Last Name': u.last_name,
                 'DOB': u.dob
             }

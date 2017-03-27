@@ -8,8 +8,10 @@ from django.core.urlresolvers import reverse_lazy
 
 from preserialize.serialize import serialize
 
+from ledger.accounts.models import EmailUser
+
 from wildlifelicensing.apps.payments import utils as payment_utils
-from wildlifelicensing.apps.main.models import Condition
+from wildlifelicensing.apps.main.models import Condition, AssessorGroup
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, \
@@ -51,7 +53,8 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        application.processing_status = 'ready_to_issue'
+        if application.processing_status not in ['issued', 'declined'] and request.POST.get('submissionType') != 'save':
+            application.processing_status = 'ready_to_issue'
 
         # remove existing conditions as there may be new conditions and/or changes of order
         application.conditions.clear()
@@ -67,8 +70,11 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 
         if request.POST.get('submissionType') == 'backToProcessing':
             return redirect('wl_applications:process', *args)
+        elif request.POST.get('submissionType') == 'save':
+            messages.success(request, 'Conditions saved')
+            return render(request, self.template_name, self.get_context_data())
         else:
-            return redirect('wl_applications:issue_licence', *self.args, **self.kwargs)
+            return redirect('wl_applications:issue_licence', *args, **kwargs)
 
 
 class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
@@ -94,17 +100,33 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
                                                 exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
 
+        assessors = [{'id': assessor.id, 'text': assessor.get_full_name()} for assessor in
+                     assessment.assessor_group.members.all().order_by('first_name')]
+        assessors.insert(0, {'id': 0, 'text': 'Unassigned'})
+
+        kwargs['assessors'] = assessors
+
         kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
                                                            fromm=self.request.user.get_full_name())
 
         return super(EnterConditionsAssessorView, self).get_context_data(**kwargs)
 
+    def _check_read_only(self, assessment, request):
+        if assessment.status == 'assessed':
+            messages.warning(request, """This assessment has already been concluded and may only be viewed in
+            read-only mode.""")
+            return True
+        elif assessment.status == 'assessment_expired':
+            messages.warning(request, """The assessment period for this application has expired, likely due to the
+                application having been issued or declined. The assessment may only be viewed in read-only mode""")
+            return True
+
+        return False
+
     def get(self, request, *args, **kwargs):
         assessment = get_object_or_404(Assessment, pk=args[1])
 
-        if assessment.status == 'assessed':
-            messages.warning(request,
-                             'This assessment has already been concluded and may only be viewed in read-only mode.')
+        if self._check_read_only(assessment, request):
             return redirect('wl_applications:view_assessment', *args)
 
         return super(EnterConditionsAssessorView, self).get(*args, **kwargs)
@@ -112,6 +134,9 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
         assessment = get_object_or_404(Assessment, pk=self.args[1])
+
+        if self._check_read_only(assessment, request):
+            return redirect('wl_applications:view_assessment', *args)
 
         assessment.assessmentcondition_set.all().delete()
         for order, condition_id in enumerate(request.POST.getlist('conditionID')):
@@ -196,3 +221,30 @@ class SetAssessmentConditionState(OfficerRequiredMixin, View):
         response = ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES[assessment_condition.acceptance_status]
 
         return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
+
+
+class AssignAssessorView(OfficerOrAssessorRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        assessment = get_object_or_404(Assessment, pk=request.POST['assessmentID'])
+
+        try:
+            assessment.assigned_assessor = EmailUser.objects.get(pk=request.POST['userID'])
+        except EmailUser.DoesNotExist:
+            assessment.assigned_assessor = None
+
+        assessment.save()
+
+        if assessment.assigned_assessor is not None:
+            name = assessment.assigned_assessor.get_full_name()
+            assigned_assessor = {'id': assessment.assigned_assessor.id, 'text': name}
+            assessment.application.log_user_action(
+                ApplicationUserAction.ACTION_ASSESSMENT_ASSIGN_TO_.format(name),
+                request)
+        else:
+            assigned_assessor = {'id': 0, 'text': 'Unassigned'}
+            assessment.application.log_user_action(
+                ApplicationUserAction.ACTION_ASSESSMENT_UNASSIGN,
+                request)
+
+        return JsonResponse({'assigned_assessor': assigned_assessor},
+                            safe=False, encoder=WildlifeLicensingJSONEncoder)

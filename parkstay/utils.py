@@ -34,7 +34,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
                     )
 
         if not sites_qs.exists():
-            raise ValidationError('No matching campsites found')
+            raise ValidationError('No matching campsites found.')
 
         # get availability for sites, filter out the non-clear runs
         availability = get_campsite_availability(sites_qs, start_date, end_date)
@@ -47,7 +47,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
 
         if not sites:
-            raise ValidationError('Campsite class unavailable for specified time period')
+            raise ValidationError('Campsite class unavailable for specified time period.')
 
         # TODO: add campsite sorting logic based on business requirements
         # for now, pick the first campsite in the list
@@ -95,7 +95,7 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         availability = get_campsite_availability(sites_qs, start_date, end_date)
         for site_id, dates in availability.items():
             if not all([v[0] == 'open' for k, v in dates.items()]):
-                raise ValidationError('Campsite unavailable for specified time period')
+                raise ValidationError('Campsite unavailable for specified time period.')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
@@ -262,7 +262,44 @@ def get_visit_rates(campsites_qs, start_date, end_date):
 
     return results
 
+def get_available_campsitetypes(campground_id,start_date,end_date,_list=True):
+    try:
+        cg = Campground.objects.get(id=campground_id)
 
+        if _list:
+            available_campsiteclasses = []
+        else:
+            available_campsiteclasses = {}
+
+        for _class in cg.campsite_classes:
+            sites_qs =  Campsite.objects.filter(
+                            campground=campground_id,
+                            campsite_class=_class
+                        )
+
+            if sites_qs.exists():
+
+                # get availability for sites, filter out the non-clear runs
+                availability = get_campsite_availability(sites_qs, start_date, end_date)
+                excluded_site_ids = set()
+                for site_id, dates in availability.items():
+                    if not all([v[0] == 'open' for k, v in dates.items()]):
+                        excluded_site_ids.add(site_id)
+
+                # create a list of campsites without bookings for that period
+                sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
+
+                if sites:
+                    if not _list:
+                        available_campsiteclasses[_class] = sites
+                    else:
+                        available_campsiteclasses.append(_class)
+
+        return available_campsiteclasses
+    except Campground.DoesNotExist:
+        raise Exception('The campsite you are searching does not exist')
+    except:
+        raise
 
 
 def get_available_campsites_list(campsite_qs,request, start_date, end_date):
@@ -351,18 +388,24 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     if vehicles:
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
-            'vehicle': vehicles.filter(type='vehicle').count(),
-            'motorbike': vehicles.filter(type='motorbike').count(),
-            'concession': vehicles.filter(type='concession').count()
+            'vehicle': vehicles.filter(type='vehicle'),
+            'motorbike': vehicles.filter(type='motorbike'),
+            'concession': vehicles.filter(type='concession')
         }
 
         for k,v in vehicle_dict.items():
-            if int(v) > 0:
+            if v.count() > 0:
                 if lines:
                     price =  park_entry_rate[k]
-                    invoice_lines.append({'ledger_description':'Park Entry - {}'.format(k),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                    regos = ', '.join([x[0] for x in v.values_list('rego')])
+                    invoice_lines.append({
+                        'ledger_description': 'Park Entry - {}'.format(k),
+                        'quantity': v.count(),
+                        'price_incl_tax': price,
+                        'oracle_code': '1236'
+                    })
                 else:
-                    price =  Decimal(park_entry_rate[k]) * v
+                    price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
 
     if lines:
@@ -621,7 +664,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     try:
         with transaction.atomic():
             booking = create_or_update_booking(request,booking_details,updating)
-
+            set_session_booking(request.session,booking)
             # Get line items
             reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
             lines = price_or_lineitems(request,booking,booking.campsite_id_list)
@@ -635,14 +678,14 @@ def internal_booking(request,booking_details,internal=True,updating=False):
         raise
 
 def set_session_booking(session, booking):
-    session['booking_id'] = booking.id
+    session['ps_booking'] = booking.id
 
     session.modified = True
 
 
 def get_session_booking(session):
-    if 'booking_id' in session:
-        booking_id = session['booking_id']
+    if 'ps_booking' in session:
+        booking_id = session['ps_booking']
     else:
         raise Exception('Booking not in Session')
 
@@ -652,8 +695,8 @@ def get_session_booking(session):
         raise Exception('Booking not found for booking_id {}'.format(booking_id))
 
 def delete_session_booking(session):
-    if 'booking_id' in session:
-        del session['booking_id']
+    if 'ps_booking' in session:
+        del session['ps_booking']
         session.modified = True
 
 def daterange(start_date, end_date):

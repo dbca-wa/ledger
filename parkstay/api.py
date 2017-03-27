@@ -312,7 +312,6 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
 
 
     def list(self, request, *args, **kwargs):
-        print(request.GET)
         data = {
             "arrival" : request.GET.get('arrival', None),
             "departure" : request.GET.get('departure', None),
@@ -329,17 +328,14 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
             sites = Campsite.objects.filter(**{scrubbed['gear_type']: True})
             ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
-
         else:
             ground_ids = set((x[0] for x in Campsite.objects.filter(**{scrubbed['gear_type']: True}).values_list('campground')))
-        
+            # we need to be tricky here. for the default search (tent, no timestamps),
+            # we want to include all of the "campgrounds" that don't have any campsites in the model!
+            if scrubbed['gear_type'] == 'tent':
+                ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
 
-        # we need to be tricky here. for the default search (tent, any timestamps)
-        # we want to include all of the "campgrounds" that don't have any campsites in the model! (i.e. non-P&W)
-        if scrubbed['gear_type'] == 'tent':
-            ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
-
-        queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -694,6 +690,27 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['get'])
+    def available_campsite_classes(self, request, format='json', pk=None):
+        try:
+            start_date = datetime.strptime(request.GET.get('arrival'),'%Y/%m/%d').date()
+            end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
+            http_status = status.HTTP_200_OK
+            available = utils.get_available_campsitetypes(self.get_object().id,start_date, end_date,_list=False)
+            available_serializers = []
+            for k,v in available.items():
+                s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
+                s['campsites'] = [c.id for c in v]
+                available_serializers.append(s)
+            data = available_serializers
+
+            return Response(data,status=http_status)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
 
 
 class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
@@ -929,24 +946,24 @@ def create_booking(request, *args, **kwargs):
         messages.success(request, 'Booking already in progress, complete this first!')
         return HttpResponse(geojson.dumps({
             'status': 'success',
-            'msg': 'Booking already in progress',
+            'msg': 'Booking already in progress.',
             'pk': request.session['ps_booking']
         }), content_type='application/json')
 
-    # for a manually-specified campsite, do a sanity check 
+    # for a manually-specified campsite, do a sanity check
     # ensure that the campground supports per-site bookings and bomb out if it doesn't
     if campsite:
         campsite_obj = Campsite.objects.prefetch_related('campground').get(pk=campsite)
         if campsite_obj.campground.site_type != 0:
             return HttpResponse(geojson.dumps({
                 'status': 'error',
-                'msg': 'Campground doesn\'t support per-site bookings'
+                'msg': 'Campground doesn\'t support per-site bookings.'
             }), status=400, content_type='application/json')
     # for the rest, check that both campsite_class and campground are provided
     elif (not campsite_class) or (not campground):
         return HttpResponse(geojson.dumps({
             'status': 'error',
-            'msg': 'Must specify campsite_class and campground'
+            'msg': 'Must specify campsite_class and campground.'
         }), status=400, content_type='application/json')
 
     # try to create a temporary booking
@@ -1206,80 +1223,111 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         from django.db import connection, transaction
-        search = request.GET.get('search[value]')
-        draw = request.GET.get('draw') if request.GET.get('draw') else 1
-        start = request.GET.get('start') if request.GET.get('draw') else 1
-        length = request.GET.get('length') if request.GET.get('draw') else 10
-        arrival = request.GET.get('arrival')
-        departure= request.GET.get('departure')
-        campground = request.GET.get('campground')
-        region = request.GET.get('region')
+        try:
+            search = request.GET.get('search[value]')
+            draw = request.GET.get('draw') if request.GET.get('draw') else 1
+            start = request.GET.get('start') if request.GET.get('draw') else 1
+            length = request.GET.get('length') if request.GET.get('draw') else 10
+            arrival = request.GET.get('arrival')
+            departure= request.GET.get('departure')
+            campground = request.GET.get('campground')
+            region = request.GET.get('region')
 
-        sql = ''
-        http_status = status.HTTP_200_OK
-        sqlSelect = 'select parkstay_booking.id as id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
-            parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-            parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id'
-        sqlCount = 'select count(*)'
+            sql = ''
+            http_status = status.HTTP_200_OK
+            sqlSelect = 'select parkstay_booking.id as id,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+                parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
+                parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,coalesce(accounts_emailuser.first_name || accounts_emailuser.last_name) as full_name'
+            sqlCount = 'select count(*)'
 
-        sqlFrom = ' from parkstay_booking\
-            join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
-            join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
-            join parkstay_district on parkstay_park.district_id = parkstay_district.id\
-            join parkstay_region on parkstay_district.region_id = parkstay_region.id'
+            sqlFrom = ' from parkstay_booking\
+                join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
+                join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
+                join parkstay_district on parkstay_park.district_id = parkstay_district.id\
+                full outer join accounts_emailuser on parkstay_booking.customer_id = accounts_emailuser.id\
+                join parkstay_region on parkstay_district.region_id = parkstay_region.id'
 
-        sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
-        sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
+            sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
+            sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
 
-        if campground :
-            sqlCampground = ' parkstay_campground.id = {}'.format(campground)
-            sql += sqlCampground
-            sqlCount += sqlCampground
-        if region:
-            sqlRegion = " parkstay_region.id = {}".format(region)
-            sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
-            sqlCount = sqlCount +" and "+ sqlRegion if campground else sqlCount + sqlRegion
-        if arrival:
-            sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
-            sqlCount = sqlCount + " and "+ sqlArrival if campground or region else sqlCount + sqlArrival
-            sql = sql + " and "+ sqlArrival if campground or region else sql + sqlArrival
-            if departure:
-                sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
-                sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
-        if search:
-            sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
-            or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
-            or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search)
-            if arrival or campground or region:
-                sql += " and ( "+ sqlsearch +" )"
-                sqlCount +=  " and  ( "+ sqlsearch +" )"
-            else:
-                sql += ' where' + sqlsearch
-                sqlCount += ' where ' + sqlsearch
+            if campground :
+                sqlCampground = ' parkstay_campground.id = {}'.format(campground)
+                sql += sqlCampground
+                sqlCount += sqlCampground
+            if region:
+                sqlRegion = " parkstay_region.id = {}".format(region)
+                sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
+                sqlCount = sqlCount +" and "+ sqlRegion if campground else sqlCount + sqlRegion
+            if arrival:
+                sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
+                sqlCount = sqlCount + " and "+ sqlArrival if campground or region else sqlCount + sqlArrival
+                sql = sql + " and "+ sqlArrival if campground or region else sql + sqlArrival
+                if departure:
+                    sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+                    sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+            if search:
+                sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
+                or lower(accounts_emailuser.first_name) LIKE lower(\'%{}%\')\
+                or lower(accounts_emailuser.last_name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search)
+                if arrival or campground or region:
+                    sql += " and ( "+ sqlsearch +" )"
+                    sqlCount +=  " and  ( "+ sqlsearch +" )"
+                else:
+                    sql += ' where' + sqlsearch
+                    sqlCount += ' where ' + sqlsearch
 
 
-        sql = sql + ' limit {} '.format(length)
-        sql = sql + ' offset {} ;'.format(start)
+            sql = sql + ' limit {} '.format(length)
+            sql = sql + ' offset {} ;'.format(start)
 
-        cursor = connection.cursor()
-        cursor.execute("Select count(*) from parkstay_booking ");
-        recordsTotal = cursor.fetchone()[0]
-        cursor.execute(sqlCount);
-        recordsFiltered = cursor.fetchone()[0]
+            cursor = connection.cursor()
+            cursor.execute("Select count(*) from parkstay_booking ");
+            recordsTotal = cursor.fetchone()[0]
+            cursor.execute(sqlCount);
+            recordsFiltered = cursor.fetchone()[0]
 
-        cursor.execute(sql)
-        columns = [col[0] for col in cursor.description]
-        data = [
-            dict(zip(columns, row))
-            for row in cursor.fetchall()
-        ]
-        for bk in data:
-            bk['invoices'] = [ i.invoice_reference for i in Booking.objects.get(id =bk['id']).invoices.all()]
-        return Response(OrderedDict([
-            ('recordsTotal', recordsTotal),
-            ('recordsFiltered',recordsFiltered),
-            ('results',data)
-        ]),status=status.HTTP_200_OK)
+            cursor.execute(sql)
+            columns = [col[0] for col in cursor.description]
+            data = [
+                dict(zip(columns, row))
+                for row in cursor.fetchall()
+            ]
+            for bk in data:
+                booking = Booking.objects.get(id=bk['id'])
+                bk['editable'] = booking.editable
+                bk['status'] = booking.status
+                bk['paid'] = booking.paid
+                bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                if not bk['legacy_id']:
+                    try:
+                        customer = EmailUser.objects.get(id=bk['customer_id'])
+                        bk['firstname'] = customer.first_name
+                        bk['lastname'] = customer.last_name
+                        if booking.is_canceled:
+                            bk['campground_site_type'] = ""
+                        else:
+                            print(Campsite.objects.get(id=booking.campsite_id_list[0]))
+                            bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
+                    except EmailUser.DoesNotExist:
+                        bk['firstname'] =  ""
+                        bk['lastname'] = ""
+                else:
+                    bk['firstname'] =  bk['legacy_name']
+                    bk['lastname'] = ""
+                    bk['campground_site_type'] = ""
+            return Response(OrderedDict([
+                ('recordsTotal', recordsTotal),
+                ('recordsFiltered',recordsFiltered),
+                ('results',data)
+            ]),status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     def create(self, request, format=None):
         from datetime import datetime
@@ -1316,31 +1364,17 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    def update(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs):
+
+        http_status = status.HTTP_200_OK
         try:
-            http_status = status.HTTP_200_OK
-
-            instance = self.get_object()
-            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
-            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
-
-            booking_details = {
-                'campsites':request.data['campsites'],
-                'start_date' : start_date,
-                'campground' : request.data['campground'],
-                'end_date' : end_date
-            }
-            data = utils.update_booking(request,instance,booking_details)
-            serializer = BookingSerializer(data)
-
-            return Response(serializer.data, status=http_status)
-
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
+            booking  = self.get_object()
+            booking.cancelBooking()
+            serializer = self.get_serializer(booking)
+            return Response(serializer.data,status=status.HTTP_200_OK)
         except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))    
+            raise serializers.ValidationError(str(e))
+
 
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
