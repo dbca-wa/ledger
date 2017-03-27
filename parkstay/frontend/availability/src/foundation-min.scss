@@ -8,82 +8,17 @@ html {
 }
 
 .f6inject {
-
-    // foundation-global-styles hits the root DOM elements, so we reproduce most of it here
-    //@include foundation-global-styles;
+    // make CSS box model not stink
     box-sizing: border-box;
+    
+    // reset font settings
     font-family: $body-font-family;
     font-weight: $global-weight-normal;
     line-height: $global-lineheight;
     color: $body-font-color;
-        
-    *, *::before, *::after {
-        box-sizing: inherit;
-    }
-
-    img {
-        // Get rid of gap under images by making them display: inline-block; by default
-        display: inline-block;
-        vertical-align: middle;
-
-        // Grid defaults to get images and embeds to work properly
-        max-width: 100%;
-        height: auto;
-        -ms-interpolation-mode: bicubic;
-    }
-
-    // Make sure textarea takes on height automatically
-    textarea {
-        height: auto;
-        min-height: 50px;
-        border-radius: $global-radius;
-    }
-
-    // Make select elements are 100% width by default
-    select {
-        box-sizing: border-box;
-        width: 100%;
-        border-radius: $global-radius;
-    }
-
-    // Styles Google Maps and MapQuest embeds properly
-    // sass-lint:disable-line no-ids
-    .map_canvas,
-    .mqa-display {
-        img,
-        embed,
-        object {
-            max-width: none !important;
-        }
-    }
-
-    // Reset <button> styles created by most browsers
-    button {
-        @include disable-mouse-outline;
-
-        padding: 0;
-
-        appearance: none;
-        border: 0;
-        border-radius: $global-radius;
-        background: transparent;
-
-        line-height: 1;
-    }
-
-    // Prevent text overflow on pre
-    pre {
-        overflow: auto;
-    }
-
-    // Internal classes to show/hide elements in JavaScript
-    .is-visible {
-        display: block !important;
-    }
-
-    .is-hidden {
-        display: none !important;
-    }
+     
+    // apply rest of global styles
+    @include foundation-global-styles;
 
     @include foundation-flex-grid;
     @include foundation-flex-classes;
