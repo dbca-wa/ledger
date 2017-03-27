@@ -43,7 +43,7 @@
                     <li><a href="{% url 'wl_dashboard:tables_applications_officer' %}">Applications</a></li>
                     <li><a href="{% url 'wl_applications:process' application.id %}">Process Application</a></li>
                     <li><a href="{% url 'wl_applications:enter_conditions' application.id %}">Enter Conditions</a></li>
-                    {% if application.licence %}
+                    {% if application.licence and application.licence.licence_number %}
                         <li class="active">Reissue Licence</li>
                     {% else %}
                         <li class="active">Issue Licence</li>
@@ -55,13 +55,10 @@
 {% endblock %}
 
 {% block messages %}
-    <div class='hidden'>
-        {{ block.super }}
-    </div>
 {% endblock %}
 
 {% block intro_title %}
-    {% if application.licence %}
+    {% if application.licence and application.licence.licence_number %}
         <h3>Reissue Licence</h3>
     {% else %}
         <h3>Issue Licence</h3>
@@ -75,6 +72,16 @@
 
 {% block content %}
     <div class="container bottom-buffer">
+        <div class="row">
+            <div class="col-md-12">
+                {% for message in messages %}
+                    <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
+                        {{ message|safe }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
         <div class="row">
             <div class="col-md-3">
                 <div class="row">
@@ -92,7 +99,23 @@
                                     <p>
                                         {{ applicant.user.first_name }} {{ applicant.user.last_name }}
                                     </p>
-                                    <p>{{ applicant.postal_address.search_text }}</p>
+                                    <div>{{ applicant.postal_address.search_text }}</div>
+                                    <div class="applicant-contact">
+                                        <div>
+                                            <span class="fa fa-envelope"></span>
+                                            <span class="email"> {{ applicant.email }}</span>
+                                        </div>
+                                        {% if applicant.user.phone_number %}
+                                            <div>
+                                                <span class="fa fa-phone phone"></span> {{ applicant.user.phone_number }}
+                                            </div>
+                                        {% endif %}
+                                        {% if applicant.user.mobile_number %}
+                                            <div>
+                                                <span class="fa fa-mobile mobile"></span> {{ applicant.user.mobile_number }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 {% endwith %}
                                 <div class="row">
                                     <div class="col-md-5">
@@ -127,14 +150,20 @@
                     </div>
                 </div>
                 {% include 'wl/logs_panel.html' %}
+                <a class="btn btn-sm btn-default" href="{% url 'wl_applications:enter_conditions' application.id %}" role="button">Conditions</a>
+                {% if payment_status == 'Credit Card Ready' %}
+                    <button id="save" name="save" type="button" class="btn btn-sm btn-info left-buffer-m">Save</button>
+                {% else %}
+                    <button id="save" name="save" type="button" class="btn btn-sm btn-info left-buffer-xxxl">Save</button>
+                {% endif %}
                 {% if payment_status == 'Awaiting Payment' %}
-                    <button id="issue" type="button" class="btn btn-sm btn-success pull-right disabled"
+                    <button id="issue" name="issue" type="button" class="btn btn-sm btn-success pull-right disabled"
                             data-title="Payment must be received before licence can be issued">
                         Issue
                     </button>
                 {% else %}
-                    <button id="issue" type="button" class="btn btn-sm btn-success pull-right">
-                        {% if application.licence %}
+                    <button id="issue" name="issue" type="button" class="btn btn-sm btn-success pull-right">
+                        {% if application.licence and application.licence.licence_number %}
                             Reissue
                         {% else %}
                             {% if payment_status == 'Credit Card Ready' %}
@@ -145,7 +174,6 @@
                         {% endif %}
                     </button>
                 {% endif %}
-                <a class="btn btn-sm btn-default" href="{% url 'wl_applications:enter_conditions' application.id %}" role="button">Back to Conditions</a>
                 <a href="{% url 'wl_applications:preview_licence' application.id %}" id="previewLicence" class="top-buffer pull-right" target="_blank">
                     Preview Licence PDF <img height="20px" src="{% static 'wl/img/pdf.png' %}">
                 </a>

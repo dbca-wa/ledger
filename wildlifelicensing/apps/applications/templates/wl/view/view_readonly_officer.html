@@ -79,7 +79,23 @@
                                     <p>
                                         {{ applicant.user.first_name }} {{ applicant.user.last_name }}
                                     </p>
-                                    <p>{{ applicant.postal_address.search_text }}</p>
+                                    <div>{{ applicant.postal_address.search_text }}</div>
+                                    <div class="applicant-contact">
+                                        <div>
+                                            <span class="fa fa-envelope"></span>
+                                            <span class="email"> {{ applicant.email }}</span>
+                                        </div>
+                                        {% if applicant.user.phone_number %}
+                                            <div>
+                                                <span class="fa fa-phone phone"></span> {{ applicant.user.phone_number }}
+                                            </div>
+                                        {% endif %}
+                                        {% if applicant.user.mobile_number %}
+                                            <div>
+                                                <span class="fa fa-mobile mobile"></span> {{ applicant.user.mobile_number }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 {% endwith %}
                                 <div class="row">
                                     <div class="col-md-5">
@@ -88,7 +104,7 @@
                                     </div>
                                     <div class="col-md-7">
                                         <label>Status</label>
-                                        <p>{{ application.processing_status }}</p>
+                                        <p><span id="status" data-toggle="popover" data-placement="right">{{ application.processing_status }}</span></p>
                                     </div>
                                 </div>
                                 <label>Currently assigned to</label>

@@ -1,14 +1,18 @@
 import json
+import datetime
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django_dynamic_fixture import G
 
-from wildlifelicensing.apps.applications.models import IDRequest
+from wildlifelicensing.apps.applications.models import IDRequest, ApplicationDeclinedDetails
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, is_login_page, \
     get_or_create_default_officer, get_or_create_default_assessor_group, is_email, get_email, clear_mailbox, upload_id, \
     clear_all_id_files, is_client_authenticated
-from wildlifelicensing.apps.applications.tests.helpers import create_and_lodge_application, get_or_create_assessment
+from wildlifelicensing.apps.applications.tests.helpers import create_and_lodge_application, get_or_create_assessment, \
+    get_or_create_condition
 from wildlifelicensing.apps.applications.emails import ApplicationIDUpdateRequestedEmail
+from wildlifelicensing.apps.main.models import Region
 
 
 class TestStatusLifeCycle(TestCase):
@@ -69,6 +73,132 @@ class TestStatusLifeCycle(TestCase):
         self.assertEqual('updated', application.id_check_status)
         self.assertEqual('under_review', application.customer_status)
         self.assertEqual('ready_for_action', application.processing_status)
+
+    def test_issued_status_after_entering_condition(self):
+        """
+        Test that if an application has been issued, entering condition leave the status as issued
+        @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2736&project_id=24
+        """
+        application = create_and_lodge_application(self.user)
+        # set some conditions
+        url = reverse('wl_applications:enter_conditions', args=[application.pk])
+        condition = get_or_create_condition('0001', {"text": "For unit test"})
+        data = {
+            'conditionID': [condition.pk]
+        }
+        self.client.login(self.officer.email)
+        self.assertTrue(is_client_authenticated(self.client))
+        resp = self.client.post(url, data=data, follow=True)
+        self.assertEquals(200, resp.status_code)
+        application.refresh_from_db()
+        self.assertEquals(application.processing_status, 'ready_to_issue')
+
+        # issue licence
+        url = reverse('wl_applications:issue_licence', args=[application.pk])
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        data = {
+            'regions': [G(Region).pk],
+            'return_frequency': -1,
+            'issue_date': str(today),
+            'start_date': str(today),
+            'end_date': str(tomorrow)
+        }
+        resp = self.client.post(url, data=data, follow=True)
+        self.assertEquals(200, resp.status_code)
+        application.refresh_from_db()
+        self.assertEquals(application.processing_status, 'issued')
+
+        # now repost conditions
+        url = reverse('wl_applications:enter_conditions', args=[application.pk])
+        condition = get_or_create_condition('0001', {"text": "For unit test"})
+        data = {
+            'conditionID': [condition.pk]
+        }
+        resp = self.client.post(url, data=data, follow=True)
+        self.assertEquals(200, resp.status_code)
+        application.refresh_from_db()
+        # status should not be 'ready_to_issue' but 'issued'
+        expected_status = 'issued'
+        self.assertEquals(application.processing_status, expected_status)
+
+
+    def test_issued_declined_licences_cannot_be_assessed(self):
+        """
+        Test that if a licence has been issued or application declined, assessments can no longer be done.
+        @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2743&project_id=24
+        """
+        # create application to issue
+        application = create_and_lodge_application(self.user)
+
+        # send out assessment
+        assessment = get_or_create_assessment(application)
+        self.assertEquals(assessment.status, 'awaiting_assessment')
+
+        self.client.login(self.officer.email)
+
+        # issue licence
+        url = reverse('wl_applications:issue_licence', args=[application.pk])
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        data = {
+            'regions': [G(Region).pk],
+            'return_frequency': -1,
+            'issue_date': str(today),
+            'start_date': str(today),
+            'end_date': str(tomorrow)
+        }
+        resp = self.client.post(url, data=data, follow=True)
+        self.assertEquals(200, resp.status_code)
+        application.refresh_from_db()
+        self.assertEquals(application.processing_status, 'issued')
+
+        assessment.refresh_from_db()
+        self.assertEquals(assessment.status, 'assessment_expired')
+
+        # create application to decline
+        application = create_and_lodge_application(self.user)
+
+        # send out assessment
+        assessment = get_or_create_assessment(application)
+        self.assertEquals(assessment.status, 'awaiting_assessment')
+
+        # decline licence
+        resp = self.client.post(reverse('wl_applications:process', args=[application.pk]), data={'decline': True},
+                                follow=True)
+        self.assertEquals(200, resp.status_code)
+
+        assessment.refresh_from_db()
+        self.assertEquals(assessment.status, 'assessment_expired')
+
+
+    def test_declined_applications_status(self):
+        """
+        Test that if an application has been declined, the officer and customer will both have a declined status
+        @see https://kanboard.dpaw.wa.gov.au/?controller=TaskViewController&action=show&task_id=2741&project_id=24
+        """
+        # create application to decline
+        application = create_and_lodge_application(self.user)
+
+        self.client.login(self.officer.email)
+
+        # decline licence
+        resp = self.client.post(reverse('wl_applications:process', args=[application.pk]),
+                                data={'decline': True, 'reason': 'N/A'},
+                                follow=True)
+        self.assertEquals(200, resp.status_code)
+
+        application.refresh_from_db()
+
+        self.assertEquals(application.customer_status, 'declined')
+        self.assertEquals(application.processing_status, 'declined')
+
+        # Test that the reason is stored
+        details = ApplicationDeclinedDetails.objects.filter(application=application).first()
+        self.assertIsNotNone(details)
+        self.assertEqual(application, details.application)
+        self.assertEqual(self.officer, details.officer)
+        self.assertEquals('N/A', details.reason)
 
 
 class TestViewAccess(TestCase):

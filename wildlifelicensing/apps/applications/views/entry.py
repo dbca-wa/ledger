@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.views.generic.base import View, TemplateView
-from django.views.generic.edit import FormView
+from django.views.generic.edit import FormView, DeleteView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -10,14 +10,14 @@ from django.utils.http import urlencode
 from ledger.accounts.models import EmailUser, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
 
-from wildlifelicensing.apps.main.models import WildlifeLicenceType,\
+from wildlifelicensing.apps.main.models import WildlifeLicenceType, \
     WildlifeLicenceCategory, Variant
 from wildlifelicensing.apps.main.forms import IdentificationForm, SeniorCardForm
-from wildlifelicensing.apps.applications.models import Application, AmendmentRequest,\
+from wildlifelicensing.apps.applications.models import Application, AmendmentRequest, \
     ApplicationVariantLink, ApplicationUserAction
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
-from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin,\
+from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, \
     UserCanViewApplicationMixin, UserCanRenewApplicationMixin, UserCanAmendApplicationMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
@@ -85,17 +85,57 @@ class EditApplicationView(UserCanEditApplicationMixin, View):
         return redirect('wl_applications:enter_details')
 
 
-class DeleteApplicationView(View, UserCanViewApplicationMixin):
+class DiscardApplicationView(View, UserCanViewApplicationMixin):
+
+    def get_and_check_application(self, request, *args):
+        """
+        Warning! Don't call this method get_application or it will clash with the one in the UserCanViewApplicationMixin
+        """
+        application = get_object_or_404(Application, pk=args[0])
+        if not application.is_discardable:
+            raise Exception('Application cannot be discarded at this stage')
+        return application
+
     def get(self, request, *args, **kwargs):
         try:
-            application = Application.objects.get(id=args[0])
-            if application.customer_status == 'draft':
+            application = self.get_and_check_application(request, *args)
+            # confirmation page context
+            ctx = {
+                'action_url': reverse('wl_applications:discard_application', args=[application.pk]),
+                'cancel_url': reverse('wl_dashboard:home')
+            }
+            return render(request,
+                          template_name='wl/entry/confirm_discard.html',
+                          context=ctx)
+
+        except Exception as e:
+            messages.error(self.request, str(e))
+            return redirect('wl_dashboard:home')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Two cases:
+         1- If an application has been lodged/submitted its state becomes 'discarded'
+         2- If it is a first time draft (not submitted) it is deleted.
+        """
+        try:
+            application = self.get_and_check_application(request, *args)
+            if application.is_deletable:
                 application.delete()
-                messages.success(self.request, 'Draft application was deleted')
             else:
-                messages.warning(self.request, 'Application can only be deleted if it is a draft')
-        except Application.DoesNotExist:
-            messages.error(self.request, 'Unable to find application')
+                application.customer_status = application.processing_status = 'discarded'
+                application.save()
+                application.log_user_action(
+                    ApplicationUserAction.ACTION_DISCARD_APPLICATION.format(application),
+                    request
+                )
+            if application.lodgement_number:
+                message = 'Application {} discarded'.format(application)
+            else:
+                message = 'Application discarded'
+            messages.success(self.request, message)
+        except Exception as e:
+            messages.error(self.request, str(e))
 
         return redirect('wl_dashboard:home')
 
@@ -312,7 +352,6 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         application.applicant.save()
 
         # update any other applications for this user that are awaiting ID upload
-#       for application in Application.objects.filter(applicant_profile__user=applicant):
         for app in Application.objects.filter(applicant=application.applicant):
             if app.id_check_status == 'awaiting_update':
                 app.id_check_status = 'updated'
@@ -488,7 +527,8 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         if 'draft' in request.POST or 'draft_continue' in request.POST:
             application.customer_status = 'draft'
 
-            if application.processing_status != 'renewal':
+            # The processing status should only be set to 'draft' if the application hasn't been lodged
+            if not application.lodgement_number:
                 application.processing_status = 'draft'
 
             application.save()

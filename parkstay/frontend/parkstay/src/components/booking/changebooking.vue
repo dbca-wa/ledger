@@ -4,19 +4,20 @@
             <form class="form-horizontal" name="changebookingForm">
                 <div class="row">
                     <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
+                    <alert :show="success" type="success"><strong>{{successString}}</strong></alert>
                     <div class="col-lg-12">
                         <div class="form-group">
                             <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
                             <div class="col-md-4">
-                                <div class="input-group">
+                                <div class="input-group arrivalPicker date">
                                     <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY" v-model="booking.arrival">
                                     <span class="input-group-addon">
-                                        <span class="glyphicon glyphicon-calendar"></span>
+                                        <span class="glyphicon glyphicon-calendar "></span>
                                     </span>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="input-group">
+                                <div class="input-group departurePicker date">
                                     <input type="text" class="form-control" name="departure" placeholder="DD/MM/YYYY" v-model="booking.departure">
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar"></span>
@@ -83,7 +84,9 @@ export default {
                 campsites: []
             },
             errors: false,
-            errorString: ''
+            errorString: '',
+            successString: '',
+            success:false
         }
     },
     computed: {
@@ -131,6 +134,7 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
+            vm.success= false;
             var booking = vm.booking;
             vm.$parent.loading.push('processing booking');
             vm.$http.put(api_endpoints.booking(booking.id),JSON.stringify(booking),{
@@ -138,7 +142,9 @@ export default {
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 }).then((response)=>{
                     vm.$parent.loading.splice('processing booking',1);
-                    vm.close();
+                    vm.successString= 'Booking Updated',
+                    vm.success=true;
+                    //vm.close();
                 },(error)=>{
                     console.log(error);
                     vm.errors = true;
@@ -189,31 +195,34 @@ export default {
                     }
                 }
             });
+       },
+       eventListerners:function () {
+           let vm = this;
+           let datepickerOptions = {
+               format: 'YYYY-MM-DD',
+               showClear:true
+           };
+           var arrival = $('.arrivalPicker');
+           var departure = $('.departurePicker');
+
+           arrival.datetimepicker(datepickerOptions);
+           departure.datetimepicker(datepickerOptions);
+
+           arrival.on('dp.change', function(e){
+               vm.booking.arrival = arrival.data('DateTimePicker').date().format('YYYY-MM-DD');
+               departure.data("DateTimePicker").minDate(e.date);
+           });
+
+          departure.on('dp.change', function(e){
+               vm.booking.departure =  departure.data('DateTimePicker').date().format('YYYY-MM-DD');
+           });
        }
    },
    mounted:function () {
        let vm =this;
        vm.form = document.forms.changebookingForm;
        vm.addFormValidations();
-       let datepickerOptions = {
-           minDate:new Date(),
-           format: 'DD/MM/YYYY',
-           showClear:true
-       };
-       var arrival = $(vm.form.arrival);
-       var departure = $(vm.form.departure);
-
-       arrival.datetimepicker(datepickerOptions);
-       departure.datetimepicker(datepickerOptions);
-
-       arrival.on('dp.change', function(e){
-           vm.booking.arrival = arrival.data('DateTimePicker').date().format('YYYY-MM-DD');
-           departure.data("DateTimePicker").minDate(e.date);
-       });
-
-      departure.on('dp.change', function(e){
-           vm.booking.departure =  departure.data('DateTimePicker').date().format('YYYY-MM-DD');
-       });
+       vm.eventListerners();
    }
 }
 </script>

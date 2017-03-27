@@ -20,7 +20,8 @@
     ], function (enter_conditions, logs) {
         $(function () {
             enter_conditions.init({{ assessment|jsonify }}, {{ application|jsonify }},
-                                  {{ form_structure|jsonify }}, {{ other_assessments|jsonify }});
+                                  {{ form_structure|jsonify }}, {{ other_assessments|jsonify }},
+                                  "{{ csrf_token }}", {{ assessors|jsonify }}, {{ request.user.id }});
 
             logs.initCommunicationLog({
                 logListURL: "{% url 'wl_applications:log_list' application.id %}",
@@ -73,7 +74,23 @@
                                     <p>
                                         {{ applicant.user.first_name }} {{ applicant.user.last_name }}
                                     </p>
-                                    <p>{{ applicant.postal_address.search_text }}</p>
+                                    <div>{{ applicant.postal_address.search_text }}</div>
+                                    <div class="applicant-contact">
+                                        <div>
+                                            <span class="fa fa-envelope"></span>
+                                            <span class="email"> {{ applicant.email }}</span>
+                                        </div>
+                                        {% if applicant.user.phone_number %}
+                                            <div>
+                                                <span class="fa fa-phone phone"></span> {{ applicant.user.phone_number }}
+                                            </div>
+                                        {% endif %}
+                                        {% if applicant.user.mobile_number %}
+                                            <div>
+                                                <span class="fa fa-mobile mobile"></span> {{ applicant.user.mobile_number }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 {% endwith %}
                                 <div class="row">
                                     <div class="col-md-5">
@@ -89,6 +106,15 @@
                                                 Unassigned
                                             {% endif %}
                                         </p>
+                                    </div>
+                                </div>
+                                <div class="row bottom-buffer">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Assigned for assessment to</label>
+                                            <input type="hidden" id="assignee" class="form-control">
+                                            <a id="assignToMe" class="pull-right">Assign to me</a>
+                                        </div>
                                     </div>
                                 </div>
                                 <p>

@@ -22,6 +22,26 @@ required environment variables at run time. Example content:
     DEBUG=True
     DATABASE_URL="postgres://USER:PASSWORD@HOST:PORT/NAME"
     SECRET_KEY="ThisIsASecretKey"
+    DEFAULT_HOST="https://website.domain/"
+    EMAIL_HOST="emailhost"
+    EMAIL_FROM="noreply@email.address"
+    PARENT_HOST="website.domain"
+    HOST_PORT=""
+    ALLOWED_HOSTS=[u'website.domain']
+    CMS_URL="https://url-used-to-retrieve-system-id-via-api/"
+    LEDGER_USER="UserForSystemIdAPI"
+    LEDGER_PASS="Password"
+    BPOINT_BILLER_CODE="1234567"
+    BPOINT_USERNAME="Username"
+    BPOINT_PASSWORD="Password"
+    BPOINT_MERCHANT_NUM="1234567889012345"
+    BPAY_BILLER_CODE="123456"
+    BPAY_FILE_PATH="/file/path/for/incoming/bpay/files"
+    OSCAR_SHOP_NAME="Shop 1"
+    NOTIFICATION_EMAIL="email@for.bpay.notifications"
+    PRODUCTION_EMAIL=False (Send system emails to NON_PROD_EMAIL if False)
+    EMAIL_INSTANCE='UAT' (DEV/TEST/UAT/PROD)
+    NON_PROD_EMAIL='comma@separated.email,listfor@nonproduction.emails'
 
 # Wildlife Licensing
 

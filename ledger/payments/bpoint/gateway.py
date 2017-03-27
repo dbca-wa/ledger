@@ -34,6 +34,7 @@ class Gateway(object):
             req.crn1 = reference
             req.sub_type = sub_type
             req.tokenisation_mode = 3
+            req.store_card = True #Store card tokens in order to make refunds
         except Exception as e:
             raise
         return req

@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
+import traceback
 import decimal
 from django.db import models
+from django.db.models import Q 
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.conf import settings
@@ -18,7 +20,7 @@ class Invoice(models.Model):
     order_number = models.CharField(max_length=50,unique=True)
     reference = models.CharField(max_length=50, unique=True)
     system = models.CharField(max_length=4,blank=True,null=True)
-    token = models.CharField(max_length=25,null=True,blank=True)
+    token = models.CharField(max_length=80,null=True,blank=True)
     voided = models.BooleanField(default=False)
 
     def __unicode__(self):
@@ -54,6 +56,16 @@ class Invoice(models.Model):
         return None
 
     @property
+    def refundable_amount(self):
+        return self.payment_amount - self.__calculate_total_refunds()
+
+    @property
+    def refundable(self):
+        if self.refundable_amount > 0:
+            return True
+        return False
+
+    @property
     def num_items(self):
         ''' Get the number of items in this invoice.
         '''
@@ -63,6 +75,12 @@ class Invoice(models.Model):
     def shipping_required(self):
         return self.order.basket.is_shipping_required() if self.order else False
     
+    @property
+    def linked_bpay_transactions(self):
+        linked = InvoiceBPAY.objects.filter(invoice=self).values('bpay')
+        txns = BpayTransaction.objects.filter(id__in=linked)
+        return txns
+
     @property
     def bpay_transactions(self):
         ''' Get this invoice's bpay transactions.
@@ -86,7 +104,10 @@ class Invoice(models.Model):
 
     @property
     def balance(self):
-        return self.amount - self.payment_amount
+        amount = decimal.Decimal(self.amount - self.payment_amount)
+        if amount < 0:
+            amount =  decimal.Decimal(0)
+        return amount
 
     @property
     def payment_status(self):
@@ -102,6 +123,30 @@ class Invoice(models.Model):
             return 'paid'
         else:
             return 'over_paid'
+
+    @property
+    def single_card_payment(self):
+        card = self.bpoint_transactions.count()
+        bpay = self.bpay_transactions
+        cash = self.cash_transactions
+    
+        if bpay or cash:
+            return False
+        
+        if card > 1:
+            return False
+        return True
+
+    @property
+    def refundable_cards(self):
+        cards = []
+        refunds = self.bpoint_transactions.filter(Q(action='payment') | Q(action='capture'),dvtoken__isnull=False)
+        for r in refunds:
+            if r.refundable_amount > 0:
+                cards.append(r)
+        print cards
+        return cards
+        
 
     # Helper Functions
     # =============================================
@@ -137,6 +182,18 @@ class Invoice(models.Model):
 
         return payments - reversals    
 
+    def __calculate_total_refunds(self):
+        ''' Calcluate the total amount of refunds
+            for this invoice.
+        '''
+        refunds = 0
+        cash_refunds = dict(self.cash_transactions.filter(type='refund').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        card_refunds = dict(self.bpoint_transactions.filter(action='refund', response_code='0').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        bpay_refunds = dict(self.bpay_transactions.filter(p_instruction_code='15', type=699).aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+
+        refunds = cash_refunds + card_refunds + bpay_refunds
+        return refunds
+
     # Functions
     # =============================================
     def save(self,*args,**kwargs):
@@ -158,6 +215,8 @@ class Invoice(models.Model):
                     card_details[0],
                     card_details[1]
                 )
+                if len(card_details) == 3:
+                    card.last_digits = card_details[2]
                 txn = bpoint_facade.pay_with_temptoken(
                         'payment',
                         'telephoneorder',
@@ -181,7 +240,7 @@ class Invoice(models.Model):
             else:
                 raise ValidationError('This invoice doesn\'t have any tokens attached to it.')
         except Exception as e:
-            print(str(e))
+            traceback.print_exc()
             raise
 
 class InvoiceBPAY(models.Model):

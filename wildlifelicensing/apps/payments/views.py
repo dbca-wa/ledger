@@ -61,7 +61,7 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')
         )
-
+        JSON_REQUEST_HEADER_PARAMS["X-CSRFToken"] = request.COOKIES.get('csrftoken')
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
 

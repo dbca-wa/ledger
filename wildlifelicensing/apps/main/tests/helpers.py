@@ -9,6 +9,7 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 from django.utils.encoding import smart_text
+from django.contrib.messages import constants as message_constants
 from django_dynamic_fixture import G
 
 from ledger.accounts.models import EmailUser, Profile, Address, Country
@@ -217,6 +218,24 @@ def get_user_home_url(user):
         return '/dashboard/tables/assessor'
 
     return '/dashboard/tables/customer'
+
+
+def get_response_messages(response):
+    if 'messages' in response.context:
+        return list(response.context['messages'])
+    return []
+
+
+def has_response_messages(response):
+    return len(get_response_messages(response)) > 0
+
+
+def get_response_error_messages(response):
+    return [m for m in get_response_messages(response) if m.level == message_constants.ERROR]
+
+
+def has_response_error_messages(response):
+    return len(get_response_error_messages(response)) > 0
 
 
 class HelpersTest(TestCase):
