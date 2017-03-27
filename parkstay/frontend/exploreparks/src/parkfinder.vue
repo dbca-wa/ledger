@@ -230,21 +230,6 @@
     content: "s";
 }
 
-.fa-chevron-left:before {
-    font-style: normal;
-    content: "«";
-}
-
-.fa-chevron-right:before {
-    font-style: normal;    
-    content: "»";
-}
-
-.fa-remove:before {
-    font-style: normal;    
-    content: "×";
-}
-
 .f6inject {
 
     .search-params hr {

@@ -114,20 +114,6 @@
 </template>
 
 <style lang="scss">
-.fa-chevron-left:before {
-    font-style: normal;
-    content: "«";
-}
-
-.fa-chevron-right:before {
-    font-style: normal;    
-    content: "»";
-}
-
-.fa-remove:before {
-    font-style: normal;    
-    content: "×";
-}
 
 .f6inject {
     th.site {
@@ -151,6 +137,12 @@
     }
     .table-scroll table {
         width: 100%;
+    }
+
+    // table font colour override
+    table thead tr {
+        background: unset;
+        color: unset;
     }
 
     td.available {
