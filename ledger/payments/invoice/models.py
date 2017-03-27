@@ -144,7 +144,7 @@ class Invoice(models.Model):
         for r in refunds:
             if r.refundable_amount > 0:
                 cards.append(r)
-        print cards
+        print(cards)
         return cards
         
 
