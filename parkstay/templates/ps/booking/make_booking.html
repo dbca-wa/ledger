@@ -373,7 +373,7 @@
 
                 // generate per night rate the ugly way
                 // (price can vary based on date, so this is an approximate measure)
-                vm.perDayFee = vm.total/{{ booking.num_days }};
+                vm.perDayFee = vm.total{% if booking %}/{{ booking.num_days }}{% endif %};
 
                 // generate + add park entry fees
                 vm.vehicles.forEach(function (el) {
