@@ -24,7 +24,7 @@ class MakeBookingsForm(forms.Form):
     num_infant = forms.IntegerField(min_value=0, max_value=16, label="Infants (ages 0-5)")
     email = forms.EmailField(widget=forms.TextInput(attrs={'required':True}))
     confirm_email = forms.EmailField(label ="Confirm Email", widget=forms.TextInput(attrs={'required':True}))
-    first_name = forms.CharField(label="First Name")
+    first_name = forms.CharField(label="Given Name(s)")
     surname = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
     phone = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
     postcode =forms.CharField(max_length=4, label="Post Code",widget=forms.TextInput(attrs={'required':True}))
@@ -42,5 +42,5 @@ class MakeBookingsForm(forms.Form):
             raise forms.ValidationError('Booking requires at least 1 guest that is an adult or concession.')
 
         if (self.cleaned_data.get('email') != self.cleaned_data.get('confirm_email')):
-            raise forms.ValidationError('Confirmation email address does not match.')
+            raise forms.ValidationError('Email and confirmation email fields do not match.')
 
