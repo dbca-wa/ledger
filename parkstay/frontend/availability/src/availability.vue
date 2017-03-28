@@ -309,6 +309,10 @@ export default {
                 method: 'POST',
                 data: submitData,
                 dataType: 'json',
+                crossDomain: true,
+                xhrFields: {
+                    withCredentials: true
+                },
                 success: function(data, stat, xhr) {
                     console.log(data);
                     if (data.status == 'success') {
