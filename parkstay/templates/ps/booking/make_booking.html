@@ -288,6 +288,7 @@
 {% endblock %}
 
 {% block custom_js %}
+{% if booking %}
 <script src="//static.dpaw.wa.gov.au/static/libs/vue/2.2.4/vue.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.18.0/moment.min.js"></script>
@@ -383,7 +384,7 @@
 
                 // generate per night rate the ugly way
                 // (price can vary based on date, so this is an approximate measure)
-                vm.perDayFee = vm.total{% if booking %}/{{ booking.num_days }}{% endif %};
+                vm.perDayFee = vm.total/{{ booking.num_days }};
 
                 // generate + add park entry fees
                 vm.vehicles.forEach(function (el) {
@@ -473,4 +474,5 @@
         }
     });
 </script>
+{% endif %}
 {% endblock %}
