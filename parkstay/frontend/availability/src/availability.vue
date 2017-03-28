@@ -308,6 +308,7 @@ export default {
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
                 data: submitData,
+                dataType: 'json',
                 success: function(data, stat, xhr) {
                     console.log(data);
                     if (data.status == 'success') {
@@ -317,7 +318,7 @@ export default {
                 error: function(data, stat, xhr) {
                     console.log('POST error');
                     console.log(data);
-                    vm.errorMsg = data.responseJSON.msg;
+                    vm.errorMsg = data.msg ? data.msg : 'Sorry, an error occurred when communicating with Parkstay. Please try again later.';
                     vm.update();
                 }
             });
