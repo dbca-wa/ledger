@@ -312,7 +312,7 @@ export default {
                 success: function(data, stat, xhr) {
                     console.log(data);
                     if (data.status == 'success') {
-                        window.location.href = '/booking';
+                        window.location.href = vm.parkstayUrl + '/booking';
                     }
                 },
                 error: function(data, stat, xhr) {
