@@ -167,6 +167,16 @@ const router = new Router({
   'mode': 'history'
 });
 
+router.beforeEach((to,from,next) => {
+    next((vm) => {
+        vm.$store.dispatch("updateAlert",{
+            visible:false,
+            type:"danger",
+            message: ""
+        });
+    });
+});
+
 new Vue({
   'router':router,
   store,
