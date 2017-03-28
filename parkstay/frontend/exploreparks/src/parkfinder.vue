@@ -536,7 +536,7 @@ export default {
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
                     params['departure'] = this.departureDate.format('YYYY/MM/DD');
                 }
-                return '#makebooking?' + $.param(params);
+                return '?' + $.param(params) + '#makebooking';
             }
         }
     },
@@ -584,7 +584,7 @@ export default {
                     if (data.features && data.features.length > 0) {
                         //console.log('Mapbox!');
                         //console.log(data.features[0]);
-                        var view = this.olmap.getView();
+                        var view = vm.olmap.getView();
                         view.animate({
                             center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
                             resolution: vm.resolutions[12],

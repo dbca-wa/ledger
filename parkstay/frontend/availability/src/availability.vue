@@ -308,7 +308,6 @@ export default {
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
                 data: submitData,
-                headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function(data, stat, xhr) {
                     console.log(data);
                     if (data.status == 'success') {
