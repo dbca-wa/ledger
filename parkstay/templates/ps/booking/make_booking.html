@@ -47,7 +47,17 @@
                             {% endverbatim %}
                                 <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel</a>
                             </p>
-                            {{ form.non_field_errors }}
+                            {% if show_errors %}
+                                <p>There were some problems with your submission:</p>
+                                <ul>
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                                {% for field in form %}{% for error in field.errors %}
+                                    <li><b>{{ field.label }}:</b> {{ error }}</li>
+                                {% endfor %}{% endfor %}
+                                </ul>
+                            {% endif %}
                             <h3 class="text-primary">Booking information</h3>
                         </div>
                         <div class="col-md-2">

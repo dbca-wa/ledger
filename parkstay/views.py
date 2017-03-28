@@ -104,7 +104,7 @@ def abort_booking_view(request, *args, **kwargs):
 class MakeBookingsView(TemplateView):
     template_name = 'ps/booking/make_booking.html'
 
-    def render_page(self, request, booking, form, vehicles):
+    def render_page(self, request, booking, form, vehicles, show_errors=False):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         expiry = booking.expiry_time.isoformat() if booking else ''
@@ -135,7 +135,8 @@ class MakeBookingsView(TemplateView):
             'campsite': campsite,
             'expiry': expiry,
             'timer': timer,
-            'pricing': pricing
+            'pricing': pricing,
+            'show_errors': show_errors
         })
 
 
@@ -164,7 +165,7 @@ class MakeBookingsView(TemplateView):
     
         # re-render the page if the form doesn't validate
         if (not form.is_valid()) or (not vehicles.is_valid()):
-            return self.render_page(request, booking, form, vehicles)
+            return self.render_page(request, booking, form, vehicles, show_errors=True)
 
         # update the booking object with information from the form
         if not booking.details:
