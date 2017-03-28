@@ -702,3 +702,63 @@ def delete_session_booking(session):
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):
         yield start_date + timedelta(n)
+
+#Oracle Parser
+def oracle_parser(date):
+    with transaction.atomic():
+        try:
+            op = OracleParser.objects.create(date=date)
+            bpoint_txns = [i.bpoint_transactions.filter(settlement_date=date) for i in Invoice.objects.filter(system=settings.SYSTEM_ID)]
+            oracle_codes = {}
+            parser_codes = {}
+            for txn in bpoint_txns:
+                invoice = Invoice.objects.get(reference=txn.crn1)
+                if invoice.reference not in parser_codes.keys():
+                    parser_codes[invoice.reference] = {} 
+                items = invoice.order.lines.all()
+                items_codes = [i.oracle_code for i in items]
+                for i in items_codes:
+                    if i not in oracle_codes.keys():
+                        oracle_codes[i] = Decimal('0.0')
+                    if i not in parser_codes[invoice.reference].keys():
+                        parser_codes[invoice.reference] = {{amount: Decimal('0.0'),'payment':True},{amount: Decimal('0.0'),'payment':False}}
+                # Start Parsing items in invoices
+                payable_amount = txn.amount
+                for i in items:
+                    code = i.oracle_code
+                    # Check previous parser results for this invoice
+                    previous_invoices = ParserInvoice.objects.filter(reference=invoice.reference).exclude(parser=parser)
+                    code_paid_amount = Decimal('0.0')
+                    code_refunded_amount = Decimal('0.0')
+                    for p in previous_invoices:
+                        for k,v in p.details.items():
+                            if k == code:
+                                if v['payment']:
+                                    code_paid_amount += v['amount']
+                                else:
+                                    code_refunded_amount += v['amount']
+                    # Deal with the current txn
+                    if txn.action == 'payment':
+                        code_payable_amount = i.line_price_incl_tax - code_paid_amount
+                        amt = code_payable_amount if code_payable_amount <= payable_amount else payable_amount
+                        oracle_codes[code] += amt
+                        payable_amount -= amt 
+                        code_paid_amount += amt
+                        for k,v in parser_codes[invoice.reference][code].items():
+                            if v['payment']:
+                                v['amount'] += amt
+
+                    elif txn.action == 'refund':
+                        code_refundable_amount = i.line_price_incl_tax - code_refunded_amount
+                        amt = code_refundable_amount if code_refundable_amount <= payable_amount else payable_amount
+                        oracle_codes[code] -= amt
+                        payable_amount -= amt 
+                        code_refunded_amount += amt
+                        for k,v in parser_codes[invoice.reference][code].items():
+                            if not v['payment']:
+                                v['amount'] += amt
+            for k,v in parser_codes.items():
+                ParserInvoice(reference=k,details=v,parser=op)
+            return oracle_codes
+        except Exception as e:
+            raise e

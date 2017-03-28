@@ -26,6 +26,10 @@ class Invoice(models.Model):
     def __unicode__(self):
         return 'Invoice #{0}'.format(self.reference)
 
+    class Meta:
+        app_label = 'payments'
+        db_table = 'invoice_invoice'
+
     # Properties
     # =============================================
     @property
@@ -247,6 +251,10 @@ class InvoiceBPAY(models.Model):
     '''
     invoice = models.ForeignKey(Invoice)
     bpay = models.ForeignKey('bpay.BpayTransaction')
+
+    class Meta:
+        app_label = 'payments'
+        db_table = 'invoice_invoicebpay'
 
     def __str__(self):
         return 'Invoice No. {}: BPAY CRN {}'.format(self.invoice.reference,self.bpay.crn)
