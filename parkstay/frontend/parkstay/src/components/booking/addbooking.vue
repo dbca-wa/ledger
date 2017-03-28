@@ -84,14 +84,14 @@
                             <div class="col-lg-12">
                                 <h3 class="text-primary">Campsite Booking</h3>
                                 <p>
-                                    Click <a href="#">here</a> to open the map of the campground to help you select the preferred campsite
+                                    Click <a href="https://parks-oim.dpaw.wa.gov.au/park-stay">here</a> to open the map of the campground to help you select the preferred campsite
                                 </p>
                                 <ul class="nav nav-tabs">
-                                    <li class="active"><a data-toggle="tab" href="#campsite-booking" @click.prevent="booking_type=booking_types.CAMPSITE">Campsite</a></li>
-                                    <li><a data-toggle="tab" href="#campsite-class-booking" @click.prevent="booking_type=booking_types.CLASS">Campsite Type </a></li>
+                                    <li :class="{active:campground.site_type == 0}" v-show="campground.site_type == 0" ><a data-toggle="tab" href="#campsite-booking" @click.prevent="booking_type=booking_types.CAMPSITE">Campsite</a></li>
+                                    <li :class="{active:campground.site_type == 1}" v-show="campground.site_type == 1" ><a data-toggle="tab" href="#campsite-class-booking" @click.prevent="booking_type=booking_types.CLASS">Campsite Type </a></li>
                                 </ul>
                                 <div class="tab-content">
-                                    <div id="campsite-booking" class="tab-pane fade in active">
+                                    <div id="campsite-booking" class="tab-pane fade in active" v-if="campground.site_type == 0">
                                         <div class="row">
                                             <div v-show="campsites.length < 1" class="col-lg-12 text-center">
                                                 <h2>No Campsites Available</h2>
@@ -107,7 +107,7 @@
                                           </div>
                                         </div>
                                     </div>
-                                    <div id="campsite-class-booking" class="tab-pane fade in">
+                                    <div id="campsite-class-booking" class="tab-pane fade in active" v-if="campground.site_type == 1">
                                         <div class="row">
                                             <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
                                                 <h2>No Campsites Available</h2>
@@ -372,7 +372,7 @@ export default {
                     name:"Vehicle",
                     amount:0,
                     price:0,
-                    description: "Vehicle Regestration",
+                    description: "Vehicle Registration",
                     rego:""
                 },
                 {
@@ -380,7 +380,7 @@ export default {
                     name:"Concession",
                     amount:0,
                     price:0,
-                    description: "Concession Vehicle Regestration",
+                    description: "Concession Vehicle Registration",
                     helpText:"accepted concession cards",
                     rego:""
                 },
@@ -389,7 +389,7 @@ export default {
                     name:"Motorbike",
                     amount:0,
                     price:0,
-                    description: "Motorbike Regestration",
+                    description: "Motorbike Registration",
                     rego:""
                 }
             ],
@@ -579,6 +579,7 @@ export default {
             vm.$http.get(api_endpoints.campground(cgId)).then((response)=>{
                 vm.campground = response.body;
                 vm.booking.campground = vm.campground.id;
+                vm.booking_type = (vm.campground.site_type == 0) ? vm.booking_types.CAMPSITE : vm.booking_types.CLASS;
                 vm.fetchStayHistory();
                 vm.fetchCampsites();
                 vm.fetchPark();
@@ -719,6 +720,15 @@ export default {
                     vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
 
                 });
+            } else {
+                $.each(vm.priceHistory,function (i,price) {
+                    for (var guest in vm.booking.guests) {
+                        if (vm.booking.guests.hasOwnProperty(guest)) {
+                            vm.booking.price += vm.booking.guests[guest] * price.rate[guest];
+                        }
+                    }
+
+                });
             }
         },
         updateParkEntryPrices:function () {
@@ -853,6 +863,11 @@ export default {
                     vm.isModalOpen=true;
                 },(error)=>{
                     console.log(error);
+                    vm.$store.dispatch("updateAlert",{
+						visible:true,
+						type:"danger",
+						message: error.body
+					});
                     vm.loading.splice('processing booking',1);
                 });
             }
