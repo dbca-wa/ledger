@@ -400,7 +400,17 @@ export default {
                 entry_fee:0
             },
             parkEntryVehicles:[],
-            parkPrices: {},
+            parkPrices: {
+                "id": null,
+                "period_start": null,
+                "period_end": null,
+                "reason": 1,
+                "details": "other",
+                "vehicle": "0.00",
+                "concession": "0.00",
+                "motorbike": "0.00",
+                "editable": false
+            },
             stayHistory:[],
             arrivalPicker: {},
             departurePickere: {},
@@ -773,11 +783,20 @@ export default {
             if (vm.booking.arrival) {
                 var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY-MM-DD");
                 vm.$http.get(api_endpoints.park_current_price(vm.park.id,arrival)).then((response)=>{
-                    vm.parkPrices = response.body;
+                    var resp = response.body;
+                    if (resp.constructor != Array) {
+                        vm.parkPrices = response.body;
+                    }else{
+                        vm.parkPrices.vehicle = "0.00";
+                        vm.parkPrices.motorbike = "0.00";
+                        vm.parkPrices.concession = "0.00";
+                    }
                     calcprices();
                 });
             }else{
-                vm.parkPrices = {};
+                vm.parkPrices.vehicle = "0.00";
+                vm.parkPrices.motorbike = "0.00";
+                vm.parkPrices.concession = "0.00";
                 calcprices();
             }
 
