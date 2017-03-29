@@ -114,6 +114,32 @@ EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
 
+# Oscar settings
+from oscar.defaults import *
+OSCAR_ALLOW_ANON_CHECKOUT = True
+OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
+OSCAR_DEFAULT_CURRENCY = 'AUD'
+OSCAR_DASHBOARD_NAVIGATION.append(
+    {
+        'label': 'Payments',
+        'icon': 'icon-globe',
+        'children': [
+            {
+                'label': 'Invoices',
+                'url_name': 'payments:invoices-list',
+            },
+            {
+                'label': 'BPAY collections',
+                'url_name': 'payments:bpay-collection-list',
+            },
+            {
+                'label': 'BPOINT transactions',
+                'url_name': 'payments:bpoint-dash-list',
+            },
+        ]
+    }
+)
+
 
 TEMPLATES = [
     {
@@ -154,7 +180,6 @@ BOOTSTRAP3 = {
     'set_placeholder': False,
 }
 
-OSCAR_DEFAULT_CURRENCY = 'AUD'
 
 HAYSTACK_CONNECTIONS = {
     'default': {
@@ -283,27 +308,4 @@ PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', False)
 #print PRODUCTION_EMAIL
 EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
 NON_PROD_EMAIL = env('NON_PROD_EMAIL')
-# Oscar settings
-from oscar.defaults import *
-OSCAR_ALLOW_ANON_CHECKOUT = True
-OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
-OSCAR_DASHBOARD_NAVIGATION.append(
-    {
-        'label': 'Payments',
-        'icon': 'icon-globe',
-        'children': [
-            {
-                'label': 'Invoices',
-                'url_name': 'payments:invoices-list',
-            },
-            {
-                'label': 'BPAY collections',
-                'url_name': 'payments:bpay-collection-list',
-            },
-            {
-                'label': 'BPOINT transactions',
-                'url_name': 'payments:bpoint-dash-list',
-            },
-        ]
-    }
-)
+
