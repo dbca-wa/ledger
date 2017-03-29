@@ -179,7 +179,9 @@
                                   <div class="col-md-6">
                                       <div class="form-group">
                                         <label for="Country" class="required">Country</label>
-                                        <input type="text" name="country" class="form-control" v-model="booking.country" >
+                                        <select class="form-control" name="country" v-model="booking.country">
+                                            <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
+                                        </select>
                                       </div>
                                   </div>
                                 </div>
@@ -320,7 +322,7 @@ export default {
                 firstname:"",
                 surname:"",
                 postcode:"",
-                country:"",
+                country:"AU",
                 phone:"",
                 vehicle:"",
                 price:"0",
@@ -513,9 +515,9 @@ export default {
             vm.loading.push('fetching countries');
             vm.$http.get(api_endpoints.countries).then((response)=>{
                 vm.countries = response.body;
-                var list = [];
+                /*var list = [];
                 $.each(vm.countries,function (i,c) {
-                    list.push(c.alpha2Code);
+                    list.push(c.name);
                 });
                 vm.$nextTick(function () {
                     var input = vm.bookingForm.country;
@@ -530,7 +532,7 @@ export default {
                     });
                     window.addEventListener('awesomplete-selectcomplete',function (e) {
                         vm.booking.country = e.text.value;
-                    });
+                    });*/
                     vm.loading.splice('fetching countries',1);
                 });
 
