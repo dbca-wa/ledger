@@ -238,6 +238,10 @@ class BookingSuccessView(TemplateView):
         # FIXME: replace with server side notify_url callback
         book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
         
+        # set booking to be permanent fixture
+        booking.booking_type = 1  # internet booking
+        booking.save()
+
         utils.delete_session_booking(request.session)
 
         context = {
