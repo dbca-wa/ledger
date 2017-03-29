@@ -1341,7 +1341,13 @@ class BookingViewSet(viewsets.ModelViewSet):
                 emailUser = request.data['customer']
                 customer = EmailUser.objects.get(email = emailUser['email'])
             except EmailUser.DoesNotExist:
-                raise
+                customer = EmailUser.objects.create(
+                    email = emailUser['email'],
+                    first_name = emailUser['first_name'],
+                    last_name = emailUser['last_name'],
+                    phone_number = emailUser['phone'],
+                ).save()
+                customer.billing_address = Address.objects.create(user = customer,postcode = emailUser['postcode'],country = emailUser['country']).save()
             booking_details = {
                 'campsite_id':request.data['campsite'],
                 'start_date' : start_date,

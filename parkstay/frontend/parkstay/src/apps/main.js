@@ -15,6 +15,9 @@ import Router from 'vue-router'
 import Campsite_type_dash from '../components/campsites-types/campsite-types-dash.vue'
 import Campsite_type from '../components/campsites-types/campsite-type.vue'
 import Bulkpricing from '../components/bulkpricing/bulkpricing.vue'
+import alert from '../components/utils/alert.vue'
+import store from './store'
+import { mapGetters } from 'vuex'
 import $ from '../hooks'
 var css = require('../hooks-css.js');
 Vue.use(Router);
@@ -164,6 +167,27 @@ const router = new Router({
   'mode': 'history'
 });
 
+router.beforeEach((to,from,next) => {
+    next((vm) => {
+        vm.$store.dispatch("updateAlert",{
+            visible:false,
+            type:"danger",
+            message: ""
+        });
+    });
+});
+
 new Vue({
-  'router':router
+  'router':router,
+  store,
+  components:{
+      alert
+  },
+  computed:{
+      ...mapGetters([
+          "showAlert",
+          "alertType",
+          "alertMessage"
+      ])
+  }
 }).$mount('#app');

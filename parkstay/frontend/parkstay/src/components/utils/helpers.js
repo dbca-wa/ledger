@@ -12,6 +12,9 @@ module.exports = {
         else if ( resp.status === 404) {
             error_str = 'The resource you are looking for does not exist.';
         }
+        else{
+            error_str = resp.responseText.replace(/[\[\]"]/g,'');
+        }
         return error_str;
     },
     apiVueResourceError: function(resp){
