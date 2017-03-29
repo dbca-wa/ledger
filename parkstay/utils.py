@@ -618,7 +618,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
         parameters = {
             'system': 'S019',
             'fallback_url': request.build_absolute_uri('/'),
-            'return_url': request.build_absolute_uri('/'),
+            'return_url': request.build_absolute_uri(reverse('public_booking_success')),
             'forceRedirect': True,
             'proxy': True if internal else False,
             "products": lines,
