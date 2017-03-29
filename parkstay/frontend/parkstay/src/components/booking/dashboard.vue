@@ -376,7 +376,7 @@ export default {
                             bk[field] = booking.campground_region;
                         break;
                         case 2:
-                            bk[field] = booking.firstname + booking.lastname;
+                            bk[field] = booking.firstname +" "+ booking.lastname;
                         break;
                         case 3:
                             bk[field] = booking.id;
