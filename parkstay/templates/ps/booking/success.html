@@ -2,13 +2,13 @@
 {% load static %}
 {% load forms %}
 {% block content %}
-    <div class="container"><div class="row">
+    <div class="container">
         <div class="well">
-            <div class="col-sm-12">
+            <div class="row"><div class="col-sm-12">
                 <h2>Success!</h2>
                 <p>A confirmation email has been sent to {{ booking.customer.email }}. </p>
-            </div>
+            </div></div>
         </div>
         {% include "ps/booking/booking_view.html" %}
-    </div></div>
+    </div>
 {% endblock %}
