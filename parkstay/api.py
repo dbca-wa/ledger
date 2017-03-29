@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
+from ledger.address.models import Country
 from parkstay import utils
 from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
@@ -1332,11 +1333,12 @@ class BookingViewSet(viewsets.ModelViewSet):
     def create(self, request, format=None):
         from datetime import datetime
         try:
+            del request.session['ps_booking']
             start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
             end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
             guests = request.data['guests']
             costs = request.data['costs']
-
+            userCreated = False
             try:
                 emailUser = request.data['customer']
                 customer = EmailUser.objects.get(email = emailUser['email'])
@@ -1346,8 +1348,16 @@ class BookingViewSet(viewsets.ModelViewSet):
                     first_name = emailUser['first_name'],
                     last_name = emailUser['last_name'],
                     phone_number = emailUser['phone'],
-                ).save()
-                customer.billing_address = Address.objects.create(user = customer,postcode = emailUser['postcode'],country = emailUser['country']).save()
+                    mobile_number  = emailUser['phone'],
+                )
+                userCreated = True
+                try:
+                    country = emailUser['country']
+                    country = Country.objects.get(iso_3166_1_a2=country)
+                    Address.objects.create(line1='address',user = customer,postcode = emailUser['postcode'],country = country.iso_3166_1_a2)
+                except Country.DoesNotExist:
+                    raise serializers.ValidationError("Country you have entered does not exist")
+
             booking_details = {
                 'campsite_id':request.data['campsite'],
                 'start_date' : start_date,
@@ -1364,9 +1374,15 @@ class BookingViewSet(viewsets.ModelViewSet):
             serializer = BookingSerializer(data)
             return Response(serializer.data)
         except serializers.ValidationError:
+            utils.delete_session_booking(request.session)
+            if userCreated:
+                customer.delete()
             print(traceback.print_exc())
             raise
         except Exception as e:
+            utils.delete_session_booking(request.session)
+            if userCreated:
+                customer.delete()
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
