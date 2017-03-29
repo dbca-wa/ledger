@@ -611,6 +611,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
     JSON_REQUEST_HEADER_PARAMS = {
         "Content-Type": "application/json",
         "Accept": "application/json",
+        "Referer": request.META.get('HTTP_REFERER'),
         "X-CSRFToken": request.COOKIES.get('csrftoken')
     }
     try:
