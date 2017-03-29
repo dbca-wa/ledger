@@ -62,7 +62,6 @@ class BpointTransaction(models.Model):
     class Meta:
         ordering = ('-created',)
         app_label = 'payments'
-        db_table = 'bpoint_bpointtransaction'
     
     def __unicode__(self):
         return self.txn_number
@@ -156,7 +155,6 @@ class BpointToken(models.Model):
     class Meta:
         unique_together = ('user', 'masked_card','expiry_date','card_type')
         app_label = 'payments'
-        db_table = 'bpoint_bpointtoken'
 
     @property
     def last_digits(self):
@@ -176,3 +174,6 @@ class BpointToken(models.Model):
 class UsedBpointToken(models.Model):
     added = models.DateTimeField(auto_now_add=True)
     DVToken = models.CharField(max_length=128)
+
+    class Meta:
+        app_label = 'payments'
