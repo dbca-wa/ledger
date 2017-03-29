@@ -79,7 +79,7 @@
                 </div>
                 <form method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
                     {% csrf_token %}
-                    <input type="hidden" name="payment_method" readonly value="other"/>
+                    <input type="hidden" name="payment_method" readonly value="bpay"/>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-large btn-primary pull-right">{% trans "Continue" %}</button>
                     </div>
