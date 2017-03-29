@@ -1332,13 +1332,14 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def create(self, request, format=None):
         from datetime import datetime
+        userCreated = False
         try:
-            del request.session['ps_booking']
+            if 'ps_booking' in request.session:
+                del request.session['ps_booking']
             start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
             end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
             guests = request.data['guests']
             costs = request.data['costs']
-            userCreated = False
             try:
                 emailUser = request.data['customer']
                 customer = EmailUser.objects.get(email = emailUser['email'])
