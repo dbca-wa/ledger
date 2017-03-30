@@ -632,10 +632,12 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')
         )
-
+        COOKIES = request.COOKIES
+        if 'ps_booking' in request.session:
+            COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
-
+ 
         response.raise_for_status()
         return response
 
@@ -655,7 +657,12 @@ def internal_create_booking_invoice(booking, checkout_response):
     if not checkout_response.history:
         raise Exception('There was a problem retrieving the invoice for this booking')
     last_redirect = checkout_response.history[-1]
-    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=last_redirect.url.split('=')[1])
+    reference = last_redirect.url.split('=')[1]
+    try:
+        Invoice.objects.get(reference=reference)
+    except Invoice.DoesNotExist:
+        raise Exception("There was a problem attaching an invoice for this booking")
+    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=reference)
     return book_inv
 
 
@@ -663,7 +670,6 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     json_booking = request.data
     try:
         with transaction.atomic():
-            delete_session_booking(request.session)
             booking = create_or_update_booking(request,booking_details,updating)
             set_session_booking(request.session,booking)
             # Get line items
@@ -673,14 +679,15 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             # Proceed to generate invoice
             checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
             internal_create_booking_invoice(booking, checkout_response)
+            delete_session_booking(request.session)
 
             return booking
+
     except:
         raise
 
 def set_session_booking(session, booking):
     session['ps_booking'] = booking.id
-
     session.modified = True
 
 
