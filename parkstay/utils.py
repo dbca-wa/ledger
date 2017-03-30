@@ -605,6 +605,8 @@ def create_or_update_booking(request,booking_details,updating=False):
             for r in regos_serializers:
                 r.is_valid(raise_exception=True)
                 r.save()
+        booking.booking_type = 1
+        booking.save()
     return booking
 
 def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False):
