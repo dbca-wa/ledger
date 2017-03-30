@@ -108,8 +108,8 @@
                         <p><b id="mapPopupName"></b></p>
                         <img class="thumbnail" id="mapPopupImage" />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
-                        <button id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;">More info</button>
-                        <button id="mapPopupBook" class="button formButton" style="margin-bottom: 0;">Book now</button>
+                        <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;">More info</a>
+                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;">Book now</a>
                     </div>
                 </div>
             </div>
@@ -124,8 +124,8 @@
                 </div>
                 <div class="small-12 medium-9 large-9 columns">
                     <div v-html="f.description"/>
-                    <a class="button" v-bind:src="f.info_url">More info</a>
-                    <a v-if="f.campground_type == 0" class="button" v-bind:src="f.info_url+bookingParam">Book now</a>
+                    <a class="button" v-bind:href="f.info_url">More info</a>
+                    <a v-if="f.campground_type == 0" class="button" v-bind:href="f.info_url+bookingParam">Book now</a>
                 </div>
             </div>
         </paginate>
@@ -1025,6 +1025,8 @@ export default {
                     $("#mapPopupImage").hide();
                 }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
+                $("#mapPopupInfo").attr('href', feature.get('info_url'));
+                $("#mapPopupBook").attr('href', feature.get('info_url')+vm.bookingParam);
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
                 } else {
