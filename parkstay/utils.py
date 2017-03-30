@@ -633,9 +633,11 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')
         )
+    
+        #import pdb; pdb.set_trace()
 
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
-                                 data=json.dumps(parameters))
+                                 data=json.dumps(parameters), allow_redirects=True)
 
         response.raise_for_status()
         return response

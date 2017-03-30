@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
+from django.contrib.auth.models import AnonymousUser
 from six.moves.urllib.parse import urlparse
 #
 from ledger.basket.models import Basket
@@ -87,12 +88,14 @@ def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
         valid_products = []
         User = get_user_model()
         # Check if owner is of class AUTH_USER_MODEL or id
-        if not isinstance(owner,User):
-            owner = User.objects.get(id=owner)
-        # Check if owner has previous baskets
-        if owner.baskets.filter(status='Open'):
-            old_basket = owner.baskets.get(status='Open')
-        # Use the previously open basket if its present or create a new one    
+        if not isinstance(owner, AnonymousUser):
+            if not isinstance(owner, User):
+                owner = User.objects.get(id=owner)
+            # Check if owner has previous baskets
+            if owner.baskets.filter(status='Open'):
+                old_basket = owner.baskets.get(status='Open')
+
+        # Use the previously open basket if its present or create a new one 
         if old_basket:
             if system.lower() == old_basket.system.lower() or not old_basket.system:
                 basket = old_basket
@@ -103,7 +106,8 @@ def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
         else:
             basket = Basket()
         # Set the owner and strategy being used to create the basket    
-        basket.owner = owner
+        if isinstance(owner, User):
+            basket.owner = owner
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
         # Check if there are products to be added to the cart and if they are valid products
@@ -139,6 +143,7 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         ]
         @param - owner (user id or user object)
     '''
+    #import pdb; pdb.set_trace()
     try:
         if not validSystem(system):
             raise ValidationError('A system with the given id does not exist.')
@@ -146,11 +151,13 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         valid_products = []
         User = get_user_model()
         # Check if owner is of class AUTH_USER_MODEL or id
-        if not isinstance(owner,User):
-            owner = User.objects.get(id=owner)
-        # Check if owner has previous baskets
-        if owner.baskets.filter(status='Open'):
-            old_basket = owner.baskets.get(status='Open')
+        if not isinstance(owner, AnonymousUser):
+            if not isinstance(owner, User):
+                owner = User.objects.get(id=owner)
+            # Check if owner has previous baskets
+            if owner.baskets.filter(status='Open'):
+                old_basket = owner.baskets.get(status='Open')
+        
         # Use the previously open basket if its present or create a new one    
         if old_basket:
             if system.lower() == old_basket.system.lower() or not old_basket.system:
@@ -162,7 +169,8 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         else:
             basket = Basket()
         # Set the owner and strategy being used to create the basket    
-        basket.owner = owner
+        if isinstance(owner, User):
+            basket.owner = owner
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
         basket.custom_ledger = True
@@ -177,6 +185,8 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         # Add the valid products to the basket
         for p in product_list:
             basket.addNonOscarProduct(p)
+        # Save the basket (again)
+        basket.save()
         # Add vouchers to the basket
         if vouchers is not None:
             for v in vouchers:
