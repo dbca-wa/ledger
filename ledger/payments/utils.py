@@ -258,12 +258,12 @@ def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):
                 code_paid_amount = D('0.0')
                 code_refunded_amount = D('0.0')
                 for p in previous_invoices:
-                    for k,v in p.details.items():
+                    details = dict(p.details)
+                    for k,v in details.items():
+                        p_item = details[k]
                         if k == code:
-                            if v['payment']:
-                                code_paid_amount += v['amount']
-                            else:
-                                code_refunded_amount += v['amount']
+                            code_paid_amount +=  D(p_item[k]['payment'])
+                            code_refunded_amount += D(p_item[k]['refund'])
                 # Deal with the current txn
                 if txn.action == 'payment':
                     code_payable_amount = i.line_price_incl_tax - code_paid_amount
