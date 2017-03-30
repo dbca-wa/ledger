@@ -525,26 +525,7 @@ export default {
             vm.loading.push('fetching countries');
             vm.$http.get(api_endpoints.countries).then((response)=>{
                 vm.countries = response.body;
-                /*var list = [];
-                $.each(vm.countries,function (i,c) {
-                    list.push(c.name);
-                });
-                vm.$nextTick(function () {
-                    var input = vm.bookingForm.country;
-                    var autoc = new awesomplete(input, {
-                        list,
-                        minChars: 1,
-                        maxItems:5,
-                        autoFirst: true,
-                        sort:function (text,input) {
-                            return text > input;
-                        }
-                    });
-                    window.addEventListener('awesomplete-selectcomplete',function (e) {
-                        vm.booking.country = e.text.value;
-                    });*/
-                    vm.loading.splice('fetching countries',1);
-                });
+                vm.loading.splice('fetching countries',1);
 
             },(response)=>{
                 console.log(response);
