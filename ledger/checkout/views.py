@@ -515,7 +515,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # We define a general error message for when an unanticipated payment
         # error occurs.
         error_msg = _("A problem occurred while processing payment for this "
-                      "order - no payment has been taken.  Please "
+                      "order - no payment has been taken.")
+        if settings.BPAY_ALLOWED:
+            error_msg += _("  Please "
                       "use the pay later option if this problem persists")
 
         signals.pre_payment.send_robust(sender=self, view=self)
@@ -531,7 +533,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
             # their bankcard has expired, wrong card number - that kind of
             # thing. This type of exception is supposed to set a friendly error
             # message that makes sense to the customer.
-            msg = six.text_type(e) + '. You can alternatively use the pay later option.'
+            msg = six.text_type(e) + '.'
+            if settings.BPAY_ALLOWED:
+                msg += ' You can alternatively use the pay later option.'
             logger.warning(
                 "Order #%s: unable to take payment (%s) - restoring basket",
                 order_number, msg)
