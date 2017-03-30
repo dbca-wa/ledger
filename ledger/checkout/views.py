@@ -2,6 +2,7 @@ import logging
 from requests.exceptions import HTTPError, ConnectionError
 import traceback
 from decimal import Decimal as D
+from django.conf import settings
 from django.utils import six
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -295,6 +296,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             ctx['cards'] = cards
 
         ctx['custom_template'] = custom_template
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['payment_method'] = method
         ctx['bankcard_form'] = kwargs.get(
             'bankcard_form', forms.BankcardForm())
@@ -312,18 +314,25 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 return self.do_place_order(request)
             else:
                 return self.handle_place_order_submission(request)
-        else:
-            # Get the payment method either card or other
-            payment_method = request.POST.get('payment_method','')
-            self.checkout_session.pay_by(payment_method)
-            # Get if user wants to store the card
-            store_card = request.POST.get('store_card',False)
-            self.checkout_session.permit_store_card(bool(store_card))
-            # Get if user wants to checkout using a stored card
-            checkout_token = request.POST.get('checkout_token',False)
-            if checkout_token:
-                self.checkout_session.checkout_using_token(request.POST.get('card',''))
-        if payment_method == 'card' and not checkout_token:
+        # Validate the payment method
+        payment_method = request.POST.get('payment_method', '')
+        if payment_method == 'bpay' and settings.BPAY_ALLOWED:
+            self.checkout_session.pay_by('bpay')
+        elif payment_method == 'card':
+            self.checkout_session.pay_by('card')
+        elif payment_method: # someone's trying to pull a fast one, refresh the page
+            self.preview = False
+            return self.render_to_response(self.get_context_data())
+
+        # Get if user wants to store the card
+        store_card = request.POST.get('store_card',False)
+        self.checkout_session.permit_store_card(bool(store_card))
+        # Get if user wants to checkout using a stored card
+        checkout_token = request.POST.get('checkout_token',False)
+        if checkout_token:
+            self.checkout_session.checkout_using_token(request.POST.get('card',''))
+        
+        if self.checkout_session.payment_method() == 'card' and not checkout_token:
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
                 # Form validation failed, render page again with errors
@@ -333,7 +342,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 return self.render_to_response(ctx)
 
         # Render preview with bankcard hidden
-        if payment_method == 'card' and not checkout_token:
+        if self.checkout_session.payment_method() == 'card' and not checkout_token:
             return self.render_preview(request,bankcard_form=bankcard_form)
         else:
             return self.render_preview(request)

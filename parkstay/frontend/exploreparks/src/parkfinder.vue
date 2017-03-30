@@ -1,5 +1,5 @@
 <template>
-    <div v-cloak>
+    <div v-cloak class="f6inject">
         <div class="row">
             <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
@@ -125,7 +125,7 @@
                 <div class="small-12 medium-9 large-9 columns">
                     <div v-html="f.description"/>
                     <a class="button" v-bind:src="f.info_url">More info</a>
-                    <button v-if="f.campground_type == 0" class="button">Book now</button>
+                    <a v-if="f.campground_type == 0" class="button" v-bind:src="f.info_url+bookingParam">Book now</a>
                 </div>
             </div>
         </paginate>
@@ -137,19 +137,15 @@
     </div>
 </template>
 
-<style>
+<style lang="scss">
+
+[v-cloak] {
+    display: none;
+}
+
 @font-face {
     font-family: "DPaWSymbols";
     src: url("./assets/campicon.woff") format("woff");
-}
-
-.search-params hr {
-    margin: 0;
-}
-
-.search-params label {
-    cursor: pointer;
-    font-size: 0.8em;
 }
 
 .symb {
@@ -234,180 +230,173 @@
     content: "s";
 }
 
-.fa-chevron-left:before {
-    font-style: normal;
-    content: "«";
-}
+.f6inject {
 
-.fa-chevron-right:before {
-    font-style: normal;    
-    content: "»";
-}
-
-.fa-remove:before {
-    font-style: normal;    
-    content: "×";
-}
-
-/* filter hiding on small screens */
-@media print, screen and (max-width: 63.9375em) {
-    .filter-hide {
-        display: none;
+    .search-params hr {
+        margin: 0;
     }
-}
 
-@media print, screen and (min-width: 64em) {
-    .filter-button {
-        display: none; 
+    .search-params label {
+        cursor: pointer;
+        font-size: 0.8em;
     }
-}
 
-#map {
-    height: 75vh;
-}
+    /* filter hiding on small screens */
+    @media print, screen and (max-width: 63.9375em) {
+        .filter-hide {
+            display: none;
+        }
+    }
 
-/* set on the #map element when mousing over a feature */
-.click {
-    cursor: pointer;
-}
+    @media print, screen and (min-width: 64em) {
+        .filter-button {
+            display: none; 
+        }
+    }
 
-input + .symb {
-    color: #000000;
-    transition: color 0.25s ease-out;
-}
+    #map {
+        height: 75vh;
+    }
 
-input:checked + .symb {
-    color: #2199e8;
-}
+    /* set on the #map element when mousing over a feature */
+    .click {
+        cursor: pointer;
+    }
 
-.button.formButton {
-    display: block;
-    width: 100%;
-}
+    input + .symb {
+        color: #000000;
+        transition: color 0.25s ease-out;
+    }
 
-.button.selector {
-    background-color: #fff;
-    border: 1px solid #777;
-    border-radius: 4px;
-    color: #000;
-}
+    input:checked + .symb {
+        color: #2199e8;
+    }
 
-.button.selector:hover {
-    background-color: #d6eaff;
-    border: 1px solid #729fcf;
-}
+    .button.formButton {
+        display: block;
+        width: 100%;
+    }
 
-.button.selector ~ input:checked {
-    color: #fff;
-    background-color: #0060c4;
-    border: 1px solid #00366e;
-}
+    .button.selector {
+        background-color: #fff;
+        border: 1px solid #777;
+        border-radius: 4px;
+        color: #000;
+    }
 
-.button.selector:hover ~ input:checked {
-    color: #fff;
-    background-color: #0e83ff;
-    border: 1px solid #004d9f;
-}
+    .button.selector:hover {
+        background-color: #d6eaff;
+        border: 1px solid #729fcf;
+    }
 
-.pagination {
-    padding: 0;
-    text-align: center;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 1em;
-}
+    .button.selector ~ input:checked {
+        color: #fff;
+        background-color: #0060c4;
+        border: 1px solid #00366e;
+    }
 
-.pagination .active {
-    background: #2199e8;
-    color: #fefefe;
-    cursor: default;
-}
+    .button.selector:hover ~ input:checked {
+        color: #fff;
+        background-color: #0e83ff;
+        border: 1px solid #004d9f;
+    }
 
-.pagination li {
-    display: inline-block;
-    cursor: pointer;
-}
+    .pagination {
+        padding: 0;
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 1em;
+    }
 
-.tooltip {
-    position: relative;
-    border-radius: 4px;
-    background-color: #ffcc33;
-    color: black;
-    padding: 4px 8px;
-    opacity: 0.7;
-    white-space: nowrap;
-}
+    .pagination .active {
+        background: #2199e8;
+        color: #fefefe;
+        cursor: default;
+    }
 
-.tooltip:before {
-    border-top: 6px solid rgba(0, 0, 0, 0.5);
-    border-right: 6px solid transparent;
-    border-left: 6px solid transparent;
-    content: "";
-    position: absolute;
-    bottom: -6px;
-    margin-left: -7px;
-    left: 50%;
-}
+    .pagination li {
+        display: inline-block;
+        cursor: pointer;
+    }
 
-.mapPopup {
-    position: absolute;
-    background-color: white;
-    -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #cccccc;
-    bottom: 32px;
-    left: -140px;
-    min-width: 280px;
-}
+    .tooltip {
+        position: relative;
+        border-radius: 4px;
+        background-color: #ffcc33;
+        color: black;
+        padding: 4px 8px;
+        opacity: 0.7;
+        white-space: nowrap;
+    }
 
-.mapPopup:after, .mapPopup:before {
-    top: 100%;
-    border: solid transparent;
-    content: " ";
-    height: 0;
-    width: 0;
-    position: absolute;
-    pointer-events: none;
-}
+    .tooltip:before {
+        border-top: 6px solid rgba(0, 0, 0, 0.5);
+        border-right: 6px solid transparent;
+        border-left: 6px solid transparent;
+        content: "";
+        position: absolute;
+        bottom: -6px;
+        margin-left: -7px;
+        left: 50%;
+    }
 
-.mapPopup:after {
-    border-top-color: white;
-    border-width: 10px;
-    left: 138px;
-    margin-left: -10px; 
-}
+    .mapPopup {
+        position: absolute;
+        background-color: white;
+        -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+        filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #cccccc;
+        bottom: 32px;
+        left: -140px;
+        min-width: 280px;
+    }
 
-.mapPopup:before {
-    border-top-color: #cccccc;
-    border-width: 11px;
-    left: 138px;
-    margin-left: -11px;
-}
+    .mapPopup:after, .mapPopup:before {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+    }
 
-.mapPopupClose {
-    text-decoration: none;
-    position: absolute;
-    top: 2px;
-    right: 8px;
-}
+    .mapPopup:after {
+        border-top-color: white;
+        border-width: 10px;
+        left: 138px;
+        margin-left: -10px; 
+    }
 
-.mapPopupClose:after {
-    content: "✖";
-}
+    .mapPopup:before {
+        border-top-color: #cccccc;
+        border-width: 11px;
+        left: 138px;
+        margin-left: -11px;
+    }
 
-.searchTitle {
-    font-size: 150%;
-    font-weight: bold;
-}
+    .mapPopupClose {
+        text-decoration: none;
+        position: absolute;
+        top: 2px;
+        right: 8px;
+    }
 
-.resultList {
-    padding: 0;
-}
+    .mapPopupClose:after {
+        content: "✖";
+    }
 
-[v-cloak] {
-    display: none;
+    .searchTitle {
+        font-size: 150%;
+        font-weight: bold;
+    }
+
+    .resultList {
+        padding: 0;
+    }
 }
 
 /* hacks to make awesomeplete play nice with F6 */
@@ -467,6 +456,8 @@ export default {
             hideExtraFilters: true,
             suggestions: {},
             extentFeatures: [],
+            arrivalDate: null,
+            departureDate: null,
             numAdults: 2,
             numConcessions: 0,
             numChildren: 0,
@@ -531,6 +522,22 @@ export default {
                     return count + " people ▼";
                 }
             }
+        },
+        bookingParam: {
+            cache: false,
+            get: function() {
+                var params = {
+                    'num_adult': this.numAdults,
+                    'num_concession': this.numConcessions,
+                    'num_children': this.numChildren,
+                    'num_infants': this.numInfants
+                };
+                if (this.arrivalDate && this.departureDate) {
+                    params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
+                    params['departure'] = this.departureDate.format('YYYY/MM/DD');
+                }
+                return '?' + $.param(params) + '#makebooking';
+            }
         }
     },
     methods: {
@@ -577,7 +584,7 @@ export default {
                     if (data.features && data.features.length > 0) {
                         //console.log('Mapbox!');
                         //console.log(data.features[0]);
-                        var view = this.olmap.getView();
+                        var view = vm.olmap.getView();
                         view.animate({
                             center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
                             resolution: vm.resolutions[12],
@@ -728,6 +735,7 @@ export default {
                 vm.departureEl.trigger('changeDate');
             }
             vm.arrivalData.hide();
+            vm.arrivalDate = moment(vm.arrivalData.date);
             vm.reload();
         }).data('datepicker');
 
@@ -739,6 +747,7 @@ export default {
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
             vm.departureData.hide();
+            vm.departureDate = moment(vm.departureData.date);
             vm.reload();
         }).data('datepicker');
 

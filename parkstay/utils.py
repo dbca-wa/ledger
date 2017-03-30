@@ -611,13 +611,14 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
     JSON_REQUEST_HEADER_PARAMS = {
         "Content-Type": "application/json",
         "Accept": "application/json",
+        "Referer": request.META.get('HTTP_REFERER'),
         "X-CSRFToken": request.COOKIES.get('csrftoken')
     }
     try:
         parameters = {
             'system': 'S019',
             'fallback_url': request.build_absolute_uri('/'),
-            'return_url': request.build_absolute_uri('/'),
+            'return_url': request.build_absolute_uri(reverse('public_booking_success')),
             'forceRedirect': True,
             'proxy': True if internal else False,
             "products": lines,
