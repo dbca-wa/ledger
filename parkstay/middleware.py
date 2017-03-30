@@ -25,7 +25,11 @@ class BookingTimerMiddleware(object):
                 del request.session['ps_booking']
 
         # force a redirect if in the checkout
-        if ('ps_booking' not in request.session) and CHECKOUT_PATH.match(request.path):
+        if ('ps_booking_internal' not in request.COOKIES) and CHECKOUT_PATH.match(request.path):
+            if ('ps_booking' not in request.session) and CHECKOUT_PATH.match(request.path):
+                return HttpResponseRedirect(reverse('public_make_booking'))
+            else:
+                return
             return HttpResponseRedirect(reverse('public_make_booking'))
 
         return

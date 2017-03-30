@@ -6,10 +6,9 @@
 			<alert :show.sync="showUpdate" type="success" :duration="7000">
 				<p>Campground successfully updated</p>
 			</alert>
-			<alert :show.sync="showError" type="danger"></alert>
-				<p>{{errorString}}
-					<p/>
-				</alert>
+			<alert :show.sync="showError" type="danger">
+				<p>{{errorString}}<p/>
+			</alert>
 					<div class="row">
 						<div class="col-lg-12">
 							<div class="panel panel-primary">
@@ -352,10 +351,18 @@ export default {
                         vm.showUpdate = true;
                         vm.isLoading = false
                     }
+					vm.$store.dispatch("updateAlert",{
+						visible:false,
+						type:"danger",
+						message: ""
+					});
                 },
                 error: function(resp) {
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+					vm.$store.dispatch("updateAlert",{
+						visible:true,
+						type:"danger",
+						message: helpers.apiError(resp)
+					});
                     vm.isLoading = false
                 }
             });
