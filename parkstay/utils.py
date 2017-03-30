@@ -657,7 +657,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
 def internal_create_booking_invoice(booking, checkout_response):
     if not checkout_response.history:
         raise Exception('There was a problem retrieving the invoice for this booking')
-    last_redirect = checkout_response.history[-1]
+    last_redirect = checkout_response.history[-2]
     reference = last_redirect.url.split('=')[1]
     try:
         Invoice.objects.get(reference=reference)
