@@ -622,6 +622,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
             return redirect('wl_applications:new_application')
 
         # update invoice reference if received, else keep the same
+        # FIXME: replace with server side notify_url callback        
         application.invoice_reference = request.GET.get('invoice', application.invoice_reference)
 
         application.save()

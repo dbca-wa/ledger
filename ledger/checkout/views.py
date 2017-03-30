@@ -314,14 +314,13 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 return self.do_place_order(request)
             else:
                 return self.handle_place_order_submission(request)
-        
         # Validate the payment method
-        payment_method = request.POST.get('payment_method', 'card')
+        payment_method = request.POST.get('payment_method', '')
         if payment_method == 'bpay' and settings.BPAY_ALLOWED:
             self.checkout_session.pay_by('bpay')
         elif payment_method == 'card':
             self.checkout_session.pay_by('card')
-        else: # someone's trying to pull a fast one, refresh the page
+        elif payment_method: # someone's trying to pull a fast one, refresh the page
             self.preview = False
             return self.render_to_response(self.get_context_data())
 
