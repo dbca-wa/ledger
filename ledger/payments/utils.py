@@ -219,13 +219,12 @@ def oracle_parser(date,system):
             bpoint_qs = [i.bpoint_transactions.filter(settlement_date=date) for i in Invoice.objects.filter(system=system)]
             for x in bpoint_qs:
                 if x:
-                    bpoint_txns = [t for t in x]
+                    for t in x:
+                        bpoint_txns.append(t)
             oracle_codes = {}
             parser_codes = {}
             # Bpoint Processing
             parser_codes,oracle_codes = bpoint_oracle_parser(op,parser_codes,oracle_codes,bpoint_txns)
-            print parser_codes
-            print oracle_codes
             for k,v in parser_codes.items():
                 for a,b in v.items():
                     for r,f in b.items():
