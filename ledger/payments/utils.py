@@ -224,7 +224,7 @@ def bpoint_oracle_parser(oracle_codes,parser_codes,bpoint_txns):
                 if i not in oracle_codes.keys():
                     oracle_codes[i] = D('0.0')
                 if i not in parser_codes[invoice.reference].keys():
-                    parser_codes[invoice.reference] = {{amount: D('0.0'),'payment':True},{amount: D('0.0'),'payment':False}}
+                    parser_codes[invoice.reference] = {'payment':{'amount': D('0.0')},'refund':{'amount': D('0.0')}}
             # Start Parsing items in invoices
             payable_amount = txn.amount
             for i in items:
