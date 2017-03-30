@@ -73,9 +73,15 @@ REGION_CHOICES = (
 class Region(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
+    class Meta:
+        app_label = 'payments'
+
 class District(models.Model):
     name = models.CharField(choices=DISTRICT_CHOICES,max_length=3,unique=True)
     region = models.ForeignKey(Region,related_name='districts')
+
+    class Meta:
+        app_label = 'payments'
 
 class CashTransaction(models.Model):
     TRANSACTION_TYPES = (
@@ -99,6 +105,9 @@ class CashTransaction(models.Model):
     district = models.CharField(choices=DISTRICT_CHOICES,max_length=3, null=True, blank=True)
     external = models.BooleanField(default=False)
     receipt = models.CharField(max_length=128,null=True,blank=True)
+
+    class Meta:
+        app_label = 'payments'
 
     def save(self, *args, **kwargs):
         # Validations

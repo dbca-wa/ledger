@@ -2,10 +2,13 @@
 {% load static %}
 {% block extra_css %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'ps/css/build.css' %}"> 
+    <link rel="stylesheet" href="{% static 'ps/css/build.css' %}">
 {% endblock %}
 {% block vue-component %}
   <div id="app">
+      <alert :show="showAlert" :type="alertType" :data-alert="alertMessage">
+          <p :text-content.prop="alertMessage"></p>
+      </alert>
        <router-view></router-view>
   </div>
 {% endblock %}
