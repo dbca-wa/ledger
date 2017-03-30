@@ -224,7 +224,7 @@ export default {
                                     invoice_string += 'invoice='+n+'&';
                                 });
                                 invoice_string = invoice_string.slice(0,-1);
-                                var payment = (full.paid) ? "View" :  (full.editable) ?"Record":"View";
+                                var payment = (full.paid) ? "View" : "Record";
                                 var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
                                 column += record_payment;
                             }
@@ -376,7 +376,7 @@ export default {
                             bk[field] = booking.campground_region;
                         break;
                         case 2:
-                            bk[field] = booking.firstname + booking.lastname;
+                            bk[field] = booking.firstname +" "+ booking.lastname;
                         break;
                         case 3:
                             bk[field] = booking.id;
