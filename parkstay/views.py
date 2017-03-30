@@ -15,6 +15,7 @@ from parkstay.models import (Campground,
                                 Campsite,
                                 CampsiteRate,
                                 Booking,
+                                BookingInvoice,
                                 PromoArea,
                                 Park,
                                 Feature,
@@ -92,19 +93,21 @@ class DashboardView(UserPassesTestMixin, TemplateView):
 
 
 def abort_booking_view(request, *args, **kwargs):
-    if 'ps_booking' in request.session:
-        booking = Booking.objects.get(pk=request.session['ps_booking'])
+    try:
+        booking = utils.get_session_booking(request.session)
         # only ever delete a booking object if it's marked as temporary
         if booking.booking_type == 3:
             booking.delete()
-        del request.session['ps_booking']
+        utils.delete_session_booking(request.session)
+    except Exception as e:
+        pass
     return redirect('public_make_booking')
 
 
 class MakeBookingsView(TemplateView):
     template_name = 'ps/booking/make_booking.html'
 
-    def render_page(self, request, booking, form, vehicles):
+    def render_page(self, request, booking, form, vehicles, show_errors=False):
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         expiry = booking.expiry_time.isoformat() if booking else ''
@@ -135,7 +138,8 @@ class MakeBookingsView(TemplateView):
             'campsite': campsite,
             'expiry': expiry,
             'timer': timer,
-            'pricing': pricing
+            'pricing': pricing,
+            'show_errors': show_errors
         })
 
 
@@ -164,7 +168,7 @@ class MakeBookingsView(TemplateView):
     
         # re-render the page if the form doesn't validate
         if (not form.is_valid()) or (not vehicles.is_valid()):
-            return self.render_page(request, booking, form, vehicles)
+            return self.render_page(request, booking, form, vehicles, show_errors=True)
 
         # update the booking object with information from the form
         if not booking.details:
@@ -221,11 +225,36 @@ class MakeBookingsView(TemplateView):
         return HttpResponse(response.content)
 
 
+class BookingSuccessView(TemplateView):
+    template_name = 'ps/booking/success.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            booking = utils.get_session_booking(request.session)
+            invoice_ref = request.GET.get('invoice')
+        except Exception as e:
+            return redirect('home')
+
+        # FIXME: replace with server side notify_url callback
+        book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+        
+        # set booking to be permanent fixture
+        booking.booking_type = 1  # internet booking
+        booking.save()
+
+        utils.delete_session_booking(request.session)
+
+        context = {
+            'booking': booking
+        }
+        return render(request, self.template_name, context)
+
+
 class MyBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/my_bookings.html'
 
     def get(self, request, *args, **kwargs):
-        bookings = Booking.objects.filter(customer=request.user)
+        bookings = Booking.objects.filter(customer=request.user, booking_type__in=(0, 1))
         today = timezone.now().date()
 
         context = {

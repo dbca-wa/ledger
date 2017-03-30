@@ -1,5 +1,6 @@
 <template>
-    <div id="sites-cal">
+    <div id="sites-cal" class="f6inject">
+        <a name="makebooking" />
         <div class="row" v-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
@@ -113,86 +114,81 @@
     </div>
 </template>
 
-<style>
+<style lang="scss">
 
-.fa-chevron-left:before {
-    font-style: normal;
-    content: "«";
-}
+.f6inject {
+    th.site {
+        width: 30%;
+        min-width: 200px;
+    }
+    th.book {
+        min-width: 100px;
+    }
+    th.date {
+        min-width: 60px;
+    }
+    td.site {
+        font-size: 0.8em;
+    }
+    .date, .book {
+        text-align: center;
+    }
+    td .button {
+        margin: 0;
+    }
+    .table-scroll table {
+        width: 100%;
+    }
 
-.fa-chevron-right:before {
-    font-style: normal;    
-    content: "»";
-}
+    // table font colour override
+    table thead tr {
+        background: unset;
+        color: unset;
+    }
 
-.fa-remove:before {
-    font-style: normal;    
-    content: "×";
-}
+    td.available {
+        color: #082d15;
+    }
+    table tbody tr > td.available {
+        background-color: #edfbf3;
+    }
+    table tbody tr:hover > td.available {
+        background-color: #ddf8e8;
+    }
+    table tbody tr:nth-child(2n) > td.available {
+        background-color: #cef5dd;
+    }
+    table tbody tr:nth-child(2n):hover > td.available {
+        background-color: #b8f0cd;
+    }
 
-th.site {
-    width: 30%;
-    min-width: 200px;
-}
-th.book {
-    min-width: 100px;
-}
-th.date {
-    min-width: 60px;
-}
-td.site {
-    font-size: 0.8em;
-}
-.date, .book {
-    text-align: center;
-}
-td .button {
-    margin: 0;
-}
-.table-scroll table {
-    width: 100%;
-}
+    table tbody tr.breakdown, table tbody tr.breakdown:hover  {
+        background-color: #656869;
+        color: white;
+    }
+    table tbody tr.breakdown:nth-child(2n), 
+    table tbody tr.breakdown:nth-child(2n):hover, 
+    table.hover:not(.unstriped) tr.breakdown:nth-of-type(2n):hover {
+        background-color: #454d50;
+        color: white;
+    }
+    table tbody tr.breakdown > td.available {
+        background-color: #468a05;
+        color: white;
+    }
+    table tbody tr.breakdown:nth-child(2n) > td.available {
+        background-color: #305e04;
+        color: white;
+    }
 
-td.available {
-    color: #082d15;
-}
-table tbody tr > td.available {
-    background-color: #edfbf3;
-}
-table tbody tr:hover > td.available {
-    background-color: #ddf8e8;
-}
-table tbody tr:nth-child(2n) > td.available {
-    background-color: #cef5dd;
-}
-table tbody tr:nth-child(2n):hover > td.available {
-    background-color: #b8f0cd;
-}
+    .button.formButton {
+        display: block;
+        width: 100%;
+    }
 
-table tbody tr.breakdown, table tbody tr.breakdown:hover  {
-    background-color: #656869;
-    color: white;
-}
-table tbody tr.breakdown:nth-child(2n), table tbody tr.breakdown:nth-child(2n):hover {
-    background-color: #454d50;
-    color: white;
-}
-table tbody tr.breakdown > td.available {
-    background-color: #468a05;
-    color: white;
-}
-table tbody tr.breakdown:nth-child(2n) > td.available {
-    background-color: #305e04;
-    color: white;
-}
-
-.button.formButton {
-    display: block;
-    width: 100%;
-}
-
-.dropdown-pane {
-    width: auto;
+    .dropdown-pane {
+        width: auto;
+    }
 }
 
 </style>
@@ -213,6 +209,15 @@ var siteType = {
     ONLINE: 1,
     PHONE: 2,
     OTHER: 3
+};
+
+function getQueryParam(name, fallback) {
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+    var results = regex.exec(window.location.href);
+    if (!results) return fallback;
+    if (!results[2]) return fallback;
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
 };
 
 function getCookie(name) {
@@ -236,18 +241,18 @@ export default {
     data: function () {
         return {
             name: '',
-            arrivalDate: moment.utc(now),
-            departureDate: moment.utc(now).add(5, 'days'),
+            arrivalDate: moment.utc(getQueryParam('arrival', moment.utc(now).format('YYYY/MM/DD')), 'YYYY/MM/DD'),
+            departureDate:  moment.utc(getQueryParam('departure', moment.utc(now).add(5, 'days').format('YYYY/MM/DD')), 'YYYY/MM/DD'),
             parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
             parkstayGroundId: global.parkstayGroundId || '1',
             days: 5,
-            numAdults: 2,
-            numChildren: 0,
-            numConcessions: 0,
-            numInfants: 0,
+            numAdults: parseInt(getQueryParam('num_adult', 2)),
+            numChildren: parseInt(getQueryParam('num_children', 0)),
+            numConcessions: parseInt(getQueryParam('num_concession', 0)),
+            numInfants: parseInt(getQueryParam('num_infants', 0)),
             maxAdults: 30,
             maxChildren: 30,
-            gearType: 'tent',
+            gearType: getQueryParam('gear_type', 'tent'),
             status: null,
             errorMsg: null,
             classes: {},
@@ -303,17 +308,21 @@ export default {
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
                 data: submitData,
-                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                dataType: 'json',
+                crossDomain: true,
+                xhrFields: {
+                    withCredentials: true
+                },
                 success: function(data, stat, xhr) {
                     console.log(data);
                     if (data.status == 'success') {
-                        window.location.href = '/booking';
+                        window.location.href = vm.parkstayUrl + '/booking';
                     }
                 },
                 error: function(data, stat, xhr) {
                     console.log('POST error');
                     console.log(data);
-                    vm.errorMsg = data.responseJSON.msg;
+                    vm.errorMsg = data.msg ? data.msg : 'Sorry, an error occurred when communicating with Parkstay. Please try again later.';
                     vm.update();
                 }
             });

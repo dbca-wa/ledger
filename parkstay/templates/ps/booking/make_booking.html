@@ -47,7 +47,17 @@
                             {% endverbatim %}
                                 <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel</a>
                             </p>
-                            {{ form.non_field_errors }}
+                            {% if show_errors %}
+                                <p>There were some problems with your submission:</p>
+                                <ul>
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                                {% for field in form %}{% for error in field.errors %}
+                                    <li><b>{{ field.label }}:</b> {{ error }}</li>
+                                {% endfor %}{% endfor %}
+                                </ul>
+                            {% endif %}
                             <h3 class="text-primary">Booking information</h3>
                         </div>
                         <div class="col-md-2">
@@ -239,6 +249,10 @@
                             <div class="col-md-12">
                                 No entry fees are required for this park.
                             </div>
+                            <input name="form-TOTAL_FORMS" max="8" min="0" value="0" type="hidden"/>
+                            <input id="id_form-INITIAL_FORMS" name="form-INITIAL_FORMS" type="hidden" value="0" />
+                            <input id="id_form-MIN_NUM_FORMS" name="form-MIN_NUM_FORMS" type="hidden" value="0" />
+                            <input id="id_form-MAX_NUM_FORMS" name="form-MAX_NUM_FORMS" type="hidden" value="8" />
                         </div>
                     </template>
                 </div>
@@ -278,6 +292,7 @@
 {% endblock %}
 
 {% block custom_js %}
+{% if booking %}
 <script src="//static.dpaw.wa.gov.au/static/libs/vue/2.2.4/vue.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.18.0/moment.min.js"></script>
@@ -463,4 +478,5 @@
         }
     });
 </script>
+{% endif %}
 {% endblock %}
