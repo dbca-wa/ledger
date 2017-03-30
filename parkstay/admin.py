@@ -112,6 +112,10 @@ class ClosureReason(ReasonAdmin):
 class OpenReason(ReasonAdmin):
     pass
 
+@admin.register(models.OracleInterface)
+class OracleInterfaceAdmin(admin.ModelAdmin):
+    pass
+
 admin.site.register(models.Rate)
 admin.site.register(models.Region)
 admin.site.register(models.District)
