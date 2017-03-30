@@ -17,13 +17,19 @@
 								</div>
 								<div class="panel-body">
 									<div class="row">
-										<div class="col-md-6">
+										<div class="col-md-4">
 											<div class="form-group">
 												<label class="control-label" >Campground Name</label>
 												<input type="text" name="name" id="name" class="form-control" v-model="campground.name" required/>
 											</div>
 										</div>
-										<div class="col-md-6">
+										<div class="col-md-4">
+											<div class="form-group">
+												<label class="control-label" >Campground Oracle Code</label>
+												<input type="text" name="oracle_code" id="oracle_code" class="form-control" v-model="campground.oracle_code" required/>
+											</div>
+										</div>
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Park</label>
 												<select name="park" v-show="!parks.length > 0" class="form-control" >
