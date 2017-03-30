@@ -582,8 +582,8 @@ export default {
                 dataType: 'json',
                 success: function(data, status, xhr) {
                     if (data.features && data.features.length > 0) {
-                        //console.log('Mapbox!');
-                        //console.log(data.features[0]);
+                        console.log('Mapbox!');
+                        console.log(data.features[0]);
                         var view = vm.olmap.getView();
                         view.animate({
                             center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
