@@ -214,7 +214,7 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
 def oracle_parser(date,system):
     with transaction.atomic():
         try:
-            op = OracleParser.objects.create(date_parsed=date)
+            op,created = OracleParser.objects.get_or_create(date_parsed=date)
             bpoint_txns = []
             bpoint_qs = [i.bpoint_transactions.filter(settlement_date=date) for i in Invoice.objects.filter(system=system)]
             for x in bpoint_qs:
@@ -254,16 +254,16 @@ def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):
             for i in items:
                 code = i.oracle_code
                 # Check previous parser results for this invoice
-                previous_invoices = OracleParserInvoice.objects.filter(reference=invoice.reference).exclude(parser=parser)
+                previous_invoices = OracleParserInvoice.objects.filter(reference=invoice.reference)
                 code_paid_amount = D('0.0')
                 code_refunded_amount = D('0.0')
                 for p in previous_invoices:
-                    details = dict(p.details)
+                    details = dict(json.loads(p.details))
                     for k,v in details.items():
                         p_item = details[k]
                         if k == code:
-                            code_paid_amount +=  D(p_item[k]['payment'])
-                            code_refunded_amount += D(p_item[k]['refund'])
+                            code_paid_amount +=  D(p_item['payment'])
+                            code_refunded_amount += D(p_item['refund'])
                 # Deal with the current txn
                 if txn.action == 'payment':
                     code_payable_amount = i.line_price_incl_tax - code_paid_amount
@@ -289,4 +289,4 @@ def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):
         return parser_codes,oracle_codes
     except Exception as e:
         print(traceback.print_exc())
-        #raise e
+        raise e
