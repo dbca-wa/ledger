@@ -11,6 +11,7 @@ import firstLevelSearch from '../components/booking/first-level-search.vue'
 import bookingDashboard from '../components/booking/dashboard.vue'
 import addBooking from '../components/booking/addbooking.vue'
 import page_404 from '../components/utils/404.vue'
+import Reports from '../components/reports/reports.vue'
 import Router from 'vue-router'
 import Campsite_type_dash from '../components/campsites-types/campsite-types-dash.vue'
 import Campsite_type from '../components/campsites-types/campsite-type.vue'
@@ -137,6 +138,11 @@ const routes = [
                         path:'bulkpricing',
                         name:'bulkpricing',
                         component:Bulkpricing
+                    },
+                    {
+                        path:'reports',
+                        name:'reports',
+                        component:Reports
                     },
                 ]
             },

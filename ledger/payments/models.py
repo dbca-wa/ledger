@@ -11,6 +11,9 @@ class OracleParser(models.Model):
     inserted = models.DateTimeField(auto_now_add=True)
     date_parsed = models.DateField()
 
+    def __str__(self):
+        return str(self.date_parsed)
+
 class OracleParserInvoice(models.Model):
     parser = models.ForeignKey(OracleParser)
     reference = models.CharField(max_length=50)
