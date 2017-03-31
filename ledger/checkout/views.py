@@ -12,6 +12,7 @@ from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
 #
 from ledger.payment import forms, models
+from ledger.payments.helpers import is_payment_admin
 from oscar.core.loading import get_class, get_model, get_classes
 from oscar.apps.checkout import signals
 from oscar.apps.shipping.methods import NoShippingRequired
@@ -287,13 +288,17 @@ class PaymentDetailsView(CorePaymentDetailsView):
         custom_template = self.checkout_session.custom_template()
 
         ctx['store_card'] = True
-        if self.checkout_session.basket_owner():
+        user = None
+        # only load stored cards if the user is an admin or has legitimately logged in
+        if self.checkout_session.basket_owner() and is_payment_admin(self.request.user):
             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-        else:
+        elif self.request.user.is_authenticated():
             user = self.request.user
-        cards = user.stored_cards.all()
-        if cards:
-            ctx['cards'] = cards
+
+        if user:
+            cards = user.stored_cards.all()
+            if cards:
+                ctx['cards'] = cards
 
         ctx['custom_template'] = custom_template
         ctx['bpay_allowed'] = settings.BPAY_ALLOWED
