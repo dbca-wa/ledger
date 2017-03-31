@@ -720,14 +720,15 @@ def oracle_integration(date):
     system = '0019'
     oracle_codes = oracle_parser(date,system) 
     for k,v in oracle_codes.items():
-       OracleInterface.objects.create(
-            receipt_number = 0,
-            receipt_date = date,
-            activity_name = k,
-            amount = v,
-            customer_name = 'Parkstay',
-            description = k,
-            comments = '{} GST/{}'.format(k,date),
-            status = 'New',
-            status_date = date 
-        ) 
+        if v != 0:
+            OracleInterface.objects.create(
+                receipt_number = 0,
+                receipt_date = date,
+                activity_name = k,
+                amount = v,
+                customer_name = 'Parkstay',
+                description = k,
+                comments = '{} GST/{}'.format(k,date),
+                status = 'New',
+                status_date = date
+            )
