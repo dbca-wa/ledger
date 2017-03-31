@@ -1,7 +1,7 @@
 <div class="well">
-    <div class="col-sm-12">
+    <div class="row"><div class="col-sm-12">
         <h3 class="text-primary">{{ booking.campground.name }}, {{ booking.campground.park.name }}</h3>
-    </div>
+    </div></div>
     <div class="row">
         <div class="col-sm-3">
             <img class="img-thumbnail img-responsive" alt="" src="{{ booking.campground.first_image.image.url }}"/>
@@ -34,14 +34,14 @@
                     <b>Booking confirmation number</b>
                 </div>
                 <div class="col-sm-8">
-                    uh
+                    {{ booking.confirmation_number }}
                 </div>
             </div><div class="row">
                 <div class="col-sm-4">
                     <b>Payment status</b>
                 </div>
                 <div class="col-sm-8">
-                    uh
+                    {{ booking.status }}
                 </div>
             </div><div class="row"> 
                 <p style="margin-top: 1em;"><a href="#" class="btn btn-info btn-lg" >Print</a></p>

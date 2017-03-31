@@ -1,8 +1,11 @@
 import json
+from django.conf import settings
+from django.core.signing import Signer
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
 from wsgiref.util import FileWrapper
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
@@ -813,7 +816,7 @@ class CheckoutCreateView(generics.CreateAPIView):
     serializer_class = CheckoutSerializer
     renderer_classes = (JSONRenderer,)
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     def get_redirect_value(self,serializer,value):
         if serializer.validated_data.get(value) is not None:
@@ -837,15 +840,16 @@ class CheckoutCreateView(generics.CreateAPIView):
             #create basket
             if serializer.validated_data.get('vouchers'):
                 if custom:
-                    createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
+                    basket = createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
                 else:
-                    createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
+                    basket = createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
             else:
                 if custom:
-                    createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
+                    basket = createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
                 else:
-                    createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
-            redirect = HttpResponseRedirect('/ledger/checkout/checkout?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
+                    basket = createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
+
+            redirect = HttpResponseRedirect(reverse('checkout:index')+'?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
                                                                                                 self.get_redirect_value(serializer,'card_method'),
                                                                                                 self.get_redirect_value(serializer,'basket_owner'),
                                                                                                 self.get_redirect_value(serializer,'template'),
@@ -859,7 +863,18 @@ class CheckoutCreateView(generics.CreateAPIView):
                                                                                                 self.get_redirect_value(serializer,'bpay_format'),
                                                                                                 self.get_redirect_value(serializer,'icrn_format'),
                                                                                                 self.get_redirect_value(serializer,'invoice_text')))
-            print(redirect)
+            # inject the current basket into the redirect response cookies
+            # or else, anonymous users will be directionless
+            redirect.set_cookie(
+                settings.OSCAR_BASKET_COOKIE_OPEN, Signer().sign(basket.id),
+                max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
+                secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
+            )
+            
+            #import pdb; pdb.set_trace()
+            #print(redirect)
+            #print(basket)
+            #print(basket.id)
 
             return redirect
         except serializers.ValidationError:

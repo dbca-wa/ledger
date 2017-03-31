@@ -924,6 +924,10 @@ class Booking(models.Model):
                 return status
         return 'Paid'
 
+    @property
+    def confirmation_number(self):
+        return 'PS{}'.format(self.pk)
+
     # Methods
     # =================================
     def __str__(self):

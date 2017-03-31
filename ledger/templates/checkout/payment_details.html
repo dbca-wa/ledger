@@ -7,7 +7,9 @@
     <!-- Pills -->
     <ul class="nav nav-pills nav-justified">
         <li class="active"><a data-toggle="tab" href="#card">Pay now by Card</a></li>
+{% if bpay_allowed %}
         <li><a data-toggle="tab" href="#bpay">Pay later by BPAY/Cash/Cheque/Money Order</a></li>
+{% endif %}
     </ul>
     <!-- Pills -->
     <div class="tab-content">
@@ -67,6 +69,7 @@
                 </form>
             </div>
         </div>
+{% if bpay_allowed %}
     <!-- BPAY -->
         <div id="bpay" class="tab-pane fade">
             <div class="well">
@@ -76,28 +79,14 @@
                 </div>
                 <form method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
                     {% csrf_token %}
-                    <input type="hidden" name="payment_method" readonly value="other"/>
+                    <input type="hidden" name="payment_method" readonly value="bpay"/>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-large btn-primary pull-right">{% trans "Continue" %}</button>
                     </div>
                 </form>
             </div>
         </div>
-    <!-- Cash -->
-        <div id="cash" class="tab-pane fade">
-            <div class="well">
-                <div class="sub-header">
-                    <h3>{% trans "Cash" %}</h3>
-                </div>
-                <form method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
-                    {% csrf_token %}
-                    <input type="hidden" name="payment_method" readonly value="cash"/>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-large btn-primary pull-right">{% trans "Continue" %}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+{% endif %}
     </div>
 </div> 
 {% endblock %}

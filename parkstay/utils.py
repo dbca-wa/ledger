@@ -11,7 +11,8 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ledger.payments.invoice.models import Invoice
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate)
+from ledger.payments.utils import oracle_parser 
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate,OracleInterface)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 
 
@@ -320,7 +321,7 @@ def get_campsite_current_rate(request,campsite_id,start_date,end_date):
         start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
         end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
         for single_date in daterange(start_date, end_date):
-            price_history = CampsiteRate.objects.filter(id=campsite_id,date_start__lte=single_date).order_by('-date_start')
+            price_history = CampsiteRate.objects.filter(campsite=campsite_id,date_start__lte=single_date).order_by('-date_start')
             if price_history:
                 rate = RateSerializer(price_history[0].rate,context={'request':request}).data
                 rate['campsite'] = campsite_id
@@ -605,19 +606,22 @@ def create_or_update_booking(request,booking_details,updating=False):
             for r in regos_serializers:
                 r.is_valid(raise_exception=True)
                 r.save()
+        booking.booking_type = 1
+        booking.save()
     return booking
 
 def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False):
     JSON_REQUEST_HEADER_PARAMS = {
         "Content-Type": "application/json",
         "Accept": "application/json",
+        "Referer": request.META.get('HTTP_REFERER'),
         "X-CSRFToken": request.COOKIES.get('csrftoken')
     }
     try:
         parameters = {
             'system': 'S019',
             'fallback_url': request.build_absolute_uri('/'),
-            'return_url': request.build_absolute_uri('/'),
+            'return_url': request.build_absolute_uri(reverse('public_booking_success')),
             'forceRedirect': True,
             'proxy': True if internal else False,
             "products": lines,
@@ -637,9 +641,13 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
             COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
- 
         response.raise_for_status()
+
+        # add the basket cookie to the current session
+        #if settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
+        #return HttpResponse()
         return response
+
 
     except requests.exceptions.HTTPError as e:
         if 400 <= e.response.status_code < 500:
@@ -656,7 +664,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
 def internal_create_booking_invoice(booking, checkout_response):
     if not checkout_response.history:
         raise Exception('There was a problem retrieving the invoice for this booking')
-    last_redirect = checkout_response.history[-1]
+    last_redirect = checkout_response.history[-2]
     reference = last_redirect.url.split('=')[1]
     try:
         Invoice.objects.get(reference=reference)
@@ -710,3 +718,20 @@ def delete_session_booking(session):
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):
         yield start_date + timedelta(n)
+
+
+def oracle_integration(date):
+    system = '0019'
+    oracle_codes = oracle_parser(date,system) 
+    for k,v in oracle_codes.items():
+       OracleInterface.objects.create(
+            receipt_number = 0,
+            receipt_date = date,
+            activity_name = k,
+            amount = v,
+            customer_name = 'Parkstay',
+            description = k,
+            comments = '{} GST/{}'.format(k,date),
+            status = 'New',
+            status_date = date 
+        ) 

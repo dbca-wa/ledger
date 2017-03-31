@@ -94,3 +94,11 @@ class BpointTransactionAdmin(admin.ModelAdmin):
     
     def has_add_permission(self,request,obj=None):
         return False
+
+class OracleInvoiceParser(admin.TabularInline):
+    model = models.OracleParserInvoice
+    extra = 0
+
+@admin.register(models.OracleParser)
+class OracleParserAdmin(admin.ModelAdmin):
+    inlines = [OracleInvoiceParser,]

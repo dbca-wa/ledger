@@ -1,4 +1,5 @@
 import requests
+import traceback
 import json
 from decimal import Decimal as D
 from django.conf import settings
@@ -6,11 +7,12 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
+from django.contrib.auth.models import AnonymousUser
 from six.moves.urllib.parse import urlparse
 #
 from ledger.basket.models import Basket
 from ledger.catalogue.models import Product
-from ledger.payments.models import OracleParser, OracleParserInvoice
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice
 from oscar.core.loading import get_class
 from oscar.apps.voucher.models import Voucher
 import logging
@@ -20,6 +22,15 @@ logger = logging.getLogger(__name__)
 OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
+
+class DecimalEncoder(json.JSONEncoder):
+    def _iterencode(self, o, markers=None):
+        if isinstance(o, decimal.Decimal):
+            # wanted a simple yield str(o) in the next line,
+            # but that would mean a yield on the line with super(...),
+            # which wouldn't work (see my comment below), so...
+            return (str(o) for o in [o])
+        return super(DecimalEncoder, self)._iterencode(o, markers)
 
 def isLedgerURL(url):
     ''' Check if the url is a ledger url
@@ -89,12 +100,14 @@ def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
         valid_products = []
         User = get_user_model()
         # Check if owner is of class AUTH_USER_MODEL or id
-        if not isinstance(owner,User):
-            owner = User.objects.get(id=owner)
-        # Check if owner has previous baskets
-        if owner.baskets.filter(status='Open'):
-            old_basket = owner.baskets.get(status='Open')
-        # Use the previously open basket if its present or create a new one    
+        if not isinstance(owner, AnonymousUser):
+            if not isinstance(owner, User):
+                owner = User.objects.get(id=owner)
+            # Check if owner has previous baskets
+            if owner.baskets.filter(status='Open'):
+                old_basket = owner.baskets.get(status='Open')
+
+        # Use the previously open basket if its present or create a new one 
         if old_basket:
             if system.lower() == old_basket.system.lower() or not old_basket.system:
                 basket = old_basket
@@ -105,7 +118,8 @@ def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
         else:
             basket = Basket()
         # Set the owner and strategy being used to create the basket    
-        basket.owner = owner
+        if isinstance(owner, User):
+            basket.owner = owner
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
         # Check if there are products to be added to the cart and if they are valid products
@@ -141,6 +155,7 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         ]
         @param - owner (user id or user object)
     '''
+    #import pdb; pdb.set_trace()
     try:
         if not validSystem(system):
             raise ValidationError('A system with the given id does not exist.')
@@ -148,11 +163,13 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         valid_products = []
         User = get_user_model()
         # Check if owner is of class AUTH_USER_MODEL or id
-        if not isinstance(owner,User):
-            owner = User.objects.get(id=owner)
-        # Check if owner has previous baskets
-        if owner.baskets.filter(status='Open'):
-            old_basket = owner.baskets.get(status='Open')
+        if not isinstance(owner, AnonymousUser):
+            if not isinstance(owner, User):
+                owner = User.objects.get(id=owner)
+            # Check if owner has previous baskets
+            if owner.baskets.filter(status='Open'):
+                old_basket = owner.baskets.get(status='Open')
+        
         # Use the previously open basket if its present or create a new one    
         if old_basket:
             if system.lower() == old_basket.system.lower() or not old_basket.system:
@@ -164,7 +181,8 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         else:
             basket = Basket()
         # Set the owner and strategy being used to create the basket    
-        basket.owner = owner
+        if isinstance(owner, User):
+            basket.owner = owner
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
         basket.custom_ledger = True
@@ -179,6 +197,8 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         # Add the valid products to the basket
         for p in product_list:
             basket.addNonOscarProduct(p)
+        # Save the basket (again)
+        basket.save()
         # Add vouchers to the basket
         if vouchers is not None:
             for v in vouchers:
@@ -191,61 +211,82 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         raise
 
 #Oracle Parser
-def oracle_parser(date):
+def oracle_parser(date,system):
     with transaction.atomic():
         try:
-            op = OracleParser.objects.create(date=date)
-            bpoint_txns = [i.bpoint_transactions.filter(settlement_date=date) for i in Invoice.objects.filter(system=settings.SYSTEM_ID)]
+            op = OracleParser.objects.create(date_parsed=date)
+            bpoint_txns = []
+            bpoint_qs = [i.bpoint_transactions.filter(settlement_date=date) for i in Invoice.objects.filter(system=system)]
+            for x in bpoint_qs:
+                if x:
+                    for t in x:
+                        bpoint_txns.append(t)
             oracle_codes = {}
             parser_codes = {}
-            for txn in bpoint_txns:
-                invoice = Invoice.objects.get(reference=txn.crn1)
-                if invoice.reference not in parser_codes.keys():
-                    parser_codes[invoice.reference] = {} 
-                items = invoice.order.lines.all()
-                items_codes = [i.oracle_code for i in items]
-                for i in items_codes:
-                    if i not in oracle_codes.keys():
-                        oracle_codes[i] = Decimal('0.0')
-                    if i not in parser_codes[invoice.reference].keys():
-                        parser_codes[invoice.reference] = {{amount: Decimal('0.0'),'payment':True},{amount: Decimal('0.0'),'payment':False}}
-                # Start Parsing items in invoices
-                payable_amount = txn.amount
-                for i in items:
-                    code = i.oracle_code
-                    # Check previous parser results for this invoice
-                    previous_invoices = ParserInvoice.objects.filter(reference=invoice.reference).exclude(parser=parser)
-                    code_paid_amount = Decimal('0.0')
-                    code_refunded_amount = Decimal('0.0')
-                    for p in previous_invoices:
-                        for k,v in p.details.items():
-                            if k == code:
-                                if v['payment']:
-                                    code_paid_amount += v['amount']
-                                else:
-                                    code_refunded_amount += v['amount']
-                    # Deal with the current txn
-                    if txn.action == 'payment':
-                        code_payable_amount = i.line_price_incl_tax - code_paid_amount
-                        amt = code_payable_amount if code_payable_amount <= payable_amount else payable_amount
-                        oracle_codes[code] += amt
-                        payable_amount -= amt 
-                        code_paid_amount += amt
-                        for k,v in parser_codes[invoice.reference][code].items():
-                            if v['payment']:
-                                v['amount'] += amt
-
-                    elif txn.action == 'refund':
-                        code_refundable_amount = i.line_price_incl_tax - code_refunded_amount
-                        amt = code_refundable_amount if code_refundable_amount <= payable_amount else payable_amount
-                        oracle_codes[code] -= amt
-                        payable_amount -= amt 
-                        code_refunded_amount += amt
-                        for k,v in parser_codes[invoice.reference][code].items():
-                            if not v['payment']:
-                                v['amount'] += amt
+            # Bpoint Processing
+            parser_codes,oracle_codes = bpoint_oracle_parser(op,parser_codes,oracle_codes,bpoint_txns)
             for k,v in parser_codes.items():
-                OracleParserInvoice(reference=k,details=v,parser=op)
+                for a,b in v.items():
+                    for r,f in b.items():
+                        parser_codes[k][a][r] = str(parser_codes[k][a][r])
+            for k,v in parser_codes.items():
+                OracleParserInvoice.objects.create(reference=k,details=json.dumps(v,cls=DecimalEncoder),parser=op)
             return oracle_codes
         except Exception as e:
+            print(traceback.print_exc())
             raise e
+
+def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):
+    try:
+        for txn in bpoint_txns:
+            invoice = Invoice.objects.get(reference=txn.crn1)
+            if invoice.reference not in parser_codes.keys():
+                parser_codes[invoice.reference] = {} 
+            items = invoice.order.lines.all()
+            items_codes = [i.oracle_code for i in items]
+            for i in items_codes:
+                if i not in oracle_codes.keys():
+                    oracle_codes[i] = D('0.0')
+                if i not in parser_codes[invoice.reference].keys():
+                    parser_codes[invoice.reference] = {i:{'payment': D('0.0'),'refund': D('0.0')}}
+            # Start Parsing items in invoices
+            payable_amount = txn.amount
+            for i in items:
+                code = i.oracle_code
+                # Check previous parser results for this invoice
+                previous_invoices = OracleParserInvoice.objects.filter(reference=invoice.reference).exclude(parser=parser)
+                code_paid_amount = D('0.0')
+                code_refunded_amount = D('0.0')
+                for p in previous_invoices:
+                    for k,v in p.details.items():
+                        if k == code:
+                            if v['payment']:
+                                code_paid_amount += v['amount']
+                            else:
+                                code_refunded_amount += v['amount']
+                # Deal with the current txn
+                if txn.action == 'payment':
+                    code_payable_amount = i.line_price_incl_tax - code_paid_amount
+                    amt = code_payable_amount if code_payable_amount <= payable_amount else payable_amount
+                    oracle_codes[code] += amt
+                    payable_amount -= amt 
+                    code_paid_amount += amt
+                    for k,v in parser_codes[invoice.reference][code].items():
+                        item = parser_codes[invoice.reference][code]
+                        if k == 'payment':
+                            item[k] += amt
+
+                elif txn.action == 'refund':
+                    code_refundable_amount = i.line_price_incl_tax - code_refunded_amount
+                    amt = code_refundable_amount if code_refundable_amount <= payable_amount else payable_amount
+                    oracle_codes[code] -= amt
+                    payable_amount -= amt 
+                    code_refunded_amount += amt
+                    for k,v in parser_codes[invoice.reference][code].items():
+                        item = parser_codes[invoice.reference][code]
+                        if k == 'refund':
+                            item[k] += amt
+        return parser_codes,oracle_codes
+    except Exception as e:
+        print(traceback.print_exc())
+        #raise e

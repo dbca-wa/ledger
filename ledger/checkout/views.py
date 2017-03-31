@@ -2,6 +2,7 @@ import logging
 from requests.exceptions import HTTPError, ConnectionError
 import traceback
 from decimal import Decimal as D
+from django.conf import settings
 from django.utils import six
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -295,6 +296,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             ctx['cards'] = cards
 
         ctx['custom_template'] = custom_template
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['payment_method'] = method
         ctx['bankcard_form'] = kwargs.get(
             'bankcard_form', forms.BankcardForm())
@@ -312,18 +314,25 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 return self.do_place_order(request)
             else:
                 return self.handle_place_order_submission(request)
-        else:
-            # Get the payment method either card or other
-            payment_method = request.POST.get('payment_method','')
-            self.checkout_session.pay_by(payment_method)
-            # Get if user wants to store the card
-            store_card = request.POST.get('store_card',False)
-            self.checkout_session.permit_store_card(bool(store_card))
-            # Get if user wants to checkout using a stored card
-            checkout_token = request.POST.get('checkout_token',False)
-            if checkout_token:
-                self.checkout_session.checkout_using_token(request.POST.get('card',''))
-        if payment_method == 'card' and not checkout_token:
+        # Validate the payment method
+        payment_method = request.POST.get('payment_method', '')
+        if payment_method == 'bpay' and settings.BPAY_ALLOWED:
+            self.checkout_session.pay_by('bpay')
+        elif payment_method == 'card':
+            self.checkout_session.pay_by('card')
+        elif payment_method: # someone's trying to pull a fast one, refresh the page
+            self.preview = False
+            return self.render_to_response(self.get_context_data())
+
+        # Get if user wants to store the card
+        store_card = request.POST.get('store_card',False)
+        self.checkout_session.permit_store_card(bool(store_card))
+        # Get if user wants to checkout using a stored card
+        checkout_token = request.POST.get('checkout_token',False)
+        if checkout_token:
+            self.checkout_session.checkout_using_token(request.POST.get('card',''))
+        
+        if self.checkout_session.payment_method() == 'card' and not checkout_token:
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
                 # Form validation failed, render page again with errors
@@ -333,7 +342,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 return self.render_to_response(ctx)
 
         # Render preview with bankcard hidden
-        if payment_method == 'card' and not checkout_token:
+        if self.checkout_session.payment_method() == 'card' and not checkout_token:
             return self.render_preview(request,bankcard_form=bankcard_form)
         else:
             return self.render_preview(request)
@@ -429,7 +438,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 invoice.save()
                             else:
                                 bankcard = kwargs['bankcard']
-                                bankcard.last_digits = bankcard.number[:-4]
+                                bankcard.last_digits = bankcard.number[-4:]
                                 resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
                     if not self.checkout_session.invoice_association():
                         # Record payment source and event
@@ -506,7 +515,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # We define a general error message for when an unanticipated payment
         # error occurs.
         error_msg = _("A problem occurred while processing payment for this "
-                      "order - no payment has been taken.  Please "
+                      "order - no payment has been taken.")
+        if settings.BPAY_ALLOWED:
+            error_msg += _("  Please "
                       "use the pay later option if this problem persists")
 
         signals.pre_payment.send_robust(sender=self, view=self)
@@ -522,7 +533,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
             # their bankcard has expired, wrong card number - that kind of
             # thing. This type of exception is supposed to set a friendly error
             # message that makes sense to the customer.
-            msg = six.text_type(e) + '. You can alternatively use the pay later option.'
+            msg = six.text_type(e) + '.'
+            if settings.BPAY_ALLOWED:
+                msg += ' You can alternatively use the pay later option.'
             logger.warning(
                 "Order #%s: unable to take payment (%s) - restoring basket",
                 order_number, msg)

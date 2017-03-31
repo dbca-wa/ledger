@@ -1309,7 +1309,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                         if booking.is_canceled:
                             bk['campground_site_type'] = ""
                         else:
-                            print Campsite.objects.get(id=booking.campsite_id_list[0])
+                            print(Campsite.objects.get(id=booking.campsite_id_list[0]))
                             bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
                     except EmailUser.DoesNotExist:
                         bk['firstname'] =  ""
