@@ -207,7 +207,7 @@ def oracle_parser(date,system):
         try:
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
             bpoint_txns = []
-            bpoint_qs = [i.bpoint_transactions.filter(settlement_date=date) for i in Invoice.objects.filter(system=system)]
+            bpoint_qs = [i.bpoint_transactions.filter(settlement_date=date,response_code=0) for i in Invoice.objects.filter(system=system)]
             for x in bpoint_qs:
                 if x:
                     for t in x:

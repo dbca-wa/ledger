@@ -102,3 +102,7 @@ class OracleInvoiceParser(admin.TabularInline):
 @admin.register(models.OracleParser)
 class OracleParserAdmin(admin.ModelAdmin):
     inlines = [OracleInvoiceParser,]
+
+@admin.register(models.OracleInterface)
+class OracleInterfaceAdmin(admin.ModelAdmin):
+    pass
