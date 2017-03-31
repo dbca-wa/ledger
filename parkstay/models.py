@@ -1096,20 +1096,6 @@ class CampsiteClassPriceHistory(ViewPriceHistory):
         db_table = 'parkstay_campsiteclass_pricehistory_v'
         ordering = ['-date_start',]
 
-# Oracle Integration
-# ======================================
-class OracleInterface(models.Model):
-    receipt_number = models.IntegerField()
-    receipt_date = models.DateField()
-    activity_name = models.CharField(max_length=50)
-    amount = models.DecimalField(max_digits=8, decimal_places=2)
-    customer_name = models.CharField(max_length=128)
-    description = models.TextField()
-    comments = models.TextField()
-    status = models.CharField(max_length=15)
-    line_item = models.TextField(blank=True,null=True)
-    status_date = models.DateField()
-
 # LISTENERS
 # ======================================
 class CampgroundBookingRangeListener(object):
