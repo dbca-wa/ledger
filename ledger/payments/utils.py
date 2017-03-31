@@ -23,15 +23,6 @@ OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
 
-class DecimalEncoder(json.JSONEncoder):
-    def _iterencode(self, o, markers=None):
-        if isinstance(o, decimal.Decimal):
-            # wanted a simple yield str(o) in the next line,
-            # but that would mean a yield on the line with super(...),
-            # which wouldn't work (see my comment below), so...
-            return (str(o) for o in [o])
-        return super(DecimalEncoder, self)._iterencode(o, markers)
-
 def isLedgerURL(url):
     ''' Check if the url is a ledger url
     :return: Boolean
@@ -225,6 +216,7 @@ def oracle_parser(date,system):
             parser_codes = {}
             # Bpoint Processing
             parser_codes,oracle_codes = bpoint_oracle_parser(op,parser_codes,oracle_codes,bpoint_txns)
+            # Convert Deimals to strings as they cannot be serialized
             for k,v in parser_codes.items():
                 for a,b in v.items():
                     for r,f in b.items():
