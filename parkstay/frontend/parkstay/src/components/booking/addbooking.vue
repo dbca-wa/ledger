@@ -242,6 +242,7 @@
                                       </div>
                                   </div>
                                 </div>
+                                <p><b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid Park Pass.</p>
                             </div>
                         </div>
                     </div>
@@ -509,6 +510,16 @@ export default {
                     var nights = departure.diff(arrival,'days');
                     vm.loading.push('updating prices');
                     vm.$http.get(api_endpoints.campsite_current_price(vm.booking.campsite,arrival.format("YYYY-MM-DD"),departure.format("YYYY-MM-DD"))).then((response)=>{
+                        vm.priceHistory = null;
+                        vm.priceHistory = response.body;
+                        vm.generateBookingPrice();
+                        vm.loading.splice('updating prices',1);
+                    },(error)=>{
+                        console.log(error);
+                        vm.loading.splice('updating prices',1);
+                    });
+                }else{
+                    vm.$http.get(api_endpoints.campsite_current_price(vm.booking.campsite,Moment().format("YYYY-MM-DD"),Moment().format("YYYY-MM-DD"))).then((response)=>{
                         vm.priceHistory = null;
                         vm.priceHistory = response.body;
                         vm.generateBookingPrice();
