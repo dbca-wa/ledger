@@ -321,7 +321,7 @@ def get_campsite_current_rate(request,campsite_id,start_date,end_date):
         start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
         end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
         for single_date in daterange(start_date, end_date):
-            price_history = CampsiteRate.objects.filter(id=campsite_id,date_start__lte=single_date).order_by('-date_start')
+            price_history = CampsiteRate.objects.filter(campsite=campsite_id,date_start__lte=single_date).order_by('-date_start')
             if price_history:
                 rate = RateSerializer(price_history[0].rate,context={'request':request}).data
                 rate['campsite'] = campsite_id
@@ -641,9 +641,13 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
             COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
- 
         response.raise_for_status()
+
+        # add the basket cookie to the current session
+        #if settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
+        #return HttpResponse()
         return response
+
 
     except requests.exceptions.HTTPError as e:
         if 400 <= e.response.status_code < 500:
