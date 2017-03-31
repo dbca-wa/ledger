@@ -222,7 +222,17 @@ class MakeBookingsView(TemplateView):
         
 
         response = utils.checkout(request, booking, lines, invoice_text=reservation)
-        return HttpResponse(response.content)
+        result =  HttpResponse(
+            content=response.content,
+            status=response.status_code,
+            content_type=response.headers['Content-Type'],
+        )
+
+        # if we're anonymous add the basket cookie to the current session
+        if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
+            result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN])
+        
+        return result
 
 
 class BookingSuccessView(TemplateView):

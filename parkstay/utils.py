@@ -643,9 +643,6 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
                                  data=json.dumps(parameters))
         response.raise_for_status()
 
-        # add the basket cookie to the current session
-        #if settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
-        #return HttpResponse()
         return response
 
 
