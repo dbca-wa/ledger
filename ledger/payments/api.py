@@ -626,7 +626,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                     }
                 )
             #bpoint
-            bpoint = invoice.bpoint_transactions
+            bpoint = invoice.bpoint_transactions.filter(response_code=0)
             for b in bpoint:
                 payments.append(
                     {

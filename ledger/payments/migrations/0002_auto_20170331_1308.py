@@ -36,8 +36,33 @@ class Migration(migrations.Migration):
                 ('DVToken', models.CharField(max_length=128)),
             ],
         ),
+        
     ]
     state_operations = [
+        migrations.CreateModel(
+            name='OracleInterface',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('receipt_number', models.IntegerField()),
+                ('receipt_date', models.DateField()),
+                ('activity_name', models.CharField(max_length=50)),
+                ('amount', models.DecimalField(decimal_places=2, max_digits=8)),
+                ('customer_name', models.CharField(max_length=128)),
+                ('description', models.TextField()),
+                ('comments', models.TextField()),
+                ('status', models.CharField(max_length=15)),
+                ('line_item', models.TextField(blank=True, null=True)),
+                ('status_date', models.DateField()),
+            ],
+        ),
+        migrations.CreateModel(
+            name='UsedBpointToken',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('added', models.DateTimeField(auto_now_add=True)),
+                ('DVToken', models.CharField(max_length=128)),
+            ],
+        ),
         migrations.AlterModelTable(
             name='bpayaccountrecord',
             table='payments_bpayaccountrecord',
