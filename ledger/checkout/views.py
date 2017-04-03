@@ -56,7 +56,7 @@ class IndexView(CoreIndexView):
         # validate bpay if present
         self.__validate_bpay(details.get('bpay_details'))
         # validate basket owner if present
-        self.__validate_basket_owner(details.get('basket_owner'))
+        self.__validate_basket_owner(details.get('basket_owner'), details.get('is_anonymous'))
         # validate if to associate invoice with token
         self.__validate_associate_token_details(details.get('associateInvoiceWithToken'))
         # validate force redirection
@@ -104,17 +104,20 @@ class IndexView(CoreIndexView):
         elif details == 'true' or details == 'True':
             self.checkout_session.redirect_forcefully(True)
 
-    def __validate_basket_owner(self,user_id):
+    def __validate_basket_owner(self, user_id, is_anonymous):
         ''' Check if the user entered for basket and order swapping is valid
         '''
         user = None
         if user_id:
             try:
                 user = EmailUser.objects.get(id=user_id)
+                self.checkout_session.owned_by(user.id)
+                # for anonymous sessions, pass oscar the email address.
+                # this fixes all of the check_user_email_is_captured checks
+                if is_anonymous:
+                    self.checkout_session.set_guest_email(user.email)
             except EmailUser.DoesNotExist:
                 raise
-            if user:
-                self.checkout_session.owned_by(user.id)
 
     def __validate_system(self, system):
         ''' Validate the system id
@@ -184,7 +187,7 @@ class IndexView(CoreIndexView):
     def get(self, request, *args, **kwargs):
         # We redirect immediately to shipping address stage if the user is
         # signed in.
-        if request.user.is_authenticated():
+        if True:
             # We raise a signal to indicate that the user has entered the
             # checkout process so analytics tools can track this event.
             signals.start_checkout.send_robust(
@@ -205,8 +208,10 @@ class IndexView(CoreIndexView):
                     'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
                     'icrn_date': request.GET.get('icrn_date', None),
                 },
-                'invoice_text': request.GET.get('invoice_text',None)
+                'invoice_text': request.GET.get('invoice_text',None),
+                'is_anonymous': request.user.is_anonymous(),
             }
+
             # Check if all the required parameters are set
             # and redirect to appropriate page if not
             try:
@@ -594,6 +599,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             self.restore_frozen_basket()
             return self.render_preview(
                 self.request, error=msg, **payment_kwargs)
+
 
 # =========
 # Thank you
