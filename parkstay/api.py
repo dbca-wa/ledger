@@ -1272,6 +1272,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 or lower(accounts_emailuser.first_name) LIKE lower(\'%{}%\')\
                 or lower(accounts_emailuser.last_name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search)
+                if search.isdigit:
+                    sqlsearch = '{} or CAST (parkstay_booking.id as TEXT) like \'{}%\''.format(sqlsearch,search)
                 if arrival or campground or region:
                     sql += " and ( "+ sqlsearch +" )"
                     sqlCount +=  " and  ( "+ sqlsearch +" )"
