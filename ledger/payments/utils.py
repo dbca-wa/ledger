@@ -23,15 +23,6 @@ OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
 
-class DecimalEncoder(json.JSONEncoder):
-    def _iterencode(self, o, markers=None):
-        if isinstance(o, decimal.Decimal):
-            # wanted a simple yield str(o) in the next line,
-            # but that would mean a yield on the line with super(...),
-            # which wouldn't work (see my comment below), so...
-            return (str(o) for o in [o])
-        return super(DecimalEncoder, self)._iterencode(o, markers)
-
 def isLedgerURL(url):
     ''' Check if the url is a ledger url
     :return: Boolean
@@ -214,9 +205,9 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
 def oracle_parser(date,system):
     with transaction.atomic():
         try:
-            op = OracleParser.objects.create(date_parsed=date)
+            op,created = OracleParser.objects.get_or_create(date_parsed=date)
             bpoint_txns = []
-            bpoint_qs = [i.bpoint_transactions.filter(settlement_date=date) for i in Invoice.objects.filter(system=system)]
+            bpoint_qs = [i.bpoint_transactions.filter(settlement_date=date,response_code=0) for i in Invoice.objects.filter(system=system)]
             for x in bpoint_qs:
                 if x:
                     for t in x:
@@ -225,6 +216,7 @@ def oracle_parser(date,system):
             parser_codes = {}
             # Bpoint Processing
             parser_codes,oracle_codes = bpoint_oracle_parser(op,parser_codes,oracle_codes,bpoint_txns)
+            # Convert Deimals to strings as they cannot be serialized
             for k,v in parser_codes.items():
                 for a,b in v.items():
                     for r,f in b.items():
@@ -254,16 +246,16 @@ def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):
             for i in items:
                 code = i.oracle_code
                 # Check previous parser results for this invoice
-                previous_invoices = OracleParserInvoice.objects.filter(reference=invoice.reference).exclude(parser=parser)
+                previous_invoices = OracleParserInvoice.objects.filter(reference=invoice.reference)
                 code_paid_amount = D('0.0')
                 code_refunded_amount = D('0.0')
                 for p in previous_invoices:
-                    for k,v in p.details.items():
+                    details = dict(json.loads(p.details))
+                    for k,v in details.items():
+                        p_item = details[k]
                         if k == code:
-                            if v['payment']:
-                                code_paid_amount += v['amount']
-                            else:
-                                code_refunded_amount += v['amount']
+                            code_paid_amount +=  D(p_item['payment'])
+                            code_refunded_amount += D(p_item['refund'])
                 # Deal with the current txn
                 if txn.action == 'payment':
                     code_payable_amount = i.line_price_incl_tax - code_paid_amount
@@ -289,4 +281,4 @@ def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):
         return parser_codes,oracle_codes
     except Exception as e:
         print(traceback.print_exc())
-        #raise e
+        raise e

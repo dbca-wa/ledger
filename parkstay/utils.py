@@ -10,9 +10,9 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from ledger.payments.invoice.models import Invoice
+from ledger.payments.models import Invoice,OracleInterface
 from ledger.payments.utils import oracle_parser 
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate,OracleInterface)
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 
 
@@ -721,14 +721,15 @@ def oracle_integration(date):
     system = '0019'
     oracle_codes = oracle_parser(date,system) 
     for k,v in oracle_codes.items():
-       OracleInterface.objects.create(
-            receipt_number = 0,
-            receipt_date = date,
-            activity_name = k,
-            amount = v,
-            customer_name = 'Parkstay',
-            description = k,
-            comments = '{} GST/{}'.format(k,date),
-            status = 'New',
-            status_date = date 
-        ) 
+        if v != 0:
+            OracleInterface.objects.create(
+                receipt_number = 0,
+                receipt_date = date,
+                activity_name = k,
+                amount = v,
+                customer_name = 'Parkstay',
+                description = k,
+                comments = '{} GST/{}'.format(k,date),
+                status = 'New',
+                status_date = date
+            )
