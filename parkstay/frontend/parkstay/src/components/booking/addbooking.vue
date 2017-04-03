@@ -878,7 +878,7 @@ export default {
         finishBooking:function () {
             let vm =this;
             vm.isModalOpen =false;
-            location.reload();
+            vm.$router.push({name:"booking-dashboard"});
         },
         isFormValid:function () {
             let vm =this;

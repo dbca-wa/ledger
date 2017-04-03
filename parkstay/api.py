@@ -1272,6 +1272,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 or lower(accounts_emailuser.first_name) LIKE lower(\'%{}%\')\
                 or lower(accounts_emailuser.last_name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search)
+                if search.isdigit:
+                    sqlsearch = '{} or CAST (parkstay_booking.id as TEXT) like \'{}%\''.format(sqlsearch,search)
                 if arrival or campground or region:
                     sql += " and ( "+ sqlsearch +" )"
                     sqlCount +=  " and  ( "+ sqlsearch +" )"
@@ -1384,6 +1386,32 @@ class BookingViewSet(viewsets.ModelViewSet):
             utils.delete_session_booking(request.session)
             if userCreated:
                 customer.delete()
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+
+            instance = self.get_object()
+            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
+
+            booking_details = {
+                'campsites':request.data['campsites'],
+                'start_date' : start_date,
+                'campground' : request.data['campground'],
+                'end_date' : end_date
+            }
+            data = utils.update_booking(request,instance,booking_details)
+            serializer = BookingSerializer(data)
+
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 

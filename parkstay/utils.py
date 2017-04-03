@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-
+import traceback
 from decimal import *
 import json
 import requests
@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface
-from ledger.payments.utils import oracle_parser 
+from ledger.payments.utils import oracle_parser
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 
@@ -472,6 +472,7 @@ def update_booking(request,old_booking,booking_details):
     same_campground = False
     with transaction.atomic():
         try:
+            set_session_booking(request.session, old_booking)
             booking = Booking(
                 arrival = booking_details['start_date'],
                 departure =booking_details['end_date'],
@@ -579,9 +580,11 @@ def update_booking(request,old_booking,booking_details):
                     old_booking.campground = booking.campground
                 old_booking.save()
                 booking.delete()
-
+            delete_session_booking(request.session)
             return old_booking
         except:
+            delete_session_booking(request.session)
+            print(traceback.print_exc())
             raise
 
 def create_or_update_booking(request,booking_details,updating=False):
@@ -722,7 +725,7 @@ def daterange(start_date, end_date):
 
 def oracle_integration(date):
     system = '0019'
-    oracle_codes = oracle_parser(date,system) 
+    oracle_codes = oracle_parser(date,system)
     for k,v in oracle_codes.items():
         if v != 0:
             OracleInterface.objects.create(

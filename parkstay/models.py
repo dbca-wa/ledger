@@ -121,6 +121,7 @@ class Campground(models.Model):
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
     max_advance_booking = models.IntegerField(default =180)
+    name = models.CharField(max_length=255, null=True,blank=True)
 
     def __str__(self):
         return self.name
