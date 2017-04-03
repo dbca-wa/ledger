@@ -1389,6 +1389,32 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+
+            instance = self.get_object()
+            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
+
+            booking_details = {
+                'campsites':request.data['campsites'],
+                'start_date' : start_date,
+                'campground' : request.data['campground'],
+                'end_date' : end_date
+            }
+            data = utils.update_booking(request,instance,booking_details)
+            serializer = BookingSerializer(data)
+
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     def destroy(self, request, *args, **kwargs):
 
         http_status = status.HTTP_200_OK
