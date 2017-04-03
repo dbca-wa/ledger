@@ -222,7 +222,7 @@ def oracle_parser(date,system):
                     for r,f in b.items():
                         parser_codes[k][a][r] = str(parser_codes[k][a][r])
             for k,v in parser_codes.items():
-                OracleParserInvoice.objects.create(reference=k,details=json.dumps(v,cls=DecimalEncoder),parser=op)
+                OracleParserInvoice.objects.create(reference=k,details=json.dumps(v),parser=op)
             return oracle_codes
         except Exception as e:
             print(traceback.print_exc())
