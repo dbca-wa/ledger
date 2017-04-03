@@ -473,7 +473,6 @@ def update_booking(request,old_booking,booking_details):
     with transaction.atomic():
         try:
             set_session_booking(request.session, old_booking)
-            print "creating temp bk"
             booking = Booking(
                 arrival = booking_details['start_date'],
                 departure =booking_details['end_date'],
