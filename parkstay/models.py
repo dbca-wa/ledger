@@ -854,8 +854,8 @@ class Booking(models.Model):
     )
 
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
-    legacy_id = models.IntegerField(unique=True, null=True)
-    legacy_name = models.CharField(max_length=255, blank=True)
+    legacy_id = models.IntegerField(unique=True, null=True,blank=True)
+    legacy_name = models.CharField(max_length=255, blank=True,null=True)
     arrival = models.DateField()
     departure = models.DateField()
     details = JSONField(null=True)
@@ -931,6 +931,22 @@ class Booking(models.Model):
 
     # Methods
     # =================================
+    def clean(self,*args,**kwargs):
+        if not self.pk:
+            print 'new'
+            #Check for existing bookings in current date range
+            arrival = self.arrival
+            departure = self.departure
+            customer = self.customer
+
+            other_bookings = Booking.objects.filter(Q(departure__gt=arrival) & Q(departure__lte=departure),customer=customer)
+            print other_bookings
+            if other_bookings:
+                print 'other'
+                raise ValidationError('Sorry you cannot make concurent bookings')   
+        raise Exception()
+        super(Booking,self).clean(*args,**kwargs)
+
     def __str__(self):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
 
@@ -1279,6 +1295,22 @@ class CampsiteBookingRangeListener(object):
                     CampsiteBookingRange.objects.create(campsite=instance.campsite,range_start=instance.range_end+timedelta(days=1),status=0)
                 except BookingRangeWithinException as e:
                     pass
+
+class BookingListener(object):
+    """
+    Event listener for Bookings 
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=Booking)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = Booking.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            instance.full_clean()
 
 class CampsiteListener(object):
     """
