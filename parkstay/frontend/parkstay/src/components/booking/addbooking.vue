@@ -854,7 +854,11 @@ export default {
                         postcode:vm.booking.postcode,
                     }
                 }
-
+                vm.$store.dispatch("updateAlert",{
+                    visible:false,
+                    type:"danger",
+                    message: ""
+                });
                 vm.$http.post(api_endpoints.bookings,JSON.stringify(booking),{
                     emulateJSON:true,
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
