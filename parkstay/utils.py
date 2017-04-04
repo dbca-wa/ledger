@@ -377,7 +377,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     campsite = Campsite.objects.get(id=c)
                     if lines:
                         price = str((num_days * Decimal(r[k])))
-                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,r['start'],r['end']),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,start.strftime('%d-%m-%Y'),end.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
                     else:
                         price = (num_days * Decimal(r[k])) * v
                         total_price += price
@@ -449,7 +449,9 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
             customer = old_booking.customer
     )
     lines = price_or_lineitems(request,booking,booking.campsite_id_list)
-    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
+    booking_arrival = booking.arrival.strftime('%d-%m-%Y')
+    booking_departure = booking.departure.strftime('%d-%m-%Y')
+    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
     # Proceed to generate invoice
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
     internal_create_booking_invoice(booking, checkout_response)
@@ -544,7 +546,9 @@ def update_booking(request,old_booking,booking_details):
                                 inv.save()
                             # Generate New Invoice
                             lines = price_or_lineitems(request,old_booking,old_booking.campsite_id_list)
-                            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(old_booking.customer.first_name,old_booking.customer.last_name),old_booking.arrival,booking.departure,old_booking.campground.name)
+                            old_booking_arrival = datetime.strptime(old_booking.arrival,"%Y-%m-%d").date().strftime('%d-%m-%Y')
+                            booking_departure = datetime.strptime(booking.departure,"%Y-%m-%d").date().strftime('%d-%m-%Y')
+                            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(old_booking.customer.first_name,old_booking.customer.last_name),old_booking_arrival,booking_departure,old_booking.campground.name)
                             # Proceed to generate invoice
                             checkout_response = checkout(request,old_booking,lines,invoice_text=reservation,internal=True)
                             internal_create_booking_invoice(booking, checkout_response)
@@ -684,7 +688,9 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             booking = create_or_update_booking(request,booking_details,updating)
             set_session_booking(request.session,booking)
             # Get line items
-            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking.arrival,booking.departure,booking.campground.name)
+            booking_arrival = booking.arrival.strftime('%d-%m-%Y')
+            booking_departure = booking.departure.strftime('%d-%m-%Y')
+            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
             lines = price_or_lineitems(request,booking,booking.campsite_id_list)
 
             # Proceed to generate invoice
