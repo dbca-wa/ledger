@@ -932,19 +932,16 @@ class Booking(models.Model):
     # Methods
     # =================================
     def clean(self,*args,**kwargs):
-        if not self.pk:
-            print 'new'
-            #Check for existing bookings in current date range
-            arrival = self.arrival
-            departure = self.departure
-            customer = self.customer
+        #Check for existing bookings in current date range
+        arrival = self.arrival
+        departure = self.departure
+        customer = self.customer
 
-            other_bookings = Booking.objects.filter(Q(departure__gt=arrival) & Q(departure__lte=departure),customer=customer)
-            print other_bookings
-            if other_bookings:
-                print 'other'
-                raise ValidationError('Sorry you cannot make concurent bookings')   
-        raise Exception()
+        other_bookings = Booking.objects.filter(Q(departure__gt=arrival) & Q(departure__lte=departure),customer=customer)
+        if self.pk:
+            other_bookings.exclude(id=self.pk)
+        if other_bookings:
+            raise ValidationError('Sorry you cannot make concurent bookings')   
         super(Booking,self).clean(*args,**kwargs)
 
     def __str__(self):
