@@ -10,7 +10,7 @@
                             <label class="col-md-2 control-label pull-left"  for="Dates">Dates: </label>
                             <div class="col-md-4">
                                 <div class="input-group arrivalPicker date">
-                                    <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY" v-model="booking.arrival">
+                                    <input type="text" class="form-control" name="arrival" placeholder="DD/MM/YYYY">
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar "></span>
                                     </span>
@@ -18,7 +18,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="input-group departurePicker date">
-                                    <input type="text" class="form-control" name="departure" placeholder="DD/MM/YYYY" v-model="booking.departure">
+                                    <input type="text" class="form-control" name="departure" placeholder="DD/MM/YYYY" >
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar"></span>
                                     </span>
@@ -56,7 +56,7 @@
 <script>
 import modal from '../utils/bootstrap-modal.vue'
 import alert from '../utils/alert.vue'
-import {$,api_endpoints,helpers,datetimepicker} from "../../hooks.js"
+import {$,api_endpoints,helpers,datetimepicker,Moment} from "../../hooks.js"
 export default {
     name:'change-booking',
     components:{
@@ -86,7 +86,9 @@ export default {
             errors: false,
             errorString: '',
             successString: '',
-            success:false
+            success:false,
+            arrivalPicker:null,
+            departurePicker:null
         }
     },
     computed: {
@@ -129,7 +131,13 @@ export default {
         },
         fetchBooking: function(id){
             let vm = this;
-            vm.$http.get(api_endpoints.booking(id)).then((response) => {vm.booking = response.body; vm.isModalOpen = true;},(error) => {console.log(error);} );
+            vm.$http.get(api_endpoints.booking(id)).then((response) => {
+                vm.booking = response.body; vm.isModalOpen = true;
+                vm.eventListerners();
+            },(error) => {
+                console.log(error);
+            } );
+
         },
         sendData:function(){
             let vm = this;
@@ -202,19 +210,24 @@ export default {
                format: 'YYYY-MM-DD',
                showClear:true
            };
-           var arrival = $('.arrivalPicker');
-           var departure = $('.departurePicker');
+           vm.arrivalPicker = $('.arrivalPicker');
+           vm.departurePicker = $('.departurePicker');
 
-           arrival.datetimepicker(datepickerOptions);
-           departure.datetimepicker(datepickerOptions);
+           vm.arrivalPicker.datetimepicker(datepickerOptions);
+           vm.departurePicker.datetimepicker(datepickerOptions);
+           vm.arrivalPicker.data("DateTimePicker").minDate(Moment().add(1, 'days'));
+           vm.departurePicker.data("DateTimePicker").minDate(Moment(vm.booking.arrival).add(1, 'days'));
 
-           arrival.on('dp.change', function(e){
-               vm.booking.arrival = arrival.data('DateTimePicker').date().format('YYYY-MM-DD');
-               departure.data("DateTimePicker").minDate(e.date);
+           vm.arrivalPicker.data("DateTimePicker").date(vm.booking.arrival);
+           vm.departurePicker.data("DateTimePicker").date(vm.booking.departure);
+
+           vm.arrivalPicker.on('dp.change', function(e){
+               vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
+               vm.departurePicker.data("DateTimePicker").minDate(e.date);
            });
 
-          departure.on('dp.change', function(e){
-               vm.booking.departure =  departure.data('DateTimePicker').date().format('YYYY-MM-DD');
+          vm.departurePicker.on('dp.change', function(e){
+               vm.booking.departure =  vm.departurePicker.data('DateTimePicker').date().format('YYYY-MM-DD');
            });
        }
    },
@@ -222,7 +235,6 @@ export default {
        let vm =this;
        vm.form = document.forms.changebookingForm;
        vm.addFormValidations();
-       vm.eventListerners();
    }
 }
 </script>
