@@ -653,6 +653,20 @@ export default {
                     vm.selected_departure= vm.booking.departure;
                 }
             });
+            vm.$http.get(api_endpoints.campgroundCampsites(vm.campground.id)).then((response) => {
+                var campsites = response.body;
+                vm.$http.get(api_endpoints.campsite_current_price(campsites[0].id,Moment().format("YYYY-MM-DD"),Moment().add(1,'days').format("YYYY-MM-DD"))).then((response)=>{
+                    vm.priceHistory = null;
+                    vm.priceHistory = response.body;
+                    vm.loading.splice('updating prices',1);
+                },(error)=>{
+                    console.log(error);
+                    vm.loading.splice('updating prices',1);
+                });
+            }, (error) => {
+                console.log(error);
+            });
+
         },
         addGuestCount:function (guest) {
             let vm =this;
