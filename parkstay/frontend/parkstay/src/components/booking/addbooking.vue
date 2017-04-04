@@ -94,7 +94,7 @@
                                     <div id="campsite-booking" class="tab-pane fade in active" v-if="campground.site_type == 0">
                                         <div class="row">
                                             <div v-show="campsites.length < 1" class="col-lg-12 text-center">
-                                                <h2>No Campsites Available</h2>
+                                                <h2>No Campsites Available For The Provided Dates</h2>
                                             </div>
                                           <div v-show="campsites.length > 0" class="col-md-6">
                                               <div class="form-group">
@@ -110,7 +110,7 @@
                                     <div id="campsite-class-booking" class="tab-pane fade in active" v-if="campground.site_type == 1">
                                         <div class="row">
                                             <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
-                                                <h2>No Campsites Available</h2>
+                                                <h2>No Campsites Available For The Provided Dates</h2>
                                             </div>
                                           <div v-for="(c,i) in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
                                               <div class="radio">
