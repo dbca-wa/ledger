@@ -29,6 +29,7 @@ from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
                                 CampsiteRate,
+                                CustomerContact,
                                 Booking,
                                 CampgroundBookingRange,
                                 CampsiteBookingRange,
@@ -58,6 +59,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundSerializer,
                                     CampgroundCampsiteFilterSerializer,
                                     CampsiteBookingSerializer,
+                                    CustomerContactSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     FeatureSerializer,
@@ -94,6 +96,9 @@ class CampsiteBookingViewSet(viewsets.ModelViewSet):
     queryset = CampsiteBooking.objects.all()
     serializer_class = CampsiteBookingSerialiser
 
+class CustomerContactViewSet(viewsets.ModelViewSet):
+    queryset = CustomerContact.objects.all()
+    serializer_class = CustomerContactSerializer
 
 class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
