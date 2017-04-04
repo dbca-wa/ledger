@@ -937,7 +937,7 @@ class Booking(models.Model):
         departure = self.departure
         customer = self.customer
 
-        other_bookings = Booking.objects.filter(Q(departure__gt=arrival) & Q(departure__lte=departure),customer=customer)
+        other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gt=arrival,arrival__lte=departure),customer=customer)
         if self.pk:
             other_bookings.exclude(id=self.pk)
         if other_bookings:
