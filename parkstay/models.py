@@ -937,11 +937,11 @@ class Booking(models.Model):
         departure = self.departure
         customer = self.customer
 
-        other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gt=arrival,arrival__lte=departure),customer=customer)
+        other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gte=arrival,arrival__lt=departure),customer=customer)
         if self.pk:
             other_bookings.exclude(id=self.pk)
         if other_bookings:
-            raise ValidationError('Sorry you cannot make concurent bookings')   
+            raise ValidationError('Sorry you cannot make concurent bookings')
         super(Booking,self).clean(*args,**kwargs)
 
     def __str__(self):
@@ -1295,7 +1295,7 @@ class CampsiteBookingRangeListener(object):
 
 class BookingListener(object):
     """
-    Event listener for Bookings 
+    Event listener for Bookings
     """
 
     @staticmethod
