@@ -255,7 +255,8 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'check_in',
             'check_out',
             'images',
-            'max_advance_booking'
+            'max_advance_booking',
+            'oracle_code'
         )
 
     def get_site_type(self, obj):
