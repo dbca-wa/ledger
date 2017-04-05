@@ -5,6 +5,7 @@ module.exports = {
     },
     regions:"/api/regions.json",
     parks:"/api/parks.json",
+    districts:"/api/districts.json",
     park_price_history:function (id) {
        return "/api/parks/price_history.json";
     },

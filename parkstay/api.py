@@ -26,6 +26,7 @@ from ledger.address.models import Country
 from parkstay import utils
 from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
+                                District,
                                 CampsiteBooking,
                                 Campsite,
                                 CampsiteRate,
@@ -54,6 +55,7 @@ from parkstay.models import (Campground,
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
+                                    DistrictSerializer,
                                     CampgroundMapSerializer,
                                     CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
@@ -95,6 +97,10 @@ from parkstay.helpers import is_officer, is_customer
 class CampsiteBookingViewSet(viewsets.ModelViewSet):
     queryset = CampsiteBooking.objects.all()
     serializer_class = CampsiteBookingSerialiser
+
+class DistrictViewSet(viewsets.ModelViewSet):
+    queryset = District.objects.all()
+    serializer_class = DistrictSerializer
 
 class CustomerContactViewSet(viewsets.ModelViewSet):
     queryset = CustomerContact.objects.all()

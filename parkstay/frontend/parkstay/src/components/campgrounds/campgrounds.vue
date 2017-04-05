@@ -36,6 +36,24 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="applications-filter-region">District: </label>
+                                        <select class="form-control" v-model="selected_district">
+                                            <option value="All">All</option>
+                                            <option v-for="district in districts" :value="district.name">{{ district.name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="applications-filter-region">Park: </label>
+                                        <select class="form-control" v-model="selected_park">
+                                            <option value="All">All</option>
+                                            <option v-for="park in parks" :value="park.name">{{ park.name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group pull-right">
@@ -69,9 +87,13 @@ module.exports = {
             grounds: [],
             rows: [],
             regions: [],
+            districts: [],
+            parks: [],
             title: 'Campgrounds',
             selected_status: 'All',
             selected_region: 'All',
+            selected_park: 'All',
+            selected_district: 'All',
             isOpenAddCampground: false,
             isOpenOpenCG: false,
             isOpenCloseCG: false,
@@ -147,6 +169,22 @@ module.exports = {
             } else {
                 vm.$refs.dtGrounds.vmDataTable.columns(1).search('').draw();
             }
+        },
+        selected_district: function() {
+            let vm = this;
+            if (vm.selected_district != 'All') {
+                vm.$refs.dtGrounds.vmDataTable.columns(3).search(vm.selected_district).draw();
+            } else {
+                vm.$refs.dtGrounds.vmDataTable.columns(3).search('').draw();
+            }
+        },
+        selected_park: function() {
+            let vm = this;
+            if (vm.selected_park != 'All') {
+                vm.$refs.dtGrounds.vmDataTable.columns(4).search(vm.selected_park).draw();
+            } else {
+                vm.$refs.dtGrounds.vmDataTable.columns(4).search('').draw();
+            }
         }
     },
     methods: {
@@ -192,6 +230,18 @@ module.exports = {
             $.get(api_endpoints.regions,function(data){
                 vm.regions = data;
             });
+        },
+        fetchParks: function() {
+            let vm = this;
+            $.get(api_endpoints.parks,function(data){
+                vm.parks = data;
+            });
+        },
+        fetchDistricts: function() {
+            let vm = this;
+            $.get(api_endpoints.districts,function(data){
+                vm.districts = data;
+            });
         }
     },
     mounted: function() {
@@ -232,6 +282,8 @@ module.exports = {
             vm.$refs.dtGrounds.vmDataTable.ajax.reload();
         });
         vm.fetchRegions();
+        vm.fetchParks();
+        vm.fetchDistricts();
     }
 };
 </script>

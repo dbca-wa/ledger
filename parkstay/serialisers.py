@@ -36,6 +36,7 @@ import rest_framework_gis.serializers as gis_serializers
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
+        fields = '__all__'
 
 class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
