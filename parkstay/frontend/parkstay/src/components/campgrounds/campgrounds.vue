@@ -111,7 +111,7 @@ module.exports = {
                     targets: 3
                 }],
                 ajax: {
-                    "url": api_endpoints.campgrounds+"?formatted=True",
+                    "url": api_endpoints.campgrounds_datatable,
                     "dataSrc": ''
                 },
                 columns: [{

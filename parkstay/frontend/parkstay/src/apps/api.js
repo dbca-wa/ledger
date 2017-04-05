@@ -23,6 +23,7 @@ module.exports = {
     },
     // Campgrounds
     campgrounds:"/api/campgrounds.json",
+    campgrounds_datatable:"/api/campgrounds/datatable_list.json",
     campground:function (id) {
         return "/api/campgrounds/"+id+".json";
     },

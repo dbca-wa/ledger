@@ -231,6 +231,24 @@ class ExistingCampgroundImageSerializer(serializers.ModelSerializer):
         model = CampgroundImage
         fields = ('id','image','campground')
 
+class CampgroundDatatableSerializer(serializers.ModelSerializer):
+    park = serializers.SerializerMethodField()
+    class Meta:
+        model = Campground
+        fields = (
+            'id',
+            'name',
+            'park',
+            'district',
+            'region',
+            'ratis_id',
+            'active',
+            'current_closure',
+        )
+
+    def get_park(self,obj):
+        return obj.park.name
+
 
 class CampgroundSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()

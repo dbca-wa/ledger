@@ -13,7 +13,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import detail_route, list_route,renderer_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -59,6 +59,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundMapSerializer,
                                     CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
+                                    CampgroundDatatableSerializer,
                                     CampgroundCampsiteFilterSerializer,
                                     CampsiteBookingSerializer,
                                     CustomerContactSerializer,
@@ -369,6 +370,13 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
 
+    @list_route(methods=['GET',])
+    @renderer_classes((JSONRenderer,))
+    def datatable_list(self,request,format=None):
+        queryset = self.get_queryset()
+        serializer = CampgroundDatatableSerializer(queryset,many=True) 
+        data = serializer.data
+        return Response(data)
 
     def list(self, request, format=None):
 
