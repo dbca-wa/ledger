@@ -94,7 +94,7 @@
                                     <div id="campsite-booking" class="tab-pane fade in active" v-if="campground.site_type == 0">
                                         <div class="row">
                                             <div v-show="campsites.length < 1" class="col-lg-12 text-center">
-                                                <h2>No Campsites Available</h2>
+                                                <h2>No Campsites Available For The Provided Dates</h2>
                                             </div>
                                           <div v-show="campsites.length > 0" class="col-md-6">
                                               <div class="form-group">
@@ -110,7 +110,7 @@
                                     <div id="campsite-class-booking" class="tab-pane fade in active" v-if="campground.site_type == 1">
                                         <div class="row">
                                             <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
-                                                <h2>No Campsites Available</h2>
+                                                <h2>No Campsites Available For The Provided Dates</h2>
                                             </div>
                                           <div v-for="(c,i) in campsite_classes" class="col-lg-3 col-md-4 col-sm-6">
                                               <div class="radio">
@@ -242,6 +242,7 @@
                                       </div>
                                   </div>
                                 </div>
+                                <p><b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid Park Pass.</p>
                             </div>
                         </div>
                     </div>
@@ -517,6 +518,16 @@ export default {
                         console.log(error);
                         vm.loading.splice('updating prices',1);
                     });
+                }else{
+                    vm.$http.get(api_endpoints.campsite_current_price(vm.booking.campsite,Moment().format("YYYY-MM-DD"),Moment().format("YYYY-MM-DD"))).then((response)=>{
+                        vm.priceHistory = null;
+                        vm.priceHistory = response.body;
+                        vm.generateBookingPrice();
+                        vm.loading.splice('updating prices',1);
+                    },(error)=>{
+                        console.log(error);
+                        vm.loading.splice('updating prices',1);
+                    });
                 }
             }
         },
@@ -642,6 +653,20 @@ export default {
                     vm.selected_departure= vm.booking.departure;
                 }
             });
+            vm.$http.get(api_endpoints.campgroundCampsites(vm.campground.id)).then((response) => {
+                var campsites = response.body;
+                vm.$http.get(api_endpoints.campsite_current_price(campsites[0].id,Moment().format("YYYY-MM-DD"),Moment().add(1,'days').format("YYYY-MM-DD"))).then((response)=>{
+                    vm.priceHistory = null;
+                    vm.priceHistory = response.body;
+                    vm.loading.splice('updating prices',1);
+                },(error)=>{
+                    console.log(error);
+                    vm.loading.splice('updating prices',1);
+                });
+            }, (error) => {
+                console.log(error);
+            });
+
         },
         addGuestCount:function (guest) {
             let vm =this;

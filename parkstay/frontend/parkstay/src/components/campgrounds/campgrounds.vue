@@ -43,7 +43,7 @@
                                 </div>
                             </div>
                         </form>
-                        <datatable :dtHeaders="['Campground','Status','Region','Dogs Allowed','Campfires Allowed','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
+                        <datatable :dtHeaders="['Campground','Status','Region','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
                     </div>
                 </div>
             </div>
@@ -86,7 +86,7 @@ module.exports = {
                     targets: 0
                 }, {
                     responsivePriority: 2,
-                    targets: 5
+                    targets: 3
                 }],
                 ajax: {
                     "url": api_endpoints.campgrounds,
@@ -103,16 +103,6 @@ module.exports = {
                     }
                 }, {
                     "data": "region"
-                }, {
-                    "data": "dog_permitted",
-                    "mRender": function(data, type, full) {
-                        return vm.flagFormat(data);
-                    }
-                }, {
-                    "data": "dog_permitted",
-                    "mRender": function(data, type, full) {
-                        return vm.flagFormat(data);
-                    }
                 }, {
                     "mRender": function(data, type, full) {
                         var id = full.id;
