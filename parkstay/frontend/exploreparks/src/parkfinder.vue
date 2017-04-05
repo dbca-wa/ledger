@@ -8,10 +8,10 @@
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
+                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-model="arrivalDateInput" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
+                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-model="departureDateInput" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label>
@@ -87,10 +87,10 @@
                         </div>
                     </template>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Book online</label>
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online bookings</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> Book in-person</label>
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> No online bookings</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
                         <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Third-party site</label>
@@ -458,6 +458,8 @@ export default {
             extentFeatures: [],
             arrivalDate: null,
             departureDate: null,
+            arrivalDateInput: null,
+            departureDateInput: null,
             numAdults: 2,
             numConcessions: 0,
             numChildren: 0,
@@ -582,8 +584,8 @@ export default {
                 dataType: 'json',
                 success: function(data, status, xhr) {
                     if (data.features && data.features.length > 0) {
-                        console.log('Mapbox!');
-                        console.log(data.features[0]);
+                        //console.log('Mapbox!');
+                        //console.log(data.features[0]);
                         var view = vm.olmap.getView();
                         view.animate({
                             center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
@@ -642,6 +644,11 @@ export default {
                 }
                 vm._updateViewport();
             }
+        },
+        updateDates: function(ev) {
+            //console.log('BANG');
+            //console.log(ev);
+            this.reload();
         },
         reload: debounce(function () {
             this.groundsSource.loadSource();
@@ -722,11 +729,12 @@ export default {
             format: 'dd/mm/yyyy',
             onRender: function (date) {
                 // disallow start dates before today
-                //return date.valueOf() < now.valueOf() ? 'disabled': '';
-                return '';
+                return date.valueOf() < now.valueOf() ? 'disabled': '';
+                //return '';
             }
         }).on('changeDate', function (ev) {
-            console.log('arrivalEl changeDate');
+            //console.log('arrivalEl changeDate');
+            ev.target.dispatchEvent(new Event('change'));
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -736,7 +744,10 @@ export default {
             }
             vm.arrivalData.hide();
             vm.arrivalDate = moment(vm.arrivalData.date);
-            vm.reload();
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new Event('change'));
+            }
         }).data('datepicker');
 
         this.departureData = this.departureEl.fdatepicker({
@@ -745,10 +756,14 @@ export default {
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            console.log('departureEl changeDate');
+            //console.log('departureEl changeDate');
+            ev.target.dispatchEvent(new Event('change'));
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
-            vm.reload();
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new Event('change'));
+            }
         }).data('datepicker');
 
         // load autosuggest choices
@@ -1016,9 +1031,9 @@ export default {
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
-                console.log(feature);
+                //console.log(feature);
                 if (feature.get('images')) {
-                    console.log(feature.get('images')[0].image);
+                    // console.log(feature.get('images')[0].image);
                     $("#mapPopupImage").attr('src', feature.get('images')[0].image);
                     $("#mapPopupImage").show();
                 } else {
