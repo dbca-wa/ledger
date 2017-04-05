@@ -373,9 +373,12 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET',])
     @renderer_classes((JSONRenderer,))
     def datatable_list(self,request,format=None):
-        queryset = self.get_queryset()
-        serializer = CampgroundDatatableSerializer(queryset,many=True) 
-        data = serializer.data
+        data = cache.get('campgrounds_dt')
+        if data is None:
+            queryset = self.get_queryset()
+            serializer = CampgroundDatatableSerializer(queryset,many=True) 
+            data = serializer.data
+            cache.set('campgrounds_dt',data,3600)
         return Response(data)
 
     def list(self, request, format=None):

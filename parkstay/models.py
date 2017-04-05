@@ -128,6 +128,7 @@ class Campground(models.Model):
 
     def save(self,*args,**kwargs):
         cache.delete('campgrounds')
+        cache.delete('campgrounds_dt')
         super(Campground,self).save(*args,**kwargs)
 
     class Meta:
