@@ -194,7 +194,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             # Check what status is required
             closures = bool(request.GET.get("closures", False))
             if closures:
-                serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+                serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges,many=True)
             res = serializer.data
@@ -615,7 +615,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             # Check what status is required
             closures = bool(request.GET.get("closures", False))
             if closures:
-                serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+                serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges,many=True)
             res = serializer.data
