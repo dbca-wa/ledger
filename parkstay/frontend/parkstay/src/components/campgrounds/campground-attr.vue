@@ -68,37 +68,17 @@
 										<div class="col-lg-12">
 											<div class="panel panel-primary">
 												<div class="panel-heading">
-													<h3 class="panel-title">Address</h3>
+													<h3 class="panel-title">Contact</h3>
 												</div>
 												<div class="panel-body">
-													<div class="col-md-6">
+													<div class="row">
 														<div class="form-group">
-															<label for="">Email</label>
-															<input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
-														</div>
-													</div>
-													<div class="col-md-6">
-														<div class="form-group">
-															<label for="">Telephone</label>
-															<input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
-														</div>
-													</div>
-													<div class="col-md-4">
-														<div class="form-group">
-															<label for="">Street</label>
-															<input id="street" name="street" type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
-														</div>
-													</div>
-													<div class="col-md-4">
-														<div class="form-group">
-															<label for="">City</label>
-															<input id="city" name="city" type="text" class="form-control" v-model="campground.address.city"  placeholder=""/>
-														</div>
-													</div>
-													<div class="col-md-4">
-														<div class="form-group">
-															<label for="">Postcode</label>
-															<input id="postcode" name="postcode" type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
+															<label class="col-md-4 control-label">Customer Contact</label>
+															<div class="col-md-8">
+															  	<select class="form-control" name="contact" v-model="campground.customer_contact">
+																	<option v-for="c in customer_contacts" :value="c.id">{{ c.name }}</option>
+															  	</select>
+															</div>
 														</div>
 													</div>
 												</div>
@@ -220,7 +200,8 @@ export default {
             errors: false,
             errorString: '',
             showUpdate: false,
-            isLoading: false
+            isLoading: false,
+			customer_contacts:[]
         }
     },
     props: {
@@ -501,6 +482,11 @@ export default {
 
         vm.form = $('#attForm');
         vm.addFormValidations();
+		vm.$http.get(api_endpoints.customer_contacts).then((response) => {
+			vm.customer_contacts = response.body
+		}, (error) => {
+			console.log(error);
+		})
     },
     updated: function() {
         let vm = this;

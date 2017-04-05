@@ -9,6 +9,10 @@ class CampsiteClassAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_filter = ('name',)
 
+@admin.register(models.CustomerContact)
+class CustomerContactAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(models.Park)
 class ParkAdmin(admin.ModelAdmin):
     list_display = ('name','district')
