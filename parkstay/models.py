@@ -688,6 +688,7 @@ class CampsiteClass(models.Model):
     features = models.ManyToManyField('Feature')
     deleted = models.BooleanField(default=False)
     description = models.TextField(null=True)
+    max_vehicles = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return self.name
