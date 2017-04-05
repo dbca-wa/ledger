@@ -246,6 +246,7 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'address',
             'contact',
             'park',
+            'district',
             'region',
             'wkb_geometry',
             'price_level',
@@ -275,6 +276,9 @@ class CampgroundSerializer(serializers.ModelSerializer):
             return {}
         return obj.address
 
+    def get_park(self,obj):
+        return obj.park.name
+
     def get_price_level(self, obj):
         return dict(Campground.CAMPGROUND_PRICE_LEVEL_CHOICES).get(obj.price_level)
 
@@ -295,6 +299,7 @@ class CampgroundSerializer(serializers.ModelSerializer):
             self.fields['site_type'] = serializers.SerializerMethodField()
             self.fields['campground_type'] = serializers.SerializerMethodField()
             self.fields['price_level'] = serializers.SerializerMethodField()
+            self.fields['park'] = serializers.SerializerMethodField()
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
             self.fields['address'] = serializers.SerializerMethodField()

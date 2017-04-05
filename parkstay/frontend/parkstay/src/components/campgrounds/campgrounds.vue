@@ -43,7 +43,7 @@
                                 </div>
                             </div>
                         </form>
-                        <datatable :dtHeaders="['Campground','Status','Region','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
+                        <datatable :dtHeaders="['Campground','Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
                     </div>
                 </div>
             </div>
@@ -89,7 +89,7 @@ module.exports = {
                     targets: 3
                 }],
                 ajax: {
-                    "url": api_endpoints.campgrounds,
+                    "url": api_endpoints.campgrounds+"?formatted=True",
                     "dataSrc": ''
                 },
                 columns: [{
@@ -103,6 +103,10 @@ module.exports = {
                     }
                 }, {
                     "data": "region"
+                },{
+                    "data": "district"
+                },{
+                    "data": "park"
                 }, {
                     "mRender": function(data, type, full) {
                         var id = full.id;

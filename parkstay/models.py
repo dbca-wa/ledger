@@ -140,6 +140,10 @@ class Campground(models.Model):
         return self.park.district.region.name
 
     @property
+    def district(self):
+        return self.park.district.name
+
+    @property
     def active(self):
         return self._is_open(datetime.now().date())
 
