@@ -336,7 +336,7 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             if scrubbed['gear_type'] == 'tent':
                 ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
 
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+        queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
