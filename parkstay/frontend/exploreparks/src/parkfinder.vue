@@ -8,10 +8,10 @@
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-model="arrivalDateInput" v-on:change="updateDates"/></label>
+                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-model="departureDateInput" v-on:change="updateDates"/></label>
+                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label>
@@ -458,8 +458,6 @@ export default {
             extentFeatures: [],
             arrivalDate: null,
             departureDate: null,
-            arrivalDateInput: null,
-            departureDateInput: null,
             numAdults: 2,
             numConcessions: 0,
             numChildren: 0,
