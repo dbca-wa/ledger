@@ -465,6 +465,7 @@ export default {
             gearType: 'tent',
             filterParams: {
             },
+            dateSetFirstTime: true,
             sitesOnline: true,
             sitesOnlineIcon: require('./assets/pin.svg'),
             sitesInPerson: true,
@@ -646,6 +647,12 @@ export default {
         updateDates: function(ev) {
             //console.log('BANG');
             //console.log(ev);
+            // for the first time someone changes the dates, enable the
+            // "Show bookable campsites only" flag
+            if (this.dateSetFirstTime) {
+                this.dateSetFirstTime = false;
+                this.bookableOnly = true;
+            }
             this.reload();
         },
         reload: debounce(function () {
