@@ -4,6 +4,7 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
                                 CampsiteStayHistory,
+                                CustomerContact,
                                 District,
                                 CampsiteBooking,
                                 BookingRange,
@@ -113,6 +114,12 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
         write_only_fields = (
             'campground'
         )
+
+class CustomerContactSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CustomerContact
+        fields ='__all__'
 
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 
@@ -257,7 +264,9 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'check_in',
             'check_out',
             'images',
-            'max_advance_booking'
+            'max_advance_booking',
+            'oracle_code',
+            'customer_contact'
         )
 
     def get_site_type(self, obj):

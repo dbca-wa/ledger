@@ -102,7 +102,7 @@ class Campground(models.Model):
     campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=0)
     promo_area = models.ForeignKey('PromoArea', on_delete=models.PROTECT,blank=True, null=True)
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
-    address = JSONField(null=True)
+    address = JSONField(null=True,blank=True)
     features = models.ManyToManyField('Feature')
     description = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
@@ -121,6 +121,7 @@ class Campground(models.Model):
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
     max_advance_booking = models.IntegerField(default =180)
+    oracle_code = models.CharField(max_length=50,null=True,blank=True)
 
     def __str__(self):
         return self.name
@@ -853,8 +854,8 @@ class Booking(models.Model):
     )
 
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
-    legacy_id = models.IntegerField(unique=True, null=True)
-    legacy_name = models.CharField(max_length=255, blank=True)
+    legacy_id = models.IntegerField(unique=True, null=True,blank=True)
+    legacy_name = models.CharField(max_length=255, blank=True,null=True)
     arrival = models.DateField()
     departure = models.DateField()
     details = JSONField(null=True)
@@ -930,6 +931,19 @@ class Booking(models.Model):
 
     # Methods
     # =================================
+    def clean(self,*args,**kwargs):
+        #Check for existing bookings in current date range
+        arrival = self.arrival
+        departure = self.departure
+        customer = self.customer
+
+        other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gte=arrival,arrival__lt=departure),customer=customer)
+        if self.pk:
+            other_bookings.exclude(id=self.pk)
+        if other_bookings:
+            raise ValidationError('Sorry you cannot make concurent bookings')
+        super(Booking,self).clean(*args,**kwargs)
+
     def __str__(self):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
 
@@ -1278,6 +1292,22 @@ class CampsiteBookingRangeListener(object):
                     CampsiteBookingRange.objects.create(campsite=instance.campsite,range_start=instance.range_end+timedelta(days=1),status=0)
                 except BookingRangeWithinException as e:
                     pass
+
+class BookingListener(object):
+    """
+    Event listener for Bookings
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=Booking)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = Booking.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            instance.full_clean()
 
 class CampsiteListener(object):
     """

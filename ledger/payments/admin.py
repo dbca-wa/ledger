@@ -81,7 +81,7 @@ class BpointTransactionAdmin(admin.ModelAdmin):
                         'dvtoken',
                         'last_digits'
                     )
-    list_display = ('txn_number','receipt_number','action','amount','approved')
+    list_display = ('txn_number','receipt_number','crn1','action','amount','approved')
     
     def has_delete_permission(self,*args,**kwargs):
         return False
