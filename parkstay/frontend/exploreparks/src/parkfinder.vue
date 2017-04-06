@@ -1020,12 +1020,16 @@ export default {
                 return;
             }
             var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
+                $('#map').attr('title', feature.get('name'));
                 return true;
             }, {
                 layerFilter: function (layer) {
                     return layer === vm.grounds;
                 }
             }) === true;
+            if (!result) {
+                $('#map').removeAttr('title');
+            }
             $('#map').toggleClass('click', result);
         });
 
