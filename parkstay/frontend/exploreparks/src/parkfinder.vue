@@ -105,7 +105,8 @@
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
                     <div id="mapPopupContent">
-                        <p><b id="mapPopupName"></b></p>
+                        <h4 style="margin: 0"><b id="mapPopupName"></b></h4>
+                        <p><i id="mapPopupPrice"></i></p>
                         <img class="thumbnail" id="mapPopupImage" />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;">More info</a>
@@ -120,10 +121,11 @@
                     <span class="searchTitle">{{ f.name }}</span>
                 </div>
                 <div class="small-12 medium-3 large-3 columns" v-if="f.images">
-                    <img class="thumbnail" v-bind:src="f.images[0].image"/> 
+                    <img class="thumbnail" v-bind:src="f.images[0].image"/>
                 </div>
                 <div class="small-12 medium-9 large-9 columns">
                     <div v-html="f.description"/>
+                    <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
                     <a class="button" v-bind:href="f.info_url">More info</a>
                     <a v-if="f.campground_type == 0" class="button" v-bind:href="f.info_url+bookingParam">Book now</a>
                 </div>
@@ -1047,6 +1049,11 @@ export default {
                     $("#mapPopupImage").show();
                 } else {
                     $("#mapPopupImage").hide();
+                }
+                if (feature.get('price_hint') && Number(feature.get('price_hint'))) {
+                    $("#mapPopupPrice")[0].innerHTML = '<small>From $' + feature.get('price_hint') + ' per night</small>';
+                } else {
+                    $("#mapPopupPrice")[0].innerHTML = '';
                 }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 $("#mapPopupInfo").attr('href', feature.get('info_url'));

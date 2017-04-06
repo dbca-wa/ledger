@@ -2,7 +2,7 @@ import traceback
 import base64
 import geojson
 from six.moves.urllib.parse import urlparse
-from django.db.models import Q
+from django.db.models import Q, Min
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
@@ -299,7 +299,7 @@ class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
 
 
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Campground.objects.all()
+    queryset = Campground.objects.all().annotate(Min('campsites__rates__rate__adult'))
     serializer_class = CampgroundMapSerializer
     permission_classes = []
 
