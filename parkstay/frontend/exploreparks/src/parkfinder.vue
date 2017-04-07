@@ -109,8 +109,8 @@
                         <p><i id="mapPopupPrice"></i></p>
                         <img class="thumbnail" id="mapPopupImage" />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
-                        <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;">More info</a>
-                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;">Book now</a>
+                        <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
+                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank">Book now</a>
                     </div>
                 </div>
             </div>
@@ -126,8 +126,8 @@
                 <div class="small-12 medium-9 large-9 columns">
                     <div v-html="f.description"/>
                     <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
-                    <a class="button" v-bind:href="f.info_url">More info</a>
-                    <a v-if="f.campground_type == 0" class="button" v-bind:href="f.info_url+bookingParam">Book now</a>
+                    <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
+                    <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.getId()+'&'+bookingParam" target="_blank">Book now</a>
                 </div>
             </div>
         </paginate>
@@ -539,7 +539,7 @@ export default {
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
                     params['departure'] = this.departureDate.format('YYYY/MM/DD');
                 }
-                return '?' + $.param(params) + '#makebooking';
+                return $.param(params);
             }
         }
     },
@@ -611,6 +611,7 @@ export default {
                     props.style = undefined;
                     props.geometry = props.geometry.getCoordinates();
                     props.distance = Math.sqrt(Math.pow(props.geometry[0]-vm.center[0], 2) + Math.pow(props.geometry[1]-vm.center[1], 2));
+                    props.id = el.id;
                     return props;
                 }).sort(function (a, b) {
                     /* distance from map center sort */
@@ -1057,7 +1058,8 @@ export default {
                 }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                $("#mapPopupBook").attr('href', feature.get('info_url')+vm.bookingParam);
+                console.log(feature);
+                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
                 } else {
