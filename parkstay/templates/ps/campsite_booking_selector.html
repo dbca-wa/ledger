@@ -9,7 +9,8 @@
     <div id="availability"></div>
 
     <script type="text/javascript">
-    var parkstayGroundId = '{{ ground_id|escapejs }}';
+{% if ground_id %}    var parkstayGroundId = '{{ ground_id|escapejs }}';
+{% endif %}
     </script>
     <script src="{% static 'availability/js/manifest.js' %}"></script>
     <script src="{% static 'availability/js/vendor.js' %}"></script>

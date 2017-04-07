@@ -37,19 +37,19 @@ from parkstay import utils
 class CampsiteBookingSelector(TemplateView):
     template_name = 'ps/campsite_booking_selector.html'
 
-    def get(self, request, *args, **kwargs):
-        return super(CampsiteBookingSelector, self).get(request, *args, **kwargs)
-
-    @method_decorator(ensure_csrf_cookie)
-    def dispatch(self, *args, **kwargs):
-        return super(CampsiteBookingSelector, self).dispatch(*args, **kwargs)
-
 
 class CampsiteAvailabilitySelector(TemplateView):
     template_name = 'ps/campsite_booking_selector.html'
 
     def get(self, request, *args, **kwargs):
-        return super(CampsiteAvailabilitySelector, self).get(request, *args, **kwargs)
+        # if page is called with ratis_id, inject the ground_id
+        context = {}
+        ratis_id = request.GET.get('ratis_id', None)
+        if ratis_id:
+            cg = Campground.objects.filter(ratis_id=ratis_id)
+            if cg.exists():
+                context['ground_id'] = cg.first().id
+        return render(request, self.template_name, context)
 
 
 class CampgroundFeed(ICalFeed):
