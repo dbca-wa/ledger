@@ -88,7 +88,7 @@
                                 </p>
                                 <ul class="nav nav-tabs">
                                     <li :class="{active:campground.site_type == 0}" v-show="campground.site_type == 0" ><a data-toggle="tab" href="#campsite-booking" @click.prevent="booking_type=booking_types.CAMPSITE">Campsite</a></li>
-                                    <li :class="{active:campground.site_type == 1}" v-show="campground.site_type == 1" ><a data-toggle="tab" href="#campsite-class-booking" @click.prevent="booking_type=booking_types.CLASS">Campsite Type </a></li>
+                                    <li :class="{active:(campground.site_type == 1) || (campground.site_type == 2)}" v-show="campground.site_type == 1" ><a data-toggle="tab" href="#campsite-class-booking" @click.prevent="booking_type=booking_types.CLASS">Campsite Type </a></li>
                                 </ul>
                                 <div class="tab-content">
                                     <div id="campsite-booking" class="tab-pane fade in active" v-if="campground.site_type == 0">
