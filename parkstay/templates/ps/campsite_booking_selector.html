@@ -6,8 +6,13 @@
 {% endblock %}
 
 {% block content %}
+    <noscript><div class="container"><div class="row">
+        <div class="col-sm-12"><div class="well">
+            <h3>Sorry, the campsite booking selector requires JavaScript support!</h3>
+            <p>Please ensure that JavaScript is enabled in your browser.</p>
+        </div></div>
+    </div></div></noscript>
     <div id="availability"></div>
-
     <script type="text/javascript">
 {% if ground_id %}    var parkstayGroundId = '{{ ground_id|escapejs }}';
 {% endif %}

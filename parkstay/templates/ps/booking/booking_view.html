@@ -13,7 +13,11 @@
                     <b>Campsite</b>
                 </div>
                 <div class="col-sm-8">
+                {% if booking.first_campsite.site_type == 2 %}
+                    {{ booking.first_campsite.type }}
+                {% else %}
                     {{ booking.first_campsite.name }} ({{ booking.first_campsite.type }})
+                {% endif %}
                 </div>
             </div><div class="row">
                 <div class="col-sm-4">

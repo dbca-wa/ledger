@@ -787,7 +787,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         }
 
         # group results by campsite class
-        if ground.site_type == 1:
+        if ground.site_type in (1, 2):
             # from our campsite queryset, generate a distinct list of campsite classes
             classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name')]
 
@@ -921,7 +921,6 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 @require_http_methods(['POST'])
 def create_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
-
     data = {
         'arrival': request.POST.get('arrival'),
         'departure': request.POST.get('departure'),
@@ -990,7 +989,7 @@ def create_booking(request, *args, **kwargs):
     except ValidationError as e:
         return HttpResponse(geojson.dumps({
             'status': 'error',
-            'msg': e.message
+            'msg': str(e)
         }), status=400, content_type='application/json')
 
     # add the booking to the current session
