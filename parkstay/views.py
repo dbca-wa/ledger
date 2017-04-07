@@ -45,6 +45,13 @@ class CampsiteBookingSelector(TemplateView):
         return super(CampsiteBookingSelector, self).dispatch(*args, **kwargs)
 
 
+class CampsiteAvailabilitySelector(TemplateView):
+    template_name = 'ps/campsite_booking_selector.html'
+
+    def get(self, request, *args, **kwargs):
+        return super(CampsiteAvailabilitySelector, self).get(request, *args, **kwargs)
+
+
 class CampgroundFeed(ICalFeed):
     timezone = 'UTC+8'
 
