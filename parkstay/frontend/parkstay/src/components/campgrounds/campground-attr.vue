@@ -49,6 +49,7 @@
 													<option value="0">Bookable Online</option>
 													<option value="1">Not Bookable Online</option>
 													<option value="2">Other accomodation</option>
+													<option value="3">Unpublished</option>
 												</select>
 											</div>
 										</div>
@@ -58,6 +59,7 @@
 												<select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
 													<option value="0">Bookable per site</option>
 													<option value="1">Bookable per site type</option>
+													<option value="2">Bookable per site type (hide site number)</option>
 												</select>
 											</div>
 										</div>
