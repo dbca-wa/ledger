@@ -217,7 +217,7 @@ def generateOracleParserFile(oracle_codes):
             writer.writerow([k,v])
     strIO.flush()
     strIO.seek(0)
-    _file = FileWrapper(strIO)
+    return strIO
 
 def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=False,error_string=None):
     dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
@@ -230,18 +230,18 @@ def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=Fals
             recipients = []
             
         email = EmailMessage(
-            'Oracle Interface Summary for {} as at{}'.format(system_name,dt),
+            'Oracle Interface Summary for {} as at {}'.format(system_name,dt),
             'Oracle Interface Summary File for {} as at {}'.format(system_name,dt),
             settings.DEFAULT_FROM_EMAIL,
-            to=[r.email for r in recipients]if recipients else settings.NOTIFICATION_EMAIL
+            to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
         )
-        email.attach('OracleInterface_{}.txt'.format(dt), _file, 'text/csv')
+        email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
     else:
         email = EmailMessage(
             'Oracle Interface Summary Error for {} as at{}'.format(system_name,dt),
             'There was an error in generating a summary report for the oracle interface parser.Please refer to the following log output:\n{}'.format(error_string),
             settings.DEFAULT_FROM_EMAIL,
-            to=[r.email for r in recipients]if recipients else settings.NOTIFICATION_EMAIL
+            to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
         )
     
     email.send()
