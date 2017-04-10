@@ -410,6 +410,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             if "images" in request.data:
                 images_data = request.data.pop("images")
+            if "contact" in request.data:
+                contact_data = request.data.pop("contact")
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance =serializer.save()
@@ -450,6 +452,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             if "images" in request.data:
                 images_data = request.data.pop("images")
+            if "contact" in request.data:
+                contact_data = request.data.pop("contact")
             serializer = self.get_serializer(instance,data=request.data,partial=True)
             serializer.is_valid(raise_exception=True)
             # Get and Validate campground images
