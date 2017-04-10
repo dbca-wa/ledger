@@ -106,3 +106,12 @@ class OracleParserAdmin(admin.ModelAdmin):
 @admin.register(models.OracleInterface)
 class OracleInterfaceAdmin(admin.ModelAdmin):
     pass
+
+class OracleInterfaceRecipientInline(admin.TabularInline):
+    model = models.OracleInterfaceRecipient
+    extra = 1
+
+@admin.register(models.OracleInterfaceSystem)
+class OracleInterfaceSystemAdmin(admin.ModelAdmin):
+    list_display = ('system_name','system_id')
+    inlines = [OracleInterfaceRecipientInline,] 
