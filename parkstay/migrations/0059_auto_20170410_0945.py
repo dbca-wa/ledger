@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('parkstay', '0058_campsiteclass_max_vehicles'),
+        ('parkstay', '0058_auto_20170410_1031'),
     ]
 
     operations = [

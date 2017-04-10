@@ -17,4 +17,9 @@ class Migration(migrations.Migration):
             name='campground_type',
             field=models.SmallIntegerField(choices=[(0, 'Bookable Online'), (1, 'Not Bookable Online'), (2, 'Other Accomodation'), (3, 'Unpublished')], default=3),
         ),
+        #migrations.AddField(
+        #    model_name='campsiteclass',
+        #    name='max_vehicles',
+        #    field=models.PositiveIntegerField(default=1),
+        #),
     ]
