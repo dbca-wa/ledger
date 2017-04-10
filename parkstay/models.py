@@ -152,7 +152,7 @@ class Campground(models.Model):
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
-            return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
+            return 'Start: {} End: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y'))
 
     @property
     def dog_permitted(self):
@@ -363,7 +363,7 @@ class BookingRange(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start > today and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end)):
+        if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start > today and not self.range_end) or ( self.range_start >= today <= self.range_end)):
             return True
         elif self.status == 0 and ((self.range_start <= today and not self.range_end) or self.range_start > today):
             return True
@@ -383,6 +383,11 @@ class BookingRange(models.Model):
         if self.range_start == other.range_start and self.range_end == other.range_end:
             return True
         return False
+
+    def clean(self, *args, **kwargs):
+        print self.__dict__
+        if self.range_end and self.range_end < self.range_start:
+            raise ValidationError('The end date cannot be before the start date.')
 
     def save(self, *args, **kwargs):
         skip_validation = bool(kwargs.pop('skip_validation',False))
@@ -465,6 +470,7 @@ class CampgroundBookingRange(BookingRange):
                 raise ValidationError('This Booking Range is not editable')
             if self.range_start < datetime.now().date() and original.range_start != self.range_start:
                 raise ValidationError('The start date can\'t be in the past')
+        super(CampgroundBookingRange,self).clean(*args, **kwargs)
 
 
 class Campsite(models.Model):
@@ -512,7 +518,7 @@ class Campsite(models.Model):
     def current_closure(self):
         closure = self.__get_current_closure()
         if closure:
-            return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
+            return 'Start: {} End: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y'))
     # Methods
     # =======================================
     def __is_campground_open(self):

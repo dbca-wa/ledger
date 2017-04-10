@@ -526,11 +526,13 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             # return object
             ground = self.get_object()
             res = CampgroundSerializer(ground, context={'request':request})
-
+            cache.delete('campgrounds_dt')
             return Response(res.data)
         except serializers.ValidationError:
+            print(traceback.print_exc())
             raise
         except Exception as e:
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'],)

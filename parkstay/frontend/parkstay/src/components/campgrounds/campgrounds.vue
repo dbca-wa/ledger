@@ -121,7 +121,7 @@ module.exports = {
                     "mRender": function(data, type, full) {
                         var status = (data == true) ? "Open" : "Temporarily Closed";
                         var column = "<td >__Status__</td>";
-                        column += data ? "" : "<br/>"+full.current_closure  ;
+                        column += data ? "" : "<br/><br/>"+full.current_closure  ;
                         return column.replace('__Status__', status);
                     }
                 }, {
