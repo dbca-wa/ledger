@@ -247,7 +247,6 @@ class CampgroundDatatableSerializer(serializers.ModelSerializer):
 
 class CampgroundSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
-    contact = ContactSerializer(required=False)
     images = CampgroundImageSerializer(many=True,required=False)
     class Meta:
         model = Campground
@@ -279,7 +278,6 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'images',
             'max_advance_booking',
             'oracle_code',
-            'customer_contact'
         )
 
     def get_site_type(self, obj):
