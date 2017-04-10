@@ -739,6 +739,6 @@ def oracle_integration(date):
                 customer_name = 'Parkstay',
                 description = k,
                 comments = '{} GST/{}'.format(k,date),
-                status = 'New',
+                status = 'NEW',
                 status_date = date
             )

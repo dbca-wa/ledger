@@ -338,9 +338,10 @@ export default {
                 featuresURL.push(f.id);
             });
             vm.campground.features = featuresURL;
-            if (vm.campground.contact == null && !vm.createCampground) {
-                delete vm.campground.contact;
+            if ( vm.campground.contact == 'undefined' && !vm.createCampground) {
+                vm.campground.contact == ''; 
             }
+            console.log(vm.campground);
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
