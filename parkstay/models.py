@@ -38,13 +38,16 @@ NUMBER_VEHICLE_CHOICES = (
     (3, 'One vehicle + small trailer/large vehicle')
 )
 
-class CustomerContact(models.Model):
+class Contact(models.Model):
     name = models.CharField(max_length=255, unique=True)
     phone_number = models.CharField(max_length=50, null=True, blank=True)
     email = models.EmailField(max_length=255)
-    description = models.TextField()
-    opening_hours = models.TextField()
-    other_services = models.TextField()
+    description = models.TextField(null=True,blank=True)
+    opening_hours = models.TextField(null=True)
+    other_services = models.TextField(null=True)
+
+    def __str__(self):
+        return "{}: {}".format(self.name, self.phone_number)
 
 
 class Park(models.Model):
@@ -71,13 +74,6 @@ class PromoArea(models.Model):
 
     def __str__(self):
         return self.name
-
-class Contact(models.Model):
-    name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=12)
-
-    def __str__(self):
-        return "{}: {}".format(self.name, self.phone_number)
 
 class Campground(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
@@ -114,7 +110,6 @@ class Campground(models.Model):
     othertransport = models.TextField(blank=True, null=True)
     key = models.CharField(max_length=255, blank=True, null=True)
     price_level = models.SmallIntegerField(choices=CAMPGROUND_PRICE_LEVEL_CHOICES, default=0)
-    customer_contact = models.ForeignKey('CustomerContact', blank=True, null=True, on_delete=models.PROTECT)
     info_url = models.CharField(max_length=255, blank=True)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)

@@ -4,7 +4,6 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
                                 CampsiteStayHistory,
-                                CustomerContact,
                                 District,
                                 CampsiteBooking,
                                 BookingRange,
@@ -116,12 +115,6 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             'campground'
         )
 
-class CustomerContactSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = CustomerContact
-        fields ='__all__'
-
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 
     class Meta:
@@ -146,7 +139,7 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = ('name','phone_number')
+        fields = '__all__' 
 
 class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

@@ -27,10 +27,10 @@ from parkstay import utils
 from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
                                 District,
+                                Contact,
                                 CampsiteBooking,
                                 Campsite,
                                 CampsiteRate,
-                                CustomerContact,
                                 Booking,
                                 CampgroundBookingRange,
                                 CampsiteBookingRange,
@@ -55,6 +55,7 @@ from parkstay.models import (Campground,
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
+                                    ContactSerializer,
                                     DistrictSerializer,
                                     CampgroundMapSerializer,
                                     CampgroundMapFilterSerializer,
@@ -62,7 +63,6 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundDatatableSerializer,
                                     CampgroundCampsiteFilterSerializer,
                                     CampsiteBookingSerializer,
-                                    CustomerContactSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     FeatureSerializer,
@@ -103,9 +103,9 @@ class DistrictViewSet(viewsets.ModelViewSet):
     queryset = District.objects.all()
     serializer_class = DistrictSerializer
 
-class CustomerContactViewSet(viewsets.ModelViewSet):
-    queryset = CustomerContact.objects.all()
-    serializer_class = CustomerContactSerializer
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
 
 class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
