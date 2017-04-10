@@ -92,7 +92,8 @@ class Campground(models.Model):
     )
     SITE_TYPE_CHOICES = (
         (0, 'Bookable Per Site'),
-        (1, 'Bookable Per Site Type')
+        (1, 'Bookable Per Site Type'),
+        (2, 'Bookable Per Site Type (hide site number)'),
     )
 
     name = models.CharField(max_length=255, null=True)
@@ -865,8 +866,8 @@ class Booking(models.Model):
         (3, 'Temporary reservation')
     )
 
-    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
-    legacy_id = models.IntegerField(unique=True, null=True,blank=True)
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
+    legacy_id = models.IntegerField(unique=True, blank=True, null=True)
     legacy_name = models.CharField(max_length=255, blank=True,null=True)
     arrival = models.DateField()
     departure = models.DateField()

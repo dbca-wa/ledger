@@ -37,12 +37,19 @@ from parkstay import utils
 class CampsiteBookingSelector(TemplateView):
     template_name = 'ps/campsite_booking_selector.html'
 
-    def get(self, request, *args, **kwargs):
-        return super(CampsiteBookingSelector, self).get(request, *args, **kwargs)
 
-    @method_decorator(ensure_csrf_cookie)
-    def dispatch(self, *args, **kwargs):
-        return super(CampsiteBookingSelector, self).dispatch(*args, **kwargs)
+class CampsiteAvailabilitySelector(TemplateView):
+    template_name = 'ps/campsite_booking_selector.html'
+
+    def get(self, request, *args, **kwargs):
+        # if page is called with ratis_id, inject the ground_id
+        context = {}
+        ratis_id = request.GET.get('ratis_id', None)
+        if ratis_id:
+            cg = Campground.objects.filter(ratis_id=ratis_id)
+            if cg.exists():
+                context['ground_id'] = cg.first().id
+        return render(request, self.template_name, context)
 
 
 class CampgroundFeed(ICalFeed):
@@ -222,7 +229,17 @@ class MakeBookingsView(TemplateView):
         
 
         response = utils.checkout(request, booking, lines, invoice_text=reservation)
-        return HttpResponse(response.content)
+        result =  HttpResponse(
+            content=response.content,
+            status=response.status_code,
+            content_type=response.headers['Content-Type'],
+        )
+
+        # if we're anonymous add the basket cookie to the current session
+        if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
+            result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN])
+        
+        return result
 
 
 class BookingSuccessView(TemplateView):

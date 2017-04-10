@@ -617,7 +617,7 @@ def create_or_update_booking(request,booking_details,updating=False):
         booking.save()
     return booking
 
-def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False):
+def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
     JSON_REQUEST_HEADER_PARAMS = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -636,7 +636,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
             "invoice_text": invoice_text,
             "vouchers": vouchers
         }
-        if internal:
+        if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
 
 
@@ -650,9 +650,6 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
                                  data=json.dumps(parameters))
         response.raise_for_status()
 
-        # add the basket cookie to the current session
-        #if settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
-        #return HttpResponse()
         return response
 
 

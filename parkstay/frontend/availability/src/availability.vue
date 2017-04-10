@@ -24,12 +24,12 @@
         <div class="row" v-show="status == 'online'">
             <div class="columns small-6 medium-6 large-3">
                 <label>Arrival
-                    <input id="date-arrival" type="text" placeholder="dd/mm/yyyy"/>
+                    <input id="date-arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
             <div class="columns small-6 medium-6 large-3">
                 <label>Departure
-                    <input id="date-departure" type="text" placeholder="dd/mm/yyyy"/>
+                    <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
             <div class="small-6 medium-6 large-3 columns">
@@ -244,7 +244,11 @@ export default {
             arrivalDate: moment.utc(getQueryParam('arrival', moment.utc(now).format('YYYY/MM/DD')), 'YYYY/MM/DD'),
             departureDate:  moment.utc(getQueryParam('departure', moment.utc(now).add(5, 'days').format('YYYY/MM/DD')), 'YYYY/MM/DD'),
             parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
-            parkstayGroundId: global.parkstayGroundId || '1',
+            // order of preference:
+            // - GET parameter 'site_id'
+            // - global JS var 'parkstayGroundId'
+            // - '1'
+            parkstayGroundId: parseInt(getQueryParam('site_id', global.parkstayGroundId || '1')),
             days: 5,
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
@@ -271,6 +275,18 @@ export default {
                 }
             }
         },
+        arrivalDateString: {
+            cache: false,
+            get: function() {
+                return this.arrivalEl[0].value ? moment(this.arrivalData.getDate()).format('YYYY/MM/DD') : null; 
+            }
+        },
+        departureDateString: {
+            cache: false,
+            get: function() {
+                return this.departureEl[0].value ? moment(this.departureData.getDate()).format('YYYY/MM/DD') : null; 
+            }
+        },
     },
     methods: {
         getDateString: function (date, offset) {
@@ -289,8 +305,8 @@ export default {
         submitBooking: function (site) {
             var vm = this;
             var submitData = {
-                arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                arrival: vm.arrivalDateString,
+                departure: vm.departureDateString,
                 num_adult: vm.numAdults,
                 num_child: vm.numChildren,
                 num_concession: vm.numConcessions,
@@ -302,8 +318,8 @@ export default {
                 submitData.campground = vm.parkstayGroundId;
                 submitData.campsite_class = site.type;
             }
-            console.log(site);
-            console.log(submitData);
+            //console.log(site);
+            //console.log(submitData);
             $.ajax({
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
@@ -314,14 +330,14 @@ export default {
                     withCredentials: true
                 },
                 success: function(data, stat, xhr) {
-                    console.log(data);
+                    //console.log(data);
                     if (data.status == 'success') {
                         window.location.href = vm.parkstayUrl + '/booking';
                     }
                 },
                 error: function(data, stat, xhr) {
-                    console.log('POST error');
-                    console.log(data);
+                    //console.log('POST error');
+                    //console.log(data);
                     vm.errorMsg = data.msg ? data.msg : 'Sorry, an error occurred when communicating with Parkstay. Please try again later.';
                     vm.update();
                 }
@@ -364,53 +380,62 @@ export default {
         var vm = this;
         $(document).foundation();
 
-        var arrivalEl = $('#date-arrival');
-        var arrivalData = arrivalEl.fdatepicker({
+        this.arrivalEl = $('#date-arrival');
+        this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
             onRender: function (date) {
                 // disallow start dates before today
-                //return date.valueOf() < now.valueOf() ? 'disabled': '';
-                return '';
+                return date.valueOf() < now.valueOf() ? 'disabled': '';
+                //return '';
             }
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
-            if (arrivalData.date.valueOf() >= departureData.date.valueOf()) {
-                var newDate = moment(arrivalData.date).add(1, 'days').toDate();
-                departureData.date = newDate;
-                departureData.setValue();
-                departureData.fill();
-                departureEl.trigger('changeDate');
+            ev.target.dispatchEvent(new Event('change'));
+            if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
+                var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
+                vm.departureData.date = newDate;
+                vm.departureData.setValue();
+                vm.departureData.fill();
+                vm.departureEl.trigger('changeDate');
             }
-            arrivalData.hide();
-            vm.arrivalDate = moment(arrivalData.date);
+            vm.arrivalData.hide();
+            vm.arrivalDate = moment(vm.arrivalData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
             vm.sites = [];
-            vm.update();
+            //vm.update();
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new Event('change'));
+            }
         }).data('datepicker');
 
-        var departureEl = $('#date-departure');
-        var departureData = departureEl.fdatepicker({
+        this.departureEl = $('#date-departure');
+        this.departureData = this.departureEl.fdatepicker({
             format: 'dd/mm/yyyy',
             onRender: function (date) {
-                return (date.valueOf() <= arrivalData.date.valueOf()) ? 'disabled': '';
+                return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
-            departureData.hide();
-            vm.departureDate = moment(departureData.date);
+            ev.target.dispatchEvent(new Event('change'));
+            vm.departureData.hide();
+            vm.departureDate = moment(vm.departureData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
             vm.sites = [];
-            vm.update();
+            //vm.update();
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new Event('change'));
+            }
         }).data('datepicker');
 
 
-
-        arrivalData.date = this.arrivalDate.toDate();
-        arrivalData.setValue();
-        arrivalData.fill();
-        departureData.date = this.departureDate.toDate();
-        departureData.setValue();
-        departureData.fill();
+        this.arrivalData.date = this.arrivalDate.toDate();
+        this.arrivalData.setValue();
+        this.arrivalData.fill();
+        this.departureData.date = this.departureDate.toDate();
+        this.departureData.setValue();
+        this.departureData.fill();
         this.update();
     }
 }

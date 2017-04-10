@@ -2,7 +2,7 @@ import traceback
 import base64
 import geojson
 from six.moves.urllib.parse import urlparse
-from django.db.models import Q
+from django.db.models import Q, Min
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
@@ -311,7 +311,7 @@ class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
 
 
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Campground.objects.all()
+    queryset = Campground.objects.all().annotate(Min('campsites__rates__rate__adult'))
     serializer_class = CampgroundMapSerializer
     permission_classes = []
 
@@ -348,7 +348,7 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             if scrubbed['gear_type'] == 'tent':
                 ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
 
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+        queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -806,7 +806,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         }
 
         # group results by campsite class
-        if ground.site_type == 1:
+        if ground.site_type in (1, 2):
             # from our campsite queryset, generate a distinct list of campsite classes
             classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name')]
 
@@ -940,7 +940,6 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 @require_http_methods(['POST'])
 def create_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
-
     data = {
         'arrival': request.POST.get('arrival'),
         'departure': request.POST.get('departure'),
@@ -1009,7 +1008,7 @@ def create_booking(request, *args, **kwargs):
     except ValidationError as e:
         return HttpResponse(geojson.dumps({
             'status': 'error',
-            'msg': e.message
+            'msg': str(e)
         }), status=400, content_type='application/json')
 
     # add the booking to the current session
