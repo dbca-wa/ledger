@@ -76,6 +76,7 @@
 															<label class="col-md-4 control-label">Customer Contact</label>
 															<div class="col-md-8">
 															  	<select class="form-control" name="contact" v-model="campground.contact">
+																	<option value="undefined">Select Contact</option>
 																	<option v-for="c in contacts" :value="c.id">{{ c.name }}</option>
 															  	</select>
 															</div>
