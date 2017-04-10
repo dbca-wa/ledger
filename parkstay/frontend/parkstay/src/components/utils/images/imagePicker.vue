@@ -201,7 +201,7 @@ module.exports = {
 }
 .btn-file {
     position: relative;
-    width: 110px;
+    width: 120px;
     overflow: hidden;
 }
 .btn-file-large{
