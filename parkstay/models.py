@@ -84,6 +84,7 @@ class Campground(models.Model):
         (0, 'Bookable Online'),
         (1, 'Not Bookable Online'),
         (2, 'Other Accomodation'),
+        (3, 'Unpublished'),
     )
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
         (0, 'Campground level'),
@@ -100,7 +101,7 @@ class Campground(models.Model):
     park = models.ForeignKey('Park', on_delete=models.PROTECT, related_name='campgrounds')
     ratis_id = models.IntegerField(default=-1)
     contact = models.ForeignKey('Contact', on_delete=models.PROTECT, blank=True, null=True)
-    campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=0)
+    campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=3)
     promo_area = models.ForeignKey('PromoArea', on_delete=models.PROTECT,blank=True, null=True)
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
     address = JSONField(null=True,blank=True)

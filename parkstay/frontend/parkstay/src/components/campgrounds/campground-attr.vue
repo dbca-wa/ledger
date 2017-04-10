@@ -49,6 +49,7 @@
 													<option value="0">Bookable Online</option>
 													<option value="1">Not Bookable Online</option>
 													<option value="2">Other accomodation</option>
+													<option value="3">Unpublished</option>
 												</select>
 											</div>
 										</div>
