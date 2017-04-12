@@ -20,6 +20,7 @@ router.register(r'parks',api.ParkViewSet)
 router.register(r'parkentryrate',api.ParkEntryRateViewSet)
 router.register(r'features',api.FeatureViewSet)
 router.register(r'regions',api.RegionViewSet)
+router.register(r'districts',api.DistrictViewSet)
 router.register(r'campsite_classes',api.CampsiteClassViewSet)
 router.register(r'booking',api.BookingViewSet)
 router.register(r'campground_booking_ranges',api.CampgroundBookingRangeViewset)
@@ -33,7 +34,7 @@ router.register(r'openReasons',api.OpenReasonViewSet)
 router.register(r'priceReasons',api.PriceReasonViewSet)
 router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 router.register(r'users',api.UsersViewSet)
-router.register(r'customer_contact',api.CustomerContactViewSet)
+router.register(r'contacts',api.ContactViewSet)
 
 api_patterns = [
     url(r'api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),

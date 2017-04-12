@@ -4,7 +4,6 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
                                 CampsiteStayHistory,
-                                CustomerContact,
                                 District,
                                 CampsiteBooking,
                                 BookingRange,
@@ -36,6 +35,7 @@ import rest_framework_gis.serializers as gis_serializers
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
+        fields = '__all__'
 
 class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -115,12 +115,6 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             'campground'
         )
 
-class CustomerContactSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = CustomerContact
-        fields ='__all__'
-
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 
     class Meta:
@@ -145,7 +139,7 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = ('name','phone_number')
+        fields = '__all__' 
 
 class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -232,10 +226,27 @@ class ExistingCampgroundImageSerializer(serializers.ModelSerializer):
         model = CampgroundImage
         fields = ('id','image','campground')
 
+class CampgroundDatatableSerializer(serializers.ModelSerializer):
+    park = serializers.SerializerMethodField()
+    class Meta:
+        model = Campground
+        fields = (
+            'id',
+            'name',
+            'park',
+            'district',
+            'region',
+            'ratis_id',
+            'active',
+            'current_closure',
+        )
+
+    def get_park(self,obj):
+        return obj.park.name
+
 
 class CampgroundSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
-    contact = ContactSerializer(required=False)
     images = CampgroundImageSerializer(many=True,required=False)
     class Meta:
         model = Campground
@@ -248,6 +259,7 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'address',
             'contact',
             'park',
+            'district',
             'region',
             'wkb_geometry',
             'price_level',
@@ -266,7 +278,6 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'images',
             'max_advance_booking',
             'oracle_code',
-            'customer_contact'
         )
 
     def get_site_type(self, obj):
@@ -276,6 +287,9 @@ class CampgroundSerializer(serializers.ModelSerializer):
         if not obj.address:
             return {}
         return obj.address
+
+    def get_park(self,obj):
+        return obj.park.name
 
     def get_price_level(self, obj):
         return dict(Campground.CAMPGROUND_PRICE_LEVEL_CHOICES).get(obj.price_level)
@@ -297,6 +311,7 @@ class CampgroundSerializer(serializers.ModelSerializer):
             self.fields['site_type'] = serializers.SerializerMethodField()
             self.fields['campground_type'] = serializers.SerializerMethodField()
             self.fields['price_level'] = serializers.SerializerMethodField()
+            self.fields['park'] = serializers.SerializerMethodField()
         if method == 'get':
             self.fields['features'] = FeatureSerializer(many=True)
             self.fields['address'] = serializers.SerializerMethodField()
@@ -374,7 +389,7 @@ class RegionSerializer(serializers.ModelSerializer):
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CampsiteClass
-        fields = ('url','id','name','tent','campervan','min_people','max_people','caravan','description','features','deleted','can_add_rate','campsites')
+        fields = ('url','id','name','tent','campervan','min_people','max_people','max_vehicles','caravan','description','features','deleted','can_add_rate','campsites')
         read_only_fields = ('campsites','can_add_rate',)
 
     def __init__(self, *args, **kwargs):

@@ -38,13 +38,16 @@ NUMBER_VEHICLE_CHOICES = (
     (3, 'One vehicle + small trailer/large vehicle')
 )
 
-class CustomerContact(models.Model):
+class Contact(models.Model):
     name = models.CharField(max_length=255, unique=True)
     phone_number = models.CharField(max_length=50, null=True, blank=True)
     email = models.EmailField(max_length=255)
-    description = models.TextField()
-    opening_hours = models.TextField()
-    other_services = models.TextField()
+    description = models.TextField(null=True,blank=True)
+    opening_hours = models.TextField(null=True)
+    other_services = models.TextField(null=True)
+
+    def __str__(self):
+        return "{}: {}".format(self.name, self.phone_number)
 
 
 class Park(models.Model):
@@ -71,13 +74,6 @@ class PromoArea(models.Model):
 
     def __str__(self):
         return self.name
-
-class Contact(models.Model):
-    name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=12)
-
-    def __str__(self):
-        return "{}: {}".format(self.name, self.phone_number)
 
 class Campground(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
@@ -115,7 +111,6 @@ class Campground(models.Model):
     othertransport = models.TextField(blank=True, null=True)
     key = models.CharField(max_length=255, blank=True, null=True)
     price_level = models.SmallIntegerField(choices=CAMPGROUND_PRICE_LEVEL_CHOICES, default=0)
-    customer_contact = models.ForeignKey('CustomerContact', blank=True, null=True, on_delete=models.PROTECT)
     info_url = models.CharField(max_length=255, blank=True)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
@@ -130,6 +125,7 @@ class Campground(models.Model):
 
     def save(self,*args,**kwargs):
         cache.delete('campgrounds')
+        cache.delete('campgrounds_dt')
         super(Campground,self).save(*args,**kwargs)
 
     class Meta:
@@ -142,6 +138,10 @@ class Campground(models.Model):
         return self.park.district.region.name
 
     @property
+    def district(self):
+        return self.park.district.name
+
+    @property
     def active(self):
         return self._is_open(datetime.now().date())
 
@@ -149,7 +149,7 @@ class Campground(models.Model):
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
-            return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
+            return 'Start: {} End: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y'))
 
     @property
     def dog_permitted(self):
@@ -360,7 +360,7 @@ class BookingRange(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start > today and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end)):
+        if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start > today and not self.range_end) or ( self.range_start >= today <= self.range_end)):
             return True
         elif self.status == 0 and ((self.range_start <= today and not self.range_end) or self.range_start > today):
             return True
@@ -380,6 +380,11 @@ class BookingRange(models.Model):
         if self.range_start == other.range_start and self.range_end == other.range_end:
             return True
         return False
+
+    def clean(self, *args, **kwargs):
+        print self.__dict__
+        if self.range_end and self.range_end < self.range_start:
+            raise ValidationError('The end date cannot be before the start date.')
 
     def save(self, *args, **kwargs):
         skip_validation = bool(kwargs.pop('skip_validation',False))
@@ -462,6 +467,7 @@ class CampgroundBookingRange(BookingRange):
                 raise ValidationError('This Booking Range is not editable')
             if self.range_start < datetime.now().date() and original.range_start != self.range_start:
                 raise ValidationError('The start date can\'t be in the past')
+        super(CampgroundBookingRange,self).clean(*args, **kwargs)
 
 
 class Campsite(models.Model):
@@ -509,7 +515,7 @@ class Campsite(models.Model):
     def current_closure(self):
         closure = self.__get_current_closure()
         if closure:
-            return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
+            return 'Start: {} End: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y'))
     # Methods
     # =======================================
     def __is_campground_open(self):
@@ -686,6 +692,7 @@ class CampsiteClass(models.Model):
     features = models.ManyToManyField('Feature')
     deleted = models.BooleanField(default=False)
     description = models.TextField(null=True)
+    max_vehicles = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return self.name

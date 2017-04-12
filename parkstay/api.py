@@ -13,7 +13,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import detail_route, list_route,renderer_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -26,10 +26,11 @@ from ledger.address.models import Country
 from parkstay import utils
 from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
+                                District,
+                                Contact,
                                 CampsiteBooking,
                                 Campsite,
                                 CampsiteRate,
-                                CustomerContact,
                                 Booking,
                                 CampgroundBookingRange,
                                 CampsiteBookingRange,
@@ -54,12 +55,14 @@ from parkstay.models import (Campground,
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
+                                    ContactSerializer,
+                                    DistrictSerializer,
                                     CampgroundMapSerializer,
                                     CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
+                                    CampgroundDatatableSerializer,
                                     CampgroundCampsiteFilterSerializer,
                                     CampsiteBookingSerializer,
-                                    CustomerContactSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     FeatureSerializer,
@@ -96,9 +99,13 @@ class CampsiteBookingViewSet(viewsets.ModelViewSet):
     queryset = CampsiteBooking.objects.all()
     serializer_class = CampsiteBookingSerialiser
 
-class CustomerContactViewSet(viewsets.ModelViewSet):
-    queryset = CustomerContact.objects.all()
-    serializer_class = CustomerContactSerializer
+class DistrictViewSet(viewsets.ModelViewSet):
+    queryset = District.objects.all()
+    serializer_class = DistrictSerializer
+
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
 
 class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
@@ -361,6 +368,16 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
 
+    @list_route(methods=['GET',])
+    @renderer_classes((JSONRenderer,))
+    def datatable_list(self,request,format=None):
+        data = cache.get('campgrounds_dt')
+        if data is None:
+            queryset = self.get_queryset()
+            serializer = CampgroundDatatableSerializer(queryset,many=True) 
+            data = serializer.data
+            cache.set('campgrounds_dt',data,3600)
+        return Response(data)
 
     def list(self, request, format=None):
 
@@ -507,11 +524,13 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             # return object
             ground = self.get_object()
             res = CampgroundSerializer(ground, context={'request':request})
-
+            cache.delete('campgrounds_dt')
             return Response(res.data)
         except serializers.ValidationError:
+            print(traceback.print_exc())
             raise
         except Exception as e:
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'],)

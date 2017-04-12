@@ -5,6 +5,7 @@ module.exports = {
     },
     regions:"/api/regions.json",
     parks:"/api/parks.json",
+    districts:"/api/districts.json",
     park_price_history:function (id) {
        return "/api/parks/price_history.json";
     },
@@ -22,6 +23,7 @@ module.exports = {
     },
     // Campgrounds
     campgrounds:"/api/campgrounds.json",
+    campgrounds_datatable:"/api/campgrounds/datatable_list.json",
     campground:function (id) {
         return "/api/campgrounds/"+id+".json";
     },
@@ -146,5 +148,5 @@ module.exports = {
     usersLookup: function (q) {
        return  encodeURI("/api/users.json?q="+q);
    },
-   customer_contacts:"/api/customer_contact.json"
+   contacts:"/api/contacts.json"
 };

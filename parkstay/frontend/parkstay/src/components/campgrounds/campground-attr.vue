@@ -77,12 +77,25 @@
 														<div class="form-group">
 															<label class="col-md-4 control-label">Customer Contact</label>
 															<div class="col-md-8">
-															  	<select class="form-control" name="contact" v-model="campground.customer_contact">
-																	<option v-for="c in customer_contacts" :value="c.id">{{ c.name }}</option>
+															  	<select class="form-control" name="contact" v-model="campground.contact">
+																	<option value="undefined">Select Contact</option>
+																	<option v-for="c in contacts" :value="c.id">{{ c.name }}</option>
 															  	</select>
 															</div>
 														</div>
 													</div>
+                                                    <div class="row">
+                                                        <div class="form-group">
+                                                            <div class="col-md-6">
+                                                                <label class="control-label">Phone Number</label>
+												                <input type="text" disabled name="contact_number" id="contact_number" class="form-control" v-model="selected_contact_number" required/>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="control-label">Email</label>
+												                <input type="text" disabled name="contact_email" id="contact_email" class="form-control" v-model="selected_contact_email" required/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
 												</div>
 											</div>
 										</div>
@@ -203,7 +216,7 @@ export default {
             errorString: '',
             showUpdate: false,
             isLoading: false,
-			customer_contacts:[]
+			contacts:[],
         }
     },
     props: {
@@ -230,7 +243,6 @@ export default {
             default: function() {
                 return {
                     address: {},
-                    contact: {},
                     images: []
                 };
             },
@@ -247,6 +259,26 @@ export default {
         },
         allFeaturesSelected: function() {
             return this.features.length < 1;
+        },
+        selected_contact_number: function(){
+            let id = this.campground.contact;
+            if(id != null){
+                let contact = this.contacts.find(contact => contact.id === id);
+                return contact ? contact.phone_number: '';
+            }
+            else{
+                return '';
+            }
+        },
+        selected_contact_email: function(){
+            let id = this.campground.contact;
+            if(id != null){
+                let contact = this.contacts.find(contact => contact.id === id);
+                return contact ? contact.email: '';
+            }
+            else{
+                return '';
+            }
         }
     },
     watch: {
@@ -308,8 +340,9 @@ export default {
                 featuresURL.push(f.id);
             });
             vm.campground.features = featuresURL;
-            if (vm.campground.contact == null && !vm.createCampground) {
-                delete vm.campground.contact;
+            if ( vm.campground.contact == "undefined") {
+                
+                vm.campground.contact = ''; 
             }
             $.ajax({
                 beforeSend: function(xhrObj) {
@@ -484,8 +517,8 @@ export default {
 
         vm.form = $('#attForm');
         vm.addFormValidations();
-		vm.$http.get(api_endpoints.customer_contacts).then((response) => {
-			vm.customer_contacts = response.body
+		vm.$http.get(api_endpoints.contacts).then((response) => {
+			vm.contacts = response.body
 		}, (error) => {
 			console.log(error);
 		})
