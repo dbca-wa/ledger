@@ -127,7 +127,7 @@
                     <div v-html="f.description"/>
                     <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
                     <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
-                    <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.getId()+'&'+bookingParam" target="_blank">Book now</a>
+                    <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
                 </div>
             </div>
         </paginate>
@@ -611,7 +611,7 @@ export default {
                     props.style = undefined;
                     props.geometry = props.geometry.getCoordinates();
                     props.distance = Math.sqrt(Math.pow(props.geometry[0]-vm.center[0], 2) + Math.pow(props.geometry[1]-vm.center[1], 2));
-                    props.id = el.id;
+                    props.id = el.getId();
                     return props;
                 }).sort(function (a, b) {
                     /* distance from map center sort */
