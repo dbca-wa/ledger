@@ -861,19 +861,19 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         # update the per-site availability
                         classes_map[key]['breakdown'][s.name][offset][0] = False
-                        classes_map[key]['breakdown'][s.name][offset][1] = 'Closed' if (stat == 'closed') else 'Sold'
+                        classes_map[key]['breakdown'][s.name][offset][1] = 'Booked' if (stat == 'booked') else 'Unavailable'
 
                         # update the class availability status
-                        book_offset = 1 if (stat == 'closed') else 0
+                        book_offset = 0 if (stat == 'booked') else 1
                         classes_map[key]['availability'][offset][3][book_offset] += 1
                         if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
                             classes_map[key]['availability'][offset][1] = 'Fully Booked'
                         elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Closed'
+                            classes_map[key]['availability'][offset][1] = 'Unavailable'
                         elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
                             classes_map[key]['availability'][offset][1] = 'Partially Booked'
                         else:
-                            classes_map[key]['availability'][offset][1] = 'Partially Closed'
+                            classes_map[key]['availability'][offset][1] = 'Partially Unavailable'
 
                         # tentatively flag campsite class as unavailable
                         classes_map[key]['availability'][offset][0] = False

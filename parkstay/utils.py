@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import traceback
 from decimal import *
 import json
@@ -204,6 +204,20 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         end = min(end_date, closure.range_end) if closure.range_end else end_date
         for i in range((end-start).days):
             results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
+
+    # strike out days before today
+    today = date.today()
+    if start_date < today:
+        for i in range((min(today, end_date)-start_date).days):
+            for key, val in results.items():
+                val[start_date+timedelta(days=i)][0] = 'tooearly'
+
+    # strike out days after the max_advance_booking
+    for site in campsites_qs:
+        stop = today + timedelta(days=site.campground.max_advance_booking)
+        stop_mark = min(max(stop, start_date), end_date)
+        for i in range((end_date-stop_mark).days):
+            results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
 
     return results
 
