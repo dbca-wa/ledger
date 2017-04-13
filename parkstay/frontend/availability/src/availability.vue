@@ -11,7 +11,8 @@
         <div class="row" v-if="errorMsg">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
-                    Sorry, there was an error placing the booking ({{ errorMsg }}). Please try again.
+                    Sorry, there was an error placing the booking: {{ errorMsg }} <br/>
+                    Please try again later. If this reoccurs, please contact <a href="https://parks-oim.dpaw.wa.gov.au/contact-us">Parks and Visitor Services</a> with this error message, the campground and the time of the request.
                 </div>
             </div>
         </div>
@@ -337,7 +338,7 @@ export default {
                 },
                 error: function(data, stat, xhr) {
                     console.log('POST error');
-                    console.log(data);
+                    //console.log(data);
                     vm.errorMsg = (data.responseJSON && data.responseJSON.msg) ? data.responseJSON.msg : 'Sorry, an error occurred when communicating with Parkstay. Please try again later.';
                     vm.update();
                 }
