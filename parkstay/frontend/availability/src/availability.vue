@@ -336,9 +336,9 @@ export default {
                     }
                 },
                 error: function(data, stat, xhr) {
-                    //console.log('POST error');
-                    //console.log(data);
-                    vm.errorMsg = data.msg ? data.msg : 'Sorry, an error occurred when communicating with Parkstay. Please try again later.';
+                    console.log('POST error');
+                    console.log(data);
+                    vm.errorMsg = (data.responseJSON && data.responseJSON.msg) ? data.responseJSON.msg : 'Sorry, an error occurred when communicating with Parkstay. Please try again later.';
                     vm.update();
                 }
             });
