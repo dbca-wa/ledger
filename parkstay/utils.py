@@ -389,8 +389,8 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     else:
         vehicles = old_booking.regos.all()
     if vehicles:
-        if not settings.PARK_ENTRY_CODE:
-            raise Exception('A park entry oracle code has not been set')
+        if booking.campground.park.entry_fee_required and not booking.campground.park.oracle_code:
+            raise Exception('A park entry oracle code has not been set for the park that the campground belongs to.')
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
             'vehicle': vehicles.filter(type='vehicle'),
@@ -412,7 +412,6 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                 else:
                     price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
-
     if lines:
         return invoice_lines
     else:

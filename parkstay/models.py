@@ -55,6 +55,7 @@ class Park(models.Model):
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
     entry_fee_required = models.BooleanField(default=True)
+    oracle_code = models.CharField(max_length=50, null=True,blank=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
@@ -62,6 +63,8 @@ class Park(models.Model):
 
     def save(self,*args,**kwargs):
         cache.delete('parks')
+        if self.entry_fee_required and not self.oracle_code:
+            raise ValidationError('A park entry oracle code is required if entry fee is required.')
         super(Park,self).save(*args,**kwargs)
 
     class Meta:
