@@ -1300,8 +1300,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             draw = request.GET.get('draw') if request.GET.get('draw') else 1
             start = request.GET.get('start') if request.GET.get('draw') else 1
             length = request.GET.get('length') if request.GET.get('draw') else 10
-            arrival = request.GET.get('arrival')
-            departure= request.GET.get('departure')
+            arrival = str(datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y')) if request.GET.get('arrival') else ''
+            departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
             campground = request.GET.get('campground')
             region = request.GET.get('region')
 
@@ -1382,7 +1382,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                         if booking.is_canceled:
                             bk['campground_site_type'] = ""
                         else:
-                            print(Campsite.objects.get(id=booking.campsite_id_list[0]))
                             bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
                     except EmailUser.DoesNotExist:
                         bk['firstname'] =  ""

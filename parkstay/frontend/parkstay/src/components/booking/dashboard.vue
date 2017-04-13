@@ -37,7 +37,7 @@
             <div class="col-md-3">
                 <label for="">Date From</label>
                 <div class="input-group date" id="booking-date-from">
-                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY">
+                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateFrom">
                   <span class="input-group-addon">
                       <span class="glyphicon glyphicon-calendar"></span>
                   </span>
@@ -46,7 +46,7 @@
             <div class="col-md-3">
                 <label for="">Date To</label>
                 <div class="input-group date" id="booking-date-to">
-                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY">
+                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo">
                   <span class="input-group-addon">
                       <span class="glyphicon glyphicon-calendar"></span>
                   </span>
@@ -248,7 +248,9 @@ export default {
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
-                useCurrent:false
+                useCurrent:false,
+                keepInvalid:true,
+                allowInputToggle:true
             },
             loading:[],
             regions:[],
@@ -269,14 +271,6 @@ export default {
             let vm = this;
             vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
-        filterDateFrom: function() {
-            let vm = this;
-            vm.$refs.bookings_table.vmDataTable.ajax.reload();
-        },
-        filterDateTo: function() {
-            let vm = this;
-            vm.$refs.bookings_table.vmDataTable.ajax.reload();
-        }
     },
     computed:{
         isLoading:function () {
@@ -328,21 +322,27 @@ export default {
                 vm.selected_booking = JSON.parse($(this).attr('data-cancel'));
                 bus.$emit('showAlert', 'cancelBooking');
             });
-            vm.dateToPicker.on('dp.hide', function(e){
-                vm.filterDateTo =  e.date.format('YYYY-MM-DD');
-                if (vm.dateToPicker.data('date') === "") {
-                    vm.filterDateTo = ""
-                }else {
-                    vm.filterDateTo =  e.date.format('YYYY-MM-DD');
+            vm.dateToPicker.on('dp.change', function(e){
+                if (vm.dateToPicker.data('DateTimePicker').date()) {
+                    vm.filterDateTo =  e.date.format('DD/MM/YYYY');
+                    vm.$refs.bookings_table.vmDataTable.ajax.reload();
                 }
+                else if (vm.dateToPicker.data('date') === "") {
+                    vm.filterDateTo = "";
+                    vm.$refs.bookings_table.vmDataTable.ajax.reload();
+                }
+                
              });
 
-            vm.dateFromPicker.on('dp.hide',function (e) {
-                if (vm.dateFromPicker.data('date') === "") {
-                    vm.filterDateFrom = ""
-                }else {
-                    vm.filterDateFrom = e.date.format('YYYY-MM-DD');
+            vm.dateFromPicker.on('dp.change',function (e) {
+                if (vm.dateFromPicker.data('DateTimePicker').date()) {
+                    vm.filterDateFrom = e.date.format('DD/MM/YYYY');
                     vm.dateToPicker.data("DateTimePicker").minDate(e.date);
+                    vm.$refs.bookings_table.vmDataTable.ajax.reload();
+                }
+                else if (vm.dateFromPicker.data('date') === "") {
+                    vm.filterDateFrom = "";
+                    vm.$refs.bookings_table.vmDataTable.ajax.reload();
                 }
 
             });
