@@ -60,3 +60,5 @@ STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'parkstay', 'fronten
 BPAY_ALLOWED = env('BPAY_ALLOWED',False)
 
 OSCAR_BASKET_COOKIE_OPEN = 'parkstay_basket'
+# Park entry oracle code
+PARK_ENTRY_CODE = env('PARK_ENTRY_CODE')
