@@ -61,10 +61,13 @@ class Park(models.Model):
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
 
-    def save(self,*args,**kwargs):
-        cache.delete('parks')
+    def clean(self,*args,**kwargs):
         if self.entry_fee_required and not self.oracle_code:
             raise ValidationError('A park entry oracle code is required if entry fee is required.')
+
+    def save(self,*args,**kwargs):
+        cache.delete('parks')
+        self.full_clean()
         super(Park,self).save(*args,**kwargs)
 
     class Meta:
