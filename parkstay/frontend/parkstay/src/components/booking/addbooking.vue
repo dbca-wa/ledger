@@ -893,11 +893,11 @@ export default {
                     frame[0].src = '/ledger/payments/invoice/'+response.body.invoices[0];
                     vm.isModalOpen=true;
                 },(error)=>{
-                    console.log(error);
+                    let error_str = helpers.apiVueResourceError(error);
                     vm.$store.dispatch("updateAlert",{
 						visible:true,
 						type:"danger",
-						message: error.body
+						message: error_str
 					});
                     vm.loading.splice('processing booking',1);
                 });

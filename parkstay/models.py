@@ -55,13 +55,19 @@ class Park(models.Model):
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
     entry_fee_required = models.BooleanField(default=True)
+    oracle_code = models.CharField(max_length=50, null=True,blank=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
 
+    def clean(self,*args,**kwargs):
+        if self.entry_fee_required and not self.oracle_code:
+            raise ValidationError('A park entry oracle code is required if entry fee is required.')
+
     def save(self,*args,**kwargs):
         cache.delete('parks')
+        self.full_clean()
         super(Park,self).save(*args,**kwargs)
 
     class Meta:
@@ -951,6 +957,8 @@ class Booking(models.Model):
             other_bookings.exclude(id=self.pk)
         if other_bookings:
             raise ValidationError('Sorry you cannot make concurent bookings')
+        if not self.campground.oracle_code:
+            raise ValidationError('Sorry you cannot make a booking for a campground without an oracle code.')
         super(Booking,self).clean(*args,**kwargs)
 
     def __str__(self):
