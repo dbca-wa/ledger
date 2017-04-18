@@ -65,7 +65,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
-    'oscar.apps.basket.middleware.BasketMiddleware',
+    'ledger.basket.middleware.BasketMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 ]
 

@@ -1,6 +1,5 @@
 import json
 from django.conf import settings
-from django.core.signing import Signer
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
@@ -24,6 +23,7 @@ from ledger.payments.reports import generate_items_csv, generate_trans_csv
 
 from ledger.accounts.models import EmailUser
 from ledger.catalogue.models import Product
+from ledger.basket.middleware import BasketMiddleware
 from oscar.apps.order.models import Order
 from oscar.apps.voucher.models import Voucher
 from oscar.apps.payment import forms
@@ -866,16 +866,11 @@ class CheckoutCreateView(generics.CreateAPIView):
             # inject the current basket into the redirect response cookies
             # or else, anonymous users will be directionless
             redirect.set_cookie(
-                settings.OSCAR_BASKET_COOKIE_OPEN, Signer().sign(basket.id),
+                settings.OSCAR_BASKET_COOKIE_OPEN, BasketMiddleware().get_basket_hash(basket.id),
                 max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
                 secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
             )
             
-            #import pdb; pdb.set_trace()
-            #print(redirect)
-            #print(basket)
-            #print(basket.id)
-
             return redirect
         except serializers.ValidationError:
             raise
