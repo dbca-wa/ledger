@@ -8,7 +8,7 @@
                 <select v-if="!reasons.length > 0" class="form-control" >
                     <option value="">Loading...</option>
                 </select>
-                <select v-else name="open_reason" :value="value" @input="$emit('input', $event.target.value)" class="form-control">
+                <select v-else name="open_reason" :value="value" @change="$emit('input', $event.target.value)" class="form-control">
                     <option value=""></option>
                     <option v-for="reason in reasons" :value="reason.id">{{reason.text}}</option>
                 </select>
