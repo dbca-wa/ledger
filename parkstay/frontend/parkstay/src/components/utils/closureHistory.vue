@@ -88,9 +88,6 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
-                order: [
-                    [0,'desc']
-                ],
                 ajax: {
                     url: vm.datatableURL, 
                     dataSrc: ''
@@ -99,7 +96,8 @@ export default {
                     data: 'range_start',
                     mRender: function(data, type, full) {
                         return Moment(data).format('MMMM Do, YYYY');
-                    }
+                    },
+                    orderable: false
 
                 }, {
                     data: 'range_end',
@@ -110,14 +108,17 @@ export default {
                         else {
                             return '';
                         }
-                    }
+                    },
+                    orderable: false
 
                 }, {
                     mRender: function(data,type, full){
                         return full.reason ? full.reason: '';
-                    }
+                    },
+                    orderable: false
                 }, {
-                    data: 'details'
+                    data: 'details',
+                    orderable: false
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
@@ -129,7 +130,8 @@ export default {
                         else {
                             return "";
                         }
-                    }
+                    },
+                    orderable: false
                 }],
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"

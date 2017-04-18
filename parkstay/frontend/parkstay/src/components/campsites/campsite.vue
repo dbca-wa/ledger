@@ -66,12 +66,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <editor ref="descriptionEditor" v-model="campsite.description"></editor>
-    						<div class="row">
-    							<div class="col-sm-12">
-                                <select-panel v-show="!createCampsite" :options="features" :selected="selected_features" id="select-features" ref="select_features"></select-panel>
-    							</div>
-    						</div>
                             <div class="row">
                               <div class="col-sm-6">
 
@@ -172,9 +166,6 @@ export default {
         let vm = this;
         return {
             isLoading: false,
-            features: [],
-            default_features:[],
-            selected_features: [],
             createCampsite: true,
             temp_campsite: {},
             campground: {},
@@ -251,18 +242,6 @@ export default {
             },
         }
     },
-    watch: {
-        selected_features: {
-            handler: function() {
-                let vm = this;
-                this.campsite.features = [];
-                $.each(vm.selected_features, function(i, feature) {
-                    vm.campsite.features.push(feature.url);
-                });
-            },
-            deep: true
-        }
-    },
     methods: {
         selected_campsite_class_url:function () {
             return (this.campsite.campsite_class != null) ? this.campsite.campsite_class :'';
@@ -271,8 +250,6 @@ export default {
             let vm =this;
             if (vm.campsite_classes.length > 0){
                 if(vm.selected_campsite_class_url()) {
-                    vm.$refs.descriptionEditor.disabled(true);
-                    vm.$refs.select_features.enabled(false);
                     var sel_class = vm.campsite_classes.find(function (el) {
                         return el.url == vm.campsite.campsite_class;
                     });
@@ -285,21 +262,14 @@ export default {
                         vm.campsite.min_people= sel_class.min_people;
                         vm.campsite.description = sel_class.description;
                         vm.$refs.descriptionEditor.updateContent(vm.campsite.description);
-                        vm.features = JSON.parse(JSON.stringify(vm.default_features));
-                        vm.selected_features.splice(0,vm.selected_features.length);
-                        vm.$refs.select_features.loadSelectedFeatures(sel_class.features);
                     }
 
                 } else {
-                    vm.$refs.descriptionEditor.disabled(false);
-                    vm.$refs.select_features.enabled(true);
                 }
 
                 /*
 
                 if(vm.selected_campsite_class_url()){
-                    vm.$refs.descriptionEditor.disabled(true);
-                    vm.$refs.select_features.enabled(false);
                     $.ajax({
                         url:vm.selected_campsite_class_url(),
                         dataType: 'json',
@@ -311,9 +281,6 @@ export default {
                             vm.campsite.min_people= sel_class.min_people;
                             vm.campsite.description = sel_class.description;
                             vm.$refs.descriptionEditor.updateContent(vm.campsite.description);
-                            vm.features = JSON.parse(JSON.stringify(vm.default_features));
-                            vm.selected_features.splice(0,vm.selected_features.length);
-                            vm.$refs.select_features.loadSelectedFeatures(sel_class.features);
                         }
 
                     });
@@ -325,8 +292,6 @@ export default {
                         vm.campsite.max_people = vm.temp_campsite.max_people;
                         vm.campsite.min_people= vm.temp_campsite.min_people;
                         vm.campsite.description = vm.temp_campsite.description;
-                        vm.$refs.descriptionEditor.disabled(false);
-                        vm.$refs.select_features.enabled(true);
                     }
                 }*/
             }
@@ -336,18 +301,6 @@ export default {
             // Update close modal attributes
             this.$refs.closeCampsite.id = id;
             this.$refs.closeCampsite.isOpen = true;
-        },
-        loadFeatures: function() {
-            var vm = this;
-            var url = api_endpoints.features;
-            $.ajax({
-                url: url,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.features = data;
-                    vm.default_features = JSON.parse(JSON.stringify(data));
-                }
-            });
         },
         fetchCampsite: function() {
             let vm = this;
@@ -366,7 +319,6 @@ export default {
                             if (data.campsite_class) {
                                 vm.onCampsiteClassChange();
                             }
-                            vm.$refs.descriptionEditor.disabled(true) ? vm.campsite.campsite_class != '' : false;
                             clearInterval(interval);
                         }
                      },100);
@@ -439,7 +391,6 @@ export default {
     },
     mounted: function() {
         let vm = this;
-        vm.loadFeatures();
         vm.form = document.forms.campsiteForm;
         vm.fetchCampsiteClasses();
         vm.fetchCampground();

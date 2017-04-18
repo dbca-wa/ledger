@@ -88,7 +88,7 @@
                                 </p>
                                 <ul class="nav nav-tabs">
                                     <li :class="{active:campground.site_type == 0}" v-show="campground.site_type == 0" ><a data-toggle="tab" href="#campsite-booking" @click.prevent="booking_type=booking_types.CAMPSITE">Campsite</a></li>
-                                    <li :class="{active:campground.site_type == 1}" v-show="campground.site_type == 1" ><a data-toggle="tab" href="#campsite-class-booking" @click.prevent="booking_type=booking_types.CLASS">Campsite Type </a></li>
+                                    <li :class="{active:(campground.site_type == 1) || (campground.site_type == 2)}" v-show="campground.site_type == 1" ><a data-toggle="tab" href="#campsite-class-booking" @click.prevent="booking_type=booking_types.CLASS">Campsite Type </a></li>
                                 </ul>
                                 <div class="tab-content">
                                     <div id="campsite-booking" class="tab-pane fade in active" v-if="campground.site_type == 0">
@@ -893,11 +893,11 @@ export default {
                     frame[0].src = '/ledger/payments/invoice/'+response.body.invoices[0];
                     vm.isModalOpen=true;
                 },(error)=>{
-                    console.log(error);
+                    let error_str = helpers.apiVueResourceError(error);
                     vm.$store.dispatch("updateAlert",{
 						visible:true,
 						type:"danger",
-						message: error.body
+						message: error_str
 					});
                     vm.loading.splice('processing booking',1);
                 });

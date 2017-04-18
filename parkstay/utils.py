@@ -377,7 +377,9 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     campsite = Campsite.objects.get(id=c)
                     if lines:
                         price = str((num_days * Decimal(r[k])))
-                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,start.strftime('%d-%m-%Y'),end.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":"1236"})
+                        if not booking.campground.oracle_code:
+                            raise Exception('The campground selected does not have an oracle code attached to it.')
+                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,start.strftime('%d-%m-%Y'),end.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.campground.oracle_code})
                     else:
                         price = (num_days * Decimal(r[k])) * v
                         total_price += price
@@ -387,6 +389,8 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     else:
         vehicles = old_booking.regos.all()
     if vehicles:
+        if booking.campground.park.entry_fee_required and not booking.campground.park.oracle_code:
+            raise Exception('A park entry oracle code has not been set for the park that the campground belongs to.')
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
             'vehicle': vehicles.filter(type='vehicle'),
@@ -403,12 +407,11 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                         'ledger_description': 'Park Entry - {}'.format(k),
                         'quantity': v.count(),
                         'price_incl_tax': price,
-                        'oracle_code': '1236'
+                        'oracle_code': settings.PARK_ENTRY_CODE 
                     })
                 else:
                     price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
-
     if lines:
         return invoice_lines
     else:
@@ -617,7 +620,7 @@ def create_or_update_booking(request,booking_details,updating=False):
         booking.save()
     return booking
 
-def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False):
+def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
     JSON_REQUEST_HEADER_PARAMS = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -636,7 +639,7 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
             "invoice_text": invoice_text,
             "vouchers": vouchers
         }
-        if internal:
+        if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
 
 
@@ -650,9 +653,6 @@ def checkout(request,booking,lines,invoice_text=None,vouchers=[],internal=False)
                                  data=json.dumps(parameters))
         response.raise_for_status()
 
-        # add the basket cookie to the current session
-        #if settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
-        #return HttpResponse()
         return response
 
 
@@ -731,17 +731,4 @@ def daterange(start_date, end_date):
 
 def oracle_integration(date):
     system = '0019'
-    oracle_codes = oracle_parser(date,system)
-    for k,v in oracle_codes.items():
-        if v != 0:
-            OracleInterface.objects.create(
-                receipt_number = 0,
-                receipt_date = date,
-                activity_name = k,
-                amount = v,
-                customer_name = 'Parkstay',
-                description = k,
-                comments = '{} GST/{}'.format(k,date),
-                status = 'New',
-                status_date = date
-            )
+    oracle_codes = oracle_parser(date,system,'Parkstay')

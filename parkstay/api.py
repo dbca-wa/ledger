@@ -2,7 +2,7 @@ import traceback
 import base64
 import geojson
 from six.moves.urllib.parse import urlparse
-from django.db.models import Q
+from django.db.models import Q, Min
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
@@ -13,7 +13,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import detail_route, list_route,renderer_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -26,10 +26,11 @@ from ledger.address.models import Country
 from parkstay import utils
 from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
+                                District,
+                                Contact,
                                 CampsiteBooking,
                                 Campsite,
                                 CampsiteRate,
-                                CustomerContact,
                                 Booking,
                                 CampgroundBookingRange,
                                 CampsiteBookingRange,
@@ -54,12 +55,14 @@ from parkstay.models import (Campground,
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
+                                    ContactSerializer,
+                                    DistrictSerializer,
                                     CampgroundMapSerializer,
                                     CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
+                                    CampgroundDatatableSerializer,
                                     CampgroundCampsiteFilterSerializer,
                                     CampsiteBookingSerializer,
-                                    CustomerContactSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     FeatureSerializer,
@@ -96,9 +99,13 @@ class CampsiteBookingViewSet(viewsets.ModelViewSet):
     queryset = CampsiteBooking.objects.all()
     serializer_class = CampsiteBookingSerialiser
 
-class CustomerContactViewSet(viewsets.ModelViewSet):
-    queryset = CustomerContact.objects.all()
-    serializer_class = CustomerContactSerializer
+class DistrictViewSet(viewsets.ModelViewSet):
+    queryset = District.objects.all()
+    serializer_class = DistrictSerializer
+
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
 
 class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
@@ -128,9 +135,11 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     def create(self, request, *args, **kwargs):
         try:
@@ -162,9 +171,11 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
@@ -189,8 +200,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             return Response(res.data)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
@@ -199,7 +212,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             # Check what status is required
             closures = bool(request.GET.get("closures", False))
             if closures:
-                serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+                serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges,many=True)
             res = serializer.data
@@ -208,9 +221,11 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def stay_history(self, request, format='json', pk=None):
@@ -222,8 +237,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
@@ -235,8 +252,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def current_price(self, request, format='json', pk=None):
@@ -257,8 +276,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             traceback.print_exc()
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 
 
@@ -279,8 +300,10 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
     queryset = CampgroundStayHistory.objects.all()
@@ -299,20 +322,20 @@ class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Campground.objects.all()
+    queryset = Campground.objects.exclude(campground_type=3).annotate(Min('campsites__rates__rate__adult'))
     serializer_class = CampgroundMapSerializer
     permission_classes = []
 
 
 class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
-    # TODO: add exclude for unpublished campground objects
-    #queryset = Campground.objects.exclude(campground_type=1)
-    queryset = Campground.objects.all()
+    queryset = Campground.objects.exclude(campground_type=3)
     serializer_class = CampgroundMapFilterSerializer
     permission_classes = []
 
@@ -341,7 +364,7 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             if scrubbed['gear_type'] == 'tent':
                 ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
 
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+        queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -363,6 +386,16 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
 
+    @list_route(methods=['GET',])
+    @renderer_classes((JSONRenderer,))
+    def datatable_list(self,request,format=None):
+        data = cache.get('campgrounds_dt')
+        if data is None:
+            queryset = self.get_queryset()
+            serializer = CampgroundDatatableSerializer(queryset,many=True) 
+            data = serializer.data
+            cache.set('campgrounds_dt',data,3600)
+        return Response(data)
 
     def list(self, request, format=None):
 
@@ -422,9 +455,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     def update(self, request, *args, **kwargs):
         try:
@@ -486,9 +521,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'])
     def open_close(self, request, format='json', pk=None):
@@ -509,12 +546,16 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             # return object
             ground = self.get_object()
             res = CampgroundSerializer(ground, context={'request':request})
-
+            cache.delete('campgrounds_dt')
             return Response(res.data)
         except serializers.ValidationError:
+            print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'],)
     def addPrice(self, request, format='json', pk=None):
@@ -549,9 +590,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.format_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.format_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'],)
     def updatePrice(self, request, format='json', pk=None):
@@ -589,9 +632,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'],)
     def deletePrice(self, request, format='json', pk=None):
@@ -609,9 +654,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
@@ -620,7 +667,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             # Check what status is required
             closures = bool(request.GET.get("closures", False))
             if closures:
-                serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+                serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges,many=True)
             res = serializer.data
@@ -629,9 +676,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def campsites(self, request, format='json', pk=None):
@@ -643,8 +692,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
@@ -657,8 +708,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def stay_history(self, request, format='json', pk=None):
@@ -679,8 +732,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 
     @detail_route(methods=['get'])
@@ -693,8 +748,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
 
             return Response(available,status=http_status)
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['get'])
     def available_campsite_classes(self, request, format='json', pk=None):
@@ -714,9 +771,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             traceback.print_exc()
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             traceback.print_exc()
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 
 class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
@@ -787,7 +846,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         }
 
         # group results by campsite class
-        if ground.site_type == 1:
+        if ground.site_type in (1, 2):
             # from our campsite queryset, generate a distinct list of campsite classes
             classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name')]
 
@@ -921,7 +980,6 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 @require_http_methods(['POST'])
 def create_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
-
     data = {
         'arrival': request.POST.get('arrival'),
         'departure': request.POST.get('departure'),
@@ -990,7 +1048,7 @@ def create_booking(request, *args, **kwargs):
     except ValidationError as e:
         return HttpResponse(geojson.dumps({
             'status': 'error',
-            'msg': e.message
+            'msg': str(e)
         }), status=400, content_type='application/json')
 
     # add the booking to the current session
@@ -1124,8 +1182,10 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'],)
     def addPrice(self, request, format='json', pk=None):
@@ -1159,8 +1219,10 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'],)
     def updatePrice(self, request, format='json', pk=None):
@@ -1199,9 +1261,11 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'],)
     def deletePrice(self, request, format='json', pk=None):
@@ -1219,9 +1283,11 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
@@ -1234,8 +1300,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             draw = request.GET.get('draw') if request.GET.get('draw') else 1
             start = request.GET.get('start') if request.GET.get('draw') else 1
             length = request.GET.get('length') if request.GET.get('draw') else 10
-            arrival = request.GET.get('arrival')
-            departure= request.GET.get('departure')
+            arrival = str(datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y')) if request.GET.get('arrival') else ''
+            departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
             campground = request.GET.get('campground')
             region = request.GET.get('region')
 
@@ -1316,7 +1382,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                         if booking.is_canceled:
                             bk['campground_site_type'] = ""
                         else:
-                            print(Campsite.objects.get(id=booking.campsite_id_list[0]))
                             bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
                     except EmailUser.DoesNotExist:
                         bk['firstname'] =  ""
@@ -1387,12 +1452,15 @@ class BookingViewSet(viewsets.ModelViewSet):
                 customer.delete()
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             utils.delete_session_booking(request.session)
             if userCreated:
                 customer.delete()
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
+            
 
     def update(self, request, *args, **kwargs):
         try:
@@ -1416,9 +1484,11 @@ class BookingViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     def destroy(self, request, *args, **kwargs):
 
@@ -1469,9 +1539,11 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
     def update(self, request, *args, **kwargs):
         try:
@@ -1507,8 +1579,10 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 class BookingRangeViewset(viewsets.ModelViewSet):
 
@@ -1531,8 +1605,10 @@ class BookingRangeViewset(viewsets.ModelViewSet):
             return Response(serializer.data)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
 
 class CampgroundBookingRangeViewset(BookingRangeViewset):
     queryset = CampgroundBookingRange.objects.all()
@@ -1620,6 +1696,8 @@ class BulkPricingView(generics.CreateAPIView):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))

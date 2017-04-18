@@ -1,19 +1,14 @@
 from django.core.exceptions import PermissionDenied
 
+from ledger.payments import helpers
+
 class InvoiceOwnerMixin(object):
     
-    def belongs_to(self,user, group_name):
-        """
-        Check if the user belongs to the given group.
-        :param user:
-        :param group_name:
-        :return:
-        """
-        return user.groups.filter(name=group_name).exists()
-    
+    def belongs_to(self, user, group_name):
+        return helpers.belongs_to(user, group_name)
 
     def is_payment_admin(self,user):
-        return user.is_authenticated() and (self.belongs_to(user, 'Payments Officers') or user.is_superuser)
+        return helpers.is_payment_admin(user)
 
     def check_owner(self, user):
         return self.get_object().order.user == user or self.is_payment_admin(user)

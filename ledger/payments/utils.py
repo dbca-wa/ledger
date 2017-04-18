@@ -1,6 +1,11 @@
 import requests
+import datetime
+from django.core.mail import EmailMessage 
 import traceback
 import json
+import csv 
+from six.moves import StringIO
+from wsgiref.util import FileWrapper
 from decimal import Decimal as D
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -202,7 +207,61 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
         raise
 
 #Oracle Parser
-def oracle_parser(date,system):
+def generateOracleParserFile(oracle_codes):
+    strIO = StringIO()
+    fieldnames = ['Activity Code','Amount']
+    writer = csv.writer(strIO)
+    writer.writerow(fieldnames)
+    for k,v in oracle_codes.items():
+        if v != 0:
+            writer.writerow([k,v])
+    strIO.flush()
+    strIO.seek(0)
+    return strIO
+
+def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=False,error_string=None):
+    dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    if not error_email:
+        _file = generateOracleParserFile(oracle_codes)
+        try:
+            sys = OracleInterfaceSystem.objects.get(sytem_id)
+            recipients = sys.recipients
+        except OracleInterfaceSystem.DoesNotExist:
+            recipients = []
+            
+        email = EmailMessage(
+            'Oracle Interface Summary for {} as at {}'.format(system_name,dt),
+            'Oracle Interface Summary File for {} as at {}'.format(system_name,dt),
+            settings.DEFAULT_FROM_EMAIL,
+            to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
+        )
+        email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
+    else:
+        email = EmailMessage(
+            'Oracle Interface Summary Error for {} as at{}'.format(system_name,dt),
+            'There was an error in generating a summary report for the oracle interface parser.Please refer to the following log output:\n{}'.format(error_string),
+            settings.DEFAULT_FROM_EMAIL,
+            to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
+        )
+    
+    email.send()
+
+def addToInterface(oracle_codes,system_name):
+
+    for k,v in oracle_codes.items():
+        if v != 0:
+            OracleInterface.objects.create(
+                receipt_number = 0,
+                receipt_date = date,
+                activity_name = k,
+                amount = v,
+                customer_name = system_name,
+                description = k,
+                comments = '{} GST/{}'.format(k,date),
+                status = 'NEW',
+                status_date = date
+            )
+def oracle_parser(date,system,system_name):
     with transaction.atomic():
         try:
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
@@ -223,9 +282,14 @@ def oracle_parser(date,system):
                         parser_codes[k][a][r] = str(parser_codes[k][a][r])
             for k,v in parser_codes.items():
                 OracleParserInvoice.objects.create(reference=k,details=json.dumps(v),parser=op)
+            # Add items to oracle interface table 
+            addToInterface(oracle_codes,system_name)
+            # Send an email with all the activity codes entered into the interface table
+            sendInterfaceParserEmail(oracle_codes,system_name,system)  
             return oracle_codes
         except Exception as e:
-            print(traceback.print_exc())
+            error = traceback.print_exc()
+            sendInterfaceParserEmail(oracle_codes,system_name,system,error_email=True,error_string=error)
             raise e
 
 def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):

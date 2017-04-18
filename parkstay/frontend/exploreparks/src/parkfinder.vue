@@ -8,10 +8,10 @@
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
+                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="reload()"/></label>
+                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label>
@@ -87,10 +87,10 @@
                         </div>
                     </template>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Book online</label>
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online bookings</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> Book in-person</label>
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> No online bookings</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
                         <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Third-party site</label>
@@ -105,11 +105,12 @@
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
                     <div id="mapPopupContent">
-                        <p><b id="mapPopupName"></b></p>
+                        <h4 style="margin: 0"><b id="mapPopupName"></b></h4>
+                        <p><i id="mapPopupPrice"></i></p>
                         <img class="thumbnail" id="mapPopupImage" />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
-                        <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;">More info</a>
-                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;">Book now</a>
+                        <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
+                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank">Book now</a>
                     </div>
                 </div>
             </div>
@@ -120,12 +121,13 @@
                     <span class="searchTitle">{{ f.name }}</span>
                 </div>
                 <div class="small-12 medium-3 large-3 columns" v-if="f.images">
-                    <img class="thumbnail" v-bind:src="f.images[0].image"/> 
+                    <img class="thumbnail" v-bind:src="f.images[0].image"/>
                 </div>
                 <div class="small-12 medium-9 large-9 columns">
                     <div v-html="f.description"/>
-                    <a class="button" v-bind:href="f.info_url">More info</a>
-                    <a v-if="f.campground_type == 0" class="button" v-bind:href="f.info_url+bookingParam">Book now</a>
+                    <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
+                    <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
+                    <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.getId()+'&'+bookingParam" target="_blank">Book now</a>
                 </div>
             </div>
         </paginate>
@@ -465,6 +467,7 @@ export default {
             gearType: 'tent',
             filterParams: {
             },
+            dateSetFirstTime: true,
             sitesOnline: true,
             sitesOnlineIcon: require('./assets/pin.svg'),
             sitesInPerson: true,
@@ -536,7 +539,7 @@ export default {
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
                     params['departure'] = this.departureDate.format('YYYY/MM/DD');
                 }
-                return '?' + $.param(params) + '#makebooking';
+                return $.param(params);
             }
         }
     },
@@ -582,8 +585,8 @@ export default {
                 dataType: 'json',
                 success: function(data, status, xhr) {
                     if (data.features && data.features.length > 0) {
-                        console.log('Mapbox!');
-                        console.log(data.features[0]);
+                        //console.log('Mapbox!');
+                        //console.log(data.features[0]);
                         var view = vm.olmap.getView();
                         view.animate({
                             center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
@@ -608,6 +611,7 @@ export default {
                     props.style = undefined;
                     props.geometry = props.geometry.getCoordinates();
                     props.distance = Math.sqrt(Math.pow(props.geometry[0]-vm.center[0], 2) + Math.pow(props.geometry[1]-vm.center[1], 2));
+                    props.id = el.id;
                     return props;
                 }).sort(function (a, b) {
                     /* distance from map center sort */
@@ -642,6 +646,17 @@ export default {
                 }
                 vm._updateViewport();
             }
+        },
+        updateDates: function(ev) {
+            //console.log('BANG');
+            //console.log(ev);
+            // for the first time someone changes the dates, enable the
+            // "Show bookable campsites only" flag
+            if (this.dateSetFirstTime) {
+                this.dateSetFirstTime = false;
+                this.bookableOnly = true;
+            }
+            this.reload();
         },
         reload: debounce(function () {
             this.groundsSource.loadSource();
@@ -722,11 +737,12 @@ export default {
             format: 'dd/mm/yyyy',
             onRender: function (date) {
                 // disallow start dates before today
-                //return date.valueOf() < now.valueOf() ? 'disabled': '';
-                return '';
+                return date.valueOf() < now.valueOf() ? 'disabled': '';
+                //return '';
             }
         }).on('changeDate', function (ev) {
-            console.log('arrivalEl changeDate');
+            //console.log('arrivalEl changeDate');
+            ev.target.dispatchEvent(new Event('change'));
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -736,7 +752,10 @@ export default {
             }
             vm.arrivalData.hide();
             vm.arrivalDate = moment(vm.arrivalData.date);
-            vm.reload();
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new Event('change'));
+            }
         }).data('datepicker');
 
         this.departureData = this.departureEl.fdatepicker({
@@ -745,10 +764,14 @@ export default {
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            console.log('departureEl changeDate');
+            //console.log('departureEl changeDate');
+            ev.target.dispatchEvent(new Event('change'));
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
-            vm.reload();
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new Event('change'));
+            }
         }).data('datepicker');
 
         // load autosuggest choices
@@ -1000,12 +1023,16 @@ export default {
                 return;
             }
             var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
+                $('#map').attr('title', feature.get('name'));
                 return true;
             }, {
                 layerFilter: function (layer) {
                     return layer === vm.grounds;
                 }
             }) === true;
+            if (!result) {
+                $('#map').removeAttr('title');
+            }
             $('#map').toggleClass('click', result);
         });
 
@@ -1016,17 +1043,23 @@ export default {
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
-                console.log(feature);
+                //console.log(feature);
                 if (feature.get('images')) {
-                    console.log(feature.get('images')[0].image);
+                    // console.log(feature.get('images')[0].image);
                     $("#mapPopupImage").attr('src', feature.get('images')[0].image);
                     $("#mapPopupImage").show();
                 } else {
                     $("#mapPopupImage").hide();
                 }
+                if (feature.get('price_hint') && Number(feature.get('price_hint'))) {
+                    $("#mapPopupPrice")[0].innerHTML = '<small>From $' + feature.get('price_hint') + ' per night</small>';
+                } else {
+                    $("#mapPopupPrice")[0].innerHTML = '';
+                }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                $("#mapPopupBook").attr('href', feature.get('info_url')+vm.bookingParam);
+                console.log(feature);
+                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
                 } else {

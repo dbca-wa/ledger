@@ -82,7 +82,7 @@
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
-                                            <li><a href="/dashboard/reports">reports</a></li>
+                                            <li><a href="/dashboard/reports">Reports</a></li>
                                             <li role="separator" class="divider"></li>
                                             <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
                                         </ul>
@@ -118,6 +118,8 @@
         {% block modals %}
         {% endblock %}
         {% block custom_js %}
+        <script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+        <script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
         {% endblock %}
     </body>
 </html>
