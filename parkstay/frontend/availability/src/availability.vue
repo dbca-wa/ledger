@@ -346,10 +346,10 @@ export default {
                         window.location.href = vm.parkstayUrl + '/booking';
                     }
                 },
-                error: function(data, stat, xhr) {
+                error: function(xhr, stat, err) {
                     console.log('POST error');
-                    //console.log(data);
-                    vm.errorMsg = (data.responseJSON && data.responseJSON.msg) ? data.responseJSON.msg : 'Sorry, an error occurred when communicating with Parkstay. Please try again later.';
+                    //console.log(xhr);
+                    vm.errorMsg = (xhr.responseJSON && xhr.responseJSON.msg) ? xhr.responseJSON.msg : '"'+err+'" response when communicating with Parkstay.';
                     vm.update();
                 }
             });
@@ -399,7 +399,7 @@ export default {
                         vm.sites = data.sites;
                         vm.status = 'online';
                     },
-                    error: function(data, stat, xhr) {
+                    error: function(xhr, stat, err) {
                         vm.status = 'offline';
                     }
                 });
