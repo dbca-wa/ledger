@@ -5,6 +5,7 @@ from wsgiref.util import FileWrapper
 from django.core.mail import EmailMessage 
 from django.conf import settings
 from parkstay.models import Booking
+from ledger.payments.models import OracleParser,OracleParserInvoice 
 
 
 def outstanding_bookings():
@@ -35,5 +36,16 @@ def outstanding_bookings():
         )
         email.attach('OustandingBookings_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
         email.send()
+    except:
+        raise
+
+def booking_refunds(start,end):
+    try:
+        parsers = OracleParser.objects.filter(date_parsed__gte=start,date_parsed__lte=end)
+        invoice_dict = {}
+        for p in parsers:
+            for i in p.invoices:
+                if p not in invoice_dict.keys():
+                    pass 
     except:
         raise
