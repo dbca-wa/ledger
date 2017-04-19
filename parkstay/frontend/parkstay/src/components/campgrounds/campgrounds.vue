@@ -79,6 +79,7 @@ import datatable from '../utils/datatable.vue'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
 import {bus} from '../utils/eventBus.js'
+import { mapGetters } from 'vuex'
 module.exports = {
     name: 'pk-campgrounds',
     data: function() {
@@ -86,9 +87,6 @@ module.exports = {
         return {
             grounds: [],
             rows: [],
-            regions: [],
-            districts: [],
-            parks: [],
             title: 'Campgrounds',
             selected_status: 'All',
             selected_region: 'All',
@@ -153,6 +151,13 @@ module.exports = {
         pkCgClose,
         pkCgOpen,
         datatable
+    },
+    computed:{
+       ...mapGetters([
+         'regions',
+         'districts',
+         'parks'
+       ]),
     },
     watch: {
         selected_region: function() {
@@ -228,21 +233,21 @@ module.exports = {
         },
         fetchRegions: function() {
             let vm = this;
-            $.get(api_endpoints.regions,function(data){
-                vm.regions = data;
-            });
+            if (vm.regions.length == 0) {
+                vm.$store.dispatch("fetchRegions");
+            }
         },
         fetchParks: function() {
             let vm = this;
-            $.get(api_endpoints.parks,function(data){
-                vm.parks = data;
-            });
+            if (vm.parks.length == 0) {
+                vm.$store.dispatch("fetchParks");
+            }
         },
         fetchDistricts: function() {
             let vm = this;
-            $.get(api_endpoints.districts,function(data){
-                vm.districts = data;
-            });
+            if (vm.districts.length == 0) {
+                vm.$store.dispatch("fetchDistricts");
+            }
         }
     },
     mounted: function() {

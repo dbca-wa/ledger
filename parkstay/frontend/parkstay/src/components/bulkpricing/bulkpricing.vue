@@ -191,6 +191,7 @@ import alert from '../utils/alert.vue'
 import reason from '../utils/reasons.vue'
 import loader from '../utils/loader.vue'
 import priceHistory from '../utils/priceHistory/priceHistory.vue'
+import { mapGetters } from 'vuex'
 export default {
     name:"bulkpricing",
     data: function() {
@@ -214,9 +215,8 @@ export default {
                 reason: '',
                 campgrounds:[]
             },
-            parks: [],
+            campgrounds:[],
             selectedPark: {},
-            campgrounds: [],
             campsiteTypes:[],
             showSuccess:false,
             priceHistoryDt:{
@@ -323,6 +323,10 @@ export default {
                 },100);
             }
         },
+        ...mapGetters([
+          'parks',
+          'campsite_classes'
+        ]),
     },
     watch: {
         setPrice: function(){
@@ -364,6 +368,10 @@ export default {
                 vm.bulkpricing.concession = '';
                 vm.bulkpricing.child = '';
             }
+        },
+        campsite_classes:function () {
+            let vm =this;
+            vm.availableCampsiteClasses();
         }
     },
     components: {
@@ -373,6 +381,21 @@ export default {
         'price-history':priceHistory
     },
     methods: {
+        availableCampsiteClasses:function () {
+            let vm =this;
+            vm.loading.push('Loading CampsiteTypes');
+            vm.campsiteTypes = [];
+            $.each(vm.campsite_classes,function(i,el){
+                el.can_add_rate ? vm.campsiteTypes.push(el): '';
+            });
+            if (vm.campsiteTypes.length == 0) {
+                vm.campsiteTypes.push({
+                    id:"",
+                    name:""
+                });
+            }
+            vm.loading.splice('Loading CampsiteTypes',1);
+        },
         sendData: function(){
             let vm = this;
             if($(vm.form).valid()){
@@ -462,14 +485,10 @@ export default {
             var vm = this;
             var url = api_endpoints.parks;
             vm.loading.push('Loading Parks');
-            $.ajax({
-                url: url,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.parks = data;
-                    vm.loading.splice('Loading Parks',1);
-                }
-            });
+            if (vm.parks.length == 0) {
+                vm.$store.dispatch("fetchParks");
+            }
+            vm.loading.splice('Loading Parks',1);
 
         },
         addHistory: function() {
@@ -491,20 +510,11 @@ export default {
         },
         fetchCampsiteTypes: function() {
             let vm = this;
-            vm.loading.push('Loading CampsiteTypes');
-            $.get(api_endpoints.campsite_classes,function(data){
-                vm.campsiteTypes = [];
-                $.each(data,function(i,el){
-                    el.can_add_rate ? vm.campsiteTypes.push(el): '';
-                });
-                if (vm.campsiteTypes.length == 0) {
-                    vm.campsiteTypes.push({
-                        id:"",
-                        name:""
-                    });
-                }
-                vm.loading.splice('Loading CampsiteTypes',1);
-            });
+            if (vm.campsite_classes.length == 0) {
+                vm.$store.dispatch("fetchCampsiteClasses");
+            }else{
+                vm.availableCampsiteClasses();
+            }
         },
         goBack:function () {
             helpers.goBack(this);

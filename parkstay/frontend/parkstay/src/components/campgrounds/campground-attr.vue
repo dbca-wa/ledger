@@ -194,6 +194,7 @@ import Editor from 'quill';
 import Render from 'quill-render';
 import loader from '../utils/loader.vue'
 import alert from '../utils/alert.vue'
+import {mapGetters} from 'vuex'
 export default {
     name: 'cg_attr',
     components: {
@@ -205,7 +206,6 @@ export default {
         let vm = this;
         return {
             selected_price_set: this.priceSet[0],
-            parks: [],
             editor: null,
             editor_updated: false,
             features: [],
@@ -279,7 +279,10 @@ export default {
             else{
                 return '';
             }
-        }
+        },
+		...mapGetters([
+          'parks'
+        ]),
     },
     watch: {
         campground: {
@@ -341,8 +344,7 @@ export default {
             });
             vm.campground.features = featuresURL;
             if ( vm.campground.contact == "undefined") {
-                
-                vm.campground.contact = ''; 
+                vm.campground.contact = '';
             }
             $.ajax({
                 beforeSend: function(xhrObj) {
@@ -394,14 +396,9 @@ export default {
         },
         loadParks: function() {
             var vm = this;
-            var url = api_endpoints.parks;
-            $.ajax({
-                url: url,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.parks = data;
-                }
-            });
+			if (vm.parks.length == 0) {
+                vm.$store.dispatch("fetchParks");
+            }
 
         },
         loadFeatures: function() {

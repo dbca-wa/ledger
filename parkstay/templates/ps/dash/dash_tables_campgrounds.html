@@ -2,15 +2,88 @@
 {% load static %}
 {% block extra_css %}
     {{ block.super }}
+    <style >
+        [v-cloak]{
+            display: none;
+        }
+    </style>
     <link rel="stylesheet" href="{% static 'ps/css/build.css' %}">
 {% endblock %}
+{% block menu %}
+<div class="topbar row" id="menu" v-cloak>
+    <div class="container-fluid">
+        <nav class="navbar navbar-default">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Dashboard</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Home</div></a>{% endif %}
+                </div>
+                <div id="navbar" class="navbar-collapse collapse" >
+                    <ul class="nav navbar-nav">
+                        {% block left_menu_items %}
+                            {% if request.user.is_staff %}
+                            <li><router-link :to="{ name: 'cg_main' }">Campgrounds</router-link></li>
+                            <li><router-link :to="{ name: 'campsite-type' }">Campsite Types</router-link></li>
+                            <li><router-link :to="{ name: 'bulkpricing' }">Bulk Pricing</router-link></li>
+                            <li><router-link :to="{ name: 'booking-dashboard' }">Existing Bookings</router-link></li>
+                            {% endif %}
+                            <li><a href="https://parks-oim.dpaw.wa.gov.au/park-stay">Explore Parks</a></li>
+                            <li><a href="https://parks-oim.dpaw.wa.gov.au/contact-us">Contact Us</a></li>
+                        {% endblock %}
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        {% if request.user.is_authenticated %}
+                            <li>
+                                <a>
+                                Welcome
+                                <strong>
+                                    {% if request.user.first_name %}
+                                        {{ request.user.get_short_name }}
+                                    {% elif request.user.last_name %}
+                                        {{ request.user.last_name }}
+                                    {% else %}
+                                        {{ request.user.email }}
+                                    {% endif %}
+                                </strong>
+                                </a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                    Options
+                                    <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    {% if request.user.is_staff %}
+                                        <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                        <li role="separator" class="divider"></li>
+                                    {% endif %}
+                                    <li><a href="/dashboard/reports">Reports</a></li>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                        {% block right_menu_items %}
+                        {% endblock %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+</div>
+{% endblock %}
 {% block vue-component %}
-  <div id="app">
+    <div id="app">
       <alert :show="showAlert" :type="alertType" :data-alert="alertMessage">
           <p :text-content.prop="alertMessage"></p>
       </alert>
        <router-view></router-view>
-  </div>
+   </div>
 {% endblock %}
 
 {% block custom_js %}
