@@ -105,7 +105,7 @@ class OracleParserAdmin(admin.ModelAdmin):
 
 @admin.register(models.OracleInterface)
 class OracleInterfaceAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['activity_name','amount','status','receipt_date'] 
 
 class OracleInterfaceRecipientInline(admin.TabularInline):
     model = models.OracleInterfaceRecipient
