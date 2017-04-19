@@ -956,9 +956,9 @@ class Booking(models.Model):
         if self.pk:
             other_bookings.exclude(id=self.pk)
         if other_bookings:
-            raise ValidationError('Sorry you cannot make concurent bookings')
+            raise ValidationError('You cannot make concurrent bookings.')
         if not self.campground.oracle_code:
-            raise ValidationError('Sorry you cannot make a booking for a campground without an oracle code.')
+            raise ValidationError('You cannot make a booking for a campground without an Oracle code.')
         super(Booking,self).clean(*args,**kwargs)
 
     def __str__(self):

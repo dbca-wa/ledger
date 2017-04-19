@@ -61,13 +61,16 @@
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Equipment</label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-3 columns">
+                        <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
+                    </div>
+                    <div class="small-12 medium-12 large-3 columns">
                         <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-3 columns">
                         <label><input type="radio" name="gear_type" value="campervan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-3 columns">
                         <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
                     </div>
                 </div><div class="row"><div class="small-12 columns">
@@ -87,13 +90,13 @@
                         </div>
                     </template>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online bookings</label>
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon" width="24" height="24"/> Online bookings</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> No online bookings</label>
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon" width="24" height="24"/> No online bookings</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Third-party site</label>
+                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon" width="24" height="24"/> Third-party site</label>
                     </div>
                     <div class="small-12 medium-12 large-12 columns filter-button">
                         <button class="button expanded" v-on:click="toggleShowFilters"><span v-if="hideExtraFilters">Show more filters ▼</span><span v-else>Hide filters ▲</span></button>
@@ -464,7 +467,7 @@ export default {
             numConcessions: 0,
             numChildren: 0,
             numInfants: 0,
-            gearType: 'tent',
+            gearType: 'all',
             filterParams: {
             },
             dateSetFirstTime: true,
@@ -533,7 +536,8 @@ export default {
                     'num_adult': this.numAdults,
                     'num_concession': this.numConcessions,
                     'num_children': this.numChildren,
-                    'num_infants': this.numInfants
+                    'num_infants': this.numInfants,
+                    'gear_type': this.gearType,
                 };
                 if (this.arrivalDate && this.departureDate) {
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');

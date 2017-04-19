@@ -348,20 +348,28 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-            "gear_type": request.GET.get('gear_type', 'tent')
+            "gear_type": request.GET.get('gear_type', 'all')
         }
 
         serializer = CampgroundCampsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         scrubbed = serializer.validated_data
+        context = {}
+        # filter to the campsites by gear allowed (if specified), else show the lot
+        if scrubbed['gear_type'] != 'all':
+            context = {scrubbed['gear_type']: True}
+
+        # if a date range is set, filter out campgrounds that are unavailable for the whole stretch
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
-            sites = Campsite.objects.filter(**{scrubbed['gear_type']: True})
+            sites = Campsite.objects.filter(**context)
             ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
-        else:
-            ground_ids = set((x[0] for x in Campsite.objects.filter(**{scrubbed['gear_type']: True}).values_list('campground')))
-            # we need to be tricky here. for the default search (tent, no timestamps),
-            # we want to include all of the "campgrounds" that don't have any campsites in the model!
-            if scrubbed['gear_type'] == 'tent':
+
+        else: # show all of the campgrounds with campsites
+            ground_ids = set((x[0] for x in Campsite.objects.filter(**context).values_list('campground')))
+
+            # we need to be tricky here. for the default search (all, no timestamps),
+            # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
+            if scrubbed['gear_type'] == 'all':
                 ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
 
         queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
@@ -807,7 +815,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         num_child = serializer.validated_data['num_child']
         num_infant = serializer.validated_data['num_infant']
         gear_type = serializer.validated_data['gear_type']
-
+        
         # if campground doesn't support online bookings, abort!
         if ground.campground_type != 0:
             return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
@@ -819,7 +827,10 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
 
         # fetch all the campsites and applicable rates for the campground
-        sites_qs = Campsite.objects.filter(campground=ground).filter(**{gear_type: True})
+        context = {}
+        if gear_type != 'all':
+            context[gear_type] = True
+        sites_qs = Campsite.objects.filter(campground=ground).filter(**context)
 
         # fetch rate map
         rates = {

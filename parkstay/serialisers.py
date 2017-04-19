@@ -50,7 +50,7 @@ class CampgroundCampsiteFilterSerializer(serializers.Serializer):
     num_concession = serializers.IntegerField(default=0)
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
-    gear_type = serializers.ChoiceField(choices=('tent', 'caravan', 'campervan'))
+    gear_type = serializers.ChoiceField(choices=('all', 'tent', 'caravan', 'campervan'), default='all')
 
 
 class CampsiteBookingSerializer(serializers.Serializer):
