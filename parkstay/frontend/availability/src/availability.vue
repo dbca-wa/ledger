@@ -94,7 +94,7 @@
                 </thead>
                 <tbody><template v-for="site in sites">
                     <tr>
-                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span></td>
+                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
                             <button v-if="site.price" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
                             <template v-else>
@@ -189,6 +189,11 @@
 
     .dropdown-pane {
         width: auto;
+    }
+
+    .siteWarning {
+        font-weight: bold;
+        font-style: italic;
     }
 }
 

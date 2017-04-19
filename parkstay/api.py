@@ -941,6 +941,12 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             for k, v in class_sites_map.items():
                 if v:
                     rate = rates_map[k]
+                    # if the number of sites is less than the warning limit, add a notification
+                    if len(v) <= settings.PS_CAMPSITE_COUNT_WARNING:
+                        classes_map[k].update({
+                            'warning': 'Only {} left!'.format(len(v))
+                        })
+
                     classes_map[k].update({
                         'id': v.pop(),
                         'price': '${}'.format(sum(rate.values())),
