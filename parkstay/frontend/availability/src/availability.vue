@@ -76,9 +76,9 @@
             <div class="columns small-6 medium-6 large-3">
                 <label>Equipment
                     <select name="gear_type" v-model="gearType" @change="update()">
-                        <option value="tent">Tent</option>
-                        <option value="campervan">Campervan</option>
-                        <option value="caravan">Caravan</option>
+                        <option value="tent" v-if="gearTotals.tent">Tent</option>
+                        <option value="campervan" v-if="gearTotals.campervan">Campervan</option>
+                        <option value="caravan" v-if="gearTotals.caravan">Caravan</option>
                     </select>
                 </label>
             </div>
@@ -92,7 +92,7 @@
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
                 </thead>
-                <tbody><template v-for="site in sites">
+                <tbody><template v-for="site in sites" v-if="site.gearType[gearType]">
                     <tr>
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
@@ -263,6 +263,11 @@ export default {
             maxAdults: 30,
             maxChildren: 30,
             gearType: getQueryParam('gear_type', 'tent'),
+            gearTotals: {
+                tent: 0,
+                campervan: 0,
+                caravan: 0
+            },
             status: null,
             errorMsg: null,
             classes: {},
@@ -358,8 +363,7 @@ export default {
                     num_adult: vm.numAdults,
                     num_child: vm.numChildren,
                     num_concession: vm.numConcessions,
-                    num_infant: vm.numInfants,
-                    gear_type: vm.gearType
+                    num_infant: vm.numInfants
                 });
                 console.log('AJAX '+url);
                 $.ajax({
@@ -369,9 +373,29 @@ export default {
                         vm.name = data.name;
                         vm.days = data.days;
                         vm.classes = data.classes;
+
+                        vm.gearTotals.tent = 0
+                        vm.gearTotals.campervan = 0
+                        vm.gearTotals.caravan = 0
                         data.sites.forEach(function(el) {
                             el.showBreakdown = false;
+                            vm.gearTotals.tent += el.gearType.tent ? 1 : 0;
+                            vm.gearTotals.campervan += el.gearType.campervan ? 1 : 0;
+                            vm.gearTotals.caravan += el.gearType.caravan ? 1 : 0;
                         });
+                        if (!vm.gearTotals[vm.gearType]) {
+                            if (vm.gearTotals.tent) {
+                                vm.gearType = 'tent';
+                            } else if (vm.gearTotals.campervan) {
+                                vm.gearType = 'campervan';
+                            } else if (vm.gearTotals.caravan) {
+                                vm.gearType = 'caravan';
+                            } else {
+                                // no campsites at all!
+                                vm.gearType = 'tent';
+                            }
+                        }
+
                         vm.sites = data.sites;
                         vm.status = 'online';
                     },

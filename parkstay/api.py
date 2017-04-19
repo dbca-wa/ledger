@@ -803,7 +803,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-            "gear_type" : request.GET.get('gear_type', 'tent')
+            "gear_type" : request.GET.get('gear_type', 'all')
         }
         serializer = CampgroundCampsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -859,7 +859,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         # group results by campsite class
         if ground.site_type in (1, 2):
             # from our campsite queryset, generate a distinct list of campsite classes
-            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name')]
+            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
 
             classes_map = {}
             bookings_map = {}
@@ -887,7 +887,12 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'type': c[1],
                     'price': '${}'.format(sum(rate.values())),
                     'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
-                    'breakdown': OrderedDict()
+                    'breakdown': OrderedDict(),
+                    'gearType': {
+                        'tent': c[3],
+                        'campervan': c[4],
+                        'caravan': c[5]
+                    }
                 }
                 result['sites'].append(site)
                 classes_map[c[1]] = site
@@ -963,7 +968,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             sites_qs = sites_qs.order_by('campsite_class__name', 'name')
 
             # from our campsite queryset, generate a digest for each site
-            sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk])) for s in sites_qs])
+            sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
             bookings_map = {}
 
             # make an entry under sites for each site
@@ -974,7 +979,12 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'type': ground.campground_type,
                     'class': v[1].pk,
                     'price': '${}'.format(sum(v[2].values())),
-                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)]
+                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)],
+                    'gearType': {
+                        'tent': v[3],
+                        'campervan': v[4],
+                        'caravan': v[5]
+                    }
                 }
                 result['sites'].append(site)
                 bookings_map[k] = site
