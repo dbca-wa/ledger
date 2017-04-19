@@ -8,20 +8,21 @@ from oscar.apps.order.abstract_models import AbstractLine as CoreAbstractLine
 class Line(CoreAbstractLine):
 
     DEFAULT_PAYMENT = {
-        'bpay': '{}',
-        'cash': '{}',
-        'card': '{}'
+        'bpay': {},
+        'cash': {},
+        'card': {}
     }
     oracle_code = models.CharField("Oracle Code",max_length=50,null=True,blank=True)
     partner_name = models.CharField(
         _("Partner name"), max_length=128, blank=True,null=True)
     partner_sku = models.CharField(_("Partner SKU"), max_length=128,null=True)
-    payment_details = JSONField(default=json.dumps(DEFAULT_PAYMENT))
-    refund_details = JSONField(default=json.dumps(DEFAULT_PAYMENT))
+    payment_details = JSONField(default=DEFAULT_PAYMENT)
+    refund_details = JSONField(default=DEFAULT_PAYMENT)
 
     @property
     def paid(self):
         amount = D(0.0)
+        print type(self.payment_details)
         for k,v in self.payment_details.items():
             for i,a in v.items():
                 amount += D(a)
