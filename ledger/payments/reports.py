@@ -12,6 +12,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
     strIO = None
     invoices = Invoice.objects.filter(system=system)
     dates, banked_dates = [], []
+    parsed_invoices = {}
     date_amounts, banked_date_amounts = [], []
     items = []
     oracle_codes = {} 
@@ -64,6 +65,8 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
         for i in invoices:
             # Add items of invoice if not in list
             if i.order:
+                if i.reference not in parsed_invoices.keys():
+                    parsed_invoices[i.reference] = {'amount':i.amount,'paid':i.payment_amount,'refunded':i.refundable_amount}
                 for x in i.order.lines.all():
                     #print((i, i.__dict__, x, x.oracle_code))
                     item_date_amounts, banked_item_dates_amounts = [], []
@@ -190,16 +193,22 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 # Card
                 for c in bpoint:
                     if c.approved and c.order == order:
-                        if c.created.strftime(date_format) == d.get('date'):
+                        if c.settlement_date.strftime(date_format) == d.get('date'):
                             #print(('CC', price, code, c, c.__dict__, d))
+                            paid_amount = parsed_invoices[c.crn1]['paid']
+                            refundable_amount = parsed_invoices[c.crn1]['refunded']
                             if c.action in ('payment', 'capture'):
-                                oracle_codes[code][date_amount_index]['amounts']['card'] += price
-                                item['card'] += price
-                                date_amounts[date_amount_index]['amounts']['card'] += price
+                                if paid_amount <= c.amount and paid_amount > 0:
+                                    oracle_codes[code][date_amount_index]['amounts']['card'] += c.amount
+                                    item['card'] += c.amount
+                                    date_amounts[date_amount_index]['amounts']['card'] += c.amount 
+                                    parsed_invoices[c.crn1]['paid'] -= c.amount
                             elif c.action in ('refund', 'reversal'):
-                                oracle_codes[code][date_amount_index]['amounts']['card'] -= price
-                                item['card'] -= price
-                                date_amounts[date_amount_index]['amounts']['card'] -= price
+                                if refundable_amount <= c.amount and refundable_amount > 0:
+                                    oracle_codes[code][date_amount_index]['amounts']['card'] -= c.amount
+                                    item['card'] -= c.amount
+                                    date_amounts[date_amount_index]['amounts']['card'] -= c.amount 
+                                    parsed_invoices[c.crn1]['refunded'] -= c.amount
                 # BPAY
                 for b in bpay:
                     if b.approved and b.order == order:
