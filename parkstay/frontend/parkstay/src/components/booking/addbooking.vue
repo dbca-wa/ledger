@@ -107,7 +107,7 @@
                                           </div>
                                         </div>
                                     </div>
-                                    <div id="campsite-class-booking" class="tab-pane fade in active" v-if="campground.site_type == 1">
+                                    <div id="campsite-class-booking" class="tab-pane fade in active" v-if="(campground.site_type == 1) || (campground.site_type == 2)">
                                         <div class="row">
                                             <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
                                                 <h2>No Campsites Available For The Provided Dates</h2>
@@ -235,12 +235,19 @@
                                   </div>
                                 </div>
                                 <div class="row" v-for="v in parkEntryVehicles">
-                                  <div class="col-md-12">
+                                  <div class="col-md-6">
                                       <div class="form-group">
-                                        <label for="Phone" class="required">{{v.description}}</label>
-                                        <input type="text" name="regos[]" class="form-control" required="required" v-model="v.rego" @change="validateRego">
+                                        <label class="required">{{v.description}}</label>
+                                        <input type="text" class="form-control" required="required" v-model="v.rego" @change="validateRego">
                                       </div>
                                   </div>
+                                  <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label>Entry fee</label>
+                                        <input type="checkbox" class="form-control" required="required" v-model="v.entry_fee" @change="updatePrices()">
+                                      </div>
+                                  </div>
+
                                 </div>
                                 <p><b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid Park Pass.</p>
                             </div>
@@ -254,7 +261,7 @@
                         <div class="row">
                           <div class="col-md-6">
                               <div class="form-group">
-                                <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.Park entry fee(where applicable) not included.)</span></label>
+                                <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.)</span></label>
                                 <div class="input-group">
                                   <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
                                   <input type="text" class="form-control" :placeholder="0|formatMoney(2)" :value="booking.price|formatMoney(2)" readonly="true">
@@ -376,7 +383,8 @@ export default {
                     amount:0,
                     price:0,
                     description: "Vehicle Registration",
-                    rego:""
+                    rego:"",
+                    entry_fee: true
                 },
                 {
                     id:"concession",
@@ -385,7 +393,8 @@ export default {
                     price:0,
                     description: "Concession Vehicle Registration",
                     helpText:"accepted concession cards",
-                    rego:""
+                    rego:"",
+                    entry_fee: true
                 },
                 {
                     id:"motorbike",
@@ -393,7 +402,8 @@ export default {
                     amount:0,
                     price:0,
                     description: "Motorbike Registration",
-                    rego:""
+                    rego:"",
+                    entry_fee: true
                 }
             ],
             users:[],
@@ -756,7 +766,7 @@ export default {
                 if (vm.booking.arrival && vm.booking.departure) {
                     $.each(vm.parkEntryVehicles,function (i,entry) {
                         entry = JSON.parse(JSON.stringify(entry));
-                        if (vm.parkPrices) {
+                        if (vm.parkPrices && entry.entry_fee) {
                             switch (entry.id) {
                                 case 'vehicle':
                                     vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
@@ -839,8 +849,9 @@ export default {
                     entry = JSON.parse(JSON.stringify(entry));
                     if (entry.rego != null || entry.rego != "null") {
                         vm.booking.entryFees.regos.push({
-                            type:entry.id,
-                            rego:entry.rego
+                            type: entry.id,
+                            rego: entry.rego,
+                            entry_fee: entry.entry_fee
                         });
                     }
                     switch (entry.id) {
