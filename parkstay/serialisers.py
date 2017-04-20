@@ -427,7 +427,7 @@ class CampsiteBookingSerialiser(serializers.HyperlinkedModelSerializer):
 class BookingRegoSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingVehicleRego
-        fields = ('rego','type','booking')
+        fields = ('rego','type','booking', 'entry_fee')
 
 class BookingSerializer(serializers.ModelSerializer):
     campground_name = serializers.CharField(source='campground.name',read_only=True)

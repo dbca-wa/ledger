@@ -958,7 +958,9 @@ class Booking(models.Model):
         if customer and other_bookings:
             raise ValidationError('You cannot make concurrent bookings.')
         if not self.campground.oracle_code:
-            raise ValidationError('You cannot make a booking for a campground without an Oracle code.')
+            raise ValidationError('Campground does not have an Oracle code.')
+        if self.campground.park.entry_fee_required and not self.campground.park.oracle_code:
+            raise ValidationError('Park does not have an Oracle code.')
         super(Booking,self).clean(*args,**kwargs)
 
     def __str__(self):
@@ -1016,6 +1018,7 @@ class BookingVehicleRego(models.Model):
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
     type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
+    entry_fee = models.BooleanField(default=False)
 
 class ParkEntryRate(models.Model):
 

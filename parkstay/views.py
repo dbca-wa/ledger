@@ -192,11 +192,17 @@ class MakeBookingsView(TemplateView):
             BookingVehicleRego.objects.create(
                     booking=booking, 
                     rego=vehicle.cleaned_data.get('vehicle_rego'), 
-                    type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')]
+                    type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')],
+                    entry_fee=vehicle.cleaned_data.get('entry_fee')
             )
 
         # generate final pricing
-        lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+        try:
+            lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+        except Exception as e:
+            form.add_error(None, '{} Please contact Parks and Visitors services with this error message, the campground/campsite and the time of the request.'.format(str(e)))
+            return self.render_page(request, booking, form, vehicles, show_errors=True)
+            
         print(lines)
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
