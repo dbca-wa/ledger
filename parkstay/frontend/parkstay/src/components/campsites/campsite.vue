@@ -44,23 +44,15 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="form-group">
-                                        <div style="margin-top:10%;" class="checkbox">
+                                        <div class="checkbox">
                                             <label><input type="checkbox" v-model="campsite.tent" :disabled="selected_campsite_class_url() != ''"/>Tent</label>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <div style="margin-top:10%;" class="checkbox">
+                                        <div class="checkbox">
                                             <label><input type="checkbox" v-model="campsite.campervan" :disabled="selected_campsite_class_url() != ''"/>Campervan</label>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <div style="margin-top:10%;" class="checkbox">
+                                        <div class="checkbox">
                                             <label><input type="checkbox" v-model="campsite.caravan" :disabled="selected_campsite_class_url() != ''"/>Caravan</label>
                                         </div>
                                     </div>
