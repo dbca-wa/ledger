@@ -5,7 +5,16 @@
                 <div class="col-md-12">
                     <h3 style="margin-bottom:20px;">Payments Reports</h3>
                     <form method="get" id="payments-form" action="/ledger/payments/api/report">
-                        <input type="hidden" name="system" value="S019">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="">Region</label>
+                                  <select class="form-control" name="region" v-model="region">
+                                      <option v-for="r in regions" :value="r.code">{{r.name}}</option>
+                                  </select>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -86,7 +95,9 @@ export default {
                 format: 'YYYY-MM-DD',
                 showClear:true,
                 useCurrent:false
-            }
+            },
+            regions:[],
+            region:'swan'
         };
     },
     methods:{
@@ -105,6 +116,13 @@ export default {
                 vm.accountsDateEndPicker.data("DateTimePicker").date(null);
                 vm.accountsDateEndPicker.data("DateTimePicker").minDate(e.date);
             });
+            vm.fetchRegions();
+        },
+        fetchRegions:function () {
+            let vm = this;
+            $.get('/ledger/payments/api/regions?format=json',function (data) {
+                vm.regions = data;
+            });
         },
         generateFlatReport:function () {
             let vm = this;
@@ -116,7 +134,8 @@ export default {
                     "end":vm.accountsDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_start":vm.flatDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_end":vm.flatDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
-                    "flat":false
+                    "flat":false,
+                    "region":vm.region
                 };
                 vm.getReport(values);
             }
@@ -131,7 +150,8 @@ export default {
                     "end":vm.accountsDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_start":vm.flatDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_end":vm.flatDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
-                    "items":true
+                    "items":true,
+                    "region":vm.region
                 };
                 vm.getReport(values);
             }
