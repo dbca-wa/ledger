@@ -246,7 +246,6 @@
                         </div>
                         <div class="col-md-4">
                             <div class="checkbox" v-if="pricing.vehicle"><label><input v-bind:name="'form-'+Number(index).toString()+'-entry_fee'" type="checkbox" v-model="vehicle[2]" v-on:change="updateVehicles"/> Entry fee</label></div>
-                            <div v-else><input v-bind:name="'form-'+Number(index).toString()+'-entry_fee'" type="hidden" value="0" v-model="vehicle[2]" /></div>
                         </div>
                     </div>
                     <div class="row" v-cloak>
