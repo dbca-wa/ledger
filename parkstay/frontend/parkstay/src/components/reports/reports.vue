@@ -10,12 +10,22 @@
                                 <div class="form-group">
                                   <label for="">Region</label>
                                   <select class="form-control" name="region" v-model="region">
+                                      <option value="">Kensington</option>
                                       <option v-for="r in regions" :value="r.code">{{r.name}}</option>
                                   </select>
                                 </div>
                             </div>
+                            <div class="col-md-6" v-show="region">
+                                <div class="form-group">
+                                  <label for="">District</label>
+                                  <select class="form-control" name="region" v-model="district">
+                                      <option value="">All</option>
+                                      <option v-for="d in selected_region.districts" :value="d.code">{{d.name}}</option>
+                                  </select>
+                                </div>
+                            </div>
                         </div>
-                        <div class="row">
+                        <div class="row" v-show="!region">
                             <div class="col-md-6">
                                 <div class="form-group">
                                   <label for="">Start Date</label>
@@ -81,12 +91,13 @@
 </template>
 
 <script>
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,formValidate} from "../../hooks.js"
+import {$,bus,datetimepicker,api_endpoints,helpers,Moment,validate} from "../../hooks.js"
 export default {
     name:"reports",
     data:function () {
         let vm = this;
         return {
+            form:null,
             accountsDateStartPicker:null,
             accountsDateEndPicker:null,
             flatDateStartPicker:null,
@@ -97,12 +108,34 @@ export default {
                 useCurrent:false
             },
             regions:[],
-            region:'swan'
+            region:'',
+            district:'',
+            selected_region:{
+                code:'',
+                name:'',
+                districts:[]
+            }
         };
+    },
+    watch:{
+        region: function () {
+            let vm =this;
+            vm.district = '';
+            if (vm.region) {
+                vm.selected_region = vm.regions.find(r => (r.code == vm.region));
+            }else{
+                vm.selected_region={
+                    code:'',
+                    name:'',
+                    districts:[]
+                }
+            }
+        }
     },
     methods:{
         addEventListeners:function () {
             let vm = this;
+            vm.form = $('#payments-form');
             vm.accountsDateStartPicker = $('#accountsDateStartPicker').datetimepicker(vm.datepickerOptions);
             vm.accountsDateEndPicker = $('#accountsDateEndPicker').datetimepicker(vm.datepickerOptions);
             vm.flatDateStartPicker = $('#flatDateStartPicker').datetimepicker(vm.datepickerOptions);
@@ -116,6 +149,7 @@ export default {
                 vm.accountsDateEndPicker.data("DateTimePicker").date(null);
                 vm.accountsDateEndPicker.data("DateTimePicker").minDate(e.date);
             });
+            vm.addFormValidations();
             vm.fetchRegions();
         },
         fetchRegions:function () {
@@ -126,41 +160,92 @@ export default {
         },
         generateFlatReport:function () {
             let vm = this;
-            var form = $('#payments-form');
-            if (formValidate.validate(form).isValid) {
-                var values = {
-                    "system":"S019",
-                    "start":vm.accountsDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
-                    "end":vm.accountsDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
-                    "banked_start":vm.flatDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
-                    "banked_end":vm.flatDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
-                    "flat":false,
-                    "region":vm.region
-                };
+            var values = vm.generateValues();
+            if (values) {
+                values.flat = false;
                 vm.getReport(values);
             }
         },
-        generateByAccount:function () {
+        generateValues:function () {
             let vm = this;
-            var form = $('#payments-form');
-            if (formValidate.validate(form).isValid) {
+            if(vm.form.valid()){
                 var values = {
                     "system":"S019",
-                    "start":vm.accountsDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
-                    "end":vm.accountsDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
+                    "start":(vm.region) ? vm.flatDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'):vm.accountsDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
+                    "end":(vm.region) ? vm.flatDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'):vm.accountsDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_start":vm.flatDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_end":vm.flatDateEndPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
-                    "items":true,
-                    "region":vm.region
                 };
+                if(vm.region){
+                    values.region = vm.region;
+                    if (vm.district) {
+                        values.district = vm.district;
+                    }
+                }
+                return values;
+            }
+            return false;
+        },
+        generateByAccount:function () {
+            let vm = this;
+            var values = vm.generateValues();
+            if (values) {
+                values.items = true;
                 vm.getReport(values);
             }
+
         },
         getReport:function (values) {
             let vm = this;
             var url = "/ledger/payments/api/report?"+$.param(values);
             window.location.assign(url);
-        }
+        },
+        addFormValidations: function() {
+            let vm =this;
+            vm.form.validate({
+                rules: {
+                    start: {
+                        required:function(){
+                            return vm.region.length == 0;
+                        }
+                    },
+                    end: {
+                        required:function(){
+                            return vm.region.length == 0;
+                        }
+                    },
+                    banked_start: "required",
+                    banked_end: "required",
+                },
+                messages: {
+                    start: "Field is required",
+                    end: "Field is required",
+                    banked_end: "Field is required",
+                    banked_start: "Field is required",
+                },
+                showErrors: function(errorMap, errorList) {
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+        },
     },
     mounted:function () {
         let vm = this;
