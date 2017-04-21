@@ -39,9 +39,11 @@ class MakeBookingsForm(forms.Form):
     def clean(self):
         super(MakeBookingsForm, self).clean()
 
-        if (self.cleaned_data.get('num_adult')+self.cleaned_data.get('num_concession')) < 1:
-            raise forms.ValidationError('Booking requires at least 1 guest that is an adult or concession.')
+        if ('num_adult' in self.cleaned_data and 'num_concession' in self.cleaned_data):
+            if (self.cleaned_data.get('num_adult')+self.cleaned_data.get('num_concession')) < 1:
+                raise forms.ValidationError('Booking requires at least 1 guest that is an adult or concession.')
 
-        if (self.cleaned_data.get('email') != self.cleaned_data.get('confirm_email')):
-            raise forms.ValidationError('Email and confirmation email fields do not match.')
+        if ('email' in self.cleaned_data and 'confirm_email' in self.cleaned_data):
+            if (self.cleaned_data.get('email') != self.cleaned_data.get('confirm_email')):
+                raise forms.ValidationError('Email and confirmation email fields do not match.')
 
