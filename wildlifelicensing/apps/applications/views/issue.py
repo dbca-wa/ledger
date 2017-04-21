@@ -1,4 +1,5 @@
 import re
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
@@ -70,7 +71,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         licence_filename = 'licence-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
         licence.licence_document = create_licence_pdf_document(licence_filename, licence, application,
-                                                               request.build_absolute_uri(reverse('home')),
+                                                               settings.WL_PDF_URL,
                                                                original_issue_date)
 
         cover_letter_filename = 'cover-letter-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
@@ -279,7 +280,7 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
             response = HttpResponse(content_type='application/pdf')
 
             response.write(create_licence_pdf_bytes(filename, licence, application,
-                                                    request.build_absolute_uri(reverse('home')),
+                                                    settings.WL_PDF_URL,
                                                     original_issue_date))
 
             return response
