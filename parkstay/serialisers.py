@@ -139,7 +139,7 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = '__all__' 
+        fields = '__all__'
 
 class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -239,6 +239,7 @@ class CampgroundDatatableSerializer(serializers.ModelSerializer):
             'ratis_id',
             'active',
             'current_closure',
+            'campground_type'
         )
 
     def get_park(self,obj):

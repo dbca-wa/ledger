@@ -79,6 +79,7 @@ import datatable from '../utils/datatable.vue'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
 import {bus} from '../utils/eventBus.js'
+import { mapGetters } from 'vuex'
 module.exports = {
     name: 'pk-campgrounds',
     data: function() {
@@ -86,9 +87,6 @@ module.exports = {
         return {
             grounds: [],
             rows: [],
-            regions: [],
-            districts: [],
-            parks: [],
             title: 'Campgrounds',
             selected_status: 'All',
             selected_region: 'All',
@@ -135,11 +133,11 @@ module.exports = {
                         var id = full.id;
                         var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
                         if (full.active) {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>\
-                            "+addBooking+"</td>";
-                        } else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>\
-                            "+addBooking+"</td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a></td>";
+                            if (full.campground_type == '0') {
+                                    var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>\
+                                    "+addBooking+"</td>";
+                            }
                         }
                         column = column.replace(/__Current_Closure__/,full.current_closure);
                         return column.replace(/__ID__/g, id);
@@ -153,6 +151,13 @@ module.exports = {
         pkCgClose,
         pkCgOpen,
         datatable
+    },
+    computed:{
+       ...mapGetters([
+         'regions',
+         'districts',
+         'parks'
+       ]),
     },
     watch: {
         selected_region: function() {
@@ -228,21 +233,21 @@ module.exports = {
         },
         fetchRegions: function() {
             let vm = this;
-            $.get(api_endpoints.regions,function(data){
-                vm.regions = data;
-            });
+            if (vm.regions.length == 0) {
+                vm.$store.dispatch("fetchRegions");
+            }
         },
         fetchParks: function() {
             let vm = this;
-            $.get(api_endpoints.parks,function(data){
-                vm.parks = data;
-            });
+            if (vm.parks.length == 0) {
+                vm.$store.dispatch("fetchParks");
+            }
         },
         fetchDistricts: function() {
             let vm = this;
-            $.get(api_endpoints.districts,function(data){
-                vm.districts = data;
-            });
+            if (vm.districts.length == 0) {
+                vm.$store.dispatch("fetchDistricts");
+            }
         }
     },
     mounted: function() {

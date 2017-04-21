@@ -74,6 +74,7 @@ import datatable from '../utils/datatable.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import changebooking from "./changebooking.vue"
 import modal from '../utils/bootstrap-modal.vue'
+import { mapGetters } from 'vuex'
 export default {
     name:'booking-dashboard',
     components:{
@@ -253,8 +254,6 @@ export default {
                 allowInputToggle:true
             },
             loading:[],
-            regions:[],
-            campgrounds:[],
             selected_booking:-1,
             filterCampground:"All",
             filterRegion:"All",
@@ -275,29 +274,26 @@ export default {
     computed:{
         isLoading:function () {
             return this.loading.length > 0;
-        }
+        },
+        ...mapGetters([
+          'regions',
+          'campgrounds'
+        ]),
     },
     methods:{
         fetchCampgrounds:function () {
             let vm =this;
             vm.loading.push('fetching campgrounds');
-            vm.$http.get(api_endpoints.campgrounds).then((response) => {
-                vm.campgrounds = response.body;
-                vm.loading.splice('fetching campgrounds',1);
-            }, (response) => {
-              vm.loading.splice('fetching campgrounds',1);
-            });
+            if (vm.campgrounds.length == 0) {
+                vm.$store.dispatch("fetchCampgrounds");
+            }
+            vm.loading.splice('fetching campgrounds',1);
         },
         fetchRegions:function () {
             let vm =this;
-            vm.loading.push('fetching regions');
-            vm.$http.get(api_endpoints.regions).then((response) => {
-                vm.regions = response.body;
-                vm.loading.splice('fetching regions',1);
-            }, (error) => {
-              vm.loading.splice('fetching regions',1);
-              console.log(error);
-            });
+            if (vm.regions.length == 0) {
+                vm.$store.dispatch("fetchRegions");
+            }
         },
         cancelBooking:function (booking) {
             let vm =this;
@@ -331,7 +327,7 @@ export default {
                     vm.filterDateTo = "";
                     vm.$refs.bookings_table.vmDataTable.ajax.reload();
                 }
-                
+
              });
 
             vm.dateFromPicker.on('dp.change',function (e) {
