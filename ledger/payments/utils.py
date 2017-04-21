@@ -17,7 +17,7 @@ from six.moves.urllib.parse import urlparse
 #
 from ledger.basket.models import Basket
 from ledger.catalogue.models import Product
-from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterface 
 from oscar.core.loading import get_class
 from oscar.apps.voucher.models import Voucher
 import logging
@@ -220,34 +220,38 @@ def generateOracleParserFile(oracle_codes):
     return strIO
 
 def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=False,error_string=None):
-    dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-    if not error_email:
-        _file = generateOracleParserFile(oracle_codes)
-        try:
-            sys = OracleInterfaceSystem.objects.get(sytem_id)
-            recipients = sys.recipients
-        except OracleInterfaceSystem.DoesNotExist:
-            recipients = []
-            
-        email = EmailMessage(
-            'Oracle Interface Summary for {} as at {}'.format(system_name,dt),
-            'Oracle Interface Summary File for {} as at {}'.format(system_name,dt),
-            settings.DEFAULT_FROM_EMAIL,
-            to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
-        )
-        email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
-    else:
-        email = EmailMessage(
-            'Oracle Interface Summary Error for {} as at{}'.format(system_name,dt),
-            'There was an error in generating a summary report for the oracle interface parser.Please refer to the following log output:\n{}'.format(error_string),
-            settings.DEFAULT_FROM_EMAIL,
-            to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
-        )
-    
-    email.send()
+    try:
+        dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+        if not error_email:
+            _file = generateOracleParserFile(oracle_codes)
+            try:
+                sys = OracleInterfaceSystem.objects.get(system_id=system_id)
+                recipients = sys.recipients.all()
+            except OracleInterfaceSystem.DoesNotExist:
+                recipients = []
+                
+            email = EmailMessage(
+                'Oracle Interface Summary for {} as at {}'.format(system_name,dt),
+                'Oracle Interface Summary File for {} as at {}'.format(system_name,dt),
+                settings.DEFAULT_FROM_EMAIL,
+                to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
+            )
+            email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
+        else:
+            email = EmailMessage(
+                'Oracle Interface Summary Error for {} as at{}'.format(system_name,dt),
+                'There was an error in generating a summary report for the oracle interface parser.Please refer to the following log output:\n{}'.format(error_string),
+                settings.DEFAULT_FROM_EMAIL,
+                to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
+            )
+        
+        email.send()
+    except Exception as e:
+        print(traceback.print_exc())
+        raise e
 
 def addToInterface(oracle_codes,system_name):
-
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
     for k,v in oracle_codes.items():
         if v != 0:
             OracleInterface.objects.create(
@@ -346,3 +350,90 @@ def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):
     except Exception as e:
         print(traceback.print_exc())
         raise e
+
+def update_payments(invoice):
+    try:
+        i = invoice
+        # Bpoint Transactions
+        for line in i.order.lines.all():
+            paid_amount = line.paid 
+            refunded_amount = line.refunded
+            amount = line.line_price_incl_tax
+            # Bpoint Amounts
+            for bpoint in i.bpoint_transactions:
+                if bpoint.approved: 
+                    if paid_amount < amount:
+                        if bpoint.action == 'payment':
+                            remaining_amount = amount - paid_amount
+                            if bpoint.id in line.payment_details['card'].keys():
+                                new_amount  = D(line.payment_details['card'][bpoint.id]) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                line.payment_details['card'][bpoint.id] = str(new_amount)
+                                paid_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                            else:
+                                new_amount  = D(0.0) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                line.payment_details['card'][bpoint.id] = str(new_amount)
+                                paid_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                    if refunded_amount < amount:
+                        if bpoint.action == 'refund':
+                            remaining_amount = amount - refunded_amount
+                            if bpoint.id in line.refund_details['card'].keys():
+                                new_amount = D(line.refund_details['card'][bpoint.id]) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                line.refund_details['card'][bpoint.id] = str(new_amount)
+                                refunded_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                            else:
+                                new_amount = D(0.0) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                line.refund_details['card'][bpoint.id] = str(new_amount)
+                                refunded_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+            # Bpay Transactions
+            for bpay in i.bpay_transactions:
+                if bpay.approved:
+                    if paid_amount < amount:
+                        if bpay.p_instruction_code == '05'and bpay.type == 399:
+                            remaining_amount = amount - paid_amount
+                            if bpay.id in line.payment_details['bpay'].keys():
+                                new_amount  = D(line.payment_details['bpay'][bpay.id]) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                line.payment_details['bpay'][bpay.id] = str(new_amount)
+                                paid_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                            else:
+                                new_amount  = D(0.0) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                line.payment_details['bpay'][bpay.id] = str(new_amount)
+                                paid_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                    if refunded_amount < amount:
+                        if bpay.p_instruction_code == '25'and bpay.type == 699:
+                            remaining_amount = amount - refunded_amount
+                            if bpay.id in line.refund_details['bpay'].keys():
+                                new_amount = D(line.refund_details['bpay'][bpay.id]) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                line.refund_details['bpay'][bpay.id] = str(new_amount)
+                                refunded_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                            else:
+                                new_amount = D(0.0) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                line.refund_details['bpay'][bpay.id] = str(new_amount)
+                                refunded_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+            # Cash Transactions
+            for c in i.cash_transactions.all():
+                if paid_amount < amount:
+                    if c.type == 'payment':
+                        remaining_amount = amount - paid_amount
+                        if c.id in line.payment_details['cash'].keys():
+                            new_amount  = D(line.payment_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
+                            line.payment_details['cash'][c.id] = str(new_amount)
+                            paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                        else:
+                            new_amount  = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
+                            line.payment_details['cash'][c.id] = str(new_amount)
+                            paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                if refunded_amount < amount:
+                    if c.type == 'refund':
+                        remaining_amount = amount - refunded_amount
+                        if c.id in line.refund_details['cash'].keys():
+                            new_amount = D(line.refund_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
+                            line.refund_details['cash'][c.id] = str(new_amount)
+                            refunded_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                        else:
+                            new_amount = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
+                            line.refund_details['cash'][c.id] = str(new_amount)
+                            refunded_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+            line.save()
+    except:
+        print(traceback.print_exc())
+        raise
