@@ -132,13 +132,16 @@ module.exports = {
                     "mRender": function(data, type, full) {
                         var id = full.id;
                         var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
+                        var column = "";
+
                         if (full.active) {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a></td>";
-                            if (full.campground_type == '0') {
-                                    var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>\
-                                    "+addBooking+"</td>";
-                            }
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>";
+                        } else {
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>";
                         }
+
+                        column += full.campground_type == '0' ? addBooking : "";
+                        column += "</td>";
                         column = column.replace(/__Current_Closure__/,full.current_closure);
                         return column.replace(/__ID__/g, id);
                     }
