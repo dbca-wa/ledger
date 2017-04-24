@@ -153,8 +153,33 @@ export default {
         },
         closeCampgrounds:function () {
             let vm =this;
-            if (vm.form.valid()){
-                console.log(vm.selected_campgrounds);
+
+            if (vm.form.valid() && vm.selected_campgrounds.length>0){
+                let vm = this;
+                let data = {
+                    range_start: vm.range_start,
+                    range_end: vm.range_end,
+                    campgrounds: vm.selected_campgrounds,
+                    reason: vm.reason,
+                    status:'1'
+                }
+                if (vm.reason == '1') {
+                    data.details = vm.details
+                }
+                $.ajax({
+                    url:"/api/campgrounds/bulk_close.json",
+                    method: 'POST',
+                    xhrFields: { withCredentials:true },
+                    data: data,
+                    headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                    dataType: 'json',
+                    success: function(data, stat, xhr) {
+                        vm.close();
+                    },
+                    error:function (resp){
+                        console.log(resp);
+                    }
+                });
             }
 
         },
@@ -162,7 +187,6 @@ export default {
             let vm = this;
             vm.form.validate({
                 rules: {
-                    campgrounds:'required',
                     closure_start: "required",
                     closure_status: "required",
                     open_reason: "required",
