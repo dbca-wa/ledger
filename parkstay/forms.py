@@ -1,4 +1,5 @@
 from django import forms
+from ledger.address.models import Country
 
 
 class LoginForm(forms.Form):
@@ -29,8 +30,8 @@ class MakeBookingsForm(forms.Form):
     surname = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
     phone = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
     postcode =forms.CharField(max_length=4, label="Post Code",widget=forms.TextInput(attrs={'required':True}))
-    country = forms.CharField(label="Country",widget=forms.TextInput(attrs={'required':True}))
-    
+    country = forms.ModelChoiceField(queryset=Country.objects.all(), to_field_name="iso_3166_1_a2")
+
 
     def __init__(self, *args, **kwargs):
         super(MakeBookingsForm, self).__init__(*args, **kwargs)
