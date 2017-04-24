@@ -128,9 +128,17 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
 
 def get_open_campgrounds(campsites_qs, start_date, end_date):
     """Fetch the set of campgrounds (from a set of campsites) with spaces open over a range of visit dates."""
+    # short circuit: if start date is before today, return nothing
+    today = date.today()
+    if start_date < today:
+        return set()
+
     # remove from the campsite list any entries with bookings
     campsites_qs = campsites_qs.exclude(
         campsitebooking__date__range=(start_date, end_date-timedelta(days=1))
+    # and also campgrounds where the book window is outside of the max advance range
+    ).exclude(
+        campground__max_advance_booking__lte=(end_date-today).days
     )
 
     # get closures at campsite and campground level
