@@ -443,7 +443,7 @@ export default {
                 ['cddp:dpaw_tenure', {}],
             ],
             filterList: [
-                {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
+                {name: '2WD accessible', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
                 {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
                 {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']}
             ],
