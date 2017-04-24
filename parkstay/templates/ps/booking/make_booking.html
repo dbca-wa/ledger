@@ -158,6 +158,7 @@
                         </div>
                     </div>
                     <div class="row">
+                    {% if request.user.is_anonymous %}
                       <div class="col-md-6">
                           <div class="form-group">
                             {{form.email.label_tag}}
@@ -170,6 +171,11 @@
                               {{ form.confirm_email|class:'form-control'}}
                           </div>
                       </div>
+                    {% else %}
+                      <div class="col-md-12">
+                          <p>Logged in as user <b>{{ request.user.email }}</b>.</p>
+                      </div>
+                    {% endif %}
                     </div>
                     <div class="row">
                       <div class="col-md-6">

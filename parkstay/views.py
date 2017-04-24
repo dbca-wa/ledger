@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django import forms
-from parkstay.forms import LoginForm, MakeBookingsForm, VehicleInfoFormset
+from parkstay.forms import LoginForm, MakeBookingsForm, AnonymousMakeBookingsForm, VehicleInfoFormset
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -159,14 +159,24 @@ class MakeBookingsView(TemplateView):
             'num_child': booking.details.get('num_child', 0) if booking else 0,
             'num_infant': booking.details.get('num_infant', 0) if booking else 0
         }
-        form = MakeBookingsForm(form_context)
+        if request.user.is_anonymous():
+            form = AnonymousMakeBookingsForm(form_context)
+        else:
+            form_context['first_name'] = request.user.first_name
+            form_context['surname'] = request.user.last_name
+            form_context['phone'] = request.user.phone_number
+            form = MakeBookingsForm(form_context)
+
         vehicles = VehicleInfoFormset()
         return self.render_page(request, booking, form, vehicles)
 
 
     def post(self, request, *args, **kwargs):
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        form = MakeBookingsForm(request.POST)
+        if request.user.is_anonymous():
+            form = AnonymousMakeBookingsForm(request.POST)
+        else:
+            form = MakeBookingsForm(request.POST)
         vehicles = VehicleInfoFormset(request.POST)   
         
         # re-render the page if there's no booking in the session
@@ -207,17 +217,21 @@ class MakeBookingsView(TemplateView):
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
         # get the customer object
+        if request.user.is_anonymous():
+            try:
+                customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
+            except EmailUser.DoesNotExist:
+                customer = EmailUser.objects.create(
+                        email=form.cleaned_data.get('email'), 
+                        first_name=form.cleaned_data.get('first_name'),
+                        last_name=form.cleaned_data.get('last_name'),
+                        phone_number=form.cleaned_data.get('phone')
+                )
+        else:
+            customer = request.user
+        
         # FIXME: get feedback on whether to overwrite personal info if the EmailUser
         # already exists
-        try:
-            customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
-        except EmailUser.DoesNotExist:
-            customer = EmailUser.objects.create(
-                    email=form.cleaned_data.get('email'), 
-                    first_name=form.cleaned_data.get('first_name'),
-                    last_name=form.cleaned_data.get('last_name'),
-                    phone_number=form.cleaned_data.get('phone')
-            )
 
         
         # finalise the booking object

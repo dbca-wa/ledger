@@ -19,17 +19,17 @@ class VehicleInfoForm(forms.Form):
 VehicleInfoFormset = forms.formset_factory(VehicleInfoForm, extra=1, max_num=8)
 
 
+
+
 class MakeBookingsForm(forms.Form):
     num_adult = forms.IntegerField(min_value=0, max_value=16, label="Adults")
     num_child = forms.IntegerField(min_value=0, max_value=16, label="Children (ages 6-15)")
     num_concession = forms.IntegerField(min_value=0, max_value=16, label="Concessions")
     num_infant = forms.IntegerField(min_value=0, max_value=16, label="Infants (ages 0-5)")
-    email = forms.EmailField(widget=forms.TextInput(attrs={'required':True}))
-    confirm_email = forms.EmailField(label ="Confirm Email", widget=forms.TextInput(attrs={'required':True}))
     first_name = forms.CharField(label="Given Name(s)")
     surname = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
     phone = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
-    postcode =forms.CharField(max_length=4, label="Post Code",widget=forms.TextInput(attrs={'required':True}))
+    postcode = forms.CharField(max_length=4, label="Post Code",widget=forms.TextInput(attrs={'required':True}))
     country = forms.ModelChoiceField(queryset=Country.objects.all(), to_field_name="iso_3166_1_a2")
 
 
@@ -43,6 +43,15 @@ class MakeBookingsForm(forms.Form):
         if ('num_adult' in self.cleaned_data and 'num_concession' in self.cleaned_data):
             if (self.cleaned_data.get('num_adult')+self.cleaned_data.get('num_concession')) < 1:
                 raise forms.ValidationError('Booking requires at least 1 guest that is an adult or concession.')
+
+
+
+class AnonymousMakeBookingsForm(MakeBookingsForm):
+    email = forms.EmailField(widget=forms.TextInput(attrs={'required':True}))
+    confirm_email = forms.EmailField(label ="Confirm Email", widget=forms.TextInput(attrs={'required':True}))
+
+    def clean(self):
+        super(AnonymousMakeBookingsForm, self).clean()
 
         if ('email' in self.cleaned_data and 'confirm_email' in self.cleaned_data):
             if (self.cleaned_data.get('email') != self.cleaned_data.get('confirm_email')):
