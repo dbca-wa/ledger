@@ -565,7 +565,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 instance = Campground.objects.get(pk = campground)
                 instance.close(dict(serializer.validated_data))
             except Exception as e:
-                pass
+                raise
 
     @list_route(methods=['post'])
     def bulk_close(self, request, format='json', pk=None):
@@ -582,9 +582,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 return Response('All Selected Campgrounds Closed')
             except serializers.ValidationError:
                 print(traceback.print_exc())
-                raise
-            except ValidationError as e:
-                raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
+                raise serializers.ValidationError(str(e[0]))
             except Exception as e:
                 print(traceback.print_exc())
                 raise serializers.ValidationError(str(e[0]))
