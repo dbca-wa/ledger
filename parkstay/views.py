@@ -278,6 +278,7 @@ class BookingSuccessView(TemplateView):
         
         # set booking to be permanent fixture
         booking.booking_type = 1  # internet booking
+        booking.expiry_time = None
         booking.save()
 
         utils.delete_session_booking(request.session)
