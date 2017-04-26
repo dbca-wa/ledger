@@ -11,7 +11,7 @@
                                 <label for="Campgrounds">Campgrounds</label>
                             </div>
                             <div class="col-md-8">
-                                <select  class="form-control" id="bc-campgrounds" name="campgrounds" placeholder="" multiple v-model="campgrounds">
+                                <select  class="form-control" id="bc-campgrounds" name="campgrounds" placeholder="" multiple v-model="selected_campgrounds">
                                     <option v-for="c in campgrounds" :value="c.id">{{ c.name }}</option>
                                 </select>
                             </div>
@@ -103,8 +103,12 @@ export default {
     },
     methods:{
         close:function () {
-            this.isModalOpen = false;
-            this.$parent.showBulkClose = false;
+            this.isModalOpen = this.$parent.showBulkClose  = false;
+            this.$parent.$refs.dtGrounds.vmDataTable.ajax.reload();
+            this.range_start = "";
+            this.range_end = "";
+            this.campgrounds = "";
+            this.reason = "";
         },
         events:function () {
             let vm = this;
