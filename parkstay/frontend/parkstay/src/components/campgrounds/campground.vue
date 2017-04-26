@@ -256,14 +256,15 @@ export default {
                 message: "Are you sure you want to Delete ?",
                 buttons: [{
                     text: "Delete",
-                    event: "delete",
+                    event: "deleteRange",
                     bsColor: "btn-danger",
                     handler: function() {
                         vm.deleteBookingRange(vm.deleteRange);
                         vm.deleteRange = null;
                     },
                     autoclose: true
-                }]
+                }],
+                id: 'deleteRange'
             },
 
         }
