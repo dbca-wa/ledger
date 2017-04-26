@@ -556,35 +556,38 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
-    def close_campground(self,closure_data,id):
-        serializer = CampgroundBookingRangeSerializer(data=closure_data, method="post")
-        serializer.is_valid(raise_exception=True)
-        instance = Campground.objects.get(pk = id)
-        instance.close(dict(serializer.validated_data))
+    def close_campgrounds(self,closure_data,campgrounds):
+        for campground in campgrounds:
+            closure_data['campground'] = campground
+            try:
+                serializer = CampgroundBookingRangeSerializer(data=closure_data, method="post")
+                serializer.is_valid(raise_exception=True)
+                instance = Campground.objects.get(pk = campground)
+                instance.close(dict(serializer.validated_data))
+            except Exception as e:
+                pass
 
     @list_route(methods=['post'])
     def bulk_close(self, request, format='json', pk=None):
-        try:
-            http_status = status.HTTP_200_OK
-            closure_data = request.data.copy();
-            campgrounds = closure_data.pop('campgrounds[]')
-            import thread
-            for campground in campgrounds:
-                closure_data['campground'] = campground
-                try:
-                    thread.start_new_thread( self.close_campground, (closure_data,campground) )
-                except Exception as e:
-                    raise
-            cache.delete('campgrounds_dt')
-            return Response('All Selected Campgrounds Closed')
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e[0]))
+        with transaction.atomic():
+            try:
+                http_status = status.HTTP_200_OK
+                closure_data = request.data.copy();
+                campgrounds = closure_data.pop('campgrounds[]')
+                '''Thread for performance / no error messages though'''
+                #import thread
+                #thread.start_new_thread( self.close_campgrounds, (closure_data,campgrounds,) )
+                self.close_campgrounds(closure_data,campgrounds)
+                cache.delete('campgrounds_dt')
+                return Response('All Selected Campgrounds Closed')
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'],)
     def addPrice(self, request, format='json', pk=None):
