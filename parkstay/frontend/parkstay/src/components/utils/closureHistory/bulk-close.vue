@@ -178,10 +178,20 @@ export default {
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                     dataType: 'json',
                     success: function(data, stat, xhr) {
-                        vm.close();
+                        vm.$store.dispatch("updateAlert",{
+        					visible:true,
+        					type:"success",
+        					message: data
+		               });
+                       vm.close();
                     },
                     error:function (resp){
-                        console.log(resp);
+                        vm.$store.dispatch("updateAlert",{
+        					visible:true,
+        					type:"danger",
+        					message: helpers.apiError(resp)
+                        });
+                        vm.close();
                     }
                 });
             }
