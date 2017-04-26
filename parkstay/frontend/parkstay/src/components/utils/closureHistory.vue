@@ -74,7 +74,7 @@ export default {
                 message: "Are you sure you want to Delete this closure Period",
                 buttons: [{
                     text: "Delete",
-                    event: "delete",
+                    event: "deleteClosure",
                     bsColor: "btn-danger",
                     handler: function() {
                         vm.deleteClosureRecord(vm.deleteClosure);
@@ -89,7 +89,7 @@ export default {
                 processing: true,
                 deferRender: true,
                 ajax: {
-                    url: vm.datatableURL, 
+                    url: vm.datatableURL,
                     dataSrc: ''
                 },
                 columns: [{
@@ -137,7 +137,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],            
+            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],
         }
     },
     methods: {
@@ -181,15 +181,15 @@ export default {
                     vm.showClose();
                 },
                 error:function (resp){
-                    
+
                 }
             });
         },
         addClosure: function() {
-            this.sendData(this.getAddURL(),'POST');   
+            this.sendData(this.getAddURL(),'POST');
         },
         updateClosure: function() {
-            this.sendData(this.closureURL(this.$refs.closeModal.closure_id),'PUT'); 
+            this.sendData(this.closureURL(this.$refs.closeModal.closure_id),'PUT');
         },
         sendData: function(url,method) {
             let vm = this;
