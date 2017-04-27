@@ -225,6 +225,7 @@ class Campground(models.Model):
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
+
         except CampgroundBookingRange.DoesNotExist:
         #if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
         #    self.__get_current_closure().delete()
@@ -237,9 +238,15 @@ class Campground(models.Model):
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
-                raise ValidationError('{} campground is already closed.'.format(within.campground.name))
+                if within.range_start != b.range_start or within.range_end != b.range_end:
+                    raise ValidationError('{} campground is already closed.'.format(within.campground.name))
+            else:
+                b.save()
         except CampgroundBookingRange.DoesNotExist:
             b.save()
+        except:
+            raise
+
 
     def createCampsitePriceHistory(self,data):
         '''Create Multiple campsite rates
