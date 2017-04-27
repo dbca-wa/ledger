@@ -109,6 +109,8 @@ export default {
             this.range_end = "";
             this.campgrounds = "";
             this.reason = "";
+			this.closeStartPicker.data('DateTimePicker').date(new Date());
+			this.closeEndPicker.data('DateTimePicker').clear();
         },
         events:function () {
             let vm = this;
