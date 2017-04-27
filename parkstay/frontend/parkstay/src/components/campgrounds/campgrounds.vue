@@ -58,6 +58,7 @@
                             <div class="col-md-4">
                                 <div class="form-group pull-right">
                                     <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Campground</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Campgrounds</a>
                                 </div>
                             </div>
                         </form>
@@ -67,6 +68,7 @@
             </div>
         </div>
     </div>
+    <bulk-close :show="showBulkClose" ref="bulkClose"/>
 </div>
 </template>
 
@@ -78,6 +80,7 @@ import {
 import datatable from '../utils/datatable.vue'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
+import bulkClose from '../utils/closureHistory/bulk-close.vue'
 import {bus} from '../utils/eventBus.js'
 import { mapGetters } from 'vuex'
 module.exports = {
@@ -95,6 +98,7 @@ module.exports = {
             isOpenAddCampground: false,
             isOpenOpenCG: false,
             isOpenCloseCG: false,
+            showBulkClose:false,
             dtoptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -153,7 +157,8 @@ module.exports = {
     components: {
         pkCgClose,
         pkCgOpen,
-        datatable
+        datatable,
+        "bulk-close":bulkClose,
     },
     computed:{
        ...mapGetters([
@@ -163,6 +168,10 @@ module.exports = {
        ]),
     },
     watch: {
+        showBulkClose:function () {
+            this.$refs.bulkClose.isModalOpen = this.showBulkClose;
+            this.$refs.bulkClose.initSelectTwo();
+        },
         selected_region: function() {
             let vm = this;
             if (vm.selected_region != 'All') {
