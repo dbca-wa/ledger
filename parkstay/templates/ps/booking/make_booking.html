@@ -102,7 +102,7 @@
                                         <label class="col-sm-4 control-label pull-left required" >Dates: </label>
                                         <div class="col-sm-8">
                                             <div class="input-group date">
-                                                {{ booking.arrival }} to {{ booking.departure }} ({{ booking.num_days }} days)
+                                                {{ booking.stay_dates }}
                                             </div>
                                         </div>
                                     </div>
@@ -186,8 +186,8 @@
                       </div>
                       <div class="col-md-6">
                           <div class="form-group">
-                              {{form.surname.label_tag}}
-                              {{ form.surname|class:'form-control'}}
+                              {{form.last_name.label_tag}}
+                              {{ form.last_name|class:'form-control'}}
                           </div>
                       </div>
                     </div>

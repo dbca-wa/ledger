@@ -628,6 +628,10 @@ def create_or_update_booking(request,booking_details,updating=False):
             num_infant=booking_details['num_infant'],
             cost_total=booking_details['cost_total'],
             customer=booking_details['customer'])
+        
+        booking.details['phone'] = booking_details['phone']
+        booking.details['country'] = booking_details['country']
+        booking.details['postcode'] = booking_details['postcode']
 
         # Add booking regos
         if request.data.get('parkEntry').get('regos'):

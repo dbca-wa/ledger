@@ -26,7 +26,7 @@ from parkstay.models import (Campground,
                                 CampsiteRate,
                                 ParkEntryRate
                                 )
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, Address
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
 from decimal import *
@@ -163,7 +163,7 @@ class MakeBookingsView(TemplateView):
             form = AnonymousMakeBookingsForm(form_context)
         else:
             form_context['first_name'] = request.user.first_name
-            form_context['surname'] = request.user.last_name
+            form_context['last_name'] = request.user.last_name
             form_context['phone'] = request.user.phone_number
             form = MakeBookingsForm(form_context)
 
@@ -190,6 +190,11 @@ class MakeBookingsView(TemplateView):
         # update the booking object with information from the form
         if not booking.details:
             booking.details = {}
+        booking.details['first_name'] = form.cleaned_data.get('first_name')
+        booking.details['last_name'] = form.cleaned_data.get('last_name')
+        booking.details['phone'] = form.cleaned_data.get('phone')
+        booking.details['country'] = form.cleaned_data.get('country').iso_3166_1_a2
+        booking.details['postcode'] = form.cleaned_data.get('postcode')
         booking.details['num_adult'] = form.cleaned_data.get('num_adult')
         booking.details['num_concession'] = form.cleaned_data.get('num_concession')
         booking.details['num_child'] = form.cleaned_data.get('num_child')
@@ -225,15 +230,16 @@ class MakeBookingsView(TemplateView):
                         email=form.cleaned_data.get('email'), 
                         first_name=form.cleaned_data.get('first_name'),
                         last_name=form.cleaned_data.get('last_name'),
-                        phone_number=form.cleaned_data.get('phone')
+                        phone_number=form.cleaned_data.get('phone'),
+                        mobile_number=form.cleaned_data.get('phone')
                 )
+                Address.objects.create(line1='address', user=customer, postcode=emailUser['postcode'], country=form.cleaned_data.get('country'))
         else:
             customer = request.user
         
         # FIXME: get feedback on whether to overwrite personal info if the EmailUser
         # already exists
-
-        
+ 
         # finalise the booking object
         booking.customer = customer
         booking.cost_total = total

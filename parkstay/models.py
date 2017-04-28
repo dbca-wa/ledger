@@ -887,6 +887,24 @@ class Booking(models.Model):
         return (self.departure-self.arrival).days
 
     @property
+    def stay_dates(self):
+        count = self.num_days
+        return '{} to {} ({} day{})'.format(self.arrival, self.departure, count, '' if count == 1 else 's')
+
+    @property
+    def stay_guests(self):
+        num_adult = self.details.get('num_adult', 0)
+        num_concession = self.details.get('num_concession', 0)
+        num_infant = self.details.get('num_infant', 0)
+        num_child = self.details.get('num_child', 0)
+        return '{} adult{}, {} concession{}, {} child{}, {} infant{}'.format(
+            num_adult, '' if num_adult == 1 else 's',
+            num_concession, '' if num_concession == 1 else 's',
+            num_child, '' if num_child == 1 else 'ren',
+            num_infant, '' if num_infant == 1 else 's',
+        )
+
+    @property
     def num_guests(self):
         num_adult = self.details.get('num_adult', 0)
         num_concession = self.details.get('num_concession', 0)

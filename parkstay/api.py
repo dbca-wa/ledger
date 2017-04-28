@@ -1469,7 +1469,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_child' : guests['child'],
                 'num_infant' : guests['infant'],
                 'cost_total' : costs['total'],
-                'customer' : customer
+                'customer' : customer,
+                'country': emailUser['country'],
+                'postcode': emailUser['postcode'],
+                'phone': emailUser['phone'],
             }
 
             data = utils.internal_booking(request,booking_details)
