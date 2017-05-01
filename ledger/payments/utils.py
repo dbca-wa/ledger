@@ -268,13 +268,31 @@ def addToInterface(oracle_codes,system_name):
 def oracle_parser(date,system,system_name):
     with transaction.atomic():
         try:
+            invoices = [] 
+            invoice_list = []
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
             bpoint_txns = []
-            bpoint_qs = [i.bpoint_transactions.filter(settlement_date=date,response_code=0) for i in Invoice.objects.filter(system=system)]
-            for x in bpoint_qs:
-                if x:
-                    for t in x:
-                        bpoint_txns.append(t)
+            bpoint_txns.extend([x for x in BpointTransaction.objects.filter(settlement_date=start,response_code=0)])
+            bpay_txns.extend([x for x in BpayTransaction.objects.filter(p_date=start, service_code=0)])
+            # Get the required invoices
+            for b in bpoint_txns:
+                if b.crn1 not in invoice_list:
+                    invoice = Invoice.objects.get(reference=b.crn1)
+                    if invoice.system == system:
+                        invoices.append(invoice)
+                        invoice_list.append(b.crn1)
+            for b in bpay_txns:
+                if b.crn not in invoice_list:
+                    invoice = Invoice.objects.get(reference=b.crn)
+                    if invoice.system == system:
+                        invoices.append(invoice)
+                        invoice_list.append(b.crn)
+
+            for invoice in invoices:
+                if invoice.order:
+                    for i in invoice.order.lines.all():
+                        pass
+
             oracle_codes = {}
             parser_codes = {}
             # Bpoint Processing
@@ -351,89 +369,95 @@ def bpoint_oracle_parser(parser,oracle_codes,parser_codes,bpoint_txns):
         print(traceback.print_exc())
         raise e
 
-def update_payments(invoice):
+def update_payments(invoice_reference):
     try:
-        i = invoice
+        i = None
+        try:
+            i = Invoice.objects.get(reference=str(invoice_reference))
+        except Invoice.DoesNotExist:
+            raise ValidationError('The invoice with refererence {} does not exist'.format(invoice_reference))
+            
         # Bpoint Transactions
-        for line in i.order.lines.all():
-            paid_amount = line.paid 
-            refunded_amount = line.refunded
-            amount = line.line_price_incl_tax
-            # Bpoint Amounts
-            for bpoint in i.bpoint_transactions:
-                if bpoint.approved: 
+        if i.order:
+            for line in i.order.lines.all():
+                paid_amount = line.paid 
+                refunded_amount = line.refunded
+                amount = line.line_price_incl_tax
+                # Bpoint Amounts
+                for bpoint in i.bpoint_transactions:
+                    if bpoint.approved: 
+                        if paid_amount < amount:
+                            if bpoint.action == 'payment':
+                                remaining_amount = amount - paid_amount
+                                if bpoint.id in line.payment_details['card'].keys():
+                                    new_amount  = D(line.payment_details['card'][bpoint.id]) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                    line.payment_details['card'][bpoint.id] = str(new_amount)
+                                    paid_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                else:
+                                    new_amount  = D(0.0) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                    line.payment_details['card'][bpoint.id] = str(new_amount)
+                                    paid_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                        if refunded_amount < amount:
+                            if bpoint.action == 'refund':
+                                remaining_amount = amount - refunded_amount
+                                if bpoint.id in line.refund_details['card'].keys():
+                                    new_amount = D(line.refund_details['card'][bpoint.id]) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                    line.refund_details['card'][bpoint.id] = str(new_amount)
+                                    refunded_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                else:
+                                    new_amount = D(0.0) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                    line.refund_details['card'][bpoint.id] = str(new_amount)
+                                    refunded_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                # Bpay Transactions
+                for bpay in i.bpay_transactions:
+                    if bpay.approved:
+                        if paid_amount < amount:
+                            if bpay.p_instruction_code == '05' and bpay.type == '399':
+                                remaining_amount = amount - paid_amount
+                                if bpay.id in line.payment_details['bpay'].keys():
+                                    new_amount  = D(line.payment_details['bpay'][bpay.id]) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                    line.payment_details['bpay'][bpay.id] = str(new_amount)
+                                    paid_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                else:
+                                    new_amount  = D(0.0) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                    line.payment_details['bpay'][bpay.id] = str(new_amount)
+                                    paid_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                        if refunded_amount < amount:
+                            if bpay.p_instruction_code == '25' and bpay.type == '699':
+                                remaining_amount = amount - refunded_amount
+                                if bpay.id in line.refund_details['bpay'].keys():
+                                    new_amount = D(line.refund_details['bpay'][bpay.id]) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                    line.refund_details['bpay'][bpay.id] = str(new_amount)
+                                    refunded_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                else:
+                                    new_amount = D(0.0) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                    line.refund_details['bpay'][bpay.id] = str(new_amount)
+                                    refunded_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                # Cash Transactions
+                for c in i.cash_transactions.all():
                     if paid_amount < amount:
-                        if bpoint.action == 'payment':
+                        if c.type == 'payment':
                             remaining_amount = amount - paid_amount
-                            if bpoint.id in line.payment_details['card'].keys():
-                                new_amount  = D(line.payment_details['card'][bpoint.id]) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
-                                line.payment_details['card'][bpoint.id] = str(new_amount)
-                                paid_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                            if c.id in line.payment_details['cash'].keys():
+                                new_amount  = D(line.payment_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
+                                line.payment_details['cash'][c.id] = str(new_amount)
+                                paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
                             else:
-                                new_amount  = D(0.0) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
-                                line.payment_details['card'][bpoint.id] = str(new_amount)
-                                paid_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                new_amount  = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
+                                line.payment_details['cash'][c.id] = str(new_amount)
+                                paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
                     if refunded_amount < amount:
-                        if bpoint.action == 'refund':
+                        if c.type == 'refund':
                             remaining_amount = amount - refunded_amount
-                            if bpoint.id in line.refund_details['card'].keys():
-                                new_amount = D(line.refund_details['card'][bpoint.id]) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
-                                line.refund_details['card'][bpoint.id] = str(new_amount)
-                                refunded_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                            if c.id in line.refund_details['cash'].keys():
+                                new_amount = D(line.refund_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
+                                line.refund_details['cash'][c.id] = str(new_amount)
+                                refunded_amount += remaining_amount if remaining_amount <= c.amount else c.amount
                             else:
-                                new_amount = D(0.0) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
-                                line.refund_details['card'][bpoint.id] = str(new_amount)
-                                refunded_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
-            # Bpay Transactions
-            for bpay in i.bpay_transactions:
-                if bpay.approved:
-                    if paid_amount < amount:
-                        if bpay.p_instruction_code == '05'and bpay.type == 399:
-                            remaining_amount = amount - paid_amount
-                            if bpay.id in line.payment_details['bpay'].keys():
-                                new_amount  = D(line.payment_details['bpay'][bpay.id]) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-                                line.payment_details['bpay'][bpay.id] = str(new_amount)
-                                paid_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-                            else:
-                                new_amount  = D(0.0) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-                                line.payment_details['bpay'][bpay.id] = str(new_amount)
-                                paid_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-                    if refunded_amount < amount:
-                        if bpay.p_instruction_code == '25'and bpay.type == 699:
-                            remaining_amount = amount - refunded_amount
-                            if bpay.id in line.refund_details['bpay'].keys():
-                                new_amount = D(line.refund_details['bpay'][bpay.id]) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-                                line.refund_details['bpay'][bpay.id] = str(new_amount)
-                                refunded_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-                            else:
-                                new_amount = D(0.0) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-                                line.refund_details['bpay'][bpay.id] = str(new_amount)
-                                refunded_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-            # Cash Transactions
-            for c in i.cash_transactions.all():
-                if paid_amount < amount:
-                    if c.type == 'payment':
-                        remaining_amount = amount - paid_amount
-                        if c.id in line.payment_details['cash'].keys():
-                            new_amount  = D(line.payment_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
-                            line.payment_details['cash'][c.id] = str(new_amount)
-                            paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
-                        else:
-                            new_amount  = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
-                            line.payment_details['cash'][c.id] = str(new_amount)
-                            paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
-                if refunded_amount < amount:
-                    if c.type == 'refund':
-                        remaining_amount = amount - refunded_amount
-                        if c.id in line.refund_details['cash'].keys():
-                            new_amount = D(line.refund_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
-                            line.refund_details['cash'][c.id] = str(new_amount)
-                            refunded_amount += remaining_amount if remaining_amount <= c.amount else c.amount
-                        else:
-                            new_amount = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
-                            line.refund_details['cash'][c.id] = str(new_amount)
-                            refunded_amount += remaining_amount if remaining_amount <= c.amount else c.amount
-            line.save()
+                                new_amount = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
+                                line.refund_details['cash'][c.id] = str(new_amount)
+                                refunded_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                line.save()
     except:
         print(traceback.print_exc())
         raise
