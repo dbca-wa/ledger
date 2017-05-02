@@ -633,7 +633,7 @@ $(function(){
         },
         cardRefund: function(amount){
             payload = {
-                "amount": amount 
+                "amount": amount
             }
             // POST
             $.ajax ({
@@ -680,8 +680,8 @@ $(function(){
                 dataType: "json",
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function(resp){
-                    rf.displaySuccess(resp);
                     rf.refund_form.reset();
+                    $(rf.refund_modal).foundation('close');
                 },
                 error: function(resp){
                     var str = resp.responseText.replace(/[\[\]"]/g,'');
