@@ -405,7 +405,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         """
         # Using preauth here (two-stage model). You could use payment to
         # perform the preauth and capture in one step.  
-        with transaction.atmoic():
+        with transaction.atomic():
             method = self.checkout_session.payment_method()
             if self.checkout_session.free_basket():
                 self.doInvoice(order_number,total)
