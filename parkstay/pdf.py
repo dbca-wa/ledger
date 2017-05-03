@@ -109,7 +109,7 @@ def _create_letter_header_footer(canvas, doc):
     canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
 
 
-def _create_confirmation(confirmation_buffer, booking):
+def create_confirmation(confirmation_buffer, booking):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
     every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_letter_header_footer)
@@ -164,7 +164,7 @@ def test():
     b = Booking.objects.get(id=34901)
 
     t = tempfile.NamedTemporaryFile()
-    _create_confirmation(t, b)
+    create_confirmation(t, b)
     t.flush()
     subprocess.call(['evince', t.name])
     t.close()

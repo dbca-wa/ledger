@@ -91,7 +91,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     ParkEntryRateSerializer,
                                     )
 from parkstay.helpers import is_officer, is_customer
-
+from parkstay import pdf
 
 
 # API Views
@@ -378,6 +378,7 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
+@require_http_methods(['GET'])
 def search_suggest(request, *args, **kwargs):
     entries = []
     for x in Campground.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
@@ -1087,6 +1088,35 @@ def create_booking(request, *args, **kwargs):
         'status': 'success',
         'pk': booking.pk
     }), content_type='application/json')
+
+
+
+@require_http_methods(['GET'])
+def get_confirmation(request, *args, **kwargs):
+    # fetch booking for ID
+    booking_id = kwargs.get('booking_id', None)
+    if (booking_id is None):
+        return HttpResponse('Booking ID not specified', status=400)
+    
+    try:
+        booking = Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return HttpResponse('Booking unavailable', status=403)
+
+    # check permissions
+    if not ((request.user == booking.customer) or (is_officer(request.user))):
+        return HttpResponse('Booking unavailable', status=403)
+
+    # check payment status
+    if (not is_officer(request.user)) and (not booking.paid):
+        return HttpResponse('Booking unavailable', status=403)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="confirmation-PS{}.pdf"'.format(booking_id)
+
+    pdf.create_confirmation(response, booking)
+
+    return response
 
 
 class PromoAreaViewSet(viewsets.ModelViewSet):
