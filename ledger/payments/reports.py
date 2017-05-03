@@ -16,7 +16,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
     parsed_invoices = {}
     date_amounts, banked_date_amounts = [], []
     items = []
-    oracle_codes = {} 
+    oracle_codes = {}
     banked_oracle_codes = {}
     date_format = '%A %d/%m/%y'
 
@@ -37,27 +37,27 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
 
     # Get the required invoices
     for e in eftpos:
-        if e.invoice.id not in invoice_list:
+        if e.invoice.reference not in invoice_list:
             if e.invoice.system == system:
                 invoices.append(e.invoice)
-                invoice_list.append(e.invoice.reference)
+                invoice_list.append(str(e.invoice.reference))
     for b in banked_cash:
-        if b.invoice.id not in invoice_list:
+        if b.invoice.reference not in invoice_list:
             if b.invoice.system == system:
                 invoices.append(b.invoice)
-                invoice_list.append(b.invoice.reference)
+                invoice_list.append(str(b.invoice.reference))
     for b in bpoint:
         if b.crn1 not in invoice_list:
             invoice = Invoice.objects.get(reference=b.crn1)
             if invoice.system == system:
                 invoices.append(invoice)
-                invoice_list.append(b.crn1)
+                invoice_list.append(str(b.crn1))
     for b in bpay:
         if b.crn not in invoice_list:
             invoice = Invoice.objects.get(reference=b.crn)
             if invoice.system == system:
                 invoices.append(invoice)
-                invoice_list.append(b.crn)
+                invoice_list.append(str(b.crn))
 
 
     if invoices:
@@ -168,7 +168,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                                     'money_order': D('0.0')
                                 }
                             })
-        
+
         for item in items:
             price = D(item.get('item').line_price_before_discounts_incl_tax)
             code = item.get('item').oracle_code
@@ -186,7 +186,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                     index += 1
 
                 for k,v in payment_details["cash"].items():
-                    c = banked_cash.filter(id=int(k))[0]
+                    c = CashTransaction.objects.get(id=int(k))
                     source = c.source
                     if source in ['cash','cheque','money_order']:
                         if c.created.strftime(date_format) == d.get('date'):
@@ -195,11 +195,11 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                             banked_date_amounts[date_amount_index]['amounts'][source] += D(v)
 
                 for k,v in refund_details["cash"].items():
-                    c = banked_cash.filter(id=int(k))[0]
+                    c = CashTransaction.objects.get(id=int(k))
                     source = c.source
                     if source in ['cash','cheque','money_order']:
                         if c.created.strftime(date_format) == d.get('date'):
-                            banked_oracle_codes[code][date_amount_index]['amounts'][source] -= D(v) 
+                            banked_oracle_codes[code][date_amount_index]['amounts'][source] -= D(v)
                             item[source] -= D(v)
                             banked_date_amounts[date_amount_index]['amounts'][source] -= D(v)
 
@@ -215,50 +215,50 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 for k,v in payment_details["cash"].items():
                     c = CashTransaction.objects.get(id=int(k))
                     source = c.source
-                    if source == 'eftpos': 
+                    if source == 'eftpos':
                         if c.created.strftime(date_format) == d.get('date'):
-                            oracle_codes[code][date_amount_index]['amounts']['eftpos'] += D(v) 
+                            oracle_codes[code][date_amount_index]['amounts']['eftpos'] += D(v)
                             item['eftpos'] += D(v)
                             date_amounts[date_amount_index]['amounts']['eftpos'] += D(v)
 
                 for k,v in refund_details["cash"].items():
                     c = CashTransaction.objects.get(id=int(k))
                     source = c.source
-                    if source == 'eftpos': 
+                    if source == 'eftpos':
                         if c.created.strftime(date_format) == d.get('date'):
-                            oracle_codes[code][date_amount_index]['amounts']['eftpos'] -= D(v) 
+                            oracle_codes[code][date_amount_index]['amounts']['eftpos'] -= D(v)
                             item['eftpos'] -= D(v)
-                            date_amounts[date_amount_index]['amounts']['eftpos'] -= D(v) 
+                            date_amounts[date_amount_index]['amounts']['eftpos'] -= D(v)
 
                 # Card
                 for k,v in payment_details['card'].items():
                     c = BpointTransaction.objects.get(id=int(k))
                     if c.settlement_date.strftime(date_format) == d.get('date') and c.approved:
-                        oracle_codes[code][date_amount_index]['amounts']['card'] += D(v) 
+                        oracle_codes[code][date_amount_index]['amounts']['card'] += D(v)
                         item['card'] += D(v)
-                        date_amounts[date_amount_index]['amounts']['card'] += D(v) 
+                        date_amounts[date_amount_index]['amounts']['card'] += D(v)
 
                 for k,v in refund_details['card'].items():
                     c = BpointTransaction.objects.get(id=int(k))
                     if c.settlement_date.strftime(date_format) == d.get('date') and c.approved:
-                        oracle_codes[code][date_amount_index]['amounts']['card'] -= D(v) 
+                        oracle_codes[code][date_amount_index]['amounts']['card'] -= D(v)
                         item['card'] -= D(v)
-                        date_amounts[date_amount_index]['amounts']['card'] -= D(v) 
+                        date_amounts[date_amount_index]['amounts']['card'] -= D(v)
 
                 # BPAY
                 for k,v in payment_details['bpay'].items():
                     b = BpayTransaction.objects.get(id=int(k))
                     if b.approved and b.p_date.strftime(date_format) == d.get('date'):
-                        oracle_codes[code][date_amount_index]['amounts']['bpay'] += D(v) 
+                        oracle_codes[code][date_amount_index]['amounts']['bpay'] += D(v)
                         item['bpay'] += D(v)
-                        date_amounts[date_amount_index]['amounts']['bpay'] += D(v) 
-                        
+                        date_amounts[date_amount_index]['amounts']['bpay'] += D(v)
+
                 for k,v in refund_details['bpay'].items():
                     b = BpayTransaction.objects.get(id=int(k))
                     if b.approved and b.p_date.strftime(date_format) == d.get('date'):
-                        oracle_codes[code][date_amount_index]['amounts']['bpay'] -= D(v) 
+                        oracle_codes[code][date_amount_index]['amounts']['bpay'] -= D(v)
                         item['bpay'] -= D(v)
-                        date_amounts[date_amount_index]['amounts']['bpay'] -= D(v) 
+                        date_amounts[date_amount_index]['amounts']['bpay'] -= D(v)
 
         for code in oracle_codes:
             item_str = ''
