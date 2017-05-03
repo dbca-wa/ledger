@@ -22,7 +22,6 @@ class Line(CoreAbstractLine):
     @property
     def paid(self):
         amount = D(0.0)
-        print type(self.payment_details)
         for k,v in self.payment_details.items():
             for i,a in v.items():
                 amount += D(a)

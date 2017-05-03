@@ -18,7 +18,7 @@ from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollectio
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
-from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check
+from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check,update_payments
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv
 
@@ -257,6 +257,8 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
             serializer = AmountSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             refund = instance.refund(serializer.validated_data['amount']) 
+            invoice = Invoice.objects.get(reference=instance.crn1) 
+            update_payments(invoice.reference)
             serializer = BpointTransactionSerializer(refund)
             return Response(serializer.data,status=http_status)
         except serializers.ValidationError:
@@ -479,6 +481,7 @@ class CashViewSet(viewsets.ModelViewSet):
             if not serializer.validated_data.get('amount'):
                 serializer.validated_data['amount'] = invoice.amount
             txn = serializer.save()
+            update_payments(invoice.reference)
             http_status = status.HTTP_201_CREATED
             serializer = CashSerializer(txn)
             return Response(serializer.data,status=http_status)
