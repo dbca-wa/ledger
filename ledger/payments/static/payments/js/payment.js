@@ -633,7 +633,8 @@ $(function(){
         },
         cardRefund: function(amount){
             payload = {
-                "amount": amount
+                "amount": amount,
+                "details": $("#refund_details > textarea[name='refund_details']").val()
             }
             // POST
             $.ajax ({
@@ -665,6 +666,7 @@ $(function(){
             payload = {
                 "invoice": invoice,
                 "amount": $('#refundAmount').val(),
+                "details": $("#refund_details > textarea[name='refund_details']").val(),
                 "type": 'refund',
                 "source": 'cash'
             }
