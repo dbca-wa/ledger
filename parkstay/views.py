@@ -309,7 +309,7 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/my_bookings.html'
 
     def get(self, request, *args, **kwargs):
-        bookings = Booking.objects.filter(customer=request.user, booking_type__in=(0, 1))
+        bookings = Booking.objects.filter(customer=request.user, booking_type__in=(0, 1), is_canceled=False)
         today = timezone.now().date()
 
         context = {
