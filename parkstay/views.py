@@ -26,6 +26,7 @@ from parkstay.models import (Campground,
                                 CampsiteRate,
                                 ParkEntryRate
                                 )
+from parkstay import emails
 from ledger.accounts.models import EmailUser, Address
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
@@ -286,8 +287,11 @@ class BookingSuccessView(TemplateView):
             booking.save()
 
             utils.delete_session_booking(request.session)
-
             request.session['ps_last_booking'] = booking.id
+            
+            # for fully paid bookings, fire off confirmation email
+            if booking.paid:
+                emails.send_booking_confirmation(booking)
 
         except Exception as e:
             if ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
