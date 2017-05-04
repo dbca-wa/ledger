@@ -1104,7 +1104,7 @@ def get_confirmation(request, *args, **kwargs):
         return HttpResponse('Booking unavailable', status=403)
 
     # check permissions
-    if not ((request.user == booking.customer) or (is_officer(request.user))):
+    if not ((request.user == booking.customer) or is_officer(request.user) or (booking.id == request.session.get('ps_last_booking', None))):
         return HttpResponse('Booking unavailable', status=403)
 
     # check payment status

@@ -276,18 +276,24 @@ class BookingSuccessView(TemplateView):
         try:
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
+
+            # FIXME: replace with server side notify_url callback
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+            
+            # set booking to be permanent fixture
+            booking.booking_type = 1  # internet booking
+            booking.expiry_time = None
+            booking.save()
+
+            utils.delete_session_booking(request.session)
+
+            request.session['ps_last_booking'] = booking.id
+
         except Exception as e:
-            return redirect('home')
-
-        # FIXME: replace with server side notify_url callback
-        book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-        
-        # set booking to be permanent fixture
-        booking.booking_type = 1  # internet booking
-        booking.expiry_time = None
-        booking.save()
-
-        utils.delete_session_booking(request.session)
+            if ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
+                booking = Booking.objects.get(id=request.session['ps_last_booking'])
+            else:
+                return redirect('home')
 
         context = {
             'booking': booking
