@@ -843,7 +843,7 @@ export default {
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
-                layer: 'dpaw:mapbox_outdoors',
+                layer: 'public:mapbox-streets',
                 matrixSet: this.matrixSet,
                 projection: this.projection,
                 tileGrid: tileGrid
@@ -855,7 +855,7 @@ export default {
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
-                layer: 'cddp:dpaw_tenure',
+                layer: 'public:dpaw_lands_and_waters',
                 matrixSet: this.matrixSet,
                 projection: this.projection,
                 tileGrid: tileGrid
