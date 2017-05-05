@@ -173,7 +173,7 @@ export default {
                     data.details = vm.details
                 }
                 $.ajax({
-                    url:"/api/campgrounds/bulk_close.json",
+                    url:api_endpoints.bulk_close,
                     method: 'POST',
                     xhrFields: { withCredentials:true },
                     data: data,
