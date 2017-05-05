@@ -356,6 +356,7 @@ export default {
         },
         updateURL: function () {
             // update browser history
+            var vm = this;
             var newHist = window.location.href.split('?')[0] +'?'+ $.param({
                 site_id: vm.parkstayGroundId,
                 arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
