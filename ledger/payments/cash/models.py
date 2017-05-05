@@ -105,7 +105,7 @@ class CashTransaction(models.Model):
     district = models.CharField(choices=DISTRICT_CHOICES,max_length=3, null=True, blank=True)
     external = models.BooleanField(default=False)
     receipt = models.CharField(max_length=128,null=True,blank=True)
-
+    details = models.TextField(null=True, blank=True)
     class Meta:
         app_label = 'payments'
 
