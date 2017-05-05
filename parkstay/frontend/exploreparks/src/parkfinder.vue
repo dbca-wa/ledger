@@ -748,6 +748,7 @@ export default {
         }).on('changeDate', function (ev) {
             //console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new Event('change'));
+        }).on('change', function (ev) {
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -771,6 +772,7 @@ export default {
         }).on('changeDate', function (ev) {
             //console.log('departureEl changeDate');
             ev.target.dispatchEvent(new Event('change'));
+        }).on('change', function (ev) {
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
         }).on('keydown', function (ev) {

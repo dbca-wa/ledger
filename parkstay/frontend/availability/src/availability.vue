@@ -354,9 +354,25 @@ export default {
                 }
             });
         },
+        updateURL: function () {
+            // update browser history
+            var newHist = window.location.href.split('?')[0] +'?'+ $.param({
+                site_id: vm.parkstayGroundId,
+                arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                gear_type: vm.gearType,
+                num_adult: vm.numAdults,
+                num_child: vm.numChildren,
+                num_concession: vm.numConcessions,
+                num_infant: vm.numInfants
+            });
+            history.replaceState('', '', newHist);
+        },
         update: function() {
             var vm = this;
+
             debounce(function() {
+                vm.updateURL();
                 var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
                     arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                     departure: moment(vm.departureDate).format('YYYY/MM/DD'),
@@ -421,6 +437,8 @@ export default {
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new Event('change'));
+        }).on('change', function (ev) {
+            console.log('arrivalEl change');
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -432,7 +450,6 @@ export default {
             vm.arrivalDate = moment(vm.arrivalData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
             vm.sites = [];
-            //vm.update();
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
                 ev.target.dispatchEvent(new Event('change'));
@@ -448,11 +465,12 @@ export default {
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
             ev.target.dispatchEvent(new Event('change'));
+        }).on('change', function (ev) {
+            console.log('departureEl change');
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
             vm.sites = [];
-            //vm.update();
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
                 ev.target.dispatchEvent(new Event('change'));
