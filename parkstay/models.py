@@ -949,7 +949,7 @@ class Booking(models.Model):
             parts = payment_status.split('_')
             for p in parts:
                 status += '{} '.format(p.title())
-            status.strip()
+            status = status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
                     return 'Canceled - Payment ({})'.format(status)
