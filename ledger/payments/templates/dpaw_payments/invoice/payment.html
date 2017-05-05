@@ -226,16 +226,14 @@
                                                     <option value="money_order">Money Order</option>
                                                 </select>
                                             </label>
-                                        <input id="other_external" type="checkbox" aria-describeby="externalHelp" /><label for="other_external">External</label>
-                                        <p class="help-text" id="externalHelp">If the payment is made outside Kensington select this option.</p>
-                                        <fieldset id="location_fieldset" class="hide">
-                                            <legend>External Location Details</legend>
+                                        <fieldset id="location_fieldset">
+                                            <legend>Location Details</legend>
                                             <div class="row">
                                                 <div class="columns small-6">
                                                     <label>
                                                             Region
                                                             <select id="regions">
-                                                                <option selected="selected" value="">---- Select Region ----</option>
+                                                                <option selected="selected" value="">Kensington</option>
                                                                 {% for region in regions %}
                                                                 <option value="{{region.0}}">{{region.1}}</option>
                                                                 {% endfor %}

@@ -143,15 +143,6 @@ $(function(){
         var modal = $('#refundModal');
         modal.foundation('open');
     });
-    // Display for the external cash payment feature
-    $('#other_external').click('on',function(){
-        if (this.checked) {
-            $location_fieldset.removeClass('hide');
-        }
-        else{
-            $location_fieldset.addClass('hide');
-        }
-    });
     // Display for the stored card feature
     $('#use_stored').click('on',function(){
         if (this.checked) {
@@ -288,7 +279,7 @@ $(function(){
             $.get('/ledger/payments/api/regions/'+region+'.json',function(resp){
                 var districts = resp.districts;
                 $('#districts').html("");
-                if (districts.length > 0) {
+                if (districts) {
                     $('#districts').append('<option value="">---- Select District ----</option>');
                     $(districts).each(function(i){
                         $('#districts').append('<option value="'+districts[i].code+'">'+districts[i].name+'</option>');
@@ -332,14 +323,14 @@ $(function(){
             payload["orig_txn"] = invoice;
         }
 
-        // Check if the external checkbox is selected
-        if ($('#other_external').is(':checked')){
+        // Check if the external
+        var pay_region = $('#regions').val().trim();
+        if (pay_region) {
             payload['external'] = true;
             payload['region'] = $('#regions').val();
             payload['district'] = $('#districts').val();
-            payload['receipt'] = $('#receipt_number').val();
         }
-
+        payload['receipt'] = $('#receipt_number').val();
         // POST
         $.ajax ({
             beforeSend: function(xhrObj){
