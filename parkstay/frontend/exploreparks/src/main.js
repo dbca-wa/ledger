@@ -10,6 +10,7 @@ import VuePaginate from 'vue-paginate';
 import ParkFinder from './parkfinder.vue';
 
 require('custom-event-polyfill');
+require('ie-array-find-polyfill');
 
 Vue.use(VuePaginate);
 

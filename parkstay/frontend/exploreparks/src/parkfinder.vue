@@ -473,10 +473,10 @@ export default {
             },
             dateSetFirstTime: true,
             sitesOnline: true,
-            sitesOnlineIcon: require('./assets/pin.svg'),
             sitesInPerson: true,
-            sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAlt: true,
+            sitesOnlineIcon: require('./assets/pin.svg'),
+            sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAltIcon: require('./assets/pin_alt.svg'),
             locationIcon: require('./assets/location.svg'),
             paginate: ['filterResults']
@@ -940,6 +940,7 @@ export default {
                     style = new ol.style.Style({
                         image: new ol.style.Icon({
                             src: icon,
+                            imgSize: [32, 32],
                             snapToPixel: true,
                             anchor: [0.5, 1.0],
                             anchorXUnits: 'fraction',
