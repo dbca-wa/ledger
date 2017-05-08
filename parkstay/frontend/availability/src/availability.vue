@@ -437,7 +437,7 @@ export default {
             }
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
-            ev.target.dispatchEvent(new Event('change'));
+            ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             console.log('arrivalEl change');
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
@@ -453,7 +453,7 @@ export default {
             vm.sites = [];
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new Event('change'));
+                ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
 
@@ -465,7 +465,7 @@ export default {
             }
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
-            ev.target.dispatchEvent(new Event('change'));
+            ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             console.log('departureEl change');
             vm.departureData.hide();
@@ -474,7 +474,7 @@ export default {
             vm.sites = [];
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new Event('change'));
+                ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
 

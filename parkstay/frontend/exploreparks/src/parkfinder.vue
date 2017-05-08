@@ -747,7 +747,7 @@ export default {
             }
         }).on('changeDate', function (ev) {
             //console.log('arrivalEl changeDate');
-            ev.target.dispatchEvent(new Event('change'));
+            ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
@@ -760,7 +760,7 @@ export default {
             vm.arrivalDate = moment(vm.arrivalData.date);
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new Event('change'));
+                ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
 
@@ -771,13 +771,13 @@ export default {
             }
         }).on('changeDate', function (ev) {
             //console.log('departureEl changeDate');
-            ev.target.dispatchEvent(new Event('change'));
+            ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new Event('change'));
+                ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
 

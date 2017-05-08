@@ -9,6 +9,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "custom-event-polyfill": "^0.3.0",
     "debounce": "^1.0.0",
     "foundation-datepicker": "^1.5.5",
     "foundation-sites": "^6.3.1",

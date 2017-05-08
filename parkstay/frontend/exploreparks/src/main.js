@@ -9,6 +9,8 @@ import Vue from 'vue';
 import VuePaginate from 'vue-paginate';
 import ParkFinder from './parkfinder.vue';
 
+require('custom-event-polyfill');
+
 Vue.use(VuePaginate);
 
 global.parkfinder = new Vue(ParkFinder);
