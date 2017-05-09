@@ -17,7 +17,7 @@ from six.moves.urllib.parse import urlparse
 #
 from ledger.basket.models import Basket
 from ledger.catalogue.models import Product
-from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction 
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode 
 from oscar.core.loading import get_class
 from oscar.apps.voucher.models import Voucher
 import logging
@@ -252,20 +252,26 @@ def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=Fals
         raise e
 
 def addToInterface(oracle_codes,system_name):
-    date = datetime.datetime.now().strftime('%Y-%m-%d')
-    for k,v in oracle_codes.items():
-        if v != 0:
-            OracleInterface.objects.create(
-                receipt_number = 0,
-                receipt_date = date,
-                activity_name = k,
-                amount = v,
-                customer_name = system_name,
-                description = k,
-                comments = '{} GST/{}'.format(k,date),
-                status = 'NEW',
-                status_date = date
-            )
+    try:
+        date = datetime.datetime.now().strftime('%Y-%m-%d')
+        for k,v in oracle_codes.items():
+            if v != 0:
+                found = OracleAccountCode.objects.filter(active_receivables_activities=k)
+                if not found:
+                    raise ValidationError('{} is not a valid account code'.format(k)) 
+                OracleInterface.objects.create(
+                    receipt_number = 0,
+                    receipt_date = date,
+                    activity_name = k,
+                    amount = v,
+                    customer_name = system_name,
+                    description = k,
+                    comments = '{} GST/{}'.format(k,date),
+                    status = 'NEW',
+                    status_date = date
+                )
+    except:
+        raise
 def oracle_parser(date,system,system_name):
     with transaction.atomic():
         try:
