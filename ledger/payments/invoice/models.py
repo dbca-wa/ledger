@@ -106,6 +106,10 @@ class Invoice(models.Model):
         return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
 
     @property
+    def refund_amount(self):
+        return self.__calculate_total_refunds()
+
+    @property
     def balance(self):
         amount = decimal.Decimal(self.amount - self.payment_amount)
         if amount < 0:

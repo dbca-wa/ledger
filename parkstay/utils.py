@@ -407,7 +407,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                         'ledger_description': 'Park Entry - {}'.format(k),
                         'quantity': v.count(),
                         'price_incl_tax': price,
-                        'oracle_code': settings.PARK_ENTRY_CODE 
+                        'oracle_code': booking.campground.park.oracle_code
                     })
                 else:
                     price =  Decimal(park_entry_rate[k]) * v.count()

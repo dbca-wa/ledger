@@ -2,11 +2,11 @@ import requests
 import datetime
 import traceback
 import json
-import csv 
+import csv
 from six.moves import StringIO
 from wsgiref.util import FileWrapper
 from decimal import Decimal as D
-from django.core.mail import EmailMessage 
+from django.core.mail import EmailMessage
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -103,7 +103,7 @@ def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
             if owner.baskets.filter(status='Open'):
                 old_basket = owner.baskets.get(status='Open')
 
-        # Use the previously open basket if its present or create a new one 
+        # Use the previously open basket if its present or create a new one
         if old_basket:
             if system.lower() == old_basket.system.lower() or not old_basket.system:
                 basket = old_basket
@@ -113,7 +113,7 @@ def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
                 raise ValidationError('You have a basket that is not completed in system {}'.format(old_basket.system))
         else:
             basket = Basket()
-        # Set the owner and strategy being used to create the basket    
+        # Set the owner and strategy being used to create the basket
         if isinstance(owner, User):
             basket.owner = owner
         basket.system = system
@@ -165,8 +165,8 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
             # Check if owner has previous baskets
             if owner.baskets.filter(status='Open'):
                 old_basket = owner.baskets.get(status='Open')
-        
-        # Use the previously open basket if its present or create a new one    
+
+        # Use the previously open basket if its present or create a new one
         if old_basket:
             if system.lower() == old_basket.system.lower() or not old_basket.system:
                 basket = old_basket
@@ -176,7 +176,7 @@ def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True)
                 raise ValidationError('You have a basket that is not completed in system {}'.format(old_basket.system))
         else:
             basket = Basket()
-        # Set the owner and strategy being used to create the basket    
+        # Set the owner and strategy being used to create the basket
         if isinstance(owner, User):
             basket.owner = owner
         basket.system = system
@@ -230,7 +230,7 @@ def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=Fals
                 recipients = sys.recipients.all()
             except OracleInterfaceSystem.DoesNotExist:
                 recipients = []
-                
+
             email = EmailMessage(
                 'Oracle Interface Summary for {} as at {}'.format(system_name,dt),
                 'Oracle Interface Summary File for {} as at {}'.format(system_name,dt),
@@ -245,7 +245,7 @@ def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=Fals
                 settings.DEFAULT_FROM_EMAIL,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
-        
+
         email.send()
     except Exception as e:
         print(traceback.print_exc())
@@ -275,7 +275,7 @@ def addToInterface(oracle_codes,system_name):
 def oracle_parser(date,system,system_name):
     with transaction.atomic():
         try:
-            invoices = [] 
+            invoices = []
             invoice_list = []
             oracle_codes = {}
             parser_codes = {}
@@ -300,7 +300,7 @@ def oracle_parser(date,system,system_name):
             for invoice in invoices:
                 if invoice.order:
                     if invoice.reference not in parser_codes.keys():
-                        parser_codes[invoice.reference] = {} 
+                        parser_codes[invoice.reference] = {}
                     # Go through the items
                     items = invoice.order.lines.all()
                     items_codes = [{'id':i.id,'code':i.oracle_code} for i in items]
@@ -312,7 +312,7 @@ def oracle_parser(date,system,system_name):
                         if i['id'] not in parser_codes[invoice.reference].keys():
                             parser_codes[invoice.reference] = {k:{'code':v,'payment': D('0.0'),'refund': D('0.0')}}
 
-                    # Start passing items in the invoice 
+                    # Start passing items in the invoice
                     for i in items:
                         code = i.oracle_code
                         item_id = i.id
@@ -367,10 +367,10 @@ def oracle_parser(date,system,system_name):
                         can_add = True
                 if can_add:
                     OracleParserInvoice.objects.create(reference=k,details=json.dumps(v),parser=op)
-            # Add items to oracle interface table 
+            # Add items to oracle interface table
             addToInterface(oracle_codes,system_name)
             # Send an email with all the activity codes entered into the interface table
-            sendInterfaceParserEmail(oracle_codes,system_name,system)  
+            sendInterfaceParserEmail(oracle_codes,system_name,system)
             return oracle_codes
         except Exception as e:
             error = traceback.format_exc()
@@ -384,87 +384,104 @@ def update_payments(invoice_reference):
             i = Invoice.objects.get(reference=str(invoice_reference))
         except Invoice.DoesNotExist:
             raise ValidationError('The invoice with refererence {} does not exist'.format(invoice_reference))
-            
+        refunded = D(0.0)
+        paid = D(0.0)
         # Bpoint Transactions
         if i.order:
             for line in i.order.lines.all():
-                paid_amount = line.paid 
+                paid_amount = line.paid
                 refunded_amount = line.refunded
                 amount = line.line_price_incl_tax
+                total_paid = i.payment_amount
+                total_refund = i.refund_amount
+                paid += paid_amount
+                refunded += refunded_amount
                 # Bpoint Amounts
                 for bpoint in i.bpoint_transactions:
-                    if bpoint.approved: 
-                        if paid_amount < amount:
+                    if bpoint.approved:
+                        if paid_amount < amount and paid < total_paid:
                             if bpoint.action == 'payment':
                                 remaining_amount = amount - paid_amount
                                 if bpoint.id in line.payment_details['card'].keys():
                                     new_amount  = D(line.payment_details['card'][bpoint.id]) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
                                     line.payment_details['card'][bpoint.id] = str(new_amount)
                                     paid_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                    paid += paid_amount
                                 else:
                                     new_amount  = D(0.0) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
                                     line.payment_details['card'][bpoint.id] = str(new_amount)
                                     paid_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
-                        if refunded_amount < amount:
+                                    paid += paid_amount
+                        if refunded_amount < amount and refunded < total_refund:
                             if bpoint.action == 'refund':
                                 remaining_amount = amount - refunded_amount
                                 if bpoint.id in line.refund_details['card'].keys():
                                     new_amount = D(line.refund_details['card'][bpoint.id]) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
                                     line.refund_details['card'][bpoint.id] = str(new_amount)
                                     refunded_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                    refunded += refunded_amount
                                 else:
                                     new_amount = D(0.0) + remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
                                     line.refund_details['card'][bpoint.id] = str(new_amount)
                                     refunded_amount += remaining_amount if remaining_amount <= bpoint.amount else bpoint.amount
+                                    refunded += refunded_amount
                 # Bpay Transactions
                 for bpay in i.bpay_transactions:
                     if bpay.approved:
-                        if paid_amount < amount:
+                        if paid_amount < amount and paid < total_paid:
                             if bpay.p_instruction_code == '05' and bpay.type == '399':
                                 remaining_amount = amount - paid_amount
                                 if bpay.id in line.payment_details['bpay'].keys():
                                     new_amount  = D(line.payment_details['bpay'][bpay.id]) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
                                     line.payment_details['bpay'][bpay.id] = str(new_amount)
                                     paid_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                    paid += paid_amount
                                 else:
                                     new_amount  = D(0.0) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
                                     line.payment_details['bpay'][bpay.id] = str(new_amount)
                                     paid_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
-                        if refunded_amount < amount:
+                                    paid += paid_amount
+                        if refunded_amount < amount and refunded < total_refund:
                             if bpay.p_instruction_code == '25' and bpay.type == '699':
                                 remaining_amount = amount - refunded_amount
                                 if bpay.id in line.refund_details['bpay'].keys():
                                     new_amount = D(line.refund_details['bpay'][bpay.id]) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
                                     line.refund_details['bpay'][bpay.id] = str(new_amount)
                                     refunded_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                    refunded += refunded_amount
                                 else:
                                     new_amount = D(0.0) + remaining_amount if remaining_amount <= bpay.amount else bpay.amount
                                     line.refund_details['bpay'][bpay.id] = str(new_amount)
                                     refunded_amount += remaining_amount if remaining_amount <= bpay.amount else bpay.amount
+                                    refunded += refunded_amount
                 # Cash Transactions
                 for c in i.cash_transactions.all():
-                    if paid_amount < amount:
+                    if paid_amount < amount and paid < total_paid:
                         if c.type == 'payment':
                             remaining_amount = amount - paid_amount
                             if c.id in line.payment_details['cash'].keys():
                                 new_amount  = D(line.payment_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
                                 line.payment_details['cash'][c.id] = str(new_amount)
                                 paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                                paid += paid_amount
                             else:
                                 new_amount  = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
                                 line.payment_details['cash'][c.id] = str(new_amount)
                                 paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
-                    if refunded_amount < amount:
+                                paid += paid_amount
+                    if refunded_amount < amount and refunded < total_refund:
                         if c.type == 'refund':
                             remaining_amount = amount - refunded_amount
                             if c.id in line.refund_details['cash'].keys():
                                 new_amount = D(line.refund_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
                                 line.refund_details['cash'][c.id] = str(new_amount)
                                 refunded_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                                refunded += refunded_amount
                             else:
                                 new_amount = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
                                 line.refund_details['cash'][c.id] = str(new_amount)
                                 refunded_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                                refunded += refunded_amount
                 line.save()
     except:
         print(traceback.print_exc())

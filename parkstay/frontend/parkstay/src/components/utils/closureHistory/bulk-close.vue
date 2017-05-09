@@ -128,7 +128,8 @@ export default {
                 vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
             });
             vm.closeEndPicker.on('dp.change', function(e){
-                vm.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+                var date = vm.closeEndPicker.data('DateTimePicker').date();
+                vm.range_end = (date) ? date.format('DD/MM/YYYY') : null;
             });
             vm.addFormValidations();
             vm.fetchCampgrounds();
@@ -173,7 +174,7 @@ export default {
                     data.details = vm.details
                 }
                 $.ajax({
-                    url:"/api/campgrounds/bulk_close.json",
+                    url:api_endpoints.bulk_close,
                     method: 'POST',
                     xhrFields: { withCredentials:true },
                     data: data,
