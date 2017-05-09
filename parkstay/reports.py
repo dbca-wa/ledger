@@ -4,8 +4,8 @@ from six.moves import StringIO
 from wsgiref.util import FileWrapper
 from django.core.mail import EmailMessage 
 from django.conf import settings
-from parkstay.models import Booking
-from ledger.payments.models import OracleParser,OracleParserInvoice 
+from parkstay.models import Booking, BookingInvoice
+from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction 
 
 
 def outstanding_bookings():
@@ -41,11 +41,42 @@ def outstanding_bookings():
 
 def booking_refunds(start,end):
     try:
-        parsers = OracleParser.objects.filter(date_parsed__gte=start,date_parsed__lte=end)
-        invoice_dict = {}
-        for p in parsers:
-            for i in p.invoices:
-                if p not in invoice_dict.keys():
-                    pass 
+        bpoint, cash = [], []
+        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end,action='refund',response_code=0)])
+        cash.extend([x for x in CashTransaction.objects.filter(created__gte=start, created__lte=end,type='refund')])
+
+        strIO = StringIO()
+        fieldnames = ['Confirmation Number', 'Name', 'Type','Amount','Oracle Code']
+        writer = csv.writer(strIO)
+        writer.writerow(fieldnames)
+
+        # Get the required invoices
+        for e in cash:
+            booking, invoice = None, None
+            if e.invoice.system == '0019':
+                try:
+                    booking = BookingInvoice.objects.get(invoice_reference=e.invoice.reference).booking
+                    invoice = e.invoice
+                except BookingInvoice.DoesNotExist:
+                    raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
+                for line in invoice.order.lines.all():
+                    for k,v in line.refund_details['cash'].items():
+                        if k == str(e.id) and booking.customer:
+                            writer.writerow([booking.confirmation_number,booking.customer.get_full_name(),'Manual',v,line.oracle_code])
+        for b in bpoint:
+            invoice = Invoice.objects.get(reference=b.crn1)
+            if invoice.system == '0019':
+                try:
+                    booking = BookingInvoice.objects.get(invoice_reference=e.invoice.reference).booking
+                except BookingInvoice.DoesNotExist:
+                    raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
+                for line in invoice.order.lines.all():
+                    for k,v in line.refund_details['card'].items():
+                        if k == str(b.id) and booking.customer:
+                            writer.writerow([booking.confirmation_number,booking.customer.get_full_name(),'Card',v,line.oracle_code])
+
+        strIO.flush()
+        strIO.seek(0)
+        return strIO
     except:
         raise

@@ -115,3 +115,7 @@ class OracleInterfaceRecipientInline(admin.TabularInline):
 class OracleInterfaceSystemAdmin(admin.ModelAdmin):
     list_display = ('system_name','system_id')
     inlines = [OracleInterfaceRecipientInline,] 
+
+@admin.register(models.OracleAccountCode)
+class OracleAccountCode(admin.ModelAdmin):
+    list_display = ('active_receivables_activities',)
