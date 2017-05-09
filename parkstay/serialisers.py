@@ -636,3 +636,7 @@ class BulkPricingSerializer(serializers.Serializer):
         except PriceReason.DoesNotExist:
             raise
         return val
+
+class ReportSerializer(serializers.Serializer):
+    start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
+    end = serializers.DateTimeField(input_formats=['%d/%m/%Y'])

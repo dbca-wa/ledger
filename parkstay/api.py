@@ -2,6 +2,7 @@ import traceback
 import base64
 import geojson
 from six.moves.urllib.parse import urlparse
+from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
 from django.db import transaction
 from django.http import HttpResponse
@@ -89,8 +90,10 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     UsersSerializer,
                                     AccountsAddressSerializer,
                                     ParkEntryRateSerializer,
+                                    ReportSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
+from parkstay import reports 
 
 
 
@@ -1731,3 +1734,32 @@ class BulkPricingView(generics.CreateAPIView):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
+
+class BookingRefundsReportView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self,request,format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            #parse and validate data
+            report = None
+            data = {
+                "start":request.GET.get('start'),
+                "end":request.GET.get('end'),
+            }
+            serializer = ReportSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'Booking Refunds Report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
+            # Generate Report
+            report = reports.booking_refunds(serializer.validated_data['start'],serializer.validated_data['end'])
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
