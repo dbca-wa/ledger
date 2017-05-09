@@ -39,7 +39,7 @@
                                     <div class="form-group">
                                       <label for="">Start Date</label>
                                       <div class="input-group date"  id="accountsDateStartPicker">
-                                          <input type="text" class="form-control" name="start" placeholder="YYYY-MM-DD" required >
+                                          <input type="text" class="form-control" name="start" placeholder="DD/MM/YYYY" required >
                                           <span class="input-group-addon">
                                               <span class="glyphicon glyphicon-calendar"></span>
                                           </span>
@@ -50,7 +50,7 @@
                                     <div class="form-group">
                                       <label for="">End Date</label>
                                       <div class="input-group date" id="accountsDateEndPicker">
-                                          <input type="text" class="form-control" name="end"  placeholder="YYYY-MM-DD" required>
+                                          <input type="text" class="form-control" name="end"  placeholder="DD/MM/YYYY" required>
                                           <span class="input-group-addon">
                                               <span class="glyphicon glyphicon-calendar"></span>
                                           </span>
@@ -63,7 +63,7 @@
                                     <div class="form-group">
                                       <label for="">Bank Start Date</label>
                                       <div class="input-group date" id="flatDateStartPicker">
-                                          <input type="text" class="form-control" name="banked_start"  placeholder="YYYY-MM-DD" required>
+                                          <input type="text" class="form-control" name="banked_start"  placeholder="DD/MM/YYYY" required>
                                           <span class="input-group-addon">
                                               <span class="glyphicon glyphicon-calendar"></span>
                                           </span>
@@ -74,7 +74,7 @@
                                     <div class="form-group">
                                       <label for="">Bank End Date</label>
                                       <div class="input-group date" id="flatDateEndPicker">
-                                          <input type="text" class="form-control" name="banked_end"  placeholder="YYYY-MM-DD" required>
+                                          <input type="text" class="form-control" name="banked_end"  placeholder="DD/MM/YYYY" required>
                                           <span class="input-group-addon">
                                               <span class="glyphicon glyphicon-calendar"></span>
                                           </span>
@@ -106,7 +106,7 @@
                             <div class="form-group">
                               <label for="">Start Date</label>
                               <div class="input-group date"  id="refundsStartPicker">
-                                  <input type="text" class="form-control" name="refund_start_date" placeholder="YYYY-MM-DD">
+                                  <input type="text" class="form-control" name="refund_start_date" placeholder="DD/MM/YYYY">
                                   <span class="input-group-addon">
                                       <span class="glyphicon glyphicon-calendar"></span>
                                   </span>
@@ -117,7 +117,7 @@
                             <div class="form-group">
                               <label for="">End Date</label>
                               <div class="input-group date" id="refundsEndPicker">
-                                  <input type="text" class="form-control" name="refund_end_date"  placeholder="YYYY-MM-DD">
+                                  <input type="text" class="form-control" name="refund_end_date"  placeholder="DD/MM/YYYY">
                                   <span class="input-group-addon">
                                       <span class="glyphicon glyphicon-calendar"></span>
                                   </span>
@@ -154,7 +154,7 @@ export default {
             refundsStartPicker:null,
             refundsEndPicker:null,
             datepickerOptions:{
-                format: 'YYYY-MM-DD',
+                format: 'DD/MM/YYYY',
                 showClear:true,
                 useCurrent:false
             },
@@ -258,8 +258,8 @@ export default {
 
             if (vm.refund_form.valid()) {
                 var values = {
-                    "start": vm.refundsEndPicker.data("DateTimePicker").date().format('YYYY-MM-DD'),
-                    "end" :vm.refundsEndPicker.data("DateTimePicker").date().format('YYYY-MM-DD'),
+                    "start": vm.refundsStartPicker.data("DateTimePicker").date().format('DD/MM/YYYY'),
+                    "end" :vm.refundsEndPicker.data("DateTimePicker").date().format('DD/MM/YYYY'),
                 }
                 var url = api_endpoints.booking_refunds +"?"+ $.param(values);
                 window.location.assign(url);
