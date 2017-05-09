@@ -35,5 +35,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(updateInvoices, reverse_func)
+        # FIXME: there's absolutely no way to make update_payments work in a
+        # migration, when the models in question are using a past version of the schema.
+        # best case is to run it afterwards?
+        #migrations.RunPython(updateInvoices, reverse_func)
     ]
