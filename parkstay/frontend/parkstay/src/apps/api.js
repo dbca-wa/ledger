@@ -143,6 +143,7 @@ module.exports = {
     booking: function(id){
         return "/parkstay/api/booking/"+id+".json";
     },
+    booking_refunds:"/parkstay/api/reports/booking_refunds",
     //other
     countries:"https://restcountries.eu/rest/v1/?fullText=true",
     users: "/parkstay/api/users.json",
