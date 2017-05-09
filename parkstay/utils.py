@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import traceback
 from decimal import *
 import json
@@ -128,9 +128,17 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
 
 def get_open_campgrounds(campsites_qs, start_date, end_date):
     """Fetch the set of campgrounds (from a set of campsites) with spaces open over a range of visit dates."""
+    # short circuit: if start date is before today, return nothing
+    today = date.today()
+    if start_date < today:
+        return set()
+
     # remove from the campsite list any entries with bookings
     campsites_qs = campsites_qs.exclude(
         campsitebooking__date__range=(start_date, end_date-timedelta(days=1))
+    # and also campgrounds where the book window is outside of the max advance range
+    ).exclude(
+        campground__max_advance_booking__lte=(end_date-today).days
     )
 
     # get closures at campsite and campground level
@@ -204,6 +212,20 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         end = min(end_date, closure.range_end) if closure.range_end else end_date
         for i in range((end-start).days):
             results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
+
+    # strike out days before today
+    today = date.today()
+    if start_date < today:
+        for i in range((min(today, end_date)-start_date).days):
+            for key, val in results.items():
+                val[start_date+timedelta(days=i)][0] = 'tooearly'
+
+    # strike out days after the max_advance_booking
+    for site in campsites_qs:
+        stop = today + timedelta(days=site.campground.max_advance_booking)
+        stop_mark = min(max(stop, start_date), end_date)
+        for i in range((end_date-stop_mark).days):
+            results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
 
     return results
 
@@ -351,7 +373,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     # Create line items for customers
     daily_rates = [get_campsite_current_rate(request,c,booking.arrival.strftime('%Y-%m-%d'),booking.departure.strftime('%Y-%m-%d')) for c in campsite_list]
     if not daily_rates:
-        raise Exception('There was an error while trying to get the daily rates')
+        raise Exception('There was an error while trying to get the daily rates.')
     for rates in daily_rates:
         for c in rates:
             if c['rate']['campsite'] not in rate_list.keys():
@@ -378,7 +400,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     if lines:
                         price = str((num_days * Decimal(r[k])))
                         if not booking.campground.oracle_code:
-                            raise Exception('The campground selected does not have an oracle code attached to it.')
+                            raise Exception('The campground selected does not have an Oracle code attached to it.')
                         invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,start.strftime('%d-%m-%Y'),end.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.campground.oracle_code})
                     else:
                         price = (num_days * Decimal(r[k])) * v
@@ -390,12 +412,12 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
         vehicles = old_booking.regos.all()
     if vehicles:
         if booking.campground.park.entry_fee_required and not booking.campground.park.oracle_code:
-            raise Exception('A park entry oracle code has not been set for the park that the campground belongs to.')
+            raise Exception('A park entry Oracle code has not been set for the park that the campground belongs to.')
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
-            'vehicle': vehicles.filter(type='vehicle'),
-            'motorbike': vehicles.filter(type='motorbike'),
-            'concession': vehicles.filter(type='concession')
+            'vehicle': vehicles.filter(entry_fee=True, type='vehicle'),
+            'motorbike': vehicles.filter(entry_fee=True, type='motorbike'),
+            'concession': vehicles.filter(entry_fee=True, type='concession')
         }
 
         for k,v in vehicle_dict.items():
@@ -606,6 +628,10 @@ def create_or_update_booking(request,booking_details,updating=False):
             num_infant=booking_details['num_infant'],
             cost_total=booking_details['cost_total'],
             customer=booking_details['customer'])
+        
+        booking.details['phone'] = booking_details['phone']
+        booking.details['country'] = booking_details['country']
+        booking.details['postcode'] = booking_details['postcode']
 
         # Add booking regos
         if request.data.get('parkEntry').get('regos'):

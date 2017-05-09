@@ -11,7 +11,8 @@
         <div class="row" v-if="errorMsg">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
-                    Sorry, there was an error placing the booking ({{ errorMsg }}). Please try again.
+                    Sorry, there was an error placing the booking: {{ errorMsg }} <br/>
+                    Please try again later. If this reoccurs, please contact <a href="https://parks-oim.dpaw.wa.gov.au/contact-us">Parks and Visitor Services</a> with this error message, the campground and the time of the request.
                 </div>
             </div>
         </div>
@@ -75,9 +76,9 @@
             <div class="columns small-6 medium-6 large-3">
                 <label>Equipment
                     <select name="gear_type" v-model="gearType" @change="update()">
-                        <option value="tent">Tent</option>
-                        <option value="campervan">Campervan</option>
-                        <option value="caravan">Caravan</option>
+                        <option value="tent" v-if="gearTotals.tent">Tent</option>
+                        <option value="campervan" v-if="gearTotals.campervan">Campervan</option>
+                        <option value="caravan" v-if="gearTotals.caravan">Caravan</option>
                     </select>
                 </label>
             </div>
@@ -91,9 +92,9 @@
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
                 </thead>
-                <tbody><template v-for="site in sites">
+                <tbody><template v-for="site in sites" v-if="site.gearType[gearType]">
                     <tr>
-                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span></td>
+                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
                             <button v-if="site.price" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
                             <template v-else>
@@ -189,6 +190,11 @@
     .dropdown-pane {
         width: auto;
     }
+
+    .siteWarning {
+        font-weight: bold;
+        font-style: italic;
+    }
 }
 
 </style>
@@ -257,6 +263,11 @@ export default {
             maxAdults: 30,
             maxChildren: 30,
             gearType: getQueryParam('gear_type', 'tent'),
+            gearTotals: {
+                tent: 0,
+                campervan: 0,
+                caravan: 0
+            },
             status: null,
             errorMsg: null,
             classes: {},
@@ -335,25 +346,41 @@ export default {
                         window.location.href = vm.parkstayUrl + '/booking';
                     }
                 },
-                error: function(data, stat, xhr) {
-                    //console.log('POST error');
-                    //console.log(data);
-                    vm.errorMsg = data.msg ? data.msg : 'Sorry, an error occurred when communicating with Parkstay. Please try again later.';
+                error: function(xhr, stat, err) {
+                    console.log('POST error');
+                    //console.log(xhr);
+                    vm.errorMsg = (xhr.responseJSON && xhr.responseJSON.msg) ? xhr.responseJSON.msg : '"'+err+'" response when communicating with Parkstay.';
                     vm.update();
                 }
             });
         },
+        updateURL: function () {
+            // update browser history
+            var vm = this;
+            var newHist = window.location.href.split('?')[0] +'?'+ $.param({
+                site_id: vm.parkstayGroundId,
+                arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                gear_type: vm.gearType,
+                num_adult: vm.numAdults,
+                num_child: vm.numChildren,
+                num_concession: vm.numConcessions,
+                num_infant: vm.numInfants
+            });
+            history.replaceState('', '', newHist);
+        },
         update: function() {
             var vm = this;
+
             debounce(function() {
+                vm.updateURL();
                 var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
                     arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                     departure: moment(vm.departureDate).format('YYYY/MM/DD'),
                     num_adult: vm.numAdults,
                     num_child: vm.numChildren,
                     num_concession: vm.numConcessions,
-                    num_infant: vm.numInfants,
-                    gear_type: vm.gearType
+                    num_infant: vm.numInfants
                 });
                 console.log('AJAX '+url);
                 $.ajax({
@@ -363,13 +390,33 @@ export default {
                         vm.name = data.name;
                         vm.days = data.days;
                         vm.classes = data.classes;
+
+                        vm.gearTotals.tent = 0
+                        vm.gearTotals.campervan = 0
+                        vm.gearTotals.caravan = 0
                         data.sites.forEach(function(el) {
                             el.showBreakdown = false;
+                            vm.gearTotals.tent += el.gearType.tent ? 1 : 0;
+                            vm.gearTotals.campervan += el.gearType.campervan ? 1 : 0;
+                            vm.gearTotals.caravan += el.gearType.caravan ? 1 : 0;
                         });
+                        if (!vm.gearTotals[vm.gearType]) {
+                            if (vm.gearTotals.tent) {
+                                vm.gearType = 'tent';
+                            } else if (vm.gearTotals.campervan) {
+                                vm.gearType = 'campervan';
+                            } else if (vm.gearTotals.caravan) {
+                                vm.gearType = 'caravan';
+                            } else {
+                                // no campsites at all!
+                                vm.gearType = 'tent';
+                            }
+                        }
+
                         vm.sites = data.sites;
                         vm.status = 'online';
                     },
-                    error: function(data, stat, xhr) {
+                    error: function(xhr, stat, err) {
                         vm.status = 'offline';
                     }
                 });
@@ -390,7 +437,9 @@ export default {
             }
         }).on('changeDate', function (ev) {
             console.log('arrivalEl changeDate');
-            ev.target.dispatchEvent(new Event('change'));
+            ev.target.dispatchEvent(new CustomEvent('change'));
+        }).on('change', function (ev) {
+            console.log('arrivalEl change');
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -402,10 +451,9 @@ export default {
             vm.arrivalDate = moment(vm.arrivalData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
             vm.sites = [];
-            //vm.update();
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new Event('change'));
+                ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
 
@@ -417,15 +465,16 @@ export default {
             }
         }).on('changeDate', function (ev) {
             console.log('departureEl changeDate');
-            ev.target.dispatchEvent(new Event('change'));
+            ev.target.dispatchEvent(new CustomEvent('change'));
+        }).on('change', function (ev) {
+            console.log('departureEl change');
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
             vm.sites = [];
-            //vm.update();
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new Event('change'));
+                ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
 

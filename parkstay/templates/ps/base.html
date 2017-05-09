@@ -30,7 +30,7 @@
             {% endblock %}
         </header>
         {% block menu %}
-        <div class="topbar row">
+        <div class="topbar">
             <div class="container-fluid">
                 <nav class="navbar navbar-default">
                     <div class="container">
@@ -46,14 +46,18 @@
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
+                                    {% if request.user.is_authenticated %}
+                                    <li><a href="{% url 'public_my_bookings'%}">My Bookings</a></li>
+                                    {% endif %}
                                     {% if request.user.is_staff %}
                                     <li><a href="{% url 'dash-campgrounds'%}">Campgrounds</a></li>
                                     <li><a href="{% url 'dash-campsite-types'%}">Campsite Types</a></li>
                                     <li><a href="{% url 'dash-bulkpricing'%}">Bulk Pricing</a></li>
                                     <li><a href="{% url 'dash-bookings'%}">Existing Bookings</a></li>
-                                    {% endif %}
+                                    {% else %}
                                     <li><a href="https://parks-oim.dpaw.wa.gov.au/park-stay">Explore Parks</a></li>
                                     <li><a href="https://parks-oim.dpaw.wa.gov.au/contact-us">Contact Us</a></li>
+                                    {% endif %}
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">
