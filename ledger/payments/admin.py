@@ -105,7 +105,7 @@ class OracleParserAdmin(admin.ModelAdmin):
 
 @admin.register(models.OracleInterface)
 class OracleInterfaceAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['activity_name','amount','status','receipt_date'] 
 
 class OracleInterfaceRecipientInline(admin.TabularInline):
     model = models.OracleInterfaceRecipient
@@ -115,3 +115,7 @@ class OracleInterfaceRecipientInline(admin.TabularInline):
 class OracleInterfaceSystemAdmin(admin.ModelAdmin):
     list_display = ('system_name','system_id')
     inlines = [OracleInterfaceRecipientInline,] 
+
+@admin.register(models.OracleAccountCode)
+class OracleAccountCode(admin.ModelAdmin):
+    list_display = ('active_receivables_activities',)

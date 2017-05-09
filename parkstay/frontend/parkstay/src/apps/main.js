@@ -173,21 +173,25 @@ const router = new Router({
   'mode': 'history'
 });
 
-router.beforeEach((to,from,next) => {
-    next((vm) => {
-        vm.$store.dispatch("updateAlert",{
-            visible:false,
-            type:"danger",
-            message: ""
-        });
-    });
-});
+new Vue({
+    router,
+}).$mount('#menu');
 
 new Vue({
   'router':router,
   store,
   components:{
       alert
+  },
+  watch:{
+      $route:function () {
+          let vm =this;
+          vm.$store.dispatch("updateAlert",{
+              visible:false,
+              type:"danger",
+              message: ""
+          });
+      }
   },
   computed:{
       ...mapGetters([

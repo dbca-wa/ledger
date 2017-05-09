@@ -6,6 +6,8 @@ from django.db.models import Q
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.conf import settings
+from django.dispatch import receiver
+from django.db.models.signals import post_delete, pre_save, post_save
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from oscar.apps.order.models import Order
@@ -104,6 +106,10 @@ class Invoice(models.Model):
         ''' Total amount paid from bpay,bpoint and cash.
         '''
         return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+
+    @property
+    def refund_amount(self):
+        return self.__calculate_total_refunds()
 
     @property
     def balance(self):
@@ -265,3 +271,41 @@ class InvoiceBPAY(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super(InvoiceBPAY,self).save(*args, **kwargs)
+
+
+class InvoiceBPAYListener(object):
+    """
+    Event listener for InvoiceBPAY
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=InvoiceBPAY)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = InvoiceBPAY.objects.get(pk=instance.pk)
+            setattr(instance, "_original_instance", original_instance)
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+
+    @staticmethod
+    @receiver(post_save, sender=InvoiceBPAY)
+    def _post_save(sender, instance, **kwargs):
+        from ledger.payments.utils import update_payments
+        original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
+        if not original_instance:
+            update_payments(instance.invoice.reference)
+
+    @staticmethod
+    @receiver(post_delete, sender=InvoiceBPAY)
+    def _post_delete(sender, instance, **kwargs):
+        for item in instance.invoice.order.lines.all():
+            removable = []
+            payment_details = item.payment_details['bpay']
+            for k,v in payment_details.items():
+                if k == str(instance.bpay.id):
+                    removable.append(k)
+            if removable:
+                for r in removable:
+                    del item.payment_details['bpay'][r]
+                item.save()
+

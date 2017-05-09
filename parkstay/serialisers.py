@@ -108,7 +108,8 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             'reason',
             'details',
             'editable',
-            'campground'
+            'campground',
+            'updated_on'
         )
         read_only_fields = ('reason',)
         write_only_fields = (
@@ -139,7 +140,7 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = '__all__' 
+        fields = '__all__'
 
 class FeatureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -239,6 +240,7 @@ class CampgroundDatatableSerializer(serializers.ModelSerializer):
             'ratis_id',
             'active',
             'current_closure',
+            'campground_type'
         )
 
     def get_park(self,obj):
@@ -634,3 +636,7 @@ class BulkPricingSerializer(serializers.Serializer):
         except PriceReason.DoesNotExist:
             raise
         return val
+
+class ReportSerializer(serializers.Serializer):
+    start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
+    end = serializers.DateTimeField(input_formats=['%d/%m/%Y'])

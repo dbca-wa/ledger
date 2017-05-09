@@ -24,6 +24,7 @@ module.exports = {
     // Campgrounds
     campgrounds:"/api/campgrounds.json",
     campgrounds_datatable:"/api/campgrounds/datatable_list.json",
+    bulk_close:"/api/campgrounds/bulk_close.json",
     campground:function (id) {
         return "/api/campgrounds/"+id+".json";
     },
@@ -142,6 +143,7 @@ module.exports = {
     booking: function(id){
         return "/api/booking/"+id+".json";
     },
+    booking_refunds:"/api/reports/booking_refunds",
     //other
     countries:"https://restcountries.eu/rest/v1/?fullText=true",
     users: "/api/users.json",

@@ -58,6 +58,7 @@
                             <div class="col-md-4">
                                 <div class="form-group pull-right">
                                     <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Campground</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Campgrounds</a>
                                 </div>
                             </div>
                         </form>
@@ -67,6 +68,7 @@
             </div>
         </div>
     </div>
+    <bulk-close :show="showBulkClose" ref="bulkClose"/>
 </div>
 </template>
 
@@ -78,7 +80,9 @@ import {
 import datatable from '../utils/datatable.vue'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
+import bulkClose from '../utils/closureHistory/bulk-close.vue'
 import {bus} from '../utils/eventBus.js'
+import { mapGetters } from 'vuex'
 module.exports = {
     name: 'pk-campgrounds',
     data: function() {
@@ -86,9 +90,6 @@ module.exports = {
         return {
             grounds: [],
             rows: [],
-            regions: [],
-            districts: [],
-            parks: [],
             title: 'Campgrounds',
             selected_status: 'All',
             selected_region: 'All',
@@ -97,6 +98,7 @@ module.exports = {
             isOpenAddCampground: false,
             isOpenOpenCG: false,
             isOpenCloseCG: false,
+            showBulkClose:false,
             dtoptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -134,13 +136,16 @@ module.exports = {
                     "mRender": function(data, type, full) {
                         var id = full.id;
                         var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
+                        var column = "";
+
                         if (full.active) {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>\
-                            "+addBooking+"</td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>";
                         } else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>\
-                            "+addBooking+"</td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>";
                         }
+
+                        column += full.campground_type == '0' ? addBooking : "";
+                        column += "</td>";
                         column = column.replace(/__Current_Closure__/,full.current_closure);
                         return column.replace(/__ID__/g, id);
                     }
@@ -152,9 +157,21 @@ module.exports = {
     components: {
         pkCgClose,
         pkCgOpen,
-        datatable
+        datatable,
+        "bulk-close":bulkClose,
+    },
+    computed:{
+       ...mapGetters([
+         'regions',
+         'districts',
+         'parks'
+       ]),
     },
     watch: {
+        showBulkClose:function () {
+            this.$refs.bulkClose.isModalOpen = this.showBulkClose;
+            this.$refs.bulkClose.initSelectTwo();
+        },
         selected_region: function() {
             let vm = this;
             if (vm.selected_region != 'All') {
@@ -228,21 +245,21 @@ module.exports = {
         },
         fetchRegions: function() {
             let vm = this;
-            $.get(api_endpoints.regions,function(data){
-                vm.regions = data;
-            });
+            if (vm.regions.length == 0) {
+                vm.$store.dispatch("fetchRegions");
+            }
         },
         fetchParks: function() {
             let vm = this;
-            $.get(api_endpoints.parks,function(data){
-                vm.parks = data;
-            });
+            if (vm.parks.length == 0) {
+                vm.$store.dispatch("fetchParks");
+            }
         },
         fetchDistricts: function() {
             let vm = this;
-            $.get(api_endpoints.districts,function(data){
-                vm.districts = data;
-            });
+            if (vm.districts.length == 0) {
+                vm.$store.dispatch("fetchDistricts");
+            }
         }
     },
     mounted: function() {

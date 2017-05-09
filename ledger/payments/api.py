@@ -17,7 +17,7 @@ from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollectio
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
-from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check
+from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check,update_payments
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv
 
@@ -74,22 +74,22 @@ class BpayTransactionSerializer(serializers.ModelSerializer):
             "linked",
             "biller_code"
         )
-        
+
     def get_type(self, obj):
         return dict(BpayTransaction.TRANSACTION_TYPE).get(obj.type)
-        
+
     def get_payment_instruction(self, obj):
         return dict(BpayTransaction.PAYMENT_INSTRUCTION_CODES).get(obj.p_instruction_code)
-    
+
     def get_payment_method(self, obj):
         return dict(BpayTransaction.PAYMENT_METHOD_CODES).get(obj.p_method_code)
-    
+
     def get_entry_method(self, obj):
         return dict(BpayTransaction.ENTRY_METHODS).get(obj.entry_method)
-    
+
     def get_reason_for_refund_or_reversal(self, obj):
         return dict(BpayTransaction.REF_REV_CODE).get(obj.ref_rev_code)
-    
+
 class BpayTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = BpayTransaction.objects.all()
     serializer_class = BpayTransactionSerializer
@@ -97,7 +97,7 @@ class BpayTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = (
         '=crn',
     )
-    
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         sorting = request.GET.get('sorting',None)
@@ -105,7 +105,7 @@ class BpayTransactionViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = [q for q in queryset if not q.matched]
         serializer = self.get_serializer(queryset,many=True)
         return Response(serializer.data)
-    
+
 class BpayFileSerializer(serializers.ModelSerializer):
     #date_modifier = serializers.SerializerMethodField()
     transactions = BpayTransactionSerializer(many=True)
@@ -136,14 +136,14 @@ class BpayFileSerializer(serializers.ModelSerializer):
             #"file_records",
             "transactions"
         )
-        
+
     def get_date_modifier(self, obj):
         return dict(BpayFile.DATE_MODIFIERS).get(obj.date_modifier)
-       
+
 class BpayCollectionSerializer(serializers.ModelSerializer):
     created = serializers.DateField(source='date')
     number_of_files = serializers.IntegerField(source='count')
-    
+
     class Meta:
         model = BpayCollection
         fields = (
@@ -154,19 +154,19 @@ class BpayCollectionSerializer(serializers.ModelSerializer):
             'debit_total',
             'total'
         )
-    
+
     def __init__(self,*args,**kwargs):
         try:
             txn_only = kwargs.pop("txns_only")
         except:
             txn_only = False
         super(BpayCollectionSerializer,self).__init__(*args, **kwargs)
-        
+
         if txn_only:
             self.fields['transactions'] = BpayTransactionSerializer(many=True,read_only=True)
         else:
             self.fields['files'] = BpayFileSerializer(many=True)
-    
+
 class BpayCollectionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = BpayCollection.objects.all()
     serializer_class = BpayCollectionSerializer
@@ -174,7 +174,7 @@ class BpayCollectionViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'created'
 
     def retrieve(self, request, created=None, format=None):
-        try: 
+        try:
             instance = BpayCollection.objects.get(date=created)
             txns_only = bool(request.GET.get('transactions',False))
             serializer = BpayCollectionSerializer(instance,txns_only=txns_only)
@@ -183,8 +183,8 @@ class BpayCollectionViewSet(viewsets.ReadOnlyModelViewSet):
             raise
         except Exception as e:
             raise serializers.ValidationError(str(e))
-            
-    
+
+
 class BpayFileList(viewsets.ReadOnlyModelViewSet):
     queryset = BpayFile.objects.all()
     serializer_class = BpayFileSerializer
@@ -237,15 +237,16 @@ class BpointTransactionSerializer(serializers.ModelSerializer):
             'last_digits',
             'refundable_amount'
         )
-    
+
 class AmountSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    details = serializers.CharField(allow_null=True, allow_blank=True,trim_whitespace=True)
 
 class BpointTransactionViewSet(viewsets.ModelViewSet):
     queryset = BpointTransaction.objects.all()
     serializer_class = BpointTransactionSerializer
     renderer_classes = (JSONRenderer,)
-    
+
     def create(self,request):
         pass
 
@@ -256,7 +257,9 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = AmountSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            refund = instance.refund(serializer.validated_data['amount']) 
+            refund = instance.refund(serializer.validated_data)
+            invoice = Invoice.objects.get(reference=instance.crn1)
+            update_payments(invoice.reference)
             serializer = BpointTransactionSerializer(refund)
             return Response(serializer.data,status=http_status)
         except serializers.ValidationError:
@@ -265,8 +268,8 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             traceback.print_exc()
             raise serializers.ValidationError(str(e))
-        
-    
+
+
 class CardSerializer(serializers.Serializer):
     cardholdername = serializers.CharField(required=False,max_length=50)
     number = serializers.CharField(min_length=13,max_length=16)
@@ -332,7 +335,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
             self.number = number
             self.cvn = cvn
             self.expiry = expiry
-    
+
     def create(self, request):
         try:
             http_status = status.HTTP_200_OK
@@ -403,7 +406,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
                     original_txn
                 )
             res = BpointTransactionSerializer(BpointTransaction.objects.get(txn_number=txn.txn_number))
-            
+
             return Response(res.data)
         except serializers.ValidationError:
             raise
@@ -424,6 +427,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
 class CashSerializer(serializers.ModelSerializer):
     original_txn = serializers.CharField(required=False)
     amount = serializers.DecimalField(max_digits=12, decimal_places=2,required=False)
+    details = serializers.CharField(allow_null=True,allow_blank=True,required=False)
     invoice = serializers.CharField(source='invoice.reference')
     external = serializers.BooleanField(default=False)
     region = serializers.CharField(required=False)
@@ -440,9 +444,10 @@ class CashSerializer(serializers.ModelSerializer):
             'region',
             'district',
             'receipt',
-            'original_txn'
+            'original_txn',
+            'details'
         )
-        
+
     def validate(self,data):
         if data['external'] and not (data.get('region') or data.get('district')):
             raise serializers.ValidationError('A region/district must be specified for an external payment.')
@@ -454,13 +459,14 @@ class CashViewSet(viewsets.ModelViewSet):
         {
             "invoice": "1000025",
             "amount": 1,
+            "details" : "refund details"
             "type": "payment"
             "source": "cash"
         }
     '''
     queryset = CashTransaction.objects.all()
     serializer_class = CashSerializer
-    
+
     def create(self,request,format=None):
         try:
             http_status = status.HTTP_200_OK
@@ -479,6 +485,7 @@ class CashViewSet(viewsets.ModelViewSet):
             if not serializer.validated_data.get('amount'):
                 serializer.validated_data['amount'] = invoice.amount
             txn = serializer.save()
+            update_payments(invoice.reference)
             http_status = status.HTTP_201_CREATED
             serializer = CashSerializer(txn)
             return Response(serializer.data,status=http_status)
@@ -495,7 +502,7 @@ class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
         fields = ('name','code')
-        
+
     def get_name(self, obj):
         return dict(DISTRICT_CHOICES).get(obj.name)
 
@@ -510,7 +517,7 @@ class RegionSerializer(serializers.ModelSerializer):
             'code',
             'districts'
         )
-   
+
     def get_name(self, obj):
         return dict(REGION_CHOICES).get(obj.name)
 
@@ -567,30 +574,30 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
 class BpayLinkSerializer(serializers.Serializer):
     bpay = serializers.IntegerField()
     link = serializers.BooleanField(default=True)
-    
+
     def validate_bpay(self,val):
         try:
             BpayTransaction.objects.get(id=val)
         except BpayTransaction.DoesNotExist:
             raise serializers.ValidationError('The bpay transaction entered does not exist.')
-        
+
         return val
-    
+
 class InvoiceTransactionViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceTransactionSerializer
     lookup_field = 'reference'
-    
+
     @detail_route(methods=['get'])
     def linked_bpay(self, request, *args, **kwargs):
         try:
             invoice = self.get_object()
-            
+
             # Get all linked bpay transactions
             linked = InvoiceBPAY.objects.filter(invoice=invoice).values('bpay')
             txns = BpayTransaction.objects.filter(id__in=linked)
             serializer = BpayTransactionSerializer(txns, many=True)
-            
+
             return Response(serializer.data)
         except serializers.ValidationError:
             raise
@@ -601,7 +608,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
     def payments(self, request, *args, **kwargs):
         try:
             invoice = self.get_object()
-            
+
             # Get all linked bpay transactions
             payments = []
             #cash
@@ -611,7 +618,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                     {
                         'date':c.created.strftime('%d/%m/%Y'),
                         'type':c.get_source_display().lower().title() if c.type != 'refund' else 'Manual',
-                        'details':c.get_type_display().lower().title(),
+                        'details':"{}{}".format(c.get_type_display().lower().title(),": {}".format(c.details) if c.details else ''),
                         'amount':'$ {}'.format(c.amount) if c.type != 'refund' else '$ -{}'.format(c.amount)
                     })
             #bpay
@@ -637,7 +644,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                     }
                 )
 
-            
+
             return Response(payments)
         except serializers.ValidationError:
             traceback.print_exc()
@@ -645,17 +652,17 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             traceback.print_exc()
             raise serializers.ValidationError(e)
-        
+
     @detail_route(methods=['post'])
     def link(self, request, *args, **kwargs):
         try:
             invoice = self.get_object()
             serializer = BpayLinkSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            
+
             bpay = BpayTransaction.objects.get(id=serializer.validated_data['bpay'])
-            
-            
+
+
             link = serializer.validated_data['link']
             if link:
                 if bpay.matched or bpay.linked:
@@ -672,12 +679,12 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                     b.delete()
                 except Exception:
                     raise
-            
+
             # Get all linked bpay transactions
             linked = InvoiceBPAY.objects.filter(invoice=invoice).values('bpay')
             txns = BpayTransaction.objects.filter(id__in=linked)
             serializer = BpayTransactionSerializer(txns, many=True)
-            
+
             return Response(serializer.data)
         except serializers.ValidationError:
             raise
@@ -833,7 +840,7 @@ class CheckoutCreateView(generics.CreateAPIView):
             custom = serializer.validated_data.get('custom_basket')
             # Validate Products
             if custom:
-                product_serializer = CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'),many=True) 
+                product_serializer = CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'),many=True)
             else:
                 product_serializer = CheckoutProductSerializer(data=serializer.initial_data.get('products'),many=True)
             product_serializer.is_valid(raise_exception=True)
@@ -870,7 +877,6 @@ class CheckoutCreateView(generics.CreateAPIView):
                 max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
                 secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
             )
-            
             return redirect
         except serializers.ValidationError:
             raise
