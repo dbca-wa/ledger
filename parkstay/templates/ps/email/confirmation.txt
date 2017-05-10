@@ -1,0 +1,6 @@
+{%  extends 'ps/email/base_email.txt' %}
+
+{% block content %}
+Please find attached the confirmation for your upcoming trip to {{ booking.campground.name }} in {{ booking.campground.park.name }}, from {{ booking.stay_dates }}. 
+You must bring this confirmation with you to the campground.
+{% endblock %}

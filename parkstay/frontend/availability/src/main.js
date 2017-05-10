@@ -6,6 +6,8 @@ import 'foundation-datepicker/css/foundation-datepicker.css';
 import Vue from 'vue';
 import availability from './availability';
 
+require('custom-event-polyfill');
+
 Vue.config.productionTip = false;
 
 /* eslint-disable no-new */

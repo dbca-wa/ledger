@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django import forms
-from parkstay.forms import LoginForm, MakeBookingsForm, VehicleInfoFormset
+from parkstay.forms import LoginForm, MakeBookingsForm, AnonymousMakeBookingsForm, VehicleInfoFormset
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -26,7 +26,8 @@ from parkstay.models import (Campground,
                                 CampsiteRate,
                                 ParkEntryRate
                                 )
-from ledger.accounts.models import EmailUser
+from parkstay import emails
+from ledger.accounts.models import EmailUser, Address
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
 from decimal import *
@@ -159,14 +160,24 @@ class MakeBookingsView(TemplateView):
             'num_child': booking.details.get('num_child', 0) if booking else 0,
             'num_infant': booking.details.get('num_infant', 0) if booking else 0
         }
-        form = MakeBookingsForm(form_context)
+        if request.user.is_anonymous():
+            form = AnonymousMakeBookingsForm(form_context)
+        else:
+            form_context['first_name'] = request.user.first_name
+            form_context['last_name'] = request.user.last_name
+            form_context['phone'] = request.user.phone_number
+            form = MakeBookingsForm(form_context)
+
         vehicles = VehicleInfoFormset()
         return self.render_page(request, booking, form, vehicles)
 
 
     def post(self, request, *args, **kwargs):
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        form = MakeBookingsForm(request.POST)
+        if request.user.is_anonymous():
+            form = AnonymousMakeBookingsForm(request.POST)
+        else:
+            form = MakeBookingsForm(request.POST)
         vehicles = VehicleInfoFormset(request.POST)   
         
         # re-render the page if there's no booking in the session
@@ -180,6 +191,11 @@ class MakeBookingsView(TemplateView):
         # update the booking object with information from the form
         if not booking.details:
             booking.details = {}
+        booking.details['first_name'] = form.cleaned_data.get('first_name')
+        booking.details['last_name'] = form.cleaned_data.get('last_name')
+        booking.details['phone'] = form.cleaned_data.get('phone')
+        booking.details['country'] = form.cleaned_data.get('country').iso_3166_1_a2
+        booking.details['postcode'] = form.cleaned_data.get('postcode')
         booking.details['num_adult'] = form.cleaned_data.get('num_adult')
         booking.details['num_concession'] = form.cleaned_data.get('num_concession')
         booking.details['num_child'] = form.cleaned_data.get('num_child')
@@ -192,28 +208,39 @@ class MakeBookingsView(TemplateView):
             BookingVehicleRego.objects.create(
                     booking=booking, 
                     rego=vehicle.cleaned_data.get('vehicle_rego'), 
-                    type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')]
+                    type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')],
+                    entry_fee=vehicle.cleaned_data.get('entry_fee')
             )
 
         # generate final pricing
-        lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+        try:
+            lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+        except Exception as e:
+            form.add_error(None, '{} Please contact Parks and Visitors services with this error message, the campground/campsite and the time of the request.'.format(str(e)))
+            return self.render_page(request, booking, form, vehicles, show_errors=True)
+            
         print(lines)
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
         # get the customer object
+        if request.user.is_anonymous():
+            try:
+                customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
+            except EmailUser.DoesNotExist:
+                customer = EmailUser.objects.create(
+                        email=form.cleaned_data.get('email'), 
+                        first_name=form.cleaned_data.get('first_name'),
+                        last_name=form.cleaned_data.get('last_name'),
+                        phone_number=form.cleaned_data.get('phone'),
+                        mobile_number=form.cleaned_data.get('phone')
+                )
+                Address.objects.create(line1='address', user=customer, postcode=emailUser['postcode'], country=form.cleaned_data.get('country'))
+        else:
+            customer = request.user
+        
         # FIXME: get feedback on whether to overwrite personal info if the EmailUser
         # already exists
-        try:
-            customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
-        except EmailUser.DoesNotExist:
-            customer = EmailUser.objects.create(
-                    email=form.cleaned_data.get('email'), 
-                    first_name=form.cleaned_data.get('first_name'),
-                    last_name=form.cleaned_data.get('last_name'),
-                    phone_number=form.cleaned_data.get('phone')
-            )
-
-        
+ 
         # finalise the booking object
         booking.customer = customer
         booking.cost_total = total
@@ -237,7 +264,8 @@ class MakeBookingsView(TemplateView):
 
         # if we're anonymous add the basket cookie to the current session
         if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
-            result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN])
+            basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
+            result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
         
         return result
 
@@ -249,17 +277,27 @@ class BookingSuccessView(TemplateView):
         try:
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
+
+            # FIXME: replace with server side notify_url callback
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+            
+            # set booking to be permanent fixture
+            booking.booking_type = 1  # internet booking
+            booking.expiry_time = None
+            booking.save()
+
+            utils.delete_session_booking(request.session)
+            request.session['ps_last_booking'] = booking.id
+            
+            # for fully paid bookings, fire off confirmation email
+            if booking.paid:
+                emails.send_booking_confirmation(booking)
+
         except Exception as e:
-            return redirect('home')
-
-        # FIXME: replace with server side notify_url callback
-        book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-        
-        # set booking to be permanent fixture
-        booking.booking_type = 1  # internet booking
-        booking.save()
-
-        utils.delete_session_booking(request.session)
+            if ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
+                booking = Booking.objects.get(id=request.session['ps_last_booking'])
+            else:
+                return redirect('home')
 
         context = {
             'booking': booking
@@ -271,7 +309,7 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
     template_name = 'ps/booking/my_bookings.html'
 
     def get(self, request, *args, **kwargs):
-        bookings = Booking.objects.filter(customer=request.user, booking_type__in=(0, 1))
+        bookings = Booking.objects.filter(customer=request.user, booking_type__in=(0, 1), is_canceled=False)
         today = timezone.now().date()
 
         context = {

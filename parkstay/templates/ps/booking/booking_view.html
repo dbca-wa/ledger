@@ -13,7 +13,7 @@
                     <b>Campsite</b>
                 </div>
                 <div class="col-sm-8">
-                {% if booking.first_campsite.site_type == 2 %}
+                {% if booking.campground.site_type == 2 %}
                     {{ booking.first_campsite.type }}
                 {% else %}
                     {{ booking.first_campsite.name }} ({{ booking.first_campsite.type }})
@@ -24,14 +24,14 @@
                     <b>Dates</b>
                 </div>
                 <div class="col-sm-8">
-                    {{ booking.arrival }} to {{ booking.departure }} ({{ booking.num_days }} days)
+                    {{ booking.stay_dates }}
                 </div>
             </div><div class="row">
                 <div class="col-sm-4">
                     <b>Number of guests</b>
                 </div>
                 <div class="col-sm-8">
-                    {{ booking.num_guests }}
+                    {{ booking.stay_guests }}
                 </div>
             </div><div class="row">
                 <div class="col-sm-4">
@@ -47,10 +47,11 @@
                 <div class="col-sm-8">
                     {{ booking.status }}
                 </div>
-            </div><div class="row"> 
-                <p style="margin-top: 1em;"><a href="#" class="btn btn-info btn-lg" >Print</a></p>
+            </div><div class="row"><div class="col-sm-12" style="margin-top: 1em">
+                {% if booking.status == 'Paid' %}<p><a href="{% url 'get_confirmation' booking.id %}" class="btn btn-info btn-lg" >Print</a></p>
                 <p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the campground.</p>
-            </div>
+                {% else %}<p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the campground. Confirmation is only available after the booking is paid in full.</p>{% endif %}
+            </div></div>
         </div>
     </div>
 </div>

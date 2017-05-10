@@ -61,13 +61,16 @@
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Equipment</label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-3 columns">
+                        <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
+                    </div>
+                    <div class="small-12 medium-12 large-3 columns">
                         <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-3 columns">
                         <label><input type="radio" name="gear_type" value="campervan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-3 columns">
                         <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
                     </div>
                 </div><div class="row"><div class="small-12 columns">
@@ -86,14 +89,15 @@
                             <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
                         </div>
                     </template>
+                </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon"/> Online bookings</label>
+                        <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon" width="24" height="24"/> Online bookings</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon"/> No online bookings</label>
+                        <label><input type="checkbox" v-model="sitesInPerson" v-on:change="updateFilter()"/><img v-bind:src="sitesInPersonIcon" width="24" height="24"/> No online bookings</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
-                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon"/> Third-party site</label>
+                        <label><input type="checkbox" v-model="sitesAlt" v-on:change="updateFilter()"/><img v-bind:src="sitesAltIcon" width="24" height="24"/> Third-party site</label>
                     </div>
                     <div class="small-12 medium-12 large-12 columns filter-button">
                         <button class="button expanded" v-on:click="toggleShowFilters"><span v-if="hideExtraFilters">Show more filters ▼</span><span v-else>Hide filters ▲</span></button>
@@ -127,7 +131,7 @@
                     <div v-html="f.description"/>
                     <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
                     <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
-                    <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.getId()+'&'+bookingParam" target="_blank">Book now</a>
+                    <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
                 </div>
             </div>
         </paginate>
@@ -439,21 +443,21 @@ export default {
                 ['cddp:dpaw_tenure', {}],
             ],
             filterList: [
-                {name: '2WD accessibile', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
+                {name: '2WD accessible', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
                 {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
                 {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']}
             ],
             extraFilterList: [
                 {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
                 {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
+                {name: 'Dump station', symb: 'RF19', key: 'sullage', 'remoteKey': ['DUMP STATION']},
                 {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
                 {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
                 {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
-                //{name: 'Portable toilet disposal', symb: 'RF19', key: 'sullage', 'remoteKey': []},
-                {name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
+                //{name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
                 {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
                 {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
-                {name: 'Walk trail', symb: 'RW3', key: 'walktrail', 'remoteKey': ['WALK TRAIL']},
+                //{name: 'Walk trail', symb: 'RW3', key: 'walktrail', 'remoteKey': ['WALK TRAIL']},
             ],
             hideExtraFilters: true,
             suggestions: {},
@@ -464,15 +468,15 @@ export default {
             numConcessions: 0,
             numChildren: 0,
             numInfants: 0,
-            gearType: 'tent',
+            gearType: 'all',
             filterParams: {
             },
             dateSetFirstTime: true,
             sitesOnline: true,
-            sitesOnlineIcon: require('./assets/pin.svg'),
             sitesInPerson: true,
-            sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAlt: true,
+            sitesOnlineIcon: require('./assets/pin.svg'),
+            sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAltIcon: require('./assets/pin_alt.svg'),
             locationIcon: require('./assets/location.svg'),
             paginate: ['filterResults']
@@ -533,7 +537,8 @@ export default {
                     'num_adult': this.numAdults,
                     'num_concession': this.numConcessions,
                     'num_children': this.numChildren,
-                    'num_infants': this.numInfants
+                    'num_infants': this.numInfants,
+                    'gear_type': this.gearType,
                 };
                 if (this.arrivalDate && this.departureDate) {
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
@@ -611,7 +616,7 @@ export default {
                     props.style = undefined;
                     props.geometry = props.geometry.getCoordinates();
                     props.distance = Math.sqrt(Math.pow(props.geometry[0]-vm.center[0], 2) + Math.pow(props.geometry[1]-vm.center[1], 2));
-                    props.id = el.id;
+                    props.id = el.getId();
                     return props;
                 }).sort(function (a, b) {
                     /* distance from map center sort */
@@ -742,7 +747,8 @@ export default {
             }
         }).on('changeDate', function (ev) {
             //console.log('arrivalEl changeDate');
-            ev.target.dispatchEvent(new Event('change'));
+            ev.target.dispatchEvent(new CustomEvent('change'));
+        }).on('change', function (ev) {
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -754,7 +760,7 @@ export default {
             vm.arrivalDate = moment(vm.arrivalData.date);
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new Event('change'));
+                ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
 
@@ -765,12 +771,13 @@ export default {
             }
         }).on('changeDate', function (ev) {
             //console.log('departureEl changeDate');
-            ev.target.dispatchEvent(new Event('change'));
+            ev.target.dispatchEvent(new CustomEvent('change'));
+        }).on('change', function (ev) {
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new Event('change'));
+                ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
 
@@ -838,7 +845,7 @@ export default {
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
-                layer: 'dpaw:mapbox_outdoors',
+                layer: 'public:mapbox-streets',
                 matrixSet: this.matrixSet,
                 projection: this.projection,
                 tileGrid: tileGrid
@@ -850,7 +857,7 @@ export default {
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
-                layer: 'cddp:dpaw_tenure',
+                layer: 'public:dpaw_lands_and_waters',
                 matrixSet: this.matrixSet,
                 projection: this.projection,
                 tileGrid: tileGrid
@@ -933,6 +940,7 @@ export default {
                     style = new ol.style.Style({
                         image: new ol.style.Icon({
                             src: icon,
+                            imgSize: [32, 32],
                             snapToPixel: true,
                             anchor: [0.5, 1.0],
                             anchorXUnits: 'fraction',

@@ -22,6 +22,12 @@ MIDDLEWARE_CLASSES += [
 # maximum number of days allowed for a booking
 PS_MAX_BOOKING_LENGTH = 90
 
+# minimum number of remaining campsites to trigger an availaiblity warning
+PS_CAMPSITE_COUNT_WARNING = 10
+
+# number of days before clearing un unpaid booking
+PS_UNPAID_BOOKING_LAPSE_DAYS = 5
+
 WSGI_APPLICATION = 'parkstay.wsgi.application'
 
 REST_FRAMEWORK = {

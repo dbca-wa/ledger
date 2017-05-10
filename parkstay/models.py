@@ -396,7 +396,7 @@ class BookingRange(models.Model):
         return False
 
     def clean(self, *args, **kwargs):
-        print self.__dict__
+        print(self.__dict__)
         if self.range_end and self.range_end < self.range_start:
             raise ValidationError('The end date cannot be before the start date.')
 
@@ -888,12 +888,31 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
+    created = models.DateTimeField(default=timezone.now)
 
     # Properties
     # =================================
     @property
     def num_days(self):
         return (self.departure-self.arrival).days
+
+    @property
+    def stay_dates(self):
+        count = self.num_days
+        return '{} to {} ({} day{})'.format(self.arrival, self.departure, count, '' if count == 1 else 's')
+
+    @property
+    def stay_guests(self):
+        num_adult = self.details.get('num_adult', 0)
+        num_concession = self.details.get('num_concession', 0)
+        num_infant = self.details.get('num_infant', 0)
+        num_child = self.details.get('num_child', 0)
+        return '{} adult{}, {} concession{}, {} child{}, {} infant{}'.format(
+            num_adult, '' if num_adult == 1 else 's',
+            num_concession, '' if num_concession == 1 else 's',
+            num_child, '' if num_child == 1 else 'ren',
+            num_infant, '' if num_infant == 1 else 's',
+        )
 
     @property
     def num_guests(self):
@@ -926,8 +945,7 @@ class Booking(models.Model):
         today = datetime.now().date()
         if self.arrival > today <= self.departure:
             if not self.is_canceled:
-                if self.status != "Paid":
-                    return True
+                return True
         return False
 
     @property
@@ -952,7 +970,7 @@ class Booking(models.Model):
             parts = payment_status.split('_')
             for p in parts:
                 status += '{} '.format(p.title())
-            status.strip()
+            status = status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
                     return 'Canceled - Payment ({})'.format(status)
@@ -977,10 +995,12 @@ class Booking(models.Model):
         other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gte=arrival,arrival__lt=departure),customer=customer)
         if self.pk:
             other_bookings.exclude(id=self.pk)
-        if other_bookings:
-            raise ValidationError('Sorry you cannot make concurent bookings')
+        if customer and other_bookings:
+            raise ValidationError('You cannot make concurrent bookings.')
         if not self.campground.oracle_code:
-            raise ValidationError('Sorry you cannot make a booking for a campground without an oracle code.')
+            raise ValidationError('Campground does not have an Oracle code.')
+        if self.campground.park.entry_fee_required and not self.campground.park.oracle_code:
+            raise ValidationError('Park does not have an Oracle code.')
         super(Booking,self).clean(*args,**kwargs)
 
     def __str__(self):
@@ -1038,6 +1058,7 @@ class BookingVehicleRego(models.Model):
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
     type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
+    entry_fee = models.BooleanField(default=False)
 
 class ParkEntryRate(models.Model):
 
