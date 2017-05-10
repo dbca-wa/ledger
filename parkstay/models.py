@@ -932,8 +932,7 @@ class Booking(models.Model):
         today = datetime.now().date()
         if self.arrival > today <= self.departure:
             if not self.is_canceled:
-                if self.status != "Paid":
-                    return True
+                return True
         return False
 
     @property
