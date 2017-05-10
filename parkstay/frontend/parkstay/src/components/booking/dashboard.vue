@@ -1,7 +1,7 @@
 <template lang="html" id="booking-dashboard">
 <div class="row">
   <div class="col-lg-12" v-show="!isLoading">
-      <div class="well">
+      <div class="well"     style="overflow: auto;">
           <div class="row">
               <div class="col-lg-12">
                   <button type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
@@ -154,6 +154,22 @@ export default {
                         return d;
                     }
                 },
+                columnDefs: [
+                    {
+                        responsivePriority: 1,
+                        targets: 0
+                    },
+                    {
+                        responsivePriority: 2,
+                        width:"10%",
+                        targets: 2
+                    },
+                    {
+                        responsivePriority: 3,
+                        width:"20%",
+                        targets: 8
+                    }
+                ],
                 columns:[
                     {
                         data:"campground_name",
