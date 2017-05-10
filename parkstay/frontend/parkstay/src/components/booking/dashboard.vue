@@ -221,10 +221,10 @@ export default {
                             var column = "<td >";
                             if (full.invoices.length > 0) {
                                 var invoice_string = '/ledger/payments/invoice/payment?';
+                                view_confirmation += "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary' > View Confirmation</a><br/>";
                                 var view_confirmation ="";
                                 $.each(full.invoices,function(i,n){
                                     invoice_string += 'invoice='+n+'&';
-                                    view_confirmation += "<a href='/ledger/payments/invoice-pdf/"+n+"' target='_blank' class='text-primary' > View Confirmation</a><br/>";
                                 });
                                 invoice_string = invoice_string.slice(0,-1);
                                 var payment = (full.paid) ? "View" : "Record";
