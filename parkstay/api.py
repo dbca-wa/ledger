@@ -52,6 +52,7 @@ from parkstay.models import (Campground,
                                 PriceReason,
                                 MaximumStayReason,
                                 ParkEntryRate,
+                                BookingVehicleRego
                                 )
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
@@ -93,7 +94,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     ReportSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
-from parkstay import reports 
+from parkstay import reports
 
 
 
@@ -1407,11 +1408,15 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['status'] = booking.status
                 bk['paid'] = booking.paid
                 bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                bk['guests'] = booking.guests
+                bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
                 if not bk['legacy_id']:
                     try:
                         customer = EmailUser.objects.get(id=bk['customer_id'])
                         bk['firstname'] = customer.first_name
                         bk['lastname'] = customer.last_name
+                        bk['email'] = customer.email if customer.email else ""
+                        bk['phone'] = customer.mobile_number if customer.mobile_number else ""
                         if booking.is_canceled:
                             bk['campground_site_type'] = ""
                         else:
@@ -1419,6 +1424,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                     except EmailUser.DoesNotExist:
                         bk['firstname'] =  ""
                         bk['lastname'] = ""
+                        bk['email'] = ""
+                        bk['phone'] = ""
                 else:
                     bk['firstname'] =  bk['legacy_name']
                     bk['lastname'] = ""
