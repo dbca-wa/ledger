@@ -357,8 +357,11 @@ export default {
         printCsv:function () {
             let vm =this;
             var json2csv = require('json2csv');
-            var fields = JSON.parse(JSON.stringify(vm.dtHeaders));
-            fields.splice(fields.length-1,1);
+            var fields = [...vm.dtHeaders];
+            fields.splice(vm.dtHeaders.length-1,1);
+            fields = [...fields,"Adults","Concession","Children","Infants","Regos"]
+            fields.splice(3,0,"Email");
+            fields.splice(4,0,"Phone");
             var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
             var bookings = [];
             $.each(data,function (i,booking) {
@@ -375,19 +378,44 @@ export default {
                             bk[field] = booking.firstname +" "+ booking.lastname;
                         break;
                         case 3:
-                            bk[field] = booking.id;
+                            bk[field] = booking.email;
                         break;
                         case 4:
-                            bk[field] = booking.campground_site_type;
+                            bk[field] = booking.phone;
                         break;
                         case 5:
-                            bk[field] = (booking.editable)? "Paid":"Unpaid";
+                            bk[field] = booking.id;
                         break;
                         case 6:
-                            bk[field] = Moment(booking.arrival).format("dddd, MMMM Do YYYY");
+                            bk[field] = booking.campground_site_type;
                         break;
                         case 7:
-                            bk[field] = Moment(booking.departure).format("dddd, MMMM Do YYYY");
+                            bk[field] = (booking.editable)? "Paid":"Unpaid";
+                        break;
+                        case 8:
+                            bk[field] = Moment(booking.arrival).format("YYYY-MM-D");
+                        break;
+                        case 9:
+                            bk[field] = Moment(booking.departure).format("YYYY-MM-D");
+                        break;
+                        case 10:
+                            bk[field] = booking.guests.adults;
+                        break;
+                        case 11:
+                            bk[field] =  booking.guests.concession;
+                        break;
+                        case 12:
+                            bk[field] =  booking.guests.children;
+                        break;
+                        case 13:
+                            bk[field] =  booking.guests.infants;
+                        break;
+                        case 14:
+                            bk[field] =  booking.regos.map(r =>{
+                                return Object.keys(r).map(k =>{
+                                    return k +" : "+ r[k]
+                                });
+                            }).join(", ");
                         break;
 
                     }
