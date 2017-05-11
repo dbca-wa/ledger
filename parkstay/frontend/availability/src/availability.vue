@@ -187,10 +187,6 @@
         width: 100%;
     }
 
-    .dropdown-pane {
-        width: auto;
-    }
-
     .siteWarning {
         font-weight: bold;
         font-style: italic;
