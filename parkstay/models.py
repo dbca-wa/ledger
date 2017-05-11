@@ -888,6 +888,7 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
+    confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
 
     # Properties

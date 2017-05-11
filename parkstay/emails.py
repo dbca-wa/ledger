@@ -30,6 +30,8 @@ def send_booking_confirmation(booking):
     att.seek(0)
 
     email_obj.send([email], context=context, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+    booking.confirmation_sent = True
+    booking.save()
 
 
 def send_booking_lapse(booking):
