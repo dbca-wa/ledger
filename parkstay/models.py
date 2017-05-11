@@ -923,6 +923,19 @@ class Booking(models.Model):
         return num_adult + num_concession + num_infant + num_child
 
     @property
+    def guests(self):
+        num_adult = self.details.get('num_adult', 0)
+        num_concession = self.details.get('num_concession', 0)
+        num_infant = self.details.get('num_infant', 0)
+        num_child = self.details.get('num_child', 0)
+        return {
+            "adults" : num_adult,
+            "concession" : num_concession,
+            "infants" : num_infant,
+            "children": num_child
+        }
+        
+    @property
     def first_campsite(self):
         cb = self.campsites.all().first()
         return cb.campsite if cb else None
