@@ -99,10 +99,8 @@ module.exports = {
         background: transparent;
         color: #03a9f4;
     }
-    td > a:hover{
-        /*background-color: rgba(153, 153, 153, 0.2);
-        text-decoration: none !important;
-        margin: 30px 1px;*/
+    td{
+        word-wrap: break-word;
     }
     table.table-bordered.dataTable tbody th, table.table-bordered.dataTable tbody td {
         border-bottom-width: 0;
@@ -154,10 +152,6 @@ module.exports = {
         margin-left: 10px;
         margin-right: 10px;
         display: inline-block;
-    }
-    table.dataTable tbody > tr > td {
-        padding-left: 18px;
-        padding-right: 18px;
     }
     .input-sm {
         width: auto;

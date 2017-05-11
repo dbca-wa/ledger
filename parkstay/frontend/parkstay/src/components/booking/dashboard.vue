@@ -161,12 +161,10 @@ export default {
                     },
                     {
                         responsivePriority: 2,
-                        width:"10%",
                         targets: 2
                     },
                     {
                         responsivePriority: 3,
-                        width:"20%",
                         targets: 8
                     }
                 ],
@@ -184,7 +182,7 @@ export default {
                     {
                         mRender: function(data, type, full) {
                             var name = full.firstname +" "+full.lastname;
-                            var max_length = 15;
+                            var max_length = 25;
                             var short_name = (name.length > max_length) ? name.substring(0,max_length-1)+'...' : name;
                             var column = '<td ><div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
                             column.replace(/__SHNAME__/g, short_name);
@@ -203,7 +201,7 @@ export default {
                         data:"campground_site_type",
                         mRender:function (data,type,full) {
                             if (data){
-                                var max_length = 10;
+                                var max_length = 15;
                                 var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
                                 var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
                                 return column.replace('__NAME__', data);
