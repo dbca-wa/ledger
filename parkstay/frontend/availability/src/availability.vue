@@ -8,6 +8,13 @@
                 </div>
             </div>
         </div>
+        <div class="row" v-else-if="status == 'empty'">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Sorry, this campground doesn't yet have any campsites assigned to it. Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
+                </div>
+            </div>
+        </div>
         <div class="row" v-if="errorMsg">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
@@ -386,6 +393,11 @@ export default {
                         vm.name = data.name;
                         vm.days = data.days;
                         vm.classes = data.classes;
+
+                        if (data.sites.length == 0) {
+                            vm.status = 'empty';
+                            return;
+                        }
 
                         vm.gearTotals.tent = 0
                         vm.gearTotals.campervan = 0
