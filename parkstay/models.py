@@ -917,25 +917,34 @@ class Booking(models.Model):
 
     @property
     def num_guests(self):
-        num_adult = self.details.get('num_adult', 0)
-        num_concession = self.details.get('num_concession', 0)
-        num_infant = self.details.get('num_infant', 0)
-        num_child = self.details.get('num_child', 0)
-        return num_adult + num_concession + num_infant + num_child
+        if self.details:
+            num_adult = self.details.get('num_adult', 0)
+            num_concession = self.details.get('num_concession', 0)
+            num_infant = self.details.get('num_infant', 0)
+            num_child = self.details.get('num_child', 0)
+            return num_adult + num_concession + num_infant + num_child
+        return 0
 
     @property
     def guests(self):
-        num_adult = self.details.get('num_adult', 0)
-        num_concession = self.details.get('num_concession', 0)
-        num_infant = self.details.get('num_infant', 0)
-        num_child = self.details.get('num_child', 0)
+        if self.details:
+            num_adult = self.details.get('num_adult', 0)
+            num_concession = self.details.get('num_concession', 0)
+            num_infant = self.details.get('num_infant', 0)
+            num_child = self.details.get('num_child', 0)
+            return {
+                "adults" : num_adult,
+                "concession" : num_concession,
+                "infants" : num_infant,
+                "children": num_child
+            }
         return {
-            "adults" : num_adult,
-            "concession" : num_concession,
-            "infants" : num_infant,
-            "children": num_child
+            "adults" : 0,
+            "concession" : 0,
+            "infants" : 0,
+            "children": 0
         }
-        
+
     @property
     def first_campsite(self):
         cb = self.campsites.all().first()

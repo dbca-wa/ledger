@@ -184,7 +184,8 @@ export default {
                             var name = full.firstname +" "+full.lastname;
                             var max_length = 25;
                             var short_name = (name.length > max_length) ? name.substring(0,max_length-1)+'...' : name;
-                            var column = '<td ><div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
+                            var popover =  (name.length > max_length) ? "class=\"name_popover\"":"";
+                            var column = '<td ><div '+popover+' tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
                             column.replace(/__SHNAME__/g, short_name);
                             return column.replace(/__NAME__/g, name);
 

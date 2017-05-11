@@ -20,7 +20,7 @@
  */
 
 'use strict';
-import {$} from '../../hooks'
+ import $ from 'jquery'
 
 /**
  * Constructor for responsive datables helper.
