@@ -289,6 +289,8 @@ class BookingSuccessView(TemplateView):
             utils.delete_session_booking(request.session)
             request.session['ps_last_booking'] = booking.id
             
+            # send out the invoice before the confirmation is sent
+            emails.send_booking_invoice(booking)
             # for fully paid bookings, fire off confirmation email
             if booking.paid:
                 emails.send_booking_confirmation(booking)
