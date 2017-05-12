@@ -2,6 +2,19 @@
 {% load static %}
 {% load i18n %}
 
+{%block styles %}
+    {{ block.super}}
+    <style>
+        .card-logo{
+            width: 100px;
+            float: left;
+            margin: 5px;
+        }
+        .card-logo.disabled{
+            opacity: 0.4;
+        }
+    </style>
+{% endblock %}
 {% block payment_details %}
 <div clas="container">
     <!-- Pills -->
@@ -56,6 +69,17 @@
                 {% endif %}
                 <form id="new_card_form" method="post" action="{% url 'checkout:preview' %}" class="form-stacked">
                     {% csrf_token %}
+                    <div>
+                        <h4>Accepted Cards</h4>
+                    </div>
+                    <div class="clearfix">
+                        <div class="visa card-logo disabled">
+                            <img src="{% static 'payments/img/visa-logo.svg' %}" alt="visa-logo"/>
+                        </div>
+                        <div class="mastercard card-logo disabled">
+                            <img src="{% static 'payments/img/mastercard-logo.svg' %}" alt="mastercard-logo"/>
+                        </div>
+                    </div>
                     {% include "partials/form_fields.html" with form=bankcard_form %}
                     {% if store_card %}
                     <div class="checkbox">
@@ -92,5 +116,6 @@
 {% endblock %}
 {% block extrascripts %}
     <script type="text/javascript" src="{% static 'payments/js/checkout.js'%}"></script>
+    
     {{ block.super }}
 {% endblock %}
