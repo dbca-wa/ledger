@@ -7,6 +7,7 @@ from django_cron import CronJobBase, Schedule
 from parkstay.models import Booking
 from parkstay.reports import outstanding_bookings
 from parkstay.emails import send_booking_confirmation
+from parkstay.utils import oracle_integration
 
 class UnpaidBookingsReportCronJob(CronJobBase):
     RUN_AT_TIMES = ['05:30']
@@ -16,6 +17,15 @@ class UnpaidBookingsReportCronJob(CronJobBase):
 
     def do(self):
         outstanding_bookings() 
+
+class OracleIntegrationCronJob(CronJobBase):
+    RUN_AT_TIMES = ['05:00']
+
+    schedule = Schedule(run_at_times=RUN_AT_TIMES)
+    code = 'parkstay.oracle_integration'
+
+    def do(self):
+        oracle_integration(str(date.today()))
 
 class SendBookingsConfirmationCronJob(CronJobBase):
     RUN_EVERY_MINS = 5
