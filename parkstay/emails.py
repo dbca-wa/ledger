@@ -68,5 +68,5 @@ def send_booking_lapse(booking):
         'booking': booking,
         'settings': settings,
     }
-    email_obj.send([email], context=context)
+    email_obj.send([email], from_address=camground_email, context=context)
 
