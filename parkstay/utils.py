@@ -14,6 +14,7 @@ from ledger.payments.models import Invoice,OracleInterface
 from ledger.payments.utils import oracle_parser
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
+from parkstay.emails import send_booking_invoice
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -610,6 +611,7 @@ def update_booking(request,old_booking,booking_details):
                 old_booking.save()
                 booking.delete()
             delete_session_booking(request.session)
+            send_booking_invoice(booking)
             return old_booking
         except:
             delete_session_booking(request.session)
@@ -723,7 +725,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
             internal_create_booking_invoice(booking, checkout_response)
             delete_session_booking(request.session)
-
+            send_booking_invoice(booking)
             return booking
 
     except:
