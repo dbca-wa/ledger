@@ -1,43 +1,43 @@
 $(function(){
-    var $new_card_form = $('#new_card_form');
-    var $stored_card_form = $('#stored_card_form');
+    var new_card_form = $('#new_card_form');
+    var stored_card_form = $('#stored_card_form');
     var mastercard_regex = /^(((222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)\d+)|((5[1-6])\d+))$/;
     var visa_regex = /^[4]{1}\d+$/;
     // Reset Forms
     function reset_forms() {
-        $stored_card_form[0].reset();
-        $new_card_form[0].reset();
+        if (stored_card_form.length > 0){
+            stored_card_form[0].reset();
+        }
+        new_card_form[0].reset();
         $('#use_stored').prop('checked',false);
     }
     
     $('#use_stored').click('on',function(){
         if (this.checked) {
-            if (!$new_card_form.hasClass('hide')) {
-               $new_card_form.addClass('hide');
+            if (!new_card_form.hasClass('hide')) {
+               new_card_form.addClass('hide');
             }
-            if ($stored_card_form.hasClass('hide')) {
-               $stored_card_form.removeClass('hide');
+            if (stored_card_form.hasClass('hide')) {
+               stored_card_form.removeClass('hide');
             }
         }
         else{
-            if ($new_card_form.hasClass('hide')) {
-               $new_card_form.removeClass('hide');
+            if (new_card_form.hasClass('hide')) {
+               new_card_form.removeClass('hide');
             }
-            if (!$stored_card_form.hasClass('hide')) {
-               $stored_card_form.addClass('hide');
+            if (!stored_card_form.hasClass('hide')) {
+               stored_card_form.addClass('hide');
             }
         }
     });
-    //reset_forms();
+    reset_forms();
 
     $('#id_number').on('keydown keyup',function(e){
         if(mastercard_regex.test(e.target.value)){
-            console.log('master');
             $('.mastercard').removeClass('disabled');
             $('.visa').addClass('disabled');
         }
         else if (visa_regex.test(e.target.value)){
-            console.log('visa');
             $('.mastercard').addClass('disabled');
             $('.visa').removeClass('disabled');
         }
