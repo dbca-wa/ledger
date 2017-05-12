@@ -888,6 +888,7 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
+    confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
 
     # Properties
@@ -916,11 +917,33 @@ class Booking(models.Model):
 
     @property
     def num_guests(self):
-        num_adult = self.details.get('num_adult', 0)
-        num_concession = self.details.get('num_concession', 0)
-        num_infant = self.details.get('num_infant', 0)
-        num_child = self.details.get('num_child', 0)
-        return num_adult + num_concession + num_infant + num_child
+        if self.details:
+            num_adult = self.details.get('num_adult', 0)
+            num_concession = self.details.get('num_concession', 0)
+            num_infant = self.details.get('num_infant', 0)
+            num_child = self.details.get('num_child', 0)
+            return num_adult + num_concession + num_infant + num_child
+        return 0
+
+    @property
+    def guests(self):
+        if self.details:
+            num_adult = self.details.get('num_adult', 0)
+            num_concession = self.details.get('num_concession', 0)
+            num_infant = self.details.get('num_infant', 0)
+            num_child = self.details.get('num_child', 0)
+            return {
+                "adults" : num_adult,
+                "concession" : num_concession,
+                "infants" : num_infant,
+                "children": num_child
+            }
+        return {
+            "adults" : 0,
+            "concession" : 0,
+            "infants" : 0,
+            "children": 0
+        }
 
     @property
     def first_campsite(self):
@@ -1034,6 +1057,17 @@ class BookingInvoice(models.Model):
 
     def __str__(self):
         return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
 
 class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""

@@ -8,6 +8,7 @@ from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen.canvas import Canvas
+from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 
@@ -58,6 +59,7 @@ styles.add(ParagraphStyle(name='BoldRight', fontName=BOLD_FONTNAME, fontSize=MED
 styles.add(ParagraphStyle(name='Center', alignment=enums.TA_CENTER))
 styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
+styles.add(ParagraphStyle(name='LongString', alignment=enums.TA_LEFT,wordWrap='CJK'))
 
 class BrokenLine(Flowable):
 
@@ -190,14 +192,14 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'ABN: 38 052 249 024')
 
     # Invoice address details
-    invoice_details_offset = 30
+    invoice_details_offset = 37
     current_y -= 20
     invoice = doc.invoice
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
     current_x = PAGE_MARGIN + 5
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.owner.get_full_name())
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,invoice.owner.username)
-    current_x += 454
+    current_x += 452
     #write Invoice details
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),'Date')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))
@@ -242,11 +244,14 @@ def _create_invoice(invoice_buffer, invoice):
         ['Item','Product', 'Quantity','Unit Price','GST', 'Total']
     ]
     val = 1
+    s = styles["BodyText"]
+    s.wordWrap = 'CJK'
+    print s.__dict__
     for item in items:
         data.append(
             [
                 val,
-                Paragraph(item.description, styles['Normal']),
+                Paragraph(item.description, s),
                 item.quantity,
                 '${}'.format(item.unit_price_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
@@ -280,12 +285,16 @@ def _create_invoice(invoice_buffer, invoice):
     t= Table(
             data,
             style=invoice_table_style,
-            hAlign='LEFT'
+            hAlign='LEFT',
+            colWidths=(
+            0.7 * inch,
+            None,
+            0.7 * inch,
+            1.0 * inch,
+            1.0 * inch,
+            1.0 * inch,
+            )
         )
-    t._argW[1] = 3.4 * inch
-    t._argW[2] = 0.7 * inch
-    for x in range (3,6):
-        t._argW[x] = 1.0 * inch
     elements.append(t)
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     # /Products Table

@@ -1,7 +1,7 @@
 <template lang="html" id="booking-dashboard">
 <div class="row">
   <div class="col-lg-12" v-show="!isLoading">
-      <div class="well">
+      <div class="well"     style="overflow: auto;">
           <div class="row">
               <div class="col-lg-12">
                   <button type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
@@ -154,6 +154,20 @@ export default {
                         return d;
                     }
                 },
+                columnDefs: [
+                    {
+                        responsivePriority: 1,
+                        targets: 0
+                    },
+                    {
+                        responsivePriority: 2,
+                        targets: 2
+                    },
+                    {
+                        responsivePriority: 3,
+                        targets: 8
+                    }
+                ],
                 columns:[
                     {
                         data:"campground_name",
@@ -168,9 +182,10 @@ export default {
                     {
                         mRender: function(data, type, full) {
                             var name = full.firstname +" "+full.lastname;
-                            var max_length = 15;
+                            var max_length = 25;
                             var short_name = (name.length > max_length) ? name.substring(0,max_length-1)+'...' : name;
-                            var column = '<td ><div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
+                            var popover =  (name.length > max_length) ? "class=\"name_popover\"":"";
+                            var column = '<td ><div '+popover+' tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
                             column.replace(/__SHNAME__/g, short_name);
                             return column.replace(/__NAME__/g, name);
 
@@ -181,13 +196,16 @@ export default {
                     {
                         data:"id",
                         orderable:false,
-                        searchable:false
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            return "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>";
+                        }
                     },
                     {
                         data:"campground_site_type",
                         mRender:function (data,type,full) {
                             if (data){
-                                var max_length = 10;
+                                var max_length = 15;
                                 var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
                                 var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
                                 return column.replace('__NAME__', data);
@@ -216,6 +234,7 @@ export default {
                         mRender: function(data, type, full) {
                             var status = (data == true) ? "Open" : "Temporarily Closed";
                             var booking = JSON.stringify(full);
+                            var invoices = "";
                             var invoice = "/ledger/payments/invoice/"+full.invoice_reference;
                             var invoice_link= (full.invoice_reference)?"<a href='"+invoice+"' target='_blank' class='text-primary'>Invoice</a><br/>":"";
                             var column = "<td >";
@@ -235,6 +254,10 @@ export default {
                                 column += cancel_booking;
                                 column += change_booking;
                             }
+                            $.each(full.active_invoices,(i,v) =>{
+                                invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
+                            });
+                            column += invoices;
                             column += "</td>";
                             return column.replace('__Status__', status);
                         },
@@ -357,8 +380,11 @@ export default {
         printCsv:function () {
             let vm =this;
             var json2csv = require('json2csv');
-            var fields = JSON.parse(JSON.stringify(vm.dtHeaders));
-            fields.splice(fields.length-1,1);
+            var fields = [...vm.dtHeaders];
+            fields.splice(vm.dtHeaders.length-1,1);
+            fields = [...fields,"Adults","Concession","Children","Infants","Regos"]
+            fields.splice(3,0,"Email");
+            fields.splice(4,0,"Phone");
             var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
             var bookings = [];
             $.each(data,function (i,booking) {
@@ -375,19 +401,44 @@ export default {
                             bk[field] = booking.firstname +" "+ booking.lastname;
                         break;
                         case 3:
-                            bk[field] = booking.id;
+                            bk[field] = booking.email;
                         break;
                         case 4:
-                            bk[field] = booking.campground_site_type;
+                            bk[field] = booking.phone;
                         break;
                         case 5:
-                            bk[field] = (booking.editable)? "Paid":"Unpaid";
+                            bk[field] = booking.id;
                         break;
                         case 6:
-                            bk[field] = Moment(booking.arrival).format("dddd, MMMM Do YYYY");
+                            bk[field] = booking.campground_site_type;
                         break;
                         case 7:
-                            bk[field] = Moment(booking.departure).format("dddd, MMMM Do YYYY");
+                            bk[field] = (booking.editable)? "Paid":"Unpaid";
+                        break;
+                        case 8:
+                            bk[field] = Moment(booking.arrival).format("YYYY-MM-D");
+                        break;
+                        case 9:
+                            bk[field] = Moment(booking.departure).format("YYYY-MM-D");
+                        break;
+                        case 10:
+                            bk[field] = booking.guests.adults;
+                        break;
+                        case 11:
+                            bk[field] =  booking.guests.concession;
+                        break;
+                        case 12:
+                            bk[field] =  booking.guests.children;
+                        break;
+                        case 13:
+                            bk[field] =  booking.guests.infants;
+                        break;
+                        case 14:
+                            bk[field] =  booking.regos.map(r =>{
+                                return Object.keys(r).map(k =>{
+                                    return k +" : "+ r[k]
+                                });
+                            }).join(", ");
                         break;
 
                     }

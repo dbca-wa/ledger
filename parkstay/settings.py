@@ -66,3 +66,11 @@ STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'parkstay', 'fronten
 BPAY_ALLOWED = env('BPAY_ALLOWED',False)
 
 OSCAR_BASKET_COOKIE_OPEN = 'parkstay_basket'
+
+
+CRON_CLASSES = [
+    'parkstay.cron.SendBookingsConfirmationCronJob',
+    'parkstay.cron.UnpaidBookingsReportCronJob',
+]
+
+CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','campgrounds@dpaw.wa.gov.au')
