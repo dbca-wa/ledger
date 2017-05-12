@@ -1467,6 +1467,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['status'] = booking.status
                 bk['paid'] = booking.paid
                 bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
                 if not bk['legacy_id']:

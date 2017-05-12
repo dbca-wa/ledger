@@ -196,7 +196,10 @@ export default {
                     {
                         data:"id",
                         orderable:false,
-                        searchable:false
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            return "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>";
+                        }
                     },
                     {
                         data:"campground_site_type",
@@ -231,19 +234,18 @@ export default {
                         mRender: function(data, type, full) {
                             var status = (data == true) ? "Open" : "Temporarily Closed";
                             var booking = JSON.stringify(full);
+                            var invoices = "";
                             var invoice = "/ledger/payments/invoice/"+full.invoice_reference;
                             var invoice_link= (full.invoice_reference)?"<a href='"+invoice+"' target='_blank' class='text-primary'>Invoice</a><br/>":"";
                             var column = "<td >";
                             if (full.invoices.length > 0) {
                                 var invoice_string = '/ledger/payments/invoice/payment?';
-                                var view_confirmation = "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary' > View Confirmation</a><br/>";
                                 $.each(full.invoices,function(i,n){
                                     invoice_string += 'invoice='+n+'&';
                                 });
                                 invoice_string = invoice_string.slice(0,-1);
                                 var payment = (full.paid) ? "View" : "Record";
                                 var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
-                                column += view_confirmation;
                                 column += record_payment;
                             }
                             if (full.editable){
@@ -252,6 +254,10 @@ export default {
                                 column += cancel_booking;
                                 column += change_booking;
                             }
+                            $.each(full.active_invoices,(i,v) =>{
+                                invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
+                            });
+                            column += invoices;
                             column += "</td>";
                             return column.replace('__Status__', status);
                         },

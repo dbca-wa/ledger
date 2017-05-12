@@ -1058,6 +1058,17 @@ class BookingInvoice(models.Model):
     def __str__(self):
         return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
 
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
+
 class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""
     VEHICLE_CHOICES = (
