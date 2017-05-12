@@ -246,7 +246,7 @@ def _create_invoice(invoice_buffer, invoice):
     val = 1
     s = styles["BodyText"]
     s.wordWrap = 'CJK'
-    print s.__dict__
+    print(s.__dict__)
     for item in items:
         data.append(
             [
