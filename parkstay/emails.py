@@ -8,6 +8,7 @@ from ledger.payments.models import Invoice
 
 from ledger.emails.emails import EmailBase
 
+camground_email = settings.CAMPGROUNDS_EMAIL
 class TemplateEmailBase(EmailBase):
     subject = ''
     html_template = 'ps/email/base_email.html'
@@ -26,13 +27,13 @@ def send_booking_invoice(booking):
     context = {
         'booking': booking
     }
-    filename = 'invoice-PS{}.pdf'.format(booking.id)
+    filename = 'invoice-{}({}-{}).pdf'.format(booking.campground.name,booking.arrival,booking.departure)
     references = [b.invoice_reference for b in booking.invoices.all()]
     invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
         
     invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
 
-    email_obj.send([email], context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
+    email_obj.send([email], from_address=camground_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
 
 def send_booking_confirmation(booking):
     email_obj = TemplateEmailBase()
@@ -50,7 +51,7 @@ def send_booking_confirmation(booking):
     pdf.create_confirmation(att, booking)
     att.seek(0)
 
-    email_obj.send([email], context=context, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+    email_obj.send([email], from_address=camground_email, context=context, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
     booking.confirmation_sent = True
     booking.save()
 
