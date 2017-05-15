@@ -1,103 +1,194 @@
 {% extends "disturbance/base.html" %}
 
+{% block extra_css %}
+{{ super }}
+    <style media="screen">
+        h3.panel-title{
+            font-weight: bold;
+            font-size: 25px;
+            padding:20px;
+        }
+        .chevron-down{
+            cursor:pointer;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-xm-12 col-sm-6">
-        <h1>Personal details</h1>
-        <table class="table table-striped table-bordered table-condensed">
-            <tbody>
-                <tr><th>Email</th><td>{{ object.emailuser.email }}</td></tr>
-                <tr><th>Given name(s)</th><td>{{ object.emailuser.first_name }}</td></tr>
-                <tr><th>Surname</th><td>{{ object.emailuser.last_name }}</td></tr>
-                <tr><th>Work phone</th><td>{{ object.work_phone}}</td></tr>
-                <tr><th>Mobile</th><td>{{ object.mobile }}</td></tr>
-            </tbody>
-        </table>
-        <a class="btn btn-primary" role="button" href="{% url 'user_profile_update' %}">Update your details</a>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-sm-12 col-md-8">
-        <h1>Addresses</h1>
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered table-condensed">
-                <tbody>
-                    <tr>
-                        <th>Postal address</th>
-                        <td>{{ object.postal_address }}</td>
-                        <td>
-                        {% if object.postal_address %}
-                            <a class="btn btn-primary btn-sm" role="button" href="{% url 'address_update' object.postal_address.pk %}">Update</a>
-                            <a class="btn btn-danger btn-sm" role="button" href="{% url 'address_delete' object.postal_address.pk %}">Delete</a>
-                        {% else %}
-                            <a class="btn btn-primary btn-sm" role="button" href="{% url 'user_address_create' 'postal' %}">Create</a>
-                        {% endif %}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="container" id="userInfo">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="well well-sm">
+                    <p>
+                        We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
+                        (personal details, address details, contact details, and weather you are managing approvals for an organisation).
+                        Once completed, click Continue to start using the system.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Personal Details <small>Provide your personal details</small>
+                        <a href="#pdbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="pdbody">
+                            <span class="glyphicon glyphicon-chevron-up pull-right chevron-down"></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse in" id="pdbody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">Given name(s)</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Surname</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Address Details <small>Provide your address details</small>
+                        <a href="#adbody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" aria-controls="adbody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right chevron-down"></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" id="adbody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">Postal address</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Town/Suburb</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">State</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Country</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Contact Details <small>Provide your contact details</small>
+                        <a href="#cdbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="cdbody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right chevron-down"></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" id="cdbody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">Phone (work)</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Mobile</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Email</label>
+                            <div class="col-sm-10">
+                                <input type="email" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing approvals</small>
+                        <a href="#orgbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="orgbody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right chevron-down"></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" id="orgbody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-6 control-label">Do you manage approvals on behalf of an organisation?</label>
+                            <div class="col-sm-6">
+                                <label class="radio-inline">
+                                  <input type="radio" name="org"  value="Yes"> Yes
+                                </label>
+                                <label class="radio-inline">
+                                  <input type="radio" name="org" value="No"> No
+                                </label>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Organisation</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="" placeholder="">
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-sm-12 col-md-8">
-        <h1>Company/organisation details</h1>
-        {% if organisations %}
-        <p>You are delegated to submit applications on behalf of the following:</p>
-        {% for org in organisations %}
-        <h3>{{ org }}</h3>
-        <p>
-            <a class="btn btn-primary" role="button" href="{% url 'organisation_update' org.pk %}">Update details</a>
-        </p>
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered table-condensed">
-                <tbody>
-                    <tr>
-                        <th>Postal address</th>
-                        <td>{{ org.postal_address }}</td>
-                        <td>
-                        {% if org.postal_address %}
-                            <a class="btn btn-primary btn-sm" role="button" href="{% url 'address_update' org.postal_address.pk %}">Update</a>
-                            <a class="btn btn-danger btn-sm" role="button" href="{% url 'address_delete' org.postal_address.pk %}">Delete</a>
-                        {% else %}
-                            <a class="btn btn-primary btn-sm" role="button" href="{% url 'organisation_address_create' org.pk 'postal' %}">Create</a>
-                        {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Billing address</th>
-                        <td>{{ org.billing_address }}</td>
-                        <td>
-                        {% if org.billing_address %}
-                            <a class="btn btn-primary btn-sm" role="button" href="{% url 'address_update' org.billing_address.pk %}">Update</a>
-                            <a class="btn btn-danger btn-sm" role="button" href="{% url 'address_delete' org.billing_address.pk %}">Delete</a>
-                        {% else %}
-                            <a class="btn btn-primary btn-sm" role="button" href="{% url 'organisation_address_create' org.pk 'billing' %}">Create</a>
-                        {% endif %}
-                        </td>
-                    </tr>
-                    {% for d in org.delegates.all %}
-                    <tr>
-                        {% if forloop.first %}<th rowspan="{{ org.delegates.count }}">Delegated users</th>{% endif %}
-                        <td>
-                            {{ d.emailuser.get_full_name}}
-                        </td>
-                        <td>
-                            <a class="btn btn-danger btn-sm" role="button" href="{% url 'organisation_unlink_delegate' org.pk d.emailuser.pk %}">Unlink</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endfor %}
-        {% else %}
-        <p>You are not currently delegated to submit applications on behalf of any companies.</p>
-        {% endif %}
-        <a class="btn btn-primary" role="button" href="{% url 'organisation_create' %}">Create a company</a>
-    </div>
-</div>
 
+{% endblock %}
+{% block custom_js %}
+    <script type="text/javascript">
+        $('a[data-toggle="collapse"]').on('click', function () {
+            var chev = $(this).children()[0];
+            window.setTimeout(function () {
+                $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
+            },100);
+        });
+    </script>
 {% endblock %}
