@@ -20,6 +20,10 @@ WSGI_APPLICATION = 'disturbance.wsgi.application'
     )
 }'''
 
+MIDDLEWARE_CLASSES += [
+    'disturbance.middleware.FirstTimeNagScreenMiddleware'
+]
+
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'disturbance', 'templates'))
 BOOTSTRAP3 = {
     'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',

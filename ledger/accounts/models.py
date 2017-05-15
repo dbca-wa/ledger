@@ -241,7 +241,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                                      verbose_name="mobile number", help_text='')
     fax_number = models.CharField(max_length=50, null=True, blank=True,
                                   verbose_name="fax number", help_text='')
-    organisation = models.CharField(max_length=300, null=True, blank=True,
+    organisation_name = models.CharField(max_length=300, null=True, blank=True,
                                     verbose_name="organisation", help_text='organisation, institution or company')
 
     residential_address = models.ForeignKey(Address, null=True, blank=False, related_name='+')
@@ -640,3 +640,24 @@ class EmailUserReport(models.Model):
     class Meta:
         managed = False
         db_table = 'accounts_emailuser_report_v'
+
+
+@python_2_unicode_compatible
+class Organisation(models.Model):
+    """This model represents the details of a company or other organisation.
+    Management of these objects will be delegated to 0+ EmailUsers.
+    """
+    name = models.CharField(max_length=128, unique=True)
+    abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
+    # TODO: business logic related to identification file upload/changes.
+    identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
+    postal_address = models.ForeignKey(Address, related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
+    billing_address = models.ForeignKey(Address, related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+    # TODO: business logic related to delegate changes.
+    delegates = models.ManyToManyField(EmailUser, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('organisation_detail', args=(self.pk,))
