@@ -655,6 +655,8 @@ class Organisation(models.Model):
     billing_address = models.ForeignKey(Address, related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
     # TODO: business logic related to delegate changes.
     delegates = models.ManyToManyField(EmailUser, blank=True)
+    pin_one = models.BigIntegerField(blank=True)
+    pin_two = models.BigIntegerField(blank=True)
 
     def __str__(self):
         return self.name

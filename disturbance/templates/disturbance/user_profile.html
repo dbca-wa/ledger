@@ -8,9 +8,6 @@
             font-size: 25px;
             padding:20px;
         }
-        .chevron-down{
-            cursor:pointer;
-        }
     </style>
 {% endblock %}
 
@@ -33,7 +30,7 @@
                   <div class="panel-heading">
                     <h3 class="panel-title">Personal Details <small>Provide your personal details</small>
                         <a href="#pdbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="pdbody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right chevron-down"></span>
+                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
                     </h3>
                   </div>
@@ -42,13 +39,13 @@
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label">Given name(s)</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="first_name" placeholder="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label" >Surname</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="last_name" placeholder="">
                             </div>
                           </div>
                        </form>
@@ -62,40 +59,40 @@
                   <div class="panel-heading">
                     <h3 class="panel-title">Address Details <small>Provide your address details</small>
                         <a href="#adbody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" aria-controls="adbody">
-                            <span class="glyphicon glyphicon-chevron-down pull-right chevron-down"></span>
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
                   </div>
                   <div class="panel-body collapse" id="adbody">
                       <form class="form-horizontal" action="index.html" method="post">
                           <div class="form-group">
-                            <label for="" class="col-sm-2 control-label">Postal address</label>
+                            <label for="" class="col-sm-2 control-label">Street</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="street" placeholder="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label" >Town/Suburb</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="surburb" placeholder="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label">State</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="state" placeholder="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label">Postcode</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="postcode" placeholder="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label" >Country</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="country" placeholder="">
                             </div>
                           </div>
                        </form>
@@ -109,7 +106,7 @@
                   <div class="panel-heading">
                     <h3 class="panel-title">Contact Details <small>Provide your contact details</small>
                         <a href="#cdbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="cdbody">
-                            <span class="glyphicon glyphicon-chevron-down pull-right chevron-down"></span>
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
                   </div>
@@ -118,19 +115,19 @@
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label">Phone (work)</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="phone" placeholder="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label" >Mobile</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="mobile" placeholder="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label" >Email</label>
                             <div class="col-sm-10">
-                                <input type="email" class="form-control" id="" placeholder="">
+                                <input type="email" class="form-control" name="email" placeholder="">
                             </div>
                           </div>
                        </form>
@@ -144,7 +141,7 @@
                   <div class="panel-heading">
                     <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing approvals</small>
                         <a href="#orgbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="orgbody">
-                            <span class="glyphicon glyphicon-chevron-down pull-right chevron-down"></span>
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
                   </div>
@@ -154,23 +151,23 @@
                             <label for="" class="col-sm-6 control-label">Do you manage approvals on behalf of an organisation?</label>
                             <div class="col-sm-6">
                                 <label class="radio-inline">
-                                  <input type="radio" name="org"  value="Yes"> Yes
+                                  <input type="radio" name="behalf_of_org"  value="Yes"> Yes
                                 </label>
                                 <label class="radio-inline">
-                                  <input type="radio" name="org" value="No"> No
+                                  <input type="radio" name="behalf_of_org" value="No" > No
                                 </label>
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label" >Organisation</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="organisation" placeholder="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" id="" placeholder="">
+                                <input type="text" class="form-control" name="abn" placeholder="">
                             </div>
                           </div>
                        </form>

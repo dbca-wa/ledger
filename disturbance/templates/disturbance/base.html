@@ -31,62 +31,63 @@
             {% endblock %}
         </header>
         {% block menu %}
-        <div class="row">
             <div class="container-fluid">
-                <nav class="navbar navbar-default">
-                    <div class="container">
-                        <div class="navbar-header">
-                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                                <span class="sr-only">Toggle navigation</span>
-                                <span class="icon-bar"></span>
-                                <span class="icon-bar"></span>
-                                <span class="icon-bar"></span>
-                            </button>
-                            <a class="navbar-brand" href="{% url 'ds_home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Home</div></a>
+                <div class="row">
+                    <nav class="navbar navbar-default">
+                        <div class="container">
+                            <div class="navbar-header">
+                                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                                    <span class="sr-only">Toggle navigation</span>
+                                    <span class="icon-bar"></span>
+                                    <span class="icon-bar"></span>
+                                    <span class="icon-bar"></span>
+                                </button>
+                                <a class="navbar-brand" href="{% url 'ds_home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Home</div></a>
+                            </div>
+                            <div id="navbar" class="navbar-collapse collapse">
+                                <ul class="nav navbar-nav">
+                                    {% block left_menu_items %}
+                                    {% endblock %}
+                                </ul>
+                                <ul class="nav navbar-nav navbar-right">
+                                    {% if request.user.is_authenticated %}
+                                        <li>
+                                            <a>
+                                            Welcome
+                                            <strong>
+                                                {% if request.user.first_name %}
+                                                    {{ request.user.get_short_name }}
+                                                {% elif request.user.last_name %}
+                                                    {{ request.user.last_name }}
+                                                {% else %}
+                                                    {{ request.user.email }}
+                                                {% endif %}
+                                            </strong>
+                                            </a>
+                                        </li>
+                                        <li class="dropdown">
+                                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                                Options
+                                                <span class="caret"></span>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                {% if request.user.is_staff %}
+                                                    <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                    <li role="separator" class="divider"></li>
+                                                {% endif %}
+                                                <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
+                                            </ul>
+                                        </li>
+                                    {% endif %}
+                                    {% block right_menu_items %}
+                                    {% endblock %}
+                                </ul>
+                            </div>
                         </div>
-                        <div id="navbar" class="navbar-collapse collapse">
-                            <ul class="nav navbar-nav">
-                                {% block left_menu_items %}
-                                {% endblock %}
-                            </ul>
-                            <ul class="nav navbar-nav navbar-right">
-                                {% if request.user.is_authenticated %}
-                                    <li>
-                                        <a>
-                                        Welcome
-                                        <strong>
-                                            {% if request.user.first_name %}
-                                                {{ request.user.get_short_name }}
-                                            {% elif request.user.last_name %}
-                                                {{ request.user.last_name }}
-                                            {% else %}
-                                                {{ request.user.email }}
-                                            {% endif %}
-                                        </strong>
-                                        </a>
-                                    </li>
-                                    <li class="dropdown">
-                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                                            Options
-                                            <span class="caret"></span>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            {% if request.user.is_staff %}
-                                                <li><a href="{% url 'admin:index' %}">Admin</a></li>
-                                                <li role="separator" class="divider"></li>
-                                            {% endif %}
-                                            <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
-                                        </ul>
-                                    </li>
-                                {% endif %}
-                                {% block right_menu_items %}
-                                {% endblock %}
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
+                    </nav>
+                </div>
+
             </div>
-        </div>
         {% endblock %}
         {% block breadcrumbs %}
         {% endblock %}
