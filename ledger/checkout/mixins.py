@@ -44,9 +44,14 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         Override this view if you want to perform custom actions when an
         order is submitted.
         """
+        from ledger.payments.utils import update_payments
         # Get the return url
         return_url = self.checkout_session.return_url()
         force_redirect = self.checkout_session.force_redirect()
+
+        # Update the payments in the order lines
+        invoice = Invoice.objects.get(order_number=order.number)
+        update_payments(invoice.reference)
 
         if self.checkout_session.send_email():
             # Send confirmation message (normally an email)

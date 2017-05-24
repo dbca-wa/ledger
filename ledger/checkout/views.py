@@ -21,7 +21,7 @@ from oscar.apps.shipping.methods import NoShippingRequired
 from ledger.payments.models import Invoice, BpointToken
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
-from ledger.payments.utils import validSystem, checkURL, isLedgerURL, systemid_check,update_payments
+from ledger.payments.utils import validSystem, checkURL, isLedgerURL, systemid_check
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -467,7 +467,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                     amount_allocated=total.incl_tax, currency=total.currency)
                             self.add_payment_source(source)
                             self.add_payment_event('Paid', total.incl_tax)
-                        update_payments(invoice.reference)
                     except Exception as e:
                         traceback.print_exc()
                         raise
