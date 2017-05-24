@@ -242,7 +242,7 @@ class BpointTransactionSerializer(serializers.ModelSerializer):
 
 class AmountSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
-    details = serializers.CharField(allow_null=True, allow_blank=True,trim_whitespace=True)
+    details = serializers.CharField(trim_whitespace=True)
 
 class BpointTransactionViewSet(viewsets.ModelViewSet):
     queryset = BpointTransaction.objects.all()
