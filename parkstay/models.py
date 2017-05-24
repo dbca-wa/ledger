@@ -973,6 +973,10 @@ class Booking(models.Model):
         return False
 
     @property
+    def outstanding(self):
+        return self.__outstanding_amount()
+
+    @property
     def status(self):
         if not self.legacy_id:
             payment_status = self.__check_payment_status()
@@ -1026,7 +1030,8 @@ class Booking(models.Model):
             except Invoice.DoesNotExist:
                 pass
         for i in invoices:
-            amount += i.payment_amount
+            if not i.voided:
+                amount += i.payment_amount
 
         if amount == 0:
             return 'unpaid'
@@ -1035,6 +1040,21 @@ class Booking(models.Model):
         elif self.cost_total > amount:
             return 'partially_paid'
         else:return "paid"
+
+    def __outstanding_amount(self):
+        invoices = []
+        amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if not i.voided:
+                amount += i.balance
+
+        return amount
 
     def cancelBooking(self):
         self.is_canceled = True

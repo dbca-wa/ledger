@@ -17,11 +17,11 @@ def outstanding_bookings():
 
 
         strIO = StringIO()
-        fieldnames = ['Confirmation Number','Customer','Campground','Arrival','Departure']
+        fieldnames = ['Confirmation Number','Customer','Campground','Arrival','Departure','Outstanding Amount']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
         for o in outstanding:
-            writer.writerow([o.confirmation_number,o.customer.get_full_name(),o.campground.name,o.arrival.strftime('%d/%m/%Y'),o.departure.strftime('%d/%m/%Y')])
+            writer.writerow([o.confirmation_number,o.customer.get_full_name(),o.campground.name,o.arrival.strftime('%d/%m/%Y'),o.departure.strftime('%d/%m/%Y'),o.outstanding])
         strIO.flush()
         strIO.seek(0)
         _file = strIO
