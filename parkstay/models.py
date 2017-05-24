@@ -1070,6 +1070,8 @@ class Booking(models.Model):
 
         self.save()
 
+class OutstandingBookingRecipient(models.Model):
+    email = models.EmailField()
 
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')

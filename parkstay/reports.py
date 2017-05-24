@@ -4,7 +4,7 @@ from six.moves import StringIO
 from wsgiref.util import FileWrapper
 from django.core.mail import EmailMessage 
 from django.conf import settings
-from parkstay.models import Booking, BookingInvoice
+from parkstay.models import Booking, BookingInvoice, OutstandingBookingRecipient
 from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction,Invoice, TrackRefund
 
 
@@ -28,6 +28,7 @@ def outstanding_bookings():
 
         dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         recipients = []
+        recipients = OutstandingBookingRecipient.objects.all()
         email = EmailMessage(
             'Unpaid Bookings Summary as at {}'.format(dt),
             'Unpaid Bookings as at {}'.format(dt),
