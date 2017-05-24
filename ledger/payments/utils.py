@@ -219,11 +219,11 @@ def generateOracleParserFile(oracle_codes):
     strIO.seek(0)
     return strIO
 
-def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=False,error_string=None):
+def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error_email=False,error_string=None):
     try:
-        dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         recipients = []
         if not error_email:
+            dt = datetime.datetime.strptime(trans_date,'%Y-%m-%d').strftime('%d/%m/%Y')
             _file = generateOracleParserFile(oracle_codes)
             try:
                 sys = OracleInterfaceSystem.objects.get(system_id=system_id)
@@ -232,15 +232,17 @@ def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=Fals
                 recipients = []
 
             email = EmailMessage(
-                'Oracle Interface Summary for {} as at {}'.format(system_name,dt),
-                'Oracle Interface Summary File for {} as at {}'.format(system_name,dt),
+                'Oracle Interface Summary for {} for transactions received on {}'.format(system_name,dt),
+                'Oracle Interface Summary File for {} for transactions received on {}'.format(system_name,dt),
                 settings.DEFAULT_FROM_EMAIL,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
             email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
         else:
+            dt = datetime.datetime.now().strftime('%d/%m/%Y')
+            t_date = datetime.datetime.strptime(trans_date, '%Y-%m-%d').strftime('%d/%m/%Y')
             email = EmailMessage(
-                'Oracle Interface Summary Error for {} as at{}'.format(system_name,dt),
+                'Oracle Interface Summary Error for {} for transactions recieved on {} processed on {}'.format(system_name,t_date,dt),
                 'There was an error in generating a summary report for the oracle interface parser.Please refer to the following log output:\n\n\n{}'.format(error_string),
                 settings.DEFAULT_FROM_EMAIL,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
@@ -310,7 +312,7 @@ def oracle_parser(date,system,system_name):
                         if i['code'] not in oracle_codes.keys():
                             oracle_codes[v] = D('0.0')
                         if i['id'] not in parser_codes[invoice.reference].keys():
-                            parser_codes[invoice.reference] = {k:{'code':v,'payment': D('0.0'),'refund': D('0.0')}}
+                            parser_codes[invoice.reference].update({k:{'code':v,'payment': D('0.0'),'refund': D('0.0')}})
 
                     # Start passing items in the invoice
                     for i in items:
@@ -370,11 +372,11 @@ def oracle_parser(date,system,system_name):
             # Add items to oracle interface table
             addToInterface(oracle_codes,system_name)
             # Send an email with all the activity codes entered into the interface table
-            sendInterfaceParserEmail(oracle_codes,system_name,system)
+            sendInterfaceParserEmail(date,oracle_codes,system_name,system)
             return oracle_codes
         except Exception as e:
             error = traceback.format_exc()
-            sendInterfaceParserEmail(oracle_codes,system_name,system,error_email=True,error_string=error)
+            sendInterfaceParserEmail(date,oracle_codes,system_name,system,error_email=True,error_string=error)
             raise e
 
 def update_payments(invoice_reference):
