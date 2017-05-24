@@ -1,4 +1,5 @@
 import json
+from django.db import transaction
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
@@ -17,6 +18,7 @@ from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollectio
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
+from ledger.payments.models import TrackRefund
 from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check,update_payments
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv
@@ -257,7 +259,7 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = AmountSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            refund = instance.refund(serializer.validated_data)
+            refund = instance.refund(serializer.validated_data,request.user)
             invoice = Invoice.objects.get(reference=instance.crn1)
             update_payments(invoice.reference)
             serializer = BpointTransactionSerializer(refund)
@@ -451,6 +453,8 @@ class CashSerializer(serializers.ModelSerializer):
     def validate(self,data):
         if data['external'] and not (data.get('region') or data.get('district')):
             raise serializers.ValidationError('A region/district must be specified for an external payment.')
+        if data['type'] == 'refund' and not data['details']:
+            raise serializers.ValidationError('details are required for a refund')
         return data
 
 class CashViewSet(viewsets.ModelViewSet):
@@ -484,8 +488,11 @@ class CashViewSet(viewsets.ModelViewSet):
             # Check if the amount was specified otherwise pay the whole amount
             if not serializer.validated_data.get('amount'):
                 serializer.validated_data['amount'] = invoice.amount
-            txn = serializer.save()
-            update_payments(invoice.reference)
+            with transaction.atomic():
+                txn = serializer.save()
+                if txn.type == 'refund':
+                    TrackRefund.objects.create(user=request.user,type=1,refund_id=txn.id,details=serializer.validated_data['details'])
+                update_payments(invoice.reference)
             http_status = status.HTTP_201_CREATED
             serializer = CashSerializer(txn)
             return Response(serializer.data,status=http_status)
