@@ -5,7 +5,7 @@ from wsgiref.util import FileWrapper
 from django.core.mail import EmailMessage 
 from django.conf import settings
 from parkstay.models import Booking, BookingInvoice
-from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction 
+from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction,Invoice
 
 
 def outstanding_bookings():
