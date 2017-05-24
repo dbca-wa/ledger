@@ -95,6 +95,7 @@ class BpointTransaction(models.Model):
     # ==============================
     def refund(self,amount,matched=True):
         from ledger.payments.facade import bpoint_facade 
+        amount = amount['amount']
         try:
             txn = None
             if self.action == 'payment' or self.action == 'capture':
