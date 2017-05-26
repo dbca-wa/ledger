@@ -12,8 +12,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Distribution / packaging
 .Python
 env/
+build/
 develop-eggs/
 dist/
 downloads/
@@ -27,9 +29,6 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# Javascript
-node_modules/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -62,7 +61,6 @@ staticfiles/
 
 # vim
 *.swp
-*.swo
 
 # Sphinx documentation
 docs/_build/
@@ -91,7 +89,6 @@ import/
 importo.py
 build.js
 build.css
-*.map
 
-#caches
-parkstay/cache/*
+#disturbance import ignores
+disturbance_vue/
