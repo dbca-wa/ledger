@@ -12,6 +12,19 @@ class Organisation(models.Model):
     pin_one = models.BigIntegerField(blank=True)
     pin_two = models.BigIntegerField(blank=True)
 
+    @staticmethod
+    def existance(abn):
+        try:
+            l_org = ledger_organisation.objects.get(abn=abn)
+        except ledger_organisation.DoesNotExist:
+            return False
+        if l_org:
+            try:
+                Organisation.objects.get(organisation=l_org)
+            except Organisation.DoesNotExist:
+                return False
+        return True
+
 class OrganisationContact(models.Model):
     organisation = models.ForeignKey(Organisation, related_name='contacts')
     email = models.EmailField(unique=True, blank=False)

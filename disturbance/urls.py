@@ -9,7 +9,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 
 # API patterns
 router = routers.DefaultRouter()
-#router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
+router.register(r'organisations',api.OrganisationViewSet)
 
 api_patterns = [
     url(r'api/',include(router.urls))
