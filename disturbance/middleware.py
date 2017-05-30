@@ -6,7 +6,7 @@ class FirstTimeNagScreenMiddleware(object):
     def process_request(self, request):
         if request.user.is_authenticated() and request.method == 'GET':
             #print('DEBUG: {}: {} == {}, {} == {}, {} == {}'.format(request.user, request.user.first_name, (not request.user.first_name), request.user.last_name, (not request.user.last_name), request.user.dob, (not request.user.dob) ))
-            if (not request.user.first_name) or (not request.user.last_name) or (not request.user.dob):
+            if (not request.user.first_name) or (not request.user.last_name):# or (not request.user.dob):
                 path_ft = reverse('first_time')
                 path_logout = reverse('accounts:logout')
                 if request.path not in (path_ft, path_logout):

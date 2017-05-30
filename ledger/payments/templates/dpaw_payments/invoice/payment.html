@@ -1,248 +1,380 @@
-{% load  static %}
-{% load dpaw_extras %}
+{% load static %} {% load dpaw_extras %}
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Payments - Department of Parks and Wildlife</title>
-        <meta name="description" content="" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/localforage/1.3.1/localforage.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.3.0/js/foundation.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/js/egg.js"></script>
-        <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/fonts/Lato2OFLWeb/Lato/latofonts.css" />
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.3.0/css/foundation-flex.css">
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/css/dataTables.foundation.css" />
-        {% block extra_css %}
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Payments - Department of Parks and Wildlife</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        {% endblock %}
-    </head>
-    <body>
-        <div class="inner-wrap">
-            <div class="content">
-                <div class="row align-center">
-                    <div class="align-center columns show-for-large hide-for-print"><a target="_blank" href="//www.dpaw.wa.gov.au">
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/localforage/1.3.1/localforage.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.3.0/js/foundation.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/js/egg.js"></script>
+    <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/fonts/Lato2OFLWeb/Lato/latofonts.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.3.0/css/foundation-flex.css">
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/css/dataTables.foundation.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    {% block extra_css %}
+    <style>
+        .voided_invoice {
+            -ms-transform: rotate(20deg);
+            -webkit-transform: rotate(20deg);
+            transform: rotate(13deg);
+            position: relative;
+            top: 137px;
+            opacity: 0.7;
+        }
+
+        .logo {
+            margin: 20px 0;
+        }
+        @media only screen and (min-width: 35.61111em) {
+             .status{
+                margin-top: 30px;
+             }
+         }
+    </style>
+    {% endblock %}
+</head>
+
+<body>
+    <div class="inner-wrap">
+        <div class="content">
+            <div class="row align-center logo">
+                <div class="align-center columns hide-for-print">
+                    <a target="_blank" href="/">
                         <img class="align-right" src="//static.dpaw.wa.gov.au/images/oimlogo_left.svg" alt="Department of Parks and Wildlife"></a>
-                    </div>
                 </div>
-                <div class="row align-justify">
-                    <div class="medium-12 columns">
-                        <h2 class="text-center">Record Payment For Invoice</h2>
-                    </div>
-                    <div class="medium-12 columns">
-                        {% block custom_block %}
-                            {% if custom_block %}
-                                {% include custom_block %}
-                            {% endif %}
-                        {% endblock %}
-                    </div>
-                    <div class="medium-4 columns">
-                        <ul class="tabs vertical" id="payment-tabs" data-tabs>
-                            <li class="tabs-title is-active"><a href="#details" aria-selected="true">Invoice Details</a></li>
-                            <li class="tabs-title"><a href="#other">Pay by Cash/Cheque/Money Order</a></li>
-                            <li class="tabs-title"><a href="#bpay">Link to unmatched BPAY payment</a></li>
-                            <li class="hide tabs-title"><a href="#card">Pay by Card</a></li>
-                        </ul>
-                    </div>
-                    <div class="medium-8 columns">
-                        <!-- Show Invoice status -->
-                        <div class="columns row large-12">
-                            <div class="row">
-                                <div class="columns small-12">
-                                    <div class="primary callout" data-closable="slide-out-right">
-                                        <p class="text-center">Status: <strong id="invoice_status">{{invoice.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Paid: <strong id="invoice_paid">${{invoice.payment_amount}}</strong></p>
-                                    </div></div>
-                            </div>
+            </div>
+            <div class="row align-justify">
+                <div class="medium-12 columns">
+                    {% block custom_block %} {% if custom_block %} {% include custom_block %} {% endif %} {% endblock %}
+                </div>
+                <div class="medium-4 small-12 columns">
+                    <ul class="tabs vertical" id="payment-tabs" data-tabs>
+                        <li class="tabs-title is-active"><a href="#details" aria-selected="true" onclick="hideBanner()">Invoice Details</a></li>
+                        <li class="tabs-title"><a href="#other" onclick="showBanner()">Payments</a></li>
+                        <li class="tabs-title"><a href="#bpay" onclick="showBanner()">Link to unmatched BPAY payment</a></li>
+                        <li class="hide tabs-title"><a href="#card">Pay by Card</a></li>
+                    </ul>
+                </div>
+                <div class="medium-8 small-12 columns">
+                    <!-- Show Errors -->
+                    <div id="errors" class="columns row large-12">
+                        <div id="errors_row" class="row">
                         </div>
-                        <!-- /Show Invoice Status -->
-                        <!-- Show Errors -->
-                        <div id="errors" class="columns row large-12">
-                            <div id="errors_row" class="row">
-                            </div>
+                    </div>
+                    <!-- /Show Errors -->
+                    <!-- Show Success -->
+                    <div id="success_div" class="columns hide row large-12">
+                        <div id="success_row" class="row">
                         </div>
-                        <!-- /Show Errors -->
-                        <!-- Show Success -->
-                        <div id="success_div" class="columns hide row large-12">
-                            <div id="success_row" class="row">
-                            </div>
-                        </div>
-                        <!-- /Show Success -->
-                        <div class="tabs-content vertical" data-tabs-content="payment-tabs" id="payment_div" {% if redirect_url %} data-redirect={{redirect_url}} {%endif%} data-reference={{invoice.reference}}>
-                            <div class="tabs-panel is-active" id="details">
-                                <table class="table table-striped table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            <th>Qty</th>
-                                            <th>Unit Price</th>
-                                            <th>GST</th>
-                                            <th>Amount</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for line in invoice.order.lines.all %}
-                                            {% with product=line.product %}
-                                                <tr>
-                                                    <td>
-                                                        <p>
-                                                            {{ line.description }}
-                                                        </p>
-                                                    </td>
-                                                    <td>{{ line.quantity }}</td>
-                                                    <td>${{ line.line_price_before_discounts_excl_tax}}</td>
-                                                    <td>${{ line.line_price_before_discounts_incl_tax|subtract:line.line_price_before_discounts_excl_tax }}</td>
-                                                    <td>${{ line.line_price_before_discounts_incl_tax }}</td>
-                                                </tr>
-                                            {% endwith %}
-                                        {% endfor %}
-                                        {% with discounts=invoice.order.basket_discounts %}
-                                            {% block discount_totals %}
-                                                {% if discounts %}
-                                                    <tr>
-                                                        <td colspan="4">Basket total (excl. discounts)</td>
-                                                        <td colspan="2">${{ order.basket_total_before_discounts_incl_tax }}</td>
-                                                    </tr>
-                                                    {% for discount in discounts %}
-                                                    <tr>
-                                                        <td colspan="4">
-                                                            <span class="label label-success">Discount</span>
-                                                            {{ discount.offer_name }}
-                                                        </td>
-                                                        <td colspan="2">- ${{ discount.amount }}</td>
-                                                    </tr>
-                                                    {% endfor %}
-                                                {% endif %}
-                                            {% endblock discount_totals %}
-                                            {% block basket_total %}
-                                                {% if discounts %}
-                                                    <tr>
-                                                        <th colspan="4">Basket total (inc. discounts)</th>
-                                                        <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
-                                                    </tr>
-                                                {% else %}
-                                                    <tr>
-                                                        <th colspan="4">Basket total</th>
-                                                        <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
-                                                    </tr>
-                                                {% endif %}
-                                            {% endblock basket_total %}
-                                        {% endwith %}
-                                        {% block shipping_totals %}
-                                            {% if invoice.order.has_shipping_discounts %}
-                                                <tr>
-                                                    <td colspan="4">Shipping total (excl. discounts)</td>
-                                                    <td colspan="2">${{ invoice.order.shipping_before_discounts_incl_tax }}</td>
-                                                </tr>
-                                                {% for discount in invoice.order.shipping_discounts %}
-                                                <tr>
-                                                    <td colspan="4">
-                                                        <span class="label label-success">Discount</span>
-                                                        {{ discount.offer_name }}
-                                                    </td>
-                                                    <td colspan="2">- ${{ discount.amount }}</td>
-                                                </tr>
+                    </div>
+                    <!-- Show Invoice status -->
+                    <div class="columns row large-12 hide" id="paymentBanner">
+                        <div class="row">
+                            <div class="columns small-12">
+                                <div class="primary callout clearfix" data-closable="slide-out-right">
+                                    <div class="float-left">
+                                        Invoice
+                                        <select id="invoice_selector">
+                                                {% for i in invoices %}
+                                                    <option value="{{i.reference}}">{{i.reference}}</option>
                                                 {% endfor %}
-                                                <tr>
-                                                    <th colspan="4">Shipping total (inc. discounts)</th>
-                                                    <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
-                                                </tr>
+                                            </select>
+                                    </div>
+                                    <div class="float-right status"> Status: <strong id="invoice_status">{{invoices.0.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Outstanding: <strong id="invoice_balance">${{invoices.0.balance}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount
+                                        Paid: <strong id="invoice_paid">${{invoices.0.payment_amount}}</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /Show Invoice Status -->
+                    <!-- /Show Success -->
+                    <div class="tabs-content vertical" data-tabs-content="payment-tabs" id="payment_div" {% if redirect_url %} data-redirect={{redirect_url}} {%endif%} data-reference={{invoice.reference}}>
+                        <div class="tabs-panel is-active" id="details">
+                            {% for invoice in invoices %}
+                            <!-- Show Invoice status -->
+                            <div class="columns row large-12">
+                                <div class="row">
+                                    <div class="columns small-12">
+                                        <div class="primary callout" data-closable="slide-out-right">
+                                            <p class="text-center invoice_details" data-reference={{invoice.reference}}>Invoice <strong>{{invoice.reference}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Status: <strong class="invoice_status" data-reference={{invoice.reference}}>{{invoice.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount
+                                                Outstanding: <strong class="invoice_balance" data-reference={{invoice.reference}}>${{invoice.balance}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Paid: <strong class="invoice_paid" data-reference={{invoice.reference}}>${{invoice.payment_amount}}</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if invoice.voided %}
+                            <!-- Voided -->
+                            <div class="columns row large-12">
+                                <div class="row">
+                                    <div class="columns small-12">
+                                        <div class="alert callout voided_invoice" data-closable="slide-out-right">
+                                            <p class="text-center">VOIDED</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- //Voided -->
+                            {% endif %}
+                            <!-- /Show Invoice Status -->
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <table class="table table-striped table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Qty</th>
+                                                <th>Unit Price</th>
+                                                <th>GST</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for line in invoice.order.lines.all %} {% with product=line.product %}
+                                            <tr>
+                                                <td>
+                                                    <p>
+                                                        {{ line.description }}
+                                                    </p>
+                                                </td>
+                                                <td>{{ line.quantity }}</td>
+                                                <td>${{ line.line_price_before_discounts_excl_tax}}</td>
+                                                <td>${{ line.line_price_before_discounts_incl_tax|subtract:line.line_price_before_discounts_excl_tax }}</td>
+                                                <td>${{ line.line_price_before_discounts_incl_tax }}</td>
+                                            </tr>
+                                            {% endwith %} {% endfor %} {% with discounts=invoice.order.basket_discounts %} {% block discount_totals %} {% if discounts %}
+                                            <tr>
+                                                <td colspan="4">Basket total (excl. discounts)</td>
+                                                <td colspan="2">${{ order.basket_total_before_discounts_incl_tax }}</td>
+                                            </tr>
+                                            {% for discount in discounts %}
+                                            <tr>
+                                                <td colspan="4">
+                                                    <span class="label label-success">Discount</span> {{ discount.offer_name }}
+                                                </td>
+                                                <td colspan="2">- ${{ discount.amount }}</td>
+                                            </tr>
+                                            {% endfor %} {% endif %} {% endblock discount_totals %} {% block basket_total %} {% if discounts %}
+                                            <tr>
+                                                <th colspan="4">Items total (inc. discounts)</th>
+                                                <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
+                                            </tr>
                                             {% else %}
-                                                <tr>
-                                                    <th colspan="4">Shipping total</th>
-                                                    <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
-                                                </tr>
-                                            {% endif %}
-                                        {% endblock %}
-                                        {% block order_total %}
+                                            <tr>
+                                                <th colspan="4">Items total</th>
+                                                <td colspan="2">${{ invoice.order.basket_total_incl_tax }}</td>
+                                            </tr>
+                                            {% endif %} {% endblock basket_total %} {% endwith %} {% if invoice.shipping_required %} {% block shipping_totals %} {% if invoice.order.has_shipping_discounts %}
+                                            <tr>
+                                                <td colspan="4">Shipping total (excl. discounts)</td>
+                                                <td colspan="2">${{ invoice.order.shipping_before_discounts_incl_tax }}</td>
+                                            </tr>
+                                            {% for discount in invoice.order.shipping_discounts %}
+                                            <tr>
+                                                <td colspan="4">
+                                                    <span class="label label-success">Discount</span> {{ discount.offer_name }}
+                                                </td>
+                                                <td colspan="2">- ${{ discount.amount }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                            <tr>
+                                                <th colspan="4">Shipping total (inc. discounts)</th>
+                                                <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
+                                            </tr>
+                                            {% else %}
+                                            <tr>
+                                                <th colspan="4">Shipping total</th>
+                                                <td colspan="2">${{ invoice.order.shipping_incl_tax }}</td>
+                                            </tr>
+                                            {% endif %} {% endblock %} {% endif %} {% block order_total %}
                                             <tr>
                                                 <th colspan="4">Order total</th>
                                                 <td colspan="2">${{ invoice.order.total_incl_tax }}</td>
                                             </tr>
-                                        {% endblock order_total %}
-                                    </tbody>
-                                </table>
+                                            {% endblock order_total %}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <!-- /Invoice Details -->
-                            <div class="tabs-panel" id="other">
-                                <form id="other_form">
-                                    {% if amountProvided %}
-                                    <label>
-                                        Amount
-                                        <input id="other_amount" name="other_amount" type="number" value=""/>
-                                    </label>
-                                    {% endif %}
-                                    <label>Action
-                                        <select id="other_type" name="other_type">
-                                            <option value="payment">Record Payment</option>
-                                            <option value="refund">Refund</option>
-                                            <option value="reversal">Reverse Payment</option>
-                                        </select>
-                                    </label>
-                                    <label>Payment Type
-                                        <select id="other_source" name="other_source">
-                                            <option value="cash">Cash</option>
-                                            <option value="eftpos">EFTPOS</option>
-                                            <option value="cheque">Cheque</option>
-                                            <option value="money_order">Money Order</option>
-                                        </select>
-                                    </label>
-                                    <input id="other_external" type="checkbox" aria-describeby="externalHelp"/><label for="other_external">External</label>
-                                    <p class="help-text" id="externalHelp">If the payment is made outside Kensington select this option.</p>
-                                    <fieldset id="location_fieldset" class="hide">
-                                        <legend>External Location Details</legend>
-                                        <div class="row">
-                                            <div class="columns small-6">
-                                                <label>
-                                                    Region
-                                                    <select id="regions">
-                                                        <option selected="selected" value="">---- Select Region ----</option>
-                                                        {% for region in regions %}
-                                                        <option value="{{region.0}}">{{region.1}}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </label>
-                                                <label class="hide" id="dist_wrapper">
-                                                    District
-                                                    <select class="disable" id="districts">
-                                                        <option value="">---- Select District ----</option>
-                                                    </select>
-                                                </label>
+                            {% endfor %}
+                        </div>
+                        <!-- /Invoice Details -->
+                        <div class="tabs-panel" id="other">
+                            <div class="row">
+                                <div class="columns large-12">
+                                    <form id="other_form" class="{% if invoices.0.payment_status == 'paid' or invoices.0.payment_status == 'over_paid' %}hide{% endif %}">
+                                        <h3> Record Payment</h3>
+                                        <label>
+                                                Amount
+                                                <input class="money" id="other_amount" name="other_amount" type="text" value=""/>
+                                            </label>
+                                        <label>Payment Type
+                                                <select id="other_source" name="other_source">
+                                                    <option value="cash">Cash</option>
+                                                    <option value="eftpos">EFTPOS</option>
+                                                    <option value="cheque">Cheque</option>
+                                                    <option value="money_order">Money Order</option>
+                                                </select>
+                                            </label>
+                                        <fieldset id="location_fieldset">
+                                            <legend>Location Details</legend>
+                                            <div class="row">
+                                                <div class="columns small-6">
+                                                    <label>
+                                                            Region
+                                                            <select id="regions">
+                                                                <option selected="selected" value="">Kensington</option>
+                                                                {% for region in regions %}
+                                                                <option value="{{region.0}}">{{region.1}}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </label>
+                                                    <label class="hide" id="dist_wrapper">
+                                                            District
+                                                            <select class="disable" id="districts">
+                                                                <option value="">---- Select District ----</option>
+                                                            </select>
+                                                        </label>
+                                                </div>
+                                                <div class="columns small-6">
+                                                    <label>
+                                                            Receipt Number
+                                                            <input aria-describeby="receiptHelp" id="receipt_number" name="receipt_number" type="text" value=""/>
+                                                        </label>
+                                                    <p class="help-text" id="receiptHelp">Enter the receipt number used to make a payment for this invoice.</p>
+                                                </div>
                                             </div>
-                                            <div class="columns small-6">
-                                                <label>
-                                                    Receipt Number
-                                                    <input aria-describeby="receiptHelp" id="receipt_number" name="receipt_number" type="text" value=""/>
-                                                </label>
-                                                <p class="help-text" id="receiptHelp">Enter the receipt number used to make a payment for this invoice.</p>
+                                        </fieldset>
+                                        <div class="row align-right">
+                                            <div class="columns medium-3">
+                                                <input id="" type="submit" class="pay_btn float-right button" value="Record Payment" />
                                             </div>
                                         </div>
-                                    </fieldset>
-                                    <div class="row align-right">
-                                        <div class="columns medium-3">
-                                            <input id="" type="submit" class="pay_btn float-right button" value="Record Payment"/>
+                                        <!-- Pay Button -->
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="large reveal" id="refundModal" data-reveal>
+                                <div id="refundLoader">
+                                    <p class="text-center"><i class="fa fa-spin fa-spinner fa-2x"></i><br />Loading...</p>
+                                </div>
+                                <form name="refundForm">
+                                   <div class="columns large-12">
+                                      <div  id="modal_alert" class="callout small text-center hide">
+                                          <p class="callout-text"></p>
+                                          <button class="close-button" id="refund_alert_btn" aria-label="Dismiss alert" type="button">
+                                              <span aria-hidden="true">&times;</span>
+                                           </button>
+                                       </div>
+                                   </div>
+                                    <div class="row">
+                                        <div class="medium-12 columns">
+                                            <h3 class="text-center">Refund</h3>
+                                            <p> Refundable Amount: <strong class="refundable_amount">${{invoices.0.refundable_amount}}</strong></p>
+                                        </div>
+                                        <div class="medium-12 columns">
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Amount: </label>
+                                                </div>
+                                                <div class="medium-6 columns">
+                                                    <input class="money" name="refundAmount" id="refundAmount" type="text" value="" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="medium-12 columns hide" data-refund-option>
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Refund Option: </label>
+                                                </div>
+                                                <div class="medium-6 columns">
+                                                    <select id="refund_option" name="refund_option">
+                                                        <option value="1">Card</option>
+                                                        <option value="2">Manual</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="medium-12 columns hide" data-refund-cards>
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Select Card: </label>
+                                                </div>
+                                                <div class="medium-6 columns" id="refundable_cards_radio">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="medium-12 columns">
+                                            <div class="row">
+                                                <div class="medium-4 columns">
+                                                    <label>Details: </label>
+                                                </div>
+                                                <div class="medium-6 columns" id="refund_details">
+                                                    <textarea name="refund_details" rows="4" style="width:100%;"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="medium-12 columns hide" data-refund-manual>
+                                            <strong>Please Contact Financial Services Branch</strong>
+                                        </div>
+                                        <div class="row align-right">
+                                            <div class="columns medium-3 button-group float-right align-right">
+                                                <input id="cancel_refund" type="button" class="pay_btn secondary button" style="margin-right:10px;" value="Cancel"/>
+                                                <input id="" type="submit" class="pay_btn button" value="Make Refund"/>
+                                            </div>
                                         </div>
                                     </div>
-                                    <!-- Pay Button -->
                                 </form>
                             </div>
-                            <div class="hide tabs-panel" id="card">
-                                <form id="card_form">
-                                    {% if amountProvided %}
-                                    <label>
+                            <div class="row">
+                                <div class="large-12 columns">
+                                    <h3>Received Payments</h3>
+                                    <div class="card">
+                                        <div class="card-divider">
+                                            <p class="text-center">Refundable Amount: <strong class="refundable_amount">${{invoices.0.refundable_amount}}</strong></p>
+                                        </div>
+                                        <div class="card-section">
+                                            <table class="table table-striped table-bordered" id="received_payments_table" width="100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Type</th>
+                                                        <th>Details</th>
+                                                        <th>Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                </tbody>
+                                            </table>
+                                            <div class="row align-right">
+                                                <div class="large-4 columns">
+                                                    <button id="refund_btn" class="{% if not invoices.0.refundable%}hide{% endif %} button float-right">Refund</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hide tabs-panel" id="card">
+                            <form id="card_form">
+                                {% if amountProvided %}
+                                <label>
                                         Amount
                                         <input id="card_amount" type="number" value=""/>
-                                    </label>
-                                    {% endif %}
-                                    <label>Select Payment Type
+                                    </label> {% endif %}
+                                <label>Select Payment Type
                                         <select id="card_action">
                                             <option value="payment">Payment</option>
                                             <option value="capture">Capture</option>
@@ -250,15 +382,15 @@
                                             <option value="reversal">Reversal</option>
                                         </select>
                                     </label>
-                                    <fieldset id="card_fieldset">
-                                        <legend>Card Details</legend>
-                                        <label>
+                                <fieldset id="card_fieldset">
+                                    <legend>Card Details</legend>
+                                    <label>
                                             Card Number
                                             <input id="card_number" type="text" value=""/>
                                         </label>
-                                        <div class="row">
-                                            <div class="columns medium-2">
-                                                <label>
+                                    <div class="row">
+                                        <div class="columns medium-2">
+                                            <label>
                                                     Expiry Month
                                                     <select id="month_expiry">
                                                         {% for m in months %}
@@ -266,9 +398,9 @@
                                                         {% endfor %}
                                                     </select>
                                                 </label>
-                                            </div>
-                                            <div class="columns medium-2">
-                                                <label>
+                                        </div>
+                                        <div class="columns medium-2">
+                                            <label>
                                                     Expiry Year
                                                     <select id="year_expiry">
                                                         {% for y in years %}
@@ -276,120 +408,132 @@
                                                         {% endfor %}
                                                     </select>
                                                 </label>
-                                            </div>
                                         </div>
-                                        <!-- /Card Details -->
-                                        <div class="row">
-                                            <div class="columns medium-2">
-                                                <label>
+                                    </div>
+                                    <!-- /Card Details -->
+                                    <div class="row">
+                                        <div class="columns medium-2">
+                                            <label>
                                                     CCV
                                                     <input id="card_cvn" type="text" value=""/>
                                                 </label>
-                                            </div>
-                                        </div>
-                                        <!-- /CVN -->
-                                    </fieldset>
-                                    {% if invoice.owner.stored_cards.all %}
-                                    <input id="use_stored" type="checkbox" aria-describeby="storedCardHelp"/><label for="use_stored">Use stored card</label>
-                                    <p class="help-text" id="storedCardHelp">Select this option if you want to use the stored cards.</p>
-                                    <fieldset class="hide" id="storedcard_fieldset">
-                                        <legend>Stored Cards</legend>
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>Card Ending</th>
-                                                    <th>Expiry Date</th>
-                                                    <th>Type</th>
-                                                    <th>Use</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for card in invoice.owner.stored_cards.all %}
-                                                <tr>
-                                                    <td>{{card.last_digits}}</td>
-                                                    <td>{{card.expiry_date}}</td>
-                                                    <td>{{card.get_card_type_display}}</td>
-                                                    <td><input  type="radio" name="card" value="{{card.id}}" selected/></td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </fieldset>
-                                    {% endif %}
-                                    <div class="row align-right">
-                                        <div class="columns medium-3">
-                                            <input type="submit" class="pay_btn float-right button" value="Pay"/>
                                         </div>
                                     </div>
-                                    <!-- Pay Button -->
-                                </form>
-                            </div>
-                            <!-- BPAY -->
-                            <div class="tabs-panel" id="bpay">
-                                <div class="row">
-                                    <div class="large-12 columns">
-                                        <div class="card">
-                                            <div class="card-divider">
-                                                Unlinked BPAY Payments
-                                            </div>
-                                            <div class="card-section">
-                                                <table class="table table-striped table-bordered" id="unlinkedBpayTable" width="100%">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>CRN</th>
-                                                            <th>Biller Code</th>
-                                                            <th>Amount</th>
-                                                            <th>Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="large-12 columns">
-                                        <div class="card">
-                                            <div class="card-divider">
-                                                Linked BPAY Payments
-                                            </div>
-                                            <div class="card-section">
-                                                <table class="table table-striped table-bordered" id="linkedBpayTable" width="100%">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>CRN</th>
-                                                            <th>Biller Code</th>
-                                                            <th>Amount</th>
-                                                            <th>Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                    <!-- /CVN -->
+                                </fieldset>
+                                {% if invoice.owner.stored_cards.all %}
+                                <input id="use_stored" type="checkbox" aria-describeby="storedCardHelp" /><label for="use_stored">Use stored card</label>
+                                <p class="help-text" id="storedCardHelp">Select this option if you want to use the stored cards.</p>
+                                <fieldset class="hide" id="storedcard_fieldset">
+                                    <legend>Stored Cards</legend>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Card Ending</th>
+                                                <th>Expiry Date</th>
+                                                <th>Type</th>
+                                                <th>Use</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for card in invoice.owner.stored_cards.all %}
+                                            <tr>
+                                                <td>{{card.last_digits}}</td>
+                                                <td>{{card.expiry_date}}</td>
+                                                <td>{{card.get_card_type_display}}</td>
+                                                <td><input type="radio" name="card" value="{{card.id}}" selected/></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </fieldset>
+                                {% endif %}
                                 <div class="row align-right">
                                     <div class="columns medium-3">
-                                        <input id="" type="submit" class="redirect_btn float-right button" value="Navigate Back" onclick="redirectPage()"/>
+                                        <input type="submit" class="pay_btn float-right button" value="Pay" />
+                                    </div>
+                                </div>
+                                <!-- Pay Button -->
+                            </form>
+                        </div>
+                        <!-- BPAY -->
+                        <div class="tabs-panel" id="bpay">
+                            <div class="row">
+                                <div class="large-12 columns">
+                                    <h3>Unlinked BPAY Payments</h3>
+                                    <div class="card">
+                                        <div class="card-divider">
+                                        </div>
+                                        <div class="card-section">
+                                            <table class="table table-striped table-bordered" id="unlinkedBpayTable" width="100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th>CRN</th>
+                                                        <th>Biller Code</th>
+                                                        <th>Amount</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <!-- /BPAY -->
+                            <div class="row">
+                                <div class="large-12 columns">
+                                    <h3>Linked BPAY Payments</h3>
+                                    <div class="card">
+                                        <div class="card-divider">
+                                        </div>
+                                        <div class="card-section">
+                                            <table class="table table-striped table-bordered" id="linkedBpayTable" width="100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th>CRN</th>
+                                                        <th>Biller Code</th>
+                                                        <th>Amount</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row align-right">
+                                <div class="columns medium-3">
+                                    <input id="" type="submit" class="redirect_btn float-right button" value="Navigate Back" onclick="redirectPage()" />
+                                </div>
+                            </div>
                         </div>
+                        <!-- /BPAY -->
                     </div>
+                    <div id="mainTabLoader">
+                        <p class="text-center"><i class="fa fa-spin fa-spinner fa-2x"></i><br />Updating Invoice</p>
+                    </div>
+                </div>
             </div>
             <div class="footer">
-                <style type="text/css">.row {min-width:100% !important;}</style>
+                <style type="text/css">
+                    .row {
+                        min-width: 100% !important;
+                    }
+                </style>
             </div>
         </div>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/jquery.dataTables.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/dataTables.foundation.min.js"></script>
-        <script type="text/javascript" src="{% static 'payments/js/payment.js'%}"></script>
-    </body>
+    </div>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/dataTables.foundation.min.js"></script>
+    <script type="text/javascript" src="{% static 'payments/js/jquery.glob.js'%}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/jQuery.glob.en-AU.js'%}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/moneyInput.js'%}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/payment.js'%}"></script>
+</body>
+
 </html>

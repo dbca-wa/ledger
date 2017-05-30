@@ -653,13 +653,7 @@ class Organisation(models.Model):
     identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
     postal_address = models.ForeignKey(Address, related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
     billing_address = models.ForeignKey(Address, related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
-    # TODO: business logic related to delegate changes.
-    delegates = models.ManyToManyField(EmailUser, blank=True)
-    pin_one = models.BigIntegerField(blank=True)
-    pin_two = models.BigIntegerField(blank=True)
 
     def __str__(self):
         return self.name
 
-    def get_absolute_url(self):
-        return reverse('organisation_detail', args=(self.pk,))

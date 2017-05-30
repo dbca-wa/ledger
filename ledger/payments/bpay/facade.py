@@ -12,6 +12,7 @@ from django.core.mail import EmailMessage, get_connection
 from django.conf import settings
 from ledger.payments.bpay.models import *
 from ledger.payments.bpay.crn import getCRN
+from ledger.payments.utils import update_payments
 
 logging.info('Starting logger for BPAY.')
 logger = logging.getLogger(__name__)
@@ -209,6 +210,7 @@ def parseFile(file_path):
     '''Parse the file in order to create the relevant
         objects.
     '''
+    from ledger.payments.models import Invoice
     f = get_file(file_path)
     transaction_list, group_list, account_list = [], [], []
     transaction_rows, group_rows, account_rows  = [], [], []
@@ -273,6 +275,13 @@ def parseFile(file_path):
             # Create File Trailer Record
             record_filetrailer(filetrailer_row,bpay_file).save()
 
+            # Update payments in the new transaction invoices
+            for t in bpay_file.transactions.all():
+                try:
+                    inv = Invoice.objects.get(reference=t.crn)
+                    update_payments(inv.reference)
+                except Invoice.DoesNotExist:
+                    pass
         return success,bpay_file,''
     except IntegrityError as e:
         success = False

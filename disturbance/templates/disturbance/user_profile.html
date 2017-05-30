@@ -180,6 +180,7 @@
 
 {% endblock %}
 {% block custom_js %}
+    {{ super }}
     <script type="text/javascript">
         $('a[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];

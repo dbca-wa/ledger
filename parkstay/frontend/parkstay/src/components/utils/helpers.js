@@ -12,6 +12,25 @@ module.exports = {
         else if ( resp.status === 404) {
             error_str = 'The resource you are looking for does not exist.';
         }
+        else{
+            error_str = resp.responseText.replace(/[\[\]"]/g,'');
+        }
+        return error_str;
+    },
+    apiVueResourceError: function(resp){
+        var error_str = '';
+        if (resp.status === 400) {
+            var text = resp.body[0];
+            try {
+                obj = JSON.parse(text);
+                error_str = obj.non_field_errors[0].replace(/[\[\]"]/g,'');
+            } catch(e) {
+                error_str = text.replace(/[\[\]"]/g,'');
+            }
+        }
+        else if ( resp.status === 404) {
+            error_str = 'The resource you are looking for does not exist.';
+        }
         return error_str;
     },
     goBack:function(vm){
@@ -36,8 +55,7 @@ module.exports = {
             $(this).popover('show');
             $(this).on('mouseout',function () {
                 $(this).popover('hide');
-            })
-
+            });
         });
     }
 };

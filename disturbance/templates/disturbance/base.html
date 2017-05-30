@@ -11,6 +11,9 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
             {% bootstrap_css %}
                 <link type="text/css" href="{% static 'disturbance/css/base.css' %}" rel="stylesheet">
+            {% if not dev %}
+                <!--<link rel="stylesheet" href="{% static 'disturbance_vue/css/app.css' %}">-->
+            {% endif %}
             {% block extra_css %}
             {% endblock %}
             {% block extra_js %}
@@ -109,8 +112,15 @@
         {% endblock %}
         {% block modals %}
         {% endblock %}
-        <script type="text/javascript" src="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/jquery/2.1.2/jquery.min.js"></script>
-        <script type="text/javascript" src="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        {% if not dev %}
+            <!--<script type="text/javascript" src="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/jquery/2.1.2/jquery.min.js"></script>
+            <script type="text/javascript" src="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+            <script type="text/javascript" src="{% static 'disturbance_vue/js/manifest.js' %}"></script>
+            <script type="text/javascript" src="{% static 'disturbance_vue/js/vendor.js' %}"></script>
+            <script type="text/javascript" src="{% static 'disturbance_vue/js/app.js' %}"></script>-->
+        {% else %}
+            <script type="text/javascript" src="{{ dev_url }}"></script>
+        {% endif %}
         {% block custom_js %}
         {% endblock %}
     </body>

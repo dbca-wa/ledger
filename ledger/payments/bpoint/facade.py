@@ -39,7 +39,7 @@ class Facade(object):
         return CardDetails(
             card_number=bankcard.number,
             cvn=bankcard.ccv,
-            expiry_date=bankcard.expiry_date.strftime("%m%y")
+            expiry_date=bankcard.expiry_date.strftime("%m%y") if bankcard.expiry_date else None
         )
 
     def _submit_info(self,order_number,reference,amount,action,_type,sub_type,bank_card=None,orig_txn_number=None):
@@ -47,11 +47,13 @@ class Facade(object):
             Submit the transaction info to the
             gateway
         '''
-        res,card_details = None, None
+        res,card_details,bankcard_lastdigits = None, None, None
         if bank_card:
             card_details = self._get_card_details(bank_card)
         if amount:
             amount = int(amount*100)
+        if bank_card.last_digits:
+            bank_card_last_digits = bank_card.last_digits
         # Handle any other exceptions that occur that are not from bpoint
         try:
             res = self.gateway.handle_txn(order_number,reference,action,amount,card_details,
@@ -76,11 +78,13 @@ class Facade(object):
             res.response_text,
             res.processed_date_time,
             res.settlement_date,
-            res.txn_number
+            res.txn_number,
+            res.dvtoken,
+            bank_card.last_digits
         )
 
     def _create_txn(self,action,crn1,amount,amount_original,amount_surcharge,
-                    type,cardtype,receipt_number,response_code,response_txt,processed,settlement_date,txn_number):
+                    type,cardtype,receipt_number,response_code,response_txt,processed,settlement_date,txn_number,dvtoken,bankcard_lastdigits=None):
         '''
             Store a Bpoint Transaction object whether the bpoint
             transaction response was successful or not
@@ -104,7 +108,9 @@ class Facade(object):
                 response_txt=response_txt,
                 processed=processed,
                 settlement_date=settlement_date,
-                txn_number=txn_number
+                txn_number=txn_number,
+                dvtoken=dvtoken,
+                last_digits = bankcard_lastdigits
             )
         except Exception as e:
             raise
@@ -160,10 +166,12 @@ class Facade(object):
                 inv = Invoice.objects.get(reference=reference)
                 if action in ['reversal','refund'] and inv.payment_status == 'unpaid':
                     raise ValidationError("A {} cannot be made for an unpaid invoice.".format(action))
-                if action == 'refund' and (inv.payment_amount < decimal.Decimal(amount)):
+                if action == 'refund' and (inv.payment_amount < decimal.Decimal(total)):
                     raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
                 if inv.payment_status == 'paid' and action == 'payment':
                     raise ValidationError('This invoice has already been paid for.')
+                if inv.voided:
+                    raise ValidationError('You cannot make a payment for an invoice that has been voided.')
                 if (decimal.Decimal(total) > inv.balance) and action == 'payment':
                     raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
 
@@ -202,15 +210,16 @@ class Facade(object):
             except IntegrityError as e:
                 if 'unique constraint' in e.message:
                     pass
-            return '{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date)
+            return '{}|{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date,bankcard.obfuscated_number[-4:])
         else:
-            return '{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date)
+            return '{}|{}|{}'.format(resp.dvtoken,resp.card_details.expiry_date,bankcard.obfuscated_number[-4:])
 
     def pay_with_storedtoken(self,action,_type,sub_type,token_id,order_number=None,reference=None,total=None,orig_txn_number=None):
         ''' Make a payment using a stored card
         '''
         try:
             token = BpointToken.objects.get(id=token_id)
+            token.bankcard.last_digits = token.last_digits
             return self.post_transaction(action,_type,sub_type,order_number,reference,total,token.bankcard,orig_txn_number)
         except BpointToken.DoesNotExist as e:
             raise UnableToTakePayment(str(e))

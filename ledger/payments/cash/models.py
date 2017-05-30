@@ -73,9 +73,15 @@ REGION_CHOICES = (
 class Region(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
+    class Meta:
+        app_label = 'payments'
+
 class District(models.Model):
     name = models.CharField(choices=DISTRICT_CHOICES,max_length=3,unique=True)
     region = models.ForeignKey(Region,related_name='districts')
+
+    class Meta:
+        app_label = 'payments'
 
 class CashTransaction(models.Model):
     TRANSACTION_TYPES = (
@@ -99,6 +105,9 @@ class CashTransaction(models.Model):
     district = models.CharField(choices=DISTRICT_CHOICES,max_length=3, null=True, blank=True)
     external = models.BooleanField(default=False)
     receipt = models.CharField(max_length=128,null=True,blank=True)
+    details = models.TextField(null=True, blank=True)
+    class Meta:
+        app_label = 'payments'
 
     def save(self, *args, **kwargs):
         # Validations
@@ -116,10 +125,14 @@ class CashTransaction(models.Model):
         if self.type == 'refund' and (self.invoice.payment_amount < decimal.Decimal(self.amount)):
             raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
         if self.pk is None:
+            if self.invoice.voided:
+                raise ValidationError('You cannot make a payment to voided invoice')
             if self.invoice.payment_status == 'paid' and self.type == 'payment':
                 raise ValidationError('This invoice has already been paid for.')
             if (decimal.Decimal(self.amount) > self.invoice.balance) and self.type == 'payment':
                 raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
+            if (decimal.Decimal(self.amount) > self.invoice.refundable_amount) and self.type == 'refund':
+                raise ValidationError('The amount to be refunded is more than the amount refundable for this invoice.')
         else:
             orig = CashTransaction.objects.get(pk=self.pk)
             if orig.amount != self.amount:

@@ -1,4 +1,3 @@
-from django.core.exceptions import ImproperlyConfigured
 from confy import env, database
 from oscar.defaults import *
 from oscar import get_core_apps, OSCAR_MAIN_TEMPLATE_DIR
@@ -66,7 +65,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
     'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
-    'oscar.apps.basket.middleware.BasketMiddleware',
+    'ledger.basket.middleware.BasketMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 ]
 
@@ -77,6 +76,9 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 AUTH_USER_MODEL = 'accounts.EmailUser'
+# for reference, django.conf.settings.X == backend.setting('X')
+# this one prevents the email auth backend from creating EmailUsers with a username param
+USER_FIELDS = ['email']
 SOCIAL_AUTH_STRATEGY = 'social_django.strategy.DjangoStrategy'
 SOCIAL_AUTH_STORAGE = 'social_django.models.DjangoStorage'
 SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/'
@@ -114,6 +116,32 @@ EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
+
+# Oscar settings
+from oscar.defaults import *
+OSCAR_ALLOW_ANON_CHECKOUT = True
+OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
+OSCAR_DEFAULT_CURRENCY = 'AUD'
+OSCAR_DASHBOARD_NAVIGATION.append(
+    {
+        'label': 'Payments',
+        'icon': 'icon-globe',
+        'children': [
+            {
+                'label': 'Invoices',
+                'url_name': 'payments:invoices-list',
+            },
+            {
+                'label': 'BPAY collections',
+                'url_name': 'payments:bpay-collection-list',
+            },
+            {
+                'label': 'BPOINT transactions',
+                'url_name': 'payments:bpoint-dash-list',
+            },
+        ]
+    }
+)
 
 
 TEMPLATES = [
@@ -155,7 +183,6 @@ BOOTSTRAP3 = {
     'set_placeholder': False,
 }
 
-OSCAR_DEFAULT_CURRENCY = 'AUD'
 
 HAYSTACK_CONNECTIONS = {
     'default': {
@@ -265,8 +292,11 @@ CMS_URL=env('CMS_URL',None)
 LEDGER_USER=env('LEDGER_USER',None)
 LEDGER_PASS=env('LEDGER_PASS')
 NOTIFICATION_EMAIL=env('NOTIFICATION_EMAIL')
-
+BPAY_GATEWAY = env('BPAY_GATEWAY','127.0.0.1')
+# GST Settings
+LEDGER_GST = env('LEDGER_GST',10)
 # BPAY settings
+BPAY_ALLOWED = env('BPAY_ALLOWED',True)
 BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
 # BPOINT settings
 BPOINT_CURRENCY='AUD'
@@ -281,34 +311,4 @@ PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', False)
 #print PRODUCTION_EMAIL
 EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
 NON_PROD_EMAIL = env('NON_PROD_EMAIL')
-if not PRODUCTION_EMAIL:
-    if not NON_PROD_EMAIL:
-        raise ImproperlyConfigured('NON_PROD_EMAIL must not be empty if PRODUCTION_EMAIL is set to False')
-    if EMAIL_INSTANCE not in ['PROD','DEV','TEST','UAT']:
-        raise ImproperlyConfigured('EMAIL_INSTANCE must be either "PROD","DEV","TEST","UAT"')
-    if EMAIL_INSTANCE == 'PROD':
-        raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PROD\' if PRODUCTION_EMAIL is set to False')
-# Oscar settings
-from oscar.defaults import *
-OSCAR_ALLOW_ANON_CHECKOUT = True
-OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
-OSCAR_DASHBOARD_NAVIGATION.append(
-    {
-        'label': 'Payments',
-        'icon': 'icon-globe',
-        'children': [
-            {
-                'label': 'Invoices',
-                'url_name': 'payments:invoices-list',
-            },
-            {
-                'label': 'BPAY collections',
-                'url_name': 'payments:bpay-collection-list',
-            },
-            {
-                'label': 'BPOINT transactions',
-                'url_name': 'payments:bpoint-dash-list',
-            },
-        ]
-    }
-)
+

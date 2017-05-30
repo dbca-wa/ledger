@@ -6,10 +6,9 @@
 			<alert :show.sync="showUpdate" type="success" :duration="7000">
 				<p>Campground successfully updated</p>
 			</alert>
-			<alert :show.sync="showError" type="danger"></alert>
-				<p>{{errorString}}
-					<p/>
-				</alert>
+			<alert :show.sync="showError" type="danger">
+				<p>{{errorString}}<p/>
+			</alert>
 					<div class="row">
 						<div class="col-lg-12">
 							<div class="panel panel-primary">
@@ -18,20 +17,26 @@
 								</div>
 								<div class="panel-body">
 									<div class="row">
-										<div class="col-md-6">
+										<div class="col-md-4">
 											<div class="form-group">
 												<label class="control-label" >Campground Name</label>
 												<input type="text" name="name" id="name" class="form-control" v-model="campground.name" required/>
 											</div>
 										</div>
-										<div class="col-md-6">
+										<div class="col-md-4">
+											<div class="form-group">
+												<label class="control-label" >Campground Oracle Code</label>
+												<input type="text" name="oracle_code" id="oracle_code" class="form-control" v-model="campground.oracle_code" required/>
+											</div>
+										</div>
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Park</label>
 												<select name="park" v-show="!parks.length > 0" class="form-control" >
 													<option >Loading...</option>
 												</select>
 												<select name="park" v-if="parks.length > 0" class="form-control" v-model="campground.park">
-													<option v-for="park in parks" :value="park.url">{{ park.name }}</option>
+													<option v-for="park in parks" :value="park.id">{{ park.name }}</option>
 												</select>
 											</div>
 										</div>
@@ -44,6 +49,7 @@
 													<option value="0">Bookable Online</option>
 													<option value="1">Not Bookable Online</option>
 													<option value="2">Other accomodation</option>
+													<option value="3">Unpublished</option>
 												</select>
 											</div>
 										</div>
@@ -53,120 +59,118 @@
 												<select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
 													<option value="0">Bookable per site</option>
 													<option value="1">Bookable per site type</option>
+													<option value="2">Bookable per site type (hide site number)</option>
 												</select>
 											</div>
 										</div>
 									</div>
                                     <imagePicker :images="campground.images"></imagePicker>
+
+									<div class="row" style="margin-top: 40px;">
+										<div class="col-lg-12">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h3 class="panel-title">Contact</h3>
+												</div>
+												<div class="panel-body">
+													<div class="row">
+														<div class="form-group">
+															<label class="col-md-4 control-label">Customer Contact</label>
+															<div class="col-md-8">
+															  	<select class="form-control" name="contact" v-model="campground.contact">
+																	<option value="undefined">Select Contact</option>
+																	<option v-for="c in contacts" :value="c.id">{{ c.name }}</option>
+															  	</select>
+															</div>
+														</div>
+													</div>
+                                                    <div class="row">
+                                                        <div class="form-group">
+                                                            <div class="col-md-6">
+                                                                <label class="control-label">Phone Number</label>
+												                <input type="text" disabled name="contact_number" id="contact_number" class="form-control" v-model="selected_contact_number" required/>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="control-label">Email</label>
+												                <input type="text" disabled name="contact_email" id="contact_email" class="form-control" v-model="selected_contact_email" required/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row" style="margin-top: 40px;">
+										<div class="col-sm-6 features">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h3 class="panel-title">Features</h3>
+												</div>
+												<div class="panel-body" v-bind:class="{ 'empty-features': allFeaturesSelected }">
+													<p v-show="allFeaturesSelected">
+				                             All features selected
+				                         </p>
+													<ul class="list-group">
+														<a href="" v-for="feature,key in features"  @click.prevent="addSelectedFeature(feature,key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
+													</ul>
+												</div>
+											</div>
+										</div>
+										<div class="col-sm-6 features">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h3 class="panel-title">Selected Feautures</h3>
+												</div>
+												<div class="panel-body"  v-bind:class="{ 'empty-features': !hasSelectedFeatures }">
+													<p v-show="!hasSelectedFeatures">
+				                             No features selected
+				                         </p>
+													<ul class="list-group">
+														<a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row" style="margin-top: 40px;">
+										<div class="col-md-12">
+											<div class="form-group">
+												<label class="control-label" >Description</label>
+												<div id="editor" class="form-control"></div>
+											</div>
+										</div>
+									</div>
+
+									<div class="row" style="margin-top: 40px;">
+										<div class="col-sm-8">
+											<div class="form-group">
+												<div class="col-sm-4 col-md-3 col-lg-2">
+													<label style="line-height: 2.5;">Price set at: </label>
+												</div>
+												<div class="col-sm-8 col-md-9 col-lg-10">
+													<select id="price_level" name="price_level" class="form-control" v-model="campground.price_level">
+														<option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
+													</select>
+												</div>
+											</div>
+										</div>
+										<div class="col-sm-4">
+											<div class="col-sm-12">
+												<div class="form-group pull-right">
+													<a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
+													<a href="#" v-else class="btn btn-primary" @click.prevent="update">Update</a>
+													<a href="#" class="btn btn-default" @click.prevent="goBack">Cancel</a>
+												</div>
+											</div>
+										</div>
+									</div>
 								</div>
-							</div>
+
 						</div>
 					</div>
-					<div class="row" style="margin-top: 40px;">
-						<div class="col-lg-12">
-							<div class="panel panel-primary">
-								<div class="panel-heading">
-									<h3 class="panel-title">Address</h3>
-								</div>
-								<div class="panel-body">
-									<div class="col-md-6">
-										<div class="form-group">
-											<label for="">Email</label>
-											<input id="email" name="email" type="email" class="form-control"v-model="campground.address.email" placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-6">
-										<div class="form-group">
-											<label for="">Telephone</label>
-											<input id="telephone" name="telephone" type="text" class="form-control" v-model="campground.address.telephone" placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group">
-											<label for="">Street</label>
-											<input id="street" name="street" type="text" class="form-control" v-model="campground.address.street"  placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group">
-											<label for="">City</label>
-											<input id="city" name="city" type="text" class="form-control" v-model="campground.address.city"  placeholder=""/>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group">
-											<label for="">Postcode</label>
-											<input id="postcode" name="postcode" type="text" class="form-control" v-model="campground.address.postcode" placeholder=""/>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="row" style="margin-top: 40px;">
-						<div class="col-sm-6 features">
-							<div class="panel panel-primary">
-								<div class="panel-heading">
-									<h3 class="panel-title">Features</h3>
-								</div>
-								<div class="panel-body" v-bind:class="{ 'empty-features': allFeaturesSelected }">
-									<p v-show="allFeaturesSelected">
-                             All features selected
-                         </p>
-									<ul class="list-group">
-										<a href="" v-for="feature,key in features"  @click.prevent="addSelectedFeature(feature,key)" class="list-group-item list-group-item-primary">{{feature.name}}</a>
-									</ul>
-								</div>
-							</div>
-						</div>
-						<div class="col-sm-6 features">
-							<div class="panel panel-primary">
-								<div class="panel-heading">
-									<h3 class="panel-title">Selected Feautures</h3>
-								</div>
-								<div class="panel-body"  v-bind:class="{ 'empty-features': !hasSelectedFeatures }">
-									<p v-show="!hasSelectedFeatures">
-                             No features selected
-                         </p>
-									<ul class="list-group">
-										<a href="" v-for="feature,key in selected_features"  @click.prevent="removeSelectedFeature(feature, key)" class="list-group-item ">{{feature.name}}</a>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="row" style="margin-top: 40px;">
-						<div class="col-md-12">
-							<div class="form-group">
-								<label class="control-label" >Description</label>
-								<div id="editor" class="form-control"></div>
-							</div>
-						</div>
-					</div>
+
 			</div>
-			<div class="row" style="margin-top: 40px;">
-				<div class="col-sm-8">
-					<div class="form-group">
-						<div class="col-sm-4 col-md-3 col-lg-2">
-							<label style="line-height: 2.5;">Price set at: </label>
-						</div>
-						<div class="col-sm-8 col-md-9 col-lg-10">
-							<select id="price_level" name="price_level" class="form-control" v-model="campground.price_level">
-								<option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
-							</select>
-						</div>
-					</div>
-				</div>
-				<div class="col-sm-4">
-					<div class="col-sm-12">
-						<div class="form-group pull-right">
-							<a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
-							<a href="#" v-else class="btn btn-primary" @click.prevent="update">Update</a>
-							<a href="#" class="btn btn-default" @click.prevent="goBack">Cancel</a>
-						</div>
-					</div>
-				</div>
-			</div>
+
 			</form>
 		</div>
 		<loader :isLoading.sync="isLoading">Loading...</loader>
@@ -190,6 +194,7 @@ import Editor from 'quill';
 import Render from 'quill-render';
 import loader from '../utils/loader.vue'
 import alert from '../utils/alert.vue'
+import {mapGetters} from 'vuex'
 export default {
     name: 'cg_attr',
     components: {
@@ -201,7 +206,6 @@ export default {
         let vm = this;
         return {
             selected_price_set: this.priceSet[0],
-            parks: [],
             editor: null,
             editor_updated: false,
             features: [],
@@ -211,7 +215,8 @@ export default {
             errors: false,
             errorString: '',
             showUpdate: false,
-            isLoading: false
+            isLoading: false,
+			contacts:[],
         }
     },
     props: {
@@ -238,7 +243,6 @@ export default {
             default: function() {
                 return {
                     address: {},
-                    contact: {},
                     images: []
                 };
             },
@@ -255,7 +259,30 @@ export default {
         },
         allFeaturesSelected: function() {
             return this.features.length < 1;
-        }
+        },
+        selected_contact_number: function(){
+            let id = this.campground.contact;
+            if(id != null){
+                let contact = this.contacts.find(contact => contact.id === id);
+                return contact ? contact.phone_number: '';
+            }
+            else{
+                return '';
+            }
+        },
+        selected_contact_email: function(){
+            let id = this.campground.contact;
+            if(id != null){
+                let contact = this.contacts.find(contact => contact.id === id);
+                return contact ? contact.email: '';
+            }
+            else{
+                return '';
+            }
+        },
+		...mapGetters([
+          'parks'
+        ]),
     },
     watch: {
         campground: {
@@ -313,11 +340,11 @@ export default {
                 vm.campground.features = vm.selected_features;
             }
             vm.campground.features.forEach(function(f) {
-                featuresURL.push(f.url);
+                featuresURL.push(f.id);
             });
             vm.campground.features = featuresURL;
-            if (vm.campground.contact == null && !vm.createCampground) {
-                delete vm.campground.contact;
+            if ( vm.campground.contact == "undefined") {
+                vm.campground.contact = '';
             }
             $.ajax({
                 beforeSend: function(xhrObj) {
@@ -348,10 +375,18 @@ export default {
                         vm.showUpdate = true;
                         vm.isLoading = false
                     }
+					vm.$store.dispatch("updateAlert",{
+						visible:false,
+						type:"danger",
+						message: ""
+					});
                 },
                 error: function(resp) {
-                    vm.errors = true;
-                    vm.errorString = helpers.apiError(resp);
+					vm.$store.dispatch("updateAlert",{
+						visible:true,
+						type:"danger",
+						message: helpers.apiError(resp)
+					});
                     vm.isLoading = false
                 }
             });
@@ -361,14 +396,9 @@ export default {
         },
         loadParks: function() {
             var vm = this;
-            var url = api_endpoints.parks;
-            $.ajax({
-                url: url,
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    vm.parks = data;
-                }
-            });
+			if (vm.parks.length == 0) {
+                vm.$store.dispatch("fetchParks");
+            }
 
         },
         loadFeatures: function() {
@@ -484,6 +514,11 @@ export default {
 
         vm.form = $('#attForm');
         vm.addFormValidations();
+		vm.$http.get(api_endpoints.contacts).then((response) => {
+			vm.contacts = response.body
+		}, (error) => {
+			console.log(error);
+		})
     },
     updated: function() {
         let vm = this;

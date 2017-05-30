@@ -42,7 +42,8 @@ urlpatterns = [
     url(r'payments/', include(api_patterns)),
     url(r'payments/invoice/(?P<reference>\d+)',views.InvoiceDetailView.as_view(), name='invoice-detail'),
     url(r'payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
-    url(r'payments/invoice/payment/(?P<reference>\d+)',views.InvoicePaymentView.as_view(), name='invoice-payment'),
+    #url(r'payments/invoice/payment/(?P<reference>\d+)',views.InvoicePaymentView.as_view(), name='invoice-payment'),
+    url(r'payments/invoice/payment$',views.InvoicePaymentView.as_view(), name='invoice-payment'),
     url(r'payments/invoice/search$',views.InvoiceSearchView.as_view(), name='invoice-search'),
     url(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
 ]

@@ -1,17 +1,34 @@
 import traceback
 import base64
+import geojson
 from six.moves.urllib.parse import urlparse
-from django.db.models import Q
+from wsgiref.util import FileWrapper
+from django.db.models import Q, Min
+from django.db import transaction
+from django.http import HttpResponse
 from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.contrib import messages
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route,renderer_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
+from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
-
+from django.core.cache import cache
+from ledger.accounts.models import EmailUser,Address
+from ledger.address.models import Country
+from parkstay import utils
+from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
+                                District,
+                                Contact,
                                 CampsiteBooking,
                                 Campsite,
                                 CampsiteRate,
@@ -19,6 +36,7 @@ from parkstay.models import (Campground,
                                 CampgroundBookingRange,
                                 CampsiteBookingRange,
                                 CampsiteStayHistory,
+                                CampgroundStayHistory,
                                 PromoArea,
                                 Park,
                                 Feature,
@@ -32,15 +50,21 @@ from parkstay.models import (Campground,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
-                                MaximumStayReason
+                                MaximumStayReason,
+                                ParkEntryRate,
+                                BookingVehicleRego
                                 )
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteSerialiser,
+                                    ContactSerializer,
+                                    DistrictSerializer,
                                     CampgroundMapSerializer,
                                     CampgroundMapFilterSerializer,
                                     CampgroundSerializer,
+                                    CampgroundDatatableSerializer,
                                     CampgroundCampsiteFilterSerializer,
+                                    CampsiteBookingSerializer,
                                     PromoAreaSerializer,
                                     ParkSerializer,
                                     FeatureSerializer,
@@ -52,6 +76,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampsiteRateSerializer,
                                     CampsiteRateReadonlySerializer,
                                     CampsiteStayHistorySerializer,
+                                    CampgroundStayHistorySerializer,
                                     RateSerializer,
                                     RateDetailSerializer,
                                     CampgroundPriceHistorySerializer,
@@ -62,11 +87,15 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     OpenReasonSerializer,
                                     PriceReasonSerializer,
                                     MaximumStayReasonSerializer,
-                                    BulkPricingSerializer
+                                    BulkPricingSerializer,
+                                    UsersSerializer,
+                                    AccountsAddressSerializer,
+                                    ParkEntryRateSerializer,
+                                    ReportSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
-
-
+from parkstay import reports 
+from parkstay import pdf
 
 
 # API Views
@@ -74,11 +103,18 @@ class CampsiteBookingViewSet(viewsets.ModelViewSet):
     queryset = CampsiteBooking.objects.all()
     serializer_class = CampsiteBookingSerialiser
 
+class DistrictViewSet(viewsets.ModelViewSet):
+    queryset = District.objects.all()
+    serializer_class = DistrictSerializer
+
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
 
 class CampsiteViewSet(viewsets.ModelViewSet):
     queryset = Campsite.objects.all()
     serializer_class = CampsiteSerialiser
-    
+
 
     def list(self, request, format=None):
         queryset = self.get_queryset()
@@ -103,6 +139,8 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -137,6 +175,8 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -164,6 +204,8 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             return Response(res.data)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -174,7 +216,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             # Check what status is required
             closures = bool(request.GET.get("closures", False))
             if closures:
-                serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+                serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = CampsiteBookingRangeSerializer(self.get_object().booking_ranges,many=True)
             res = serializer.data
@@ -183,6 +225,8 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -197,6 +241,8 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -204,15 +250,42 @@ class CampsiteViewSet(viewsets.ModelViewSet):
     def price_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            price_history = self.get_object().rates.all()
+            price_history = self.get_object().rates.all().order_by('-date_start')
             serializer = CampsiteRateReadonlySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
-
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def current_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            start_date = request.GET.get('arrival',False)
+            end_date = request.GET.get('departure',False)
+            res = []
+            if start_date and end_date:
+                res = utils.get_campsite_current_rate(request,self.get_object().id,start_date,end_date)
+            else:
+                res.append({
+                    "error":"Arrival and departure dates are required",
+                    "success":False
+                })
+
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
 
 class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
     queryset = CampsiteStayHistory.objects.all()
@@ -231,26 +304,47 @@ class CampsiteStayHistoryViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
+    queryset = CampgroundStayHistory.objects.all()
+    serializer_class = CampgroundStayHistorySerializer
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance,data=request.data,partial=partial)
+            serializer.is_valid(raise_exception=True)
+            if instance.range_end and not serializer.validated_data.get('range_end'):
+                instance.range_end = None
+            self.perform_update(serializer)
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
 
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Campground.objects.all()
+    queryset = Campground.objects.exclude(campground_type=3).annotate(Min('campsites__rates__rate__adult'))
     serializer_class = CampgroundMapSerializer
     permission_classes = []
 
 
 class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
-    # TODO: add exclude for unpublished campground objects
-    #queryset = Campground.objects.exclude(campground_type=1)
-    queryset = Campground.objects.all()
+    queryset = Campground.objects.exclude(campground_type=3)
     serializer_class = CampgroundMapFilterSerializer
     permission_classes = []
-   
+
 
     def list(self, request, *args, **kwargs):
-        print(request.GET)
         data = {
             "arrival" : request.GET.get('arrival', None),
             "departure" : request.GET.get('departure', None),
@@ -258,44 +352,74 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-            "gear_type": request.GET.get('gear_type', 'tent')
+            "gear_type": request.GET.get('gear_type', 'all')
         }
 
         serializer = CampgroundCampsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         scrubbed = serializer.validated_data
+        context = {}
+        # filter to the campsites by gear allowed (if specified), else show the lot
+        if scrubbed['gear_type'] != 'all':
+            context = {scrubbed['gear_type']: True}
+
+        # if a date range is set, filter out campgrounds that are unavailable for the whole stretch
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
-            sites = Campsite.objects.exclude(
-                campsitebooking__date__range=(
-                    scrubbed['arrival'],
-                    scrubbed['departure']-timedelta(days=1)
-                )
-            ).filter(**{scrubbed['gear_type']: True})
-            ground_ids = set([s.campground.id for s in sites])
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
-        else:
-            ground_ids = set((x[0] for x in Campsite.objects.filter(**{scrubbed['gear_type']: True}).values_list('campground')))
-            # we need to be tricky here. for the default search (tent, no timestamps),
-            # we want to include all of the "campgrounds" that don't have any campsites in the model!
-            if scrubbed['gear_type'] == 'tent':
+            sites = Campsite.objects.filter(**context)
+            ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
+
+        else: # show all of the campgrounds with campsites
+            ground_ids = set((x[0] for x in Campsite.objects.filter(**context).values_list('campground')))
+
+            # we need to be tricky here. for the default search (all, no timestamps),
+            # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
+            if scrubbed['gear_type'] == 'all':
                 ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
-    
-            queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+
+        queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+@require_http_methods(['GET'])
+def search_suggest(request, *args, **kwargs):
+    entries = []
+    for x in Campground.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Campground', 'id': x[0], 'name': x[1]}))
+    for x in Park.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Park', 'id': x[0], 'name': x[1]}))
+    for x in PromoArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))
+
+    return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
 
 
 class CampgroundViewSet(viewsets.ModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
 
+    @list_route(methods=['GET',])
+    @renderer_classes((JSONRenderer,))
+    def datatable_list(self,request,format=None):
+        data = cache.get('campgrounds_dt')
+        if data is None:
+            queryset = self.get_queryset()
+            serializer = CampgroundDatatableSerializer(queryset,many=True)
+            data = serializer.data
+            cache.set('campgrounds_dt',data,3600)
+        return Response(data)
 
     def list(self, request, format=None):
-        queryset = self.get_queryset()
-        formatted = bool(request.GET.get("formatted", False))
-        serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
-        return Response(serializer.data)
+
+        data = cache.get('campgrounds')
+        if data is None:
+            queryset = self.get_queryset()
+            formatted = bool(request.GET.get("formatted", False))
+            serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
+            data = serializer.data
+            cache.set('campgrounds',data,3600)
+        return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -344,6 +468,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -408,6 +534,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -431,12 +559,46 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             # return object
             ground = self.get_object()
             res = CampgroundSerializer(ground, context={'request':request})
-
+            cache.delete('campgrounds_dt')
             return Response(res.data)
         except serializers.ValidationError:
+            print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e[0]))
+    def close_campgrounds(self,closure_data,campgrounds):
+        for campground in campgrounds:
+            closure_data['campground'] = campground
+            try:
+                serializer = CampgroundBookingRangeSerializer(data=closure_data, method="post")
+                serializer.is_valid(raise_exception=True)
+                instance = Campground.objects.get(pk = campground)
+                instance.close(dict(serializer.validated_data))
+            except Exception as e:
+                raise
+
+    @list_route(methods=['post'])
+    def bulk_close(self, request, format='json', pk=None):
+        with transaction.atomic():
+            try:
+                http_status = status.HTTP_200_OK
+                closure_data = request.data.copy();
+                campgrounds = closure_data.pop('campgrounds[]')
+                '''Thread for performance / no error messages though'''
+                #import thread
+                #thread.start_new_thread( self.close_campgrounds, (closure_data,campgrounds,) )
+                self.close_campgrounds(closure_data,campgrounds)
+                cache.delete('campgrounds_dt')
+                return Response('All Selected Campgrounds Closed')
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e[0]))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e[0]))
 
     @detail_route(methods=['post'],)
     def addPrice(self, request, format='json', pk=None):
@@ -452,13 +614,13 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
-                    'reason': PriceReason.objects.get(serializer.validated_data['reason']),
+                    'reason': PriceReason.objects.get(pk = serializer.validated_data['reason']),
                     'details': serializer.validated_data['details'],
                     'update_level': 0
                 }
@@ -469,8 +631,12 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
+            print(traceback.format_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
+            print(traceback.format_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'],)
@@ -490,7 +656,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 new_data = {
@@ -509,6 +675,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -529,6 +697,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -540,7 +710,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             # Check what status is required
             closures = bool(request.GET.get("closures", False))
             if closures:
-                serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)),many=True)
+                serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = CampgroundBookingRangeSerializer(self.get_object().booking_ranges,many=True)
             res = serializer.data
@@ -549,6 +719,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -563,6 +735,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -570,101 +744,90 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def price_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id)
+            price_history = CampgroundPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
             serializer = CampgroundPriceHistorySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
-    def campsite_bookings(self, request, pk=None, format=None):
-        """Fetch campsite availability for a campground."""
-        # convert GET parameters to objects
-        ground = self.get_object()
-        # Validate parameters
-        data = {
-            "arrival" : request.GET.get('arrival'),
-            "departure" : request.GET.get('departure'),
-            "num_adult" : request.GET.get('num_adult', 0),
-            "num_concession" : request.GET.get('num_concession', 0),
-            "num_child" : request.GET.get('num_child', 0),
-            "num_infant" : request.GET.get('num_infant', 0)
-        }
-        serializer = CampgroundCampsiteFilterSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
+    def stay_history(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            start = request.GET.get("start",False)
+            end = request.GET.get("end",False)
+            serializer = None
+            if (start) or (end):
+                start = datetime.strptime(start,"%Y-%m-%d").date()
+                end = datetime.strptime(end,"%Y-%m-%d").date()
+                queryset = CampgroundStayHistory.objects.filter(range_end__range = (start,end), range_start__range=(start,end) ).order_by("range_start")[:5]
+                serializer = CampgroundStayHistorySerializer(queryset,many=True,context={'request':request},method='get')
+            else:
+                serializer = CampgroundStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
+            res = serializer.data
 
-        start_date = serializer.validated_data['arrival']
-        end_date = serializer.validated_data['departure']
-        num_adult = serializer.validated_data['num_adult']
-        num_concession = serializer.validated_data['num_concession']
-        num_child = serializer.validated_data['num_child']
-        num_infant = serializer.validated_data['num_infant']
-        # get a length of the stay (in days), capped if necessary to the request maximum
-        length = max(0, (end_date-start_date).days)
-        if length > settings.PS_MAX_BOOKING_LENGTH:
-            length = settings.PS_MAX_BOOKING_LENGTH
-            end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
 
-        # fetch all of the single-day CampsiteBooking objects within the date range for the campground
-        bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__campground=ground,
-                            date__gte=start_date,
-                            date__lt=end_date
-                        ).order_by('date', 'campsite__name')
-        # fetch all the campsites and applicable rates for the campground
-        sites_qs = Campsite.objects.filter(campground=ground).order_by('name')
-        rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
-
-        # make a map of campsite class to cost
-        rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
-
-        # from our campsite queryset, generate a digest for each site
-        sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates_map[s.campsite_class_id])) for s in sites_qs])
-        bookings_map = {}
-
-        # create our result object, which will be returned as JSON
-        result = {
-            'arrival': start_date.strftime('%Y/%m/%d'),
-            'days': length,
-            'adults': 1,
-            'children': 0,
-            'maxAdults': 30,
-            'maxChildren': 30,
-            'sites': [],
-            'classes': {}
-        }
-
-        # make an entry under sites for each site
-        for k, v in sites_map.items():
-            site = {
-                'name': k,
-                'id': v[0],
-                'type': ground.campground_type,
-                'class': v[1].pk,
-                'price': '${}'.format(v[2]*length),
-                'availability': [[True, '${}'.format(v[2]), v[2]] for i in range(length)]
-            }
-            result['sites'].append(site)
-            bookings_map[k] = site
-            if v[1].pk not in result['classes']:
-                result['classes'][v[1].pk] = v[1].name
-
-        # strike out existing bookings
-        for b in bookings_qs:
-            offset = (b.date-start_date).days
-            bookings_map[b.campsite.name]['availability'][offset][0] = False
-            bookings_map[b.campsite.name]['availability'][offset][1] = 'Closed' if b.booking_type == 2 else 'Sold'
-            bookings_map[b.campsite.name]['price'] = False
-
-        return Response(result)
 
     @detail_route(methods=['get'])
-    def campsite_class_bookings(self, request, pk=None, format=None):
-        """Fetch campsite availability for a campground, grouped by campsite class."""
+    def available_campsites(self, request, format='json', pk=None):
+        try:
+            start_date = datetime.strptime(request.GET.get('arrival'),'%Y/%m/%d').date()
+            end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
+            campsite_qs = Campsite.objects.all().filter(campground_id=self.get_object().id)
+            http_status = status.HTTP_200_OK
+            available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
+
+            return Response(available,status=http_status)
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def available_campsite_classes(self, request, format='json', pk=None):
+        try:
+            start_date = datetime.strptime(request.GET.get('arrival'),'%Y/%m/%d').date()
+            end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
+            http_status = status.HTTP_200_OK
+            available = utils.get_available_campsitetypes(self.get_object().id,start_date, end_date,_list=False)
+            available_serializers = []
+            for k,v in available.items():
+                s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
+                s['campsites'] = [c.id for c in v]
+                available_serializers.append(s)
+            data = available_serializers
+
+            return Response(data,status=http_status)
+        except serializers.ValidationError:
+            traceback.print_exc()
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+
+
+class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Campground.objects.all()
+    serializer_class = CampgroundSerializer
+    permission_classes = []
+
+    def retrieve(self, request, pk=None, format=None):
+        """Fetch full campsite availability for a campground."""
         # convert GET parameters to objects
         ground = self.get_object()
         # Validate parameters
@@ -674,7 +837,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             "num_adult" : request.GET.get('num_adult', 0),
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
-            "num_infant" : request.GET.get('num_infant', 0)
+            "num_infant" : request.GET.get('num_infant', 0),
+            "gear_type" : request.GET.get('gear_type', 'all')
         }
         serializer = CampgroundCampsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -685,6 +849,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         num_concession = serializer.validated_data['num_concession']
         num_child = serializer.validated_data['num_child']
         num_infant = serializer.validated_data['num_infant']
+        gear_type = serializer.validated_data['gear_type']
+        
+        # if campground doesn't support online bookings, abort!
+        if ground.campground_type != 0:
+            return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
 
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
@@ -692,27 +861,26 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             length = settings.PS_MAX_BOOKING_LENGTH
             end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
 
-        # fetch all of the single-day CampsiteBooking objects within the date range for the campground
-        bookings_qs =   CampsiteBooking.objects.filter(
-                            campsite__campground=ground,
-                            date__gte=start_date,
-                            date__lt=end_date
-                        ).order_by('date', 'campsite__name')
         # fetch all the campsites and applicable rates for the campground
-        sites_qs = Campsite.objects.filter(campground=ground)
-        rates_qs = CampsiteRate.objects.filter(campsite__in=sites_qs)
+        context = {}
+        if gear_type != 'all':
+            context[gear_type] = True
+        sites_qs = Campsite.objects.filter(campground=ground).filter(**context)
 
-        # make a map of campsite class to cost
-        rates_map = {r.campsite.campsite_class_id: r.get_rate(num_adult, num_concession, num_child, num_infant) for r in rates_qs}
+        # fetch rate map
+        rates = {
+            siteid: {
+                date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
+                for date, info in dates.items()
+            } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
+        }
 
-        # from our campsite queryset, generate a distinct list of campsite classes
-        classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name')]
-
-        classes_map = {}
-        bookings_map = {}
+        # fetch availability map
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
 
         # create our result object, which will be returned as JSON
         result = {
+            'name': ground.name,
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
             'adults': 1,
@@ -723,82 +891,267 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             'classes': {}
         }
 
-        # make an entry under sites for each campsite class
-        for c in classes:
-            rate = rates_map[c[1]]
-            site = {
-                'name': c[2],
-                'id': None,
-                'type': ground.campground_type,
-                'price': '${}'.format(rate*length),
-                'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
-                'breakdown': OrderedDict()
-            }
-            result['sites'].append(site)
-            classes_map[c[1]] = site
+        # group results by campsite class
+        if ground.site_type in (1, 2):
+            # from our campsite queryset, generate a distinct list of campsite classes
+            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
 
-        # make a map of class IDs to site IDs
-        class_sites_map = {}
-        for s in sites_qs:
-            if s.campsite_class.pk not in class_sites_map:
-                class_sites_map[s.campsite_class.pk] = set()
+            classes_map = {}
+            bookings_map = {}
 
-            class_sites_map[s.campsite_class.pk].add(s.pk)
-            rate = rates_map[s.campsite_class.pk]
-            classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate), rate] for i in range(length)]
+            # create a rough mapping of rates to campsite classes
+            # (it doesn't matter if this isn't a perfect match, the correct
+            # pricing will show up on the booking page)
+            rates_map = {}
 
-        # store number of campsites in each class
-        class_sizes = {k: len(v) for k, v in class_sites_map.items()}
+            class_sites_map = {}
+            for s in sites_qs:
+                if s.campsite_class.pk not in class_sites_map:
+                    class_sites_map[s.campsite_class.pk] = set()
+                    rates_map[s.campsite_class.pk] = rates[s.pk]
+
+                class_sites_map[s.campsite_class.pk].add(s.pk)
 
 
+            # make an entry under sites for each campsite class
+            for c in classes:
+                rate = rates_map[c[1]]
+                site = {
+                    'name': c[2],
+                    'id': None,
+                    'type': c[1],
+                    'price': '${}'.format(sum(rate.values())),
+                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
+                    'breakdown': OrderedDict(),
+                    'gearType': {
+                        'tent': c[3],
+                        'campervan': c[4],
+                        'caravan': c[5]
+                    }
+                }
+                result['sites'].append(site)
+                classes_map[c[1]] = site
 
-        # strike out existing bookings
-        for b in bookings_qs:
-            offset = (b.date-start_date).days
-            key = b.campsite.campsite_class.pk
+            # make a map of class IDs to site IDs
+            for s in sites_qs:
+                rate = rates_map[s.campsite_class.pk]
+                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)]] for i in range(length)]
 
-            # clear the campsite from the class sites map
-            if b.campsite.pk in class_sites_map[key]:
-                class_sites_map[key].remove(b.campsite.pk)
+            # store number of campsites in each class
+            class_sizes = {k: len(v) for k, v in class_sites_map.items()}
 
-            # update the per-site availability
-            classes_map[key]['breakdown'][b.campsite.name][offset][0] = False
-            classes_map[key]['breakdown'][b.campsite.name][offset][1] = 'Closed' if (b.booking_type == 2) else 'Sold'
+            # update results based on availability map
+            for s in sites_qs:
+                # get campsite class key
+                key = s.campsite_class.pk
+                # if there's not a free run of slots
+                if not all([v[0] == 'open' for k, v in availability[s.pk].items()]):
+                    # clear the campsite from the campsite class map
+                    if s.pk in class_sites_map[key]:
+                        class_sites_map[key].remove(s.pk)
 
-            # update the class availability status
-            book_offset = 1 if (b.booking_type == 2) else 0
-            classes_map[key]['availability'][offset][3][book_offset] += 1
-            if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
-                classes_map[key]['availability'][offset][1] = 'Fully Booked'
-            elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
-                classes_map[key]['availability'][offset][1] = 'Closed'
-            elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
-                classes_map[key]['availability'][offset][1] = 'Partially Booked'
-            else:
-                classes_map[key]['availability'][offset][1] = 'Partially Closed'
+                    # update the days that are non-open
+                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                        # update the per-site availability
+                        classes_map[key]['breakdown'][s.name][offset][0] = False
+                        classes_map[key]['breakdown'][s.name][offset][1] = 'Booked' if (stat == 'booked') else 'Unavailable'
 
-            # tentatively flag campsite class as unavailable
-            classes_map[key]['availability'][offset][0] = False
-            classes_map[key]['price'] = False
+                        # update the class availability status
+                        book_offset = 0 if (stat == 'booked') else 1
+                        classes_map[key]['availability'][offset][3][book_offset] += 1
+                        if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Fully Booked'
+                        elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Unavailable'
+                        elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
+                            classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                        else:
+                            classes_map[key]['availability'][offset][1] = 'Partially Unavailable'
 
-        # convert breakdowns to a flat list
-        for klass in classes_map.values():
-            klass['breakdown'] = [{'name': k, 'availability': v} for k, v in klass['breakdown'].items()]
+                        # tentatively flag campsite class as unavailable
+                        classes_map[key]['availability'][offset][0] = False
+                        classes_map[key]['price'] = False
 
-        # any campsites remaining in the class sites map have zero bookings!
-        # check if there's any left for each class, and if so return that as the target
-        for k, v in class_sites_map.items():
-            if v:
-                rate = rates_map[k]
-                classes_map[k].update({
-                    'id': v.pop(),
-                    'price': '${}'.format(rate*length),
-                    'availability': [[True, '${}'.format(rate), rate, [0, 0]] for i in range(length)],
-                    'breakdown': []
-                })
+            # convert breakdowns to a flat list
+            for klass in classes_map.values():
+                klass['breakdown'] = [{'name': k, 'availability': v} for k, v in klass['breakdown'].items()]
+
+            # any campsites remaining in the class sites map have zero bookings!
+            # check if there's any left for each class, and if so return that as the target
+            for k, v in class_sites_map.items():
+                if v:
+                    rate = rates_map[k]
+                    # if the number of sites is less than the warning limit, add a notification
+                    if len(v) <= settings.PS_CAMPSITE_COUNT_WARNING:
+                        classes_map[k].update({
+                            'warning': 'Only {} left!'.format(len(v))
+                        })
+
+                    classes_map[k].update({
+                        'id': v.pop(),
+                        'price': '${}'.format(sum(rate.values())),
+                        'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
+                        'breakdown': []
+                    })
 
 
-        return Response(result)
+            return Response(result)
+
+
+        # don't group by class, list individual sites
+        else:
+            sites_qs = sites_qs.order_by('campsite_class__name', 'name')
+
+            # from our campsite queryset, generate a digest for each site
+            sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
+            bookings_map = {}
+
+            # make an entry under sites for each site
+            for k, v in sites_map.items():
+                site = {
+                    'name': k,
+                    'id': v[0],
+                    'type': ground.campground_type,
+                    'class': v[1].pk,
+                    'price': '${}'.format(sum(v[2].values())),
+                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)],
+                    'gearType': {
+                        'tent': v[3],
+                        'campervan': v[4],
+                        'caravan': v[5]
+                    }
+                }
+                result['sites'].append(site)
+                bookings_map[k] = site
+                if v[1].pk not in result['classes']:
+                    result['classes'][v[1].pk] = v[1].name
+
+
+            # update results based on availability map
+            for s in sites_qs:
+                # if there's not a free run of slots
+                if not all([v[0] == 'open' for k, v in availability[s.pk].items()]):
+                    # update the days that are non-open
+                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                        bookings_map[s.name]['availability'][offset][0] = False
+                        bookings_map[s.name]['availability'][offset][1] = 'Closed' if (stat == 'closed') else 'Sold'
+                        bookings_map[s.name]['price'] = False
+
+            return Response(result)
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def create_booking(request, *args, **kwargs):
+    """Create a temporary booking and link it to the current session"""
+    data = {
+        'arrival': request.POST.get('arrival'),
+        'departure': request.POST.get('departure'),
+        'num_adult': request.POST.get('num_adult', 0),
+        'num_concession': request.POST.get('num_concession', 0),
+        'num_child': request.POST.get('num_child', 0),
+        'num_infant': request.POST.get('num_infant', 0),
+        'campground': request.POST.get('campground', 0),
+        'campsite_class': request.POST.get('campsite_class', 0),
+        'campsite': request.POST.get('campsite', 0)
+    }
+
+    serializer = CampsiteBookingSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+
+    campground = serializer.validated_data['campground']
+    campsite_class = serializer.validated_data['campsite_class']
+    campsite = serializer.validated_data['campsite']
+    start_date = serializer.validated_data['arrival']
+    end_date = serializer.validated_data['departure']
+    num_adult = serializer.validated_data['num_adult']
+    num_concession = serializer.validated_data['num_concession']
+    num_child = serializer.validated_data['num_child']
+    num_infant = serializer.validated_data['num_infant']
+
+    if 'ps_booking' in request.session:
+        # if there's already a booking in the current session, send bounce signal
+        messages.success(request, 'Booking already in progress, complete this first!')
+        return HttpResponse(geojson.dumps({
+            'status': 'success',
+            'msg': 'Booking already in progress.',
+            'pk': request.session['ps_booking']
+        }), content_type='application/json')
+
+    # for a manually-specified campsite, do a sanity check
+    # ensure that the campground supports per-site bookings and bomb out if it doesn't
+    if campsite:
+        campsite_obj = Campsite.objects.prefetch_related('campground').get(pk=campsite)
+        if campsite_obj.campground.site_type != 0:
+            return HttpResponse(geojson.dumps({
+                'status': 'error',
+                'msg': 'Campground doesn\'t support per-site bookings.'
+            }), status=400, content_type='application/json')
+    # for the rest, check that both campsite_class and campground are provided
+    elif (not campsite_class) or (not campground):
+        return HttpResponse(geojson.dumps({
+            'status': 'error',
+            'msg': 'Must specify campsite_class and campground.'
+        }), status=400, content_type='application/json')
+
+    # try to create a temporary booking
+    try:
+        if campsite:
+            booking = utils.create_booking_by_site(
+                campsite, start_date, end_date,
+                num_adult, num_concession,
+                num_child, num_infant
+            )
+        else:
+            booking = utils.create_booking_by_class(
+                campground, campsite_class,
+                start_date, end_date,
+                num_adult, num_concession,
+                num_child, num_infant
+            )
+    except ValidationError as e:
+        return HttpResponse(geojson.dumps({
+            'status': 'error',
+            'msg': str(e)
+        }), status=400, content_type='application/json')
+
+    # add the booking to the current session
+    request.session['ps_booking'] = booking.pk
+
+    return HttpResponse(geojson.dumps({
+        'status': 'success',
+        'pk': booking.pk
+    }), content_type='application/json')
+
+
+
+@require_http_methods(['GET'])
+def get_confirmation(request, *args, **kwargs):
+    # fetch booking for ID
+    booking_id = kwargs.get('booking_id', None)
+    if (booking_id is None):
+        return HttpResponse('Booking ID not specified', status=400)
+    
+    try:
+        booking = Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return HttpResponse('Booking unavailable', status=403)
+
+    # check permissions
+    if not ((request.user == booking.customer) or is_officer(request.user) or (booking.id == request.session.get('ps_last_booking', None))):
+        return HttpResponse('Booking unavailable', status=403)
+
+    # check payment status
+    if (not is_officer(request.user)) and (not booking.paid):
+        return HttpResponse('Booking unavailable', status=403)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="confirmation-PS{}.pdf"'.format(booking_id)
+
+    pdf.create_confirmation(response, booking)
+
+    return response
+
 
 class PromoAreaViewSet(viewsets.ModelViewSet):
     queryset = PromoArea.objects.all()
@@ -808,9 +1161,70 @@ class ParkViewSet(viewsets.ModelViewSet):
     queryset = Park.objects.all()
     serializer_class = ParkSerializer
 
+    def list(self, request, *args, **kwargs):
+        data = cache.get('parks')
+        if data is None:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            data = serializer.data
+            cache.set('parks',data,3600)
+        return Response(data)
+
+    @list_route(methods=['get'])
+    def price_history(self, request, format='json', pk=None):
+        http_status = status.HTTP_200_OK
+        try:
+            price_history = ParkEntryRate.objects.all().order_by('-period_start')
+            serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request},method='get')
+            res = serializer.data
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+
+
+        return Response(res,status=http_status)
+
+    @detail_route(methods=['get'])
+    def current_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            start_date = request.GET.get('arrival',False)
+            res = []
+            if start_date:
+                start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+                price_history = ParkEntryRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+                if price_history:
+                    serializer = ParkEntryRateSerializer(price_history,many=True,context={'request':request})
+                    res = serializer.data[0]
+
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+        return Response(res,status=http_status)
+
+    @list_route(methods=['post'],)
+    def add_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer =  ParkEntryRateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save();
+            res = serializer.data
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
     serializer_class = FeatureSerializer
+
+class ParkEntryRateViewSet(viewsets.ModelViewSet):
+    queryset = ParkEntryRate.objects.all()
+    serializer_class = ParkEntryRateSerializer
 
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all()
@@ -832,14 +1246,14 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance,method='get')
-        return Response(serializer.data) 
-        
+        return Response(serializer.data)
+
 
     @detail_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            price_history = CampsiteClassPriceHistory.objects.filter(id=self.get_object().id)
+            price_history = CampsiteClassPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
             # Format list
             open_ranges,formatted_list,fixed_list= [],[],[]
             for p in price_history:
@@ -861,6 +1275,8 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -878,7 +1294,7 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 data = {
@@ -896,6 +1312,8 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -917,7 +1335,7 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 new_data = {
@@ -936,6 +1354,8 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -956,25 +1376,242 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
 
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
 
+    def list(self, request, *args, **kwargs):
+        from django.db import connection, transaction
+        try:
+            search = request.GET.get('search[value]')
+            draw = request.GET.get('draw') if request.GET.get('draw') else 1
+            start = request.GET.get('start') if request.GET.get('draw') else 1
+            length = request.GET.get('length') if request.GET.get('draw') else 10
+            arrival = str(datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y')) if request.GET.get('arrival') else ''
+            departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
+            campground = request.GET.get('campground')
+            region = request.GET.get('region')
+
+            sql = ''
+            http_status = status.HTTP_200_OK
+            sqlSelect = 'select parkstay_booking.id as id,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+                parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
+                parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
+            sqlCount = 'select count(*)'
+
+            sqlFrom = ' from parkstay_booking\
+                join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
+                join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
+                join parkstay_district on parkstay_park.district_id = parkstay_district.id\
+                full outer join accounts_emailuser on parkstay_booking.customer_id = accounts_emailuser.id\
+                join parkstay_region on parkstay_district.region_id = parkstay_region.id'
+
+            sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
+            sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
+
+            if campground :
+                sqlCampground = ' parkstay_campground.id = {}'.format(campground)
+                sql += sqlCampground
+                sqlCount += sqlCampground
+            if region:
+                sqlRegion = " parkstay_region.id = {}".format(region)
+                sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
+                sqlCount = sqlCount +" and "+ sqlRegion if campground else sqlCount + sqlRegion
+            if arrival:
+                sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
+                sqlCount = sqlCount + " and "+ sqlArrival if campground or region else sqlCount + sqlArrival
+                sql = sql + " and "+ sqlArrival if campground or region else sql + sqlArrival
+                if departure:
+                    sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+                    sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+            if search:
+                sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
+                or lower(accounts_emailuser.first_name) LIKE lower(\'%{}%\')\
+                or lower(accounts_emailuser.last_name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search)
+                if search.isdigit:
+                    sqlsearch = '{} or CAST (parkstay_booking.id as TEXT) like \'{}%\''.format(sqlsearch,search)
+                if arrival or campground or region:
+                    sql += " and ( "+ sqlsearch +" )"
+                    sqlCount +=  " and  ( "+ sqlsearch +" )"
+                else:
+                    sql += ' where' + sqlsearch
+                    sqlCount += ' where ' + sqlsearch
+
+
+            sql = sql + ' limit {} '.format(length)
+            sql = sql + ' offset {} ;'.format(start)
+
+            cursor = connection.cursor()
+            cursor.execute("Select count(*) from parkstay_booking ");
+            recordsTotal = cursor.fetchone()[0]
+            cursor.execute(sqlCount);
+            recordsFiltered = cursor.fetchone()[0]
+
+            cursor.execute(sql)
+            columns = [col[0] for col in cursor.description]
+            data = [
+                dict(zip(columns, row))
+                for row in cursor.fetchall()
+            ]
+            for bk in data:
+                booking = Booking.objects.get(id=bk['id'])
+                bk['editable'] = booking.editable
+                bk['status'] = booking.status
+                bk['paid'] = booking.paid
+                bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
+                bk['guests'] = booking.guests
+                bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
+                if not bk['legacy_id']:
+                    try:
+                        customer = EmailUser.objects.get(id=bk['customer_id'])
+                        bk['firstname'] = customer.first_name
+                        bk['lastname'] = customer.last_name
+                        bk['email'] = customer.email if customer.email else ""
+                        bk['phone'] = customer.mobile_number if customer.mobile_number else ""
+                        if booking.is_canceled:
+                            bk['campground_site_type'] = ""
+                        else:
+                            bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
+                    except EmailUser.DoesNotExist:
+                        bk['firstname'] =  ""
+                        bk['lastname'] = ""
+                        bk['email'] = ""
+                        bk['phone'] = ""
+                else:
+                    bk['firstname'] =  bk['legacy_name']
+                    bk['lastname'] = ""
+                    bk['campground_site_type'] = ""
+            return Response(OrderedDict([
+                ('recordsTotal', recordsTotal),
+                ('recordsFiltered',recordsFiltered),
+                ('results',data)
+            ]),status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def create(self, request, format=None):
+        from datetime import datetime
+        userCreated = False
+        try:
+            if 'ps_booking' in request.session:
+                del request.session['ps_booking']
+            start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
+            guests = request.data['guests']
+            costs = request.data['costs']
+            try:
+                emailUser = request.data['customer']
+                customer = EmailUser.objects.get(email = emailUser['email'])
+            except EmailUser.DoesNotExist:
+                customer = EmailUser.objects.create(
+                    email = emailUser['email'],
+                    first_name = emailUser['first_name'],
+                    last_name = emailUser['last_name'],
+                    phone_number = emailUser['phone'],
+                    mobile_number  = emailUser['phone'],
+                )
+                userCreated = True
+                try:
+                    country = emailUser['country']
+                    country = Country.objects.get(iso_3166_1_a2=country)
+                    Address.objects.create(line1='address',user = customer,postcode = emailUser['postcode'],country = country.iso_3166_1_a2)
+                except Country.DoesNotExist:
+                    raise serializers.ValidationError("Country you have entered does not exist")
+
+            booking_details = {
+                'campsite_id':request.data['campsite'],
+                'start_date' : start_date,
+                'end_date' : end_date,
+                'num_adult' : guests['adult'],
+                'num_concession' : guests['concession'],
+                'num_child' : guests['child'],
+                'num_infant' : guests['infant'],
+                'cost_total' : costs['total'],
+                'customer' : customer,
+                'country': emailUser['country'],
+                'postcode': emailUser['postcode'],
+                'phone': emailUser['phone'],
+            }
+
+            data = utils.internal_booking(request,booking_details)
+            serializer = BookingSerializer(data)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            utils.delete_session_booking(request.session)
+            if userCreated:
+                customer.delete()
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            utils.delete_session_booking(request.session)
+            if userCreated:
+                customer.delete()
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e[0]))
+
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+
+            instance = self.get_object()
+            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
+            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
+
+            booking_details = {
+                'campsites':request.data['campsites'],
+                'start_date' : start_date,
+                'campground' : request.data['campground'],
+                'end_date' : end_date
+            }
+            data = utils.update_booking(request,instance,booking_details)
+            serializer = BookingSerializer(data)
+
+            return Response(serializer.data, status=http_status)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def destroy(self, request, *args, **kwargs):
+
+        http_status = status.HTTP_200_OK
+        try:
+            booking  = self.get_object()
+            booking.cancelBooking()
+            serializer = self.get_serializer(booking)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
 class CampsiteRateViewSet(viewsets.ModelViewSet):
     queryset = CampsiteRate.objects.all()
     serializer_class = CampsiteRateSerializer
-
 
     def create(self, request, format=None):
         try:
             http_status = status.HTTP_200_OK
             rate = None
-            print(request.data)
             rate_serializer = RateDetailSerializer(data=request.data)
             rate_serializer.is_valid(raise_exception=True)
             rate_id = rate_serializer.validated_data.get('rate',None)
@@ -984,26 +1621,28 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=rate_serializer.validated_data['adult'],concession=rate_serializer.validated_data['concession'],child=rate_serializer.validated_data['child'])[0]
             print(rate_serializer.validated_data)
             if rate:
                 data = {
                     'rate': rate.id,
                     'date_start': rate_serializer.validated_data['period_start'],
                     'campsite': rate_serializer.validated_data['campsite'],
-                    #'reason': serializer.validated_data['reason'],
+                    'reason': rate_serializer.validated_data['reason'],
                     'update_level': 2
                 }
-            serializer = self.get_serializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            res = serializer.save()
+                serializer = self.get_serializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                res = serializer.save()
 
-            serializer = CampsiteRateReadonlySerializer(res)
-            return Response(serializer.data, status=http_status)
+                serializer = CampsiteRateReadonlySerializer(res)
+                return Response(serializer.data, status=http_status)
 
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -1021,25 +1660,29 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'])[0]
+                rate = Rate.objects.get_or_create(adult=rate_serializer.validated_data['adult'],concession=rate_serializer.validated_data['concession'],child=rate_serializer.validated_data['child'])[0]
+                pass
             if rate:
                 data = {
                     'rate': rate.id,
                     'date_start': rate_serializer.validated_data['period_start'],
                     'campsite': rate_serializer.validated_data['campsite'],
-                    #'reason': serializer.validated_data['reason'],
+                    'reason': rate_serializer.validated_data['reason'],
                     'update_level': 2
                 }
-            instance = self.get_object()
-            partial = kwargs.pop('partial', False)
-            serializer = self.get_serializer(instance,data=data,partial=partial)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
+                instance = self.get_object()
+                partial = kwargs.pop('partial', False)
+                serializer = self.get_serializer(instance,data=data,partial=partial)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
 
-            return Response(serializer.data, status=http_status)
+                return Response(serializer.data, status=http_status)
 
         except serializers.ValidationError:
+            print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -1064,6 +1707,8 @@ class BookingRangeViewset(viewsets.ModelViewSet):
             return Response(serializer.data)
         except serializers.ValidationError:
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -1097,6 +1742,21 @@ class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
 
+class UsersViewSet(viewsets.ModelViewSet):
+    queryset = EmailUser.objects.all()
+    serializer_class = UsersSerializer
+
+    def list(self, request, *args, **kwargs):
+        start = request.GET.get('start') if request.GET.get('draw') else 1
+        length = request.GET.get('length') if request.GET.get('draw') else 10
+        q = request.GET.get('q')
+        if q :
+            queryset = EmailUser.objects.filter(email__icontains=q)[:10]
+        else:
+            queryset = self.get_queryset()
+
+        serializer = self.get_serializer(queryset,many=True)
+        return Response(serializer.data)
 # Bulk Pricing
 # ===========================
 class BulkPricingView(generics.CreateAPIView):
@@ -1138,6 +1798,36 @@ class BulkPricingView(generics.CreateAPIView):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(str(e[0]))
+
+class BookingRefundsReportView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self,request,format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            #parse and validate data
+            report = None
+            data = {
+                "start":request.GET.get('start'),
+                "end":request.GET.get('end'),
+            }
+            serializer = ReportSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'Booking Refunds Report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
+            # Generate Report
+            report = reports.booking_refunds(serializer.validated_data['start'],serializer.validated_data['end'])
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()

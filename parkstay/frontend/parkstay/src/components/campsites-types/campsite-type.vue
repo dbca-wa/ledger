@@ -27,6 +27,12 @@
                                                 <input type="text" name="name" class="form-control"  v-model="campsite_type.name"required/>
                                             </div>
                                         </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="control-label" >Maximum Number of Vehicles</label>
+                                                <input type="number" name="max_vehicles" class="form-control"  v-model="campsite_type.max_vehicles"required/>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6">
@@ -43,23 +49,15 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <div class="form-group">
-                                                <div style="margin-top:10%;" class="checkbox">
+                                                <div class="checkbox">
                                                     <label><input type="checkbox" v-model="campsite_type.tent" />Tent</label>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <div style="margin-top:10%;" class="checkbox">
+                                                <div  class="checkbox">
                                                     <label><input type="checkbox" v-model="campsite_type.campervan" />Campervan</label>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <div style="margin-top:10%;" class="checkbox">
+                                                <div class="checkbox">
                                                     <label><input type="checkbox" v-model="campsite_type.caravan" />Caravan</label>
                                                 </div>
                                             </div>

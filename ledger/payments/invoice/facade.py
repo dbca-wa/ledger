@@ -1,7 +1,7 @@
 from ledger.payments.invoice.models import Invoice
 from ledger.payments.bpay.crn import getCRN, getICRN
 
-def create_invoice_crn(order_number,amount,crn_string,system):
+def create_invoice_crn(order_number,amount,crn_string,system,text):
     '''Make a new Invoice object using crn
     '''
     inv,created = Invoice.objects.get_or_create(
@@ -11,14 +11,16 @@ def create_invoice_crn(order_number,amount,crn_string,system):
     )
     if created:
         inv.system = system
+        inv.text = text
         inv.save()
     else:
         if inv.system != system:
             inv.system = system
+            inv.text = text
             inv.save()
     return inv
 
-def create_invoice_icrn(order_number,amount,crn_string,_format,system):
+def create_invoice_icrn(order_number,amount,crn_string,_format,system,text):
     '''Make a new Invoice object using icrn
     '''
     if _format in ['ICRNDATE','ICRNAMTDATE']:
@@ -32,9 +34,11 @@ def create_invoice_icrn(order_number,amount,crn_string,_format,system):
     )
     if created:
         inv.system = system
+        inv.text = text
         inv.save()
     else:
         if inv.system != system:
             inv.system = system
+            inv.text = text
             inv.save()
     return inv

@@ -14,13 +14,11 @@ User = get_user_model()
 class LoginForm(Form):
     email = EmailField(max_length=254)
 
-class ProfileForm(ModelForm):
-    first_name = CharField(max_length=128, required=False)
-    last_name = CharField(max_length=128, required=False)
+class PersonalForm(ModelForm):
 
     class Meta:
         model = User
-        fields = ['phone_number', 'mobile_number']
+        fields = ['first_name', 'last_name']
 
     def __init__(self, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)
@@ -29,7 +27,27 @@ class ProfileForm(ModelForm):
         self.helper.attrs = {'novalidate': ''}
         # Define the form layout.
         self.helper.layout = Layout(
-            'first_name', 'last_name', 'phone_number', 'mobile_number', 
+            'first_name', 'last_name', 
+            FormActions(
+                Submit('save', 'Save', css_class='btn-lg'),
+                Submit('cancel', 'Cancel')
+            )
+        )
+
+class ContactForm(ModelForm):
+
+    class Meta:
+        model = User
+        fields = ['email', 'phone_number','mobile_number']
+
+    def __init__(self, *args, **kwargs):
+        super(ProfileForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper(self)
+        self.helper.form_id = 'id_form_emailuserprofile_update'
+        self.helper.attrs = {'novalidate': ''}
+        # Define the form layout.
+        self.helper.layout = Layout(
+            'phone_number', 'mobile_number','email', 
             FormActions(
                 Submit('save', 'Save', css_class='btn-lg'),
                 Submit('cancel', 'Cancel')

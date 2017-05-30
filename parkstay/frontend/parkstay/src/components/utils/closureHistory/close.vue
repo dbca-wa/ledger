@@ -40,7 +40,7 @@
                     <div class="col-md-2">
                         <label>Details: </label>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <textarea name="closure_details" v-model="statusHistory.details" class="form-control" id="close_cg_details"></textarea>
                     </div>
                 </div>
