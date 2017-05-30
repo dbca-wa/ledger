@@ -46,9 +46,40 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def contacts(self, request, *args, **kwargs):
         pass
 
+    @detail_route(methods=['POST',])
+    def validate_pins(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = OrganisationPinCheckSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'])} 
+            return Response(data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @list_route(methods=['POST',])
     def existance(self, request, *args, **kwargs):
-        pass
+        try:
+            serializer = OrganisationCheckSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            data = Organisation.existance(serializer.validated_data['abn']) 
+            return Response(data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
     
 class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     queryset = OrganisationRequest.objects.all()

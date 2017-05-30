@@ -12,18 +12,26 @@ class Organisation(models.Model):
     pin_one = models.BigIntegerField(blank=True)
     pin_two = models.BigIntegerField(blank=True)
 
+    def validate_pins(self,pin1,pin2):
+        return self.pin1 == pin1 and self.pin2 == pin2
+    
     @staticmethod
     def existance(abn):
+        exists = True
+        org = None
         try:
-            l_org = ledger_organisation.objects.get(abn=abn)
-        except ledger_organisation.DoesNotExist:
-            return False
-        if l_org:
             try:
-                Organisation.objects.get(organisation=l_org)
-            except Organisation.DoesNotExist:
-                return False
-        return True
+                l_org = ledger_organisation.objects.get(abn=abn)
+            except ledger_organisation.DoesNotExist:
+                exists = False
+            if l_org:
+                try:
+                    org = Organisation.objects.get(organisation=l_org).id
+                except Organisation.DoesNotExist:
+                    exists = False
+            return {'exists': exists, 'id': org}
+        except:
+            raise
 
 class OrganisationContact(models.Model):
     organisation = models.ForeignKey(Organisation, related_name='contacts')

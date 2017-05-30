@@ -12,6 +12,10 @@ class OrganisationCheckSerializer(serializers.Serializer):
     abn = serializers.CharField()
     name = serializers.CharField()
 
+class OrganisationPinCheckSerializer(serializers.Serializer):
+    pin1 = serializers.CharField()
+    pin2 = serializers.CharField()
+
 class OrganisationSerializer(serializers.ModelSerializer):
     
     class Meta:
