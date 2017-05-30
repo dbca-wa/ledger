@@ -26,34 +26,35 @@ from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
 from disturbance import utils
 from datetime import datetime,timedelta, date
-from disturbance.models import  (   Organisation,
-                                    OrganisationRequest,
-                                    OrganisationContact
+from disturbance.models import  (   
+                                    Organisation,
                                 )
 
-from disturbance.serializers import (   OrganisationSerializer,
-                                        OrganisationRequestSerializer,
-                                        OrganisationContactSerializer,
-                                        OrganisationCheckSerializer,
-                                    )
+from disturbance.serializers.users import   (   
+                                                UserSerializer,
+                                                PersonalSerializer,
+                                                ContactSerializer,
+                                            )
 
+class GetProfile(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    def get(self, request, format=None):
+        serializer  = UserSerializer(request.user)
+        return Response(serializer.data)
 
-class OrganisationViewSet(viewsets.ModelViewSet):
-    queryset = Organisation.objects.all()
-    serializer_class = OrganisationSerializer
-
-    @detail_route(methods=['GET',])
-    def contacts(self, request, *args, **kwargs):
-        pass
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = EmailUser.objects.all()
+    serializer_class = UserSerializer
 
     @detail_route(methods=['POST',])
-    def validate_pins(self, request, *args, **kwargs):
+    def update_personal(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrganisationPinCheckSerializer(data=request.data)
+            serializer = PersonalSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
-            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'])} 
-            return Response(data);
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -64,13 +65,15 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @list_route(methods=['POST',])
-    def existance(self, request, *args, **kwargs):
+    @detail_route(methods=['POST',])
+    def update_contact(self, request, *args, **kwargs):
         try:
-            serializer = OrganisationCheckSerializer(data=request.data)
+            instance = self.get_object()
+            serializer = ContactSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
-            data = Organisation.existance(serializer.validated_data['abn']) 
-            return Response(data);
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -80,8 +83,22 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-    
-class OrganisationRequestsViewSet(viewsets.ModelViewSet):
-    queryset = OrganisationRequest.objects.all()
-    serializer_class = OrganisationRequestSerializer
 
+    @detail_route(methods=['POST',])
+    def update_address(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = AddressSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))

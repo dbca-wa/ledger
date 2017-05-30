@@ -2,17 +2,22 @@ from django.conf import settings
 from django.conf.urls import url, include
 from django.conf.urls.static import static
 from rest_framework import routers
-from disturbance import views, api
+from disturbance import views
 from disturbance.admin import admin
+
+from disturbance.api import users as users_api
+from disturbance.api import organisations as org_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
 # API patterns
 router = routers.DefaultRouter()
-router.register(r'organisations',api.OrganisationViewSet)
+router.register(r'organisations',org_api.OrganisationViewSet)
+router.register(r'users',users_api.UserViewSet)
 
 api_patterns = [
-    url(r'api/',include(router.urls))
+    url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/',include(router.urls))
 ]
 
 # URL Patterns

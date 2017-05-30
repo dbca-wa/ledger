@@ -1,20 +1,32 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
+from django.core.exceptions import ValidationError
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser 
 
-
+@python_2_unicode_compatible
 class Organisation(models.Model):
     organisation = models.ForeignKey(ledger_organisation)
     # TODO: business logic related to delegate changes.
     delegates = models.ManyToManyField(EmailUser, blank=True, through='UserDelegation', related_name='disturbance_organisations')
-    pin_one = models.BigIntegerField(blank=True)
-    pin_two = models.BigIntegerField(blank=True)
+    pin_one = models.CharField(max_length=50,blank=True)
+    pin_two = models.CharField(max_length=50,blank=True)
+
+    def __str__(self):
+        return str(self.organisation)
 
     def validate_pins(self,pin1,pin2):
-        return self.pin1 == pin1 and self.pin2 == pin2
+        return self.pin_one == pin1 and self.pin_two == pin2
     
+    def link_user(self,user):
+        try:
+            UserDelegation.objects.find(organisation=self,user=user)
+            raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
+        except UserDelegation.DoesNotExist:
+            UserDelegation.objects.create(organisation=self,user=user)
+
     @staticmethod
     def existance(abn):
         exists = True
@@ -34,6 +46,7 @@ class Organisation(models.Model):
         except:
             raise
 
+@python_2_unicode_compatible
 class OrganisationContact(models.Model):
     organisation = models.ForeignKey(Organisation, related_name='contacts')
     email = models.EmailField(unique=True, blank=False)
@@ -45,6 +58,9 @@ class OrganisationContact(models.Model):
                                      verbose_name="mobile number", help_text='')
     fax_number = models.CharField(max_length=50, null=True, blank=True,
                                   verbose_name="fax number", help_text='')
+
+    def __str__(self):
+        return '{} {}'.format(self.last_name,self.first_name)
 
 class UserDelegation(models.Model):
     organisation = models.ForeignKey(Organisation)
