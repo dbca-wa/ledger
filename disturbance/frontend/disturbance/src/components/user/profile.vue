@@ -133,7 +133,7 @@
                   <div class="panel-body collapse" :id="oBody">
                       <form class="form-horizontal" action="index.html" method="post">
                           <div class="form-group">
-                            <label for="" class="col-sm-5 control-label">Do you manage approvals on behalf of an organisation?</label>
+                            <label for="" class="col-sm-5 control-label">Do you manage approvalz on behalf of an organisation?</label>
                             <div class="col-sm-4">
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
@@ -161,42 +161,42 @@
                                 <a style="cursor:pointer;"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
-                          <div style="margin-top:15px;" v-for="org in newCompanies" v-if="managesOrg=='Yes'">
+                          <div style="margin-top:15px;" v-if="managesOrg=='Yes'">
                               <h3> New Organisation</h3>
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="form-control" name="organisation" v-model="org.name" placeholder="">
+                                    <input type="text" class="form-control" name="organisation" v-model="newOrg.name" placeholder="">
                                 </div>
                               </div>
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="form-control" name="abn" v-model="org.abn" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
                                 </div>
                                 <div class="col-sm-2">
-                                    <button class="btn btn-primary">Check Details</button>
+                                    <button @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
                                 </div>
                               </div>
-                              <div class="form-group" v-if="org.exists">
+                              <div class="form-group" v-if="newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
                                     This organisation has already been  registered with the system.Please enter the two pin codes:</br>
                                     (These pin codes can be retrieved from Name of first five people linked to the organisation)
                                   </label>
                                   <label for="" class="col-sm-2 control-label" >Pin 1</label>
                                   <div class="col-sm-2">
-                                    <input type="text" class="form-control" name="abn" v-model="org.abn" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin1" placeholder="">
                                   </div>
                                   <label for="" class="col-sm-2 control-label" >Pin 2</label>
                                   <div class="col-sm-2">
-                                    <input type="text" class="form-control" name="abn" v-model="org.abn" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="">
                                   </div>
                                   <div class="col-sm-2">
-                                    <button class="btn btn-primary pull-left">Check</button>
-                                    <button class="btn btn-primary pull-left"><i class="fa fa-spin fa-spinner"></i>&nbsp;Checking</button>
+                                    <button v-if="!checkingPins" class="btn btn-primary pull-left">Validate</button>
+                                    <button v-else class="btn btn-primary pull-left"><i class="fa fa-spin fa-spinner"></i>&nbsp;Validating Pins</button>
                                   </div>
                               </div>
-                              <div class="form-group" v-else>
+                              <div class="form-group" v-else-if="!newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
                                     This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this origanisation.</br>
                                   </label>
@@ -208,8 +208,8 @@
                                   </div>
                                   <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.</label>
                                   <div class="col-sm-12">
-                                    <button class="btn btn-primary pull-right">Submit</button>
-                                    <button disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
+                                    <button v-if="!registeringOrg" class="btn btn-primary pull-right">Submit</button>
+                                    <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                                   </div>
                               </div>
                               
@@ -224,6 +224,7 @@
 
 <script>
 import $ from 'jquery'
+import { api_endpoints, helpers } from '@/utils/hooks'
 export default {
     name: 'Profile',
     data () {
@@ -236,18 +237,24 @@ export default {
             profile: {
                 organisations:[]
             },
-            newCompanies: [],
+            newOrg: {
+                'detailsChecked': false,
+                'exists': false
+            },
+            registeringOrg: false,
+            checkingPins: false,
+            checkingDetails: false,
             addingCompany: false,
             managesOrg: 'No',
-            uploadedFile: null
+            uploadedFile: null,
         }
     },
     watch: {
         managesOrg: function() {
-            if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newCompanies.length == 0){
+            if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
                  this.addCompany()
-            } else if (this.managesOrg == 'No' && this.newCompanies.length > 0){
-                this.newCompanies = [];
+            } else if (this.managesOrg == 'No' && this.newOrg){
+                this.resetNewOrg();
                 this.uploadedFile = null;
                 this.addingCompany = false;
             } 
@@ -277,13 +284,29 @@ export default {
             vm.uploadedFile = _file;
         },
         addCompany: function (){
-            this.newCompanies.push({
+            this.newOrg.push = {
                 'name': '',
                 'abn': '',
+            };
+            this.addingCompany=true;
+        },
+        resetNewOrg: function(){
+            this.newOrg = {
                 'detailsChecked': false,
                 'exists': false
+            }
+        },
+        checkOrganisation: function() {
+            let vm = this;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
+                emulateJSON:true
+            }).then((response) => {
+                console.log(response);
+                this.newOrg.exists = response.body.exists;
+                this.newOrg.detailsChecked = true;
+            }, (error) => {
+                console.log(error);
             });
-            this.addingCompany=true;
         },
         toggleSection: function (e) {
             let el = e.target;
