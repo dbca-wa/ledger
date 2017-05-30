@@ -19,6 +19,7 @@ class Organisation(models.Model):
     def existance(abn):
         exists = True
         org = None
+        l_org = None
         try:
             try:
                 l_org = ledger_organisation.objects.get(abn=abn)

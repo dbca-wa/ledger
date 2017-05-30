@@ -305,7 +305,7 @@ export default {
                 this.newOrg.exists = response.body.exists;
                 this.newOrg.detailsChecked = true;
             }, (error) => {
-                console.log(response);
+                console.log(error);
             });
         },
         toggleSection: function (e) {
