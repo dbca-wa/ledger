@@ -80,9 +80,9 @@
         render(h) {
             let vm =this;
             return (
-                <div class="row">
-                    <div class="col-sm-12" >
-                        <h3>Proposal: <small>158325</small></h3>
+                <div>
+                    <div class="col-lg-12" >
+                        <h3 style="padding-left:40px;">Proposal: <small>158325</small></h3>
                     </div>
                     <div class="col-md-2" >
                         <nav class="hidden-print hidden-sm hidden-xs affix">
