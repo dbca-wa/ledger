@@ -31,12 +31,13 @@ from disturbance.models import  (   Organisation,
                                     OrganisationContact
                                 )
 
-from disturbance.serializers import (   OrganisationSerializer,
+from disturbance.serializers.organisations import (   
+                                        OrganisationSerializer,
                                         OrganisationRequestSerializer,
                                         OrganisationContactSerializer,
                                         OrganisationCheckSerializer,
+                                        OrganisationPinCheckSerializer,
                                     )
-
 
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()

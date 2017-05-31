@@ -129,7 +129,7 @@ class Address(models.Model):
     line2 = models.CharField('Line 2', max_length=255, blank=True)
     line3 = models.CharField('Line 3', max_length=255, blank=True)
     locality = models.CharField('Suburb / Town', max_length=255)
-    state = models.CharField(max_length=255, choices=STATE_CHOICES, default='WA', blank=True)
+    state = models.CharField(max_length=255, default='WA', blank=True)
     country = CountryField(default='AU')
     postcode = models.CharField(max_length=10)
     # A field only used for searching addresses.
@@ -454,6 +454,21 @@ class Profile(RevisionedMixin):
         else:
             return '{}'.format(self.email)
 
+@python_2_unicode_compatible
+class Organisation(models.Model):
+    """This model represents the details of a company or other organisation.
+    Management of these objects will be delegated to 0+ EmailUsers.
+    """
+    name = models.CharField(max_length=128, unique=True)
+    abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
+    # TODO: business logic related to identification file upload/changes.
+    identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
+    postal_address = models.ForeignKey(Address, related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
+    billing_address = models.ForeignKey(Address, related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return self.name
+
 
 class ProfileListener(object):
     """
@@ -641,19 +656,4 @@ class EmailUserReport(models.Model):
         managed = False
         db_table = 'accounts_emailuser_report_v'
 
-
-@python_2_unicode_compatible
-class Organisation(models.Model):
-    """This model represents the details of a company or other organisation.
-    Management of these objects will be delegated to 0+ EmailUsers.
-    """
-    name = models.CharField(max_length=128, unique=True)
-    abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
-    # TODO: business logic related to identification file upload/changes.
-    identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
-    postal_address = models.ForeignKey(Address, related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
-    billing_address = models.ForeignKey(Address, related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
-
-    def __str__(self):
-        return self.name
 

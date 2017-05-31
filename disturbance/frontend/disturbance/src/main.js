@@ -6,6 +6,7 @@ import App from './App'
 import router from './router'
 import bs from 'bootstrap'
 import helpers from '@/utils/helpers'
+import api_endpoints from './api'
 require('../node_modules/bootstrap/dist/css/bootstrap.css');
 //require('../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
 require('../node_modules/font-awesome/css/font-awesome.min.css')
@@ -16,7 +17,9 @@ Vue.use(resource);
 // Add CSRF Token to every request
 Vue.http.interceptors.push(function(request, next) {
     // modify headers
-    request.headers.set('X-CSRFToken', helpers.getCookie('csrftoken'));
+    if (request.url != api_endpoints.countries){
+        request.headers.set('X-CSRFToken', helpers.getCookie('csrftoken'));
+    }
 
     // continue to next interceptor
     next();
