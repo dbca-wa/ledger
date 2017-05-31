@@ -26,7 +26,7 @@
     const easing = require('easing');
     export default {
         props:{
-            application:{
+            proposal:{
                 type: Array,
                 required:true
             },
@@ -69,7 +69,7 @@
            });
            $(window).scroll(function () {
                 var wScroll = $(this).scrollTop();
-                if (wScroll >= $('#'+Renderer.sections[0].name).offset().top) {
+                if (wScroll >= $('#scrollspy-heading').offset().top-56) {
                     $('nav.affix').addClass('affix-top');
                 }else{
                     $('nav.affix').removeClass('affix-top');
@@ -81,18 +81,18 @@
             let vm =this;
             return (
                 <div>
-                    <div class="col-lg-12" >
+                    <div id="scrollspy-heading" class="col-lg-12" >
                         <h3 style="padding-left:40px;">Proposal: <small>158325</small></h3>
                     </div>
-                    <div class="col-md-2" >
+                    <div class="col-md-3" >
                         <nav class="hidden-print hidden-sm hidden-xs affix">
                             <ul class="" id="scrollspy-section">
 
                             </ul>
                         </nav>
                     </div>
-                    <div class="col-md-10">
-                        {vm.application.map(d =>{
+                    <div class="col-md-9">
+                        {vm.proposal.map(d =>{
                             return Renderer.renderChildren(h,d,vm.values)
                         })}
                     </div>

@@ -56,7 +56,7 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <a style="margin-top:25px;" class="btn btn-primary pull-right">New Proposal</a>
+                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'new_proposal' }">New Proposal</router-link>
                         </div>
                     </div>
                     <div class="row">
@@ -263,7 +263,7 @@ export default {
       filterApprovalStatus: 'All',
       filterApprovalExpiryFrom: '',
       filterApprovalExpiryTo: '',
-      // Filters for Compliance 
+      // Filters for Compliance
       filterComplianceRegion: '',
       filterComplianceActivity: '',
       filterComplianceStatus: 'All',

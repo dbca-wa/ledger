@@ -21,8 +21,6 @@
 </template>
 
 <script>
-import Form from '@/components/form.vue'
-console.log(Form);
 export default {
   name: 'hello',
   data () {

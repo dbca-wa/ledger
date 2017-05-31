@@ -4,7 +4,6 @@ import Hello from '@/components/Hello'
 import Profile from '@/components/user/profile.vue'
 import external_routes from '@/components/external/routes'
 import internal_routes from '@/components/internal/routes'
-console.log(external_routes)
 Vue.use(Router)
 
 export default new Router({
