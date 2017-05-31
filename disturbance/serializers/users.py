@@ -8,7 +8,14 @@ from rest_framework import serializers
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
-        fields = '__all__'
+        fields = (
+            'id',
+            'line1',
+            'locality',
+            'state',
+            'country',
+            'postcode'
+        ) 
 
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')

@@ -32,6 +32,7 @@ from disturbance.models import  (
 
 from disturbance.serializers.users import   (   
                                                 UserSerializer,
+                                                UserAddressSerializer,
                                                 PersonalSerializer,
                                                 ContactSerializer,
                                             )
@@ -88,9 +89,18 @@ class UserViewSet(viewsets.ModelViewSet):
     def update_address(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = AddressSerializer(instance,data=request.data)
+            serializer = UserAddressSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
+            address, created = Address.objects.get_or_create(
+                line1 = serializer.validated_data['line1'],
+                locality = serializer.validated_data['locality'],
+                state = serializer.validated_data['state'],
+                country = serializer.validated_data['country'],
+                postcode = serializer.validated_data['postcode'],
+                user = instance 
+            )
+            instance.residential_address = address
+            instance.save()
             serializer = UserSerializer(instance)
             return Response(serializer.data);
         except serializers.ValidationError:

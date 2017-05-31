@@ -77,32 +77,25 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">State</label>
                             <div class="col-sm-3">
-                                <select class="form-control" name="state" v-model="profile.residential_address.state">
-                                    <option value="">Select State</option>
-                                    <option value="ACT">ACT</option>
-                                    <option value="NSW">NSW</option>
-                                    <option value="NT">NT</option>
-                                    <option value="QLD">QLD</option>
-                                    <option value="SA">SA</option>
-                                    <option value="TAS">TAS</option>
-                                    <option value="VIC">VIC</option>
-                                    <option value="WA">WA</option>
-                                </select>
+                                <input type="text" class="form-control" name="country" placeholder="" v-model="profile.residential_address.state">
                             </div>
                             <label for="" class="col-sm-1 control-label">Postcode</label>
                             <div class="col-sm-2">
-                                <input type="text" class="form-control" name="postcode" placeholder="">
+                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="profile.residential_address.postcode">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Country</label>
                             <div class="col-sm-4">
-                                <input type="text" class="form-control" name="country" placeholder="">
+                                <select class="form-control" name="country" v-model="profile.residential_address.country">
+                                    <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
+                                </select>
                             </div>
                           </div>
                           <div class="form-group">
                             <div class="col-sm-12">
-                                <button class="pull-right btn btn-primary">Update</button>
+                                <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
+                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                             </div>
                           </div>
                        </form>
@@ -275,6 +268,8 @@ export default {
                 'detailsChecked': false,
                 'exists': false
             },
+            countries: [],
+            loading: [],
             registeringOrg: false,
             validatingPins: false,
             checkingDetails: false,
@@ -366,6 +361,21 @@ export default {
                 vm.updatingContact = false;
             });
         },
+        updateAddress: function() {
+            let vm = this;
+            vm.updatingAddress = true;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_address')),JSON.stringify(vm.profile.residential_address),{
+                emulateJSON:true
+            }).then((response) => {
+                console.log(response);
+                vm.updatingAddress = false;
+                vm.profile = response.body;
+                if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+            }, (error) => {
+                console.log(error);
+                vm.updatingAddress = false;
+            });
+        },
         checkOrganisation: function() {
             let vm = this;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
@@ -402,6 +412,17 @@ export default {
                 $(chev).toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
             })
         },
+        fetchCountries:function (){
+            let vm =this;
+            vm.loading.push('fetching countries');
+            vm.$http.get(api_endpoints.countries).then((response)=>{
+                vm.countries = response.body;
+                vm.loading.splice('fetching countries',1);
+            },(response)=>{
+                console.log(response);
+                vm.loading.splice('fetching countries',1);
+            });
+        },
         load_profile: function() {
             let vm = this;
             vm.$http.get(api_endpoints.profile).then((response) => {
@@ -413,6 +434,7 @@ export default {
         }
     },
     mounted: function(){
+        this.fetchCountries();
         this.load_profile();
         this.personal_form = document.forms.personal_form;
         $('a[data-toggle="collapse"]').on('click', function () {
