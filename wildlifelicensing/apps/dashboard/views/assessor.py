@@ -43,6 +43,11 @@ class TableAssessorView(AssessorRequiredMixin, base.TablesBaseView):
                 'title': 'Assigned Assessor'
             },
             {
+                'title': 'Application PDF',
+                'searchable': False,
+                'orderable': False
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -86,6 +91,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
         'application.lodgement_date',
         'application.assigned_officer',
         'assigned_assessor',
+        'application_pdf',
         'action'
     ]
     order_columns = [
@@ -135,11 +141,14 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
                 search
             ),
         },
-        'action': {
-            'render': lambda self, instance: DataTableApplicationAssessorView.render_action_column(instance),
-        },
         'application.lodgement_date': {
             'render': lambda self, instance: base.render_date(instance.application.lodgement_date),
+        },
+        'application_pdf': {
+            'render': lambda self, instance: base.render_application_document(instance.application)
+        },
+        'action': {
+            'render': lambda self, instance: DataTableApplicationAssessorView.render_action_column(instance),
         },
     })
 

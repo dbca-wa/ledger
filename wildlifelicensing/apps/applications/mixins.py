@@ -175,7 +175,7 @@ class UserCanViewApplicationMixin(UserPassesTestMixin):
         if not user.is_authenticated():
             self.raise_exception = False
             return False
-        if is_officer(user):
+        if is_officer(user) or is_assessor(user):
             return True
         self.raise_exception = True
         application = self.get_application()

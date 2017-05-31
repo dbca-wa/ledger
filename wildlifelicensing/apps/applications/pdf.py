@@ -1,16 +1,9 @@
-import os
-import json
 from io import BytesIO
-from datetime import date
 
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
-    KeepTogether, PageBreak
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.utils import ImageReader
-from reportlab.lib.colors import HexColor
-from wildlifelicensing.apps.main.pdf import MEDIUM_FONTSIZE
 
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
@@ -20,43 +13,35 @@ BOLD_FONTNAME = 'Helvetica-Bold'
 ITALIC_FONTNAME = 'Helvetica-Oblique'
 BOLD_ITALIC_FONTNAME = 'Helvetica-BoldOblique'
 
-VERY_LARGE_FONTSIZE = 14
-LARGE_FONTSIZE = 12
-MEDIUM_FONTSIZE = 10
-SMALL_FONTSIZE = 8
+VERY_LARGE_FONTSIZE = 16
+LARGE_FONTSIZE = 14
+MEDIUM_FONTSIZE = 12
+SMALL_FONTSIZE = 10
 
-PARAGRAPH_BOTTOM_MARGIN = 5
+PARAGRAPH_INDENT = 15
+PARAGRAPH_BOTTOM_MARGIN = 2
 
 SECTION_BUFFER_HEIGHT = 10
 
-DATE_FORMAT = '%d/%m/%Y'
-
 HEADER_MARGIN = 10
-HEADER_SMALL_BUFFER = 3
 
 PAGE_MARGIN = 20
 PAGE_TOP_MARGIN = 200
 
+DATE_FORMAT = '%d/%m/%Y'
+
+MISSING_VALUE_PLACEHOLDER = 'Not specified'
+MISSING_FILE_PLACEHOLDER = 'No file attachment provided'
+
+
 styles = getSampleStyleSheet()
-styles.add(ParagraphStyle(name='InfoTitleLargeCenter', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE,
-                          spaceAfter=PARAGRAPH_BOTTOM_MARGIN, alignment=enums.TA_CENTER))
-styles.add(ParagraphStyle(name='InfoTitleVeryLargeCenter', fontName=BOLD_FONTNAME, fontSize=VERY_LARGE_FONTSIZE,
+styles.add(ParagraphStyle(name='ApplicationTitle', fontName=BOLD_FONTNAME, fontSize=VERY_LARGE_FONTSIZE,
+                          spaceAfter=HEADER_MARGIN, alignment=enums.TA_CENTER))
+styles.add(ParagraphStyle(name='ApplicationVariantsTitle', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE,
                           spaceAfter=PARAGRAPH_BOTTOM_MARGIN * 2, alignment=enums.TA_CENTER))
-styles.add(ParagraphStyle(name='InfoTitleLargeLeft', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE,
-                          spaceAfter=PARAGRAPH_BOTTOM_MARGIN, alignment=enums.TA_LEFT,
-                          leftIndent=PAGE_WIDTH / 10, rightIndent=PAGE_WIDTH / 10))
-styles.add(ParagraphStyle(name='InfoTitleLargeRight', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE,
-                          spaceAfter=PARAGRAPH_BOTTOM_MARGIN, alignment=enums.TA_RIGHT,
-                          rightIndent=PAGE_WIDTH / 10))
-styles.add(ParagraphStyle(name='BoldLeft', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
-styles.add(ParagraphStyle(name='BoldRight', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_RIGHT))
-styles.add(ParagraphStyle(name='ItalicLeft', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
-styles.add(ParagraphStyle(name='ItalifRight', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_RIGHT))
-styles.add(ParagraphStyle(name='Center', alignment=enums.TA_CENTER))
+
+styles.add(ParagraphStyle(name='BoldLeft', fontName=BOLD_FONTNAME, fontSize=SMALL_FONTSIZE, alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
-styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
-styles.add(ParagraphStyle(name='LetterLeft', fontSize=LARGE_FONTSIZE, alignment=enums.TA_LEFT))
-styles.add(ParagraphStyle(name='LetterBoldLeft', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE, alignment=enums.TA_LEFT))
 
 
 def _create_application(application_buffer, application):
@@ -68,67 +53,42 @@ def _create_application(application_buffer, application):
 
     elements = []
 
+    elements.append(Paragraph(application.licence_type.name.encode('UTF-8'), styles['ApplicationTitle']))
+
     # cannot use licence get_title_with_variants because licence isn't saved yet so can't get variants
     if application.variants.exists():
-        title = '{} ({})'.format(application.licence_type.name.encode('UTF-8'), ' / '.join(application.variants.all().
-                                 values_list('name', flat=True)))
-    else:
-        title = application.licence_type.name.encode('UTF-8')
-
-    elements.append(Paragraph('Application for {}'.format(title), styles['InfoTitleVeryLargeCenter']))
+        variants = '({})'.format(' / '.join(application.variants.all().values_list('name', flat=True)))
+        elements.append(Paragraph(variants, styles['ApplicationVariantsTitle']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    elements.append(_create_metadata(application))
+    elements.append(_create_application_metadata(application))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     for field, datum in zip(application.licence_type.application_schema, application.data):
-        _create_data(field, datum, elements, 0)
+        _create_application_questionaire(field, datum, elements, 0)
 
     doc.build(elements)
 
     return application_buffer
 
 
-def _create_data(field, data, elements, indent_index):
-    paragraph_style = ParagraphStyle('', leftIndent=indent_index * 20)
-    if field['type'] == 'section':
-        paragraph_style.fontName = BOLD_FONTNAME
-        paragraph_style.fontSize = LARGE_FONTSIZE
-        elements.append(Paragraph(field['label'], paragraph_style))
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        for child_data in data[field['name']]:
-            for child_field in field['children']:
-                _create_data(child_field, child_data, elements, indent_index)
-    elif field['type'] == 'group':
-        paragraph_style.fontName = BOLD_FONTNAME
-
-        for group_index, child_data in enumerate(data[field['name']]):
-            elements.append(Paragraph('{} {}'.format(field['label'], group_index + 1), paragraph_style))
-            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-            for child_field in field['children']:
-                _create_data(child_field, child_data, elements, indent_index + 1)
-    else:
-        paragraph_style.fontName = BOLD_FONTNAME
-        elements.append(Paragraph(field['label'], paragraph_style))
-        paragraph_style.fontName = DEFAULT_FONTNAME
-        elements.append(Paragraph(data[field['name']], paragraph_style))
-
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-
-def _create_metadata(application):
+def _create_application_metadata(application):
     # dates and licensing officer
-    metadata_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                       ('ALIGN', (0, 0), (-2, -1), 'LEFT'),
-                                       ('ALIGN', (-1, 0), (-1, -1), 'LEFT')])
+    metadata_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
+
+    licensee = application.applicant.get_full_name()
+    if application.lodgement_number and application.lodgement_sequence:
+        lodgement_number = '{}-{}'.format(application.lodgement_number, application.lodgement_sequence)
+    else:
+        lodgement_number = ''
 
     top_row = [
         Paragraph('Licensee:', styles['BoldLeft']),
-        Paragraph(application.applicant.get_full_name(), styles['Left']),
+        Paragraph(licensee, styles['Left']),
         Paragraph('Lodgement Number:', styles['BoldLeft']),
-        Paragraph('{}-{}'.format(application.lodgement_number, application.lodgement_sequence), styles['Left'])
+        Paragraph(lodgement_number, styles['Left'])
     ]
 
     address = application.applicant_profile.postal_address
@@ -137,20 +97,77 @@ def _create_metadata(application):
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
                           Paragraph(address.country.name, styles['Left'])]
 
+    lodgement_date = application.lodgement_date.strftime(DATE_FORMAT) if application.lodgement_date is not None else ''
+
     bottow_row = [
         Paragraph('Address:', styles['BoldLeft']),
         address_paragraphs,
         Paragraph('Lodgement Date:', styles['BoldLeft']),
-        Paragraph(application.lodgement_date.strftime(DATE_FORMAT), styles['Left'])
+        Paragraph(lodgement_date, styles['Left'])
     ]
 
     left_heading_cell_width = 60
     right_heading_cell_width = 110
-    value_cell_width = (PAGE_WIDTH - (2 * PAGE_MARGIN) - (2 * left_heading_cell_width + right_heading_cell_width)) / 2
+    value_cell_width = 140
 
     return Table([top_row, bottow_row],
                  colWidths=[left_heading_cell_width, value_cell_width, right_heading_cell_width, value_cell_width],
                  style=metadata_table_style)
+
+
+def _format_field_value(field, value):
+    if field['type'] in ['radiobuttons', 'select']:
+        return value.title() if value else MISSING_VALUE_PLACEHOLDER
+    elif field['type'] == 'declaration':
+        return 'Declaration checked' if value == 'on' else 'Declaration not checked'
+    elif field['type'] == 'checkbox':
+        return 'Yes' if value == 'on' else 'No'
+    elif field['type'] == 'file':
+        return value if value else MISSING_FILE_PLACEHOLDER
+    else:
+        return value if value else MISSING_VALUE_PLACEHOLDER
+
+
+def _create_application_questionaire(field, data, elements, indent_index):
+    paragraph_style = ParagraphStyle('', spaceAfter=PARAGRAPH_BOTTOM_MARGIN, leftIndent=indent_index * PARAGRAPH_INDENT)
+    if field['type'] == 'section':
+        paragraph_style.fontName = BOLD_FONTNAME
+        paragraph_style.fontSize = LARGE_FONTSIZE
+        elements.append(Paragraph('<u>{}</u>'.format(field['label']), paragraph_style))
+
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        for child_data in data[field['name']]:
+            for child_field in field['children']:
+                _create_application_questionaire(child_field, child_data, elements, indent_index)
+    elif field['type'] == 'group':
+        paragraph_style.fontName = BOLD_FONTNAME
+        paragraph_style.fontSize = MEDIUM_FONTSIZE
+
+        # only append the number to the group title if there is more than one group
+        show_group_number = len(data.get(field['name'], [])) > 1
+        for group_index, child_data in enumerate(data.get(field['name'], [])):
+            group_label = '{} {}'.format(field['label'], group_index + 1) if show_group_number else field['label']
+            elements.append(Paragraph(group_label, paragraph_style))
+
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+            for child_field in field['children']:
+                _create_application_questionaire(child_field, child_data, elements, indent_index + 1)
+    else:
+        paragraph_style.fontName = BOLD_FONTNAME
+        elements.append(Paragraph(field['label'], paragraph_style))
+
+        paragraph_style.fontName = DEFAULT_FONTNAME
+        formatted_value = _format_field_value(field, data.get(field['name'], ''))
+        elements.append(Paragraph(formatted_value, paragraph_style))
+
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        # fields with conditional children
+        if 'conditions' in field and data.get(field['name']) in field['conditions']:
+            for child_field in field['conditions'][data.get(field['name'])]:
+                _create_application_questionaire(child_field, data, elements, indent_index + 1)
 
 
 def create_application_pdf_bytes(application):
