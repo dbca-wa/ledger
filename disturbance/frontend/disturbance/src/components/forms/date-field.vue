@@ -15,21 +15,21 @@
 import moment from 'moment'
 import datetimepicker from 'datetimepicker'
 export default {
-    props:['name','label','help_text','value','conditions',"handleChange"],
-    computed:{
-        isChecked:function () {
-            //TODO return value from database
-            return false;
-        },
-        options:function () {
-            return JSON.stringify(this.conditions);
-        }
+  props: ['name', 'label', 'help_text', 'value', 'conditions', "handleChange"],
+  computed: {
+    isChecked: function() {
+      //TODO return value from database
+      return false;
     },
-    mounted:function () {
-        $('.date').datetimepicker({
-            format: 'DD/MM/YYYY'
-        });
+    options: function() {
+      return JSON.stringify(this.conditions);
     }
+  },
+  mounted: function() {
+    $('.date').datetimepicker({
+      format: 'DD/MM/YYYY'
+    });
+  }
 }
 </script>
 

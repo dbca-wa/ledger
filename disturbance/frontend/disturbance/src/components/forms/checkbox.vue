@@ -13,16 +13,16 @@
 
 <script>
 export default {
-    props:['name','label','help_text','conditions',"handleChange"],
-    computed:{
-        isChecked:function () {
-            //TODO return value from database
-            return false;
-        },
-        options:function () {
-            return JSON.stringify(this.conditions);
-        }
+  props: ['name', 'label', 'help_text', 'conditions', "handleChange"],
+  computed: {
+    isChecked: function() {
+      //TODO return value from database
+      return false;
+    },
+    options: function() {
+      return JSON.stringify(this.conditions);
     }
+  }
 }
 </script>
 
