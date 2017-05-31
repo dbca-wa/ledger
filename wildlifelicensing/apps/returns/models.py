@@ -102,7 +102,7 @@ class Return(RevisionedMixin):
         """
         :return: True if the return is in one of the editable status.
         """
-        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
+        return self.status in self.CUSTOMER_EDITABLE_STATE
 
 
 class ReturnTable(RevisionedMixin):
