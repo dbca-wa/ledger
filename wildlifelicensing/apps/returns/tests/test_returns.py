@@ -239,7 +239,7 @@ class TestPermissions(TestCase):
         """
         return_type = self.ret.return_type
         url = reverse('wl_returns:download_return_template', args=(return_type.pk,))
-        allowed = [self.officer,self.not_allowed_customer, self.assessor, self.customer]
+        allowed = [self.officer, self.not_allowed_customer, self.assessor, self.customer]
         forbidden = []
 
         for user in allowed:
