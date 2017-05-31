@@ -22,7 +22,7 @@ module.exports = {
   },
   dev: {
     env: require('./dev.env'),
-    port: 3001,
+    port: require('./dev.env').PORT.replace(/\"/g,""),
     webpackHost: require('./dev.env').WEBPACK_HOST,
     autoOpenBrowser: true,
     assetsSubDirectory: 'static',
