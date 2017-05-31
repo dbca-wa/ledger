@@ -36,7 +36,7 @@ class AssessorRequiredMixin(UserPassesTestMixin):
 
 class OfficerOrCustomerRequiredMixin(UserPassesTestMixin):
     """
-    An AccessMixin that check for user being a WL Officer or WL Assessor.
+    An AccessMixin that check for user being a WL Officer or a customer.
     See rules in 'is_officer' and 'is_customer' functions
     """
 

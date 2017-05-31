@@ -10,11 +10,11 @@ from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.http.response import JsonResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType
 from wildlifelicensing.apps.main import excel
 from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm, NilReturnForm, ReturnsLogEntryForm
@@ -24,6 +24,8 @@ from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
+from wildlifelicensing.apps.returns.mixins import UserCanEditReturnMixin, UserCanViewReturnMixin, \
+    UserCanCurateReturnMixin
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -83,7 +85,7 @@ def _create_return_data_from_post_data(ret, tables_info, post_data):
             ReturnRow.objects.bulk_create(return_rows)
 
 
-class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
+class EnterReturnView(UserCanEditReturnMixin, TemplateView):
     template_name = 'wl/enter_return.html'
     login_url = '/'
 
@@ -240,7 +242,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
 
-class CurateReturnView(EnterReturnView):
+class CurateReturnView(UserCanCurateReturnMixin, EnterReturnView):
     template_name = 'wl/curate_return.html'
     login_url = '/'
 
@@ -294,7 +296,7 @@ class CurateReturnView(EnterReturnView):
             return redirect('home')
 
 
-class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
+class ViewReturnReadonlyView(UserCanViewReturnMixin, TemplateView):
     template_name = 'wl/view_return_read_only.html'
     login_url = '/'
 
@@ -321,7 +323,7 @@ class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
         return super(ViewReturnReadonlyView, self).get_context_data(**kwargs)
 
 
-class ReturnLogListView(OfficerRequiredMixin, View):
+class ReturnLogListView(UserCanCurateReturnMixin, View):
     def get(self, request, *args, **kwargs):
         ret = get_object_or_404(Return, pk=args[0])
         data = serialize(ReturnLogEntry.objects.filter(ret=ret),
@@ -331,7 +333,7 @@ class ReturnLogListView(OfficerRequiredMixin, View):
         return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class AddReturnLogEntryView(OfficerRequiredMixin, View):
+class AddReturnLogEntryView(UserCanCurateReturnMixin, View):
     def post(self, request, *args, **kwargs):
         form = ReturnsLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
@@ -368,10 +370,10 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                         }
                     ]
                 },
-                safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)
+                safe=False, encoder=WildlifeLicensingJSONEncoder, status=422)
 
 
-class DownloadReturnTemplate(OfficerOrCustomerRequiredMixin, View):
+class DownloadReturnTemplate(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         return_type = get_object_or_404(ReturnType, pk=args[0])
         filename = 'Return_{}_template.xlsx'.format(return_type.licence_type.code)

@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
-    get_or_create_default_officer, create_licence
+    get_or_create_default_officer, create_licence, create_random_customer, get_or_create_default_assessor
 from wildlifelicensing.apps.returns.tests.helpers import create_return
 
 TEST_SPREADSHEET_PATH = os.path.join('wildlifelicensing', 'apps', 'returns', 'test_data', 'regulation17.xlsx')
@@ -50,15 +50,6 @@ class ReturnsTestCase(TestCase):
 
     def tearDown(self):
         self.client.logout()
-
-    def test_returns_lodgement_page(self):
-        """Testing that a user can access the returns lodgement page"""
-
-        self.client.login(self.customer.email)
-
-        # check that client can access the licence type selection list
-        response = self.client.get(reverse('wl_returns:enter_return', args=(self.ret.pk,)))
-        self.assertEqual(200, response.status_code)
 
     def test_lodge_nil_return(self):
         """Testing that a user can log a nil return"""
@@ -121,3 +112,144 @@ class ReturnsTestCase(TestCase):
         # assert values in the return is what is expected
         for key, value in self.ret.returntable_set.first().returnrow_set.first().data.items():
             self.assertEqual(value, str(TEST_VALUES[key]))
+
+
+class TestPermissions(TestCase):
+    fixtures = ['licences.json', 'countries.json', 'catalogue.json', 'partner.json', 'returns.json']
+
+    def setUp(self):
+        self.customer = get_or_create_default_customer(include_default_profile=True)
+        self.officer = get_or_create_default_officer()
+        self.assessor = get_or_create_default_assessor()
+        self.not_allowed_customer = create_random_customer()
+        self.assertNotEqual(self.not_allowed_customer, self.customer)
+
+        self.client = SocialClient()
+        self.licence = create_licence(self.customer, self.officer, product_title='regulation-17')
+        self.ret = create_return(self.licence)
+
+    def test_returns_lodgement_page(self):
+        """
+        Only officer or application owner can view returns
+        """
+        url = reverse('wl_returns:enter_return', args=(self.ret.pk,))
+        allowed = [self.officer, self.customer]
+        forbidden = [self.not_allowed_customer, self.assessor]
+
+        for user in allowed:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(200, response.status_code)
+            self.client.logout()
+
+        for user in forbidden:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(403, response.status_code)
+            self.client.logout()
+
+    def test_readonly_view(self):
+        """
+        Only officer or application owner can enter returns
+        """
+        url = reverse('wl_returns:view_return', args=(self.ret.pk,))
+        allowed = [self.officer, self.customer]
+        forbidden = [self.not_allowed_customer, self.assessor]
+
+        for user in allowed:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(200, response.status_code)
+            self.client.logout()
+
+        for user in forbidden:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(403, response.status_code)
+            self.client.logout()
+
+    def test_curate_view(self):
+        """
+        Only officer can curate returns
+        """
+        url = reverse('wl_returns:curate_return', args=(self.ret.pk,))
+        allowed = [self.officer]
+        forbidden = [self.not_allowed_customer, self.assessor, self.customer]
+
+        for user in allowed:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(200, response.status_code)
+            self.client.logout()
+
+        for user in forbidden:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(403, response.status_code)
+            self.client.logout()
+
+    def test_view_log(self):
+        """
+        Only officer can view log
+        """
+        url = reverse('wl_returns:log_list', args=(self.ret.pk,))
+        allowed = [self.officer]
+        forbidden = [self.not_allowed_customer, self.assessor, self.customer]
+
+        for user in allowed:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(200, response.status_code)
+            self.client.logout()
+
+        for user in forbidden:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(403, response.status_code)
+            self.client.logout()
+
+    def test_add_log(self):
+        """
+        Only officer can view log
+        """
+        url = reverse('wl_returns:add_log_entry', args=(self.ret.pk,))
+        allowed = [self.officer]
+        forbidden = [self.not_allowed_customer, self.assessor, self.customer]
+
+        payload = {
+            'to': 'user',
+            'from': 'test',
+            'type': 'email'
+        }
+        for user in allowed:
+            self.client.login(user.email)
+            response = self.client.post(url, data=payload)
+            self.assertEqual(200, response.status_code)
+            self.client.logout()
+
+        for user in forbidden:
+            self.client.login(user.email)
+            response = self.client.post(url, data=payload)
+            self.assertEqual(403, response.status_code)
+            self.client.logout()
+
+    def test_download_template(self):
+        """
+        Every authenticated user should be able to download a return template
+        """
+        return_type = self.ret.return_type
+        url = reverse('wl_returns:download_return_template', args=(return_type.pk,))
+        allowed = [self.officer, self.not_allowed_customer, self.assessor, self.customer]
+        forbidden = []
+
+        for user in allowed:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(200, response.status_code)
+            self.client.logout()
+
+        for user in forbidden:
+            self.client.login(user.email)
+            response = self.client.get(url)
+            self.assertEqual(403, response.status_code)
+            self.client.logout()
