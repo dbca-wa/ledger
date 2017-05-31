@@ -1,5 +1,6 @@
 sudo: false
 language: python
+cache: pip
 python:
     - "2.7"
     - "3.5"
@@ -18,6 +19,7 @@ env:
         - EMAIL_INSTANCE="TEST"
         - NON_PROD_EMAIL="travis@dpaw.wa.gov.au"
 install:
+    - pip install pip --upgrade
     - pip install -r requirements.txt
     - pip install coveralls
 before_script:
