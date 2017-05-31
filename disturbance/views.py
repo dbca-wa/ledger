@@ -12,15 +12,26 @@ from disturbance.helpers import is_officer
 from disturbance.forms import *
 
 
-class DashboardView(UserPassesTestMixin, TemplateView):
+class InternalView(UserPassesTestMixin, TemplateView):
     template_name = 'disturbance/dash/index.html'
 
     def test_func(self):
         return is_officer(self.request.user)
 
+    def get_context_data(self, **kwargs):
+        context = super(InternalView, self).get_context_data(**kwargs)
+        context['dev'] = settings.DEV_STATIC
+        context['dev_url'] = settings.DEV_STATIC_URL
+        return context
 
-class MyProposalsView(LoginRequiredMixin, TemplateView):
+class ExternalView(LoginRequiredMixin, TemplateView):
     template_name = 'disturbance/dash/index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ExternalView, self).get_context_data(**kwargs)
+        context['dev'] = settings.DEV_STATIC
+        context['dev_url'] = settings.DEV_STATIC_URL
+        return context
 
 
 class DisturbanceRoutingView(TemplateView):
@@ -29,7 +40,7 @@ class DisturbanceRoutingView(TemplateView):
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
             if is_officer(self.request.user):
-                return redirect('dash')
+                return redirect('internal')
             return redirect('external')
         kwargs['form'] = LoginForm
         return super(DisturbanceRoutingView, self).get(*args, **kwargs)
