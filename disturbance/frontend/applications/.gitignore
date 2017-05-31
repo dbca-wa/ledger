@@ -1,7 +1,0 @@
-.DS_Store
-node_modules/
-dist/
-assets/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*

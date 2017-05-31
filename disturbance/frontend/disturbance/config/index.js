@@ -22,7 +22,7 @@ module.exports = {
   },
   dev: {
     env: require('./dev.env'),
-    port: 8080,
+    port: 3001,
     webpackHost: require('./dev.env').WEBPACK_HOST,
     autoOpenBrowser: true,
     assetsSubDirectory: 'static',

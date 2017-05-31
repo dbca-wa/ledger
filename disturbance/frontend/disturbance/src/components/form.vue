@@ -20,9 +20,9 @@
 <script>
     import Renderer from '@/utils/renderer'
     import bs from 'bootstrap'
-    require('../node_modules/bootstrap/dist/css/bootstrap.css');
-    require('../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
-    require('../node_modules/font-awesome/css/font-awesome.min.css')
+    require('../../node_modules/bootstrap/dist/css/bootstrap.css');
+    require('../../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
+    require('../../node_modules/font-awesome/css/font-awesome.min.css')
     const easing = require('easing');
     export default {
         props:{

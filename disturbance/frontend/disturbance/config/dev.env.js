@@ -3,5 +3,5 @@ var prodEnv = require('./prod.env')
 
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
-  WEBPACK_HOST: '"172.31.1.50:8080"'
+  WEBPACK_HOST: '"10.6.209.13:3001"'
 })

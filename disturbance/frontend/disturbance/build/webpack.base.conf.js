@@ -23,7 +23,9 @@ module.exports = {
     extensions: ['.js', '.vue', '.json'],
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
-      '@': resolve('src')
+      '@': resolve('src'),
+      'datetimepicker':'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js',
+      'easing':'jquery.easing/jquery.easing.js'
     }
   },
   module: {
@@ -45,6 +47,10 @@ module.exports = {
       {
         test: /bootstrap.+\.(js)$/,
         loader: 'imports-loader?jQuery=jquery,$=jquery,this=>window'
+      },
+      {
+          test: /jquery.easing.+\.(js)$/,
+          loader: 'imports-loader?jQuery=jquery,$=jquery,this=>window'
       },
       {
         test: /\.js$/,
