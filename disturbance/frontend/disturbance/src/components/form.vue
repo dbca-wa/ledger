@@ -95,6 +95,7 @@
                         {vm.proposal.map(d =>{
                             return Renderer.renderChildren(h,d,vm.values)
                         })}
+                        { this.$slots.default }
                     </div>
                 </div>
             )

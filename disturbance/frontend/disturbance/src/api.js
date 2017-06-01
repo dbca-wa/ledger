@@ -4,4 +4,5 @@ module.exports = {
   profile: '/api/profile',
   //other
   countries: "https://restcountries.eu/rest/v1/?fullText=true",
+  proposal_type:"/api/proposal_type"
 }

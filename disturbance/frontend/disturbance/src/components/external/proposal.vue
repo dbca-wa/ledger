@@ -1,31 +1,50 @@
 <template lang="html">
     <div >
         <form action="/" method="post" name="new_proposal">
-            <Proposal :proposal="proposal" />
-            <input type="button" @click.prevent.stop="submit">
+            <Proposal v-if="!isLoading" :proposal="proposal" >
+                <input type="button" class="btn btn-primary" @click.prevent.stop="submit" value="Save">
+            </Proposal>
         </form>
     </div>
 </template>
-
 <script>
 import Proposal from '../form.vue'
-const data = require("@/assets/data.json")
+import {api_endpoints } from '@/utils/hooks'
 export default {
     data:function () {
         return {
-            "proposal":data
+            "proposal":[],
+            "loading":[],
+            form:null
         }
     },
     components:{
         Proposal
     },
+    computed:{
+        isLoading:function () {
+            return this.loading.length > 0
+        }
+    },
     methods:{
         submit:function (e) {
-            console.log($(form).serializeArray());
+            let vm =this;
+            console.log($(vm.form).serializeArray());
         }
     },
     mounted:function(){
-        var form = document.forms.new_proposal;
+        let vm = this;
+        vm.form = document.forms.new_proposal;
+        var url = api_endpoints.proposal_type;
+        vm.loading.push('fetching proposal');
+        vm.$http.get(url).then((response)=>{
+            vm.proposal = response.body.schema;
+            vm.loading.splice('fetching proposal',1);
+        },(response)=>{
+            console.log(response);
+            vm.loading.splice('fetching proposal',1);
+        });
+
     }
 }
 </script>

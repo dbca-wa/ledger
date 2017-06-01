@@ -1,6 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
-from disturbance.models import (   
+from disturbance.models import (
                                     ProposalType,
                                 )
 from rest_framework import serializers
@@ -16,4 +16,4 @@ class ProposalTypeSerializer(serializers.ModelSerializer):
         )
 
     def get_activities(self,obj):
-        return obj.activites.names()
+        return obj.activities.names()
