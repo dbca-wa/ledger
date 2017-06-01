@@ -5,7 +5,7 @@ define(['jQuery', 'js/wl.bootstrap-treeview'], function ($) {
         return text.toLowerCase().replace(/ /g,'-').replace(/[^\w-]+/g,'');
     }
 
-    function _init(categories) {
+    function _initCategories(categories) {
         $.each(categories, function(index, value) {
             var $tree = $('#' + _convertToSlug(value.name));
 
@@ -30,6 +30,38 @@ define(['jQuery', 'js/wl.bootstrap-treeview'], function ($) {
                 }
             });
         });
+    }
+
+    function _initNavigateAway(deleteApplicationSessionURL, applicationId, csrfToken, categoryContainerSelector) {
+        var $categoryContainer = $(categoryContainerSelector),
+            $lastClicked;
+
+        $('a, :button').click(function(e) {
+            $lastClicked = $(this);
+        });
+
+        window.onbeforeunload = function (e) {
+            // if we haven't been passed the event get the window.event
+            e = e || window.event;
+
+            // if link is for current page or child of main
+            if(!$lastClicked.attr('href') ||
+               ($lastClicked.attr('href').indexOf(window.location.href) > -1 ||
+                $categoryContainer.find($lastClicked).length > 0)) {
+                return;
+            };
+
+            $.post(deleteApplicationSessionURL, {
+                    applicationId: applicationId,
+                    csrfmiddlewaretoken: csrfToken
+                }
+            );
+        };
+    }
+
+    function _init(options) {
+        _initCategories(options.categories);
+        _initNavigateAway(options.deleteApplicationSessionURL, options.applicationId, options.csrfToken);
     }
 
     return {

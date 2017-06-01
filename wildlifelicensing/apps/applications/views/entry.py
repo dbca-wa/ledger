@@ -5,6 +5,7 @@ from django.views.generic.edit import FormView, DeleteView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http.response import HttpResponse, HttpResponseForbidden
 from django.utils.http import urlencode
 
 from ledger.accounts.models import EmailUser, Document
@@ -51,6 +52,24 @@ class ApplicationEntryBaseView(TemplateView):
         kwargs['is_amendment'] = application.processing_status == 'licence_amendment'
 
         return super(ApplicationEntryBaseView, self).get_context_data(**kwargs)
+
+
+class DeleteApplicationSessionView(OfficerOrCustomerRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=request.POST.get('applicationId'))
+
+        if not (application.applicant == request.user or application.proxy_applicant == request.user):
+            return HttpResponseForbidden('Application does not belong to user or proxy application')
+
+        session_application_id = utils.get_session_application(request.session)
+
+        if session_application_id.id == application.id:
+            utils.delete_session_application(request.session)
+
+            if application.customer_status == 'temp':
+                application.delete()
+
+        return HttpResponse()
 
 
 class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
@@ -227,13 +246,13 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        if args:
-            try:
-                application = utils.get_session_application(self.request.session)
-            except Exception as e:
-                messages.error(self.request, str(e))
-                return redirect('wl_applications:new_application')
+        try:
+            application = utils.get_session_application(self.request.session)
+        except Exception as e:
+            messages.error(self.request, str(e))
+            return redirect('wl_applications:new_application')
 
+        if args:
             application.licence_type = WildlifeLicenceType.objects.get(id=self.args[0])
 
             application.data = None
@@ -306,7 +325,10 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
         if uncategorised_queryset.exists():
             __populate_category_dict({'name': 'Other', 'licence_types': []}, uncategorised_queryset, categories)
 
-        return render(request, self.template_name, {'categories': categories})
+        return render(request, self.template_name, {
+            'application': application,
+            'categories': categories
+        })
 
 
 class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseView, FormView):

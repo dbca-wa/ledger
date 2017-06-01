@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
-from wildlifelicensing.apps.applications.views.entry import NewApplicationView, SelectLicenceTypeView, \
-    CreateSelectCustomer, EditApplicationView, CheckIdentificationRequiredView, \
+from wildlifelicensing.apps.applications.views.entry import DeleteApplicationSessionView, NewApplicationView, \
+    SelectLicenceTypeView, CreateSelectCustomer, EditApplicationView, CheckIdentificationRequiredView, \
     CreateSelectProfileView, EnterDetailsView, PreviewView, ApplicationCompleteView, RenewLicenceView, \
     AmendLicenceView, CheckSeniorCardView, DiscardApplicationView
 
@@ -20,6 +20,7 @@ from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, Vie
 
 urlpatterns = [
     # application entry / licence renewal/amendment
+    url('^delete-application-session/$', DeleteApplicationSessionView.as_view(), name='delete_application_session'),
     url('^new-application/$', NewApplicationView.as_view(), name='new_application'),
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^select-licence-type/([0-9]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),

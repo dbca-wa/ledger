@@ -10,7 +10,13 @@
 
 {% block requirements %}
     require(['js/entry/select_licence_type'], function(selectLicenceType) {
-        selectLicenceType.init({{ categories|jsonify }});
+        selectLicenceType.init({
+            categories: {{ categories|jsonify }},
+            deleteApplicationSessionURL: '{% url 'wl_applications:delete_application_session' %}',
+            applicationId: {{ application.id }},
+            csrfToken: '{{ csrf_token }}',
+            categoryContainerSelector: '#categoriesContainer'
+        });
     });
 {% endblock %}
 
@@ -44,7 +50,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div id="categoriesContainer" class="container">
         {% for category in categories %}
             <h4>{{ category.name }}</h4>
             <div class="row">
