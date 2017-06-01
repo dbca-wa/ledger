@@ -3,8 +3,12 @@ from __future__ import unicode_literals
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
+from django.contrib.postgres.fields.jsonb import JSONField
+from django.contrib.sites.models import Site
+from taggit.managers import TaggableManager
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser 
+from disturbance.fields import CommaSeparatedField
 
 @python_2_unicode_compatible
 class Organisation(models.Model):
@@ -82,3 +86,7 @@ class OrganisationRequest(models.Model):
     identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
     status = models.CharField(max_length=100,choices=STATUS_CHOICES)
 
+class ProposalType(models.Model):
+    schema = JSONField()
+    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.") 
+    site = models.OneToOneField(Site) 

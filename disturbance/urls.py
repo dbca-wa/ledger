@@ -7,6 +7,7 @@ from disturbance.admin import admin
 
 from disturbance.api import users as users_api
 from disturbance.api import organisations as org_api
+from disturbance.api import proposal as proposal_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
@@ -17,6 +18,7 @@ router.register(r'users',users_api.UserViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/proposal_type$', proposal_api.GetProposalType.as_view(), name='get-proposal-type'),
     url(r'^api/',include(router.urls))
 ]
 
