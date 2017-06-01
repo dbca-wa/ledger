@@ -6,6 +6,7 @@ from disturbance.models import (
 from rest_framework import serializers
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
+    activities = serializers.SerializerMethodField()
     class Meta:
         model = ProposalType
         fields = (
@@ -13,3 +14,6 @@ class ProposalTypeSerializer(serializers.ModelSerializer):
             'schema',
             'activities'
         )
+
+    def get_activities(self,obj):
+        return obj.activites.names()
