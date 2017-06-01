@@ -2,9 +2,12 @@ import datetime
 
 from django.core.urlresolvers import reverse_lazy
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib import messages
+from django.shortcuts import redirect
 
 from wildlifelicensing.apps.main.helpers import is_customer, is_officer, is_assessor, get_user_assessor_groups
 from wildlifelicensing.apps.applications.models import Application, Assessment
+from wildlifelicensing.apps.applications.utils import get_session_application
 
 
 class UserCanEditApplicationMixin(UserPassesTestMixin):
@@ -118,6 +121,20 @@ class UserCanAmendApplicationMixin(UserPassesTestMixin):
             return application.licence.end_date >= datetime.date.today()
         else:
             return False
+
+
+class ApplicationNotInSessionMixin(object):
+    """
+    Mixin to check that there is not currently an application in the session, in the case an application is 
+    being entered.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if 'application_id' in request.session:
+            messages.error(request, 'There is currently an application already being entered. Please conclude or save '
+                                    'this application before creating a new one.')
+            return redirect('home')
+
+        return super(ApplicationNotInSessionMixin, self).dispatch(request, *args, **kwargs)
 
 
 class CanPerformAssessmentMixin(UserPassesTestMixin):

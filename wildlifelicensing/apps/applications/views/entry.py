@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.response import HttpResponse, HttpResponseForbidden
 from django.utils.http import urlencode
+from django.core.urlresolvers import reverse
 
 from ledger.accounts.models import EmailUser, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
@@ -18,11 +19,10 @@ from wildlifelicensing.apps.applications.models import Application, AmendmentReq
     ApplicationVariantLink, ApplicationUserAction
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
-from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, \
-    UserCanViewApplicationMixin, UserCanRenewApplicationMixin, UserCanAmendApplicationMixin
+from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, UserCanViewApplicationMixin, \
+    UserCanRenewApplicationMixin, UserCanAmendApplicationMixin, ApplicationNotInSessionMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
 from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
-from django.core.urlresolvers import reverse
 from wildlifelicensing.apps.applications.utils import delete_session_application
 from wildlifelicensing.apps.payments.utils import is_licence_free, get_licence_price, \
     generate_product_title
@@ -72,7 +72,7 @@ class DeleteApplicationSessionView(OfficerOrCustomerRequiredMixin, View):
         return HttpResponse()
 
 
-class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
+class NewApplicationView(OfficerOrCustomerRequiredMixin, ApplicationNotInSessionMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
