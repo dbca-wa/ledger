@@ -19,6 +19,12 @@ export default new Router({
           name: 'first-time',
           component: Profile
         },
-        external_routes
+        {
+          path: '/account',
+          name: 'account',
+          component: Profile
+        },
+        external_routes,
+        internal_routes
     ]
 })

@@ -6,6 +6,10 @@ from disturbance import models
 class OrganisationAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.OrganisationRequest)
+class OrganisationRequestAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(models.ProposalType)
 class ProposalTypeAdmin(admin.ModelAdmin):
     exclude=("site",) 

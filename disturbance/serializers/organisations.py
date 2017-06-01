@@ -28,9 +28,11 @@ class OrganisationContactSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrganisationRequestSerializer(serializers.ModelSerializer):
+    identification = serializers.FileField()
     class Meta:
         model = OrganisationRequest
         fields = '__all__'
+        read_only_fields = ('requester',)
 
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,7 +43,7 @@ class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
     class Meta:
-        mdoel = Organisation
+        model = Organisation
         fields = (
             'id',
             'name',

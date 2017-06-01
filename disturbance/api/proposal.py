@@ -42,3 +42,5 @@ class GetProposalType(views.APIView):
             return Response(serializer.data)
         else:
             return Response({'error':'There is currently no proposal type.'},status=status.HTTP_404_NOT_FOUND)
+
+

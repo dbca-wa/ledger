@@ -14,6 +14,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
+router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'users',users_api.UserViewSet)
 
 api_patterns = [
@@ -27,9 +28,10 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.DisturbanceRoutingView.as_view(), name='ds_home'),
-    url(r'^internal/$', views.InternalView.as_view(), name='dash'),
+    url(r'^internal/', views.InternalView.as_view(), name='internal'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
+    url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
 ] + ledger_patterns
 
