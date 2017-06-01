@@ -3,6 +3,7 @@ from django.conf.urls import url, include
 from django.conf.urls.static import static
 from rest_framework import routers
 from disturbance import views
+from disturbance.Views import proposal
 from disturbance.admin import admin
 
 from disturbance.api import users as users_api
@@ -30,6 +31,7 @@ urlpatterns = [
     url(r'^internal/$', views.InternalView.as_view(), name='dash'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
+    url(r'^proposal/$', proposal.ProposalView.as_view(), name='proposal'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
 ] + ledger_patterns
 

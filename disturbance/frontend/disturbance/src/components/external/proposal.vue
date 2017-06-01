@@ -1,15 +1,16 @@
 <template lang="html">
     <div >
-        <form action="/" method="post" name="new_proposal">
+        <form action="/proposal/" method="post" name="new_proposal" enctype="multipart/form-data">
             <Proposal v-if="!isLoading" :proposal="proposal" >
-                <input type="button" class="btn btn-primary" @click.prevent.stop="submit" value="Save">
+                <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token">
+                <input type="submit" class="btn btn-primary" value="Save"/>
             </Proposal>
         </form>
     </div>
 </template>
 <script>
 import Proposal from '../form.vue'
-import {api_endpoints } from '@/utils/hooks'
+import {api_endpoints,helpers } from '@/utils/hooks'
 export default {
     data:function () {
         return {
@@ -24,6 +25,9 @@ export default {
     computed:{
         isLoading:function () {
             return this.loading.length > 0
+        },
+        csrf_token:function () {
+            return helpers.getCookie('csrftoken')
         }
     },
     methods:{
