@@ -5,3 +5,7 @@ from disturbance import models
 @admin.register(models.Organisation)
 class OrganisationAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(models.ProposalType)
+class ProposalTypeAdmin(admin.ModelAdmin):
+    exclude=("site",) 
