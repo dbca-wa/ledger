@@ -154,6 +154,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes,
                                                             is_renewable=application.licence_type.is_renewable,
+                                                            default_period=application.licence_type.default_period,
                                                             return_frequency=return_frequency)
 
             kwargs['extracted_fields'] = extract_licence_fields(application.licence_type.application_schema,
