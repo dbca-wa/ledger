@@ -89,4 +89,4 @@ class OrganisationRequest(models.Model):
 class ProposalType(models.Model):
     schema = JSONField()
     activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.") 
-    site = models.OneToOneField(Site) 
+    site = models.OneToOneField(Site, default='1') 
