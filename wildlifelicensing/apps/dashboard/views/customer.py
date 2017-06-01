@@ -217,7 +217,8 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
 
     @staticmethod
     def _search_lodgement_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        # meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             lodgement_number, lodgement_sequence = '-'.join(components[:2]), '-'.join(components[2:])
@@ -354,7 +355,8 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
 
     @staticmethod
     def _search_licence_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        # meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
@@ -423,6 +425,9 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
         elif instance.status == 'draft':
             url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
+        elif instance.status == 'amendment_required':
+            url = reverse('wl_returns:enter_return', args=(instance.pk,))
+            return '<a href="{0}">Amend Return</a>'.format(url)
         else:
             url = reverse('wl_returns:view_return', args=(instance.pk,))
             return '<a href="{0}">View Return (read-only)</a>'.format(url)
@@ -443,7 +448,8 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
 
     @staticmethod
     def _search_licence_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        # meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
