@@ -331,6 +331,28 @@ class TestLifeCycle(TestCase):
         self.assertEqual(ret.status, expected_status)
         return ret, data
 
+    def _create_lodge_and_amend_return(self):
+        ret, data = self._create_and_lodge_return()
+        expected_status = 'submitted'
+        self.assertEqual(ret.status, expected_status)
+
+        url = reverse('wl_returns:amendment_request')
+        curator = self.officer
+        self.client.login(curator.email)
+        payload = {
+            'ret': ret.pk,
+            'officer': curator.pk,
+            'reason': 'Chubby bat is not a valid species'
+        }
+        resp = self.client.post(url, data=payload)
+        self.assertEqual(resp.status_code, 200)
+        ret.refresh_from_db()
+        expected_status = 'amendment_required'
+        self.assertEqual(ret.status, expected_status)
+        self.assertEqual(ret.pending_amendments_qs.count(), 1)
+        self.client.logout()
+        return ret
+
     def test_initial_states_with_future(self):
         """
         Test that after the licence has been created some returns has been created according to the return frequency
@@ -484,7 +506,11 @@ class TestLifeCycle(TestCase):
         self.assertTrue(str(email.body).find(expected_url) > 0)
 
     def test_user_edit_after_amendments(self):
-        pass
+        ret = self._create_lodge_and_amend_return()
+        self._lodge_reg17_return(ret)
+        expected_status = 'amended'
+        self.assertEqual(ret.status, expected_status)
+        self.assertEqual(ret.pending_amendments_qs.count(), 0)
 
     def test_curate_amended(self):
         pass

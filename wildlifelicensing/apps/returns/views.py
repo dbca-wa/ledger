@@ -102,11 +102,14 @@ class EnterReturnView(UserCanEditReturnMixin, TemplateView):
         if is_officer(self.request.user):
             ret.proxy_customer = self.request.user
 
-        ret.status = 'submitted'
-        ret.save()
-
         # assume that all the amendment requests has been solved.
-        ret.pending_amendments_qs.update(status='amended')
+        pending_amendments = ret.pending_amendments_qs
+        if pending_amendments:
+            pending_amendments.update(status='amended')
+            ret.status = 'amended'
+        else:
+            ret.status = 'submitted'
+        ret.save()
 
         message = 'Return successfully submitted.'
 
