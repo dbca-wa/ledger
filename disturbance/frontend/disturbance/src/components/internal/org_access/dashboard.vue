@@ -1,5 +1,5 @@
 <template>
-<div class="container-fluid" id="internalOrgAccessDash">
+<div class="container" id="internalOrgAccessDash">
     <div class="row">
         <div class="col-md-3">
             <div class="form-group">

@@ -1,5 +1,6 @@
 import InternalDashboard from '../dashboard.vue'
 import OrgAccessTable from '../org_access/dashboard.vue'
+import OrgAccess from '../org_access/access.vue'
 //import Proposal from '../proposal.vue'
 export default
 {
@@ -28,6 +29,11 @@ export default
                 {
                     path: 'access',
                     component: OrgAccessTable,
+                    name:"org-access-dash"
+                },
+                {
+                    path: 'access/:access_id',
+                    component: OrgAccess,
                     name:"org-access"
                 }
  
