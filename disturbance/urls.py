@@ -3,11 +3,12 @@ from django.conf.urls import url, include
 from django.conf.urls.static import static
 from rest_framework import routers
 from disturbance import views
-from disturbance.admin import admin
+from disturbance.admin import disturbance_admin_site 
 
-from disturbance.api import users as users_api
-from disturbance.api import organisations as org_api
-from disturbance.api import proposal as proposal_api
+print disturbance_admin_site.urls
+from disturbance.components.users import api as users_api
+from disturbance.components.organisations import api as org_api
+from disturbance.components.proposals import api as proposal_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
@@ -25,7 +26,7 @@ api_patterns = [
 
 # URL Patterns
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
+    url(r'^admin/', disturbance_admin_site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.DisturbanceRoutingView.as_view(), name='ds_home'),
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
