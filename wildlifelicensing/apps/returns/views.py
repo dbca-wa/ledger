@@ -162,9 +162,9 @@ class EnterReturnView(UserCanEditReturnMixin, TemplateView):
             kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
         kwargs['nil_return_form'] = NilReturnForm()
 
-        if ret.status == 'amendment_required':
-            amendments = ret.pending_amendments_qs
-            kwargs['amendments'] = amendments
+        pending_amendments = ret.pending_amendments_qs
+        if pending_amendments:
+            kwargs['amendments'] = pending_amendments
 
         return super(EnterReturnView, self).get_context_data(**kwargs)
 

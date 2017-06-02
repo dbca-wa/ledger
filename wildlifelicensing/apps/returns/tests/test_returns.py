@@ -1,11 +1,17 @@
 import os
+from datetime import date, timedelta
 
+from dateutil.relativedelta import relativedelta
+from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
+from wildlifelicensing.apps.applications.tests import helpers as app_helpers
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, \
-    get_or_create_default_officer, create_licence, create_random_customer, get_or_create_default_assessor
-from wildlifelicensing.apps.returns.tests.helpers import create_return
+    get_or_create_default_officer, create_licence, create_random_customer, get_or_create_default_assessor, \
+    get_or_create_licence_type, clear_mailbox
+from wildlifelicensing.apps.returns.models import Return
+from wildlifelicensing.apps.returns.tests.helpers import create_return, get_or_create_return_type
 
 TEST_SPREADSHEET_PATH = os.path.join('wildlifelicensing', 'apps', 'returns', 'test_data', 'regulation17.xlsx')
 
@@ -253,3 +259,235 @@ class TestPermissions(TestCase):
             response = self.client.get(url)
             self.assertEqual(403, response.status_code)
             self.client.logout()
+
+
+class TestLifeCycle(TestCase):
+    fixtures = ['licences.json', 'countries.json', 'catalogue.json', 'partner.json', 'returns.json']
+
+    def setUp(self):
+        self.customer = get_or_create_default_customer(include_default_profile=True)
+        self.officer = get_or_create_default_officer()
+        self.assessor = get_or_create_default_assessor()
+        self.not_allowed_customer = create_random_customer()
+        self.assertNotEqual(self.not_allowed_customer, self.customer)
+
+        self.client = SocialClient()
+        self.licence_type = get_or_create_licence_type('regulation-17')
+        self.return_type = get_or_create_return_type(self.licence_type)
+
+    def tearDown(self):
+        self.client.logout()
+
+    def _issue_licence(self, licence_data, **kwargs):
+        application = app_helpers.create_and_lodge_application(self.customer, **{
+            'applicant': kwargs.get('applicant', self.customer),
+            'licence_type': kwargs.get('licence_type', self.licence_type)
+        })
+        self.assertIsNotNone(application)
+        self.assertEqual(application.applicant, self.customer)
+        self.assertIsNone(application.proxy_applicant)
+        licence = app_helpers.issue_licence(
+            application,
+            kwargs.get('issuer', self.officer),
+            licence_data=licence_data
+        )
+        self.assertEqual(licence.holder, self.customer)
+        self.assertIsNotNone(licence)
+        return licence
+
+    def _lodge_reg17_return(self, ret, data=None):
+        post_params = {
+            'lodge': True,
+        }
+        data = data or TEST_VALUES
+        for key, value in data.items():
+            post_params['regulation-17::{}'.format(key)] = value
+
+        holder = ret.licence.holder
+        self.client.login(holder.email)
+        response = self.client.post(reverse('wl_returns:enter_return', args=(ret.pk,)), post_params)
+        self.assertRedirects(response, reverse('home'),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+        ret.refresh_from_db()
+        self.client.logout()
+        return data
+
+    def _create_and_lodge_return(self):
+        start_date = date.today()
+        end_date = start_date + relativedelta(months=2)  # 2 months licence
+        licence_data = {
+            'return_frequency': -1,  # one off
+            'start_date': str(start_date),
+            'end_date': str(end_date)
+        }
+        licence = self._issue_licence(licence_data)
+        self.assertIsNotNone(licence)
+
+        ret = Return.objects.first()
+        expected_status = 'current'
+        self.assertEqual(ret.status, expected_status)
+        data = self._lodge_reg17_return(ret)
+        expected_status = 'submitted'
+        self.assertEqual(ret.status, expected_status)
+        return ret, data
+
+    def test_initial_states_with_future(self):
+        """
+        Test that after the licence has been created some returns has been created according to the return frequency
+        and the licence end date
+        """
+        # issue licence
+        # use a one year licence with a monthly return
+        start_date = today = date.today()
+        end_date = start_date + timedelta(days=365)
+        licence_data = {
+            'return_frequency': 1,
+            'start_date': str(start_date),
+            'end_date': str(end_date)
+        }
+        licence = self._issue_licence(licence_data)
+        self.assertIsNotNone(licence)
+
+        # 12 returns should have been created
+        rets = Return.objects.all().order_by('due_date')
+        self.assertEqual(rets.count(), 12)
+        # the first one should be in a month with status 'current'
+        current = rets.first()
+        self.assertEqual(current.status, 'current')
+        next_month = today + relativedelta(months=1)
+        self.assertEqual(current.due_date, next_month)
+        # the next ones should have the status 'future'
+        futures = rets[1:]
+        for i, future in enumerate(futures, start=1):
+            self.assertEqual(future.status, 'future')
+            expected_due_date = next_month + relativedelta(months=i)
+            self.assertEqual(future.due_date, expected_due_date)
+
+    def test_initial_one_off(self):
+        """
+        Test one off. One return due at the licence end date
+        """
+        start_date = date.today()
+        end_date = start_date + relativedelta(months=2)  # 2 months licence
+        licence_data = {
+            'return_frequency': -1,  # one off
+            'start_date': str(start_date),
+            'end_date': str(end_date)
+        }
+        licence = self._issue_licence(licence_data)
+        self.assertIsNotNone(licence)
+        rets = Return.objects.all()
+        self.assertEqual(rets.count(), 1)
+        # the first one should be in a month with status 'current'
+        current = rets.first()
+        self.assertEqual(current.status, 'current')
+        # due date should match the licence end date
+        expected_due_date = end_date
+        self.assertEqual(current.due_date, expected_due_date)
+
+    def test_enter_return_happy_path(self):
+        start_date = date.today()
+        end_date = start_date + relativedelta(months=2)  # 2 months licence
+        licence_data = {
+            'return_frequency': -1,  # one off
+            'start_date': str(start_date),
+            'end_date': str(end_date)
+        }
+        licence = self._issue_licence(licence_data)
+        self.assertIsNotNone(licence)
+
+        ret = Return.objects.first()
+        expected_status = 'current'
+        self.assertEqual(ret.status, expected_status)
+        self._lodge_reg17_return(ret)
+        expected_status = 'submitted'
+        self.assertEqual(ret.status, expected_status)
+
+    def test_curate_happy_path(self):
+        ret, data = self._create_and_lodge_return()
+        expected_status = 'submitted'
+        self.assertEqual(ret.status, expected_status)
+
+        # changed the species name
+        new_species = 'Chubby bat'
+        data = TEST_VALUES
+        data['SPECIES_NAME'] = new_species
+        payload = {
+            'accept': True
+        }
+        for key, value in data.items():
+            payload['regulation-17::{}'.format(key)] = value
+        url = reverse('wl_returns:curate_return', args=(ret.pk,))
+        curator = self.officer
+        self.client.login(curator.email)
+        response = self.client.post(url, data=payload)
+        self.assertRedirects(response, reverse('home'),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+        ret.refresh_from_db()
+        expected_status = 'accepted'
+        self.assertEqual(ret.status, expected_status)
+
+        # check value
+        data = ret.returntable_set.first().returnrow_set.first().data
+        self.assertEqual(data.get('SPECIES_NAME'), new_species)
+
+    def test_curate_request_amendments(self):
+        ret, data = self._create_and_lodge_return()
+        expected_status = 'submitted'
+        self.assertEqual(ret.status, expected_status)
+
+        pending_amendments = ret.pending_amendments_qs
+        self.assertEqual(pending_amendments.count(), 0)
+
+        url = reverse('wl_returns:amendment_request')
+        curator = self.officer
+        self.client.login(curator.email)
+        # important clear mailbox
+        clear_mailbox()
+        self.assertEqual(len(mail.outbox), 0)
+
+        payload = {
+            'ret': ret.pk,
+            'officer': curator.pk,
+            'reason': 'Chubby bat is not a valid species'
+        }
+        resp = self.client.post(url, data=payload)
+        self.assertEqual(resp.status_code, 200)
+        # expect a json response with the return amendment serialized
+        resp_data = resp.json()
+        self.assertTrue('amendment_request' in resp_data)
+        # the reason should be returned
+        self.assertEqual(resp_data['amendment_request'].get('reason'), payload['reason'])
+
+        ret.refresh_from_db()
+        expected_status = 'amendment_required'
+        self.assertEqual(ret.status, expected_status)
+
+        # we should have a pending amendment
+        pending_amendments = ret.pending_amendments_qs
+        self.assertEqual(pending_amendments.count(), 1)
+        pending_amendment = pending_amendments.first()
+        self.assertEqual(pending_amendment.status, 'requested')
+        self.assertEqual(pending_amendment.officer, curator)
+        self.assertEqual(pending_amendment.reason, payload['reason'])
+        self.assertEqual(pending_amendment.ret, ret)
+
+        # an email must have been sent to the applicant
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(len(email.to), 1)
+        expected_address = ret.licence.profile.email
+        self.assertEqual(email.to[0], expected_address)
+        # the email body should contain a link to the edit return page
+        # due to test environment we cannot use reverse or even host_reverse
+        expected_url = "/returns/enter-return/{}".format(ret.pk)
+        self.assertTrue(str(email.body).find(expected_url) > 0)
+
+    def test_user_edit_after_amendments(self):
+        pass
+
+    def test_curate_amended(self):
+        pass
+
+    def test_declined_amended(self):
+        pass

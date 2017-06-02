@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils.encoding import smart_text
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 
-from wildlifelicensing.apps.emails.emails import TemplateEmailBase
+from wildlifelicensing.apps.emails.emails import TemplateEmailBase, host_reverse
 from wildlifelicensing.apps.returns.models import ReturnLogEntry
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
@@ -22,7 +22,7 @@ class ReturnOverdueNotificationEmail(TemplateEmailBase):
 
 def send_return_overdue_email_notification(ret):
     email = ReturnOverdueNotificationEmail()
-    url = 'http:' + reverse('wl_returns:enter_return', args=(ret.pk,))
+    url = host_reverse('wl_returns:enter_return', args=(ret.pk,))
 
     context = {
         'url': url,
