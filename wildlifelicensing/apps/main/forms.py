@@ -92,6 +92,8 @@ class IssueLicenceForm(forms.ModelForm):
 
         is_renewable = kwargs.pop('is_renewable', False)
 
+        default_period = kwargs.pop('default_period', None)
+
         return_frequency = kwargs.pop('return_frequency', WildlifeLicence.DEFAULT_FREQUENCY)
 
         skip_required = kwargs.pop('skip_required', False)
@@ -115,9 +117,10 @@ class IssueLicenceForm(forms.ModelForm):
 
             self.fields['issue_date'].localize = False
 
-            one_year_today = today_date + relativedelta(years=1, days=-1)
+            if default_period is not None:
+                end_date = today_date + relativedelta(days=default_period)
 
-            self.fields['end_date'].initial = one_year_today.strftime(DATE_FORMAT)
+                self.fields['end_date'].initial = end_date.strftime(DATE_FORMAT)
 
             self.fields['is_renewable'].initial = is_renewable
 
