@@ -50,6 +50,11 @@
                             <div id="navbar" class="navbar-collapse collapse">
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
+                                        {% if request.user.is_staff %}
+                                        <li><a href="/internal/approvals">Approvals</a></li>
+                                        <li><a href="/internal/compliances">Compliance with Requirements</a></li>
+                                        <li><a href="/internal/organisations/access">Organisation Access</a></li>
+                                        {% endif %}
                                     {% endblock %}
                                 </ul>
                                 <ul class="nav navbar-nav navbar-right">

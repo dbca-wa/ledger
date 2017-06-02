@@ -1,4 +1,5 @@
 import InternalDashboard from '../dashboard.vue'
+import OrgAccessTable from '../org_access/dashboard.vue'
 //import Proposal from '../proposal.vue'
 export default
 {
@@ -14,6 +15,23 @@ export default
         {
             path: '/',
             component: InternalDashboard
+        },
+        {
+            path: 'organisations',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: 'access',
+                    component: OrgAccessTable,
+                    name:"org-access"
+                }
+ 
+            ]
         },
         /*{
             path: 'proposal',

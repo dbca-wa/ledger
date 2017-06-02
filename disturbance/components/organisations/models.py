@@ -81,7 +81,6 @@ class UserDelegation(models.Model):
     
 class OrganisationRequest(models.Model):
     STATUS_CHOICES = (
-        ('new','New'),
         ('with_assessor','With Assessor'),
         ('approved','Approved'),
         ('declined','Declined')
@@ -91,7 +90,7 @@ class OrganisationRequest(models.Model):
     requester = models.ForeignKey(EmailUser)
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='org_request_assignee')
     identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', null=True, blank=True)
-    status = models.CharField(max_length=100,choices=STATUS_CHOICES, default="new")
+    status = models.CharField(max_length=100,choices=STATUS_CHOICES, default="with_assessor")
     lodgement_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:

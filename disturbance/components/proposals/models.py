@@ -72,6 +72,7 @@ class Proposal(RevisionedMixin):
         ('accepted', 'Accepted'))
 
     data = JSONField(blank=True, null=True)
+    proposal_schema = JSONField()
     documents = models.ManyToManyField(Document)
     hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
     

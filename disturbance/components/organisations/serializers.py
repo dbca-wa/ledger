@@ -30,10 +30,22 @@ class OrganisationContactSerializer(serializers.ModelSerializer):
 
 class OrganisationRequestSerializer(serializers.ModelSerializer):
     identification = serializers.FileField()
+    requester = serializers.SerializerMethodField()
+    assigned_officer = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     class Meta:
         model = OrganisationRequest
         fields = '__all__'
-        read_only_fields = ('requester',)
+        read_only_fields = ('requester','lodgement_date','assigned_officer')
+
+    def get_requester(self,obj):
+        return obj.requester.get_full_name()
+
+    def get_assigned_officer(self,obj):
+        return obj.assigned_officer.get_full_name() if obj.assigned_officer else ''
+
+    def get_status(self,obj):
+        return obj.get_status_display()
 
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:

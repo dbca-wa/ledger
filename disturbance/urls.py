@@ -5,7 +5,6 @@ from rest_framework import routers
 from disturbance import views
 from disturbance.admin import disturbance_admin_site 
 
-print disturbance_admin_site.urls
 from disturbance.components.users import api as users_api
 from disturbance.components.organisations import api as org_api
 from disturbance.components.proposals import api as proposal_api
