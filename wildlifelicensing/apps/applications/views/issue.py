@@ -175,12 +175,17 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
+        is_save = request.POST.get('submissionType') == 'save'
+        skip_required = is_save
+
         # get extract fields from licence if it exists, else extract from application data
         if application.licence is not None:
-            issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES)
+            issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES,
+                                                  skip_required=skip_required)
             extracted_fields = application.licence.extracted_fields
         else:
-            issue_licence_form = IssueLicenceForm(request.POST, files=request.FILES)
+            issue_licence_form = IssueLicenceForm(request.POST, files=request.FILES,
+                                                  skip_required=skip_required)
             extracted_fields = extract_licence_fields(application.licence_type.application_schema, application.data)
 
         # update contents of extracted field based on posted data
@@ -213,7 +218,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             application.licence = licence
             application.save()
 
-            if request.POST.get('submissionType') == 'save':
+            if is_save:
                 messages.success(request, 'Licence saved but not yet issued.')
 
                 return render(request, self.template_name, {
