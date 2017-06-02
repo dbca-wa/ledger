@@ -71,8 +71,9 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
 def extract_licence_fields(schema, data):
     licence_fields = []
 
-    for item in schema:
-        _extract_licence_fields_from_item(item, data, licence_fields)
+    if schema is not None:
+        for item in schema:
+            _extract_licence_fields_from_item(item, data, licence_fields)
 
     return licence_fields
 

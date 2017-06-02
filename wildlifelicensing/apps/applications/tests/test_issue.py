@@ -7,12 +7,15 @@ from django.test import TestCase
 
 from django_dynamic_fixture import G
 
+from dateutil.relativedelta import relativedelta
+
 from wildlifelicensing.apps.applications.tests import helpers as app_helpers
 from wildlifelicensing.apps.main.tests import helpers as main_helpers
 from wildlifelicensing.apps.main.models import Region
+from wildlifelicensing.apps.main.forms import DATE_FORMAT
 
 
-class TestViewsAccess(TestCase):
+class TestIssueLicence(TestCase):
     """
     Only officers can access any of the views in the entry modules
     """
@@ -166,3 +169,32 @@ class TestViewsAccess(TestCase):
         self.assertEquals(application.processing_status, 'issued')
         self.assertIsNotNone(application.licence)
         self.assertTrue(application.licence.is_issued)
+
+
+    def test_default_licence_period(self):
+        """
+        Test that a licence default period correctly calculates the end date of a licence.
+        """
+        default_period = 183
+
+        self.client.login(self.officer.email)
+
+        licence_type = main_helpers.get_or_create_licence_type('test')
+        licence_type.default_period = default_period
+        licence_type.save()
+
+        application = app_helpers.create_and_lodge_application(self.user, licence_type=licence_type)
+
+        response = self.client.get(reverse('wl_applications:issue_licence', args=[application.pk]))
+
+        todays_date_string = (datetime.date.today() + relativedelta(days=default_period)).strftime(DATE_FORMAT)
+
+        self.assertIn(todays_date_string, response.context['issue_licence_form']['end_date'].initial)
+
+        # test that end date not set when default_period is not set
+        licence_type.default_period = None
+        licence_type.save()
+
+        response = self.client.get(reverse('wl_applications:issue_licence', args=[application.pk]))
+
+        self.assertIsNone(response.context['issue_licence_form']['end_date'].initial)
