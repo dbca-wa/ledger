@@ -10,26 +10,34 @@ def extract_licence_fields(schema, data):
     return licence_fields
 
 
-def _extract_licence_fields_from_item(item, data, licence_fields):
+def _extract_licence_fields_from_item(item, data, licence_fields,group_licence_fields={}):
     children_extracted = False
     licence_field={}
-    if 'section' not in item['type']:
+    if 'section' != item['type']:
         # label / checkbox types are extracted differently so skip here
         if item['type'] not in ('label', 'checkbox'):
             licence_field[item['name']] = _extract_item_data(item['name'], data)
             licence_fields.append(licence_field)
     else:
-        group_licence_fields = {}
+        licence_field[item['name']] = []
         for child_item in item.get('children'):
             if child_item['type'] == 'label':
                 _extract_label_and_checkboxes(child_item, item.get('children'), data,group_licence_fields)
-            if child_item['type'] not in ('label'):
+            if child_item['type'] not in ('label','checkbox','select','radio'):
                 group_licence_fields[child_item['name']] = _extract_item_data(child_item['name'], data)
-        licence_field[item['name']] = []
+            if 'conditions' in child_item:
+                _extract_licence_fields_from_item(child_item,data,licence_field[item['name']],group_licence_fields)
         licence_field[item['name']].append(group_licence_fields)
         licence_fields.append(licence_field)
         children_extracted = True
-
+    if 'conditions' in item:
+        for condition in item['conditions'].keys():
+            for child_item in item['conditions'][condition]:
+                if child_item['type'] == 'label' and child_item.get('isCopiedToPermit', False):
+                    _extract_label_and_checkboxes(child_item, item['conditions'][condition], data, licence_fields)
+                _extract_licence_fields_from_item(child_item, data, licence_fields)
+                print "conditions"
+'''
     # extract licence fields from field's children
     if 'children' in item and not children_extracted:
         for child_item in item.get('children'):
@@ -40,14 +48,8 @@ def _extract_licence_fields_from_item(item, data, licence_fields):
             _extract_licence_fields_from_item(child_item, data, licence_fields)
 
     # extract licence fields from field's conditional children
-    if 'conditions' in item:
-        for condition in item['conditions'].keys():
-            for child_item in item['conditions'][condition]:
-                if child_item['type'] == 'label' and child_item.get('isCopiedToPermit', False):
-                    _extract_label_and_checkboxes(child_item, item['conditions'][condition], data, licence_fields)
-                _extract_licence_fields_from_item(child_item, data, licence_fields)
 
-
+'''
 def _extract_label_and_checkboxes(current_item, items, data, licence_fields):
     licence_field = {}
     # find index of first checkbox after checkbox label within current item list

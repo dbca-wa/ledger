@@ -44,19 +44,28 @@
         },
         methods:{
             mapDataToApplication:function () {
+
                 if (this.data) {
                     let fdata = {};
                     let jans = this.data;
                     for (var a in jans) {
                         var key = Object.keys(jans[a])[0];
-                        fdata[key] = jans[a][key][0];
+                        if (jans[a][key] instanceof Array) {
+                            fdata[key] = jans[a][key][0];
+                        }
+                        else{
+                            fdata[key] = jans[a][key];
+                        }
+
                     }
                     this.values = fdata
                 }
             }
         },
-        mounted:function () {
+        created:function () {
             this.mapDataToApplication();
+        },
+        mounted:function () {
             Renderer.sections.map(sec => {
                 $('#scrollspy-section').append(`<li><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
             });

@@ -1,7 +1,7 @@
 <template lang="html">
     <div >
         <form action="/proposal/" method="post" name="new_proposal" enctype="multipart/form-data">
-            <Proposal v-if="!isLoading" :proposal="proposal" >
+            <Proposal v-if="!isLoading" :proposal="proposal" :data="ans">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token">
                 <input type="submit" class="btn btn-primary" value="Save"/>
             </Proposal>
@@ -16,7 +16,8 @@ export default {
         return {
             "proposal":[],
             "loading":[],
-            form:null
+            form:null,
+            "ans":require('@/assets/ans.json')
         }
     },
     components:{

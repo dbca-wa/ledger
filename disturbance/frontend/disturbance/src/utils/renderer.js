@@ -31,10 +31,14 @@ module.exports = {
                 )
                 break;
             case 'select':
+                var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data )? data : null ;
+                }
                 return (
                     <div>
                         <Select name={c.name} label={c.label} value={c.value} options={c.options} help_text={c.help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions}/>
-                        <SelectConditions conditions={c.conditions} renderer={this} name={c.name} />
+                        <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={value} />
                     </div>
                 )
                 break;
