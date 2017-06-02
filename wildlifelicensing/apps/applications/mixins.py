@@ -123,18 +123,33 @@ class UserCanAmendApplicationMixin(UserPassesTestMixin):
             return False
 
 
-class ApplicationNotInSessionMixin(object):
+class RedirectApplicationInSessionMixin(object):
     """
-    Mixin to check that there is not currently an application in the session, in the case an application is 
+    Mixin to check if there is currently an application in the session and if so, redirect to home with a message. This
+    is for the case when a view is about to start entering application details but another application is currently
     being entered.
     """
     def dispatch(self, request, *args, **kwargs):
         if 'application_id' in request.session:
-            messages.error(request, 'There is currently an application already being entered. Please conclude or save '
-                                    'this application before creating a new one.')
+            messages.error(request, 'There is currently an application in the process of being entered. Please '
+                           'conclude or save this application before creating a new one.')
             return redirect('home')
 
-        return super(ApplicationNotInSessionMixin, self).dispatch(request, *args, **kwargs)
+        return super(RedirectApplicationInSessionMixin, self).dispatch(request, *args, **kwargs)
+
+
+class RedirectApplicationNotInSessionMixin(object):
+    """
+    Mixin to check if an application is in the session, and if not, redirect to home with a message. This is the case
+    where an application is being edited but somehow the session has become corrupt and there is no longer an
+    application referenced there.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if 'application_id' not in request.session:
+            messages.error(request, 'The application session was corrupted.')
+            return redirect('home')
+
+        return super(RedirectApplicationNotInSessionMixin, self).dispatch(request, *args, **kwargs)
 
 
 class CanPerformAssessmentMixin(UserPassesTestMixin):

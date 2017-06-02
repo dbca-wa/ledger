@@ -21,7 +21,7 @@
         applicationDetails.layoutFormItems('#formContainer', {{ application.licence_type.application_schema|jsonify }}
             {% if application.data %}, {{ application.data|jsonify }}{% endif %});
 
-        $('#mainContainer').removeClass('hidden');
+        $('#contentContainer').removeClass('hidden');
 
         // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
         applicationDetails.initialiseSidebarMenu('#sectionList');
@@ -33,12 +33,13 @@
             }
         });
 
-        navigation.setupNavigateAway('Warning: any information entered into the form will be lost if not saved as draft.');
+        navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
+            {{ application.id }}, '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
     });
 {% endblock %}
 
 {% block breadcrumbs %}
-    <div class="container">
+    <div id="breadcrumbsContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
@@ -91,7 +92,7 @@
 {% endblock %}
 
 {% block content %}
-    <div id="mainContainer" class="container hidden">
+    <div id="contentContainer" class="container hidden bottom-buffer">
         {% if amendments %}
             <div class="row">
                 <div class="col-sm-2 col-md-10 col-md-offset-2">

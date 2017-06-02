@@ -8,12 +8,13 @@
 
 {% block requirements %}
     require(['js/entry/navigation'], function(navigation) {
-        navigation.setupNavigateAway('Warning: any information entered into the form will be lost if not saved as draft.');
+        navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
+            {{ application.id }}, '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
     });
 {% endblock %}
 
 {% block breadcrumbs %}
-    <div class="container">
+    <div id="breadcrumbsContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
@@ -64,7 +65,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container bottom-buffer">
+    <div id="contentContainer" class="container bottom-buffer">
         {% if profile_selection_form %}
             <div class="row">
                 <div class="col-md-12">
