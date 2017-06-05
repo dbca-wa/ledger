@@ -32,7 +32,7 @@ LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
 
 
-class ApplicationEntryBaseView(TemplateView, RedirectApplicationNotInSessionMixin):
+class ApplicationEntryBaseView(RedirectApplicationNotInSessionMixin, TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
@@ -63,7 +63,7 @@ class DeleteApplicationSessionView(OfficerOrCustomerRequiredMixin, View):
         if session_application_id.id == application.id:
             utils.delete_session_application(request.session)
 
-            if application.customer_status == 'temp':
+            if application.is_temporary:
                 application.delete()
 
         return HttpResponse()
@@ -207,6 +207,8 @@ class CreateSelectCustomer(OfficerRequiredMixin, RedirectApplicationNotInSession
     login_url = '/'
 
     def get_context_data(self, **kwargs):
+        kwargs['application'] = utils.get_session_application(self.request.session)
+
         kwargs['create_customer_form'] = EmailUserForm(email_required=False)
 
         return super(CreateSelectCustomer, self).get_context_data(**kwargs)
@@ -228,7 +230,10 @@ class CreateSelectCustomer(OfficerRequiredMixin, RedirectApplicationNotInSession
                     request
                 )
             else:
-                context = {'create_customer_form': create_customer_form}
+                context = {
+                    'create_customer_form': create_customer_form, 
+                    'application': application
+                }
                 return render(request, self.template_name, context)
 
         return redirect('wl_applications:select_licence_type', *args, **kwargs)
@@ -333,11 +338,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
             return redirect('wl_applications:check_senior_card')
 
     def get_context_data(self, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         kwargs['application'] = application
 
@@ -378,15 +379,13 @@ class CheckSeniorCardView(LoginRequiredMixin, ApplicationEntryBaseView, FormView
             return redirect('wl_applications:create_select_profile')
 
     def get_context_data(self, **kwargs):
+        kwargs['application'] = utils.get_session_application(self.request.session)
+
         kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in self.form_class.VALID_FILE_TYPES])
         return super(CheckSeniorCardView, self).get_context_data(**kwargs)
 
     def form_valid(self, form):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         if application.applicant.senior_card is not None:
             application.applicant.senior_card.delete()
@@ -435,7 +434,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                 application.applicant_profile = profile_selection_form.cleaned_data.get('profile')
                 application.save()
             else:
-                return render(request, self.template_name, {'licence_type': application.licence_type,
+                return render(request, self.template_name, {'application': application,
                                                             'profile_selection_form': profile_selection_form,
                                                             'profile_creation_form': ProfileForm(),
                                                             'address_form': AddressForm(user=application.applicant)})
@@ -456,7 +455,8 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                 )
             else:
                 return render(request, self.template_name,
-                              {'licence_type': application.licence_type,
+                              {'application': application,
+                               'licence_type': application.licence_type,
                                'profile_selection_form': ProfileSelectionForm(user=request.user),
                                'profile_creation_form': profile_form, 'address_form': address_form})
 

@@ -1,6 +1,6 @@
 import datetime
 
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -131,8 +131,10 @@ class RedirectApplicationInSessionMixin(object):
     """
     def dispatch(self, request, *args, **kwargs):
         if 'application_id' in request.session:
-            messages.error(request, 'There is currently an application in the process of being entered. Please '
-                           'conclude or save this application before creating a new one.')
+            messages.error(request, 'There is currently another application in the process of being entered. Please '
+                           'conclude or save this application before creating a new one. If you are seeing this '
+                           'message and are not another application being entered, you may need to <a href="{}">logout'
+                           '</a> and log in again.'.format(reverse('accounts:logout')))
             return redirect('home')
 
         return super(RedirectApplicationInSessionMixin, self).dispatch(request, *args, **kwargs)

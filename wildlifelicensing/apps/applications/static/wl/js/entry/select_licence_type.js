@@ -32,29 +32,8 @@ define(['jQuery', 'js/wl.bootstrap-treeview'], function ($) {
         });
     }
 
-    function _initNavigateAway(deleteApplicationSessionURL, applicationId, csrfToken, categoryContainerSelector) {
-        var $categoryContainer = $(categoryContainerSelector),
-            isLinkLicenceSelection = false;
-
-        $('a').click(function(e) {
-            isLinkLicenceSelection = $categoryContainer.find(this).length > 0;
-        });
-
-        window.onunload = function (e) {
-            if(!isLinkLicenceSelection) {
-                $.post(deleteApplicationSessionURL, {
-                        applicationId: applicationId,
-                        csrfmiddlewaretoken: csrfToken
-                    }
-                );
-            }
-        };
-    }
-
     function _init(options) {
         _initCategories(options.categories);
-        _initNavigateAway(options.deleteApplicationSessionURL, options.applicationId, options.csrfToken,
-                options.categoryContainerSelector);
     }
 
     return {

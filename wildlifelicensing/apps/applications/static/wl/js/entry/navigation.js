@@ -36,11 +36,6 @@ define(['jQuery'], function($) {
                             csrfmiddlewaretoken: csrfToken
                         }
                     });
-//                    $.post('/delete-application-session/', {
-//                            applicationId: applicationId,
-//                            csrfmiddlewaretoken: csrfToken
-//                        }
-//                    );
                 }
             };
         }
