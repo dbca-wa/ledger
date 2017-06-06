@@ -38,7 +38,7 @@ module.exports = {
                 return (
                     <div>
                         <Select name={c.name} label={c.label} value={c.value} options={c.options} help_text={c.help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions}/>
-                        <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={value} />
+                        <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={data} />
                     </div>
                 )
                 break;
@@ -93,6 +93,8 @@ module.exports = {
                   value = ( data[c.name] )? data[c.name] : null ;
                 }
                 this.sections.push({name:c.name,label:c.label});
+                console.log(c.name);
+                console.log(value);
                 return (
                     <Section label={c.label} Key={c.name} id={c.name}>
                         {c.children.map(d=>{
@@ -107,19 +109,30 @@ module.exports = {
                 break;
 
             case 'checkbox':
+                var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data[c.name] )? data[c.name] : null ;
+                }
                 return (
                     <div class="form-group">
                         <Checkbox name={c.name} label={c.label} help_text={c.help_text} value={c.value} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
-                        <Conditions conditions={c.conditions} renderer={this} name={c.name}/>
+                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={value}/>
                     </div>
                 )
                 break;
             case 'declaration':
+                if (c.name.trim() == 'permits_acknowledgement') {
+                    console.log(data);
+                }
+                var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data[c.name] )? data[c.name] : null ;
+                }
                 return (
                     <div class="form-group">
                         <label>{c.label}</label>
-                        <Checkbox name={c.name} label={c.label} value={c.value} help_text={c.help_text} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
-                        <Conditions conditions={c.conditions} renderer={this} name={c.name}/>
+                        <Checkbox name={c.name} label={c.label} value={val} help_text={c.help_text} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
+                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={value}/>
                     </div>
                 )
                 break;
