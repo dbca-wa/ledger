@@ -1,4 +1,6 @@
 import re
+from datetime import date
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
@@ -64,6 +66,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         original_issue_date = application.licence.issue_date if application.licence.is_issued else None
 
         licence.licence_sequence += 1
+
+        licence.issue_date = date.today()
 
         # reset renewal_sent flag in case of reissue
         licence.renewal_sent = False
@@ -219,7 +223,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             application.save()
 
             if is_save:
-                messages.success(request, 'Licence saved but not yet issued.')
+                messages.warning(request, 'Licence saved but not yet issued.')
 
                 return render(request, self.template_name, {
                     'application': serialize(application, posthook=format_application),

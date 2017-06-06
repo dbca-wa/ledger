@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import date
 
 from django.utils import six
 from django import forms
@@ -74,9 +74,8 @@ class IssueLicenceForm(forms.ModelForm):
 
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose',
-                  'locations',
-                  'additional_information', 'cover_letter_message']
+        fields = ['start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose',
+                  'locations', 'additional_information', 'cover_letter_message']
         widgets = {
             'regions': SelectMultiple(
                 attrs={"class": "hidden"}
@@ -105,7 +104,7 @@ class IssueLicenceForm(forms.ModelForm):
                 field.required = False
         else:
             # enforce required for some fields not required at the ledger (Licence) model level
-            required = ['issue_date', 'start_date', 'end_date']
+            required = ['start_date', 'end_date']
             for field_name in required:
                 field = self.fields.get(field_name)
                 if field is not None:
@@ -119,11 +118,9 @@ class IssueLicenceForm(forms.ModelForm):
         # if a licence instance has not been passed in nor any POST data
         # (i.e. this is creating the 'get' version of the form)
         if 'instance' not in kwargs and len(args) == 0:
-            today_date = datetime.now()
-            self.fields['issue_date'].initial = today_date.strftime(DATE_FORMAT)
-            self.fields['start_date'].initial = today_date.strftime(DATE_FORMAT)
+            today_date = date.today()
 
-            self.fields['issue_date'].localize = False
+            self.fields['start_date'].initial = today_date.strftime(DATE_FORMAT)
 
             if default_period is not None:
                 end_date = today_date + relativedelta(days=default_period)
@@ -142,6 +139,8 @@ class IssueLicenceForm(forms.ModelForm):
         if end_date is not None and start_date is not None and end_date < start_date:
             msg = 'End date must be greater than start date'
             self.add_error('end_date', msg)
+
+        return cleaned_data
 
 
 class CommunicationsLogEntryForm(forms.ModelForm):
