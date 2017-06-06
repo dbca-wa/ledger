@@ -9,7 +9,7 @@ from django.views.generic import View, TemplateView
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser
 from disturbance.utils import extract_licence_fields, update_licence_fields
-from disturbance.models import ProposalType
+from disturbance.components.proposals.models import ProposalType
 
 
 class ProposalView(TemplateView):

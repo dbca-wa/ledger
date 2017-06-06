@@ -3,9 +3,8 @@ from django.conf.urls import url, include
 from django.conf.urls.static import static
 from rest_framework import routers
 from disturbance import views
-from disturbance.admin import disturbance_admin_site 
+from disturbance.admin import disturbance_admin_site
 from disturbance.Views import proposal
-from disturbance.admin import admin
 
 from disturbance.components.users import api as users_api
 from disturbance.components.organisations import api as org_api
