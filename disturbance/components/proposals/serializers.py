@@ -1,6 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
-from disturbance.models import (
+from disturbance.components.proposals.models import (
                                     ProposalType,
                                 )
 from rest_framework import serializers

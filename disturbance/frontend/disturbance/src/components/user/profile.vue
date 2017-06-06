@@ -1,6 +1,6 @@
 <template>
     <div class="container" id="userInfo">
-        <div class="row">
+        <div v-if="showCompletion" class="row">
             <div class="col-sm-12">
                 <div class="well well-sm">
                     <p>
@@ -157,7 +157,7 @@
                     </h3>
                   </div>
                   <div class="panel-body collapse" :id="oBody">
-                      <form class="form-horizontal" action="index.html" method="post">
+                      <form class="form-horizontal" name="orgForm" method="post">
                           <div class="form-group">
                             <label for="" class="col-sm-5 control-label">Do you manage approvals on behalf of an organisation?</label>
                             <div class="col-sm-4">
@@ -234,7 +234,7 @@
                                   </div>
                                   <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.</label>
                                   <div class="col-sm-12">
-                                    <button v-if="!registeringOrg" class="btn btn-primary pull-right">Submit</button>
+                                    <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-right">Submit</button>
                                     <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                                   </div>
                               </div>
@@ -279,6 +279,7 @@ export default {
             updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
+            registeringOrg: false,
         }
     },
     watch: {
@@ -307,7 +308,7 @@ export default {
         readFile: function() {
             let vm = this;
             let _file = null;
-            var input = vm.$refs.uploadedFile[0];
+            var input = $(vm.$refs.uploadedFile)[0];
             if (input.files && input.files[0]) {
                 var reader = new FileReader();
                 reader.readAsDataURL(input.files[0]); 
@@ -401,6 +402,24 @@ export default {
                 vm.validatingPins = false;
                 console.log(error);
             });
+        },
+        orgRequest: function() {
+            let vm = this;
+            vm.registeringOrg = true;
+            let data = new FormData()
+            data.append('name', vm.newOrg.name)
+            data.append('abn', vm.newOrg.abn)
+            data.append('identification', vm.uploadedFile)
+            vm.$http.post(api_endpoints.organisation_requests,data,{
+                emulateJSON:true
+            }).then((response) => {
+                console.log(response);
+                vm.registeringOrg = false;
+            }, (error) => {
+                vm.registeringOrg = false;
+                console.log(error);
+            });
+
         },
         toggleSection: function (e) {
             let el = e.target;

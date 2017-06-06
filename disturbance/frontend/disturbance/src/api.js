@@ -1,5 +1,6 @@
 module.exports = {
   organisations: '/api/organisations.json',
+  organisation_requests: '/api/organisation_requests.json',
   users: '/api/users.json',
   profile: '/api/profile',
   //other

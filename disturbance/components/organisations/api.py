@@ -26,12 +26,13 @@ from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
 from disturbance import utils
 from datetime import datetime,timedelta, date
-from disturbance.models import  (   Organisation,
+from disturbance.components.organisations.models import  (   
+                                    Organisation,
                                     OrganisationRequest,
                                     OrganisationContact
                                 )
 
-from disturbance.serializers.organisations import (   
+from disturbance.components.organisations .serializers import (   
                                         OrganisationSerializer,
                                         OrganisationRequestSerializer,
                                         OrganisationContactSerializer,
@@ -86,3 +87,19 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     queryset = OrganisationRequest.objects.all()
     serializer_class = OrganisationRequestSerializer
 
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.validated_data['requester'] = request.user
+            serializer.save()
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))

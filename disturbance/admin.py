@@ -1,11 +1,8 @@
-from django.contrib import admin
-from disturbance import models
-# Register your models here.
+from django.contrib.admin import AdminSite
 
-@admin.register(models.Organisation)
-class OrganisationAdmin(admin.ModelAdmin):
-    pass
 
-@admin.register(models.ProposalType)
-class ProposalTypeAdmin(admin.ModelAdmin):
-    exclude=("site",) 
+class DisturbanceAdminSite(AdminSite):
+    site_header = 'Disturbance Administration'
+    site_title = 'Diturbance Licensing'
+
+disturbance_admin_site = DisturbanceAdminSite(name='disturbanceadmin')

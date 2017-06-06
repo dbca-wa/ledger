@@ -24,6 +24,7 @@ module.exports = {
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
       '@': resolve('src'),
+      '@vue-utils': resolve('src/utils/vue'),
       'datetimepicker':'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js',
       'easing':'jquery.easing/jquery.easing.js'
     }
@@ -72,7 +73,11 @@ module.exports = {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
-      }
+      },
+      {
+        test: /datatables\.net.*/,
+        loader: 'imports-loader?define=>false,jquery=>jquery,$=>jquery'
+      }  
     ]
   },
   plugins:[
@@ -80,7 +85,7 @@ module.exports = {
            $: "jquery",
            jQuery: "jquery",
            "select2": "../node_modules/select2/dist/js/select2.full.min.js",
-           moment: "../node_modules/moment/moment.js",
+           moment: "moment",
            datetimepicker:"../node_modules/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
        })
     ]

@@ -26,11 +26,11 @@ from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
 from disturbance import utils
 from datetime import datetime,timedelta, date
-from disturbance.models import  (   
+from disturbance.components.proposals.models import  (   
                                     ProposalType,
                                 )
 
-from disturbance.serializers.proposal import   (   
+from disturbance.components.proposals.serializers import   (   
                                                 ProposalTypeSerializer,
                                             )
 class GetProposalType(views.APIView):
@@ -42,3 +42,5 @@ class GetProposalType(views.APIView):
             return Response(serializer.data)
         else:
             return Response({'error':'There is currently no proposal type.'},status=status.HTTP_404_NOT_FOUND)
+
+

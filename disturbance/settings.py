@@ -7,6 +7,10 @@ SITE_ID = 1
 INSTALLED_APPS += [
     'bootstrap3',
     'disturbance',
+    'disturbance.components.main',
+    'disturbance.components.organisations',
+    'disturbance.components.users',
+    'disturbance.components.proposals',
     'taggit',
     'rest_framework',
     'rest_framework_gis'

@@ -26,11 +26,11 @@ from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
 from disturbance import utils
 from datetime import datetime,timedelta, date
-from disturbance.models import  (   
+from disturbance.components.organisations.models import  (   
                                     Organisation,
                                 )
 
-from disturbance.serializers.users import   (   
+from disturbance.components.users.serializers import   (   
                                                 UserSerializer,
                                                 UserAddressSerializer,
                                                 PersonalSerializer,

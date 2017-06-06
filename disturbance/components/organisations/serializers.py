@@ -1,6 +1,7 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
-from disturbance.models import (   Organisation,
+from disturbance.components.organisations.models import (   
+                                Organisation,
                                 OrganisationContact,
                                 OrganisationRequest
                             )
@@ -28,9 +29,23 @@ class OrganisationContactSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrganisationRequestSerializer(serializers.ModelSerializer):
+    identification = serializers.FileField()
+    requester = serializers.SerializerMethodField()
+    assigned_officer = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     class Meta:
         model = OrganisationRequest
         fields = '__all__'
+        read_only_fields = ('requester','lodgement_date','assigned_officer')
+
+    def get_requester(self,obj):
+        return obj.requester.get_full_name()
+
+    def get_assigned_officer(self,obj):
+        return obj.assigned_officer.get_full_name() if obj.assigned_officer else ''
+
+    def get_status(self,obj):
+        return obj.get_status_display()
 
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,7 +56,7 @@ class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
     class Meta:
-        mdoel = Organisation
+        model = Organisation
         fields = (
             'id',
             'name',

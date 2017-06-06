@@ -3,18 +3,20 @@ from django.conf.urls import url, include
 from django.conf.urls.static import static
 from rest_framework import routers
 from disturbance import views
+from disturbance.admin import disturbance_admin_site 
 from disturbance.Views import proposal
 from disturbance.admin import admin
 
-from disturbance.api import users as users_api
-from disturbance.api import organisations as org_api
-from disturbance.api import proposal as proposal_api
+from disturbance.components.users import api as users_api
+from disturbance.components.organisations import api as org_api
+from disturbance.components.proposals import api as proposal_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
+router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'users',users_api.UserViewSet)
 
 api_patterns = [
@@ -25,12 +27,13 @@ api_patterns = [
 
 # URL Patterns
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
+    url(r'^admin/', disturbance_admin_site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.DisturbanceRoutingView.as_view(), name='ds_home'),
-    url(r'^internal/$', views.InternalView.as_view(), name='dash'),
+    url(r'^internal/', views.InternalView.as_view(), name='internal'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
+    url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
     url(r'^proposal/$', proposal.ProposalView.as_view(), name='proposal'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
 ] + ledger_patterns
