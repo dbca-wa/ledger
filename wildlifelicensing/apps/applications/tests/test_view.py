@@ -27,7 +27,7 @@ class ViewApplicationTestCase(TestCase):
 
     def test_view_application_pdf(self):
         """
-        Only officers, assessors and customer that owns the application can view the application pdf
+        Testing that when a user requests the application as a pdf they are returned a response containing a pdf
         """
         self.client.login(self.officer.email)
 
@@ -38,7 +38,7 @@ class ViewApplicationTestCase(TestCase):
 
     def test_view_application_pdf_permissions(self):
         """
-        Only officers, assessors and customer that owns the application can view the application pdf
+        Testing that only officers, assessors and customer that owns the application can view the application pdf
         """
         url = reverse('wl_applications:view_application_pdf', args=(self.application.pk,))
         allowed = [self.officer, self.assessor, self.customer]

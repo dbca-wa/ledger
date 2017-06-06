@@ -47,7 +47,7 @@ styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 def _create_application(application_buffer, application):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN, PAGE_HEIGHT - 2 * PAGE_MARGIN,
                              id='EveryPagesFrame')
-    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame)
+    every_page_template = PageTemplate(id='EveryPages', frames=[every_page_frame])
 
     doc = BaseDocTemplate(application_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
@@ -79,10 +79,7 @@ def _create_application_metadata(application):
     metadata_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
 
     licensee = application.applicant.get_full_name()
-    if application.lodgement_number and application.lodgement_sequence:
-        lodgement_number = '{}-{}'.format(application.lodgement_number, application.lodgement_sequence)
-    else:
-        lodgement_number = ''
+    lodgement_number = application.reference
 
     top_row = [
         Paragraph('Licensee:', styles['BoldLeft']),

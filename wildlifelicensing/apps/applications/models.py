@@ -107,7 +107,10 @@ class Application(RevisionedMixin):
 
     @property
     def reference(self):
-        return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
+        if self.lodgement_number and self.lodgement_sequence:
+            return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
+        else:
+            return ''
 
     @property
     def is_assigned(self):
