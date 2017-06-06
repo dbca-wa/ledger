@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.generic.base import TemplateView, View
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
@@ -12,6 +12,7 @@ from wildlifelicensing.apps.applications.mixins import UserCanViewApplicationMix
 from wildlifelicensing.apps.applications.utils import convert_documents_to_url, append_app_document_to_schema_data, \
     get_log_entry_to, format_application, format_assessment
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
+from wildlifelicensing.apps.applications.pdf import create_application_pdf_bytes
 from wildlifelicensing.apps.main.models import Document
 from wildlifelicensing.apps.main.helpers import is_officer, render_user_name
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
@@ -51,6 +52,17 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
             messages.error(self.request, message)
 
         return super(ViewReadonlyView, self).get_context_data(**kwargs)
+
+
+class ViewPDFView(UserCanViewApplicationMixin, View):
+    def get(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=self.args[0])
+
+        response = HttpResponse(content_type='application/pdf')
+
+        response.write(create_application_pdf_bytes(application))
+
+        return response
 
 
 class ViewReadonlyOfficerView(UserCanViewApplicationMixin, TemplateView):

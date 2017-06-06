@@ -51,6 +51,12 @@ def render_lodgement_number(application):
     else:
         return ''
 
+def render_application_document(application):
+    if application is not None:
+        return '<a href="{0}" target="_blank">View <img height="20" src="{1}"></img></a>'.format(
+            reverse('wl_applications:view_application_pdf', args=(application.pk,)), static('wl/img/pdf.png'))
+    else:
+        return ''
 
 def render_licence_number(licence):
     if licence is not None and licence.licence_number and licence.licence_sequence:

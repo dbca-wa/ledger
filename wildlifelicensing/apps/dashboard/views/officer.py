@@ -173,6 +173,11 @@ class TablesApplicationsOfficerView(OfficerRequiredMixin, base.TablesBaseView):
                 'orderable': False
             },
             {
+                'title': 'Application PDF',
+                'searchable': False,
+                'orderable': False
+            },
+            {
                 'title': 'Action',
                 'searchable': False,
                 'orderable': False
@@ -219,6 +224,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         'assigned_officer',
         'proxy_applicant',
         'payment',
+        'application_pdf',
         'action'
     ]
     order_columns = [
@@ -238,6 +244,9 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             'search': lambda self, search: DataTableApplicationsOfficerView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance),
         },
+        'lodgement_date': {
+            'render': lambda self, instance: base.render_date(instance.lodgement_date)
+        },
         'assigned_officer': {
             'search': lambda self, search: base.build_field_query(
                 ['assigned_officer__last_name', 'assigned_officer__first_name'],
@@ -251,16 +260,16 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
                 search),
             'render': lambda self, obj: base.render_user_name(obj.proxy_applicant)
         },
-        'action': {
-            'render': lambda self, instance: DataTableApplicationsOfficerView._render_action_column(instance),
-        },
-        'lodgement_date': {
-            'render': lambda self, instance: base.render_date(instance.lodgement_date)
-        },
         'payment': {
             'render': lambda self, instance: base.render_payment(instance, self.request.build_absolute_uri(
                 reverse('wl_dashboard:tables_applications_officer')))
         },
+        'application_pdf': {
+            'render': lambda self, instance: base.render_application_document(instance)
+        },
+        'action': {
+            'render': lambda self, instance: DataTableApplicationsOfficerView._render_action_column(instance),
+        }
     })
 
     SESSION_SAVE_SETTINGS = True
@@ -305,7 +314,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         elif any([issued, discarded, declined]):
             return '<a href="{0}">{1}</a>'.format(
                 reverse('wl_applications:view_application_officer', args=[obj.pk]),
-                'View application (read-only)'
+                'View (read-only)'
             )
         else:
             return '<a href="{0}">Process</a>'.format(
