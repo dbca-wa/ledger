@@ -6,6 +6,7 @@ import re
 
 from dateutil.parser import parse as date_parse
 
+# TODO: fix the deprecation of SchemaModel. Use jsontableschema.model.Schema, but there is a problem (see below)
 from jsontableschema.model import SchemaModel
 from jsontableschema import types
 from jsontableschema.exceptions import InvalidDateType
@@ -130,6 +131,7 @@ class SchemaField:
     for validation.
     """
     # For most of the type we use the jsontableschema ones
+    # TODO: SchemaModel is deprecated in favor of of jsontableschema.schema.Schema but there's no _type_map!
     BASE_TYPE_MAP = SchemaModel._type_map()
     # except for anything date.
     BASE_TYPE_MAP['date'] = DayFirstDateType
