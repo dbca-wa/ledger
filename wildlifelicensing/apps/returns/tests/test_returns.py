@@ -430,6 +430,48 @@ class TestLifeCycle(TestCase):
         expected_status = 'submitted'
         self.assertEqual(ret.status, expected_status)
 
+        url = reverse('wl_returns:curate_return', args=(ret.pk,))
+        curator = self.officer
+        self.client.login(curator.email)
+
+        # get method
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # the return data is in a 'tables' context (one per return type).
+        ctx = response.context
+        self.assertTrue('tables' in ctx)
+        # this return (reg-17) has only one table.
+        tables = ctx['tables']
+        self.assertEqual(len(tables), 1)
+        table = tables[0]
+        self.assertIsInstance(table, dict)
+        self.assertEqual(sorted(['headers', 'data', 'name', 'title']), sorted(table.keys()))
+
+        # verify data
+        sent_data = table['data']
+        # should be a list of rows
+        self.assertIsInstance(sent_data, list)
+        # we expect only one row
+        self.assertEqual(len(sent_data), 1)
+        sent_first_row = sent_data[0]
+        self.assertIsInstance(sent_first_row, dict)
+        # the values should match what the customer submitted
+        expected_data = TEST_VALUES
+        for expected_key, expected_value in expected_data.items():
+            self.assertTrue(expected_key in sent_first_row, "{} not in sent data".format(expected_key))
+            # each returned 'cell' contains the value and an error
+            sent_cell = sent_first_row.get(expected_key)
+            self.assertTrue('value' in sent_cell)
+            self.assertTrue('error' in sent_cell)
+            sent_value = sent_cell.get('value')
+            sent_error = sent_cell.get('error')
+            # we don't expect any error
+            self.assertIsNone(sent_error)
+            # all sent values are string
+            expected_value = str(expected_value)
+            self.assertEqual(sent_value, expected_value)
+
+        # post method
         # changed the species name
         new_species = 'Chubby bat'
         data = TEST_VALUES
@@ -439,9 +481,6 @@ class TestLifeCycle(TestCase):
         }
         for key, value in data.items():
             payload['regulation-17::{}'.format(key)] = value
-        url = reverse('wl_returns:curate_return', args=(ret.pk,))
-        curator = self.officer
-        self.client.login(curator.email)
         response = self.client.post(url, data=payload)
         self.assertRedirects(response, reverse('home'),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
@@ -454,6 +493,10 @@ class TestLifeCycle(TestCase):
         self.assertEqual(data.get('SPECIES_NAME'), new_species)
 
     def test_curate_request_amendments(self):
+        """
+        Test workflow when an officer requests a amendment to a return, especially the status change and verify that
+        an email is sent to the user.
+        """
         ret, data = self._create_and_lodge_return()
         expected_status = 'submitted'
         self.assertEqual(ret.status, expected_status)
@@ -506,6 +549,10 @@ class TestLifeCycle(TestCase):
         self.assertTrue(str(email.body).find(expected_url) > 0)
 
     def test_user_edit_after_amendments(self):
+        """
+        The user can edit and loge (amend) the return
+        :return:
+        """
         ret = self._create_lodge_and_amend_return()
         self._lodge_reg17_return(ret)
         expected_status = 'amended'
@@ -513,7 +560,57 @@ class TestLifeCycle(TestCase):
         self.assertEqual(ret.pending_amendments_qs.count(), 0)
 
     def test_curate_amended(self):
-        pass
+        """
+        The officer can curate and accept an amended return
+        :return:
+        """
+        # create/amend ...
+        ret = self._create_lodge_and_amend_return()
+        self._lodge_reg17_return(ret)
+        expected_status = 'amended'
+        self.assertEqual(ret.status, expected_status)
+        self.assertEqual(ret.pending_amendments_qs.count(), 0)
+
+        # officer curates: changed the species name
+        url = reverse('wl_returns:curate_return', args=(ret.pk,))
+        curator = self.officer
+        self.client.login(curator.email)
+        new_species = 'Chubby bat'
+        data = TEST_VALUES
+        data['SPECIES_NAME'] = new_species
+        payload = {
+            'accept': True
+        }
+        for key, value in data.items():
+            payload['regulation-17::{}'.format(key)] = value
+        response = self.client.post(url, data=payload)
+        self.assertRedirects(response, reverse('home'),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+        ret.refresh_from_db()
+        expected_status = 'accepted'
+        self.assertEqual(ret.status, expected_status)
 
     def test_declined_amended(self):
-        pass
+        """
+        Test decline an amended returns
+        """
+        # create/amend ...
+        ret = self._create_lodge_and_amend_return()
+        self._lodge_reg17_return(ret)
+        expected_status = 'amended'
+        self.assertEqual(ret.status, expected_status)
+        self.assertEqual(ret.pending_amendments_qs.count(), 0)
+
+        url = reverse('wl_returns:curate_return', args=(ret.pk,))
+        curator = self.officer
+        self.client.login(curator.email)
+        payload = {
+            'decline': True
+        }
+        response = self.client.post(url, data=payload)
+        self.assertRedirects(response, reverse('home'),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+        ret.refresh_from_db()
+        expected_status = 'declined'
+        self.assertEqual(ret.status, expected_status)
+
