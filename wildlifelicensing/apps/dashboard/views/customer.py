@@ -343,13 +343,18 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         except Application.DoesNotExist:
             pass
 
+        renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
+        amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+
         expiry_days = (instance.end_date - datetime.date.today()).days
-        if expiry_days <= 30 and instance.is_renewable:
-            url = reverse('wl_applications:renew_licence', args=(instance.pk,))
-            return '<a href="{0}">Renew</a>'.format(url)
-        elif instance.end_date >= datetime.date.today():
-            url = reverse('wl_applications:amend_licence', args=(instance.pk,))
-            return '<a href="{0}">Amend</a>'.format(url)
+
+        if instance.is_renewable:
+            if expiry_days <= 30 and expiry_days > 0:
+                return '<a href="{0}">Amend</a> / <a href="{1}">Renew</a>'.format(amend_url, renew_url)
+            elif expiry_days <= 0:
+                return '<a href="{0}">Renew</a>'.format(renew_url)
+        if instance.end_date >= datetime.date.today():
+            return '<a href="{0}">Amend</a>'.format(amend_url)
         else:
             return 'N/A'
 

@@ -748,15 +748,22 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         except Application.DoesNotExist:
             pass
 
+        amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+        renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
         reissue_url = reverse('wl_applications:reissue_licence', args=(instance.pk,))
+
         expiry_days = (instance.end_date - datetime.date.today()).days
 
-        if expiry_days <= 30 and instance.is_renewable:
-            renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
-            return '<a href="{0}">Renew</a> / <a href="{1}">Reissue</a>'.format(renew_url, reissue_url)
-        else:
-            amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+        if instance.is_renewable:
+            if expiry_days <= 30 and expiry_days > 0:
+                return '<a href="{0}">Amend</a> / <a href="{1}">Renew</a> / <a href="{2}">Reissue</a>'.\
+                    format(amend_url, renew_url, reissue_url)
+            elif expiry_days <= 30:
+                return '<a href="{0}">Renew</a>'.format(renew_url)
+        if instance.end_date >= datetime.date.today():
             return '<a href="{0}">Amend</a> / <a href="{1}">Reissue</a>'.format(amend_url, reissue_url)
+        else:
+            return 'N/A'
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()
