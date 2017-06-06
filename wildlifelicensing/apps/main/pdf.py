@@ -395,9 +395,6 @@ def _create_letter_address(licence):
 
     address_elements.append(Paragraph(_format_name(addressee, include_first_name=True), styles['LetterLeft']))
 
-    if licence.profile.institution:
-        address_elements.append(Paragraph(licence.profile.institution, styles['LetterLeft']))
-
     address_elements.append(Paragraph(address.line1, styles['LetterLeft']))
 
     if address.line2:
