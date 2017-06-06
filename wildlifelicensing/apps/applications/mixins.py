@@ -133,7 +133,7 @@ class RedirectApplicationInSessionMixin(object):
         if 'application_id' in request.session:
             messages.error(request, 'There is currently another application in the process of being entered. Please '
                            'conclude or save this application before creating a new one. If you are seeing this '
-                           'message and are not another application being entered, you may need to <a href="{}">logout'
+                           'message and there is not another application being entered, you may need to <a href="{}">logout'
                            '</a> and log in again.'.format(reverse('accounts:logout')))
             return redirect('home')
 

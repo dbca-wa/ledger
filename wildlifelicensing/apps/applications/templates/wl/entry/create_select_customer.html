@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block requirements %}
-    require(['js/entry/create_select_customer', 'js/entry/navigation'], function (create_select_customer) {
+    require(['js/entry/create_select_customer', 'js/entry/navigation'], function (create_select_customer, navigation) {
         create_select_customer.init();
 
         navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',

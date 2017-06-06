@@ -23,7 +23,7 @@ from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMix
     UserCanRenewApplicationMixin, UserCanAmendApplicationMixin, RedirectApplicationInSessionMixin, \
     RedirectApplicationNotInSessionMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
+from wildlifelicensing.apps.main.helpers import is_customer, is_officer, render_user_name
 from wildlifelicensing.apps.applications.utils import delete_session_application
 from wildlifelicensing.apps.payments.utils import is_licence_free, get_licence_price, \
     generate_product_title
@@ -51,7 +51,7 @@ class ApplicationEntryBaseView(RedirectApplicationNotInSessionMixin, TemplateVie
         return super(ApplicationEntryBaseView, self).get_context_data(**kwargs)
 
 
-class DeleteApplicationSessionView(OfficerOrCustomerRequiredMixin, View):
+class DeleteApplicationSessionView(UserCanEditApplicationMixin, View):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=request.POST.get('applicationId'))
 
@@ -171,6 +171,8 @@ class RenewLicenceView(UserCanRenewApplicationMixin, RedirectApplicationInSessio
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application)
             application.processing_status = 'renewal'
+            if is_officer(request.user):
+                application.proxy_applicant = request.user
             application.save()
 
         utils.set_session_application(request.session, application)
@@ -195,6 +197,8 @@ class AmendLicenceView(UserCanAmendApplicationMixin, RedirectApplicationInSessio
             application = utils.clone_application_with_status_reset(previous_application, is_licence_amendment=True)
             application.processing_status = 'licence_amendment'
             application.is_licence_amendment = True
+            if is_officer(request.user):
+                application.proxy_applicant = request.user
             application.save()
 
         utils.set_session_application(request.session, application)

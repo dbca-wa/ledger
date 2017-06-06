@@ -9,11 +9,11 @@
 {% load users %}
 
 {% block requirements %}
-    require(['js/entry/select_licence_type'], function(selectLicenceType) {
+    require(['js/entry/select_licence_type', 'js/entry/navigation'], function(selectLicenceType, navigation) {
         selectLicenceType.init({
             categories: {{ categories|jsonify }},
         });
-        
+
         navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
             {{ application.id }}, '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
     });
@@ -46,7 +46,7 @@
 {% endblock %}
 
 {% block content %}
-    <div id="categoriesContainer" class="container">
+    <div id="contentContainer" class="container">
         {% for category in categories %}
             <h4>{{ category.name }}</h4>
             <div class="row">
