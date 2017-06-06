@@ -497,17 +497,19 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 application.hard_copy.file = request.FILES[f]
                 application.hard_copy.save()
             else:
+                document = Document.objects.create(name=f, file=request.FILES[f])
+                document.save()
                 # for legacy applications, need to check if there's a document where file is
                 # named by the file name rather than the form field name
                 try:
-                    document = application.documents.get(name=str(request.FILES[f]))
+                    old_document = application.documents.get(name=str(request.FILES[f]))
                 except Document.DoesNotExist:
-                    document = application.documents.get_or_create(name=f)[0]
+                    old_document = application.documents.filter(name=f).first()
 
-                document.name = f
-                document.file = request.FILES[f]
+                if old_document is not None:
+                    application.documents.remove(old_document)
 
-                document.save()
+                application.documents.add(document)
 
         application.save()
 
