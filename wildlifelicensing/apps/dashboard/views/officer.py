@@ -930,7 +930,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
     @staticmethod
     def _search_licence_number(search):
         # testing to see if search term contains no spaces and two hyphens,
-        # meaning it's a lodgement number with a sequence
+        # meaning it's a licence number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])

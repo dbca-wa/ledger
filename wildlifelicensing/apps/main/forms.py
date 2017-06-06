@@ -108,7 +108,7 @@ class IssueLicenceForm(forms.ModelForm):
             required = ['issue_date', 'start_date', 'end_date']
             for field_name in required:
                 field = self.fields.get(field_name)
-                if field:
+                if field is not None:
                     field.required = True
 
         if purpose is not None:
@@ -139,7 +139,7 @@ class IssueLicenceForm(forms.ModelForm):
 
         end_date = cleaned_data.get('end_date')
         start_date = cleaned_data.get('start_date')
-        if end_date and start_date and end_date < start_date:
+        if end_date is not None and start_date is not None and end_date < start_date:
             msg = 'End date must be greater than start date'
             self.add_error('end_date', msg)
 

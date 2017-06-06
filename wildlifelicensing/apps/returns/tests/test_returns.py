@@ -592,7 +592,7 @@ class TestLifeCycle(TestCase):
 
     def test_declined_amended(self):
         """
-        Test decline an amended returns
+        Test decline an amended return
         """
         # create/amend ...
         ret = self._create_lodge_and_amend_return()
