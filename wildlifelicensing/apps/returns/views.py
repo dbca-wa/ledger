@@ -15,9 +15,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
-from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType
+from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType, \
+    ReturnAmendmentRequest
 from wildlifelicensing.apps.main import excel
-from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm, NilReturnForm, ReturnsLogEntryForm
+from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm, NilReturnForm, ReturnsLogEntryForm,\
+    ReturnAmendmentRequestForm
 from wildlifelicensing.apps.returns.utils_schema import Schema, create_return_template_workbook
 from wildlifelicensing.apps.returns.utils import format_return
 from wildlifelicensing.apps.returns.signals import return_submitted
@@ -26,6 +28,8 @@ from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
 from wildlifelicensing.apps.returns.mixins import UserCanEditReturnMixin, UserCanViewReturnMixin, \
     UserCanCurateReturnMixin
+from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.returns.emails import send_amendment_requested_email
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -98,7 +102,13 @@ class EnterReturnView(UserCanEditReturnMixin, TemplateView):
         if is_officer(self.request.user):
             ret.proxy_customer = self.request.user
 
-        ret.status = 'submitted'
+        # assume that all the amendment requests has been solved.
+        pending_amendments = ret.pending_amendments_qs
+        if pending_amendments:
+            pending_amendments.update(status='amended')
+            ret.status = 'amended'
+        else:
+            ret.status = 'submitted'
         ret.save()
 
         message = 'Return successfully submitted.'
@@ -154,6 +164,10 @@ class EnterReturnView(UserCanEditReturnMixin, TemplateView):
         if 'upload_spreadsheet_form' not in kwargs:
             kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
         kwargs['nil_return_form'] = NilReturnForm()
+
+        pending_amendments = ret.pending_amendments_qs
+        if pending_amendments:
+            kwargs['amendments'] = pending_amendments
 
         return super(EnterReturnView, self).get_context_data(**kwargs)
 
@@ -260,6 +274,14 @@ class CurateReturnView(UserCanCurateReturnMixin, EnterReturnView):
             to=to.get_full_name(),
             fromm=self.request.user.get_full_name(),
         )
+
+        ctx['amendment_request_form'] = ReturnAmendmentRequestForm(
+            ret=ret,
+            officer=self.request.user
+        )
+
+        amendment_requests = ReturnAmendmentRequest.objects.filter(ret=ret)
+        ctx['amendment_requests'] = serialize(amendment_requests, fields=['status', 'reason'])
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -381,3 +403,24 @@ class DownloadReturnTemplate(LoginRequiredMixin, View):
         wb = create_return_template_workbook(return_type)
 
         return excel.WorkbookResponse(wb, filename)
+
+
+class AmendmentRequestView(UserCanCurateReturnMixin, View):
+    def post(self, request, *args, **kwargs):
+        amendment_request_form = ReturnAmendmentRequestForm(request.POST)
+        if amendment_request_form.is_valid():
+            amendment_request = amendment_request_form.save()
+            ret = amendment_request.ret
+            ret.status = 'amendment_required'
+            ret.save()
+            application = get_object_or_404(Application, licence=ret.licence)
+            send_amendment_requested_email(amendment_request, request, application)
+            response = {
+                'amendment_request': serialize(amendment_request, fields=['status', 'reason'])
+            }
+            return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
+        else:
+            return JsonResponse(amendment_request_form.errors,
+                                safe=False,
+                                encoder=WildlifeLicensingJSONEncoder,
+                                status=422)

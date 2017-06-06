@@ -700,7 +700,8 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     @staticmethod
     def _search_licence_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        #  meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
@@ -908,7 +909,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         elif instance.status == 'draft':
             url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
-        elif instance.status == 'submitted':
+        elif instance.status in ['submitted', 'amended', 'amendment_required']:
             text = 'Curate Return'
             url = reverse('wl_returns:curate_return', args=(instance.pk,))
             return '<a href="{0}">{1}</a>'.format(url, text)
@@ -937,7 +938,8 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
 
     @staticmethod
     def _search_licence_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        # meaning it's a licence number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
@@ -974,7 +976,7 @@ class BulkLicenceRenewalPDFView(DataTableLicencesOfficerView):
 
     def get(self, request, *args, **kwargs):
         super(BulkLicenceRenewalPDFView, self).get(request, *args, **kwargs)
-        licences = []
+        licences = WildlifeLicence.objects.none()
         if self.qs:
             licences = self.qs
         response = HttpResponse(content_type='application/pdf')

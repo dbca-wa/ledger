@@ -103,13 +103,21 @@ class IssueLicenceForm(forms.ModelForm):
         if skip_required:
             for field in self.fields.values():
                 field.required = False
+        else:
+            # enforce required for some fields not required at the ledger (Licence) model level
+            required = ['issue_date', 'start_date', 'end_date']
+            for field_name in required:
+                field = self.fields.get(field_name)
+                if field is not None:
+                    field.required = True
 
         if purpose is not None:
             self.fields['purpose'].initial = purpose
 
         self.fields['is_renewable'].widget = forms.CheckboxInput()
 
-        # if a licence instance has not been passed in nor any POST data (i.e. this is creating the 'get' version of the form)
+        # if a licence instance has not been passed in nor any POST data
+        # (i.e. this is creating the 'get' version of the form)
         if 'instance' not in kwargs and len(args) == 0:
             today_date = datetime.now()
             self.fields['issue_date'].initial = today_date.strftime(DATE_FORMAT)
@@ -129,8 +137,11 @@ class IssueLicenceForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(IssueLicenceForm, self).clean()
 
-        if cleaned_data.get('end_date') < cleaned_data.get('start_date'):
-            raise forms.ValidationError('End date must be greater than start date')
+        end_date = cleaned_data.get('end_date')
+        start_date = cleaned_data.get('start_date')
+        if end_date is not None and start_date is not None and end_date < start_date:
+            msg = 'End date must be greater than start date'
+            self.add_error('end_date', msg)
 
 
 class CommunicationsLogEntryForm(forms.ModelForm):
