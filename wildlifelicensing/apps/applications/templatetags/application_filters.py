@@ -1,5 +1,8 @@
 from django.template.defaulttags import register
 
+from wildlifelicensing.apps.applications.models import Application
+
+
 MAX_COLS = 12
 
 
@@ -11,3 +14,16 @@ def derive_col_width(num_cols):
         return 1
     else:
         return int(MAX_COLS / num_cols)
+
+
+@register.filter
+def get_application_verb(application):
+    if application.previous_application is not None:
+        if application.is_licence_amendment:
+            return 'Amend'
+        else:
+            return 'Renew'
+    elif application.is_temporary:
+        return 'New'
+    else:
+        return 'Edit'

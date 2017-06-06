@@ -1,10 +1,13 @@
 import datetime
 
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib import messages
+from django.shortcuts import redirect
 
 from wildlifelicensing.apps.main.helpers import is_customer, is_officer, is_assessor, get_user_assessor_groups
 from wildlifelicensing.apps.applications.models import Application, Assessment
+from wildlifelicensing.apps.applications.utils import get_session_application
 
 
 class UserCanEditApplicationMixin(UserPassesTestMixin):
@@ -118,6 +121,37 @@ class UserCanAmendApplicationMixin(UserPassesTestMixin):
             return application.licence.end_date >= datetime.date.today()
         else:
             return False
+
+
+class RedirectApplicationInSessionMixin(object):
+    """
+    Mixin to check if there is currently an application in the session and if so, redirect to home with a message. This
+    is for the case when a view is about to start entering application details but another application is currently
+    being entered.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if 'application_id' in request.session:
+            messages.error(request, 'There is currently another application in the process of being entered. Please '
+                           'conclude or save this application before creating a new one. If you are seeing this '
+                           'message and there is not another application being entered, you may need to <a href="{}">logout'
+                           '</a> and log in again.'.format(reverse('accounts:logout')))
+            return redirect('home')
+
+        return super(RedirectApplicationInSessionMixin, self).dispatch(request, *args, **kwargs)
+
+
+class RedirectApplicationNotInSessionMixin(object):
+    """
+    Mixin to check if an application is in the session, and if not, redirect to home with a message. This is the case
+    where an application is being edited but somehow the session has become corrupt and there is no longer an
+    application referenced there.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if 'application_id' not in request.session:
+            messages.error(request, 'The application session was corrupted.')
+            return redirect('home')
+
+        return super(RedirectApplicationNotInSessionMixin, self).dispatch(request, *args, **kwargs)
 
 
 class CanPerformAssessmentMixin(UserPassesTestMixin):
