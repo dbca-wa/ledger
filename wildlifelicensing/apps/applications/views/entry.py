@@ -63,7 +63,7 @@ class DeleteApplicationSessionView(UserCanEditApplicationMixin, View):
         if session_application_id.id == application.id:
             utils.delete_session_application(request.session)
 
-            if application.is_temporary:
+            if application.customer_status == 'temp':
                 application.delete()
 
         return HttpResponse()
