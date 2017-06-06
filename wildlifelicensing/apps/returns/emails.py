@@ -9,7 +9,6 @@ from wildlifelicensing.apps.emails.emails import TemplateEmailBase, host_reverse
 from wildlifelicensing.apps.returns.models import ReturnLogEntry
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
-MAX_SUBJECT_LENGTH = 76
 
 logger = logging.getLogger(__name__)
 
