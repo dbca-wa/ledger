@@ -325,9 +325,13 @@ class TestAssignAssessor(TestCase):
     def test_assign_assessment_send_email(self):
         """
         Use case: assessor_1 assign the assessment to assessor_2.
-         assessor_2 should receive an email with a link
+         Test that assessor_2 should receive an email with a link.
+         The email should be also log in the communication log
         """
         assessment = self._issue_assessment(self.application, self.assessor_group)
+        previous_comm_log = app_helpers.get_communication_log(assessment.application)
+        previous_action_list = app_helpers.get_action_log(assessment.application)
+
         url = reverse('wl_applications:assign_assessor')
         self.client.login(self.assessor_1.email)
         payload = {
@@ -335,6 +339,7 @@ class TestAssignAssessor(TestCase):
             'userID': self.assessor_2.id
         }
         resp = self.client.post(url, data=payload)
+        self.assertEqual(resp.status_code, 200)
         # the response is a json response. It should contain the assessment id
         expected_content_type = 'application/json'
         self.assertEqual(resp['content-type'], expected_content_type)
@@ -354,12 +359,27 @@ class TestAssignAssessor(TestCase):
                                args=[assessment.application.pk, assessment.pk])
         self.assertTrue(email.body.find(expected_url) > -1)
 
+        # test that the email has been logged.
+        new_comm_log = app_helpers.get_communication_log(assessment.application)
+        self.assertEqual(len(new_comm_log), len(previous_comm_log) + 1)
+        previous_recipients = [entry['to'] for entry in previous_comm_log]
+        self.assertNotIn(self.assessor_2.email, previous_recipients)
+        new_recipients = [entry['to'] for entry in new_comm_log]
+        self.assertIn(self.assessor_2.email, new_recipients)
+
+        # it should also be recorded in the action list
+        new_action_list = app_helpers.get_action_log(assessment.application)
+        self.assertEqual(len(new_action_list), len(previous_action_list) + 1)
+
     def test_assign_to_me_no_email(self):
         """
         Use case: assessor_1 assign the assessment to himself.
          test that no email is sent
         """
         assessment = self._issue_assessment(self.application, self.assessor_group)
+        previous_comm_log = app_helpers.get_communication_log(assessment.application)
+        previous_action_list = app_helpers.get_action_log(assessment.application)
+
         url = reverse('wl_applications:assign_assessor')
         self.client.login(self.assessor_1.email)
         payload = {
@@ -374,3 +394,11 @@ class TestAssignAssessor(TestCase):
         # we should have one email sent to the assessor
         emails = get_emails()
         self.assertEqual(len(emails), 0)
+
+        # com log should be unchanged.
+        new_comm_log = app_helpers.get_communication_log(assessment.application)
+        self.assertEqual(new_comm_log, previous_comm_log)
+
+        # but should be recorded in the action list
+        new_action_list = app_helpers.get_action_log(assessment.application)
+        self.assertEqual(len(new_action_list), len(previous_action_list) + 1)

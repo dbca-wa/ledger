@@ -117,6 +117,26 @@ def get_minimum_data_for_issuing_licence():
     }
 
 
+def get_communication_log(application):
+    client = SocialClient()
+    officer = get_or_create_default_officer()
+    client.login(officer.email)
+    url = reverse('wl_applications:log_list', args=[application.pk])
+    resp = client.get(url)
+    client.logout()
+    return resp.json()['data']
+
+
+def get_action_log(application):
+    client = SocialClient()
+    officer = get_or_create_default_officer()
+    client.login(officer.email)
+    url = reverse('wl_applications:action_list', args=[application.pk])
+    resp = client.get(url)
+    client.logout()
+    return resp.json()['data']
+
+
 class HelpersTest(TestCase):
     def test_create_profile(self):
         user = create_random_customer()
@@ -128,3 +148,15 @@ class HelpersTest(TestCase):
     def test_create_application(self):
         application = create_application()
         self.assertIsNotNone(application)
+
+    def test_communication_log(self):
+        application = create_and_lodge_application()
+        comm_log = get_communication_log(application)
+        self.assertIsNotNone(comm_log)
+        self.assertIsInstance(comm_log, list)
+
+    def test_action_log(self):
+        application = create_and_lodge_application()
+        action_log = get_action_log(application)
+        self.assertIsNotNone(action_log)
+        self.assertIsInstance(action_log, list)
