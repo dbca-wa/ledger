@@ -42,32 +42,14 @@ class OrgRequestRequesterSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return obj.get_full_name()
 
-class OrganisationAcessGroupMembers(serializers.Serializer):
-    members = serializers.SerializerMethodField()
-    
-    def get_members(self):
-        members = []
-        group = OrganisationAccessGroup.objects.first()
-        if group:
-            for m in group.all_members:
-                members.append({'name': m.get_full_name(),'id': m.id})
-        else:
-            for m in EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True):
-                members.append({'name': m.get_full_name(),'id': m.id})
-        return members
-
 class OrganisationRequestSerializer(serializers.ModelSerializer):
     identification = serializers.FileField()
     requester = OrgRequestRequesterSerializer(read_only=True)
-    assigned_officer = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     class Meta:
         model = OrganisationRequest
         fields = '__all__'
         read_only_fields = ('requester','lodgement_date','assigned_officer')
-
-    def get_assigned_officer(self,obj):
-        return obj.assigned_officer.get_full_name() if obj.assigned_officer else ''
 
     def get_status(self,obj):
         return obj.get_status_display()
