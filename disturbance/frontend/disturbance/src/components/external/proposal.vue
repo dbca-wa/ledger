@@ -2,7 +2,9 @@
     <div >
         <form action="/proposal/" method="post" name="new_proposal" enctype="multipart/form-data">
             <Proposal v-if="!isLoading" :proposal="proposal" :data="ans">
-                <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token">
+                <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+                <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
+                <input type='hidden' name="proposal_id" :value="1" />
                 <input type="submit" class="btn btn-primary" value="Save"/>
             </Proposal>
         </form>
@@ -17,7 +19,7 @@ export default {
             "proposal":[],
             "loading":[],
             form:null,
-            "ans":require('@/assets/ans.json')
+            "ans":require('@/assets/ans.json'),
         }
     },
     components:{
@@ -40,7 +42,10 @@ export default {
     mounted:function(){
         let vm = this;
         vm.form = document.forms.new_proposal;
-        var url = api_endpoints.proposal_type;
+    },
+    created:function(){
+      let vm =this;
+      var url = api_endpoints.proposal_type;
         vm.loading.push('fetching proposal');
         vm.$http.get(url).then((response)=>{
             vm.proposal = response.body.schema;
@@ -49,7 +54,6 @@ export default {
             console.log(response);
             vm.loading.splice('fetching proposal',1);
         });
-
     }
 }
 </script>
