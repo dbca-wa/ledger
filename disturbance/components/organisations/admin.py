@@ -10,3 +10,10 @@ class OrganisationAdmin(admin.ModelAdmin):
 class OrganisationRequestAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.OrganisationAccessGroup)
+class OrganisationAccessGroupAdmin(admin.ModelAdmin):
+
+    exclude = ('site',)
+
+    def has_add_permission(self, request):
+        return True if models.OrganisationAccessGroup.objects.count() == 0 else False

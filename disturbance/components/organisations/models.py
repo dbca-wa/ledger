@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.contrib.sites.models import Site
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from django.utils.encoding import python_2_unicode_compatible
@@ -95,3 +96,22 @@ class OrganisationRequest(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+
+class OrganisationAccessGroup(models.Model):
+    site = models.OneToOneField(Site, default='1') 
+    members = models.ManyToManyField(EmailUser)
+
+    def __str__(self):
+        return 'Organisation Access Group'
+
+    @property
+    def all_members(self):
+        all_members = []
+        all_members.extend(self.members.all())
+        member_ids = [m.id for m in self.members.all()]
+        all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
+        return all_members
+
+    class Meta:
+        app_label = 'disturbance'
+        
