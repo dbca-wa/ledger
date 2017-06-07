@@ -72,6 +72,7 @@ class SocialClient(Client):
         else:
             login_url = re.search('(?P<url>https?://[^\s]+)', mail.outbox[0].body).group('url')
             response = self.get(login_url, follow=True)
+            clear_mailbox()
         return response
 
     def logout(self):

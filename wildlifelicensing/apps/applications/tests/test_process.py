@@ -7,8 +7,8 @@ from django_dynamic_fixture import G
 
 from wildlifelicensing.apps.applications.models import IDRequest, ApplicationDeclinedDetails
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, is_login_page, \
-    get_or_create_default_officer, get_or_create_default_assessor_group, is_email, get_email, clear_mailbox, upload_id, \
-    clear_all_id_files, is_client_authenticated
+    get_or_create_default_officer, get_or_create_default_assessor_group, is_email, get_email, clear_mailbox, \
+    upload_id, clear_all_id_files, is_client_authenticated
 from wildlifelicensing.apps.applications.tests.helpers import create_and_lodge_application, get_or_create_assessment, \
     get_or_create_condition
 from wildlifelicensing.apps.applications.emails import ApplicationIDUpdateRequestedEmail
@@ -122,7 +122,6 @@ class TestStatusLifeCycle(TestCase):
         expected_status = 'issued'
         self.assertEquals(application.processing_status, expected_status)
 
-
     def test_issued_declined_licences_cannot_be_assessed(self):
         """
         Test that if a licence has been issued or application declined, assessments can no longer be done.
@@ -170,7 +169,6 @@ class TestStatusLifeCycle(TestCase):
 
         assessment.refresh_from_db()
         self.assertEquals(assessment.status, 'assessment_expired')
-
 
     def test_declined_applications_status(self):
         """
