@@ -3,7 +3,7 @@
         <div class="form-group">
             <div class="checkbox">
                 <label>
-                    <input :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" />
+                    <input ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="true" />
                     {{ label }}
                 </label><i data-toggle="tooltip" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>
             </div>
@@ -21,6 +21,16 @@ export default {
     options: function() {
       return JSON.stringify(this.conditions);
     }
+  },
+  mounted:function () {
+      let vm = this;
+      if (vm.isChecked) {
+          var input = this.$refs.Checkbox;
+          //input.checked = true;
+          var e = document.createEvent('HTMLEvents');
+          e.initEvent('change', true, true);
+          input.dispatchEvent(e);
+      }
   }
 }
 </script>

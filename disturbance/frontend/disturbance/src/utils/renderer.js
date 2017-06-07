@@ -58,6 +58,10 @@ module.exports = {
                 )
                 break;
             case 'radiobuttons':
+            var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data )? data : null ;
+                }
                 return (
                     <div class="form-group">
                         <label>{c.label}</label>
@@ -66,14 +70,14 @@ module.exports = {
                                     <Radio name={c.name} label={op.label} value={op.value} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} />
                                 )
                             })}
-                            <Conditions conditions={c.conditions} renderer={this} name={c.name}/>
+                            <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data}/>
                     </div>
                 )
                 break;
             case 'group':
                 var value = null;
                 if(data !== null && data !== undefined) {
-                  value = ( data[c.name] )? data[c.name] : null ;
+                  value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 return (
                     <Group label={c.label} name={c.name} help_text={c.help_text} isRemovable={true}>
@@ -90,11 +94,9 @@ module.exports = {
             case 'section':
                 var value = null;
                 if(data !== null && data !== undefined) {
-                  value = ( data[c.name] )? data[c.name] : null ;
+                  value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 this.sections.push({name:c.name,label:c.label});
-                console.log(c.name);
-                console.log(value);
                 return (
                     <Section label={c.label} Key={c.name} id={c.name}>
                         {c.children.map(d=>{
@@ -109,21 +111,14 @@ module.exports = {
                 break;
 
             case 'checkbox':
-                var value = null;
-                if(data !== null && data !== undefined) {
-                  value = ( data[c.name] )? data[c.name] : null ;
-                }
                 return (
                     <div class="form-group">
-                        <Checkbox name={c.name} label={c.label} help_text={c.help_text} value={c.value} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
-                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={value}/>
+                        <Checkbox name={c.name} label={c.label} help_text={c.help_text} value={val} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
+                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data}/>
                     </div>
                 )
                 break;
             case 'declaration':
-                if (c.name.trim() == 'permits_acknowledgement') {
-                    console.log(data);
-                }
                 var value = null;
                 if(data !== null && data !== undefined) {
                   value = ( data[c.name] )? data[c.name] : null ;
