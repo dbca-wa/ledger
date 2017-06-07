@@ -149,17 +149,33 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             kwargs['extracted_fields'] = application.licence.extracted_fields
         else:
-            purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
+            licence_initial_data = {
+                'is_renewable': application.licence_type.is_renewable,
+                'default_period': application.licence_type.default_period,
+            }
+
+            if application.previous_application is not None and application.previous_application.licence is not None:
+                previous_licence = application.previous_application.licence
+
+                licence_initial_data['regions'] = previous_licence.regions.all().values_list('pk', flat=True)
+                licence_initial_data['locations'] = previous_licence.locations
+                licence_initial_data['purpose'] = previous_licence.purpose
+                licence_initial_data['additional_information'] = previous_licence.additional_information
+                licence_initial_data['cover_letter_message'] = previous_licence.cover_letter_message
+
+                if application.is_licence_amendment:
+                    licence_initial_data['end_date'] = previous_licence.end_date
+
+            if not 'purpose' in licence_initial_data or len(licence_initial_data['purpose']) == 0:
+                licence_initial_data['purpose'] = '\n\n'.join(Assessment.objects.filter(application=application).
+                                                              values_list('purpose', flat=True))
 
             if hasattr(application.licence_type, 'returntype'):
-                return_frequency = application.licence_type.returntype.month_frequency
+                licence_initial_data['return_frequency'] = application.licence_type.returntype.month_frequency
             else:
-                return_frequency = -1
+                licence_initial_data['return_frequency'] = -1
 
-            kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes,
-                                                            is_renewable=application.licence_type.is_renewable,
-                                                            default_period=application.licence_type.default_period,
-                                                            return_frequency=return_frequency)
+            kwargs['issue_licence_form'] = IssueLicenceForm(**licence_initial_data)
 
             kwargs['extracted_fields'] = extract_licence_fields(application.licence_type.application_schema,
                                                                 application.data)
@@ -276,6 +292,7 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
+            licence.issue_date = date.today()
             licence.licence_type = application.licence_type
             licence.profile = application.applicant_profile
             licence.holder = application.applicant

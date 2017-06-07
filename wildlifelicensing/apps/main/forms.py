@@ -9,7 +9,7 @@ from django.forms.widgets import SelectMultiple
 
 from dateutil.relativedelta import relativedelta
 
-from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
+from wildlifelicensing.apps.main.models import WildlifeLicence, Region, CommunicationsLogEntry
 
 DATE_FORMAT = '%d/%m/%Y'
 
@@ -87,13 +87,15 @@ class IssueLicenceForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        purpose = kwargs.pop('purpose', None)
-
+        regions = kwargs.pop('regions', Region.objects.none())
+        end_date = kwargs.pop('end_date', None)
         is_renewable = kwargs.pop('is_renewable', False)
-
         default_period = kwargs.pop('default_period', None)
-
         return_frequency = kwargs.pop('return_frequency', WildlifeLicence.DEFAULT_FREQUENCY)
+        locations = kwargs.pop('locations', '')
+        purpose = kwargs.pop('purpose', '')
+        additional_information = kwargs.pop('additional_information', '')
+        cover_letter_message = kwargs.pop('cover_letter_message', '')
 
         skip_required = kwargs.pop('skip_required', False)
 
@@ -110,26 +112,28 @@ class IssueLicenceForm(forms.ModelForm):
                 if field is not None:
                     field.required = True
 
-        if purpose is not None:
-            self.fields['purpose'].initial = purpose
-
         self.fields['is_renewable'].widget = forms.CheckboxInput()
 
-        # if a licence instance has not been passed in nor any POST data
-        # (i.e. this is creating the 'get' version of the form)
+        # if a licence instance has not been passed in nor any POST data (i.e. get version of form)
         if 'instance' not in kwargs and len(args) == 0:
             today_date = date.today()
 
             self.fields['start_date'].initial = today_date.strftime(DATE_FORMAT)
 
-            if default_period is not None:
+            if end_date is not None:
+                self.fields['end_date'].initial = end_date
+            elif default_period is not None:
                 end_date = today_date + relativedelta(days=default_period)
 
                 self.fields['end_date'].initial = end_date.strftime(DATE_FORMAT)
 
+            self.fields['regions'].initial = regions
             self.fields['is_renewable'].initial = is_renewable
-
             self.fields['return_frequency'].initial = return_frequency
+            self.fields['locations'].initial = locations
+            self.fields['purpose'].initial = purpose
+            self.fields['additional_information'].initial = additional_information
+            self.fields['cover_letter_message'].initial = cover_letter_message
 
     def clean_start_date(self):
         start_date = self.cleaned_data['start_date']
