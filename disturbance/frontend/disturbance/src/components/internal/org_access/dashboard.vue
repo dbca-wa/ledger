@@ -63,7 +63,7 @@ export default {
                 responsive: true,
                 processing:true,
                 ajax: {
-                    "url": api_endpoints.organisation_requests,
+                    "url": helpers.add_endpoint_json(api_endpoints.organisation_requests,'datatable_list'),
                     "dataSrc": '',
                 },
                 columns:[

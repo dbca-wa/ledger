@@ -29,12 +29,14 @@ from datetime import datetime,timedelta, date
 from disturbance.components.organisations.models import  (   
                                     Organisation,
                                     OrganisationRequest,
-                                    OrganisationContact
+                                    OrganisationContact,
+                                    OrganisationAccessGroup,
                                 )
 
 from disturbance.components.organisations .serializers import (   
                                         OrganisationSerializer,
                                         OrganisationRequestSerializer,
+                                        OrganisationRequestDTSerializer,
                                         OrganisationContactSerializer,
                                         OrganisationCheckSerializer,
                                         OrganisationPinCheckSerializer,
@@ -87,6 +89,22 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     queryset = OrganisationRequest.objects.all()
     serializer_class = OrganisationRequestSerializer
 
+    @list_route(methods=['GET',])
+    def datatable_list(self, request, *args, **kwargs):
+        try:
+            qs = self.get_queryset()
+            serializer = OrganisationRequestDTSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     def create(self, request, *args, **kwargs):
         try:
             serializer = self.get_serializer(data=request.data)
@@ -103,3 +121,18 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+class OrganisationAccessGroupMembers(views.APIView):
+    
+    renderer_classes = [JSONRenderer,]
+    def get(self,request, format=None):
+        members = []
+        group = OrganisationAccessGroup.objects.first()
+        if group:
+            for m in group.all_members:
+                members.append({'name': m.get_full_name(),'id': m.id})
+        else:
+            for m in EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True):
+                members.append({'name': m.get_full_name(),'id': m.id})
+        return Response(members)
+
