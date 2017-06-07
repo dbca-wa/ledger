@@ -322,7 +322,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             )
 
     def get_initial_queryset(self):
-        return Application.objects.exclude(processing_status__in=['draft', 'temp'])
+        return Application.objects.exclude(processing_status__in=['draft', 'temp']).exclude(customer_status='temp')
 
 
 class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):

@@ -131,6 +131,13 @@ class IssueLicenceForm(forms.ModelForm):
 
             self.fields['return_frequency'].initial = return_frequency
 
+    def clean_start_date(self):
+        start_date = self.cleaned_data['start_date']
+        if start_date < date.today():
+            raise forms.ValidationError('Start date cannot before current date')
+
+        return start_date
+
     def clean(self):
         cleaned_data = super(IssueLicenceForm, self).clean()
 
@@ -139,8 +146,6 @@ class IssueLicenceForm(forms.ModelForm):
         if end_date is not None and start_date is not None and end_date < start_date:
             msg = 'End date must be greater than start date'
             self.add_error('end_date', msg)
-
-        return cleaned_data
 
 
 class CommunicationsLogEntryForm(forms.ModelForm):

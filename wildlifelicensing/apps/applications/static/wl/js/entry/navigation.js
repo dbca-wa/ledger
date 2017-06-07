@@ -1,10 +1,10 @@
 define(['jQuery'], function($) {
     return {
-        init: function(message, applicationId, contentContainerSelector, csrfToken) {
+        init: function(message, applicationId, navigationElementSelector, contentContainerSelector, csrfToken) {
             var $contentContainer = $(contentContainerSelector),
                 isExpectedNavigationAction = false;
 
-            $('a, :button').click(function(e) {
+            $(navigationElementSelector).click(function(e) {
                 isExpectedNavigationAction = $contentContainer.find(this).length > 0;
             });
 

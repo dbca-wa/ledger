@@ -118,7 +118,7 @@ class Application(RevisionedMixin):
 
     @property
     def is_temporary(self):
-        return self.customer_status == 'temp' and self.processing_status == 'temp'
+        return self.customer_status == 'temp'
 
     @property
     def can_user_edit(self):
