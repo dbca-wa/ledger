@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.db import models
+from django.db import models, transaction
 from django.contrib.sites.models import Site
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+from disturbance.components.main.models import UserAction
 
 @python_2_unicode_compatible
 class Organisation(models.Model):
@@ -97,6 +98,38 @@ class OrganisationRequest(models.Model):
     class Meta:
         app_label = 'disturbance'
 
+    def accept(self, request):
+        with transaction.atomic():
+            self.status = 'approved'
+            self.save()
+            self.log_user_action(OrganisationRequestUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),request)
+
+    def assign_to(self, user,request):
+        with transaction.atomic():
+            self.assigned_officer = user
+            self.save()
+            self.log_user_action(OrganisationRequestUserAction.ACTION_ASSIGN_TO.format(user.get_full_name()),request)
+
+    def unassign(self,request):
+        with transaction.atomic():
+            self.assigned_officer = None 
+            self.save()
+            self.log_user_action(OrganisationRequestUserAction.ACTION_UNASSIGN,request)
+
+    def decline(self, reason, request):
+        with transaction.atomic():
+            self.status = 'declined'
+            self.save()
+            OrganisationRequestDeclinedDetails.objects.create(
+                officer = request.user,
+                reason = reason,
+                request = self
+            )
+            self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST,request)
+
+    def log_user_action(self, action, request):
+        return OrganisationRequestUserAction.log_action(self, action, request.user)
+
 class OrganisationAccessGroup(models.Model):
     site = models.OneToOneField(Site, default='1') 
     members = models.ManyToManyField(EmailUser)
@@ -115,3 +148,32 @@ class OrganisationAccessGroup(models.Model):
     class Meta:
         app_label = 'disturbance'
         
+class OrganisationRequestUserAction(UserAction):
+    ACTION_LODGE_REQUEST = "Lodge {}"
+    ACTION_ASSIGN_TO = "Assign to {}"
+    ACTION_UNASSIGN = "Unassign"
+    ACTION_DECLINE_REQUEST = "Decline request"
+    # Assessors
+    ACTION_CONCLUDE_REQUEST = "Conclude request {}"
+
+    @classmethod
+    def log_action(cls, request, action, user):
+        return cls.objects.create(
+            request=request,
+            who=user,
+            what=str(action)
+        )
+
+    request = models.ForeignKey(OrganisationRequest)
+
+    class Meta:
+        app_label = 'disturbance'
+
+
+class OrganisationRequestDeclinedDetails(models.Model):
+    request = models.ForeignKey(OrganisationRequest)
+    officer = models.ForeignKey(EmailUser, null=False)
+    reason = models.TextField(blank=True)
+
+    class Meta:
+        app_label = 'disturbance'

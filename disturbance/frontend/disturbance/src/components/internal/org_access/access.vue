@@ -67,10 +67,11 @@
                                     <select v-show="isLoading" class="form-control">
                                         <option value="">Loading...</option>
                                     </select>
-                                    <select v-if="!isLoading" class="form-control" v-model="access.assigned_to">
+                                    <select v-if="!isLoading" class="form-control" v-model="access.assigned_officer">
+                                        <option value="null">Unassigned</option>
                                         <option v-for="member in members" :value="member.id">{{member.name}}</option>
                                     </select>
-                                    <a href="" @click.prevent="" class="pull-right">Assign to me</a>
+                                    <a @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
                             <div class="col-sm-12 top-buffer-s">
@@ -197,7 +198,14 @@ export default {
 
     },
     assignMyself: function(){
-        //vm.$http
+        let vm = this;
+        vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_request_user')))
+        .then((response) => {
+            console.log(response);
+            vm.access = response.body;
+        }, (error) => {
+            console.log(error);
+        });
     }
   },
   mounted: function () {
