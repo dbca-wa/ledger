@@ -3,7 +3,8 @@ from ledger.accounts.models import EmailUser,Address
 from disturbance.components.organisations.models import (   
                                 Organisation,
                                 OrganisationContact,
-                                OrganisationRequest
+                                OrganisationRequest,
+                                OrganisationRequestUserAction,
                             )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -75,6 +76,12 @@ class UserOrganisationSerializer(serializers.ModelSerializer):
             'name',
             'abn'
         )
+
+class OrganisationRequestActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+    class Meta:
+        model = OrganisationRequestUserAction 
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     disturbance_organisations = UserOrganisationSerializer(many=True)

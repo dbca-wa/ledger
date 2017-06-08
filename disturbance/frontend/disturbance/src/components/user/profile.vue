@@ -165,7 +165,7 @@
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
                                 </label>
                                 <label class="radio-inline">
-                                  <input type="radio" name="behalf_of_org" v-model="managesOrg" value="No" > No
+                                  <input :disabled="hasOrgs" type="radio" name="behalf_of_org" v-model="managesOrg" value="No" > No
                                 </label>
                             </div>
                           </div>
@@ -187,7 +187,7 @@
                                 <a style="cursor:pointer;"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
-                          <div style="margin-top:15px;" v-if="managesOrg=='Yes'">
+                          <div style="margin-top:15px;" v-if="addingCompany">
                               <h3> New Organisation</h3>
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
@@ -447,6 +447,7 @@ export default {
             vm.$http.get(api_endpoints.profile).then((response) => {
                 vm.profile = response.body
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                if ( vm.profile.disturbance_organisations && vm.profile.disturbance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
             },(error) => {
                 console.log(error);
             })

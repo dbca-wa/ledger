@@ -11,4 +11,7 @@ export default {
 </script>
 
 <style>
+.popover {
+    max-width: 100% !important;
+}
 </style>
