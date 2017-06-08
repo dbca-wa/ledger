@@ -16,11 +16,9 @@ class OrganisationListener(object):
             original_instance = Organisation.objects.get(pk=instance.pk)
             setattr(instance, "_original_instance", original_instance)
 
-            if not instance._is_same(original_instance):
-                instance.updated_on = timezone.now()
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
-            instance.pin_two = instance._generate_pin()
+            instance.pin_one = instance._generate_pin()
             instance.pin_two = instance._generate_pin() 
 

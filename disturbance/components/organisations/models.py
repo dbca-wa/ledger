@@ -37,7 +37,7 @@ class Organisation(models.Model):
             UserDelegation.objects.create(organisation=self,user=user)
 
     def generate_pins(self):
-        self.pin_two = self._generate_pin()
+        self.pin_one = self._generate_pin()
         self.pin_two = self._generate_pin()
         self.save()
 
