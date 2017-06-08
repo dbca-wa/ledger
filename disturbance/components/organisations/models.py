@@ -11,6 +11,7 @@ from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from disturbance.components.main.models import UserAction
 from disturbance.components.organisations.utils import random_generator
+from disturbance.components.organisations.emails import send_organisation_request_accept_email_notification
 
 @python_2_unicode_compatible
 class Organisation(models.Model):
@@ -126,7 +127,8 @@ class OrganisationRequest(models.Model):
         org = Organisation.objects.create(organisation=ledger_org)
         # Link requester to organisation
         UserDelegation.objects.create(user=self.requester,organisation=org)
-        # TODO send email to requester
+        # send email to requester
+        send_organisation_request_accept_email_notification(self)
 
     def assign_to(self, user,request):
         with transaction.atomic():
