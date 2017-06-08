@@ -2,10 +2,10 @@
     <div class="form-group">
         <label>{{label}}</label>
          <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>
-        <div v-if="value">
-            <div  v-for="v in value">
+        <div v-if="files">
+            <div v-for="v in files">
                 <p>
-                    Currently: <a :href="value" target="_blank">{{v.value}}</a>
+                    File: <a :href="v" target="_blank">{{v}}</a>
                 </p>
                 <input :name="name+'-existing'" type="hidden" :value="value"/>
             </div>
@@ -23,7 +23,11 @@ export default {
         name:String,
         label:String,
         help_text:String,
-        value:Array,
+        value:{
+            default:function () {
+                return null;
+            }
+        },
         fileTypes:{
             default:function () {
                 return "image/*,application/pdf,text/csv,application/msword"
@@ -33,7 +37,8 @@ export default {
     },
     data:function(){
         return {
-            repeat:1
+            repeat:1,
+            files:[]
         }
     },
     methods:{
@@ -53,6 +58,12 @@ export default {
                     }
                 }
             }
+        }
+    },
+    mounted:function () {
+        let vm = this;
+        if (vm.value) {
+            vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
         }
     }
 }
