@@ -325,7 +325,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             )
 
     def get_initial_queryset(self):
-        return Application.objects.exclude(processing_status__in=['draft', 'temp'])
+        return Application.objects.exclude(processing_status__in=['draft', 'temp']).exclude(customer_status='temp')
 
 
 class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):
@@ -723,6 +723,9 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     @staticmethod
     def _render_status(instance):
+        if not instance.is_issued:
+            return 'Unissued'
+
         try:
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
@@ -759,6 +762,9 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
                 return 'N/A'
         except Application.DoesNotExist:
             pass
+
+        if not instance.is_issued:
+            return '<a href="{0}">Issue</a>'.format(reverse('wl_applications:issue_licence', args=(application.pk,)))
 
         amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
         renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
