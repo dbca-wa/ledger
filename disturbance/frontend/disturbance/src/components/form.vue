@@ -21,14 +21,8 @@
     export default {
         props:{
             proposal:{
-                type: Array,
+                type: Object,
                 required:true
-            },
-            data:{
-                type: Array,
-                default:function () {
-                    return null;
-                }
             }
         },
         data:function () {
@@ -38,8 +32,8 @@
         },
         methods:{
             mapDataToApplication:function () {
-                if (this.data) {
-                    this.values = this.data[0]
+                if (this.proposal.data) {
+                    this.values = this.proposal.data[0]
                 }
             }
         },
@@ -76,7 +70,7 @@
             return (
                 <div>
                     <div id="scrollspy-heading" class="col-lg-12" >
-                        <h3>Proposal: <small>123</small></h3>
+                        <h3>Proposal: <small>{vm.proposal.id}</small></h3>
                     </div>
                     <div class="col-md-3" >
                         <div class="panel panel-default fixed">
@@ -91,7 +85,7 @@
                         </div>
                     </div>
                     <div class="col-md-9">
-                        {vm.proposal.map(d =>{
+                        {vm.proposal.schema.map(d =>{
                             return Renderer.renderChildren(h,d,vm.values)
                         })}
                         { this.$slots.default }

@@ -19,7 +19,13 @@ class ProposalTypeSerializer(serializers.ModelSerializer):
     def get_activities(self,obj):
         return obj.activities.names()
 
+class EmailUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = ('id','email','first_name','last_name','title','organisation')
+
 class ProposalSerializer(serializers.ModelSerializer):
+    submitter = EmailUserSerializer(read_only=True)
     class Meta:
         model = Proposal
         fields = '__all__'

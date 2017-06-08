@@ -88,6 +88,11 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <datatable id="proposal_dashboard" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -235,7 +240,7 @@
 </div>
 </template>
 <script>
-import $ from 'jquery'
+import datatable from '@/utils/vue/datatable.vue'
 import {
   api_endpoints,
   helpers
@@ -269,7 +274,58 @@ export default {
       filterComplianceStatus: 'All',
       filterComplianceDueFrom: '',
       filterComplianceDueTo: '',
+      proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
+      proposal_options:{
+          language: {
+              processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+          },
+          responsive: true,
+          ajax: {
+              "url": api_endpoints.proposals,
+              "dataSrc": ''
+          },
+          columns: [
+              {data: "id"},
+              //{data: "region"},
+              {data: "id"},
+              {data: "id"},
+              //{data: "activity"},
+              {
+                  data:'data',
+                  mRender:function (data,type,full) {
+                      if (data) {
+                           return `${data[0].project_details[0].project_title}`;
+                      }
+                     return ''
+                  }
+              },
+              {data: "id"},
+              {data: "id"},
+              {
+                  data: "submitter",
+                  mRender:function (data,type,full) {
+                      if (data) {
+                           return `${data.first_name} ${data.last_name}`;
+                      }
+                     return ''
+                  }
+              },
+              //{data: "applicant"},
+              {data: "id"},
+              {data: "processing_status"},
+              {data: "lodgement_date"},
+              {
+                  mRender:function (data,type,full) {
+                      return `<a href='#${full.id}' >Action</a>`
+                  }
+              }
+          ],
+          processing: true
+      }
     }
+  },
+  components:{
+      datatable
   },
   watch: {},
   computed: {
