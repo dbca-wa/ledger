@@ -135,13 +135,6 @@ class IssueLicenceForm(forms.ModelForm):
             self.fields['additional_information'].initial = additional_information
             self.fields['cover_letter_message'].initial = cover_letter_message
 
-    def clean_start_date(self):
-        start_date = self.cleaned_data['start_date']
-        if start_date < date.today():
-            raise forms.ValidationError('Start date cannot before current date')
-
-        return start_date
-
     def clean(self):
         cleaned_data = super(IssueLicenceForm, self).clean()
 
