@@ -1,5 +1,5 @@
 <template lang="html">
-    <div >
+    <div class="container" >
         <form action="/proposal/" method="post" name="new_proposal" enctype="multipart/form-data">
             <Proposal v-if="!isLoading" :proposal="proposal" :data="ans">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>

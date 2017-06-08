@@ -1,17 +1,11 @@
-<style lang="css">
+<style lang="css" scoped>
     .section{
         text-transform: capitalize;
     }
-    #scrollspy-section li {
-        list-style-type: none;
-        font-size:1.2em;
-        line-height: 2;
+    .list-group{
+        margin-bottom: 0;
     }
-
-    #scrollspy-section li>a{
-        text-decoration: none;
-    }
-    .affix-top{
+    .fixed-top{
         position: fixed;
         top:56px;
     }
@@ -54,7 +48,7 @@
         },
         mounted:function () {
             Renderer.sections.map(sec => {
-                $('#scrollspy-section').append(`<li><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
+                $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
             });
             $('a.page-scroll').bind('click', function(event) {
                var $anchor = $(this);
@@ -66,26 +60,35 @@
            $(window).scroll(function () {
                 var wScroll = $(this).scrollTop();
                 if (wScroll >= $('#scrollspy-heading').offset().top-56) {
-                    $('nav.affix').addClass('affix-top');
+                    var width = $('.fixed').width();
+                    $('.fixed').addClass('fixed-top');
+                    $('.fixed-top').width(width);
                 }else{
-                    $('nav.affix').removeClass('affix-top');
+                    $('.fixed').removeClass('fixed-top');
+                    $('.fixed').width('100%');
                 }
             });
 
         },
         render(h) {
             let vm =this;
+            Renderer.sections = [];
             return (
                 <div>
                     <div id="scrollspy-heading" class="col-lg-12" >
-                        <h3 style="padding-left:40px;">Proposal: <small>158325</small></h3>
+                        <h3>Proposal: <small>123</small></h3>
                     </div>
                     <div class="col-md-3" >
-                        <nav class="hidden-print hidden-sm hidden-xs affix">
-                            <ul class="" id="scrollspy-section">
+                        <div class="panel panel-default fixed">
+                          <div class="panel-heading">
+                            <h5>Sections</h5>
+                          </div>
+                          <div class="panel-body" style="padding:0">
+                              <ul class="list-group" id="scrollspy-section" style="margin-bottom:0">
 
-                            </ul>
-                        </nav>
+                              </ul>
+                          </div>
+                        </div>
                     </div>
                     <div class="col-md-9">
                         {vm.proposal.map(d =>{
