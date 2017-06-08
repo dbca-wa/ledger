@@ -752,7 +752,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
                 pk=instance.pk
             )
             logger.exception(Exception(message))
-            return 'In Process'
+            return 'Unissued'
 
     @staticmethod
     def _render_action(instance):
@@ -761,7 +761,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             if Application.objects.filter(previous_application=application).exists():
                 return 'N/A'
         except Application.DoesNotExist:
-            pass
+            application = None
 
         if not instance.is_issued:
             return '<a href="{0}">Issue</a>'.format(reverse('wl_applications:issue_licence', args=(application.pk,)))
@@ -773,7 +773,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
         if instance.end_date is not None:
             expiry_days = (instance.end_date - datetime.date.today()).days
             if instance.is_renewable:
-                if expiry_days <= 30 and expiry_days > 0:
+                if 30 >= expiry_days > 0:
                     return '<a href="{0}">Amend</a> / <a href="{1}">Renew</a> / <a href="{2}">Reissue</a>'.\
                         format(amend_url, renew_url, reissue_url)
                 elif expiry_days <= 30:
@@ -783,13 +783,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             else:
                 return 'N/A'
         else:
-            # should not happen
-            message = "The licence ref:{ref} pk:{pk} has no end date!".format(
-                ref=instance.reference,
-                pk=instance.pk
-            )
-            logger.exception(Exception(message))
-            return 'N/A'
+            return '<a href="{0}">Issue</a>'.format(reverse('wl_applications:issue_licence', args=(application.pk,)))
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()
