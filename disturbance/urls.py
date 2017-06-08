@@ -15,6 +15,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
+router.register(r'proposal',proposal_api.ProposalViewSet)
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'users',users_api.UserViewSet)
 
