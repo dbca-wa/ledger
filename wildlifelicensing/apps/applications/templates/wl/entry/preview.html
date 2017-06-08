@@ -25,7 +25,7 @@
         applicationPreview.setupDisclaimer($('#disclaimers').find('input[type=checkbox]'), '#lodge');
 
         navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
-            {{ application.id }}, '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
+            {{ application.id }}, 'a, :button', '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
     });
 {% endblock %}
 

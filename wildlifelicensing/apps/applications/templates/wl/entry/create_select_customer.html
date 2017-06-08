@@ -19,7 +19,7 @@
         create_select_customer.init();
 
         navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
-            {{ application.id }}, '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
+            {{ application.id }}, 'a, :button', '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
     });
 {% endblock %}
 
