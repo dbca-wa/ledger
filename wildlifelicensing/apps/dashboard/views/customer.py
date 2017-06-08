@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.urlresolvers import reverse, reverse_lazy
@@ -9,6 +10,8 @@ from wildlifelicensing.apps.dashboard.views import base
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
+
+logger = logging.getLogger(__name__)
 
 
 def _get_user_applications(user):
@@ -320,12 +323,21 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         except Application.DoesNotExist:
             pass
 
-        expiry_days = (instance.end_date - datetime.date.today()).days
-        if instance.end_date < datetime.date.today():
-            return '<span class="label label-danger">Expired</span>'
-        elif expiry_days <= 30 and instance.is_renewable:
-            return '<span class="label label-warning">Due for renewal</span>'
+        if instance.end_date is not None:
+            expiry_days = (instance.end_date - datetime.date.today()).days
+            if instance.end_date < datetime.date.today():
+                return '<span class="label label-danger">Expired</span>'
+            elif expiry_days <= 30 and instance.is_renewable:
+                return '<span class="label label-warning">Due for renewal</span>'
+            else:
+                return 'Current'
         else:
+            # should not happen
+            message = "The licence ref:{ref} pk:{pk} has no end date!".format(
+                ref=instance.reference,
+                pk=instance.pk
+            )
+            logger.exception(Exception(message))
             return 'Current'
 
     @staticmethod
@@ -346,16 +358,24 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
         amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
 
-        expiry_days = (instance.end_date - datetime.date.today()).days
-
-        if instance.is_renewable:
-            if expiry_days <= 30 and expiry_days > 0:
-                return '<a href="{0}">Amend</a> / <a href="{1}">Renew</a>'.format(amend_url, renew_url)
-            elif expiry_days <= 0:
-                return '<a href="{0}">Renew</a>'.format(renew_url)
-        if instance.end_date >= datetime.date.today():
-            return '<a href="{0}">Amend</a>'.format(amend_url)
+        if instance.end_date is not None:
+            expiry_days = (instance.end_date - datetime.date.today()).days
+            if instance.is_renewable:
+                if 30 >= expiry_days > 0:
+                    return '<a href="{0}">Amend</a> / <a href="{1}">Renew</a>'.format(amend_url, renew_url)
+                elif expiry_days <= 0:
+                    return '<a href="{0}">Renew</a>'.format(renew_url)
+            if instance.end_date >= datetime.date.today():
+                return '<a href="{0}">Amend</a>'.format(amend_url)
+            else:
+                return 'N/A'
         else:
+            # should not happen
+            message = "The licence ref:{ref} pk:{pk} has no end date!".format(
+                ref=instance.reference,
+                pk=instance.pk
+            )
+            logger.exception(Exception(message))
             return 'N/A'
 
     @staticmethod
@@ -371,7 +391,8 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             return Q(licence_number__icontains=search)
 
     def get_initial_queryset(self):
-        return WildlifeLicence.objects.filter(holder=self.request.user)
+        # should only see the issued customer's licence
+        return WildlifeLicence.objects.filter(holder=self.request.user).filter(licence_number__isnull=False)
 
 
 class DataTableReturnsCustomerView(base.DataTableBaseView):
