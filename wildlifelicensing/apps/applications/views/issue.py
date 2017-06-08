@@ -166,7 +166,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 if application.is_licence_amendment:
                     licence_initial_data['end_date'] = previous_licence.end_date
 
-            if not 'purpose' in licence_initial_data or len(licence_initial_data['purpose']) == 0:
+            if 'purpose' not in licence_initial_data or len(licence_initial_data['purpose']) == 0:
                 licence_initial_data['purpose'] = '\n\n'.join(Assessment.objects.filter(application=application).
                                                               values_list('purpose', flat=True))
 
