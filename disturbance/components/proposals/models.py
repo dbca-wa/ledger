@@ -12,12 +12,12 @@ from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from ledger.licence.models import  Licence
 from disturbance.components.organisations.models import Organisation
-from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction 
+from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction
 
 class ProposalType(models.Model):
     schema = JSONField()
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.") 
-    site = models.OneToOneField(Site, default='1') 
+    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
+    site = models.OneToOneField(Site, default='1')
 
     class Meta:
         app_label = 'disturbance'
@@ -72,10 +72,10 @@ class Proposal(RevisionedMixin):
         ('accepted', 'Accepted'))
 
     data = JSONField(blank=True, null=True)
-    proposal_schema = JSONField()
+    schema = JSONField(blank=False, null=False)
     documents = models.ManyToManyField(Document)
     hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
-    
+
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
     applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='proposals')
@@ -83,9 +83,9 @@ class Proposal(RevisionedMixin):
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateField(blank=True, null=True)
-    
-    proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proxy') 
-    submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals') 
+
+    proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proxy')
+    submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals')
 
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='assignee')
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,

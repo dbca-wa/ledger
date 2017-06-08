@@ -2,6 +2,7 @@ from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from disturbance.components.proposals.models import (
                                     ProposalType,
+                                    Proposal
                                 )
 from rest_framework import serializers
 
@@ -17,3 +18,8 @@ class ProposalTypeSerializer(serializers.ModelSerializer):
 
     def get_activities(self,obj):
         return obj.activities.names()
+
+class ProposalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Proposal
+        fields = '__all__'
