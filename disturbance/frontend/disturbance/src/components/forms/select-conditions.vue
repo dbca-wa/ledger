@@ -1,6 +1,6 @@
 <script>
     export default {
-        props:["conditions","renderer","name"],
+        props:["conditions","renderer","name","data"],
         mounted(){
 
         },
@@ -21,7 +21,7 @@
                                     {return (
                                         <div id={'cons_'+vm.name+'_'+val} class="hidden">
                                             {conditions[val].map(c=>{
-                                                return vm.renderer.renderChildren(h,c)
+                                                return vm.renderer.renderChildren(h,c,vm.data)
                                             })}
                                         </div>
                                     )}

@@ -1,6 +1,7 @@
 {% extends 'disturbance/base.html' %}
 {% load static %}
 {% load users %}
+
 {% block extra_css %}
     <link href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/datatables/1.10.12/css/dataTables.bootstrap.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
@@ -14,10 +15,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container-fluid" id="dashboard-table-container">
-        {% block vue-component %}
-        <div id="app"></div>
-        {% endblock %}
+    <div class="container">
 
     </div>
 {% endblock %}

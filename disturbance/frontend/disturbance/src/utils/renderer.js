@@ -31,10 +31,14 @@ module.exports = {
                 )
                 break;
             case 'select':
+                var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data )? data : null ;
+                }
                 return (
                     <div>
                         <Select name={c.name} label={c.label} value={c.value} options={c.options} help_text={c.help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions}/>
-                        <SelectConditions conditions={c.conditions} renderer={this} name={c.name} />
+                        <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={data} />
                     </div>
                 )
                 break;
@@ -54,6 +58,10 @@ module.exports = {
                 )
                 break;
             case 'radiobuttons':
+            var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data )? data : null ;
+                }
                 return (
                     <div class="form-group">
                         <label>{c.label}</label>
@@ -62,14 +70,14 @@ module.exports = {
                                     <Radio name={c.name} label={op.label} value={op.value} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} />
                                 )
                             })}
-                            <Conditions conditions={c.conditions} renderer={this} name={c.name}/>
+                            <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data}/>
                     </div>
                 )
                 break;
             case 'group':
                 var value = null;
                 if(data !== null && data !== undefined) {
-                  value = ( data[c.name] )? data[c.name] : null ;
+                  value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 return (
                     <Group label={c.label} name={c.name} help_text={c.help_text} isRemovable={true}>
@@ -86,7 +94,7 @@ module.exports = {
             case 'section':
                 var value = null;
                 if(data !== null && data !== undefined) {
-                  value = ( data[c.name] )? data[c.name] : null ;
+                  value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 this.sections.push({name:c.name,label:c.label});
                 return (
@@ -105,17 +113,21 @@ module.exports = {
             case 'checkbox':
                 return (
                     <div class="form-group">
-                        <Checkbox name={c.name} label={c.label} help_text={c.help_text} value={c.value} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
-                        <Conditions conditions={c.conditions} renderer={this} name={c.name}/>
+                        <Checkbox name={c.name} label={c.label} help_text={c.help_text} value={val} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
+                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data}/>
                     </div>
                 )
                 break;
             case 'declaration':
+                var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data[c.name] )? data[c.name] : null ;
+                }
                 return (
                     <div class="form-group">
                         <label>{c.label}</label>
-                        <Checkbox name={c.name} label={c.label} value={c.value} help_text={c.help_text} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
-                        <Conditions conditions={c.conditions} renderer={this} name={c.name}/>
+                        <Checkbox name={c.name} label={c.label} value={val} help_text={c.help_text} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
+                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={value}/>
                     </div>
                 )
                 break;
