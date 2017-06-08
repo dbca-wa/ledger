@@ -4,3 +4,11 @@ from django.apps import AppConfig
 
 class DisturbanceConfig(AppConfig):
     name = 'disturbance'
+
+    run_once = False
+
+    def ready(self):
+        if not self.run_once:
+            from disturbance.components.organisations import signals
+
+        self.run_once = True
