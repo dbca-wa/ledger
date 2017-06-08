@@ -21,7 +21,7 @@ class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
     class Meta:
-        mdoel = Organisation
+        model = Organisation
         fields = (
             'id',
             'name',

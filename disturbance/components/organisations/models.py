@@ -103,6 +103,21 @@ class OrganisationRequest(models.Model):
             self.status = 'approved'
             self.save()
             self.log_user_action(OrganisationRequestUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),request)
+            # Continue with remaining logic
+            self.__accept()
+
+    def __accept(self):
+        # Check if orgsanisation exists in ledger
+        ledger_org = None
+        try:
+            ledger_org = ledger_organisation.objects.get(abn=self.abn) 
+        except ledger_organisation.DoesNotExist:
+            ledger_org = ledger_organisation.objects.create(name=self.name,abn=self.abn)
+        # Create Organisation in disturbance
+        org = Organisation.objects.create(organisation=ledger_org)
+        # Link requester to organisation
+        UserDelegation.objects.create(user=self.requester,organisation=org)
+        # TODO send email to requester
 
     def assign_to(self, user,request):
         with transaction.atomic():
@@ -149,7 +164,7 @@ class OrganisationAccessGroup(models.Model):
         app_label = 'disturbance'
         
 class OrganisationRequestUserAction(UserAction):
-    ACTION_LODGE_REQUEST = "Lodge {}"
+    ACTION_LODGE_REQUEST = "Lodge request {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"
@@ -164,7 +179,7 @@ class OrganisationRequestUserAction(UserAction):
             what=str(action)
         )
 
-    request = models.ForeignKey(OrganisationRequest)
+    request = models.ForeignKey(OrganisationRequest,related_name='action_logs')
 
     class Meta:
         app_label = 'disturbance'

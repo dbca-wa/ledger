@@ -16,7 +16,7 @@
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Actions</strong><br/>
-                                <a @click.prevent="" class="actionBtn">Show</a>
+                                <a tabindex="2" ref="showActionBtn" class="actionBtn">Show</a>
                             </div>
                         </div>
                     </div>
@@ -67,17 +67,17 @@
                                     <select v-show="isLoading" class="form-control">
                                         <option value="">Loading...</option>
                                     </select>
-                                    <select v-if="!isLoading" class="form-control" v-model="access.assigned_officer">
+                                    <select @change="assignTo" :disabled="isFinalised" v-if="!isLoading" class="form-control" v-model="access.assigned_officer">
                                         <option value="null">Unassigned</option>
                                         <option v-for="member in members" :value="member.id">{{member.name}}</option>
                                     </select>
-                                    <a @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
+                                    <a v-if="!isFinalised" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Action</strong><br/>
-                                <button class="btn btn-primary" @click.prevent="">Accept</button><br/>
-                                <button class="btn btn-primary top-buffer-s" @click.prevent="">Decline</button>
+                                <button class="btn btn-primary" v-if="!isFinalised" @click.prevent="acceptRequest()">Accept</button><br/>
+                                <button class="btn btn-primary top-buffer-s" v-if="!isFinalised" @click.prevent="">Decline</button>
                             </div>
                         </div>
                     </div>
@@ -144,6 +144,7 @@
 <script>
 import $ from 'jquery'
 import Vue from 'vue'
+import datatable from '@vue-utils/datatable.vue'
 import {
   api_endpoints,
   helpers
@@ -154,18 +155,52 @@ export default {
   data() {
     let vm = this;
     return {
-      loading: [],
-      access: {
-        requester: {}
-      },
-      members: [],
-      // Filters
+        loading: [],
+        access: {
+            requester: {}
+        },
+        members: [],
+        // Filters
+        dtOptions:{
+            language: {
+                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+            },
+            responsive: true,
+            deferRender: true, 
+            autowidth: true,
+            order: [[2, 'desc']],
+            dom:
+                "<'row'<'col-sm-5'l><'col-sm-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+            processing:true,
+            ajax: {
+                "url": helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/action_log'),
+                "dataSrc": '',
+            },
+            columns:[
+                {
+                    data:"who",
+                },
+                {
+                    data:"what",
+                },
+                {
+                    data:"when",
+                    mRender:function(data,type,full){
+                        return moment(data).format('DD/MM/YYYY HH:mm:ss')
+                    }
+                },
+            ]
+        },
+        dtHeaders:["Who","What","When"],
+        actionsTable : null
     }
   },
   watch: {},
   filters: {
     formatDate: function(data){
-        return moment(data).format('DD/MM/YYYY');
+        return moment(data).format('DD/MM/YYYY HH:mm:ss');
     }
   },
   beforeRouteEnter: function(to, from, next){
@@ -178,10 +213,14 @@ export default {
     })
   },
   components: {
+    datatable
   },
   computed: {
     isLoading: function () {
       return this.loading.length > 0;
+    },
+    isFinalised: function(){
+        return this.access.status == 'With Assesor' || this.access.status == 'Approved';
     }
   },
   methods: {
@@ -206,10 +245,84 @@ export default {
         }, (error) => {
             console.log(error);
         });
+    },
+    assignTo: function(){
+        let vm = this;
+        if ( vm.access.assigned_officer != 'null'){
+            let data = {'user_id': vm.access.assigned_officer};
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_to')),JSON.stringify(data),{
+                emulateJSON:true
+            }).then((response) => {
+                console.log(response);
+                vm.access = response.body;
+            }, (error) => {
+                console.log(error);
+            });
+            console.log('there');
+        }
+        else{
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/unassign')))
+            .then((response) => {
+                console.log(response);
+                vm.access = response.body;
+            }, (error) => {
+                console.log(error);
+            });
+        }
+    },
+    acceptRequest: function() {
+        let vm = this;
+        swal({
+            title: "Accept Organisation Request",
+            text: "Are you sure you want to accept this organisation request?",
+            type: "question",
+            showCancelButton: true,
+            confirmButtonText: 'Accept'
+        }).then(() => {
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/accept')))
+            .then((response) => {
+                console.log(response);
+                vm.access = response.body;
+            }, (error) => {
+                console.log(error);
+            });
+        },(error) => {
+
+        });
+
+    },
+    initialisePopovers: function(){
+        let vm = this;
+        let actionLogId = 'actions-log-table'+vm._uid;
+        $(vm.$refs.showActionBtn).popover({
+            content: function() {
+                return ` 
+                <table id="${actionLogId}" class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
+                    <thead>
+                        <tr>
+                            <th>Who</th>
+                            <th>When</th>
+                            <th>What</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>`
+            },
+            html: true,
+            title: 'Action Log',
+            container: 'body',
+            placement: 'right',
+            trigger: "click",
+        }).on('inserted.bs.popover', function () {
+            vm.actionsTable = $('#'+actionLogId).DataTable(vm.dtOptions);
+        });
     }
   },
   mounted: function () {
+    let vm = this;
     this.fetchAccessGroupMembers();
+    vm.initialisePopovers();
   }
 }
 </script>
@@ -219,5 +332,8 @@ export default {
 }
 .actionBtn {
     cursor: pointer;
+}
+.hidePopover {
+    display: none;
 }
 </style>
