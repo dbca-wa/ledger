@@ -1,7 +1,7 @@
 <template lang="html">
     <div class="container" >
-        <form action="/proposal/" method="post" name="new_proposal" enctype="multipart/form-data">
-            <Proposal v-if="!isLoading" :proposal="proposal" :data="ans">
+        <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
+            <Proposal v-if="proposal" :proposal="proposal">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
@@ -12,49 +12,56 @@
 </template>
 <script>
 import Proposal from '../form.vue'
-import {api_endpoints,helpers } from '@/utils/hooks'
+import Vue from 'vue'
+import {
+  api_endpoints,
+  helpers
+}
+from '@/utils/hooks'
 export default {
-    data:function () {
-        return {
-            "proposal":[],
-            "loading":[],
-            form:null,
-            "ans":require('@/assets/ans.json'),
-        }
-    },
-    components:{
-        Proposal
-    },
-    computed:{
-        isLoading:function () {
-            return this.loading.length > 0
-        },
-        csrf_token:function () {
-            return helpers.getCookie('csrftoken')
-        }
-    },
-    methods:{
-        submit:function (e) {
-            let vm =this;
-            console.log($(vm.form).serializeArray());
-        }
-    },
-    mounted:function(){
-        let vm = this;
-        vm.form = document.forms.new_proposal;
-    },
-    created:function(){
-      let vm =this;
-      var url = api_endpoints.proposal_type;
-        vm.loading.push('fetching proposal');
-        vm.$http.get(url).then((response)=>{
-            vm.proposal = response.body.schema;
-            vm.loading.splice('fetching proposal',1);
-        },(response)=>{
-            console.log(response);
-            vm.loading.splice('fetching proposal',1);
-        });
+  data: function() {
+    return {
+      "proposal": null,
+      "loading": [],
+      form: null,
     }
+  },
+  components: {
+    Proposal
+  },
+  computed: {
+    isLoading: function() {
+      return this.loading.length > 0
+    },
+    csrf_token: function() {
+      return helpers.getCookie('csrftoken')
+    },
+    proposal_form_url:function () {
+        return (this.proposal)?`/api/proposal/${this.proposal.id}/draft.json` : '';
+    }
+  },
+  methods: {
+    submit: function(e) {
+      let vm = this;
+      console.log($(vm.form).serializeArray());
+    }
+  },
+  mounted: function() {
+    let vm = this;
+    vm.form = document.forms.new_proposal;
+  },
+  beforeRouteEnter: function(to, from, next) {
+
+      Vue.http.post('/api/proposal.json').then(res =>{
+        next(vm => {
+          vm.loading.push('fetching proposal')
+          vm.proposal = res.body;
+          vm.loading.splice('fetching proposal', 1);
+        });
+    },
+    err => {
+    });
+  }
 }
 </script>
 
