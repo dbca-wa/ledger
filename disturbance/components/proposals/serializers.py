@@ -16,6 +16,7 @@ class ProposalTypeSerializer(serializers.ModelSerializer):
             'activities'
         )
 
+
     def get_activities(self,obj):
         return obj.activities.names()
 
@@ -28,9 +29,11 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proposal
         fields = '__all__'
+        read_only_fields=('documents',)
 
 class DTProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
+    applicant = serializers.CharField(source='applicant.organisation.name')
 
 class ProposalSerializer(BaseProposalSerializer):
     pass

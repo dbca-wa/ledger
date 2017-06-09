@@ -28,11 +28,6 @@ export default
             children: [
                 {
                     path: '/',
-                    component: Proposal,
-                    name:"new_proposal"
-                },
-                {
-                    path: ':proposal_id/apply',
                     component: ProposalApply,
                     name:"apply_proposal"
                 },

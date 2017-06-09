@@ -24,7 +24,7 @@
                                           <input type="radio" name="behalf_of_org" v-model="behalf_of"  value="other" > On behalf of an organisation (as an authorised agent)
                                         </label>
                                     </div>
-                                </div>  
+                                </div>
                             </div>
                             <div v-if="behalf_of == 'other'" class="col-sm-12">
                                 <div class="row">
@@ -57,7 +57,7 @@
                                 </div>
                             </div>
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == 'other' || behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button> 
+                                <button :disabled="behalf_of == 'other' || behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                             </div>
                         </form>
                     </div>
@@ -107,15 +107,31 @@ export default {
     submit: function() {
         let vm = this;
         swal({
-            title: "Submit Proposal",
-            text: "Are you sure you want to submit this proposal on behalf of "+vm.org+" ?",
+            title: "Create Proposal",
+            text: "Are you sure you want to create a proposal on behalf of "+vm.org+" ?",
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Accept'
         }).then(() => {
+            vm.createProposal();
         },(error) => {
         });
     },
+    createProposal:function () {
+        let vm = this;
+        vm.$http.post('/api/proposal.json',{
+            behalf_of: vm.behalf_of
+        }).then(res => {
+              vm.proposal = res.body;
+              vm.$router.push({
+                  name:"draft_proposal",
+                  params:{proposal_id:vm.proposal.id}
+              });
+          },
+          err => {
+            console.log(err);
+          });
+    }
   },
   mounted: function() {
     let vm = this;
@@ -124,12 +140,12 @@ export default {
   beforeRouteEnter: function(to, from, next) {
     let initialisers = [
         utils.fetchProfile(),
-        utils.fetchProposal(to.params.proposal_id)
+        //utils.fetchProposal(to.params.proposal_id)
     ]
     next(vm => {
         Promise.all(initialisers).then(data => {
             vm.profile = data[0];
-            vm.proposal = data[1];
+            //vm.proposal = data[1];
         })
     })
   }

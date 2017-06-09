@@ -92,12 +92,10 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-            d = Document(name="text")
-            d.save();
             data = {
                 'schema': ProposalType.objects.first().schema,
-                'documents': [d.id],
                 'submitter': request.user.id,
+                'applicant': request.data.get('behalf_of')
             }
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)

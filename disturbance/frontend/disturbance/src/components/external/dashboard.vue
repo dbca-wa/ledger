@@ -56,7 +56,7 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'new_proposal' }">New Proposal</router-link>
+                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link>
                         </div>
                     </div>
                     <div class="row">
@@ -324,7 +324,7 @@ export default {
                      return ''
                   }
               },
-              {data: "id"},
+              {data: "applicant"},
               {data: "processing_status"},
               {data: "lodgement_date"},
               {
