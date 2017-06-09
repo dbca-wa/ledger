@@ -5,9 +5,13 @@
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
-                <input type="submit" class="btn btn-primary" value="Save and Exit"/>
-                <input type="submit" class="btn btn-primary" value="Save and Continue"/>
-                <router-link :to="{name:'apply_proposal',params: { proposal_id: proposal.id }}" class="btn btn-primary">Submit</router-link>
+                <div class="row" style="margin-bottom:20px;">
+                  <div class="col-lg-12 pull-right">
+                        <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                        <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                        <router-link :to="{name:'apply_proposal',params: { proposal_id: proposal.id }}" class="btn btn-primary">Submit</router-link>
+                  </div>
+                </div>
             </Proposal>
         </form>
     </div>
@@ -43,9 +47,18 @@ export default {
     }
   },
   methods: {
-    submit: function(e) {
+    save: function(e) {
       let vm = this;
-      console.log($(vm.form).serializeArray());
+      let formData = new FormData(vm.form);
+      vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+          swal(
+            'Saved',
+            'Your proposal has been saved',
+            'success'
+          )
+      },err=>{
+
+      });
     }
   },
   mounted: function() {

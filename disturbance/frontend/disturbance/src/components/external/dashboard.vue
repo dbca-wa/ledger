@@ -90,7 +90,7 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
-                            <datatable id="proposal_dashboard" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
+                            <datatable ref="proposal_datatable" id="proposal_datatable" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
                         </div>
                     </div>
                 </div>
@@ -240,6 +240,7 @@
 </div>
 </template>
 <script>
+
 import datatable from '@/utils/vue/datatable.vue'
 import {
   api_endpoints,
@@ -328,7 +329,15 @@ export default {
               {data: "lodgement_date"},
               {
                   mRender:function (data,type,full) {
-                      return `<a href='/external/proposal/${full.id}'>Edit Draft</a>`
+                      let links = '';
+                      if (full.processing_status == 'draft') {
+                         links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
+                         links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
+                      }
+                      if (full.processing_status == 'accepted' || full.processing_status == 'under review') {
+                         links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
+                      }
+                      return links;
                   }
               }
           ],
@@ -345,8 +354,35 @@ export default {
       return this.loading.length == 0;
     }
   },
-  methods: {},
+  methods: {
+      discardProposal:function (proposal_id) {
+          let vm = this;
+          swal({
+              title: "Discard Proposal",
+              text: "Are you sure you want to discard this proposal?",
+              type: "warning",
+              showCancelButton: true,
+              confirmButtonText: 'Discard Proposal',
+              confirmButtonColor:'#d9534f'
+          }).then(() => {
+              vm.$http.delete(api_endpoints.discard_proposal(proposal_id))
+              .then((response) => {
+                  swal(
+                    'Discarded',
+                    'Your proposal has been discarded',
+                    'success'
+                  )
+                  vm.$refs.proposal_datatable.vmDataTable.ajax.reload();
+              }, (error) => {
+                  console.log(error);
+              });
+          },(error) => {
+
+          });
+      }
+  },
   mounted: function () {
+      let vm =this;
     $( 'a[data-toggle="collapse"]' )
       .on( 'click', function () {
         var chev = $( this )
@@ -356,6 +392,12 @@ export default {
             .toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
         }, 100 );
       } );
+
+      vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-discard-proposal]', function(e) {
+            e.preventDefault();
+            var id = $(this).attr('data-discard-proposal');
+            vm.discardProposal(id);
+        });
   }
 }
 </script>
