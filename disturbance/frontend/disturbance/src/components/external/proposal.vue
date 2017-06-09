@@ -7,7 +7,7 @@
                 <input type='hidden' name="proposal_id" :value="1" />
                 <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                 <input type="submit" class="btn btn-primary" value="Save and Continue"/>
-                <input type="submit" class="btn btn-primary" value="Submit"/>
+                <router-link :to="{name:'apply_proposal',params: { proposal_id: proposal.id }}" class="btn btn-primary">Submit</router-link>
             </Proposal>
         </form>
     </div>
