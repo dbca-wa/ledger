@@ -201,9 +201,9 @@ export default {
             language: {
                 processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
             },
-            //responsive: true,
+            responsive: true,
             deferRender: true, 
-            //autowidth: true,
+            autowidth: true,
             order: [[0, 'desc']],
             processing:true,
             ajax: {
@@ -451,7 +451,7 @@ export default {
         $(vm.$refs.showActionBtn).popover({
             content: function() {
                 return ` 
-                <table id="${actionLogId}" class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
+                <table id="${actionLogId}" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
                     <thead>
                         <tr>
                             <th>Who</th>
@@ -490,5 +490,4 @@ export default {
 .hidePopover {
     display: none;
 }
-td {word-wrap: break-word}
 </style>
