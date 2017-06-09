@@ -24,8 +24,13 @@ class EmailUserSerializer(serializers.ModelSerializer):
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
 
-class ProposalSerializer(serializers.ModelSerializer):
-    submitter = EmailUserSerializer(read_only=True)
+class BaseProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proposal
         fields = '__all__'
+
+class DTProposalSerializer(BaseProposalSerializer):
+    submitter = EmailUserSerializer()
+
+class ProposalSerializer(BaseProposalSerializer):
+    pass

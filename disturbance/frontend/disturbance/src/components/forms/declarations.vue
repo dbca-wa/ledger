@@ -1,7 +1,7 @@
 <template lang="html">
     <div class="form-group">
         <label>
-            <input :name="name" type="checkbox" @change="handleDeclaration" data-parsley-required :checked="isChecked" />
+            <input ref="Checkbox" :name="name" type="checkbox" @change="handleDeclaration" data-parsley-required :checked="isChecked" />
             {{label}}
         </label>
         <p class="help-block">{{ help_text }}</p>
@@ -13,8 +13,16 @@ export default {
     props:['name','label','help_text',"handleDeclaration"],
     computed:{
         isChecked:function () {
-            //TODO return value from database
-            return false;
+            return (this.value == 'on');
+        }
+    },
+    mounted:function () {
+        let vm = this;
+        if (vm.isChecked) {
+            var input = this.$refs.Checkbox;
+            var e = document.createEvent('HTMLEvents');
+            e.initEvent('change', true, true);
+            input.dispatchEvent(e);
         }
     }
 }

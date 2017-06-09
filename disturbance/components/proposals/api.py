@@ -34,7 +34,8 @@ from disturbance.components.proposals.models import (
 
 from disturbance.components.proposals.serializers import (
     ProposalTypeSerializer,
-    ProposalSerializer
+    ProposalSerializer,
+    DTProposalSerializer
 )
 
 
@@ -56,7 +57,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     def list(self, request,*args,**kwargs):
         queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset,many=True)
+        serializer = DTProposalSerializer(queryset,many=True)
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
@@ -68,7 +69,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance.data = extracted_fields
             data = {
                 'data': extracted_fields,
-                'submitter':request.user.id
+                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0],
+                'submitter': request.user.id,
             }
             serializer = self.get_serializer(instance,data,partial=True)
             serializer.is_valid(raise_exception=True)
@@ -90,7 +92,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
             d.save();
             data = {
                 'schema':ProposalType.objects.first().schema,
-                'documents':[d.id]
+                'documents':[d.id],
+                'submitter': request.user.id,
             }
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)

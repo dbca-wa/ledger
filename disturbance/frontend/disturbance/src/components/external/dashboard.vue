@@ -286,10 +286,25 @@ export default {
           },
           columns: [
               {data: "id"},
-              //{data: "region"},
-              {data: "id"},
-              {data: "id"},
-              //{data: "activity"},
+              {
+                  data:'data',
+                  mRender:function (data,type,full) {
+                      if (data) {
+                          let region = (data[0].region)?data[0].region:'n/a';
+                          return `${region}`;
+                      }
+                     return ''
+                  }
+              },
+              {
+                  data:'data',
+                  mRender:function (data,type,full) {
+                      if (data) {
+                           return `${data[0].activity}`;
+                      }
+                     return ''
+                  }
+              },
               {
                   data:'data',
                   mRender:function (data,type,full) {
@@ -299,8 +314,6 @@ export default {
                      return ''
                   }
               },
-              {data: "id"},
-              {data: "id"},
               {
                   data: "submitter",
                   mRender:function (data,type,full) {
@@ -310,13 +323,12 @@ export default {
                      return ''
                   }
               },
-              //{data: "applicant"},
               {data: "id"},
               {data: "processing_status"},
               {data: "lodgement_date"},
               {
                   mRender:function (data,type,full) {
-                      return `<a href='#${full.id}' >Action</a>`
+                      return `<a href='/external/proposal/${full.id}'>Edit Draft</a>`
                   }
               }
           ],

@@ -5,7 +5,9 @@
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
-                <input type="submit" class="btn btn-primary" value="Save"/>
+                <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                <input type="submit" class="btn btn-primary" value="Save and Continue"/>
+                <input type="submit" class="btn btn-primary" value="Submit"/>
             </Proposal>
         </form>
     </div>
@@ -36,8 +38,8 @@ export default {
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
     },
-    proposal_form_url:function () {
-        return (this.proposal)?`/api/proposal/${this.proposal.id}/draft.json` : '';
+    proposal_form_url: function() {
+      return (this.proposal) ? `/api/proposal/${this.proposal.id}/draft.json` : '';
     }
   },
   methods: {
@@ -51,16 +53,30 @@ export default {
     vm.form = document.forms.new_proposal;
   },
   beforeRouteEnter: function(to, from, next) {
-
-      Vue.http.post('/api/proposal.json').then(res =>{
-        next(vm => {
-          vm.loading.push('fetching proposal')
-          vm.proposal = res.body;
-          vm.loading.splice('fetching proposal', 1);
+    if (to.params.proposal_id) {
+      Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
+          next(vm => {
+            vm.loading.push('fetching proposal')
+            vm.proposal = res.body;
+            vm.loading.splice('fetching proposal', 1);
+          });
+        },
+        err => {
+          console.log(err);
         });
-    },
-    err => {
-    });
+    }
+    else {
+      Vue.http.post('/api/proposal.json').then(res => {
+          next(vm => {
+            vm.loading.push('fetching proposal')
+            vm.proposal = res.body;
+            vm.loading.splice('fetching proposal', 1);
+          });
+        },
+        err => {
+          console.log(err);
+        });
+    }
   }
 }
 </script>

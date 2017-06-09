@@ -18,7 +18,14 @@ export default
         {
             path: 'proposal',
             component: Proposal,
-            name:"new_proposal"
+            name:"new_proposal",
+            children: [
+                {
+                    path: ':proposal_id',
+                    component: Proposal,
+                    name:"draft_proposal"
+                }
+            ]
         }
     ]
 }
