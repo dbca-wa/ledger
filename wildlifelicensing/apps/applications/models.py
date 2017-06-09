@@ -60,6 +60,16 @@ class Application(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
+    TYPE_NEW_LICENCE = 'new licence'
+    TYPE_AMENDMENT = 'amendment'
+    TYPE_RENEWAL = 'renewal'
+    APPLICATION_TYPE_CHOICES = (
+        (TYPE_NEW_LICENCE, TYPE_NEW_LICENCE.title()),
+        (TYPE_AMENDMENT, TYPE_AMENDMENT.title()),
+        (TYPE_RENEWAL, TYPE_RENEWAL.title()),
+    )
+    application_type = models.CharField('Application Type', max_length=40, choices=APPLICATION_TYPE_CHOICES,
+                                        default=TYPE_NEW_LICENCE)
     licence_type = models.ForeignKey(WildlifeLicenceType, blank=True, null=True)
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
