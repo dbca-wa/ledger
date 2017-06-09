@@ -59,7 +59,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
     serializer_class = ProposalSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset().exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0]).exclude(processing_status='discarded')
+        user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
+        qs = []
+        qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0]).exclude(processing_status='discarded')))
+        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0]).exclude(processing_status='discarded')))
+        queryset = list(set(qs))
         serializer = DTProposalSerializer(queryset, many=True)
         return Response(serializer.data)
 
