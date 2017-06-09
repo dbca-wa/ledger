@@ -1,4 +1,7 @@
-import traceback,datetime,base64,geojson
+import traceback
+import datetime
+import base64
+import geojson
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -20,7 +23,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address,Document
+from ledger.accounts.models import EmailUser, Address, Document
 from ledger.address.models import Country
 from disturbance import utils
 from datetime import datetime, timedelta, date
@@ -55,24 +58,25 @@ class ProposalViewSet(viewsets.ModelViewSet):
     queryset = Proposal.objects.all()
     serializer_class = ProposalSerializer
 
-    def list(self, request,*args,**kwargs):
-        queryset = self.get_queryset()
-        serializer = DTProposalSerializer(queryset,many=True)
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0]).exclude(processing_status='discarded')
+        serializer = DTProposalSerializer(queryset, many=True)
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
-    def draft(self, request,*args,**kwargs):
+    def draft(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            extracted_fields = create_data_from_form(instance.schema,request.POST, request.FILES)
+            extracted_fields = create_data_from_form(
+                instance.schema, request.POST, request.FILES)
             instance.data = extracted_fields
             data = {
                 'data': extracted_fields,
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0],
                 'submitter': request.user.id,
             }
-            serializer = self.get_serializer(instance,data,partial=True)
+            serializer = self.get_serializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
             return redirect(reverse('external'))
@@ -91,14 +95,26 @@ class ProposalViewSet(viewsets.ModelViewSet):
             d = Document(name="text")
             d.save();
             data = {
-                'schema':ProposalType.objects.first().schema,
-                'documents':[d.id],
+                'schema': ProposalType.objects.first().schema,
+                'documents': [d.id],
                 'submitter': request.user.id,
             }
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def destroy(self, request,*args,**kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            instance = self.get_object()
+            serializer = self.get_serializer(instance,{'processing_status':'discarded'},partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data,status=http_status)
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))

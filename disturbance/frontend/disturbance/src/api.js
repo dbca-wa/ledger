@@ -7,5 +7,8 @@ module.exports = {
   //other
   countries: "https://restcountries.eu/rest/v1/?fullText=true",
   proposal_type:"/api/proposal_type",
-  proposals:"/api/proposal.json"
+  proposals:"/api/proposal.json",
+  discard_proposal:function (id) {
+      return `/api/proposal/${id}.json`;
+  }
 }
