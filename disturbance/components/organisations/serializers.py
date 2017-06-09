@@ -5,6 +5,7 @@ from disturbance.components.organisations.models import (
                                 OrganisationContact,
                                 OrganisationRequest,
                                 OrganisationRequestUserAction,
+                                OrganisationRequestLogEntry,
                             )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -81,6 +82,11 @@ class OrganisationRequestActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
     class Meta:
         model = OrganisationRequestUserAction 
+        fields = '__all__'
+
+class OrganisationRequestCommsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganisationRequestLogEntry
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):

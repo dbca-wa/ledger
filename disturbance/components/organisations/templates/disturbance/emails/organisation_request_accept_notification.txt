@@ -1,4 +1,4 @@
-{%  extends 'disturbance/emails/base_email.html' %}
+{%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
     Your organisation request has been approved:

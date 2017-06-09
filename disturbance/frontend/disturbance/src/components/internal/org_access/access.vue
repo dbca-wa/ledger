@@ -12,7 +12,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Communications</strong><br/>
-                                <a @click.prevent="" class="actionBtn">Show</a>
+                                <a ref="showCommsBtn" class="actionBtn">Show</a>
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Actions</strong><br/>
@@ -145,6 +145,7 @@
 import $ from 'jquery'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
+import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
   api_endpoints,
   helpers
@@ -159,9 +160,10 @@ export default {
         access: {
             requester: {}
         },
+        DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
         members: [],
         // Filters
-        dtOptions:{
+        actionDtOptions:{
             language: {
                 processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
             },
@@ -188,13 +190,126 @@ export default {
                 {
                     data:"when",
                     mRender:function(data,type,full){
-                        return moment(data).format('DD/MM/YYYY HH:mm:ss')
+                        return moment(data).format(vm.DATE_TIME_FORMAT)
                     }
                 },
             ]
         },
         dtHeaders:["Who","What","When"],
-        actionsTable : null
+        actionsTable : null,
+        commsDtOptions:{
+            language: {
+                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+            },
+            //responsive: true,
+            deferRender: true, 
+            //autowidth: true,
+            order: [[0, 'desc']],
+            processing:true,
+            ajax: {
+                "url": helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/comms_log'),
+                "dataSrc": '',
+            },
+            columns:[
+                {
+                    title: 'Date',
+                    data: 'created',
+                    render: function (date) {
+                        return moment(date).format(vm.DATE_TIME_FORMAT);
+                    }
+                },
+                {
+                    title: 'Type',
+                    data: 'type'
+                },
+                {
+                    title: 'Reference',
+                    data: 'reference'
+                },
+                {
+                    title: 'To',
+                    data: 'to',
+                    render: vm.commaToNewline
+                },
+                {
+                    title: 'CC',
+                    data: 'cc',
+                    render: vm.commaToNewline
+                },
+                {
+                    title: 'From',
+                    data: 'fromm',
+                    render: vm.commaToNewline
+                },
+                {
+                    title: 'Subject/Desc.',
+                    data: 'subject'
+                },
+                {
+                    title: 'Text',
+                    data: 'text',
+                    'render': function (value) {
+                        var ellipsis = '...',
+                            truncated = _.truncate(value, {
+                                length: 100,
+                                omission: ellipsis,
+                                separator: ' '
+                            }),
+                            result = '<span>' + truncated + '</span>',
+                            popTemplate = _.template('<a href="#" ' +
+                                'role="button" ' +
+                                'data-toggle="popover" ' +
+                                'data-trigger="click" ' +
+                                'data-placement="top auto"' +
+                                'data-html="true" ' +
+                                'data-content="<%= text %>" ' +
+                                '>more</a>');
+                        if (_.endsWith(truncated, ellipsis)) {
+                            result += popTemplate({
+                                text: value
+                            });
+                        }
+
+                        return result;
+                    },
+                    'createdCell': function (cell) {
+                        //TODO why this is not working?
+                        // the call to popover is done in the 'draw' event
+                        $(cell).popover();
+                    }
+                },
+                {
+                    title: 'Documents',
+                    data: 'documents',
+                    'render': function (values) {
+                        var result = '';
+                        _.forEach(values, function (value) {
+                            // We expect an array [docName, url]
+                            // if it's a string it is the url
+                            var docName = '',
+                                url = '';
+                            if (_.isArray(value) && value.length > 1){
+                                docName = value[0];
+                                url = value[1];
+                            }
+                            if (typeof s === 'string'){
+                                url = value;
+                                // display the first  chars of the filename
+                                docName = _.last(value.split('/'));
+                                docName = _.truncate(docName, {
+                                    length: 18,
+                                    omission: '...',
+                                    separator: ' '
+                                });
+                            }
+                            result += '<a href="' + url + '" target="_blank"><p>' + docName+ '</p></a><br>';
+                        });
+                        return result;
+                    }
+                }
+            ]
+        },
+        commsTable : null,
     }
   },
   watch: {},
@@ -224,6 +339,9 @@ export default {
     }
   },
   methods: {
+    commaToNewline(s){
+        return s.replace(/[,;]/g, '\n');
+    },
     fetchAccessGroupMembers: function(){
         let vm = this;
         vm.loading.push('Loading Access Group Members');
@@ -292,6 +410,42 @@ export default {
 
     },
     initialisePopovers: function(){
+        this.initialiseActionLogs();
+        this.initialiseCommLogs();
+    },
+    initialiseCommLogs: function(){
+        let vm = this;
+        let commsLogId = 'comms-log-table'+vm._uid;
+        $(vm.$refs.showCommsBtn).popover({
+            content: function() {
+                return ` 
+                <table id="${commsLogId}" class="hover table table-striped table-bordered dt-responsive " cellspacing="0" width="100%">
+                </table>`
+            },
+            html: true,
+            title: 'Communications Log',
+            container: 'body',
+            placement: 'right',
+            trigger: "click",
+        }).on('inserted.bs.popover', function () {
+            vm.commsTable = $('#'+commsLogId).DataTable(vm.commsDtOptions);
+
+            // activate popover when table is drawn.
+            vm.commsTable.on('draw.dt', function () {
+                var $tablePopover = $(this).find('[data-toggle="popover"]');
+                if ($tablePopover.length > 0) {
+                    $tablePopover.popover();
+                    // the next line prevents from scrolling up to the top after clicking on the popover.
+                    $($tablePopover).on('click', function (e) {
+                        e.preventDefault();
+                        return true;
+                    });
+                }
+            });
+        });
+
+    },
+    initialiseActionLogs: function(){
         let vm = this;
         let actionLogId = 'actions-log-table'+vm._uid;
         $(vm.$refs.showActionBtn).popover({
@@ -315,7 +469,7 @@ export default {
             placement: 'right',
             trigger: "click",
         }).on('inserted.bs.popover', function () {
-            vm.actionsTable = $('#'+actionLogId).DataTable(vm.dtOptions);
+            vm.actionsTable = $('#'+actionLogId).DataTable(vm.actionDtOptions);
         });
     }
   },
@@ -336,4 +490,5 @@ export default {
 .hidePopover {
     display: none;
 }
+td {word-wrap: break-word}
 </style>
