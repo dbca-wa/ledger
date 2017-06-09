@@ -32,6 +32,7 @@ from disturbance.components.organisations.models import  (
                                     OrganisationRequestUserAction,
                                     OrganisationContact,
                                     OrganisationAccessGroup,
+                                    OrganisationRequestLogEntry,
                                 )
 
 from disturbance.components.organisations .serializers import (   
@@ -42,6 +43,7 @@ from disturbance.components.organisations .serializers import (
                                         OrganisationCheckSerializer,
                                         OrganisationPinCheckSerializer,
                                         OrganisationRequestActionSerializer,
+                                        OrganisationRequestCommsSerializer,
                                     )
 
 class OrganisationViewSet(viewsets.ModelViewSet):
@@ -189,6 +191,23 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.action_logs.all()
             serializer = OrganisationRequestActionSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = OrganisationRequestCommsSerializer(qs,many=True)
             return Response(serializer.data) 
         except serializers.ValidationError:
             print(traceback.print_exc())

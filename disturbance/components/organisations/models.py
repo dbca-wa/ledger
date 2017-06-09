@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
-from disturbance.components.main.models import UserAction
+from disturbance.components.main.models import UserAction,CommunicationsLogEntry
 from disturbance.components.organisations.utils import random_generator
 from disturbance.components.organisations.emails import send_organisation_request_accept_email_notification
 
@@ -114,9 +114,9 @@ class OrganisationRequest(models.Model):
             self.save()
             self.log_user_action(OrganisationRequestUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),request)
             # Continue with remaining logic
-            self.__accept()
+            self.__accept(request)
 
-    def __accept(self):
+    def __accept(self,request):
         # Check if orgsanisation exists in ledger
         ledger_org = None
         try:
@@ -128,7 +128,7 @@ class OrganisationRequest(models.Model):
         # Link requester to organisation
         UserDelegation.objects.create(user=self.requester,organisation=org)
         # send email to requester
-        send_organisation_request_accept_email_notification(self)
+        send_organisation_request_accept_email_notification(self,request)
 
     def assign_to(self, user,request):
         with transaction.atomic():
@@ -200,6 +200,18 @@ class OrganisationRequestDeclinedDetails(models.Model):
     request = models.ForeignKey(OrganisationRequest)
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
+
+    class Meta:
+        app_label = 'disturbance'
+
+class OrganisationRequestLogEntry(CommunicationsLogEntry):
+    request = models.ForeignKey(OrganisationRequest, related_name='comms_logs')
+
+    def save(self, **kwargs):
+        # save the request id if the reference not provided
+        if not self.reference:
+            self.reference = self.request.id
+        super(OrganisationRequestLogEntry, self).save(**kwargs)
 
     class Meta:
         app_label = 'disturbance'

@@ -87,6 +87,7 @@ module.exports = {
            "select2": "../node_modules/select2/dist/js/select2.full.min.js",
            moment: "moment",
            swal: 'sweetalert2',
+           _: 'lodash',
            datetimepicker:"../node_modules/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
        })
     ]
