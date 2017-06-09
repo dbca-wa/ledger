@@ -253,7 +253,11 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
-#        'oscar.checkout': {
+        'wildlifelicensing': {
+            'handlers': ['file'],
+            'level': 'INFO'
+        },
+        #        'oscar.checkout': {
 #            'handlers': ['file'],
 #            'level': 'INFO'
 #        }
