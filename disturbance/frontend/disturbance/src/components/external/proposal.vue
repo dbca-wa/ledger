@@ -7,9 +7,9 @@
                 <input type='hidden' name="proposal_id" :value="1" />
                 <div class="row" style="margin-bottom:20px;">
                   <div class="col-lg-12 pull-right">
-                      <input type="submit" class="btn btn-primary" value="Save and Exit"/>
-                      <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                      <input type="submit" class="btn btn-primary" value="Submit Proposal"/>
+                        <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                        <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                        <router-link :to="{name:'apply_proposal',params: { proposal_id: proposal.id }}" class="btn btn-primary">Submit</router-link>
                   </div>
                 </div>
             </Proposal>
