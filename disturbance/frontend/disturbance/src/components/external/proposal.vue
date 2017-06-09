@@ -5,7 +5,9 @@
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
-                <input type="submit" class="btn btn-primary" value="Save"/>
+                <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                <input type="submit" class="btn btn-primary" value="Save and Continue"/>
+                <input type="submit" class="btn btn-primary" value="Submit"/>
             </Proposal>
         </form>
     </div>
