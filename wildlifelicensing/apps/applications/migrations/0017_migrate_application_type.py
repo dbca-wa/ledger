@@ -26,7 +26,7 @@ def update_type_and_status(apps, schema_editor):
         app.application_type = 'amendment' if app.is_licence_amendment else 'renewal'
         # we update also the processing status to 'new' if it is one of the now obsolete status
         if app.processing_status in obsolete_processing_status:
-            app.status = 'new'
+            app.processing_status = 'new'
         app.save()
 
     # double check status for applications without previous app
@@ -35,7 +35,7 @@ def update_type_and_status(apps, schema_editor):
     if should_not_be:
         logger.error("Some applications without parents have a status in {}: {}".
                      format(obsolete_processing_status, should_not_be.values('pk')))
-        # should_not_be.update(processing_status='new')
+        should_not_be.update(processing_status='new')
 
 
 def roll_back(apps, schema_editor):
