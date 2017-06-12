@@ -607,7 +607,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
         context['application'] = application
 
         context['show_invoice'] = not is_licence_free(generate_product_title(application)) and \
-            not application.is_licence_amendment
+            not application.application_type == 'amendment'
 
         delete_session_application(request.session)
 

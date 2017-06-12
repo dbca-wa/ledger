@@ -163,10 +163,6 @@ class Application(RevisionedMixin):
         """
         return self.customer_status == 'draft' and not self.lodgement_number
 
-    @property
-    def is_licence_amendment(self):
-        return self.application_type == 'amendment'
-
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)
 

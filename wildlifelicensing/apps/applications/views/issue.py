@@ -163,7 +163,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 licence_initial_data['additional_information'] = previous_licence.additional_information
                 licence_initial_data['cover_letter_message'] = previous_licence.cover_letter_message
 
-                if application.is_licence_amendment:
+                if application.application_type == 'amendment':
                     licence_initial_data['end_date'] = previous_licence.end_date
 
             if 'purpose' not in licence_initial_data or len(licence_initial_data['purpose']) == 0:

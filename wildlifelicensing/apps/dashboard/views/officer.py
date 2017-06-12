@@ -740,7 +740,7 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
 
-            if replacing_application.is_licence_amendment:
+            if replacing_application.application_type == 'amendment':
                 return 'Amended'
             else:
                 return 'Renewed'
