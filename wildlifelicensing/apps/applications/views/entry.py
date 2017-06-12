@@ -45,8 +45,8 @@ class ApplicationEntryBaseView(RedirectApplicationNotInSessionMixin, TemplateVie
 
         kwargs['customer'] = application.applicant
 
-        kwargs['is_renewal'] = application.application_type == Application.TYPE_RENEWAL
-        kwargs['is_amendment'] = application.application_type == Application.TYPE_AMENDMENT
+        kwargs['is_renewal'] = application.application_type == 'renewal'
+        kwargs['is_amendment'] = application.application_type == 'amendment'
 
         return super(ApplicationEntryBaseView, self).get_context_data(**kwargs)
 
@@ -170,7 +170,7 @@ class RenewLicenceView(UserCanRenewApplicationMixin, RedirectApplicationInSessio
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application)
-            application.application_type = Application.TYPE_RENEWAL
+            application.application_type = 'renewal'
             if is_officer(request.user):
                 application.proxy_applicant = request.user
             application.save()
@@ -195,7 +195,7 @@ class AmendLicenceView(UserCanAmendApplicationMixin, RedirectApplicationInSessio
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application, is_licence_amendment=True)
-            application.application_type = Application.TYPE_AMENDMENT
+            application.application_type = 'amendment'
             if is_officer(request.user):
                 application.proxy_applicant = request.user
             application.save()
