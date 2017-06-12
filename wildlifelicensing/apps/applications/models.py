@@ -34,8 +34,8 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
-    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'),
-                                 ('licence_amendment', 'Licence Amendment'), ('ready_for_action', 'Ready for Action'),
+    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'),
+                                 ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'),
@@ -106,7 +106,6 @@ class Application(RevisionedMixin):
     licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
-    is_licence_amendment = models.BooleanField(default=False)
 
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
@@ -166,6 +165,10 @@ class Application(RevisionedMixin):
         :return:
         """
         return self.customer_status == 'draft' and not self.lodgement_number
+
+    @property
+    def is_licence_amendment(self):
+        return self.application_type == Application.TYPE_AMENDMENT
 
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)

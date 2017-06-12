@@ -45,8 +45,8 @@ class ApplicationEntryBaseView(RedirectApplicationNotInSessionMixin, TemplateVie
 
         kwargs['customer'] = application.applicant
 
-        kwargs['is_renewal'] = application.processing_status == 'renewal'
-        kwargs['is_amendment'] = application.processing_status == 'licence_amendment'
+        kwargs['is_renewal'] = application.application_type == Application.TYPE_RENEWAL
+        kwargs['is_amendment'] = application.application_type == Application.TYPE_AMENDMENT
 
         return super(ApplicationEntryBaseView, self).get_context_data(**kwargs)
 
@@ -170,7 +170,7 @@ class RenewLicenceView(UserCanRenewApplicationMixin, RedirectApplicationInSessio
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application)
-            application.processing_status = 'renewal'
+            application.application_type = Application.TYPE_RENEWAL
             if is_officer(request.user):
                 application.proxy_applicant = request.user
             application.save()
@@ -195,8 +195,7 @@ class AmendLicenceView(UserCanAmendApplicationMixin, RedirectApplicationInSessio
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application, is_licence_amendment=True)
-            application.processing_status = 'licence_amendment'
-            application.is_licence_amendment = True
+            application.application_type = Application.TYPE_AMENDMENT
             if is_officer(request.user):
                 application.proxy_applicant = request.user
             application.save()
@@ -571,7 +570,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
             application.review_status = 'amended'
             application.processing_status = 'ready_for_action'
-        elif application.processing_status != 'renewal' and application.processing_status != 'licence_amendment':
+        else :
             application.processing_status = 'new'
 
         application.customer_status = 'under_review'
