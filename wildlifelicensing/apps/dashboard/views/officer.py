@@ -159,6 +159,9 @@ class TablesApplicationsOfficerView(OfficerRequiredMixin, base.TablesBaseView):
                 'title': 'User'
             },
             {
+                'title': 'Type'
+            },
+            {
                 'title': 'Status',
             },
             {
@@ -222,6 +225,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         'lodgement_number',
         'licence_type',
         'applicant',
+        'application_type',
         'processing_status',
         'lodgement_date',
         'assigned_officer',
@@ -234,6 +238,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
         ['applicant.last_name', 'applicant.first_name', 'applicant.email'],
+        'application_type',
         'processing_status',
         'lodgement_date',
         ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
@@ -350,6 +355,9 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):
                 'title': 'User'
             },
             {
+                'title': 'Type'
+            },
+            {
                 'title': 'Status'
             },
             {
@@ -461,6 +469,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
         'lodgement_number',
         'licence_type',
         'applicant',
+        'application_type',
         'processing_status',
         'lodgement_date',
         'action'
@@ -469,6 +478,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
         ['applicant.last_name', 'applicant.first_name', 'applicant.email'],
+        'application_type',
         'processing_status',
         'lodgement_date',
         '']

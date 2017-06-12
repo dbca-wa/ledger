@@ -31,6 +31,9 @@ class TableAssessorView(AssessorRequiredMixin, base.TablesBaseView):
                 'title': 'User'
             },
             {
+                'title': 'Type'
+            },
+            {
                 'title': 'Status'
             },
             {
@@ -87,6 +90,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
         'application.lodgement_number',
         'licence_type',
         'application.applicant',
+        'application.application_type',
         'status',
         'application.lodgement_date',
         'application.assigned_officer',
@@ -99,6 +103,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
         ['application.licence_type.short_name', 'application.licence_type.name'],
         ['application.applicant.last_name', 'application.applicant.first_name',
          'application.applicant.email'],
+        'application.application_type',
         'status',
         'application.lodgement_date',
         ['application.assigned_officer.first_name', 'application.assigned_officer.last_name',

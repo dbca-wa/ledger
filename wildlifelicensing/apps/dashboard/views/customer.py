@@ -45,6 +45,9 @@ class TableCustomerView(LoginRequiredMixin, base.TablesBaseView):
                 'title': 'Profile'
             },
             {
+                'title': 'Type'
+            },
+            {
                 'title': 'Status'
             },
             {
@@ -193,6 +196,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         'lodgement_number',
         'licence_type',
         'applicant_profile',
+        'application_type',
         'customer_status',
         'lodgement_date',
         'action'
@@ -201,6 +205,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
         'applicant_profile',
+        'application_type',
         'customer_status',
         'lodgement_date',
         '']
