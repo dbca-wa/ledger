@@ -46,6 +46,10 @@
     margin-bottom: 20px;
 }
 
+.bottom-buffer-xs {
+    margin-bottom: 5px;
+}
+
 .left-buffer-xxxl {
     margin-left: 40px;
 }

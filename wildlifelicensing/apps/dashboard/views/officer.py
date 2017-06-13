@@ -171,9 +171,6 @@ class TablesApplicationsOfficerView(OfficerRequiredMixin, base.TablesBaseView):
                 'title': 'Assignee'
             },
             {
-                'title': 'Proxy'
-            },
-            {
                 'title': 'Payment',
                 'searchable': False,
                 'orderable': False
@@ -229,7 +226,6 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         'processing_status',
         'lodgement_date',
         'assigned_officer',
-        'proxy_applicant',
         'payment',
         'application_pdf',
         'action'
@@ -242,7 +238,6 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         'processing_status',
         'lodgement_date',
         ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
-        ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
         ''
         ''
     ]
@@ -261,12 +256,6 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
                 search
             ),
             'render': lambda self, instance: base.render_user_name(instance.assigned_officer)
-        },
-        'proxy_applicant': {
-            'search': lambda self, search: base.build_field_query([
-                'proxy_applicant__last_name', 'proxy_applicant__first_name'],
-                search),
-            'render': lambda self, obj: base.render_user_name(obj.proxy_applicant)
         },
         'payment': {
             'render': lambda self, instance: base.render_payment(instance, self.request.build_absolute_uri(
