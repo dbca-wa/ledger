@@ -58,6 +58,23 @@ class TestData(object):
     }
 
 
+class BaseUserTestCase(TestCase):
+    """
+    A test case that provides some users.
+    """
+    client_class = SocialClient
+
+    def _pre_setup(self):
+        super(BaseUserTestCase, self)._pre_setup()
+        self.customer = get_or_create_default_customer(include_default_profile=True)
+        self.officer = get_or_create_default_officer()
+        self.assessor = get_or_create_default_assessor()
+
+    def _post_teardown(self):
+        super(BaseUserTestCase, self)._post_teardown()
+        self.client.logout()
+
+
 class SocialClient(Client):
     """
     A django Client for authenticating with the social auth password-less framework.
