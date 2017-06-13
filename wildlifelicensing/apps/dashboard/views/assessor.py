@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Q
 
-from wildlifelicensing.apps.applications.models import Assessment
+from wildlifelicensing.apps.applications.models import Assessment, Application
 from wildlifelicensing.apps.dashboard.views import base
 from wildlifelicensing.apps.main.helpers import render_user_name
 from wildlifelicensing.apps.main.mixins import OfficerOrAssessorRequiredMixin, \
@@ -29,6 +29,9 @@ class TableAssessorView(AssessorRequiredMixin, base.TablesBaseView):
             },
             {
                 'title': 'User'
+            },
+            {
+                'title': 'Type'
             },
             {
                 'title': 'Status'
@@ -82,11 +85,13 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
     """
     The model of this table is not Application but Assessment.
     """
+    APPLICATION_TYPES = dict(Application.APPLICATION_TYPE_CHOICES)
     model = Assessment
     columns = [
         'application.lodgement_number',
         'licence_type',
         'application.applicant',
+        'application.application_type',
         'status',
         'application.lodgement_date',
         'application.assigned_officer',
@@ -99,6 +104,7 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
         ['application.licence_type.short_name', 'application.licence_type.name'],
         ['application.applicant.last_name', 'application.applicant.first_name',
          'application.applicant.email'],
+        'application.application_type',
         'status',
         'application.lodgement_date',
         ['application.assigned_officer.first_name', 'application.assigned_officer.last_name',
@@ -125,6 +131,9 @@ class DataTableApplicationAssessorView(OfficerOrAssessorRequiredMixin, base.Data
                 ['application__applicant_profile__user__last_name', 'application__applicant_profile__user__first_name'],
                 search
             ),
+        },
+        'application.application_type': {
+            'render': lambda self, instance: self.APPLICATION_TYPES[instance.application.application_type]
         },
         'application.assigned_officer': {
             'render': lambda self, instance: render_user_name(instance.application.assigned_officer),

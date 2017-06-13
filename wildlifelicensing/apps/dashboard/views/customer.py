@@ -45,6 +45,9 @@ class TableCustomerView(LoginRequiredMixin, base.TablesBaseView):
                 'title': 'Profile'
             },
             {
+                'title': 'Type'
+            },
+            {
                 'title': 'Status'
             },
             {
@@ -193,6 +196,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         'lodgement_number',
         'licence_type',
         'applicant_profile',
+        'application_type',
         'customer_status',
         'lodgement_date',
         'action'
@@ -201,6 +205,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
         'applicant_profile',
+        'application_type',
         'customer_status',
         'lodgement_date',
         '']
@@ -316,7 +321,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             replacing_application = Application.objects.get(previous_application=application)
 
             if replacing_application.licence is not None and replacing_application.licence.is_issued:
-                if replacing_application.is_licence_amendment:
+                if replacing_application.application_type == 'amendment':
                     return 'Amended'
                 else:
                     return 'Renewed'
@@ -346,7 +351,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
             if replacing_application.licence is None or not replacing_application.licence.is_issued:
-                if replacing_application.is_licence_amendment:
+                if replacing_application.application_type == 'amendment':
                     return 'Amendment Pending'
                 else:
                     return 'Renewal Pending'

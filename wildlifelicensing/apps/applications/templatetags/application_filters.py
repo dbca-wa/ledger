@@ -18,11 +18,10 @@ def derive_col_width(num_cols):
 
 @register.filter
 def get_application_verb(application):
-    if application.previous_application is not None:
-        if application.is_licence_amendment:
-            return 'Amend'
-        else:
-            return 'Renew'
+    if application.application_type == 'amendment':
+        return 'Amend'
+    elif application.application_type == 'renewal':
+        return 'Renew'
     elif application.is_temporary:
         return 'New'
     else:

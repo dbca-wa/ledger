@@ -225,7 +225,7 @@ define([
         var $container = $('#returnsCheck');
 
         // for new applications or applications that are licence amendments, no need to check returns
-        if (!application.previous_application || application.is_licence_amendment) {
+        if (application.application_type !== 'renewal') {
             $container.addClass('hidden');
             return;
         }
@@ -610,7 +610,7 @@ define([
             $buttonClicked,
             approvableConditions = [
                 (application.licence_type.identification_required && application.id_check_status === 'Accepted') || !application.licence_type.identification_required,
-                (application.previous_application && application.returns_check_status === 'Accepted') || !application.previous_application || application.is_licence_amendment,
+                (application.application_type === 'renewal' && application.returns_check_status === 'Accepted') || application.application_type != 'renewal',
                 application.character_check_status === 'Accepted',
                 application.review_status === 'Accepted'
             ];

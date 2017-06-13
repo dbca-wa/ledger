@@ -34,8 +34,8 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
-    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'),
-                                 ('licence_amendment', 'Licence Amendment'), ('ready_for_action', 'Ready for Action'),
+    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'),
+                                 ('ready_for_action', 'Ready for Action'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'),
@@ -60,6 +60,13 @@ class Application(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
+    APPLICATION_TYPE_CHOICES = (
+        ('new_licence', 'New Licence'),
+        ('amendment', 'Amendment'),
+        ('renewal', 'Renewal'),
+    )
+    application_type = models.CharField('Application Type', max_length=40, choices=APPLICATION_TYPE_CHOICES,
+                                        default=APPLICATION_TYPE_CHOICES[0][0])
     licence_type = models.ForeignKey(WildlifeLicenceType, blank=True, null=True)
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
@@ -96,7 +103,6 @@ class Application(RevisionedMixin):
     licence = models.ForeignKey(WildlifeLicence, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
-    is_licence_amendment = models.BooleanField(default=False)
 
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 

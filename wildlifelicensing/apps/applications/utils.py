@@ -306,8 +306,6 @@ def clone_application_with_status_reset(application, is_licence_amendment=False)
 
     application.licence = None
 
-    application.is_licence_amendment = is_licence_amendment
-
     if not is_licence_amendment:
         application.invoice_reference = ''
 

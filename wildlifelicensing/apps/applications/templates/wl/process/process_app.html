@@ -186,7 +186,7 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                        {% if not data.application.is_licence_amendment %}
+                                        {% if data.application.application_type == 'renewal' %}
                                             <div>
                                                 <label>Returns</label>
                                                 {% if data.returns_outstanding %}
