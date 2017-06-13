@@ -71,7 +71,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         if request.POST.get('submissionType') == 'backToProcessing':
             return redirect('wl_applications:process', *args)
         elif request.POST.get('submissionType') == 'save':
-            messages.success(request, 'Conditions saved')
+            messages.warning(request, 'Conditions saved')
             return render(request, self.template_name, self.get_context_data())
         else:
             return redirect('wl_applications:issue_licence', *args, **kwargs)

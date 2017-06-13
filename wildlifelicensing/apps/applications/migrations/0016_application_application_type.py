@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='application',
             name='application_type',
-            field=models.CharField(choices=[('new licence', 'New Licence'), ('amendment', 'Amendment'), ('renewal', 'Renewal')], default='new licence', max_length=40, verbose_name='Application Type'),
+            field=models.CharField(choices=[('new_licence', 'New Licence'), ('amendment', 'Amendment'), ('renewal', 'Renewal')], default='new_licence', max_length=40, verbose_name='Application Type'),
         ),
     ]
