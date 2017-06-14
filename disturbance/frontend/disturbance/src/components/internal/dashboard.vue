@@ -45,9 +45,6 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'new_proposal' }">New Proposal</router-link>
-                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-3">
@@ -76,6 +73,11 @@
                                     <option value="current">Current</option>
                                 </select>
                             </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <datatable ref="proposal_datatable" id="proposal_datatable" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
                         </div>
                     </div>
                 </div>
@@ -165,6 +167,7 @@
 </template>
 <script>
 import $ from 'jquery'
+import datatable from '@/utils/vue/datatable.vue'
 import {
   api_endpoints,
   helpers
@@ -193,9 +196,75 @@ export default {
       filterReferalLodgedFrom: '',
       filterReferalLodgedTo: '',
       filterReferalSubmitter: '',
+      proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
+      proposal_options:{
+          language: {
+              processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+          },
+          responsive: true,
+          ajax: {
+              "url": api_endpoints.proposals,
+              "dataSrc": ''
+          },
+          columns: [
+              {data: "id"},
+              {
+                  data:'data',
+                  mRender:function (data,type,full) {
+                      if (data) {
+                          let region = (data[0].region)?data[0].region:'n/a';
+                          return `${region}`;
+                      }
+                     return ''
+                  }
+              },
+              {
+                  data:'data',
+                  mRender:function (data,type,full) {
+                      if (data) {
+                           return `${data[0].activity}`;
+                      }
+                     return ''
+                  }
+              },
+              {
+                  data:'data',
+                  mRender:function (data,type,full) {
+                      if (data) {
+                           return `${data[0].project_details[0].project_title}`;
+                      }
+                     return ''
+                  }
+              },
+              {
+                  data: "submitter",
+                  mRender:function (data,type,full) {
+                      if (data) {
+                           return `${data.first_name} ${data.last_name}`;
+                      }
+                     return ''
+                  }
+              },
+              {data: "applicant"},
+              {data: "processing_status"},
+              {data: "lodgement_date"},
+              {
+                  mRender:function (data,type,full) {
+                        let links = '';
+                        links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                        return links;
+                  }
+              }
+          ],
+          processing: true
+      }
     }
+    
   },
   watch: {},
+  components: {
+    datatable
+  },
   computed: {
     isLoading: function () {
       return this.loading.length == 0;

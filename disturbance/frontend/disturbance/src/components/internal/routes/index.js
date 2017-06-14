@@ -1,7 +1,9 @@
 import InternalDashboard from '../dashboard.vue'
-import OrgAccessTable from '../org_access/dashboard.vue'
-import OrgAccess from '../org_access/access.vue'
-//import Proposal from '../proposal.vue'
+import Search from '../search.vue'
+import OrgAccessTable from '../organisations/dashboard.vue'
+import OrgAccess from '../organisations/access.vue'
+import Organisation from '../organisations/manage.vue'
+import Proposal from '../proposals/proposal.vue'
 export default
 {
     path: '/internal',
@@ -16,6 +18,11 @@ export default
         {
             path: '/',
             component: InternalDashboard
+        },
+        {
+            path: 'search',
+            component: Search,
+            name:"internal-search"
         },
         {
             path: 'organisations',
@@ -35,7 +42,29 @@ export default
                     path: 'access/:access_id',
                     component: OrgAccess,
                     name:"org-access"
+                },
+                {
+                    path: ':org_id',
+                    component: Organisation,
+                    name:"internal-org-detail"
+                },
+ 
+            ]
+        },
+        {
+            path: 'proposal',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
                 }
+            },
+            children: [
+                {
+                    path: ':proposal_id',
+                    component: Proposal,
+                    name:"internal-proposal"
+                },
  
             ]
         },

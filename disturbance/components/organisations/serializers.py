@@ -1,15 +1,23 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,OrganisationAddress
 from disturbance.components.organisations.models import (   
                                 Organisation,
                                 OrganisationContact,
                                 OrganisationRequest,
                                 OrganisationRequestUserAction,
+                                OrganisationAction,
                                 OrganisationRequestLogEntry,
+                                OrganisationLogEntry,
+                                ledger_organisation,
                             )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 
+
+class LedgerOrganisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ledger_organisation
+        fields = '__all__'
 
 class OrganisationCheckSerializer(serializers.Serializer):
     abn = serializers.CharField()
@@ -19,11 +27,57 @@ class OrganisationPinCheckSerializer(serializers.Serializer):
     pin1 = serializers.CharField()
     pin2 = serializers.CharField()
 
+class OrganisationAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganisationAddress
+        fields = (
+            'id',
+            'line1',
+            'locality',
+            'state',
+            'country',
+            'postcode'
+        ) 
+
+class DelegateSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='get_full_name')
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'name',
+        ) 
+
 class OrganisationSerializer(serializers.ModelSerializer):
-    
+    address = OrganisationAddressSerializer(read_only=True) 
+    pins = serializers.SerializerMethodField(read_only=True)
+    delegates = DelegateSerializer(many=True,read_only=True)
     class Meta:
         model = Organisation
-        fields = '__all__'
+        fields = (
+                    'id',
+                    'name',
+                    'abn',
+                    'address',
+                    'email',
+                    'phone_number',
+                    'pins',
+                    'delegates',
+                )
+
+    def get_pins(self,obj):
+        user =  self.context['request'].user
+        # Check if the request user is among the first five delegates in the organisation
+        delegates = obj.delegates.all()[:5]
+        if user in delegates:
+            return {'one': obj.pin_one, 'two': obj.pin_two}
+        else:
+            return None
+
+class DetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ledger_organisation
+        fields = ('id','name')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -62,11 +116,6 @@ class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
     def get_requester(self,obj):
         return obj.requester.get_full_name()
 
-class AddressSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Address
-        fields = '__all__'
-
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
@@ -84,43 +133,18 @@ class OrganisationRequestActionSerializer(serializers.ModelSerializer):
         model = OrganisationRequestUserAction 
         fields = '__all__'
 
+class OrganisationActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+    class Meta:
+        model = OrganisationAction 
+        fields = '__all__'
+
 class OrganisationRequestCommsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganisationRequestLogEntry
         fields = '__all__'
 
-class UserSerializer(serializers.ModelSerializer):
-    disturbance_organisations = UserOrganisationSerializer(many=True)
-    residential_address = AddressSerializer()
-    personal_details = serializers.SerializerMethodField()
-    address_details = serializers.SerializerMethodField()
-    contact_details = serializers.SerializerMethodField()
+class OrganisationCommsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = EmailUser
-        fields = (
-            'id',
-            'last_name',
-            'first_name',
-            'email',
-            'residential_address',
-            'phone_number',
-            'mobile_number',
-            'disturbance_organisations',
-            'personal_details',
-            'address_details',
-            'contact_details'
-        )
-    
-    def get_personal_details(self,obj):
-        return True if obj.last_name  and obj.first_name else False
-
-    def get_address_details(self,obj):
-        return True if obj.residential_address else False
-
-    def get_contact_details(self,obj):
-        if obj.mobile_number and obj.email:
-            return True
-        elif obj.mobile_number and obj.phone_number:
-            return True
-        else:
-            return False
+        model = OrganisationLogEntry
+        fields = '__all__'

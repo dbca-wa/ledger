@@ -27,15 +27,19 @@ class Organisation(models.Model):
     def __str__(self):
         return str(self.organisation)
 
+    def log_user_action(self, action, request):
+        return OrganisationAction.log_action(self, action, request.user)
+
     def validate_pins(self,pin1,pin2):
         return self.pin_one == pin1 and self.pin_two == pin2
     
     def link_user(self,user):
         try:
-            UserDelegation.objects.find(organisation=self,user=user)
+            UserDelegation.objects.get(organisation=self,user=user)
             raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
         except UserDelegation.DoesNotExist:
-            UserDelegation.objects.create(organisation=self,user=user)
+            delegate = UserDelegation.objects.create(organisation=self,user=user)
+            delegate.log_user_action(OrganisationDelegateAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
 
     def generate_pins(self):
         self.pin_one = self._generate_pin()
@@ -64,10 +68,30 @@ class Organisation(models.Model):
         except:
             raise
 
+    @property
+    def name(self):
+        return self.organisation.name
+
+    @property
+    def abn(self):
+        return self.organisation.abn
+
+    @property
+    def address(self):
+        return self.organisation.postal_address
+
+    @property
+    def phone_number(self):
+        return self.organisation.phone_number
+
+    @property
+    def email(self):
+        return self.organisation.email
+
 @python_2_unicode_compatible
 class OrganisationContact(models.Model):
     organisation = models.ForeignKey(Organisation, related_name='contacts')
-    email = models.EmailField(unique=True, blank=False)
+    email = models.EmailField(blank=False)
     first_name = models.CharField(max_length=128, blank=False, verbose_name='Given name(s)')
     last_name = models.CharField(max_length=128, blank=False)
     phone_number = models.CharField(max_length=50, null=True, blank=True,
@@ -79,6 +103,7 @@ class OrganisationContact(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+        unique_together = (('organisation','email'),)
 
     def __str__(self):
         return '{} {}'.format(self.last_name,self.first_name)
@@ -90,7 +115,44 @@ class UserDelegation(models.Model):
     class Meta:
         unique_together = (('organisation','user'),)
         app_label = 'disturbance'
+
+
+class OrganisationAction(UserAction):
+    ACTION_REQUEST_APPROVED = "Organisation Request {} Approved"
+    ACTION_LINK = "Linked {}"
+    ACTION_UNLINK = "Unlinked {}"
+    ACTION_CONTACT_ADDED = "Added new contact {}"
+    ACTION_CONTACT_REMOVED = "Removed contact {}"
+    ACTION_ORGANISATIONAL_DETAILS_SAVED_NOT_CHANGED = "Details saved without changes"
+    ACTION_ORGANISATIONAL_DETAILS_SAVED_CHANGED = "Details saved with the following changes: \n{}"
+    ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_NOT_CHANGED = "Address Details saved without changes"
+    ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_CHANGED = "Addres Details saved with folowing changes: \n{}"
+
+    @classmethod
+    def log_action(cls, organisation, action, user):
+        return cls.objects.create(
+            organisation=organisation,
+            who=user,
+            what=str(action)
+        )
+
+    organisation = models.ForeignKey(Organisation,related_name='action_logs')
+
+    class Meta:
+        app_label = 'disturbance'
     
+class OrganisationLogEntry(CommunicationsLogEntry):
+    organisation = models.ForeignKey(Organisation, related_name='comms_logs')
+
+    def save(self, **kwargs):
+        # save the request id if the reference not provided
+        if not self.reference:
+            self.reference = self.organisation.id
+        super(OrganisationLogEntry, self).save(**kwargs)
+
+    class Meta:
+        app_label = 'disturbance'
+
 class OrganisationRequest(models.Model):
     STATUS_CHOICES = (
         ('with_assessor','With Assessor'),
@@ -126,9 +188,24 @@ class OrganisationRequest(models.Model):
         # Create Organisation in disturbance
         org = Organisation.objects.create(organisation=ledger_org)
         # Link requester to organisation
-        UserDelegation.objects.create(user=self.requester,organisation=org)
+        delegate = UserDelegation.objects.create(user=self.requester,organisation=org)
+        # log who approved the request
+        org.log_user_action(OrganisationAction.ACTION_REQUEST_APPROVED.format(self.id),request)
+        # log who created the link
+        org.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+        # Create contact person
+        OrganisationContact.objects.create(
+            organisation = org,
+            first_name = self.requester.first_name,
+            last_name = self.requester.last_name,
+            mobile_number = self.requester.mobile_number,
+            phone_number = self.requester.phone_number,
+            fax_number = self.requester.fax_number,
+            email = self.requester.email
+        
+        )
         # send email to requester
-        send_organisation_request_accept_email_notification(self,request)
+        send_organisation_request_accept_email_notification(self,org,request)
 
     def assign_to(self, user,request):
         with transaction.atomic():

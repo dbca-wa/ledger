@@ -18,7 +18,7 @@
                     <i v-if="showCompletion && profile.personal_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
                     <i v-else-if="showCompletion && !profile.personal_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
                     <h3 class="panel-title">Personal Details <small>Provide your personal details</small>
-                        <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
+                        <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
                     </h3>
@@ -55,7 +55,7 @@
                     <i v-if="showCompletion && profile.address_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
                     <i v-else-if="showCompletion && !profile.address_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
                     <h3 class="panel-title">Address Details <small>Provide your address details</small>
-                        <a :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
+                        <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
@@ -110,7 +110,7 @@
                     <i v-if="showCompletion && profile.contact_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
                     <i v-else-if="showCompletion && !profile.contact_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
                     <h3 class="panel-title">Contact Details <small>Provide your contact details</small>
-                        <a :href="'#'+cBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cBody">
+                        <a class="panelClicker" :href="'#'+cBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
@@ -151,7 +151,7 @@
                 <div class="panel panel-default">
                   <div class="panel-heading">
                     <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing approvals</small>
-                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
+                        <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
@@ -457,7 +457,7 @@ export default {
         this.fetchCountries();
         this.load_profile();
         this.personal_form = document.forms.personal_form;
-        $('a[data-toggle="collapse"]').on('click', function () {
+        $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];
             window.setTimeout(function () {
                 $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");

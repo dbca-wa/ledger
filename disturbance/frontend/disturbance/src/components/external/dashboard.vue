@@ -282,7 +282,7 @@ export default {
           },
           responsive: true,
           ajax: {
-              "url": api_endpoints.proposals,
+              "url": helpers.add_endpoint_json(api_endpoints.proposals,'user_list'),
               "dataSrc": ''
           },
           columns: [

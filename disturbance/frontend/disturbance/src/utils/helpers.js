@@ -68,5 +68,63 @@ module.exports = {
     var res = string.split( ".json" )
     return res[ 0 ] + '/' + addition + '.json';
   },
+    initialiseCommLogs: function(vm_uid,ref,datatable_options,table){
+        let vm = this;
+        let commsLogId = 'comms-log-table'+vm_uid;
+        $(ref).popover({
+            content: function() {
+                return ` 
+                <table id="${commsLogId}" class="hover table table-striped table-bordered dt-responsive " cellspacing="0" width="100%">
+                </table>`
+            },
+            html: true,
+            title: 'Communications Log',
+            container: 'body',
+            placement: 'right',
+            trigger: "click",
+        }).on('inserted.bs.popover', function () {
+            table = $('#'+commsLogId).DataTable(datatable_options);
 
+            // activate popover when table is drawn.
+            table.on('draw.dt', function () {
+                var $tablePopover = $(this).find('[data-toggle="popover"]');
+                if ($tablePopover.length > 0) {
+                    $tablePopover.popover();
+                    // the next line prevents from scrolling up to the top after clicking on the popover.
+                    $($tablePopover).on('click', function (e) {
+                        e.preventDefault();
+                        return true;
+                    });
+                }
+            });
+        });
+
+    },
+    initialiseActionLogs: function(vm_uid,ref,datatable_options,table){
+        let vm = this;
+        let actionLogId = 'actions-log-table'+vm_uid;
+        $(ref).popover({
+            content: function() {
+                return ` 
+                <table id="${actionLogId}" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
+                    <thead>
+                        <tr>
+                            <th>Who</th>
+                            <th>What</th>
+                            <th>When</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>`
+            },
+            html: true,
+            title: 'Action Log',
+            container: 'body',
+            placement: 'right',
+            trigger: "click",
+        }).on('inserted.bs.popover', function () {
+            table = $('#'+actionLogId).DataTable(datatable_options);
+        });
+    }
 };

@@ -1,6 +1,7 @@
 import ExternalDashboard from '../dashboard.vue'
 import Proposal from '../proposal.vue'
 import ProposalApply from '../proposal_apply.vue'
+import Organisation from '../organisations/manage.vue'
 export default
 {
     path: '/external',
@@ -15,6 +16,10 @@ export default
         {
             path: '/',
             component: ExternalDashboard
+        },
+        {
+            path: 'organisations/manage/:org_id',
+            component: Organisation
         },
         {
             path: 'proposal',

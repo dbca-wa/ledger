@@ -59,6 +59,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
     serializer_class = ProposalSerializer
 
     def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset() 
+        serializer = DTProposalSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
         user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
         qs = []
         qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0]).exclude(processing_status='discarded')))

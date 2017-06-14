@@ -1,6 +1,6 @@
 <script>
     export default {
-        props:["conditions","renderer","name","data"],
+        props:["conditions","renderer","name","data","readonly"],
         mounted(){
 
         },
@@ -20,7 +20,7 @@
                                 {values.map(val =>{
                                     {return conditions[val].map(c=>{
                                         {return (<div id={'cons_'+vm.name+'_'+val} class="hidden">
-                                            {vm.renderer.renderChildren(h,c,vm.data)}
+                                            {vm.renderer.renderChildren(h,c,vm.data,vm.readonly)}
                                         </div>)}
                                     })}
                                 })}

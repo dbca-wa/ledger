@@ -410,68 +410,9 @@ export default {
 
     },
     initialisePopovers: function(){
-        this.initialiseActionLogs();
-        this.initialiseCommLogs();
+        helpers.initialiseActionLogs(this._uid,this.$refs.showActionBtn,this.actionDtOptions,this.actionsTable);
+        helpers.initialiseCommLogs(this._uid,this.$refs.showCommsBtn,this.commsDtOptions,this.commsTable);
     },
-    initialiseCommLogs: function(){
-        let vm = this;
-        let commsLogId = 'comms-log-table'+vm._uid;
-        $(vm.$refs.showCommsBtn).popover({
-            content: function() {
-                return ` 
-                <table id="${commsLogId}" class="hover table table-striped table-bordered dt-responsive " cellspacing="0" width="100%">
-                </table>`
-            },
-            html: true,
-            title: 'Communications Log',
-            container: 'body',
-            placement: 'right',
-            trigger: "click",
-        }).on('inserted.bs.popover', function () {
-            vm.commsTable = $('#'+commsLogId).DataTable(vm.commsDtOptions);
-
-            // activate popover when table is drawn.
-            vm.commsTable.on('draw.dt', function () {
-                var $tablePopover = $(this).find('[data-toggle="popover"]');
-                if ($tablePopover.length > 0) {
-                    $tablePopover.popover();
-                    // the next line prevents from scrolling up to the top after clicking on the popover.
-                    $($tablePopover).on('click', function (e) {
-                        e.preventDefault();
-                        return true;
-                    });
-                }
-            });
-        });
-
-    },
-    initialiseActionLogs: function(){
-        let vm = this;
-        let actionLogId = 'actions-log-table'+vm._uid;
-        $(vm.$refs.showActionBtn).popover({
-            content: function() {
-                return ` 
-                <table id="${actionLogId}" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
-                    <thead>
-                        <tr>
-                            <th>Who</th>
-                            <th>When</th>
-                            <th>What</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>`
-            },
-            html: true,
-            title: 'Action Log',
-            container: 'body',
-            placement: 'right',
-            trigger: "click",
-        }).on('inserted.bs.popover', function () {
-            vm.actionsTable = $('#'+actionLogId).DataTable(vm.actionDtOptions);
-        });
-    }
   },
   mounted: function () {
     let vm = this;

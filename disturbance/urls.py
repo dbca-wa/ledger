@@ -17,6 +17,7 @@ router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
 router.register(r'proposal',proposal_api.ProposalViewSet)
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
+router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
 
 api_patterns = [
@@ -35,6 +36,7 @@ urlpatterns = [
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
+    #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     url(r'^proposal/$', proposal_views.ProposalView.as_view(), name='proposal'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
 ] + ledger_patterns

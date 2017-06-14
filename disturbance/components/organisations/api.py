@@ -22,12 +22,13 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,OrganisationAddress
 from ledger.address.models import Country
 from disturbance import utils
 from datetime import datetime,timedelta, date
 from disturbance.components.organisations.models import  (   
                                     Organisation,
+                                    OrganisationContact,
                                     OrganisationRequest,
                                     OrganisationRequestUserAction,
                                     OrganisationContact,
@@ -37,13 +38,21 @@ from disturbance.components.organisations.models import  (
 
 from disturbance.components.organisations .serializers import (   
                                         OrganisationSerializer,
+                                        OrganisationAddressSerializer,
+                                        DetailsSerializer,
                                         OrganisationRequestSerializer,
+                                        OrganisationContactSerializer,
                                         OrganisationRequestDTSerializer,
                                         OrganisationContactSerializer,
                                         OrganisationCheckSerializer,
                                         OrganisationPinCheckSerializer,
                                         OrganisationRequestActionSerializer,
+                                        OrganisationActionSerializer,
                                         OrganisationRequestCommsSerializer,
+                                        OrganisationCommsSerializer,
+                                    )
+from disturbance.components.proposals.serializers import (
+                                        DTProposalSerializer,
                                     )
 
 class OrganisationViewSet(viewsets.ModelViewSet):
@@ -72,6 +81,57 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    def action_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.action_logs.all()
+            serializer = OrganisationActionSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def proposals(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.proposals.all()
+            serializer = DTProposalSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = OrganisationCommsSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @list_route(methods=['POST',])
     def existance(self, request, *args, **kwargs):
         try:
@@ -79,6 +139,71 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             data = Organisation.existance(serializer.validated_data['abn']) 
             return Response(data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def update_details(self, request, *args, **kwargs):
+        try:
+            org = self.get_object()
+            instance = org.organisation
+            serializer = DetailsSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = self.get_serializer(org)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def contacts(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = OrganisationContactSerializer(instance.contacts.all(),many=True)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def update_address(self, request, *args, **kwargs):
+        try:
+            org = self.get_object()
+            instance = org.organisation
+            serializer = OrganisationAddressSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            address, created = OrganisationAddress.objects.get_or_create(
+                line1 = serializer.validated_data['line1'],
+                locality = serializer.validated_data['locality'],
+                state = serializer.validated_data['state'],
+                country = serializer.validated_data['country'],
+                postcode = serializer.validated_data['postcode'],
+                organisation = instance
+            )
+            instance.postal_address = address
+            instance.save()
+            serializer = self.get_serializer(org)
+            return Response(serializer.data);
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -252,3 +377,7 @@ class OrganisationAccessGroupMembers(views.APIView):
                 members.append({'name': m.get_full_name(),'id': m.id})
         return Response(members)
 
+
+class OrganisationContactViewSet(viewsets.ModelViewSet):
+    serializer_class = OrganisationContactSerializer
+    queryset = OrganisationContact.objects.all()
