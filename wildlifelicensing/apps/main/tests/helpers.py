@@ -81,23 +81,6 @@ class SocialClient(Client):
         self.get(reverse('accounts:logout'))
 
 
-class BaseUserTestCase(TestCase):
-    """
-    A test case that provides some users.
-    """
-    client_class = SocialClient
-
-    def _pre_setup(self):
-        super(BaseUserTestCase, self)._pre_setup()
-        self.customer = get_or_create_default_customer(include_default_profile=True)
-        self.officer = get_or_create_default_officer()
-        self.assessor = get_or_create_default_assessor()
-
-    def _post_teardown(self):
-        super(BaseUserTestCase, self)._post_teardown()
-        self.client.logout()
-
-
 def create_default_country():
     return G(Country, iso_3166_1_a2='AU')
 
