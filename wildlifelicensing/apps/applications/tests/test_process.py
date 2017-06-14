@@ -293,16 +293,14 @@ class TestViewAccess(TestCase):
             response = self.client.post(url['url'], url['data'], follow=True)
             self.assertTrue(is_login_page(response))
 
-        # logged-in. Should redirect to dashboard
+        # logged-in. Should get a 403
         self.client.login(self.user.email)
         for url in self.process_urls_get:
             response = self.client.get(url, follow=True)
-            self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
-                                 target_status_code=200)
+            self.assertEqual(response.status_code, 403)
         for url in self.process_urls_post:
             response = self.client.post(url['url'], url['data'], follow=True)
-            self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
-                                 target_status_code=200)
+            self.assertEqual(response.status_code, 403)
 
     def test_officer_access(self):
         self.client.login(self.officer.email)
