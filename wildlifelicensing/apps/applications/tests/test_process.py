@@ -5,13 +5,15 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django_dynamic_fixture import G
 
-from wildlifelicensing.apps.applications.models import IDRequest, ApplicationDeclinedDetails
+from wildlifelicensing.apps.applications.models import IDRequest, AmendmentRequest, ApplicationDeclinedDetails
+from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_default_customer, is_login_page, \
     get_or_create_default_officer, get_or_create_default_assessor_group, is_email, get_email, clear_mailbox, \
     upload_id, clear_all_id_files, is_client_authenticated
 from wildlifelicensing.apps.applications.tests.helpers import create_and_lodge_application, get_or_create_assessment, \
     get_or_create_condition
-from wildlifelicensing.apps.applications.emails import ApplicationIDUpdateRequestedEmail
+from wildlifelicensing.apps.applications.emails import ApplicationIDUpdateRequestedEmail,\
+    ApplicationAmendmentRequestedEmail
 from wildlifelicensing.apps.main.models import Region
 
 
@@ -73,6 +75,132 @@ class TestStatusLifeCycle(TestCase):
         self.assertEqual('updated', application.id_check_status)
         self.assertEqual('under_review', application.customer_status)
         self.assertEqual('ready_for_action', application.processing_status)
+
+    def test_application_amendment(self):
+        """
+        Test that when an amendment is required and the users update their application the customer and id status
+        are correctly updated
+        """
+        application = create_and_lodge_application(self.user)
+
+        self.client.login(self.officer.email)
+
+        post_data = {
+            'officer': self.officer.pk,
+            'application': application.pk,
+            'reason': AmendmentRequest.REASON_CHOICES[0][0],
+            'text': 'Application needs more data'
+        }
+
+        response = self.client.post(reverse('wl_applications:amendment_request'), post_data)
+
+        self.assertEqual(200, response.status_code)
+
+        resp_data = json.loads(response.content.decode('utf8'))
+
+        application.refresh_from_db()
+
+        self.assertIn('review_status', resp_data)
+        self.assertEquals(resp_data['review_status'], utils.REVIEW_STATUSES[application.review_status])
+        self.assertIn('processing_status', resp_data)
+        self.assertEquals(resp_data['processing_status'], utils.PROCESSING_STATUSES[application.processing_status])
+
+        self.assertEqual(application.customer_status, 'amendment_required')
+        self.assertEqual(application.processing_status, 'awaiting_applicant_response')
+        self.assertEqual(application.review_status, 'awaiting_amendments')
+
+        amendment_request = AmendmentRequest.objects.filter(application=application).first()
+
+        self.assertIsNotNone(amendment_request)
+
+        self.assertEquals(amendment_request.status, 'requested')
+
+        self.assertTrue(is_email())
+        email = get_email()
+        self.assertIn(application.applicant_profile.email, email.to)
+        self.assertEqual(ApplicationAmendmentRequestedEmail.subject, email.subject)
+
+        # user logs in
+        self.client.logout()
+        self.client.login(self.user.email)
+
+        response = self.client.get(reverse('wl_applications:edit_application', args=(application.pk,)), follow=True)
+
+        # check that client will be redirected to the enter details page
+        self.assertRedirects(response, reverse('wl_applications:enter_details'), status_code=302,
+                             target_status_code=200)
+
+        # edit and resubmit data
+        post_params = {
+            'project_title-0-0': 'New Title',
+            'lodge': True
+        }
+
+        response = self.client.post(reverse('wl_applications:enter_details'), post_params)
+
+        # check that client is redirected to preview
+        self.assertRedirects(response, reverse('wl_applications:preview'),
+                             status_code=302, target_status_code=200, fetch_redirect_response=False)
+
+        response = self.client.post(reverse('wl_applications:preview'))
+
+        application.refresh_from_db()
+
+        self.assertEqual(application.data[0]['project_details'][0]['project_title'], 'New Title')
+
+        self.assertEqual(application.customer_status, 'under_review')
+        self.assertEqual(application.processing_status, 'ready_for_action')
+        self.assertEqual(application.review_status, 'amended')
+
+        amendment_request.refresh_from_db()
+
+        self.assertEquals(amendment_request.status, 'amended')
+
+        # officer logs in
+        self.client.logout()
+        self.client.login(self.officer.email)
+
+        post_data = {
+            'applicationID': application.id,
+            'status': 'accepted'
+        }
+
+        response = self.client.post(reverse('wl_applications:set_review_status'), post_data)
+
+        self.assertEquals(response.status_code, 200)
+
+        application.refresh_from_db()
+
+        self.assertEquals(application.review_status, 'accepted')
+
+    def test_character_check(self):
+        """
+        Test that the character check shows for questionable characters
+        """
+        self.user.character_flagged = True
+        self.user.save()
+        application = create_and_lodge_application(self.user)
+
+        self.assertEquals(application.character_check_status, 'not_checked')
+
+        self.client.login(self.officer.email)
+
+        response = self.client.get(reverse('wl_applications:process', args=(application.pk,)))
+
+        self.assertContains(response, '<span class="glyphicon glyphicon-user"></span>')
+
+        post_data = {
+            'applicationID': application.id,
+            'status': 'accepted'
+        }
+
+        response = self.client.post(reverse('wl_applications:set_character_check_status'), post_data)
+
+        self.assertEquals(response.status_code, 200)
+
+        application.refresh_from_db()
+
+        self.assertEquals(application.character_check_status, 'accepted')
 
     def test_issued_status_after_entering_condition(self):
         """
