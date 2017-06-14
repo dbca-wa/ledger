@@ -80,12 +80,10 @@ class TestIssueLicence(TestCase):
         self.client.login(self.user.email)
         for url in self.issue_urls_get:
             response = self.client.get(url['url'], data=url['data'], follow=True)
-            self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
-                                 target_status_code=200)
+            self.assertEqual(response.status_code, 403)
         for url in self.issue_urls_post:
             response = self.client.post(url['url'], url['data'], follow=True)
-            self.assertRedirects(response, reverse('wl_dashboard:tables_customer'), status_code=302,
-                                 target_status_code=200)
+            self.assertEqual(response.status_code, 403)
 
     def test_assessor_access(self):
         """
@@ -94,12 +92,10 @@ class TestIssueLicence(TestCase):
         self.client.login(self.assessor.email)
         for url in self.issue_urls_get:
             response = self.client.get(url['url'], data=url['data'], follow=True)
-            self.assertRedirects(response, reverse('wl_dashboard:tables_assessor'), status_code=302,
-                                 target_status_code=200)
+            self.assertEqual(response.status_code, 403)
         for url in self.issue_urls_post:
             response = self.client.post(url['url'], url['data'], follow=True)
-            self.assertRedirects(response, reverse('wl_dashboard:tables_assessor'), status_code=302,
-                                 target_status_code=200)
+            self.assertEqual(response.status_code, 403)
 
     def test_officer_access(self):
         """

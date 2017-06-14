@@ -105,6 +105,12 @@ def set_application_session(client, application):
     session.save()
 
 
+def delete_application_session(client):
+    session = client.session
+    del session['application_id']
+    session.save()
+
+
 def get_minimum_data_for_issuing_licence():
     today = date.today()
     tomorrow = today + timedelta(days=1)
