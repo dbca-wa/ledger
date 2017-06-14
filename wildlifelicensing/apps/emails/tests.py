@@ -20,7 +20,6 @@ class EmailTest(TestCase):
         emails = helpers.get_emails()
         self.assertEqual(len(emails), 1)
         email = emails[0]
-        print(email)
         self.assertEqual(len(email.subject), MAX_SUBJECT_LENGTH)
         expected_subject = '{}..'.format(subject[:MAX_SUBJECT_LENGTH - 2])
         self.assertEqual(email.subject, expected_subject)

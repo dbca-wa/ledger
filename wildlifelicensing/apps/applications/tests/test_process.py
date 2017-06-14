@@ -78,10 +78,11 @@ class TestStatusLifeCycle(TestCase):
 
     def test_application_amendment(self):
         """
-        Test that when an amendment is required and the users update their application the customer and id status
-        are correctly updated
+        Test that when an amendment is required, the user receives an email and can amend their application. When the
+        user relodged, the officer can see the amendment and set the review status accordingly.
         """
         application = create_and_lodge_application(self.user)
+        self.assertFalse(application.can_user_edit)
 
         self.client.login(self.officer.email)
 
@@ -124,6 +125,8 @@ class TestStatusLifeCycle(TestCase):
         self.client.logout()
         self.client.login(self.user.email)
 
+        self.assertTrue(application.can_user_edit)
+
         response = self.client.get(reverse('wl_applications:edit_application', args=(application.pk,)), follow=True)
 
         # check that client will be redirected to the enter details page
@@ -145,6 +148,8 @@ class TestStatusLifeCycle(TestCase):
         response = self.client.post(reverse('wl_applications:preview'))
 
         application.refresh_from_db()
+
+        self.assertFalse(application.can_user_edit)
 
         self.assertEqual(application.data[0]['project_details'][0]['project_title'], 'New Title')
 
