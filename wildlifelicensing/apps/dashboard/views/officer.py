@@ -856,7 +856,7 @@ class TablesReturnsOfficerView(OfficerRequiredMixin, base.TablesBaseView):
         return DataTableReturnsOfficerView.get_session_data(self.request)
 
 
-class DataTableReturnsOfficerView(base.DataTableBaseView):
+class DataTableReturnsOfficerView(OfficerRequiredMixin, base.DataTableBaseView):
     model = Return
     columns = [
         'lodgement_number',
