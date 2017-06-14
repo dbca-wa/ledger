@@ -1,15 +1,15 @@
 from __future__ import unicode_literals
 
-import os
 import datetime
+import os
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from ledger.accounts.models import EmailUser, Profile
+from ledger.accounts.models import Profile
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_user, add_to_group, \
     get_or_create_default_customer, get_or_create_default_officer, TestData, upload_id, create_default_country, \
-    BaseUserTestCase, BasePermissionViewTestCase
+    BasePermissionViewTestCase
 
 TEST_ID_PATH = TestData.TEST_ID_PATH
 
