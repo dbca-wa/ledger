@@ -38,7 +38,7 @@ from disturbance.components.proposals.models import (
 from disturbance.components.proposals.serializers import (
     ProposalTypeSerializer,
     ProposalSerializer,
-    CreateProposalSerializer,
+    SaveProposalSerializer,
     DTProposalSerializer
 )
 
@@ -108,9 +108,21 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'submitter': request.user.id,
                 'applicant': request.data.get('behalf_of')
             }
-            serializer = CreateProposalSerializer(data=data)
+            serializer = SaveProposalSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def update(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            instance = self.get_object()
+            serializer = SaveProposalSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())

@@ -71,5 +71,5 @@ class DTProposalSerializer(BaseProposalSerializer):
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
 
-class CreateProposalSerializer(BaseProposalSerializer):
+class SaveProposalSerializer(BaseProposalSerializer):
     pass
