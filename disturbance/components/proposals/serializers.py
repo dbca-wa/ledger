@@ -26,7 +26,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
         fields = ('id','email','first_name','last_name','title','organisation')
 
 class BaseProposalSerializer(serializers.ModelSerializer):
-    readonly = serializers.SerializerMethodField()
+    readonly = serializers.SerializerMethodField(read_only=True)
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
@@ -53,7 +53,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
         read_only_fields=('documents',)
 
     def get_readonly(self,obj):
-        return True
+        return False
 
     def get_processing_status(self,obj):
         return obj.get_processing_status_display()
@@ -70,3 +70,6 @@ class DTProposalSerializer(BaseProposalSerializer):
 
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
+
+class CreateProposalSerializer(BaseProposalSerializer):
+    pass
