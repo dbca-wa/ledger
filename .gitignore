@@ -93,4 +93,5 @@ build.css
 #disturbance import ignores
 disturbance_vue/
 !/disturbance/frontend/disturbance/build/
+!/disturbance/frontend/disturbance/build/build.js
 dev.env.js
