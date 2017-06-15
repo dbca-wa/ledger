@@ -3,11 +3,16 @@
         <div v-if="showCompletion" class="row">
             <div class="col-sm-12">
                 <div class="well well-sm">
-                    <p>
-                        We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
-                        (personal details, address details, contact details, and weather you are managing approvals for an organisation).
-                        Once completed, click Continue to start using the system.
-                    </p>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <p>
+                                We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
+                                (personal details, address details, contact details, and weather you are managing approvals for an organisation).
+                                Once completed, click Continue to start using the system.
+                            </p>
+                            <a :disabled="!completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -249,6 +254,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import $ from 'jquery'
 import { api_endpoints, helpers } from '@/utils/hooks'
 export default {
@@ -302,7 +308,10 @@ export default {
         },
         showCompletion: function() {
             return this.$route.name == 'first-time'
-        } 
+        },
+        completedProfile: function(){
+            return this.profile.contact_details && this.profile.personal_details && this.profile.address_details;
+        }
     },
     methods: {
         readFile: function() {
@@ -442,20 +451,25 @@ export default {
                 vm.loading.splice('fetching countries',1);
             });
         },
-        load_profile: function() {
-            let vm = this;
-            vm.$http.get(api_endpoints.profile).then((response) => {
-                vm.profile = response.body
-                if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
-                if ( vm.profile.disturbance_organisations && vm.profile.disturbance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
-            },(error) => {
-                console.log(error);
-            })
-        }
+    },
+    beforeRouteEnter: function(to,from,next){
+        Vue.http.get(api_endpoints.profile).then((response) => {
+            if (response.body.address_details && response.body.personal_details && response.body.contact_details && to.name == 'first-time'){
+                window.location.href='/';
+            }
+            else{
+                next(vm => {
+                    vm.profile = response.body
+                    if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                    if ( vm.profile.disturbance_organisations && vm.profile.disturbance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+                });
+            }
+        },(error) => {
+            console.log(error);
+        })
     },
     mounted: function(){
         this.fetchCountries();
-        this.load_profile();
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];
