@@ -87,7 +87,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0],
                 'submitter': request.user.id,
             }
-            serializer = self.get_serializer(instance, data, partial=True)
+            serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
             return redirect(reverse('external'))
