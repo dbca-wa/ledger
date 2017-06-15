@@ -176,7 +176,7 @@
                           </div>
                           <div class="form-group" v-if="managesOrg=='Yes'">
                             <div class="col-sm-12">
-                                <button class="btn btn-primary pull-right" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Company</button>   
+                                <button class="btn btn-primary pull-right" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>   
                             </div>
                           </div>
                           <div v-for="org in profile.disturbance_organisations">
@@ -339,7 +339,7 @@ export default {
             this.newOrg = {
                 'detailsChecked': false,
                 'exists': false
-            }
+            };
         },
         updatePersonal: function() {
             let vm = this;
@@ -405,7 +405,30 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,(vm.newOrg.id+'/validate_pins')),JSON.stringify(this.newOrg),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
+                if (response.body.valid){
+                    swal(
+                        'Validate Pins',
+                        'The pins you entered have been validated and you have now been linked to this organisation.',
+                        'success'
+                    )
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    Vue.http.get(api_endpoints.profile).then((response) => {
+                        vm.profile = response.body
+                        if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                        if ( vm.profile.disturbance_organisations && vm.profile.disturbance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+                    },(error) => {
+                        console.log(error);
+                    })
+                }else {
+                    swal(
+                        'Validate Pins',
+                        'The pins you entered were incorrect', 
+                        'error'
+                    )
+                }
                 vm.validatingPins = false;
             }, (error) => {
                 vm.validatingPins = false;
@@ -422,8 +445,15 @@ export default {
             vm.$http.post(api_endpoints.organisation_requests,data,{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
                 vm.registeringOrg = false;
+                vm.uploadedFile = null;
+                vm.addingCompany = false;
+                vm.resetNewOrg();
+                swal(
+                    'Sent',
+                    'Your organisation request has been successfuly submited.',
+                    'success'
+                )
             }, (error) => {
                 vm.registeringOrg = false;
                 console.log(error);

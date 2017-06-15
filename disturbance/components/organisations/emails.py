@@ -17,8 +17,44 @@ class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
 
 class OrganisationRequestDeclineNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been declined.'
-    html_template = 'wl/emails/organisation_request_decline_notification.html'
-    txt_template = 'wl/emails/organisation_request_decline_notification.txt'
+    html_template = 'disturbance/emails/organisation_request_decline_notification.html'
+    txt_template = 'disturbance/emails/organisation_request_decline_notification.txt'
+
+class OrganisationLinkNotificationEmail(TemplateEmailBase):
+    subject = 'You have been linked to an organisation.'
+    html_template = 'disturbance/emails/organisation_link_notification.html'
+    txt_template = 'disturbance/emails/organisation_link_notification.txt'
+
+class OrganisationUnlinkNotificationEmail(TemplateEmailBase):
+    subject = 'You have been unlinked from an organisation.'
+    html_template = 'disturbance/emails/organisation_unlink_notification.html'
+    txt_template = 'disturbance/emails/organisation_unlink_notification.txt'
+
+def send_organisation_link_email_notification(linked_user,linked_by,organisation,request):
+    email = OrganisationLinkNotificationEmail()
+
+    context = {
+        'user': linked_user,
+        'linked_by': linked_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(linked_user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, linked_user, sender=sender)
+
+def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organisation,request):
+    email = OrganisationUnlinkNotificationEmail()
+
+    context = {
+        'user': unlinked_user,
+        'linked_by': unlinked_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(unlinked_user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, unlinked_user, sender=sender)
 
 def send_organisation_request_accept_email_notification(org_request,organisation,request):
     email = OrganisationRequestAcceptNotificationEmail()

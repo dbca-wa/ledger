@@ -11,7 +11,10 @@ from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from disturbance.components.main.models import UserAction,CommunicationsLogEntry
 from disturbance.components.organisations.utils import random_generator
-from disturbance.components.organisations.emails import send_organisation_request_accept_email_notification
+from disturbance.components.organisations.emails import (
+                        send_organisation_request_accept_email_notification,
+                        send_organisation_link_email_notification
+                    )
 
 @python_2_unicode_compatible
 class Organisation(models.Model):
@@ -30,16 +33,23 @@ class Organisation(models.Model):
     def log_user_action(self, action, request):
         return OrganisationAction.log_action(self, action, request.user)
 
-    def validate_pins(self,pin1,pin2):
-        return self.pin_one == pin1 and self.pin_two == pin2
+    def validate_pins(self,pin1,pin2,request):
+        val = self.pin_one == pin1 and self.pin_two == pin2
+        if val:
+            self.link_user(request.user,request)
+        return val
     
-    def link_user(self,user):
-        try:
-            UserDelegation.objects.get(organisation=self,user=user)
-            raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
-        except UserDelegation.DoesNotExist:
-            delegate = UserDelegation.objects.create(organisation=self,user=user)
-            delegate.log_user_action(OrganisationDelegateAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+    def link_user(self,user,request):
+        with transaction.atomic():
+            try:
+                UserDelegation.objects.get(organisation=self,user=user)
+                raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
+            except UserDelegation.DoesNotExist:
+                delegate = UserDelegation.objects.create(organisation=self,user=user)
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_link_email_notification(user,request.user,self,request)
 
     def generate_pins(self):
         self.pin_one = self._generate_pin()

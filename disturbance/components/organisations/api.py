@@ -69,7 +69,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'])} 
+            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)} 
             return Response(data);
         except serializers.ValidationError:
             print(traceback.print_exc())
