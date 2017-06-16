@@ -104,7 +104,10 @@ class Proposal(RevisionedMixin):
 
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
-
+    # Special Fields
+    activity = models.CharField(max_length=255,null=True,blank=True)
+    region = models.CharField(max_length=255,null=True,blank=True)
+    title = models.CharField(max_length=255,null=True,blank=True)
 
     class Meta:
         app_label = 'disturbance'

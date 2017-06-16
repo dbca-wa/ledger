@@ -287,34 +287,9 @@ export default {
           },
           columns: [
               {data: "id"},
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                          let region = (data[0].region)?data[0].region:'n/a';
-                          return `${region}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data[0].activity}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data[0].project_details[0].project_title}`;
-                      }
-                     return ''
-                  }
-              },
+              {data: "region"},
+              {data: "activity"},
+              {data: "title"},
               {
                   data: "submitter",
                   mRender:function (data,type,full) {
@@ -330,7 +305,7 @@ export default {
               {
                   mRender:function (data,type,full) {
                       let links = '';
-                      if (full.processing_status == 'draft') {
+                      if (full.processing_status == 'Draft' || full.processing_status == 'Temporary') {
                          links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
                          links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
                       }

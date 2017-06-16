@@ -68,8 +68,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def user_list(self, request, *args, **kwargs):
         user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
         qs = []
-        qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0]).exclude(processing_status='discarded')))
-        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0]).exclude(processing_status='discarded')))
+        qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0])))
+        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0])))
         queryset = list(set(qs))
         serializer = DTProposalSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -79,14 +79,19 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def draft(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            extracted_fields = create_data_from_form(
-                instance.schema, request.POST, request.FILES)
+            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+            extracted_fields,special_fields = create_data_from_form(
+                instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
             instance.data = extracted_fields
             data = {
+                'region': special_fields.get('isRegionColumnForDashboard',None),
+                'title': special_fields.get('isTitleColumnForDashboard',None),
+                'activity': special_fields.get('isActivityColumnForDashboard',None),
                 'data': extracted_fields,
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0],
                 'submitter': request.user.id,
             }
+            print data
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)

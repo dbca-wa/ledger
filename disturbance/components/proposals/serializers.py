@@ -27,13 +27,13 @@ class EmailUserSerializer(serializers.ModelSerializer):
 
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
-    processing_status = serializers.SerializerMethodField(read_only=True)
-    review_status = serializers.SerializerMethodField(read_only=True)
-    customer_status = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Proposal
         fields = (
                 'id',
+                'activity',
+                'title',
+                'region',
                 'data',
                 'schema',
                 'customer_status',
@@ -67,9 +67,15 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 class DTProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(source='applicant.organisation.name')
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    review_status = serializers.SerializerMethodField(read_only=True)
+    customer_status = serializers.SerializerMethodField(read_only=True)
 
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    review_status = serializers.SerializerMethodField(read_only=True)
+    customer_status = serializers.SerializerMethodField(read_only=True)
 
 class SaveProposalSerializer(BaseProposalSerializer):
     pass

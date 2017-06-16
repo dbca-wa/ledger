@@ -5,3 +5,7 @@ from disturbance.components.proposals import models
 @admin.register(models.ProposalType)
 class ProposalTypeAdmin(admin.ModelAdmin):
     exclude=("site",) 
+
+@admin.register(models.Proposal)
+class ProposalAdmin(admin.ModelAdmin):
+    pass

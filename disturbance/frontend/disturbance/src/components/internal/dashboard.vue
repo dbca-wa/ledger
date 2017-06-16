@@ -208,34 +208,9 @@ export default {
           },
           columns: [
               {data: "id"},
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                          let region = (data[0].region)?data[0].region:'n/a';
-                          return `${region}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data[0].activity}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data[0].project_details[0].project_title}`;
-                      }
-                     return ''
-                  }
-              },
+              {data: "region"},
+              {data: "activity"},
+              {data: "title"},
               {
                   data: "submitter",
                   mRender:function (data,type,full) {
