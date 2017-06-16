@@ -124,7 +124,7 @@
         <div class="col-md-1"></div>
         <div class="col-md-8">
             <div class="row">
-                <div class="col-md-12">
+                <div v-show="false" class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -142,6 +142,20 @@
                                 <h3>Applicant</h3> 
                             </div>
                             <div class="panel-body panel-collapse">
+                                  <form class="form-horizontal">
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Name</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="proposal.applicant.name">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="proposal.applicant.abn">
+                                        </div>
+                                      </div>
+                                  </form>
                             </div>
                         </div>
                     </div>
@@ -153,6 +167,36 @@
                                 <h3>Address Details</h3> 
                             </div>
                             <div class="panel-body panel-collapse">
+                                  <form class="form-horizontal">
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Street</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="street" placeholder="" v-model="proposal.applicant.address.line1">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="proposal.applicant.address.locality">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">State</label>
+                                        <div class="col-sm-2">
+                                            <input disabled type="text" class="form-control" name="country" placeholder="" v-model="proposal.applicant.address.state">
+                                        </div>
+                                        <label for="" class="col-sm-2 control-label">Postcode</label>
+                                        <div class="col-sm-2">
+                                            <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="proposal.applicant.address.postcode">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Country</label>
+                                        <div class="col-sm-4">
+                                            <input disabled type="text" class="form-control" name="country" v-model="proposal.applicant.address.country"/>
+                                        </div>
+                                      </div>
+                                   </form>
                             </div>
                         </div>
                     </div>
@@ -164,33 +208,29 @@
                                 <h3>Contact Details</h3>
                             </div>
                             <div class="panel-body panel-collapse">
+                                <div v-if="contactsURL != ''">
+                                <datatable ref="contacts_datatable" id="organisation_contacts_datatable" :dtOptions="contacts_options" :dtHeaders="contacts_headers"/>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-12">
                     <div class="row">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Proposal</h3>
-                            </div>
-                            <div class="panel-body panel-collapse">
-                                <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                                    <Proposal form_width="col-md-12" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
-                                        <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-                                        <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
-                                        <input type='hidden' name="proposal_id" :value="1" />
-                                        <div class="row" style="margin-bottom:20px;">
-                                          <div class="col-lg-12 pull-right">
-                                                <input type="submit" class="btn btn-primary" value="Save and Exit"/>
-                                                <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                                <router-link :to="{name:'apply_proposal',params: { proposal_id: proposal.id }}" class="btn btn-primary">Submit</router-link>
-                                          </div>
-                                        </div>
-                                    </Proposal>
-                                </form>
-                            </div>
-                        </div>
+                        <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
+                            <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                                <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+                                <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
+                                <input type='hidden' name="proposal_id" :value="1" />
+                                <div class="row" style="margin-bottom:20px;">
+                                  <div class="col-lg-12 pull-right">
+                                        <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                                        <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                                        <router-link :to="{name:'apply_proposal',params: { proposal_id: proposal.id }}" class="btn btn-primary">Submit</router-link>
+                                  </div>
+                                </div>
+                            </Proposal>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -201,6 +241,7 @@
 <script>
 import Proposal from '../../form.vue'
 import Vue from 'vue'
+import datatable from '@vue-utils/datatable.vue'
 import {
   api_endpoints,
   helpers
@@ -209,22 +250,59 @@ from '@/utils/hooks'
 export default {
   name: 'InternalProposal',
   data: function() {
+    let vm = this;
     return {
-      "proposal": null,
-      "loading": [],
-      form: null,
-      members: [],
+        "proposal": null,
+        "loading": [],
+        form: null,
+        members: [],
+        contacts_headers:["Name","Phone","Mobile","Fax","Email"],
+        contacts_options:{
+            language: {
+                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+            },
+            responsive: true,
+            ajax: {
+                "url": vm.contactsURL,
+                "dataSrc": ''
+            },
+            columns: [
+                {
+                    mRender:function (data,type,full) {
+                        return full.first_name + " " + full.last_name;
+                    }
+                },
+                {data:'phone_number'},
+                {data:'mobile_number'},
+                {data:'fax_number'},
+                {data:'email'},
+              ],
+              processing: true
+        }
     }
   },
   components: {
-    Proposal
+    Proposal,
+    datatable
   },
   filters: {
     formatDate: function(data){
         return moment(data).format('DD/MM/YYYY HH:mm:ss');
     }
   },
+  watch: {
+    contactsURL: function(){
+        console.log('hi');
+        if (this.$refs.contacts_datatable){
+            this.$refs.contacts_datatable.vmDataTable.ajax.url(this.contactsURL);
+            this.$refs.contacts_datatable.vmDataTable.ajax.reload();
+        }
+    }
+  },
   computed: {
+    contactsURL: function(){
+        return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
+    },
     isLoading: function() {
       return this.loading.length > 0
     },
@@ -293,9 +371,10 @@ export default {
     vm.form = document.forms.new_proposal;
   },
   beforeRouteEnter: function(to, from, next) {
-      Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
+      Vue.http.get(`/api/proposal/${to.params.proposal_id}/internal_proposal.json`).then(res => {
           next(vm => {
             vm.proposal = res.body;
+            vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
           });
         },
         err => {
@@ -306,6 +385,7 @@ export default {
       Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
           next(vm => {
             vm.proposal = res.body;
+            vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
           });
         },
         err => {

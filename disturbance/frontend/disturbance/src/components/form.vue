@@ -109,19 +109,36 @@
                 )
             }
             else{
-                return (
-                    <div class={vm.form_width}>
-                        {vm.proposal.schema.map(d =>{
-                            if (vm.proposal.readonly){
-                                return Renderer.renderChildren(h,d,vm.values,true)
-                            }
-                            else{
-                                return Renderer.renderChildren(h,d,vm.values)
-                            }
-                        })}
-                        { this.$slots.default }
-                    </div>
-                )
+                if (vm.form_width == 'inherit'){
+                    return (
+                        <div>
+                            {vm.proposal.schema.map(d =>{
+                                if (vm.proposal.readonly){
+                                    return Renderer.renderChildren(h,d,vm.values,true)
+                                }
+                                else{
+                                    return Renderer.renderChildren(h,d,vm.values)
+                                }
+                            })}
+                            { this.$slots.default }
+                        </div>
+                    )
+                }
+                else {
+                    return (
+                        <div class={vm.form_width}>
+                            {vm.proposal.schema.map(d =>{
+                                if (vm.proposal.readonly){
+                                    return Renderer.renderChildren(h,d,vm.values,true)
+                                }
+                                else{
+                                    return Renderer.renderChildren(h,d,vm.values)
+                                }
+                            })}
+                            { this.$slots.default }
+                        </div>
+                    )
+                }
             }
         }
     }

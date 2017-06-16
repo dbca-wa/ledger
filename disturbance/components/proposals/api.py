@@ -38,6 +38,7 @@ from disturbance.components.proposals.models import (
 from disturbance.components.proposals.serializers import (
     ProposalTypeSerializer,
     ProposalSerializer,
+    InternalProposalSerializer,
     SaveProposalSerializer,
     DTProposalSerializer
 )
@@ -72,6 +73,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
         qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0])))
         queryset = list(set(qs))
         serializer = DTProposalSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def internal_proposal(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = InternalProposalSerializer(instance)
         return Response(serializer.data)
 
     @detail_route(methods=['post'])

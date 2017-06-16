@@ -4,6 +4,9 @@ from disturbance.components.proposals.models import (
                                     ProposalType,
                                     Proposal
                                 )
+from disturbance.components.organisations.models import (
+                                Organisation
+                            )
 from rest_framework import serializers
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
@@ -79,3 +82,22 @@ class ProposalSerializer(BaseProposalSerializer):
 
 class SaveProposalSerializer(BaseProposalSerializer):
     pass
+
+class ApplicantSerializer(serializers.ModelSerializer):
+    from disturbance.components.organisations.serializers import OrganisationAddressSerializer
+    address = OrganisationAddressSerializer()
+    class Meta:
+        model = Organisation
+        fields = (
+                    'id',
+                    'name',
+                    'abn',
+                    'address',
+                    'email',
+                    'phone_number',
+                )
+
+class InternalProposalSerializer(BaseProposalSerializer):
+    applicant = ApplicantSerializer()
+    def get_readonly(self,obj):
+        return True
