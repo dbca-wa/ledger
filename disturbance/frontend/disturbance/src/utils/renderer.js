@@ -45,7 +45,7 @@ module.exports = {
                 break;
             case 'multi-select':
                 return (
-                    <Select name={c.name} label={c.label} value={val} options={c.options} value={val} help_text={c.help_text} isMultiple={true} />
+                    <Select name={c.name} label={c.label} value={val} options={c.options} value={val} help_text={c.help_text} handleChange={this.selectionChanged} isMultiple={true} />
                 )
                 break;
             case 'text_area':

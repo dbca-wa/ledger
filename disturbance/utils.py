@@ -3,17 +3,17 @@ from ledger.accounts.models import EmailUser, Document
 import traceback
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[]):
-    data = []
+    data = {} 
     special_fields_list = []
     special_fields_search = SpecialFieldsSearch(special_fields)
     try:
         for item in schema:
-            data.append(_create_data_from_item(item, post_data, file_data, 0, ''))
+            data.update(_create_data_from_item(item, post_data, file_data, 0, ''))
             special_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
         special_fields_list = special_fields_search.special_fields
     except:
         traceback.print_exc()
-    return data,special_fields_list
+    return [data],special_fields_list
 
 def _extend_item_name(name, suffix, repetition):
     return '{}{}-{}'.format(name, suffix, repetition)
@@ -23,7 +23,6 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
 
     if 'name' in item:
         extended_item_name = item['name']
-
     else:
         raise Exception('Missing name in item %s' % item['label'])
 
