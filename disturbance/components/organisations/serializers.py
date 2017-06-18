@@ -111,6 +111,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
         return obj.get_status_display()
 
 class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
+    assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
     requester = serializers.SerializerMethodField()
 
     def get_requester(self,obj):
