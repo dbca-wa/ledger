@@ -58,6 +58,14 @@ class OracleAccountCode(models.Model):
         managed = False
         db_table = 'payments_account_codes'
 
+class OracleOpenPeriod(models.Model):
+    period_name = models.CharField(max_length=240,primary_key=True)
+    closing_status = models.CharField(max_length=1)
+
+    class Meta:
+        managed = False
+        db_table = 'payments_open_periods'
+
 # Refund Tracking
 class TrackRefund(models.Model):
     REFUND_TYPES = (
