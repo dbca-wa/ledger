@@ -1259,7 +1259,8 @@ class CampgroundBookingRangeListener(object):
                         linked_open.range_start = instance.range_start
                 else:
                      linked_open.range_start = today
-                linked_open.save(skip_validation=True)
+                if len(linked_open) > 0:
+                    linked_open[0].save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
