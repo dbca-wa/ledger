@@ -23,7 +23,7 @@
             </div>
         </div>
         <div class="row" v-show="status == 'online'">
-            <div class="columns small-12 medium-12 large-12">
+            <div v-if="long_description" class="columns small-12 medium-12 large-12">
                 <div class="row">
                     <div class="columns small-6 medium-6 large-3">
                         <button type="button" class="button formButton" @click="toggleMoreInfo">
