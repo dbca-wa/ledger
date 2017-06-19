@@ -208,7 +208,7 @@
                                 <h3>Contact Details</h3>
                             </div>
                             <div class="panel-body panel-collapse">
-                                <div v-if="contactsURL != ''">
+                                <div v-if="contactsURL != '' && contactsURL != 'undefined'">
                                 <datatable ref="contacts_datatable" id="organisation_contacts_datatable" :dtOptions="contacts_options" :dtHeaders="contacts_headers"/>
                                 </div>
                             </div>
@@ -287,16 +287,16 @@ export default {
   },
   filters: {
     formatDate: function(data){
-        return moment(data).format('DD/MM/YYYY HH:mm:ss');
+        return data ? moment(data).format('DD/MM/YYYY HH:mm:ss'): '';
     }
   },
   watch: {
     contactsURL: function(){
-        console.log('hi');
-        if (this.$refs.contacts_datatable){
-            this.$refs.contacts_datatable.vmDataTable.ajax.url(this.contactsURL);
-            this.$refs.contacts_datatable.vmDataTable.ajax.reload();
-        }
+        let vm = this;
+        this.$nextTick(() => {
+            vm.$refs.contacts_datatable.vmDataTable.ajax.url(this.contactsURL);
+            vm.$refs.contacts_datatable.vmDataTable.ajax.reload();
+        })
     }
   },
   computed: {
