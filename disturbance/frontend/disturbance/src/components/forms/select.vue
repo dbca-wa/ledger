@@ -3,9 +3,13 @@
         <div class="form-group">
           <label>{{ label }}</label>
           <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text">&nbsp;</i>
-          <select :disabled="readonly" ref="selectB" :id="selectid" :name="name" class="form-control" :multiple="isMultiple" :data-conditions="cons" style="width:100%">
+          <select v-if="!isMultiple" :disabled="readonly" ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
               <option value="">Select...</option>
               <option v-for="op in options"  :value="op.value" @change="handleChange" :selected="op.value == value">{{ op.label }}</option>
+          </select>
+          <select v-else :disabled="readonly" ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%">
+              <option value="">Select...</option>
+              <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
           </select>
       </div>
   </div>
@@ -20,13 +24,13 @@ export default {
         'name':String,
         'label':String,
         'help_text':String,
-        "value":String,
+        "value":[String,Array],
         "options":Array,
         "conditions":Object,
         "handleChange":null,
         "isMultiple":{
             default:function () {
-                return null;
+                return false;
             }
         },
         'readonly': Boolean
@@ -35,7 +39,8 @@ export default {
         let vm =this;
         return{
             selected: (this.isMultiple) ? [] : "",
-            selectid: "select"+vm._uid
+            selectid: "select"+vm._uid,
+            multipleSelected: []
         }
     },
     computed:{
@@ -44,6 +49,16 @@ export default {
         }
     },
     methods:{
+        multipleSelection: function(val){
+            if (Array.isArray(this.value)){
+                if (this.value.find(v => v == val)){
+                    return true;
+                }
+            }else{
+                if (this.value == val){return true;}
+            }
+            return false;
+        },
         init:function () {
             let vm =this;
             setTimeout(function (e) {
@@ -56,11 +71,17 @@ export default {
                        var selected = $(e.currentTarget);
                        vm.handleChange(selected[0])
                        e.preventDefault();
+                        if( vm.isMultiple){
+                            vm.multipleSelected = selected.val();
+                        }
                    }).
                    on("select2:unselect",function (e) {
-                       var selected = $(e.currentTarget);
+                        var selected = $(e.currentTarget);
                         vm.handleChange(selected[0])
                         e.preventDefault();
+                        if( vm.isMultiple){
+                            vm.multipleSelected = selected.val();
+                        }
                    });
                    if (vm.value) {
                        vm.handleChange(vm.$refs.selectB);
