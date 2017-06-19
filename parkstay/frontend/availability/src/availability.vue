@@ -23,6 +23,22 @@
             </div>
         </div>
         <div class="row" v-show="status == 'online'">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="row">
+                    <div class="columns small-6 medium-6 large-3">
+                        <button type="button" class="button formButton" @click="toggleMoreInfo">
+                            More Information &nbsp;&nbsp;
+                            <i style="font-size:large;" v-if="!showMoreInfo" class="fa fa-caret-down"></i>
+                            <i style="font-size:large;" v-else class="fa fa-caret-up"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
+                    <div class="columns small-12 medium-12 large-12">
+                        <div v-html="long_description"></div>
+                    </div>
+                </div>
+            </div>
             <div class="columns small-6 medium-6 large-3">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
@@ -271,7 +287,9 @@ export default {
             status: null,
             errorMsg: null,
             classes: {},
-            sites: []
+            sites: [],
+            long_description: '',
+            showMoreInfo: false,
         };
     },
     computed: {
@@ -300,6 +318,9 @@ export default {
         },
     },
     methods: {
+        toggleMoreInfo: function(){
+            this.showMoreInfo ? this.showMoreInfo = false: this.showMoreInfo = true;
+        },
         getDateString: function (date, offset) {
             return moment(date).add(offset, 'days').format('ddd MMM D');
         },
@@ -390,6 +411,7 @@ export default {
                         vm.name = data.name;
                         vm.days = data.days;
                         vm.classes = data.classes;
+                        vm.long_description = data.long_description;
 
                         vm.gearTotals.tent = 0
                         vm.gearTotals.campervan = 0
