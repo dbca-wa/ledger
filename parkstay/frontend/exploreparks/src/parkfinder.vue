@@ -604,7 +604,7 @@ export default {
                         } else {
                             $("#mapPopupBook").hide();
                         }
-                    },1500);
+                    },1000);
                 }
 
 
