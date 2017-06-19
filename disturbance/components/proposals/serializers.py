@@ -99,5 +99,9 @@ class ApplicantSerializer(serializers.ModelSerializer):
 
 class InternalProposalSerializer(BaseProposalSerializer):
     applicant = ApplicantSerializer()
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    review_status = serializers.SerializerMethodField(read_only=True)
+    customer_status = serializers.SerializerMethodField(read_only=True)
+    submitter = serializers.CharField(source='submitter.get_full_name')
     def get_readonly(self,obj):
         return True
