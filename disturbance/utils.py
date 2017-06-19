@@ -39,7 +39,10 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
                 item_data[item['name']] = ''
         else:
             if extended_item_name in post_data:
-                item_data[item['name']] = post_data.get(extended_item_name)
+                if item['type'] == 'multi-select':
+                    item_data[item['name']] = post_data.getlist(extended_item_name)
+                else:
+                    item_data[item['name']] = post_data.get(extended_item_name)
     else:
         if 'repetition' in item:
             item_data = generate_item_data(extended_item_name,item,item_data,post_data,file_data,len(post_data[item['name']]),suffix)
@@ -92,7 +95,10 @@ class SpecialFieldsSearch(object):
                         val = None
                         val = item.get(f,None)
                         if val:
-                            item_data[f] = post_data.get(extended_item_name) 
+                            if item['type'] == 'multi-select':
+                                item_data[f] = ','.join(post_data.getlist(extended_item_name))
+                            else:
+                                item_data[f] = post_data.get(extended_item_name)
                             self.special_fields.update(item_data)
         else:
             if 'repetition' in item:
