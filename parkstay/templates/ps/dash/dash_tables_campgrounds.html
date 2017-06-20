@@ -32,8 +32,8 @@
                             <li><router-link :to="{ name: 'bulkpricing' }">Bulk Pricing</router-link></li>
                             <li><router-link :to="{ name: 'booking-dashboard' }">Existing Bookings</router-link></li>
                             {% endif %}
-                            <li><a href="https://parks-oim.dpaw.wa.gov.au/park-stay">Explore Parks</a></li>
-                            <li><a href="https://parks-oim.dpaw.wa.gov.au/contact-us">Contact Us</a></li>
+                            <li><a href="{{EXPLORE_PARKS_SEARCH}}">Explore Parks</a></li>
+                            <li><a href="{{EXPLORE_PARKS_CONTACT}}">Contact Us</a></li>
                         {% endblock %}
                     </ul>
                     <ul class="nav navbar-nav navbar-right">

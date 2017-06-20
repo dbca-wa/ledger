@@ -17,7 +17,7 @@ from six.moves.urllib.parse import urlparse
 #
 from ledger.basket.models import Basket
 from ledger.catalogue.models import Product
-from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode 
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode,OracleOpenPeriod 
 from oscar.core.loading import get_class
 from oscar.apps.voucher.models import Voucher
 import logging
@@ -219,28 +219,28 @@ def generateOracleParserFile(oracle_codes):
     strIO.seek(0)
     return strIO
 
-def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=False,error_string=None):
+def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error_email=False,error_string=None):
     try:
-        dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-        recipients = []
+        try:
+            sys = OracleInterfaceSystem.objects.get(system_id=system_id)
+            recipients = sys.recipients.all()
+        except OracleInterfaceSystem.DoesNotExist:
+            recipients = []
         if not error_email:
+            dt = datetime.datetime.strptime(trans_date,'%Y-%m-%d').strftime('%d/%m/%Y')
             _file = generateOracleParserFile(oracle_codes)
-            try:
-                sys = OracleInterfaceSystem.objects.get(system_id=system_id)
-                recipients = sys.recipients.all()
-            except OracleInterfaceSystem.DoesNotExist:
-                recipients = []
-
             email = EmailMessage(
-                'Oracle Interface Summary for {} as at {}'.format(system_name,dt),
-                'Oracle Interface Summary File for {} as at {}'.format(system_name,dt),
+                'Oracle Interface Summary for {} for transactions received on {}'.format(system_name,dt),
+                'Oracle Interface Summary File for {} for transactions received on {}'.format(system_name,dt),
                 settings.DEFAULT_FROM_EMAIL,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
             email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
         else:
+            dt = datetime.datetime.now().strftime('%d/%m/%Y')
+            t_date = datetime.datetime.strptime(trans_date, '%Y-%m-%d').strftime('%d/%m/%Y')
             email = EmailMessage(
-                'Oracle Interface Summary Error for {} as at{}'.format(system_name,dt),
+                'Oracle Interface Summary Error for {} for transactions received on {} processed on {}'.format(system_name,t_date,dt),
                 'There was an error in generating a summary report for the oracle interface parser.Please refer to the following log output:\n\n\n{}'.format(error_string),
                 settings.DEFAULT_FROM_EMAIL,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
@@ -251,9 +251,16 @@ def sendInterfaceParserEmail(oracle_codes,system_name,system_id,error_email=Fals
         print(traceback.print_exc())
         raise e
 
-def addToInterface(oracle_codes,system_name):
+def addToInterface(date,oracle_codes,system_name):
     try:
-        date = datetime.datetime.now().strftime('%Y-%m-%d')
+        dt = datetime.datetime.strptime(date,'%Y-%m-%d')
+        trans_date = datetime.datetime.strptime(date,'%Y-%m-%d').strftime('%d/%m/%Y')
+        today = datetime.datetime.now().strftime('%Y-%m-%d')
+        oracle_date = '{}-{}'.format(dt.strftime('%B').upper(),dt.strftime('%y'))
+        try:
+            OracleOpenPeriod.objects.get(period_name=oracle_date)
+        except OracleOpenPeriod.DoesNotExist:
+            raise ValidationError('There is currently no open period for transactions done on {}'.format(trans_date))
         for k,v in oracle_codes.items():
             if v != 0:
                 found = OracleAccountCode.objects.filter(active_receivables_activities=k)
@@ -261,14 +268,14 @@ def addToInterface(oracle_codes,system_name):
                     raise ValidationError('{} is not a valid account code'.format(k)) 
                 OracleInterface.objects.create(
                     receipt_number = 0,
-                    receipt_date = date,
+                    receipt_date = trans_date,
                     activity_name = k,
                     amount = v,
                     customer_name = system_name,
                     description = k,
                     comments = '{} GST/{}'.format(k,date),
                     status = 'NEW',
-                    status_date = date
+                    status_date = today
                 )
     except:
         raise
@@ -310,7 +317,7 @@ def oracle_parser(date,system,system_name):
                         if i['code'] not in oracle_codes.keys():
                             oracle_codes[v] = D('0.0')
                         if i['id'] not in parser_codes[invoice.reference].keys():
-                            parser_codes[invoice.reference] = {k:{'code':v,'payment': D('0.0'),'refund': D('0.0')}}
+                            parser_codes[invoice.reference].update({k:{'code':v,'payment': D('0.0'),'refund': D('0.0')}})
 
                     # Start passing items in the invoice
                     for i in items:
@@ -368,13 +375,13 @@ def oracle_parser(date,system,system_name):
                 if can_add:
                     OracleParserInvoice.objects.create(reference=k,details=json.dumps(v),parser=op)
             # Add items to oracle interface table
-            addToInterface(oracle_codes,system_name)
+            addToInterface(date,oracle_codes,system_name)
             # Send an email with all the activity codes entered into the interface table
-            sendInterfaceParserEmail(oracle_codes,system_name,system)
+            sendInterfaceParserEmail(date,oracle_codes,system_name,system)
             return oracle_codes
         except Exception as e:
             error = traceback.format_exc()
-            sendInterfaceParserEmail(oracle_codes,system_name,system,error_email=True,error_string=error)
+            sendInterfaceParserEmail(date,oracle_codes,system_name,system,error_email=True,error_string=error)
             raise e
 
 def update_payments(invoice_reference):

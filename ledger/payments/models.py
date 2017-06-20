@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import traceback
 from django.db import models
+from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from ledger.payments.bpay.models import BpayTransaction, BpayFile, BillerCodeRecipient, BillerCodeSystem
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
@@ -56,3 +57,23 @@ class OracleAccountCode(models.Model):
     class Meta:
         managed = False
         db_table = 'payments_account_codes'
+
+class OracleOpenPeriod(models.Model):
+    period_name = models.CharField(max_length=240,primary_key=True)
+    closing_status = models.CharField(max_length=1)
+
+    class Meta:
+        managed = False
+        db_table = 'payments_open_periods'
+
+# Refund Tracking
+class TrackRefund(models.Model):
+    REFUND_TYPES = (
+        (1,'Cash'),
+        (2,'Bpoint'),
+        (3,'Bpay')
+    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    type = models.SmallIntegerField(choices=REFUND_TYPES)
+    refund_id = models.PositiveIntegerField()
+    details = models.TextField()

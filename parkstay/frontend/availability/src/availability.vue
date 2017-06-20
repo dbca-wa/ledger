@@ -29,7 +29,32 @@
                 <h1>Book a campsite at {{ name }}</h1>
             </div>
         </div>
+        <div v-if="ongoing_booking"class="row">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="clearfix">
+                    <a type="button" :href="parkstayUrl+'/booking'" class="button float-right warning continueBooking">
+                        Continue with your current booking
+                    </a>
+                </div>
+            </div>
+        </div>
         <div class="row" v-show="status == 'online'">
+            <div v-if="long_description" class="columns small-12 medium-12 large-12">
+                <div class="row">
+                    <div class="columns small-6 medium-6 large-3">
+                        <button type="button" class="button formButton" @click="toggleMoreInfo">
+                            More Information &nbsp;&nbsp;
+                            <i style="font-size:large;" v-if="!showMoreInfo" class="fa fa-caret-down"></i>
+                            <i style="font-size:large;" v-else class="fa fa-caret-up"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
+                    <div class="columns small-12 medium-12 large-12">
+                        <div v-html="long_description"></div>
+                    </div>
+                </div>
+            </div>
             <div class="columns small-6 medium-6 large-3">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
@@ -103,7 +128,8 @@
                     <tr>
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
-                            <button v-if="site.price" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
+                            <button v-if="site.price && !ongoing_booking" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
+                            <button v-if="site.price && ongoing_booking" disabled class="button has-tip" data-tooltip aria-haspopup="true" title="Please complete your current ongoing booking using the button at the top of the page."><small>Book now</small><br/>{{ site.price }}</button>
                             <template v-else>
                                 <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)"><small>Show availability</small></button>
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
@@ -198,6 +224,9 @@
         font-weight: bold;
         font-style: italic;
     }
+    .continueBooking {
+        text-decoration: none;
+    }
 }
 
 </style>
@@ -258,6 +287,7 @@ export default {
             // - global JS var 'parkstayGroundId'
             // - '1'
             parkstayGroundId: parseInt(getQueryParam('site_id', global.parkstayGroundId || '1')),
+            parkstayGroundRatisId: parseInt(getQueryParam('ratis_id', '0')),
             days: 5,
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
@@ -274,7 +304,10 @@ export default {
             status: null,
             errorMsg: null,
             classes: {},
-            sites: []
+            sites: [],
+            long_description: '',
+            showMoreInfo: false,
+            ongoing_booking: false 
         };
     },
     computed: {
@@ -303,6 +336,9 @@ export default {
         },
     },
     methods: {
+        toggleMoreInfo: function(){
+            this.showMoreInfo ? this.showMoreInfo = false: this.showMoreInfo = true;
+        },
         getDateString: function (date, offset) {
             return moment(date).add(offset, 'days').format('ddd MMM D');
         },
@@ -376,15 +412,27 @@ export default {
             var vm = this;
 
             debounce(function() {
-                vm.updateURL();
-                var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
-                    arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                    departure: moment(vm.departureDate).format('YYYY/MM/DD'),
-                    num_adult: vm.numAdults,
-                    num_child: vm.numChildren,
-                    num_concession: vm.numConcessions,
-                    num_infant: vm.numInfants
-                });
+                if (parseInt(vm.parkstayGroundRatisId) > 0){
+                    var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param({
+                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                        num_adult: vm.numAdults,
+                        num_child: vm.numChildren,
+                        num_concession: vm.numConcessions,
+                        num_infant: vm.numInfants
+                    });
+                }
+                else{
+                    vm.updateURL();
+                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
+                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                        num_adult: vm.numAdults,
+                        num_child: vm.numChildren,
+                        num_concession: vm.numConcessions,
+                        num_infant: vm.numInfants
+                    });
+                }
                 console.log('AJAX '+url);
                 $.ajax({
                     url: url,
@@ -393,6 +441,8 @@ export default {
                         vm.name = data.name;
                         vm.days = data.days;
                         vm.classes = data.classes;
+                        vm.long_description = data.long_description;
+                        vm.ongoing_booking = data.ongoing_booking;
 
                         if (data.sites.length == 0) {
                             vm.status = 'empty';
@@ -423,6 +473,10 @@ export default {
 
                         vm.sites = data.sites;
                         vm.status = 'online';
+                        if (parseInt(vm.parkstayGroundRatisId) > 0){
+                            vm.parkstayGroundId = data.id;
+                            vm.updateURL();
+                        }
                     },
                     error: function(xhr, stat, err) {
                         vm.status = 'offline';

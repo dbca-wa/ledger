@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import datetime
 from decimal import Decimal as D
-from django.db import models
+from django.db import models,transaction
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from ledger.payments.bpoint import settings as bpoint_settings
@@ -93,44 +93,50 @@ class BpointTransaction(models.Model):
 
     # Methods
     # ==============================
-    def refund(self,amount,matched=True):
+    def refund(self,amount,user,matched=True):
         from ledger.payments.facade import bpoint_facade 
-        try:
-            txn = None
-            if self.action == 'payment' or self.action == 'capture':
+        from ledger.payments.models import TrackRefund
 
-                card_details = self.dvtoken.split('|')
-                card = TempBankCard(
-                    self.dvtoken,
-                    None 
-                )
-                card.last_digits = self.last_digits
-                if self.approved:
-                    if amount <= self.refundable_amount:
-                        txn = bpoint_facade.pay_with_temptoken(
-                                    'refund' if matched else 'unmatched_refund',
-                                    'telephoneorder',
-                                    'single',
-                                    card,
-                                    self.order, 
-                                    self.crn1,
-                                    amount,
-                                    self.txn_number 
-                                )
-                        if txn.approved:
-                            try:
-                                BpointToken.objects.get(DVToken=txn.dvtoken)
-                            except BpointToken.DoesNotExist:
-                                UsedBpointToken.objects.create(DVToken=txn.dvtoken)
+        with transaction.atomic():
+            amount = amount['amount']
+            details = amount['details']
+            try:
+                txn = None
+                if self.action == 'payment' or self.action == 'capture':
+
+                    card_details = self.dvtoken.split('|')
+                    card = TempBankCard(
+                        self.dvtoken,
+                        None 
+                    )
+                    card.last_digits = self.last_digits
+                    if self.approved:
+                        if amount <= self.refundable_amount:
+                            txn = bpoint_facade.pay_with_temptoken(
+                                        'refund' if matched else 'unmatched_refund',
+                                        'telephoneorder',
+                                        'single',
+                                        card,
+                                        self.order, 
+                                        self.crn1,
+                                        amount,
+                                        self.txn_number 
+                                    )
+                            if txn.approved:
+                                try:
+                                    BpointToken.objects.get(DVToken=txn.dvtoken)
+                                except BpointToken.DoesNotExist:
+                                    UsedBpointToken.objects.create(DVToken=txn.dvtoken)
+                                TrackRefund.objects.create(user=user,type=2,refund_id=txn.id,details=details)
+                        else:
+                            raise ValidationError('The refund amount is greater than the amount refundable on this card.')
                     else:
-                        raise ValidationError('The refund amount is greater than the amount refundable on this card.')
+                        raise ValidationError('A refund cannot be made to an unnapproved tranascation.')
                 else:
-                    raise ValidationError('A refund cannot be made to an unnapproved tranascation.')
-            else:
-                raise ValidationError('The transaction has to be either a payment or capture in order to make a refund.')
-            return txn 
-        except:
-            raise
+                    raise ValidationError('The transaction has to be either a payment or capture in order to make a refund.')
+                return txn 
+            except:
+                raise
 
 class TempBankCard(object):
     def __init__(self,card_number,expiry_date,ccv=None):

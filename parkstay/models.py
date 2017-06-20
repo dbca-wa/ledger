@@ -118,6 +118,7 @@ class Campground(models.Model):
     key = models.CharField(max_length=255, blank=True, null=True)
     price_level = models.SmallIntegerField(choices=CAMPGROUND_PRICE_LEVEL_CHOICES, default=0)
     info_url = models.CharField(max_length=255, blank=True)
+    long_description = models.TextField(blank=True,null=True)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     dog_permitted = models.BooleanField(default=False)
@@ -973,6 +974,10 @@ class Booking(models.Model):
         return False
 
     @property
+    def outstanding(self):
+        return self.__outstanding_amount()
+
+    @property
     def status(self):
         if not self.legacy_id:
             payment_status = self.__check_payment_status()
@@ -1026,7 +1031,8 @@ class Booking(models.Model):
             except Invoice.DoesNotExist:
                 pass
         for i in invoices:
-            amount += i.payment_amount
+            if not i.voided:
+                amount += i.payment_amount
 
         if amount == 0:
             return 'unpaid'
@@ -1035,6 +1041,21 @@ class Booking(models.Model):
         elif self.cost_total > amount:
             return 'partially_paid'
         else:return "paid"
+
+    def __outstanding_amount(self):
+        invoices = []
+        amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if not i.voided:
+                amount += i.balance
+
+        return amount
 
     def cancelBooking(self):
         self.is_canceled = True
@@ -1050,6 +1071,8 @@ class Booking(models.Model):
 
         self.save()
 
+class OutstandingBookingRecipient(models.Model):
+    email = models.EmailField()
 
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
@@ -1237,7 +1260,8 @@ class CampgroundBookingRangeListener(object):
                         linked_open.range_start = instance.range_start
                 else:
                      linked_open.range_start = today
-                linked_open.save(skip_validation=True)
+                if len(linked_open) > 0:
+                    linked_open[0].save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:

@@ -112,6 +112,9 @@ class ClosureReason(ReasonAdmin):
 class OpenReason(ReasonAdmin):
     pass
 
+@admin.register(models.OutstandingBookingRecipient)
+class OutstandingBookingRecipient(admin.ModelAdmin):
+    pass
 
 admin.site.register(models.Rate)
 admin.site.register(models.Region)

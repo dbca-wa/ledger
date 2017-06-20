@@ -575,6 +575,39 @@ export default {
                     resolution: resolution,
                     duration: 1000
                 });
+
+                // Open the popup
+                let feature = this.groundsData.a.find(f => parseInt(f.a) == parseInt(target.properties.id));
+                if (feature){
+                    setTimeout(() => {
+                        vm.popup.setPosition(feature.getGeometry().getCoordinates());
+                        // really want to make vue.js render this, except reactivity dies
+                        // when you pass control of the popup element to OpenLayers :(
+                        $("#mapPopupName")[0].innerHTML = feature.get('name');
+                        if (feature.get('images')) {
+                            // console.log(feature.get('images')[0].image);
+                            $("#mapPopupImage").attr('src', feature.get('images')[0].image);
+                            $("#mapPopupImage").show();
+                        } else {
+                            $("#mapPopupImage").hide();
+                        }
+                        if (feature.get('price_hint') && Number(feature.get('price_hint'))) {
+                            $("#mapPopupPrice")[0].innerHTML = '<small>From $' + feature.get('price_hint') + ' per night</small>';
+                        } else {
+                            $("#mapPopupPrice")[0].innerHTML = '';
+                        }
+                        $("#mapPopupDescription")[0].innerHTML = feature.get('description');
+                        $("#mapPopupInfo").attr('href', feature.get('info_url'));
+                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                        if (feature.get('campground_type') == 0) {
+                            $("#mapPopupBook").show();
+                        } else {
+                            $("#mapPopupBook").hide();
+                        }
+                    },1000);
+                }
+
+
                 return;
             }
 
@@ -1051,7 +1084,6 @@ export default {
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
-                //console.log(feature);
                 if (feature.get('images')) {
                     // console.log(feature.get('images')[0].image);
                     $("#mapPopupImage").attr('src', feature.get('images')[0].image);
@@ -1066,7 +1098,6 @@ export default {
                 }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                console.log(feature);
                 $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
