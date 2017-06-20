@@ -128,7 +128,8 @@
                     <tr>
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
-                            <button v-if="site.price" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
+                            <button v-if="site.price && !ongoing_booking" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
+                            <button v-if="site.price && ongoing_booking" disabled class="button has-tip" data-tooltip aria-haspopup="true" title="Please complete your current ongoing booking using the button at the top of the page."><small>Book now</small><br/>{{ site.price }}</button>
                             <template v-else>
                                 <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)"><small>Show availability</small></button>
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
@@ -395,19 +396,6 @@ export default {
         updateURL: function () {
             // update browser history
             var vm = this;
-            /*if (parseInt(vm.parkstayGroundRatisId) > 0){
-                var newHist = window.location.href.split('?')[0] +'?'+ $.param({
-                    ratis_id: vm.parkstayGroundRatisId,
-                    arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                    departure: moment(vm.departureDate).format('YYYY/MM/DD'),
-                    gear_type: vm.gearType,
-                    num_adult: vm.numAdults,
-                    num_child: vm.numChildren,
-                    num_concession: vm.numConcessions,
-                    num_infant: vm.numInfants
-                });
-            }
-            else{*/
             var newHist = window.location.href.split('?')[0] +'?'+ $.param({
                 site_id: vm.parkstayGroundId,
                 arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
@@ -418,7 +406,6 @@ export default {
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants
             });
-            //}
             history.replaceState('', '', newHist);
         },
         update: function() {
