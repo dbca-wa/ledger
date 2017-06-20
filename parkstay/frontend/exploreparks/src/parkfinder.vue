@@ -357,7 +357,7 @@
         border: 1px solid #cccccc;
         bottom: 32px;
         left: -140px;
-        min-width: 280px;
+        width: 280px;
     }
 
     .mapPopup:after, .mapPopup:before {
