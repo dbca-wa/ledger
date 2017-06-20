@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
-from wildlifelicensing.apps.applications.views.entry import NewApplicationView, SelectLicenceTypeView, \
-    CreateSelectCustomer, EditApplicationView, CheckIdentificationRequiredView, \
+from wildlifelicensing.apps.applications.views.entry import DeleteApplicationSessionView, NewApplicationView, \
+    SelectLicenceTypeView, CreateSelectCustomer, EditApplicationView, CheckIdentificationRequiredView, \
     CreateSelectProfileView, EnterDetailsView, PreviewView, ApplicationCompleteView, RenewLicenceView, \
     AmendLicenceView, CheckSeniorCardView, DiscardApplicationView
 
@@ -14,12 +14,13 @@ from wildlifelicensing.apps.applications.views.conditions import EnterConditions
 
 from wildlifelicensing.apps.applications.views.issue import IssueLicenceView, ReissueLicenceView, PreviewLicenceView
 
-from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, ViewReadonlyOfficerView, \
+from wildlifelicensing.apps.applications.views.view import ViewReadonlyView, ViewPDFView, ViewReadonlyOfficerView, \
     ViewReadonlyAssessorView, AddApplicationLogEntryView, ApplicationLogListView, ApplicationUserActionListView
 
 
 urlpatterns = [
     # application entry / licence renewal/amendment
+    url('^delete-application-session/$', DeleteApplicationSessionView.as_view(), name='delete_application_session'),
     url('^new-application/$', NewApplicationView.as_view(), name='new_application'),
     url('^select-licence-type$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
     url('^select-licence-type/([0-9]+)$', SelectLicenceTypeView.as_view(), name='select_licence_type'),
@@ -72,6 +73,7 @@ urlpatterns = [
 
     # view
     url('^view-application/([0-9]+)/$', ViewReadonlyView.as_view(), name='view_application'),
+    url('^view-application-pdf/([0-9]+)/$', ViewPDFView.as_view(), name='view_application_pdf'),
     url('^view-application-officer/([0-9]+)/$', ViewReadonlyOfficerView.as_view(), name='view_application_officer'),
     url('^view-assessment/([0-9]+)/assessment/([0-9]+)/$', ViewReadonlyAssessorView.as_view(), name='view_assessment')
 ]

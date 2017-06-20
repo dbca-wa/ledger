@@ -275,6 +275,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         super(EmailUser, self).clean()
+
+        if self.dob < date(1900, 1, 1):
+            raise ValidationError({'dob': 'Date of birth cannot be before 01/01/1900'})
+
         self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 

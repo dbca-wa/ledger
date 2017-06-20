@@ -9,7 +9,7 @@ define(
         'bootstrap-datetimepicker'
     ],
     function ($, _, dt, moment) {
-        "use strict";
+        'use strict';
 
         var options,
             tableOptions = {
@@ -73,8 +73,16 @@ define(
                             // add filters to the query
                             d.filters = $(options.selectors.applicationsFilterForm).serializeArray();
                         },
+                        dataSrc: function (data) {
+                            // intercept the returned data to display (console) error if any.
+                            if (data['error']) {
+                                window.console.error('Applications error:', data['error']);
+                            }
+                            return data['data'] || [];
+                        },
                         error: function (xhr, textStatus, thrownError) {
-                            console.log("Error while loading applications data:", thrownError, textStatus, xhr.responseText, xhr.status);
+                            window.console.log('Error while loading applications data:',
+                                thrownError, textStatus, xhr.responseText, xhr.status);
                             //Stop the data table 'Processing'.
                             $(options.selectors.applicationsTable + '_processing').hide();
                         }
@@ -176,8 +184,16 @@ define(
                                 d.filters = $(options.selectors.licencesFilterForm).serializeArray();
                             }
                         },
+                        dataSrc: function (data) {
+                            // intercept the returned data to display (console) error if any.
+                            if (data['error']) {
+                                window.console.error('Licences error:', data['error']);
+                            }
+                            return data['data'] || [];
+                        },
                         error: function (xhr, textStatus, thrownError) {
-                            console.log("Error while loading licences data:", thrownError, textStatus, xhr.responseText, xhr.status);
+                            window.console.log('Error while loading licences data:',
+                                thrownError, textStatus, xhr.responseText, xhr.status);
                             //Stop the data table 'Processing'.
                             $(options.selectors.licencesTable + '_processing').hide();
                         },
@@ -306,6 +322,13 @@ define(
             var returnsTableOptions = $.extend({}, tableOptions, {
                     ajax: {
                         url: options.data.returns.ajax.url,
+                        dataSrc: function (data) {
+                            // intercept the returned data to display (console) error if any.
+                            if (data['error']) {
+                                window.console.error('Returns error:', data['error']);
+                            }
+                            return data['data'] || [];
+                        },
                         data: function (d) {
                             // add filters to the query
                             if ($(options.selectors.returnsFilterForm)) {
@@ -314,7 +337,8 @@ define(
                         },
                         error: function (xhr, textStatus, thrownError) {
                             //Stop the data table 'Processing'.
-                            console.log("Error while loading returns data:", thrownError, textStatus, xhr.responseText, xhr.status);
+                            window.console.log('Error while loading returns data:',
+                                thrownError, textStatus, xhr.responseText, xhr.status);
                             $(options.selectors.returnsTable + '_processing').hide();
                         }
                     }
@@ -413,7 +437,6 @@ define(
                 $(options.selectors.returnsAccordion).collapse('show');
             }
         }
-
 
         function setFilters(query) {
             /**
@@ -517,7 +540,7 @@ define(
                 data: {
                     'applications': {
                         ajax: {
-                            url: "/dashboard/data/applications"
+                            url: '/dashboard/data/applications'
                         },
                         'columnDefinitions': [],
                         'filters': {}

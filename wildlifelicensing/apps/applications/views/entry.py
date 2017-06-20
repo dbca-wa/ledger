@@ -5,7 +5,9 @@ from django.views.generic.edit import FormView, DeleteView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http.response import HttpResponse, HttpResponseForbidden
 from django.utils.http import urlencode
+from django.core.urlresolvers import reverse
 
 from ledger.accounts.models import EmailUser, Document
 from ledger.accounts.forms import EmailUserForm, AddressForm, ProfileForm
@@ -17,11 +19,11 @@ from wildlifelicensing.apps.applications.models import Application, AmendmentReq
     ApplicationVariantLink, ApplicationUserAction
 from wildlifelicensing.apps.applications import utils
 from wildlifelicensing.apps.applications.forms import ProfileSelectionForm
-from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, \
-    UserCanViewApplicationMixin, UserCanRenewApplicationMixin, UserCanAmendApplicationMixin
+from wildlifelicensing.apps.applications.mixins import UserCanEditApplicationMixin, UserCanViewApplicationMixin, \
+    UserCanRenewApplicationMixin, UserCanAmendApplicationMixin, RedirectApplicationInSessionMixin, \
+    RedirectApplicationNotInSessionMixin
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.main.helpers import is_customer, render_user_name
-from django.core.urlresolvers import reverse
+from wildlifelicensing.apps.main.helpers import is_customer, is_officer, render_user_name
 from wildlifelicensing.apps.applications.utils import delete_session_application
 from wildlifelicensing.apps.payments.utils import is_licence_free, get_licence_price, \
     generate_product_title
@@ -30,15 +32,11 @@ LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
 
 
-class ApplicationEntryBaseView(TemplateView):
+class ApplicationEntryBaseView(RedirectApplicationNotInSessionMixin, TemplateView):
     login_url = '/'
 
     def get_context_data(self, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         kwargs['licence_type'] = application.licence_type
 
@@ -47,13 +45,31 @@ class ApplicationEntryBaseView(TemplateView):
 
         kwargs['customer'] = application.applicant
 
-        kwargs['is_renewal'] = application.processing_status == 'renewal'
-        kwargs['is_amendment'] = application.processing_status == 'licence_amendment'
+        kwargs['is_renewal'] = application.application_type == 'renewal'
+        kwargs['is_amendment'] = application.application_type == 'amendment'
 
         return super(ApplicationEntryBaseView, self).get_context_data(**kwargs)
 
 
-class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
+class DeleteApplicationSessionView(UserCanEditApplicationMixin, View):
+    def post(self, request, *args, **kwargs):
+        application = get_object_or_404(Application, pk=request.POST.get('applicationId'))
+
+        if not (application.applicant == request.user or application.proxy_applicant == request.user):
+            return HttpResponseForbidden('Application does not belong to user or proxy application')
+
+        session_application_id = utils.get_session_application(request.session)
+
+        if session_application_id.id == application.id:
+            utils.delete_session_application(request.session)
+
+            if application.is_temporary:
+                application.delete()
+
+        return HttpResponse()
+
+
+class NewApplicationView(OfficerOrCustomerRequiredMixin, RedirectApplicationInSessionMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
@@ -72,7 +88,7 @@ class NewApplicationView(OfficerOrCustomerRequiredMixin, View):
             return redirect('wl_applications:create_select_customer')
 
 
-class EditApplicationView(UserCanEditApplicationMixin, View):
+class EditApplicationView(UserCanEditApplicationMixin, RedirectApplicationInSessionMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
@@ -140,7 +156,7 @@ class DiscardApplicationView(View, UserCanViewApplicationMixin):
         return redirect('wl_dashboard:home')
 
 
-class RenewLicenceView(UserCanRenewApplicationMixin, View):
+class RenewLicenceView(UserCanRenewApplicationMixin, RedirectApplicationInSessionMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
@@ -154,7 +170,9 @@ class RenewLicenceView(UserCanRenewApplicationMixin, View):
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application)
-            application.processing_status = 'renewal'
+            application.application_type = 'renewal'
+            if is_officer(request.user):
+                application.proxy_applicant = request.user
             application.save()
 
         utils.set_session_application(request.session, application)
@@ -162,7 +180,7 @@ class RenewLicenceView(UserCanRenewApplicationMixin, View):
         return redirect('wl_applications:enter_details')
 
 
-class AmendLicenceView(UserCanAmendApplicationMixin, View):
+class AmendLicenceView(UserCanAmendApplicationMixin, RedirectApplicationInSessionMixin, View):
     def get(self, request, *args, **kwargs):
         utils.remove_temp_applications_for_user(request.user)
 
@@ -177,8 +195,9 @@ class AmendLicenceView(UserCanAmendApplicationMixin, View):
                 return redirect('wl_dashboard:home')
         except Application.DoesNotExist:
             application = utils.clone_application_with_status_reset(previous_application, is_licence_amendment=True)
-            application.processing_status = 'licence_amendment'
-            application.is_licence_amendment = True
+            application.application_type = 'amendment'
+            if is_officer(request.user):
+                application.proxy_applicant = request.user
             application.save()
 
         utils.set_session_application(request.session, application)
@@ -186,21 +205,19 @@ class AmendLicenceView(UserCanAmendApplicationMixin, View):
         return redirect('wl_applications:enter_details')
 
 
-class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
+class CreateSelectCustomer(OfficerRequiredMixin, RedirectApplicationNotInSessionMixin, TemplateView):
     template_name = 'wl/entry/create_select_customer.html'
     login_url = '/'
 
     def get_context_data(self, **kwargs):
+        kwargs['application'] = utils.get_session_application(self.request.session)
+
         kwargs['create_customer_form'] = EmailUserForm(email_required=False)
 
         return super(CreateSelectCustomer, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        try:
-            application = utils.get_session_application(request.session)
-        except Exception as e:
-            messages.error(request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(request.session)
 
         if 'select' in request.POST:
             application.applicant = EmailUser.objects.get(id=request.POST.get('customer'))
@@ -216,24 +233,23 @@ class CreateSelectCustomer(OfficerRequiredMixin, TemplateView):
                     request
                 )
             else:
-                context = {'create_customer_form': create_customer_form}
+                context = {
+                    'create_customer_form': create_customer_form, 
+                    'application': application
+                }
                 return render(request, self.template_name, context)
 
         return redirect('wl_applications:select_licence_type', *args, **kwargs)
 
 
-class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
+class SelectLicenceTypeView(LoginRequiredMixin, RedirectApplicationNotInSessionMixin, TemplateView):
     template_name = 'wl/entry/select_licence_type.html'
     login_url = '/'
 
     def get(self, request, *args, **kwargs):
-        if args:
-            try:
-                application = utils.get_session_application(self.request.session)
-            except Exception as e:
-                messages.error(self.request, str(e))
-                return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
+        if args:
             application.licence_type = WildlifeLicenceType.objects.get(id=self.args[0])
 
             application.data = None
@@ -306,7 +322,10 @@ class SelectLicenceTypeView(LoginRequiredMixin, TemplateView):
         if uncategorised_queryset.exists():
             __populate_category_dict({'name': 'Other', 'licence_types': []}, uncategorised_queryset, categories)
 
-        return render(request, self.template_name, {'categories': categories})
+        return render(request, self.template_name, {
+            'application': application,
+            'categories': categories
+        })
 
 
 class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseView, FormView):
@@ -314,11 +333,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
     form_class = IdentificationForm
 
     def get(self, *args, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         if application.licence_type.identification_required and application.applicant.identification is None:
             return super(CheckIdentificationRequiredView, self).get(*args, **kwargs)
@@ -326,11 +341,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
             return redirect('wl_applications:check_senior_card')
 
     def get_context_data(self, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         kwargs['application'] = application
 
@@ -339,11 +350,7 @@ class CheckIdentificationRequiredView(LoginRequiredMixin, ApplicationEntryBaseVi
         return super(CheckIdentificationRequiredView, self).get_context_data(**kwargs)
 
     def form_valid(self, form):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         if application.applicant.identification is not None:
             application.applicant.identification.delete()
@@ -365,11 +372,7 @@ class CheckSeniorCardView(LoginRequiredMixin, ApplicationEntryBaseView, FormView
     form_class = SeniorCardForm
 
     def get(self, *args, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         if application.licence_type.senior_applicable \
                 and application.applicant.is_senior \
@@ -379,15 +382,13 @@ class CheckSeniorCardView(LoginRequiredMixin, ApplicationEntryBaseView, FormView
             return redirect('wl_applications:create_select_profile')
 
     def get_context_data(self, **kwargs):
+        kwargs['application'] = utils.get_session_application(self.request.session)
+
         kwargs['file_types'] = ', '.join(['.' + file_ext for file_ext in self.form_class.VALID_FILE_TYPES])
         return super(CheckSeniorCardView, self).get_context_data(**kwargs)
 
     def form_valid(self, form):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         if application.applicant.senior_card is not None:
             application.applicant.senior_card.delete()
@@ -402,11 +403,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/create_select_profile.html'
 
     def get_context_data(self, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         kwargs['application'] = application
 
@@ -431,11 +428,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
         return super(CreateSelectProfileView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        try:
-            application = utils.get_session_application(request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(request.session)
 
         if 'select' in request.POST:
             profile_selection_form = ProfileSelectionForm(request.POST, user=application.applicant)
@@ -444,7 +437,7 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                 application.applicant_profile = profile_selection_form.cleaned_data.get('profile')
                 application.save()
             else:
-                return render(request, self.template_name, {'licence_type': application.licence_type,
+                return render(request, self.template_name, {'application': application,
                                                             'profile_selection_form': profile_selection_form,
                                                             'profile_creation_form': ProfileForm(),
                                                             'address_form': AddressForm(user=application.applicant)})
@@ -465,7 +458,8 @@ class CreateSelectProfileView(LoginRequiredMixin, ApplicationEntryBaseView):
                 )
             else:
                 return render(request, self.template_name,
-                              {'licence_type': application.licence_type,
+                              {'application': application,
+                               'licence_type': application.licence_type,
                                'profile_selection_form': ProfileSelectionForm(user=request.user),
                                'profile_creation_form': profile_form, 'address_form': address_form})
 
@@ -476,11 +470,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/enter_details.html'
 
     def get_context_data(self, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         if application.review_status == 'awaiting_amendments':
             amendments = AmendmentRequest.objects.filter(application=application).filter(status='requested')
@@ -494,11 +484,7 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         return super(EnterDetailsView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         application.data = utils.create_data_from_form(application.licence_type.application_schema,
                                                        request.POST, request.FILES)
@@ -510,17 +496,19 @@ class EnterDetailsView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
                 application.hard_copy.file = request.FILES[f]
                 application.hard_copy.save()
             else:
+                document = Document.objects.create(name=f, file=request.FILES[f])
+                document.save()
                 # for legacy applications, need to check if there's a document where file is
                 # named by the file name rather than the form field name
                 try:
-                    document = application.documents.get(name=str(request.FILES[f]))
+                    old_document = application.documents.get(name=str(request.FILES[f]))
                 except Document.DoesNotExist:
-                    document = application.documents.get_or_create(name=f)[0]
+                    old_document = application.documents.filter(name=f).first()
 
-                document.name = f
-                document.file = request.FILES[f]
+                if old_document is not None:
+                    application.documents.remove(old_document)
 
-                document.save()
+                application.documents.add(document)
 
         application.save()
 
@@ -548,11 +536,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
     template_name = 'wl/entry/preview.html'
 
     def get_context_data(self, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         kwargs['is_payment_required'] = not is_licence_free(generate_product_title(application)) and \
             not application.invoice_reference and is_customer(self.request.user)
@@ -572,11 +556,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
         return super(PreviewView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         application.correctness_disclaimer = request.POST.get('correctnessDisclaimer', '') == 'on'
         application.further_information_disclaimer = request.POST.get('furtherInfoDisclaimer', '') == 'on'
@@ -590,7 +570,7 @@ class PreviewView(UserCanEditApplicationMixin, ApplicationEntryBaseView):
             AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
             application.review_status = 'amended'
             application.processing_status = 'ready_for_action'
-        elif application.processing_status != 'renewal' and application.processing_status != 'licence_amendment':
+        else :
             application.processing_status = 'new'
 
         application.customer_status = 'under_review'
@@ -615,11 +595,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
     template_name = 'wl/entry/complete.html'
 
     def get(self, request, *args, **kwargs):
-        try:
-            application = utils.get_session_application(self.request.session)
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return redirect('wl_applications:new_application')
+        application = utils.get_session_application(self.request.session)
 
         # update invoice reference if received, else keep the same
         application.invoice_reference = request.GET.get('invoice', application.invoice_reference)
@@ -631,7 +607,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
         context['application'] = application
 
         context['show_invoice'] = not is_licence_free(generate_product_title(application)) and \
-            not application.is_licence_amendment
+            not application.application_type == 'amendment'
 
         delete_session_application(request.session)
 

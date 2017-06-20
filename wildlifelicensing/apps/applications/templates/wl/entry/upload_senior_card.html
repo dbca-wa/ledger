@@ -4,17 +4,21 @@
 
 {% load users %}
 
+{% load application_filters %}
+
+{% block requirements %}
+    require(['js/entry/navigation'], function(navigation) {
+        navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
+            {{ application.id }}, 'a, :button', '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
+    });
+{% endblock %}
+
 {% block breadcrumbs %}
-    <div class="container">
+    <div id="breadcrumbsContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
-                    <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if request.user|is_officer %}
-                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a>
-                        </li>
-                    {% endif %}
-                    <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
+                    <li><strong>{{ application|get_application_verb }} Application</strong></li>
                     <li class="active">Upload Senior Card</li>
                 </ol>
             </div>
@@ -68,7 +72,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div id="contentContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <form method="post" enctype="multipart/form-data">

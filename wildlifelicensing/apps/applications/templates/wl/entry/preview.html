@@ -8,6 +8,8 @@
 
 {% load users %}
 
+{% load application_filters %}
+
 {% block requirements %}
     require(['jQuery',
              'js/entry/application_preview',
@@ -15,31 +17,26 @@
         applicationPreview.layoutPreviewItems('#formContainer', {{ application.licence_type.application_schema|jsonify }},
                                               {{ application.data|jsonify }});
 
-        $('#mainContainer').removeClass('hidden');
+        $('#contentContainer').removeClass('hidden');
 
         // need to initialise sidebar menu after showing main container otherwise affix height will be wrong
         applicationPreview.initialiseSidebarMenu('#sectionList');
 
         applicationPreview.setupDisclaimer($('#disclaimers').find('input[type=checkbox]'), '#lodge');
 
-        navigation.setupNavigateAway('Warning: any information entered into the form will be lost if not saved as draft.');
+        navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
+            {{ application.id }}, 'a, :button', '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
     });
 {% endblock %}
 
 {% block breadcrumbs %}
-    <div class="container">
+    <div id="breadcrumbsContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
-                    <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if application.is_temporary %}
-                        {% if request.user|is_officer %}
-                            <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
-                        {% endif %}
-                        <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
-                    {% endif %}
-                    <li><a data-entry-link="True" href="{% url 'wl_applications:create_select_profile' %}">Select Profile</a></li>
-                    <li><a data-entry-link="True" href="{% url 'wl_applications:enter_details' %}">Enter Application Details</a></li>
+                    <li><strong>{{ application|get_application_verb }} Application</strong></li>
+                    <li><a href="{% url 'wl_applications:create_select_profile' %}">Select Profile</a></li>
+                    <li><a href="{% url 'wl_applications:enter_details' %}">Enter Application Details</a></li>
                     <li class="active">Preview and Lodge Application</li>
                 </ol>
             </div>
@@ -65,15 +62,15 @@
     <p>
         This is your application information as it will be seen by an assessing officer. Please review the information
         for detail and accuracy before lodging your application. If you need to change any answers, return to the
-        application by clicking the “Edit Application Details” button at the bottom-left.
+        application by clicking the "Edit Application Details" button at the bottom-left.
     </p>
     <p>
         {% if is_payment_required %}
             When you are satisfied with your answers, read, agree with and check the disclaimer checkboxes
-            and click the “Proceed to Payment” button at the bottom-right.
+            and click the "Proceed to Payment" button at the bottom-right.
         {% else %}
             When you are satisfied with your answers, read, agree with and check the disclaimer checkboxes
-            and click the “Lodge Application” button at the bottom-right.
+            and click the "Lodge Application" button at the bottom-right.
         {% endif %}
     </p>
     <p>
@@ -84,7 +81,7 @@
 {% endblock %}
 
 {% block content %}
-    <div id="mainContainer" class="container hidden">
+    <div id="contentContainer" class="container hidden bottom-buffer">
         <div class="row">
             <div class="col-md-2 col-sm-3">
                 <label class="top-buffer">Selected Profile:</label>

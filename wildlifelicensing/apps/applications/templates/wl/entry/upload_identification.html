@@ -6,18 +6,21 @@
 
 {% load users %}
 
+{% load application_filters %}
+
+{% block requirements %}
+    require(['js/entry/navigation'], function(navigation) {
+        navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
+            {{ application.id }}, 'a, :button', '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
+    });
+{% endblock %}
+
 {% block breadcrumbs %}
-    <div class="container">
+    <div id="breadcrumbsContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
-                    <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if application.is_temporary %}
-                        {% if request.user|is_officer %}
-                            <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
-                        {% endif %}
-                        <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
-                    {% endif %}
+                    <li><strong>{{ application|get_application_verb }} Application</strong></li>
                     <li class="active">Upload Identification</li>
                 </ol>
             </div>
@@ -31,7 +34,7 @@
         {{ licence_type.name }} {% if is_renewal %}(Renewal) {% endif %} {% if is_amendment %}(Amendment) {% endif %}
     </h4> 
     {% if customer %}
-            <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
+        <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
     {% endif %}
     {% if variants %}
         <h4>
@@ -53,7 +56,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div id="contentContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <form method="post" enctype="multipart/form-data">

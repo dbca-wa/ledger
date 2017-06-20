@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from dateutil.parser import parse as date_parse
 from django.contrib.staticfiles.templatetags.staticfiles import static
@@ -16,6 +17,8 @@ from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.main.pdf import bulk_licence_renewal_pdf_bytes
 from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
+
+logger = logging.getLogger(__name__)
 
 
 def _render_cover_letter_document(licence):
@@ -156,6 +159,9 @@ class TablesApplicationsOfficerView(OfficerRequiredMixin, base.TablesBaseView):
                 'title': 'User'
             },
             {
+                'title': 'Type'
+            },
+            {
                 'title': 'Status',
             },
             {
@@ -165,10 +171,12 @@ class TablesApplicationsOfficerView(OfficerRequiredMixin, base.TablesBaseView):
                 'title': 'Assignee'
             },
             {
-                'title': 'Proxy'
+                'title': 'Payment',
+                'searchable': False,
+                'orderable': False
             },
             {
-                'title': 'Payment',
+                'title': 'Application PDF',
                 'searchable': False,
                 'orderable': False
             },
@@ -214,21 +222,22 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         'lodgement_number',
         'licence_type',
         'applicant',
+        'application_type',
         'processing_status',
         'lodgement_date',
         'assigned_officer',
-        'proxy_applicant',
         'payment',
+        'application_pdf',
         'action'
     ]
     order_columns = [
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
         ['applicant.last_name', 'applicant.first_name', 'applicant.email'],
+        'application_type',
         'processing_status',
         'lodgement_date',
         ['assigned_officer.first_name', 'assigned_officer.last_name', 'assigned_officer.email'],
-        ['proxy_applicant.first_name', 'proxy_applicant.last_name', 'proxy_applicant.email'],
         ''
         ''
     ]
@@ -238,6 +247,9 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             'search': lambda self, search: DataTableApplicationsOfficerView._search_lodgement_number(search),
             'render': lambda self, instance: base.render_lodgement_number(instance),
         },
+        'lodgement_date': {
+            'render': lambda self, instance: base.render_date(instance.lodgement_date)
+        },
         'assigned_officer': {
             'search': lambda self, search: base.build_field_query(
                 ['assigned_officer__last_name', 'assigned_officer__first_name'],
@@ -245,22 +257,16 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             ),
             'render': lambda self, instance: base.render_user_name(instance.assigned_officer)
         },
-        'proxy_applicant': {
-            'search': lambda self, search: base.build_field_query([
-                'proxy_applicant__last_name', 'proxy_applicant__first_name'],
-                search),
-            'render': lambda self, obj: base.render_user_name(obj.proxy_applicant)
-        },
-        'action': {
-            'render': lambda self, instance: DataTableApplicationsOfficerView._render_action_column(instance),
-        },
-        'lodgement_date': {
-            'render': lambda self, instance: base.render_date(instance.lodgement_date)
-        },
         'payment': {
             'render': lambda self, instance: base.render_payment(instance, self.request.build_absolute_uri(
                 reverse('wl_dashboard:tables_applications_officer')))
         },
+        'application_pdf': {
+            'render': lambda self, instance: base.render_application_document(instance)
+        },
+        'action': {
+            'render': lambda self, instance: DataTableApplicationsOfficerView._render_action_column(instance),
+        }
     })
 
     SESSION_SAVE_SETTINGS = True
@@ -305,7 +311,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         elif any([issued, discarded, declined]):
             return '<a href="{0}">{1}</a>'.format(
                 reverse('wl_applications:view_application_officer', args=[obj.pk]),
-                'View application (read-only)'
+                'View (read-only)'
             )
         else:
             return '<a href="{0}">Process</a>'.format(
@@ -313,7 +319,7 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
             )
 
     def get_initial_queryset(self):
-        return Application.objects.exclude(processing_status__in=['draft', 'temp'])
+        return Application.objects.exclude(processing_status__in=['draft', 'temp']).exclude(customer_status='temp')
 
 
 class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):
@@ -336,6 +342,9 @@ class TablesOfficerOnBehalfView(OfficerRequiredMixin, base.TablesBaseView):
             },
             {
                 'title': 'User'
+            },
+            {
+                'title': 'Type'
             },
             {
                 'title': 'Status'
@@ -449,6 +458,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
         'lodgement_number',
         'licence_type',
         'applicant',
+        'application_type',
         'processing_status',
         'lodgement_date',
         'action'
@@ -457,6 +467,7 @@ class DataTableApplicationsOfficerOnBehalfView(OfficerRequiredMixin, base.DataTa
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
         ['applicant.last_name', 'applicant.first_name', 'applicant.email'],
+        'application_type',
         'processing_status',
         'lodgement_date',
         '']
@@ -691,7 +702,8 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     @staticmethod
     def _search_licence_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        #  meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
@@ -710,24 +722,36 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
 
     @staticmethod
     def _render_status(instance):
+        if not instance.is_issued:
+            return 'Unissued'
+
         try:
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
 
-            if replacing_application.is_licence_amendment:
+            if replacing_application.application_type == 'amendment':
                 return 'Amended'
             else:
                 return 'Renewed'
         except Application.DoesNotExist:
             pass
 
-        expiry_days = (instance.end_date - datetime.date.today()).days
-        if instance.end_date < datetime.date.today():
-            return '<span class="label label-danger">Expired</span>'
-        elif expiry_days <= 30 and instance.is_renewable:
-            return '<span class="label label-warning">Due for renewal</span>'
+        if instance.end_date is not None:
+            expiry_days = (instance.end_date - datetime.date.today()).days
+            if instance.end_date < datetime.date.today():
+                return '<span class="label label-danger">Expired</span>'
+            elif expiry_days <= 30 and instance.is_renewable:
+                return '<span class="label label-warning">Due for renewal</span>'
+            else:
+                return 'Current'
         else:
-            return 'Current'
+            # should not happen
+            message = "The licence ref:{ref} pk:{pk} has no end date!".format(
+                ref=instance.reference,
+                pk=instance.pk
+            )
+            logger.exception(Exception(message))
+            return 'Unissued'
 
     @staticmethod
     def _render_action(instance):
@@ -736,17 +760,29 @@ class DataTableLicencesOfficerView(OfficerRequiredMixin, base.DataTableBaseView)
             if Application.objects.filter(previous_application=application).exists():
                 return 'N/A'
         except Application.DoesNotExist:
-            pass
+            application = None
 
+        if not instance.is_issued:
+            return '<a href="{0}">Issue</a>'.format(reverse('wl_applications:issue_licence', args=(application.pk,)))
+
+        amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+        renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
         reissue_url = reverse('wl_applications:reissue_licence', args=(instance.pk,))
-        expiry_days = (instance.end_date - datetime.date.today()).days
 
-        if expiry_days <= 30 and instance.is_renewable:
-            renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
-            return '<a href="{0}">Renew</a> / <a href="{1}">Reissue</a>'.format(renew_url, reissue_url)
+        if instance.end_date is not None:
+            expiry_days = (instance.end_date - datetime.date.today()).days
+            if instance.is_renewable:
+                if 30 >= expiry_days > 0:
+                    return '<a href="{0}">Amend</a> / <a href="{1}">Renew</a> / <a href="{2}">Reissue</a>'.\
+                        format(amend_url, renew_url, reissue_url)
+                elif expiry_days <= 30:
+                    return '<a href="{0}">Renew</a>'.format(renew_url)
+            if instance.end_date >= datetime.date.today():
+                return '<a href="{0}">Amend</a> / <a href="{1}">Reissue</a>'.format(amend_url, reissue_url)
+            else:
+                return 'N/A'
         else:
-            amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
-            return '<a href="{0}">Amend</a> / <a href="{1}">Reissue</a>'.format(amend_url, reissue_url)
+            return '<a href="{0}">Issue</a>'.format(reverse('wl_applications:issue_licence', args=(application.pk,)))
 
     def get_initial_queryset(self):
         return WildlifeLicence.objects.all()
@@ -820,7 +856,7 @@ class TablesReturnsOfficerView(OfficerRequiredMixin, base.TablesBaseView):
         return DataTableReturnsOfficerView.get_session_data(self.request)
 
 
-class DataTableReturnsOfficerView(base.DataTableBaseView):
+class DataTableReturnsOfficerView(OfficerRequiredMixin, base.DataTableBaseView):
     model = Return
     columns = [
         'lodgement_number',
@@ -899,7 +935,7 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
         elif instance.status == 'draft':
             url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
-        elif instance.status == 'submitted':
+        elif instance.status in ['submitted', 'amended', 'amendment_required']:
             text = 'Curate Return'
             url = reverse('wl_returns:curate_return', args=(instance.pk,))
             return '<a href="{0}">{1}</a>'.format(url, text)
@@ -928,7 +964,8 @@ class DataTableReturnsOfficerView(base.DataTableBaseView):
 
     @staticmethod
     def _search_licence_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        # meaning it's a licence number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
@@ -965,7 +1002,7 @@ class BulkLicenceRenewalPDFView(DataTableLicencesOfficerView):
 
     def get(self, request, *args, **kwargs):
         super(BulkLicenceRenewalPDFView, self).get(request, *args, **kwargs)
-        licences = []
+        licences = WildlifeLicence.objects.none()
         if self.qs:
             licences = self.qs
         response = HttpResponse(content_type='application/pdf')

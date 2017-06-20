@@ -16,7 +16,7 @@ django-cron==0.5.0
 django-dynamic-fixture==1.9.1
 openpyxl==2.3.5
 datapackage==0.8.1
-jsontableschema==0.6.5
+jsontableschema==0.10.1
 python-dateutil==2.5.3
 py4j==0.10.2.1
 djangorestframework==3.4.0

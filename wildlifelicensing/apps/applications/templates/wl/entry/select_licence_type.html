@@ -9,21 +9,23 @@
 {% load users %}
 
 {% block requirements %}
-    require(['js/entry/select_licence_type'], function(selectLicenceType) {
-        selectLicenceType.init({{ categories|jsonify }});
+    require(['js/entry/select_licence_type', 'js/entry/navigation'], function(selectLicenceType, navigation) {
+        selectLicenceType.init({
+            categories: {{ categories|jsonify }},
+        });
+
+        navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
+            {{ application.id }}, 'a, :button, span', '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
     });
 {% endblock %}
 
 {% block breadcrumbs %}
-    <div class="container">
+    <div id="breadcrumbsContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
-                    <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if application.is_temporary and request.user|is_officer %}
-                        <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
-                    {% endif %}
-                    <li class="active">New Licence Application - Select Licence Type</li>
+                    <li><strong>New Application</strong></li>
+                    <li class="active">Select Licence Type</li>
                 </ol>
             </div>
         </div>
@@ -44,7 +46,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div id="contentContainer" class="container">
         {% for category in categories %}
             <h4>{{ category.name }}</h4>
             <div class="row">

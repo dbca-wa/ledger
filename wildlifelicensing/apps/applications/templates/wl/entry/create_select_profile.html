@@ -6,24 +6,21 @@
 
 {% load users %}
 
+{% load application_filters %}
+
 {% block requirements %}
     require(['js/entry/navigation'], function(navigation) {
-        navigation.setupNavigateAway('Warning: any information entered into the form will be lost if not saved as draft.');
+        navigation.init('Warning: any information entered into the form will be lost if not saved as draft.',
+            {{ application.id }}, 'a, :button', '#breadcrumbsContainer, #contentContainer', "{{ csrf_token }}");
     });
 {% endblock %}
 
 {% block breadcrumbs %}
-    <div class="container">
+    <div id="breadcrumbsContainer" class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
-                    <li><a href="{% url 'home' %}">Home</a></li>
-                    {% if application.is_temporary %}
-                        {% if request.user|is_officer %}
-                            <li><a href="{% url 'wl_applications:create_select_customer' %}">Select or Create Customer</a></li>
-                        {% endif %}
-                        <li><a href="{% url 'wl_applications:select_licence_type' %}">Select Licence Type</a></li>
-                    {% endif %}
+                    <li><strong>{{ application|get_application_verb }} Application</strong></li>
                     <li class="active">{% if profile_selection_form %}Select{% else %}Create{% endif %} Profile</li>
                 </ol>
             </div>
@@ -34,7 +31,7 @@
 {% block intro_title %}<h3>Select Profile</h3>{% endblock %}
 {% block intro_subtitle %}
     <h4 class="inline">
-        {{ licence_type.name }} {% if is_renewal %}(Renewal) {% endif %} {% if is_amendment %}(Amendment) {% endif %}
+        {{ application.licence_type.name }} {% if is_renewal %}(Renewal) {% endif %} {% if is_amendment %}(Amendment) {% endif %}
     </h4> 
     {% if customer %}
             <h4 class="pull-right">Customer: {{ customer.get_full_name }}</h4>
@@ -47,24 +44,24 @@
 {% endblock %}
 {% block intro_text %}
     <p>
-        The Wildlife Licensing System utilises the concept of “profiles” to allow users to hold licences under different circumstances,
+        The Wildlife Licensing System utilises the concept of "profiles" to allow users to hold licences under different circumstances,
         rather than registering numerous accounts. Each profile can have a different email address, postal address and affiliation details.
     </p>
     <p>
-        For example, a registered user may have a “Consultant” profile for work/employment purposes, a “Friends of”
-        profile for volunteer work, and a “Personal” profile for private licences.
+        For example, a registered user may have a "Consultant" profile for work/employment purposes, a "Friends of"
+        profile for volunteer work, and a "Personal" profile for private licences.
     </p>
     <p>
         Please select an existing profile or alternatively create a new profile for this licence application.
     </p>
     <p>
-        To manage your profiles generally you can click on “Options” on top-right toolbar and choose “Manage Profile.”
+        To manage your profiles generally you can click on "Options" on top-right toolbar and choose "Manage Profile."
     </p>
 
 {% endblock %}
 
 {% block content %}
-    <div class="container bottom-buffer">
+    <div id="contentContainer" class="container bottom-buffer">
         {% if profile_selection_form %}
             <div class="row">
                 <div class="col-md-12">

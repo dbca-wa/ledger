@@ -71,8 +71,9 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
 def extract_licence_fields(schema, data):
     licence_fields = []
 
-    for item in schema:
-        _extract_licence_fields_from_item(item, data, licence_fields)
+    if schema is not None:
+        for item in schema:
+            _extract_licence_fields_from_item(item, data, licence_fields)
 
     return licence_fields
 
@@ -304,8 +305,6 @@ def clone_application_with_status_reset(application, is_licence_amendment=False)
     application.assigned_officer = None
 
     application.licence = None
-
-    application.is_licence_amendment = is_licence_amendment
 
     if not is_licence_amendment:
         application.invoice_reference = ''

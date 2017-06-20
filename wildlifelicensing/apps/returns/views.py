@@ -10,20 +10,26 @@ from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.http.response import JsonResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import Document
-from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrCustomerRequiredMixin
-from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType
+from wildlifelicensing.apps.returns.models import Return, ReturnTable, ReturnRow, ReturnLogEntry, ReturnType, \
+    ReturnAmendmentRequest
 from wildlifelicensing.apps.main import excel
-from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm, NilReturnForm, ReturnsLogEntryForm
+from wildlifelicensing.apps.returns.forms import UploadSpreadsheetForm, NilReturnForm, ReturnsLogEntryForm,\
+    ReturnAmendmentRequestForm
 from wildlifelicensing.apps.returns.utils_schema import Schema, create_return_template_workbook
 from wildlifelicensing.apps.returns.utils import format_return
 from wildlifelicensing.apps.returns.signals import return_submitted
 from wildlifelicensing.apps.main.helpers import is_officer
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.main.utils import format_communications_log_entry
+from wildlifelicensing.apps.returns.mixins import UserCanEditReturnMixin, UserCanViewReturnMixin, \
+    UserCanCurateReturnMixin
+from wildlifelicensing.apps.applications.models import Application
+from wildlifelicensing.apps.returns.emails import send_amendment_requested_email
 
 LICENCE_TYPE_NUM_CHARS = 2
 LODGEMENT_NUMBER_NUM_CHARS = 6
@@ -83,7 +89,7 @@ def _create_return_data_from_post_data(ret, tables_info, post_data):
             ReturnRow.objects.bulk_create(return_rows)
 
 
-class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
+class EnterReturnView(UserCanEditReturnMixin, TemplateView):
     template_name = 'wl/enter_return.html'
     login_url = '/'
 
@@ -96,7 +102,13 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         if is_officer(self.request.user):
             ret.proxy_customer = self.request.user
 
-        ret.status = 'submitted'
+        # assume that all the amendment requests has been solved.
+        pending_amendments = ret.pending_amendments_qs
+        if pending_amendments:
+            pending_amendments.update(status='amended')
+            ret.status = 'amended'
+        else:
+            ret.status = 'submitted'
         ret.save()
 
         message = 'Return successfully submitted.'
@@ -152,6 +164,10 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         if 'upload_spreadsheet_form' not in kwargs:
             kwargs['upload_spreadsheet_form'] = UploadSpreadsheetForm()
         kwargs['nil_return_form'] = NilReturnForm()
+
+        pending_amendments = ret.pending_amendments_qs
+        if pending_amendments:
+            kwargs['amendments'] = pending_amendments
 
         return super(EnterReturnView, self).get_context_data(**kwargs)
 
@@ -240,7 +256,7 @@ class EnterReturnView(OfficerOrCustomerRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
 
-class CurateReturnView(EnterReturnView):
+class CurateReturnView(UserCanCurateReturnMixin, EnterReturnView):
     template_name = 'wl/curate_return.html'
     login_url = '/'
 
@@ -258,6 +274,14 @@ class CurateReturnView(EnterReturnView):
             to=to.get_full_name(),
             fromm=self.request.user.get_full_name(),
         )
+
+        ctx['amendment_request_form'] = ReturnAmendmentRequestForm(
+            ret=ret,
+            officer=self.request.user
+        )
+
+        amendment_requests = ReturnAmendmentRequest.objects.filter(ret=ret)
+        ctx['amendment_requests'] = serialize(amendment_requests, fields=['status', 'reason'])
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -294,7 +318,7 @@ class CurateReturnView(EnterReturnView):
             return redirect('home')
 
 
-class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
+class ViewReturnReadonlyView(UserCanViewReturnMixin, TemplateView):
     template_name = 'wl/view_return_read_only.html'
     login_url = '/'
 
@@ -321,7 +345,7 @@ class ViewReturnReadonlyView(OfficerOrCustomerRequiredMixin, TemplateView):
         return super(ViewReturnReadonlyView, self).get_context_data(**kwargs)
 
 
-class ReturnLogListView(OfficerRequiredMixin, View):
+class ReturnLogListView(UserCanCurateReturnMixin, View):
     def get(self, request, *args, **kwargs):
         ret = get_object_or_404(Return, pk=args[0])
         data = serialize(ReturnLogEntry.objects.filter(ret=ret),
@@ -331,7 +355,7 @@ class ReturnLogListView(OfficerRequiredMixin, View):
         return JsonResponse({'data': data[0]}, safe=False, encoder=WildlifeLicensingJSONEncoder)
 
 
-class AddReturnLogEntryView(OfficerRequiredMixin, View):
+class AddReturnLogEntryView(UserCanCurateReturnMixin, View):
     def post(self, request, *args, **kwargs):
         form = ReturnsLogEntryForm(data=request.POST, files=request.FILES)
         if form.is_valid():
@@ -368,10 +392,10 @@ class AddReturnLogEntryView(OfficerRequiredMixin, View):
                         }
                     ]
                 },
-                safe=False, encoder=WildlifeLicensingJSONEncoder, status_code=422)
+                safe=False, encoder=WildlifeLicensingJSONEncoder, status=422)
 
 
-class DownloadReturnTemplate(OfficerOrCustomerRequiredMixin, View):
+class DownloadReturnTemplate(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         return_type = get_object_or_404(ReturnType, pk=args[0])
         filename = 'Return_{}_template.xlsx'.format(return_type.licence_type.code)
@@ -379,3 +403,24 @@ class DownloadReturnTemplate(OfficerOrCustomerRequiredMixin, View):
         wb = create_return_template_workbook(return_type)
 
         return excel.WorkbookResponse(wb, filename)
+
+
+class AmendmentRequestView(UserCanCurateReturnMixin, View):
+    def post(self, request, *args, **kwargs):
+        amendment_request_form = ReturnAmendmentRequestForm(request.POST)
+        if amendment_request_form.is_valid():
+            amendment_request = amendment_request_form.save()
+            ret = amendment_request.ret
+            ret.status = 'amendment_required'
+            ret.save()
+            application = get_object_or_404(Application, licence=ret.licence)
+            send_amendment_requested_email(amendment_request, request, application)
+            response = {
+                'amendment_request': serialize(amendment_request, fields=['status', 'reason'])
+            }
+            return JsonResponse(response, safe=False, encoder=WildlifeLicensingJSONEncoder)
+        else:
+            return JsonResponse(amendment_request_form.errors,
+                                safe=False,
+                                encoder=WildlifeLicensingJSONEncoder,
+                                status=422)

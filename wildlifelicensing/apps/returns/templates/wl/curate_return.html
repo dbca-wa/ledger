@@ -8,21 +8,35 @@
 
 {% load users %}
 
+{% load jsonify %}
+
 {% block extra_css %}
     <link rel="stylesheet"
           href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.10/css/dataTables.bootstrap.css">
     <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
     <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css"
           rel="stylesheet"/>
+    <link href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet"/>
+    <link href="{% static 'wl/css/applications.css' %}" rel="stylesheet"/>
+    {{ block.super }}
 {% endblock %}
 
 {% block requirements %}
     require([
-        "{% static 'wl/js/return_table.js' %}",
+        "{% static 'wl/js/curate_return.js' %}",
         'js/logs'
     ],
-    function (returnTable, logs) {
-        returnTable.initTables();
+    function (module, logs) {
+        module.init({
+            selectors: {
+                requestAmendmentBtn: '#requestAmendmentBtn',
+                requestAmendmentModal: '#requestAmendmentModal',
+                showAmendmentRequests: '#showAmendmentsRequests'
+            },
+            data: {
+                amendmentRequests: {{ amendment_requests|jsonify }}
+            }
+        });
 
         logs.initCommunicationLog({
             logListURL: "{% url 'wl_returns:log_list' return.id %}",
@@ -51,9 +65,9 @@
     <h3>Curate Return</h3>
 {% endblock %}
 {% block intro_subtitle %}
-     <h4 class="inline">
-         {{ return.licence.licence_type.name }}
-     </h4>
+    <h4 class="inline">
+        {{ return.licence.licence_type.name }}
+    </h4>
 {% endblock %}
 
 {% block content %}
@@ -98,16 +112,40 @@
                                 </div>
                             </div>
                         </div>
-                        {%  with hide_action_log=True %}
+                        {% with hide_action_log=True %}
                             {% include 'wl/logs_panel.html' %}
-                        {%  endwith %}
+                        {% endwith %}
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Review
+                                <a data-toggle="collapse" href="#amendments" class="pull-right">
+                                    <span class="glyphicon"></span>
+                                </a>
+                            </div>
+                            <div id="amendments" class="panel-body panel-collapse in">
+                                <div>
+                                    <label>Amendments</label>
+                                </div>
+                                <div class="action-buttons-group">
+                                    <button id="requestAmendmentBtn" type="button" class="btn btn-xs btn-warning pull-left">
+                                        Request Amendments
+                                    </button>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <a id="showAmendmentsRequests" class="hidden small-text" data-toggle="popover"
+                                           data-placement="right" title="Amendment Requests">View all amendment requests</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <button id="accept" type="submit" name="accept" type="button"
-                        class="btn btn-sm btn-success pull-right">Accept
+                <button id="decline" type="submit" name="decline"
+                        class="btn btn-sm btn-danger pull-left">Decline
                 </button>
-                <button id="decline" type="submit" name="decline" type="button"
-                        class="btn btn-sm btn-danger">Decline
+                <button id="accept" type="submit" name="accept"
+                        class="btn btn-sm btn-success pull-right">Accept
                 </button>
             </div>
             <div class="col-md-9">
@@ -134,9 +172,9 @@
                                                             <td>
                                                                 <input name="{{ table.name }}::{{ header.title }}"
                                                                        value="{{ value|default_if_none:"" }}"
-                                                                       {%  if header.species %}
-                                                                           data-species="{{ header.species }}"
-                                                                       {% endif %}
+                                                                        {% if header.species %}
+                                                                       data-species="{{ header.species }}"
+                                                                        {% endif %}
                                                                 />
                                                                 {% if error %}
                                                                     <div><span class="text-danger">{{ error }}</span>
@@ -169,5 +207,29 @@
 {% endblock %}
 
 {% block modals %}
+    <div class="modal fade" id="requestAmendmentModal" tabindex="-1">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    <h4 class="modal-title">Request Amendments to Return</h4>
+                </div>
+                <form id="amendmentRequestForm" method="post"
+                      action="{% url 'wl_returns:amendment_request' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="modal-body">
+                            {% if amendment_request_form %}
+                                {% bootstrap_form amendment_request_form %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-default">Send Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     {% include 'wl/logs_comm_entry_modal.html' %}
 {% endblock %}

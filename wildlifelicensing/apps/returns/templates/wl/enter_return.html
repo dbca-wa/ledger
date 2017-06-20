@@ -78,6 +78,24 @@
 
 {% block content %}
     <div class="container bottom-buffer">
+        {% if amendments %}
+            <div class="row">
+                <div class="col-sm-2 col-md-10 col-md-offset-2">
+                    <div id="amendments-panel">
+                        <h4>
+                            <span class="icon glyphicon glyphicon-alert text-warning"></span>
+                            <label>Your return requires the following amendment(s) before approval:</label>
+                        </h4>
+                        {%  for amendment in amendments %}
+                            <div class="alert alert-warning">
+                                {{ amendment.reason|safe }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         <h4>Standard Return</h4>
         <div class="row">
             <div class="col-md-12">

@@ -1,14 +1,15 @@
 from __future__ import unicode_literals
 
-import os
 import datetime
+import os
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from ledger.accounts.models import EmailUser, Profile
+from ledger.accounts.models import Profile
 from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_create_user, add_to_group, \
-    get_or_create_default_customer, get_or_create_default_officer, TestData, upload_id, create_default_country
+    get_or_create_default_customer, get_or_create_default_officer, TestData, upload_id, create_default_country, \
+    BasePermissionViewTestCase
 
 TEST_ID_PATH = TestData.TEST_ID_PATH
 
@@ -28,45 +29,6 @@ class AccountsTestCase(TestCase):
         if self.customer.identification:
             os.remove(self.customer.identification.path)
 
-    def test_search_customers(self):
-        """Testing that searching customers will return the right customer(s) and only customers"""
-        self.client.login(self.officer.email)
-
-        user_1, _ = get_or_create_user({
-            'first_name': 'Some',
-            'last_name': 'Guy',
-            'email': 'some_email@test.net',
-            'dob': datetime.date(1989, 8, 12),
-        })
-
-        user_2, _ = get_or_create_user({
-            'first_name': 'Some Other',
-            'last_name': 'Guy',
-            'email': 'some_other_email@test.net',
-            'dob': datetime.date(1998, 8, 12),
-        })
-
-        # search for users by common part of first name - both users should be found
-        response = self.client.get('{}?q={}'.format(reverse('wl_main:search_customers'), 'some'))
-        self.assertEqual(200, response.status_code)
-
-        json_response = response.json()
-
-        self.assertEqual(len(json_response), 2)
-
-        # make user_2 an officer and check that only user_1 is found by search for common part of first name
-        add_to_group(user_2, 'officers')
-
-        response = self.client.get('{}?q={}'.format(reverse('wl_main:search_customers'), 'some'))
-        self.assertEqual(200, response.status_code)
-
-        json_response = response.json()
-
-        self.assertEqual(len(json_response), 1)
-
-        self.assertEqual(json_response[0]['id'], user_1.id)
-        self.assertEqual(json_response[0]['text'], user_1.get_full_name_dob())
-
     def test_profile_list(self):
         """Testing that a user can display the profile list if they are a customer"""
         self.client.login(self.customer.email)
@@ -81,7 +43,7 @@ class AccountsTestCase(TestCase):
 
         # check that client gets redirected if they try to access the profile list
         response = self.client.get(reverse('wl_main:list_profiles'))
-        self.assertEqual(302, response.status_code)
+        self.assertEqual(403, response.status_code)
 
     def test_create_profile(self):
         """Testing that a user can create a profile"""
@@ -180,3 +142,56 @@ class AccountsTestCase(TestCase):
         self.customer.refresh_from_db()
 
         self.assertIsNotNone(self.customer.identification)
+
+
+class SearchCustomerTestCase(BasePermissionViewTestCase):
+    view_url = reverse('wl_main:search_customers')
+
+    @property
+    def permissions(self):
+        return {
+            'get': {
+                'allowed': [self.officer],
+                'forbidden': [self.customer, self.assessor],
+            },
+        }
+
+    def test_search_customers(self):
+        """Testing that searching customers will return the right customer(s) and only customers"""
+        self.client.login(self.officer.email)
+
+        user_1, _ = get_or_create_user({
+            'first_name': 'Some',
+            'last_name': 'Guy',
+            'email': 'some_email@test.net',
+            'dob': datetime.date(1989, 8, 12),
+        })
+
+        user_2, _ = get_or_create_user({
+            'first_name': 'Some Other',
+            'last_name': 'Guy',
+            'email': 'some_other_email@test.net',
+            'dob': datetime.date(1998, 8, 12),
+        })
+
+        # search for users by common part of first name - both users should be found
+        response = self.client.get('{}?q={}'.format(self.view_url, 'some'))
+        self.assertEqual(200, response.status_code)
+
+        json_response = response.json()
+
+        self.assertEqual(len(json_response), 2)
+
+        # make user_2 an officer and check that only user_1 is found by search for common part of first name
+        add_to_group(user_2, 'officers')
+
+        response = self.client.get('{}?q={}'.format(self.view_url, 'some'))
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(response['content-type'], 'application/json')
+
+        json_response = response.json()
+
+        self.assertEqual(len(json_response), 1)
+
+        self.assertEqual(json_response[0]['id'], user_1.id)
+        self.assertEqual(json_response[0]['text'], user_1.get_full_name_dob())
