@@ -113,7 +113,7 @@ class OpenReason(ReasonAdmin):
     pass
 
 @admin.register(models.OutstandingBookingRecipient)
-class OustadningBookingRecipient(admin.ModelAdmin):
+class OutstandingBookingRecipient(admin.ModelAdmin):
     pass
 
 admin.site.register(models.Rate)
