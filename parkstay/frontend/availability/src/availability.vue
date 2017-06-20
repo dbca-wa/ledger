@@ -306,7 +306,7 @@ export default {
             sites: [],
             long_description: '',
             showMoreInfo: false,
-            ongoing_booking: true 
+            ongoing_booking: false 
         };
     },
     computed: {
