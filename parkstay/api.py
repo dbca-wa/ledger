@@ -826,10 +826,12 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CampgroundSerializer
     permission_classes = []
 
-    def retrieve(self, request, pk=None, format=None):
+    def retrieve(self, request, pk=None, ratis_id=None , format=None):
         """Fetch full campsite availability for a campground."""
         # convert GET parameters to objects
         ground = self.get_object()
+        # check if the user has an ongoing booking
+        ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
         # Validate parameters
         data = {
             "arrival" : request.GET.get('arrival'),
@@ -882,6 +884,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         result = {
             'name': ground.name,
             'long_description': ground.long_description,
+            'ongoing_booking': True if ongoing_booking else False,
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
             'adults': 1,
@@ -1040,6 +1043,8 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
             return Response(result)
 
+class AvailabilityRatisViewSet(AvailabilityViewSet):
+    lookup_field = 'ratis_id'
 
 @csrf_exempt
 @require_http_methods(['POST'])
