@@ -76,3 +76,4 @@ CRON_CLASSES = [
 
 CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','campgrounds@dpaw.wa.gov.au')
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://parks-oim.dpaw.wa.gov.au')
+CORS_ORIGIN_ALLOW_ALL = True

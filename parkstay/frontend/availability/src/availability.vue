@@ -22,6 +22,15 @@
                 <h1>Book a campsite at {{ name }}</h1>
             </div>
         </div>
+        <div v-if="ongoing_booking"class="row">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="clearfix">
+                    <a type="button" :href="parkstayUrl+'/booking'" class="button float-right warning continueBooking">
+                        Continue with your current booking
+                    </a>
+                </div>
+            </div>
+        </div>
         <div class="row" v-show="status == 'online'">
             <div v-if="long_description" class="columns small-12 medium-12 large-12">
                 <div class="row">
@@ -211,6 +220,9 @@
         font-weight: bold;
         font-style: italic;
     }
+    .continueBooking {
+        text-decoration: none;
+    }
 }
 
 </style>
@@ -271,6 +283,7 @@ export default {
             // - global JS var 'parkstayGroundId'
             // - '1'
             parkstayGroundId: parseInt(getQueryParam('site_id', global.parkstayGroundId || '1')),
+            parkstayGroundRatisId: parseInt(getQueryParam('ratis_id', '0')),
             days: 5,
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
@@ -290,6 +303,7 @@ export default {
             sites: [],
             long_description: '',
             showMoreInfo: false,
+            ongoing_booking: true 
         };
     },
     computed: {
@@ -378,6 +392,19 @@ export default {
         updateURL: function () {
             // update browser history
             var vm = this;
+            /*if (parseInt(vm.parkstayGroundRatisId) > 0){
+                var newHist = window.location.href.split('?')[0] +'?'+ $.param({
+                    ratis_id: vm.parkstayGroundRatisId,
+                    arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                    departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                    gear_type: vm.gearType,
+                    num_adult: vm.numAdults,
+                    num_child: vm.numChildren,
+                    num_concession: vm.numConcessions,
+                    num_infant: vm.numInfants
+                });
+            }
+            else{*/
             var newHist = window.location.href.split('?')[0] +'?'+ $.param({
                 site_id: vm.parkstayGroundId,
                 arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
@@ -388,21 +415,34 @@ export default {
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants
             });
+            //}
             history.replaceState('', '', newHist);
         },
         update: function() {
             var vm = this;
 
             debounce(function() {
-                vm.updateURL();
-                var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
-                    arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                    departure: moment(vm.departureDate).format('YYYY/MM/DD'),
-                    num_adult: vm.numAdults,
-                    num_child: vm.numChildren,
-                    num_concession: vm.numConcessions,
-                    num_infant: vm.numInfants
-                });
+                if (parseInt(vm.parkstayGroundRatisId) > 0){
+                    var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param({
+                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                        num_adult: vm.numAdults,
+                        num_child: vm.numChildren,
+                        num_concession: vm.numConcessions,
+                        num_infant: vm.numInfants
+                    });
+                }
+                else{
+                    vm.updateURL();
+                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
+                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                        num_adult: vm.numAdults,
+                        num_child: vm.numChildren,
+                        num_concession: vm.numConcessions,
+                        num_infant: vm.numInfants
+                    });
+                }
                 console.log('AJAX '+url);
                 $.ajax({
                     url: url,
@@ -412,6 +452,7 @@ export default {
                         vm.days = data.days;
                         vm.classes = data.classes;
                         vm.long_description = data.long_description;
+                        vm.ongoing_booking = data.ongoing_booking;
 
                         vm.gearTotals.tent = 0
                         vm.gearTotals.campervan = 0
@@ -437,6 +478,10 @@ export default {
 
                         vm.sites = data.sites;
                         vm.status = 'online';
+                        if (parseInt(vm.parkstayGroundRatisId) > 0){
+                            vm.parkstayGroundId = data.id;
+                            vm.updateURL();
+                        }
                     },
                     error: function(xhr, stat, err) {
                         vm.status = 'offline';

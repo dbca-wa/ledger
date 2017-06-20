@@ -882,6 +882,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # create our result object, which will be returned as JSON
         result = {
+            'id': ground.id,
             'name': ground.name,
             'long_description': ground.long_description,
             'ongoing_booking': True if ongoing_booking else False,
