@@ -55,8 +55,8 @@
                                     <li><a href="{% url 'dash-bulkpricing'%}">Bulk Pricing</a></li>
                                     <li><a href="{% url 'dash-bookings'%}">Existing Bookings</a></li>
                                     {% else %}
-                                    <li><a href="https://parks-oim.dpaw.wa.gov.au/park-stay">Explore Parks</a></li>
-                                    <li><a href="https://parks-oim.dpaw.wa.gov.au/contact-us">Contact Us</a></li>
+                                    <li><a href="{{EXPLORE_PARKS_SEARCH}}">Explore Parks</a></li>
+                                    <li><a href="{{EXPLORE_PARKS_CONTACT}}">Contact Us</a></li>
                                     {% endif %}
                                 {% endblock %}
                             </ul>
