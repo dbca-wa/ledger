@@ -42,6 +42,7 @@ if not DEBUG:
 
 
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'parkstay', 'templates'))
+TEMPLATES[0]['OPTIONS']['context_processors'].append('parkstay.context_processors.parkstay_url')
 '''BOOTSTRAP3 = {
     'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
     'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
@@ -74,3 +75,4 @@ CRON_CLASSES = [
 ]
 
 CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','campgrounds@dpaw.wa.gov.au')
+EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://parks-oim.dpaw.wa.gov.au')
