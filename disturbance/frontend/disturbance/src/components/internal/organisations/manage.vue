@@ -635,7 +635,7 @@ export default {
                   columns: [
                       {data: "id"},
                       {data: "region"},
-                      {data: activity"},
+                      {data: "activity"},
                       {data: "title"},
                       {
                           data: "submitter",
