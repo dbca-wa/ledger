@@ -10,5 +10,5 @@ def can_manage_org(organisation,user):
         return False
     return True
 
-def random_generator(size=12, chars=string.letters + string.punctuation + string.digits):
+def random_generator(size=12, chars=string.digits):
     return ''.join(random.choice(chars) for _ in range(size))

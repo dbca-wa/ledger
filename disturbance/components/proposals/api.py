@@ -40,7 +40,9 @@ from disturbance.components.proposals.serializers import (
     ProposalSerializer,
     InternalProposalSerializer,
     SaveProposalSerializer,
-    DTProposalSerializer
+    DTProposalSerializer,
+    ProposalUserActionSerializer,
+    ProposalLogEntrySerializer,
 )
 
 
@@ -64,6 +66,40 @@ class ProposalViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset() 
         serializer = DTProposalSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def action_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.action_logs.all()
+            serializer = ProposalUserActionSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = ProposalLogEntrySerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):

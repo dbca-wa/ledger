@@ -48,7 +48,7 @@ def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organi
 
     context = {
         'user': unlinked_user,
-        'linked_by': unlinked_by,
+        'unlinked_by': unlinked_by,
         'organisation': organisation
     }
 

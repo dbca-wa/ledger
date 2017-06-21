@@ -189,7 +189,7 @@
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="org.abn" placeholder="">
                                 </div>
-                                <a style="cursor:pointer;"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
+                                <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
                           <div style="margin-top:15px;" v-if="addingCompany">
@@ -210,9 +210,9 @@
                                 </div>
                               </div>
                               <div class="form-group" v-if="newOrg.exists && newOrg.detailsChecked">
-                                  <label class="col-sm-12" style="text-align:left;">
+                                  <label class="col-sm-12" style="text-align:left;margin-bottom:20px;">
                                     This organisation has already been  registered with the system.Please enter the two pin codes:</br>
-                                    (These pin codes can be retrieved from Name of first five people linked to the organisation)
+                                    These pin codes can be retrieved from ({{newOrg.first_five}})
                                   </label>
                                   <label for="" class="col-sm-2 control-label" >Pin 1</label>
                                   <div class="col-sm-2">
@@ -395,6 +395,7 @@ export default {
                 this.newOrg.exists = response.body.exists;
                 this.newOrg.detailsChecked = true;
                 this.newOrg.id = response.body.id;
+                if (response.body.first_five){this.newOrg.first_five = response.body.first_five }
             }, (error) => {
                 console.log(error);
             });
@@ -481,6 +482,41 @@ export default {
                 vm.loading.splice('fetching countries',1);
             });
         },
+        unlinkUser: function(org){
+            let vm = this;
+            let org_name = org.name;
+            swal({
+                title: "Unlink From Organisation",
+                text: "Are you sure you want to be unlinked from "+org.name+" ?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then(() => {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),{'user':vm.profile.id},{
+                    emulateJSON:true
+                }).then((response) => {
+                    Vue.http.get(api_endpoints.profile).then((response) => {
+                        vm.profile = response.body
+                        if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                        if ( vm.profile.disturbance_organisations && vm.profile.disturbance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+                    },(error) => {
+                        console.log(error);
+                    })
+                    swal(
+                        'Unlink',
+                        'You have been successfully unlinked from '+org_name+'.',
+                        'success'
+                    )
+                }, (error) => {
+                    swal(
+                        'Unlink',
+                        'There was an error unlinking you from '+org_name+'.',
+                        'error'
+                    )
+                });
+            },(error) => {
+            }); 
+        }
     },
     beforeRouteEnter: function(to,from,next){
         Vue.http.get(api_endpoints.profile).then((response) => {

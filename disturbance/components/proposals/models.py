@@ -162,7 +162,7 @@ class Proposal(RevisionedMixin):
         return ApplicationUserAction.log_action(self, action, request.user)
 
 class ProposalLogEntry(CommunicationsLogEntry):
-    proposal = models.ForeignKey(Proposal)
+    proposal = models.ForeignKey(Proposal, related_name='comms_logs')
 
     class Meta:
         app_label = 'disturbance'
@@ -338,7 +338,7 @@ class ProposalUserAction(UserAction):
             what=str(action)
         )
 
-    proposal = models.ForeignKey(Proposal)
+    proposal = models.ForeignKey(Proposal, related_name='action_logs')
 
 @receiver(pre_delete, sender=Proposal)
 def delete_documents(sender, instance, *args, **kwargs):

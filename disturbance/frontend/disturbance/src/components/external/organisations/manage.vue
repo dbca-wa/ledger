@@ -142,15 +142,15 @@
                         <div class="col-sm-4">
                           <form class="form-horizontal" action="index.html" method="post">
                               <div class="form-group">
-                                <label for="" class="col-sm-3 control-label">Pin 1</label>
+                                <label for="" class="col-sm-3 control-label">Pin 1:</label>
                                 <div class="col-sm-6">
-                                    <input type="text" disabled class="form-control" name="phone" placeholder="" v-model="org.pins.one">
+                                    <label class="control-label">{{org.pins.one}}</label>
                                 </div>
                               </div>
                               <div class="form-group">
-                                <label for="" class="col-sm-3 control-label" >Pin 2</label>
+                                <label for="" class="col-sm-3 control-label" >Pin 2:</label>
                                 <div class="col-sm-6">
-                                    <input type="text" disabled class="form-control" name="email" placeholder="" v-model="org.pins.two">
+                                    <label class="control-label">{{org.pins.two}}</label>
                                 </div>
                               </div>
                             </form>

@@ -2,7 +2,9 @@ from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from disturbance.components.proposals.models import (
                                     ProposalType,
-                                    Proposal
+                                    Proposal,
+                                    ProposalUserAction,
+                                    ProposalLogEntry,
                                 )
 from disturbance.components.organisations.models import (
                                 Organisation
@@ -105,3 +107,13 @@ class InternalProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
     def get_readonly(self,obj):
         return True
+\
+class ProposalUserActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProposalUserAction
+        fields = '__all__'
+
+class ProposalLogEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProposalLogEntry
+        fields = '__all__'

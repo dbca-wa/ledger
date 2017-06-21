@@ -18,17 +18,17 @@ module.exports = {
         switch (c.type) {
             case 'text':
                 return (
-                    <TextField readonly={readonly} type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} />
+                    <TextField readonly={readonly} type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
                 )
                 break;
             case 'number':
                 return (
-                    <TextField type="number" name={c.name} value={val} label={c.label} help_text={c.help_text} />
+                    <TextField type="number" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
                 )
                 break;
             case 'email':
                 return (
-                    <TextField readonly={readonly} type="email" name={c.name} value={val} label={c.label} help_text={c.help_text} />
+                    <TextField readonly={readonly} type="email" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
                 )
                 break;
             case 'select':
@@ -45,7 +45,7 @@ module.exports = {
                 break;
             case 'multi-select':
                 return (
-                    <Select name={c.name} label={c.label} value={val} options={c.options} value={val} help_text={c.help_text} handleChange={this.selectionChanged} isMultiple={true} />
+                    <Select name={c.name} label={c.label} value={val} options={c.options} value={val} help_text={c.help_text} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} />
                 )
                 break;
             case 'text_area':
@@ -68,7 +68,7 @@ module.exports = {
                         <label>{c.label}</label>
                             {c.options.map(op =>{
                                 return(
-                                    <Radio name={c.name} label={op.label} value={op.value} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} />
+                                    <Radio name={c.name} label={op.label} value={op.value} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>
                                 )
                             })}
                             <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data} readonly={readonly} />
@@ -114,7 +114,7 @@ module.exports = {
             case 'checkbox':
                 return (
                     <div class="form-group">
-                        <Checkbox name={c.name} label={c.label} help_text={c.help_text} value={val} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
+                        <Checkbox name={c.name} label={c.label} help_text={c.help_text} value={val} handleChange={this.handleCheckBoxChange} conditions={c.conditions} readonly={readonly}/>
                         <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data}/>
                     </div>
                 )
@@ -134,12 +134,12 @@ module.exports = {
                 break;
             case 'file':
                 return (
-                    <File name={c.name} label={c.label} value={val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange}/>
+                    <File name={c.name} label={c.label} value={val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly}/>
                 )
                 break;
             case 'date':
                 return (
-                    <DateField name={c.name} label={c.label} value={val}  handleChange={this.handleFileChange}/>
+                    <DateField name={c.name} label={c.label} value={val}  handleChange={this.handleFileChange} readonly={readonly}/>
                 )
                 break;
             default:

@@ -13,7 +13,8 @@ from disturbance.components.main.models import UserAction,CommunicationsLogEntry
 from disturbance.components.organisations.utils import random_generator
 from disturbance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
-                        send_organisation_link_email_notification
+                        send_organisation_link_email_notification,
+                        send_organisation_unlink_email_notification,
                     )
 
 @python_2_unicode_compatible
@@ -46,10 +47,43 @@ class Organisation(models.Model):
                 raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
             except UserDelegation.DoesNotExist:
                 delegate = UserDelegation.objects.create(organisation=self,user=user)
+            # Create contact person
+            OrganisationContact.objects.create(
+                organisation = self,
+                first_name = user.first_name,
+                last_name = user.last_name,
+                mobile_number = user.mobile_number,
+                phone_number = user.phone_number,
+                fax_number = user.fax_number,
+                email = user.email
+            
+            )
             # log linking
             self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
             send_organisation_link_email_notification(user,request.user,self,request)
+
+    def unlink_user(self,user,request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self,user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # delete contact person
+            try:
+                OrganisationContact.objects.get(
+                    organisation = self,
+                    email = delegate.user.email
+                
+                ).delete()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # delete delegate
+            delegate.delete()
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_unlink_email_notification(user,request.user,self,request)
 
     def generate_pins(self):
         self.pin_one = self._generate_pin()
@@ -71,10 +105,13 @@ class Organisation(models.Model):
                 exists = False
             if l_org:
                 try:
-                    org = Organisation.objects.get(organisation=l_org).id
+                    org = Organisation.objects.get(organisation=l_org)
                 except Organisation.DoesNotExist:
                     exists = False
-            return {'exists': exists, 'id': org}
+            if exists:
+                return {'exists': exists, 'id': org.id,'first_five':org.first_five}
+            return {'exists': exists, 'id': org.id}
+            
         except:
             raise
 
@@ -97,6 +134,10 @@ class Organisation(models.Model):
     @property
     def email(self):
         return self.organisation.email
+
+    @property
+    def first_five(self):
+        return ','.join([user.get_full_name() for user in self.delegates.all()[:5]])
 
 @python_2_unicode_compatible
 class OrganisationContact(models.Model):

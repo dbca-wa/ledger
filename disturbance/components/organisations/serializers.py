@@ -149,3 +149,16 @@ class OrganisationCommsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganisationLogEntry
         fields = '__all__'
+
+class OrganisationUnlinkUserSerializer(serializers.Serializer):
+    user = serializers.IntegerField()
+
+    def validate(self,obj):
+        user = None
+        try:
+            user = EmailUser.objects.get(id=obj['user'])
+            obj['user_obj'] = user
+        except EmailUser.DoesNotExist:
+            raise serializers.ValidationError('The user you want to unlink does not exist.')
+        return obj
+        

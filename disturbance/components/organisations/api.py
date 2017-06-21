@@ -50,6 +50,7 @@ from disturbance.components.organisations .serializers import (
                                         OrganisationActionSerializer,
                                         OrganisationRequestCommsSerializer,
                                         OrganisationCommsSerializer,
+                                        OrganisationUnlinkUserSerializer,
                                     )
 from disturbance.components.proposals.serializers import (
                                         DTProposalSerializer,
@@ -70,6 +71,29 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)} 
+            return Response(data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def unlink_user(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = OrganisationUnlinkUserSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            try:
+                instance.delegates.get(id=request.user.id)
+            except EmailUser.DoesNotExist:
+                raise serializers.ValidationError('You are not permitted to perform this operation since you are not a member of this organisation.')
+            instance.unlink_user(serializer.validated_data['user_obj'],request)
+            data = {'unlinked': True}
             return Response(data);
         except serializers.ValidationError:
             print(traceback.print_exc())

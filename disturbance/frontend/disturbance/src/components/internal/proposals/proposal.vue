@@ -139,9 +139,13 @@
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Applicant</h3> 
+                                <h3 class="panel-title">Applicant
+                                    <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="detailsBody">
+                                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                    </a>
+                                </h3> 
                             </div>
-                            <div class="panel-body panel-collapse">
+                            <div class="panel-body panel-collapse collapse in" :id="detailsBody">
                                   <form class="form-horizontal">
                                       <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Name</label>
@@ -164,9 +168,13 @@
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Address Details</h3> 
+                                <h3 class="panel-title">Address Details
+                                    <a class="panelClicker" :href="'#'+addressBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="addressBody">
+                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3> 
                             </div>
-                            <div class="panel-body panel-collapse">
+                            <div class="panel-body panel-collapse collapse" :id="addressBody">
                                   <form class="form-horizontal">
                                       <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Street</label>
@@ -205,9 +213,13 @@
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Contact Details</h3>
+                                <h3 class="panel-title">Contact Details
+                                    <a class="panelClicker" :href="'#'+contactsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="contactsBody">
+                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3>
                             </div>
-                            <div class="panel-body panel-collapse">
+                            <div class="panel-body panel-collapse collapse" :id="contactsBody">
                                 <div v-if="contactsURL != '' && contactsURL != 'undefined'">
                                 <datatable ref="contacts_datatable" id="organisation_contacts_datatable" :dtOptions="contacts_options" :dtHeaders="contacts_headers"/>
                                 </div>
@@ -242,156 +254,334 @@
 import Proposal from '../../form.vue'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
+import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
-  api_endpoints,
-  helpers
+    api_endpoints,
+    helpers
 }
 from '@/utils/hooks'
 export default {
-  name: 'InternalProposal',
-  data: function() {
-    let vm = this;
-    return {
-        "proposal": null,
-        "loading": [],
-        form: null,
-        members: [],
-        contacts_headers:["Name","Phone","Mobile","Fax","Email"],
-        contacts_options:{
-            language: {
-                processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-            },
-            responsive: true,
-            ajax: {
-                "url": vm.contactsURL,
-                "dataSrc": ''
-            },
-            columns: [
-                {
-                    mRender:function (data,type,full) {
-                        return full.first_name + " " + full.last_name;
-                    }
+    name: 'InternalProposal',
+    data: function() {
+        let vm = this;
+        return {
+            detailsBody: 'detailsBody'+vm._uid,
+            addressBody: 'addressBody'+vm._uid,
+            contactsBody: 'contactsBody'+vm._uid,
+            "proposal": null,
+            "loading": [],
+            form: null,
+            members: [],
+            contacts_headers:["Name","Phone","Mobile","Fax","Email"],
+            contacts_options:{
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                {data:'phone_number'},
-                {data:'mobile_number'},
-                {data:'fax_number'},
-                {data:'email'},
-              ],
-              processing: true
+                responsive: true,
+                ajax: {
+                    "url": vm.contactsURL,
+                    "dataSrc": ''
+                },
+                columns: [
+                    {
+                        mRender:function (data,type,full) {
+                            return full.first_name + " " + full.last_name;
+                        }
+                    },
+                    {data:'phone_number'},
+                    {data:'mobile_number'},
+                    {data:'fax_number'},
+                    {data:'email'},
+                  ],
+                  processing: true
+            },
+            DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
+            actionsTable: null,
+            actionsDtOptions:{
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                deferRender: true, 
+                autowidth: true,
+                order: [[2, 'desc']],
+                dom:
+                    "<'row'<'col-sm-5'l><'col-sm-6'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+                processing:true,
+                ajax: {
+                    "url": helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/action_log'),
+                    "dataSrc": '',
+                },
+                columns:[
+                    {
+                        data:"who",
+                    },
+                    {
+                        data:"what",
+                    },
+                    {
+                        data:"when",
+                        mRender:function(data,type,full){
+                            return moment(data).format(vm.DATE_TIME_FORMAT)
+                        }
+                    },
+                ]
+            },
+            commsDtOptions:{
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                deferRender: true, 
+                autowidth: true,
+                order: [[0, 'desc']],
+                processing:true,
+                ajax: {
+                    "url": helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/comms_log'),
+                    "dataSrc": '',
+                },
+                columns:[
+                    {
+                        title: 'Date',
+                        data: 'created',
+                        render: function (date) {
+                            return moment(date).format(vm.DATE_TIME_FORMAT);
+                        }
+                    },
+                    {
+                        title: 'Type',
+                        data: 'type'
+                    },
+                    {
+                        title: 'Reference',
+                        data: 'reference'
+                    },
+                    {
+                        title: 'To',
+                        data: 'to',
+                        render: vm.commaToNewline
+                    },
+                    {
+                        title: 'CC',
+                        data: 'cc',
+                        render: vm.commaToNewline
+                    },
+                    {
+                        title: 'From',
+                        data: 'fromm',
+                        render: vm.commaToNewline
+                    },
+                    {
+                        title: 'Subject/Desc.',
+                        data: 'subject'
+                    },
+                    {
+                        title: 'Text',
+                        data: 'text',
+                        'render': function (value) {
+                            var ellipsis = '...',
+                                truncated = _.truncate(value, {
+                                    length: 100,
+                                    omission: ellipsis,
+                                    separator: ' '
+                                }),
+                                result = '<span>' + truncated + '</span>',
+                                popTemplate = _.template('<a href="#" ' +
+                                    'role="button" ' +
+                                    'data-toggle="popover" ' +
+                                    'data-trigger="click" ' +
+                                    'data-placement="top auto"' +
+                                    'data-html="true" ' +
+                                    'data-content="<%= text %>" ' +
+                                    '>more</a>');
+                            if (_.endsWith(truncated, ellipsis)) {
+                                result += popTemplate({
+                                    text: value
+                                });
+                            }
+
+                            return result;
+                        },
+                        'createdCell': function (cell) {
+                            //TODO why this is not working?
+                            // the call to popover is done in the 'draw' event
+                            $(cell).popover();
+                        }
+                    },
+                    {
+                        title: 'Documents',
+                        data: 'documents',
+                        'render': function (values) {
+                            var result = '';
+                            _.forEach(values, function (value) {
+                                // We expect an array [docName, url]
+                                // if it's a string it is the url
+                                var docName = '',
+                                    url = '';
+                                if (_.isArray(value) && value.length > 1){
+                                    docName = value[0];
+                                    url = value[1];
+                                }
+                                if (typeof s === 'string'){
+                                    url = value;
+                                    // display the first  chars of the filename
+                                    docName = _.last(value.split('/'));
+                                    docName = _.truncate(docName, {
+                                        length: 18,
+                                        omission: '...',
+                                        separator: ' '
+                                    });
+                                }
+                                result += '<a href="' + url + '" target="_blank"><p>' + docName+ '</p></a><br>';
+                            });
+                            return result;
+                        }
+                    }
+                ]
+            },
+            commsTable : null,
+            popoversInitialised: false,
+            panelClickersInitialised: false,
         }
-    }
-  },
-  components: {
-    Proposal,
-    datatable
-  },
-  filters: {
-    formatDate: function(data){
-        return data ? moment(data).format('DD/MM/YYYY HH:mm:ss'): '';
-    }
-  },
-  watch: {
-    contactsURL: function(){
+    },
+    components: {
+        Proposal,
+        datatable
+    },
+    filters: {
+        formatDate: function(data){
+            return data ? moment(data).format('DD/MM/YYYY HH:mm:ss'): '';
+        }
+    },
+    watch: {
+        contactsURL: function(){
+            let vm = this;
+            this.$nextTick(() => {
+                vm.$refs.contacts_datatable.vmDataTable.ajax.url(this.contactsURL);
+                vm.$refs.contacts_datatable.vmDataTable.ajax.reload();
+            })
+        }
+    },
+    computed: {
+        contactsURL: function(){
+            return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
+        },
+        isLoading: function() {
+          return this.loading.length > 0
+        },
+        csrf_token: function() {
+          return helpers.getCookie('csrftoken')
+        },
+        proposal_form_url: function() {
+          return (this.proposal) ? `/api/proposal/${this.proposal.id}/draft.json` : '';
+        },
+        isFinalised: function(){
+            return this.proposal.processing_status == 'Declined' || this.proposal.status == 'Approved';
+        }
+    },
+    methods: {
+        commaToNewline(s){
+            return s.replace(/[,;]/g, '\n');
+        },
+        save: function(e) {
+          let vm = this;
+          let formData = new FormData(vm.form);
+          vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+              swal(
+                'Saved',
+                'Your proposal has been saved',
+                'success'
+              )
+          },err=>{
+          });
+        },
+        assignTo: function(){
+            let vm = this;
+            if ( vm.proposal.assigned_officer != 'null'){
+                let data = {'user_id': vm.proposal.assigned_officer};
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.proposal.id+'/assign_to')),JSON.stringify(data),{
+                    emulateJSON:true
+                }).then((response) => {
+                    console.log(response);
+                    vm.proposal = response.body;
+                }, (error) => {
+                    console.log(error);
+                });
+                console.log('there');
+            }
+            else{
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.proposal.id+'/unassign')))
+                .then((response) => {
+                    console.log(response);
+                    vm.proposal = response.body;
+                }, (error) => {
+                    console.log(error);
+                });
+            }
+        },
+        fetchProposalGroupMembers: function(){
+            let vm = this;
+            vm.loading.push('Loading Proposal Group Members');
+            vm.$http.get(api_endpoints.organisation_access_group_members).then((response) => {
+                vm.members = response.body
+                vm.loading.splice('Loading Proposal Group Members',1);
+            },(error) => {
+                console.log(error);
+                vm.loading.splice('Loading Proposal Group Members',1);
+            })
+        },
+        initialisePopovers: function(){
+            if (!this.popoversInitialised){
+                helpers.initialiseActionLogs(this._uid,this.$refs.showActionBtn,this.actionsDtOptions,this.actionsTable);
+                helpers.initialiseCommLogs('-internal-proposal-'+this._uid,this.$refs.showCommsBtn,this.commsDtOptions,this.commsTable);
+                this.popoversInitialised = true;
+            }
+        },
+    },
+    mounted: function() {
         let vm = this;
+        vm.fetchProposalGroupMembers();
+        vm.form = document.forms.new_proposal;
+    },
+    updated: function(){
+        let vm = this;
+        if (!vm.panelClickersInitialised){
+            $('.panelClicker[data-toggle="collapse"]').on('click', function () {
+                var chev = $(this).children()[0];
+                window.setTimeout(function () {
+                    $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
+                },100);
+            }); 
+            vm.panelClickersInitialised = true;
+        }
         this.$nextTick(() => {
-            vm.$refs.contacts_datatable.vmDataTable.ajax.url(this.contactsURL);
-            vm.$refs.contacts_datatable.vmDataTable.ajax.reload();
-        })
-    }
-  },
-  computed: {
-    contactsURL: function(){
-        return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
-    },
-    isLoading: function() {
-      return this.loading.length > 0
-    },
-    csrf_token: function() {
-      return helpers.getCookie('csrftoken')
-    },
-    proposal_form_url: function() {
-      return (this.proposal) ? `/api/proposal/${this.proposal.id}/draft.json` : '';
-    },
-    isFinalised: function(){
-        return this.proposal.processing_status == 'Declined' || this.proposal.status == 'Approved';
-    }
-  },
-  methods: {
-    save: function(e) {
-      let vm = this;
-      let formData = new FormData(vm.form);
-      vm.$http.post(vm.proposal_form_url,formData).then(res=>{
-          swal(
-            'Saved',
-            'Your proposal has been saved',
-            'success'
-          )
-      },err=>{
-      });
-    },
-    assignTo: function(){
-        let vm = this;
-        if ( vm.proposal.assigned_officer != 'null'){
-            let data = {'user_id': vm.proposal.assigned_officer};
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.proposal.id+'/assign_to')),JSON.stringify(data),{
-                emulateJSON:true
-            }).then((response) => {
-                console.log(response);
-                vm.proposal = response.body;
-            }, (error) => {
-                console.log(error);
-            });
-            console.log('there');
-        }
-        else{
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.proposal.id+'/unassign')))
-            .then((response) => {
-                console.log(response);
-                vm.proposal = response.body;
-            }, (error) => {
-                console.log(error);
-            });
-        }
-    },
-    fetchProposalGroupMembers: function(){
-        let vm = this;
-        vm.loading.push('Loading Proposal Group Members');
-        vm.$http.get(api_endpoints.organisation_access_group_members).then((response) => {
-            vm.members = response.body
-            vm.loading.splice('Loading Proposal Group Members',1);
-        },(error) => {
-            console.log(error);
-            vm.loading.splice('Loading Proposal Group Members',1);
-        })
-    },
-  },
-  mounted: function() {
-    let vm = this;
-    vm.fetchProposalGroupMembers();
-    vm.form = document.forms.new_proposal;
-  },
-  beforeRouteEnter: function(to, from, next) {
-      Vue.http.get(`/api/proposal/${to.params.proposal_id}/internal_proposal.json`).then(res => {
-          next(vm => {
-            vm.proposal = res.body;
-            vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-          });
-        },
-        err => {
-          console.log(err);
+            vm.initialisePopovers()
         });
-  },
-  beforeRouteUpdate: function(to, from, next) {
-      Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
-          next(vm => {
-            vm.proposal = res.body;
-            vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-          });
-        },
-        err => {
-          console.log(err);
-        });
-  }
+    },
+    beforeRouteEnter: function(to, from, next) {
+          Vue.http.get(`/api/proposal/${to.params.proposal_id}/internal_proposal.json`).then(res => {
+              next(vm => {
+                vm.proposal = res.body;
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+              });
+            },
+            err => {
+              console.log(err);
+            });
+    },
+    beforeRouteUpdate: function(to, from, next) {
+          Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
+              next(vm => {
+                vm.proposal = res.body;
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+              });
+            },
+            err => {
+              console.log(err);
+            });
+    }
 }
 </script>
 <style scoped>
