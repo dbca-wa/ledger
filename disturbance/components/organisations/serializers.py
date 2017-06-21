@@ -10,6 +10,7 @@ from disturbance.components.organisations.models import (
                                 OrganisationLogEntry,
                                 ledger_organisation,
                             )
+from disturbance.components.organisations.utils import can_manage_org
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 
@@ -68,8 +69,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
     def get_pins(self,obj):
         user =  self.context['request'].user
         # Check if the request user is among the first five delegates in the organisation
-        delegates = obj.delegates.all()[:5]
-        if user in delegates:
+        if can_manage_org(obj,user):
             return {'one': obj.pin_one, 'two': obj.pin_two}
         else:
             return None
