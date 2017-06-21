@@ -170,7 +170,7 @@
                                                 </div>
                                             </div> 
                                         </div>
-                                        <div class="col-sm-4">
+                                        <div class="col-sm-4" v-if="org.pins">
                                           <form class="form-horizontal" action="index.html" method="post">
                                               <div class="form-group">
                                                 <label for="" class="col-sm-3 control-label">Pin 1</label>
