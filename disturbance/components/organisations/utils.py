@@ -11,7 +11,9 @@ def can_manage_org(organisation,user):
     except UserDelegation.DoesNotExist:
         pass
     try:
-        OrganisationAccessGroup.objects.first().members.get(id=user.id)
+        group = OrganisationAccessGroup.objects.first()
+        if group:
+            group.members.get(id=user.id)
         return True
     except EmailUser.DoesNotExist:
         pass
