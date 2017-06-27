@@ -1,11 +1,12 @@
 from __future__ import unicode_literals
 
-from django.db import models
+from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.utils import timezone
 from django.contrib.sites.models import Site
 from taggit.managers import TaggableManager
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -25,6 +26,7 @@ class ProposalType(models.Model):
 class Proposal(RevisionedMixin):
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('under_review', 'Under Review'),
+                               ('with_assessor', 'With Assesor'),
                                ('id_required', 'Identification Required'),
                                ('returns_required', 'Returns Completion Required'),
                                ('amendment_required', 'Amendment Required'),
@@ -43,10 +45,15 @@ class Proposal(RevisionedMixin):
                                'id_and_returns_and_amendment_required']
 
     # List of statuses from above that allow a customer to view an application (read-only)
-    CUSTOMER_VIEWABLE_STATE = ['under_review', 'id_required', 'returns_required', 'approved', 'declined']
+    CUSTOMER_VIEWABLE_STATE = ['with_assessor', 'under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
-    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('new', 'New'), ('renewal', 'Renewal'),
-                                 ('licence_amendment', 'Licence Amendment'), ('ready_for_action', 'Ready for Action'),
+    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), 
+                                 ('draft', 'Draft'), 
+                                 ('with_assessor', 'With Assesor'),
+                                 ('with_referral', 'With Referral'),
+                                 ('ready_for_action', 'Ready for Action'),
+                                 ('renewal', 'Renewal'),
+                                 ('licence_amendment', 'Licence Amendment'), 
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'),
@@ -159,7 +166,18 @@ class Proposal(RevisionedMixin):
         return self.customer_status == 'draft' and not self.lodgement_number
 
     def log_user_action(self, action, request):
-        return ApplicationUserAction.log_action(self, action, request.user)
+        return ProposalUserAction.log_action(self, action, request.user)
+
+    def submit(self,request):
+        with transaction.atomic():
+            self.processing_status = 'with_assessor'
+            self.customer_status = 'with_assessor'
+            self.lodgement_date = timezone.now().strftime('%Y-%m-%d') 
+            self.save()
+            # Create a log entry for the proposal
+            self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            # Create a log entry for the organisation
+            self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
 
 class ProposalLogEntry(CommunicationsLogEntry):
     proposal = models.ForeignKey(Proposal, related_name='comms_logs')

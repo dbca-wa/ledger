@@ -5,11 +5,16 @@
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
-                <div class="row" style="margin-bottom:20px;">
+                <div v-if="!proposal.readonly" class="row" style="margin-bottom:20px;">
                   <div class="col-lg-12 pull-right">
                         <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                        <router-link :to="{name:'apply_proposal',params: { proposal_id: proposal.id }}" class="btn btn-primary">Submit</router-link>
+                        <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                  </div>
+                </div>
+                <div v-else class="row" style="margin-bottom:20px;">
+                  <div class="col-lg-12 pull-right">
+                    <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
                   </div>
                 </div>
             </Proposal>
@@ -59,6 +64,29 @@ export default {
       },err=>{
 
       });
+    },
+    submit: function(){
+        let vm = this;
+        
+        swal({
+            title: "Submit Proposal",
+            text: "Are you sure you want to submit this proposal?",
+            type: "question",
+            showCancelButton: true,
+            confirmButtonText: 'Submit'
+        }).then(() => {
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit')).then(res => {
+                vm.proposal = res.body;
+                vm.$router.push({
+                    name: 'submit_proposal',
+                    params: { proposal: vm.proposal} 
+                });
+            },
+            err => {
+              console.log(err);
+            });
+        },(error) => {
+        });
     }
   },
   mounted: function() {

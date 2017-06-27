@@ -13,13 +13,22 @@ import TextArea from '../components/forms/text-area.vue'
 import ReadonlyText from '../components/forms/readonly_text.vue'
 
 module.exports = {
-    renderChildren(h,c,data=null,readonly=false) {
+    renderChildren(h,c,data=null,readonly=false,assessorMode=false,referralMode=false) {
         var val = (data) ? (data[c.name]) ? data[c.name] : null : null;
         switch (c.type) {
             case 'text':
-                return (
-                    <TextField readonly={readonly} type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
-                )
+                if (c.isVisibleForAssessorOnly){
+                    if ( assessorMode){
+                        return (
+                            <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text}/>
+                        )
+                    }
+                }
+                else{
+                    return (
+                        <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
+                    )
+                }
                 break;
             case 'number':
                 return (
@@ -28,7 +37,7 @@ module.exports = {
                 break;
             case 'email':
                 return (
-                    <TextField readonly={readonly} type="email" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
+                    <TextField type="email" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
                 )
                 break;
             case 'select':
@@ -85,7 +94,7 @@ module.exports = {
                         {c.children.map(c=>{
                             return (
                                 <div>
-                                    {this.renderChildren(h,c,value,readonly)}
+                                    {this.renderChildren(h,c,value,readonly,assessorMode,referralMode)}
                                 </div>
                             )
                         })}
@@ -103,7 +112,7 @@ module.exports = {
                         {c.children.map(d=>{
                             return (
                                 <div>
-                                    {this.renderChildren(h,d,value,readonly)}
+                                    {this.renderChildren(h,d,value,readonly,assessorMode,referralMode)}
                                 </div>
                             )
                         })}

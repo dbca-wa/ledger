@@ -37,12 +37,9 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Activity</label>
-                                <select v-show="isLoading" class="form-control" name="">
-                                    <option value="">Loading...</option>
-                                </select>
-                                <select v-if="!isLoading" class="form-control" v-model="filterProposalActivity">
+                                <select class="form-control" v-model="filterProposalActivity">
                                     <option value="All">All</option>
-                                    <option v-for="region in regions" :value="region.id">{{region.name}}</option>
+                                    <option v-for="a in activityTitles" :value="a">{{a}}</option>
                                 </select>
                             </div>
                         </div>
@@ -83,7 +80,7 @@
                                 <label for="">Submitter</label>
                                 <select class="form-control" v-model="filterProposalSubmitter">
                                     <option value="">Select Submitter</option>
-                                    <option value="current">Current</option>
+                                    <option v-for="s in submitters" :value="s.search_term">{{s.search_term}}</option>
                                 </select>
                             </div>
                         </div>
@@ -258,7 +255,7 @@ export default {
       loading: [],
       // Filters for Proposals
       filterProposalRegion: '',
-      filterProposalActivity: '',
+      filterProposalActivity: 'All',
       filterProposalStatus: 'All',
       filterProposalLodgedFrom: '',
       filterProposalLodgedTo: '',
@@ -275,6 +272,9 @@ export default {
       filterComplianceStatus: 'All',
       filterComplianceDueFrom: '',
       filterComplianceDueTo: '',
+      //
+      activityTitles : [],
+      submitters: [],
       proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
       proposal_options:{
           language: {
@@ -294,7 +294,7 @@ export default {
                   data: "submitter",
                   mRender:function (data,type,full) {
                       if (data) {
-                           return `${data.first_name} ${data.last_name}`;
+                           return `${data.first_name} ${data.last_name}`+'\n'+`(${data.email})`;
                       }
                      return ''
                   }
@@ -305,18 +305,43 @@ export default {
               {
                   mRender:function (data,type,full) {
                       let links = '';
-                      if (full.processing_status == 'Draft' || full.processing_status == 'Temporary') {
+                      if (full.can_user_edit) {
                          links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
                          links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
                       }
-                      if (full.processing_status == 'accepted' || full.processing_status == 'under review') {
+                      else if (full.can_user_view) {
                          links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                       }
                       return links;
                   }
               }
           ],
-          processing: true
+          processing: true,
+          initComplete: function () {
+            // Grab Titles from the data in the table
+            var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
+            titleColumn.data().unique().sort().each( function ( d, j ) {
+                let activityTitles = [];
+                $.each(d,(index,a) => {
+                    a != null ? activityTitles.push(a): '';
+                })
+                vm.activityTitles = activityTitles;
+            });
+            // Grab submitters from the data in the table
+            var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
+            submittersColumn.data().unique().sort().each( function ( d, j ) {
+                var submitters = [];
+                $.each(d,(index,s) => {
+                    if (!submitters.find(submitter => submitter.email == s.email) || submitters.length == 0){
+                        submitters.push({
+                            'email':s.email,
+                            'search_term': `${s.first_name} ${s.last_name} (${s.email})`
+                        });
+                    }
+                });
+                vm.submitters = submitters;
+            });
+         }
       }
     }
   },

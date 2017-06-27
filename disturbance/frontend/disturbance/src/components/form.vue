@@ -49,7 +49,7 @@
             this.mapDataToApplication();
         },
         mounted:function () {
-            if (this.withSectionSelector){
+            if (this.withSectionsSelector){
                 Renderer.sections.map(sec => {
                     $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
                 });
@@ -75,7 +75,7 @@
         },
         render(h) {
             let vm =this;
-            Renderer.sections = [];
+            //Renderer.sections = [];
             if (vm.withSectionsSelector){
                 return (
                     <div>
@@ -96,12 +96,7 @@
                         </div>
                         <div class="col-md-9">
                             {vm.proposal.schema.map(d =>{
-                                if (vm.proposal.readonly){
-                                    return Renderer.renderChildren(h,d,vm.values,true)
-                                }
-                                else{
-                                    return Renderer.renderChildren(h,d,vm.values)
-                                }
+                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.readonly,vm.proposal.assessor_mode)
                             })}
                             { this.$slots.default }
                         </div>
@@ -113,12 +108,7 @@
                     return (
                         <div>
                             {vm.proposal.schema.map(d =>{
-                                if (vm.proposal.readonly){
-                                    return Renderer.renderChildren(h,d,vm.values,true)
-                                }
-                                else{
-                                    return Renderer.renderChildren(h,d,vm.values)
-                                }
+                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.readonly,vm.proposal.assessor_mode)
                             })}
                             { this.$slots.default }
                         </div>
@@ -128,12 +118,7 @@
                     return (
                         <div class={vm.form_width}>
                             {vm.proposal.schema.map(d =>{
-                                if (vm.proposal.readonly){
-                                    return Renderer.renderChildren(h,d,vm.values,true)
-                                }
-                                else{
-                                    return Renderer.renderChildren(h,d,vm.values)
-                                }
+                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.readonly,vm.proposal.assessor_mode)
                             })}
                             { this.$slots.default }
                         </div>

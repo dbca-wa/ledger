@@ -105,8 +105,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def user_list(self, request, *args, **kwargs):
         user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
         qs = []
-        qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0])))
-        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[0][0])))
+        qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])))
+        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
         serializer = DTProposalSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -115,6 +115,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def internal_proposal(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = InternalProposalSerializer(instance)
+        return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def submit(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.submit(request)
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
@@ -179,8 +186,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             instance = self.get_object()
-            serializer = self.get_serializer(instance,{'processing_status':'discarded'},partial=True)
+            serializer = SaveProposalSerializer(instance,{'processing_status':'discarded'},partial=True)
             serializer.is_valid(raise_exception=True)
+            print serializer
             self.perform_update(serializer)
             return Response(serializer.data,status=http_status)
         except Exception as e:

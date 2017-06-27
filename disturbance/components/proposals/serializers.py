@@ -53,7 +53,9 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'lodgement_date',
                 'documents',
                 'requirements',
-                'readonly'
+                'readonly',
+                'can_user_edit',
+                'can_user_view',
                 )
         read_only_fields=('documents',)
 
@@ -82,6 +84,9 @@ class ProposalSerializer(BaseProposalSerializer):
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
 
+    def get_readonly(self,obj):
+        return obj.can_user_view 
+
 class SaveProposalSerializer(BaseProposalSerializer):
     pass
 
@@ -105,6 +110,16 @@ class InternalProposalSerializer(BaseProposalSerializer):
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     submitter = serializers.CharField(source='submitter.get_full_name')
+
+
+    def __init__(self,*args,**kwargs):
+        super(InternalProposalSerializer, self).__init__(*args, **kwargs)
+        self.fields['assessor_mode'] = serializers.SerializerMethodField()
+
+    def get_assessor_mode(self,obj):
+        # TODO check if the proposal has been accepted or declined
+        return not obj.can_user_edit
+
     def get_readonly(self,obj):
         return True
 \
