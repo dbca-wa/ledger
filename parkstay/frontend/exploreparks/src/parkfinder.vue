@@ -577,7 +577,7 @@ export default {
                 });
 
                 // Open the popup
-                let feature = this.groundsData.a.find(f => parseInt(f.a) == parseInt(target.properties.id));
+                /*let feature = this.groundsData.a.find(f => parseInt(f.a) == parseInt(target.properties.id));
                 if (feature){
                     setTimeout(() => {
                         vm.popup.setPosition(feature.getGeometry().getCoordinates());
@@ -605,7 +605,7 @@ export default {
                             $("#mapPopupBook").hide();
                         }
                     },1000);
-                }
+                }*/
 
 
                 return;
