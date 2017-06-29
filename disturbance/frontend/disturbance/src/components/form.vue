@@ -96,7 +96,7 @@
                         </div>
                         <div class="col-md-9">
                             {vm.proposal.schema.map(d =>{
-                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.readonly,vm.proposal.assessor_mode)
+                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.assessor_data,vm.proposal.readonly,vm.proposal.assessor_mode)
                             })}
                             { this.$slots.default }
                         </div>
@@ -108,7 +108,7 @@
                     return (
                         <div>
                             {vm.proposal.schema.map(d =>{
-                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.readonly,vm.proposal.assessor_mode)
+                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.assessor_data,vm.proposal.readonly,vm.proposal.assessor_mode)
                             })}
                             { this.$slots.default }
                         </div>
@@ -118,7 +118,7 @@
                     return (
                         <div class={vm.form_width}>
                             {vm.proposal.schema.map(d =>{
-                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.readonly,vm.proposal.assessor_mode)
+                                return Renderer.renderChildren(h,d,vm.values,vm.proposal.assessor_data,vm.proposal.readonly,vm.proposal.assessor_mode)
                             })}
                             { this.$slots.default }
                         </div>

@@ -10,19 +10,22 @@ import Select from '../components/forms/select.vue'
 import DateField from '../components/forms/date-field.vue'
 import TextField from '../components/forms/text.vue'
 import TextArea from '../components/forms/text-area.vue'
-import ReadonlyText from '../components/forms/readonly_text.vue'
+import AssessorText from '../components/forms/readonly_text.vue'
 
 module.exports = {
-    renderChildren(h,c,data=null,readonly=false,assessorMode=false,referralMode=false) {
+    renderChildren(h,c,data=null,assessor_data=null,readonly=false,assessorMode=false,assessorLevel) {
+        assessorMode = true;
+        assessorLevel = 'assessor';
         var val = (data) ? (data[c.name]) ? data[c.name] : null : null;
         switch (c.type) {
             case 'text':
-                if (c.isVisibleForAssessorOnly){
-                    if ( assessorMode){
-                        return (
-                            <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text}/>
-                        )
-                    }
+                if (assessorMode && c.canBeEditedByAssessor){
+                    var proponent_field = <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
+                    var boxes = this.generateAssessorTextBoxes(h,c,val,assessorLevel,assessor_data);
+                    boxes.unshift(proponent_field);
+                    return (
+                        boxes
+                    )
                 }
                 else{
                     return (
@@ -94,7 +97,7 @@ module.exports = {
                         {c.children.map(c=>{
                             return (
                                 <div>
-                                    {this.renderChildren(h,c,value,readonly,assessorMode,referralMode)}
+                                    {this.renderChildren(h,c,value,assessor_data,readonly,assessorMode,assessorLevel)}
                                 </div>
                             )
                         })}
@@ -112,7 +115,7 @@ module.exports = {
                         {c.children.map(d=>{
                             return (
                                 <div>
-                                    {this.renderChildren(h,d,value,readonly,assessorMode,referralMode)}
+                                    {this.renderChildren(h,d,value,assessor_data,readonly,assessorMode,assessorLevel)}
                                 </div>
                             )
                         })}
@@ -198,5 +201,97 @@ module.exports = {
     getSections(){
         return this.sections;
     },
-    sections:[]
+    sections:[],
+    generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data=null,assessor_email){
+        var boxes = [];
+
+        if (assessor_data){
+            var _dt = assessor_data.find(at => at.name == c.name)
+            // Assessor Data
+            var assessor_name = `${c.name}-Assessor`;
+            var assessor_val = _dt.assessor == '' ? val : _dt.assessor;
+            var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
+            boxes.push(
+                <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+            )
+            $.each(_dt.referrals,(i,v)=> {
+                var readonly = v.email != assessor_email ? true : false;
+                var referral_name = `${c.name}-Referral-${v.email}`;
+                boxes.push(
+                    <AssessorText type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
+                )
+            });
+        }
+        else{
+            if (assessor_mode == 'assessor'){
+                var name = `${c.name}-Assessor`;
+                var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
+                boxes.push(
+                    <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+                )
+            }
+        }
+
+
+
+        if (assessor_mode == 'assessor'){
+        }
+        else if (assessor_mode == 'referral'){
+            
+        }
+        boxes = [<div class="row"> {boxes} </div>]
+        return boxes;
+        /* Visibility stuff
+        if (visibility.visible){
+            if (visibility.editable){
+                return (
+                    <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text}/>
+                )
+            }
+            else{
+                return (
+                    <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={!visibility.editable}/>
+                )
+            }
+        }*/
+    },
+    getVisibility(c,readonly,assessor_mode,referral_mode){
+        var status = {
+            'visible': false,
+            'editable': false
+        };
+        if (c.isVisibleForAssessorOnly){
+            console.log(c.name);
+            if (assessor_mode || referral_mode){
+                if (assessor_mode){
+                    if (c.canBeEditedByAssessor){
+                        status['visible'] = true;
+                        status['editable'] = true;
+                    }
+                    else {
+                       status['visible'] = true;
+                    }
+                }
+                if (referral_mode){
+                    if (c.canBeEditedByAssessor){
+                        status['visible'] = true;
+                        status['editable'] = true;
+                    }
+                    else {
+                       status['visible'] = true;
+                    }
+                }
+            }
+            else{
+                return status;
+            }
+        }
+        else{
+            status['visible'] = true;
+            if (!readonly){
+                status['editable'] = true;
+            }
+        }
+        return status;
+    }
 }

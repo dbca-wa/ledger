@@ -114,7 +114,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def internal_proposal(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = InternalProposalSerializer(instance)
+        serializer = InternalProposalSerializer(instance,context={'request':request})
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
@@ -130,8 +130,40 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+            print request.POST
             extracted_fields,special_fields = create_data_from_form(
                 instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
+            instance.data = extracted_fields
+            data = {
+                'region': special_fields.get('isRegionColumnForDashboard',None),
+                'title': special_fields.get('isTitleColumnForDashboard',None),
+                'activity': special_fields.get('isActivityColumnForDashboard',None),
+                'data': extracted_fields,
+                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0],
+                'submitter': request.user.id,
+            }
+            serializer = SaveProposalSerializer(instance, data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return redirect(reverse('external'))
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def assessor_save(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+            extracted_fields,special_fields = create_data_from_form(
+                instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
+            raise Exception()
             instance.data = extracted_fields
             data = {
                 'region': special_fields.get('isRegionColumnForDashboard',None),

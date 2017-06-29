@@ -79,6 +79,7 @@ class Proposal(RevisionedMixin):
         ('accepted', 'Accepted'))
 
     data = JSONField(blank=True, null=True)
+    assessor_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
     documents = models.ManyToManyField(Document)
     hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
@@ -120,7 +121,7 @@ class Proposal(RevisionedMixin):
         app_label = 'disturbance'
 
     def __str__(self):
-        return self.reference
+        return str(self.id)
 
     @property
     def reference(self):

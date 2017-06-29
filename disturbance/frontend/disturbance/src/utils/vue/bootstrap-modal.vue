@@ -1,7 +1,7 @@
 <template id="bootstrap-modal">
     <div v-show="show" :transition="transition">
         <div class="modal" @click.self="clickMask">
-            <div class="modal-dialog" :class="modalClass">
+            <div class="modal-dialog" :class="modalClass" role="document">
                 <div class="modal-content">
                     <!--Header-->
                     <slot name="header">
@@ -151,8 +151,18 @@
     .modal .btn {
         margin-bottom: 0px;
     }
+    .modal-header {
+        border-top-left-radius: .3rem;
+        border-top-right-radius: .3rem;
+    }
+    .modal-footer{
+        border-bottom-left-radius: .3rem;
+        border-bottom-right-radius: .3rem;
+    }
     .modal-body, .modal-footer, .modal-header {
-        background-color: #F5F5F5;
+        /*background-color: #F5F5F5;
+        color: #333333;*/
+        background-color: #efefef;
         color: #333333;
     }
     .modal-transition {
@@ -172,8 +182,11 @@
         opacity: 0;
     }
     .close {
-        color: #d9534f;
-        opacity: 1;
+        font-size: 2.5rem;
+        opacity: .3;
+    }
+    .close:hover {
+        opacity: .7;
     }
     #okBtn {
         margin-bottom: 0px;

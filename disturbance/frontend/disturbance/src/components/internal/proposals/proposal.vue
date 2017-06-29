@@ -107,12 +107,12 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" v-if="!isFinalised" @click.prevent="">Request Ammendment</button><br/>
+                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" v-if="!isFinalised" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" v-if="!isFinalised" @click.prevent="">Decline</button>
+                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" v-if="!isFinalised" @click.prevent="proposedDecline()">Decline</button>
                                     </div>
                                 </div>
                             </div>
@@ -220,9 +220,8 @@
                                 </h3>
                             </div>
                             <div class="panel-body panel-collapse collapse" :id="contactsBody">
-                                <div v-if="contactsURL != '' && contactsURL != 'undefined'">
-                                <datatable ref="contacts_datatable" id="organisation_contacts_datatable" :dtOptions="contacts_options" :dtHeaders="contacts_headers"/>
-                                </div>
+                                <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -236,6 +235,7 @@
                                 <input type='hidden' name="proposal_id" :value="1" />
                                 <div class="row" style="margin-bottom:20px;">
                                   <div class="col-lg-12 pull-right">
+                                    <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
                                   </div>
                                 </div>
                             </Proposal>
@@ -245,11 +245,15 @@
             </div>
         </div>
         </div>
+        <ProposedDecline ref="proposed_decline" :proposal_id="proposal.id"></ProposedDecline>
+        <AmmendmentRequest ref="ammendment_request" :proposal_id="proposal.id"></AmmendmentRequest>
     </div>
 </template>
 <script>
 import Proposal from '../../form.vue'
 import Vue from 'vue'
+import ProposedDecline from './proposal_proposed_decline.vue'
+import AmmendmentRequest from './ammendment_request.vue'
 import datatable from '@vue-utils/datatable.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
@@ -269,7 +273,8 @@ export default {
             "loading": [],
             form: null,
             members: [],
-            contacts_headers:["Name","Phone","Mobile","Fax","Email"],
+            contacts_table_initialised: false,
+            contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -281,17 +286,31 @@ export default {
                 },
                 columns: [
                     {
+                        title: 'Name',
                         mRender:function (data,type,full) {
                             return full.first_name + " " + full.last_name;
                         }
                     },
-                    {data:'phone_number'},
-                    {data:'mobile_number'},
-                    {data:'fax_number'},
-                    {data:'email'},
+                    {
+                        title: 'Phone',
+                        data:'phone_number'
+                    },
+                    {
+                        title: 'Mobile',
+                        data:'mobile_number'
+                    },
+                    {
+                        title: 'Fax',
+                        data:'fax_number'
+                    },
+                    {
+                        title: 'Email',
+                        data:'email'
+                    },
                   ],
                   processing: true
             },
+            contacts_table: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             actionsTable: null,
             actionsDtOptions:{
@@ -445,7 +464,9 @@ export default {
     },
     components: {
         Proposal,
-        datatable
+        datatable,
+        ProposedDecline,
+        AmmendmentRequest
     },
     filters: {
         formatDate: function(data){
@@ -453,13 +474,6 @@ export default {
         }
     },
     watch: {
-        contactsURL: function(){
-            let vm = this;
-            this.$nextTick(() => {
-                vm.$refs.contacts_datatable.vmDataTable.ajax.url(this.contactsURL);
-                vm.$refs.contacts_datatable.vmDataTable.ajax.reload();
-            })
-        }
     },
     computed: {
         contactsURL: function(){
@@ -472,15 +486,29 @@ export default {
           return helpers.getCookie('csrftoken')
         },
         proposal_form_url: function() {
-          return (this.proposal) ? `/api/proposal/${this.proposal.id}/draft.json` : '';
+          return (this.proposal) ? `/api/proposal/${this.proposal.id}/assessor_save.json` : '';
         },
         isFinalised: function(){
             return this.proposal.processing_status == 'Declined' || this.proposal.status == 'Approved';
         }
     },
     methods: {
+        initialiseOrgContactTable: function(){
+            let vm = this;
+            if (vm.proposal && !vm.contacts_table_initialised){
+                vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.proposal.applicant.id+'/contacts');
+                vm.contacts_table = $('#'+vm.contacts_table_id).DataTable(vm.contacts_options);
+                vm.contacts_table_initialised = true;
+            }
+        },
         commaToNewline(s){
             return s.replace(/[,;]/g, '\n');
+        },
+        proposedDecline: function(){
+            this.$refs.proposed_decline.isModalOpen = true;
+        },
+        ammendmentRequest: function(){
+            this.$refs.ammendment_request.isModalOpen = true;
         },
         save: function(e) {
           let vm = this;
@@ -540,7 +568,6 @@ export default {
     mounted: function() {
         let vm = this;
         vm.fetchProposalGroupMembers();
-        vm.form = document.forms.new_proposal;
     },
     updated: function(){
         let vm = this;
@@ -555,6 +582,8 @@ export default {
         }
         this.$nextTick(() => {
             vm.initialisePopovers()
+            vm.initialiseOrgContactTable();
+            vm.form = document.forms.new_proposal;
         });
     },
     beforeRouteEnter: function(to, from, next) {

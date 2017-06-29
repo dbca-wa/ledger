@@ -115,6 +115,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
     def __init__(self,*args,**kwargs):
         super(InternalProposalSerializer, self).__init__(*args, **kwargs)
         self.fields['assessor_mode'] = serializers.SerializerMethodField()
+        self.fields['user_email'] = serializers.SerializerMethodField()
+        self.fields['assessor_data'] = serializers.SerializerMethodField()
+        
 
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
@@ -122,7 +125,13 @@ class InternalProposalSerializer(BaseProposalSerializer):
 
     def get_readonly(self,obj):
         return True
-\
+    
+    def get_user_email(self,obj):
+        return self.context['request'].user.email
+
+    def get_assessor_data(self,obj):
+        return obj.assessor_data
+
 class ProposalUserActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProposalUserAction

@@ -1,3 +1,4 @@
+import re
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 import traceback
@@ -14,6 +15,36 @@ def create_data_from_form(schema, post_data, file_data, post_data_index=None,spe
     except:
         traceback.print_exc()
     return [data],special_fields_list
+
+def extract_assessor_data(item,post_data):
+    values = []
+    res = {
+        'name': item,
+        'assessor': '',
+        'referrals':[]
+    }
+    for k in post_data:
+        if re.match(item,k):
+            values.append({k:post_data[k]})
+    if values:
+        for v in values:
+            for k,v in v.items():
+                parts = k.split('{}-'.format(item))
+                if len(parts) > 1:
+                    # split parts to see if referall
+                    ref_parts = parts[1].split('Referral-')
+                    if len(ref_parts) > 1:
+                        # Referrals
+                        res['referrals'].append({
+                            'value':v,
+                            'email':ref_parts[1],
+                            'full_name': EmailUser.objects.get(email=ref_parts[1]).get_full_name()
+                        })
+                    else:
+                        # Assessor
+                        res['assessor'] = v
+
+    return res
 
 def _extend_item_name(name, suffix, repetition):
     return '{}{}-{}'.format(name, suffix, repetition)
@@ -43,6 +74,8 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
                     item_data[item['name']] = post_data.getlist(extended_item_name)
                 else:
                     item_data[item['name']] = post_data.get(extended_item_name)
+        if item.get('canBeEditedByAssessor'):
+            extract_assessor_data(extended_item_name,post_data)
     else:
         if 'repetition' in item:
             item_data = generate_item_data(extended_item_name,item,item_data,post_data,file_data,len(post_data[item['name']]),suffix)

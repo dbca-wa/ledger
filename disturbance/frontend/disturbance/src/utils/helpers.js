@@ -126,5 +126,5 @@ module.exports = {
         }).on('inserted.bs.popover', function () {
             table = $('#'+actionLogId).DataTable(datatable_options);
         });
-    }
+    },
 };
