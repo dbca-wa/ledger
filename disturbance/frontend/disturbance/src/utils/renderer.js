@@ -11,6 +11,7 @@ import DateField from '../components/forms/date-field.vue'
 import TextField from '../components/forms/text.vue'
 import TextArea from '../components/forms/text-area.vue'
 import AssessorText from '../components/forms/readonly_text.vue'
+import HelpText from '../components/forms/help_text.vue'
 
 module.exports = {
     renderChildren(h,c,data=null,assessorData=null,_readonly) {
@@ -65,7 +66,7 @@ module.exports = {
                 break;
             case 'multi-select':
                 _elements.push(
-                    <Select name={c.name} label={c.label} value={val} options={c.options} value={val} help_text={c.help_text} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} />
+                    <Select name={c.name} label={c.label} value={val} options={c.options} value={val} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} />
                 )
                 break;
             case 'text_area':
@@ -86,6 +87,8 @@ module.exports = {
                 _elements.push(
                     <div class="form-group">
                         <label>{c.label}</label>
+                            <HelpText help_text={c.help_text}/>
+                            <HelpText help_text={c.help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
                             {c.options.map(op =>{
                                 return(
                                     <Radio name={c.name} label={op.label} value={op.value} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>
@@ -154,12 +157,12 @@ module.exports = {
                 break;
             case 'file':
                 _elements.push(
-                    <File name={c.name} label={c.label} value={val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly}/>
+                    <File name={c.name} label={c.label} value={val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode}/>
                 )
                 break;
             case 'date':
                 _elements.push(
-                    <DateField name={c.name} label={c.label} value={val}  handleChange={this.handleFileChange} readonly={readonly}/>
+                    <DateField name={c.name} label={c.label} value={val}  handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode}/>
                 )
                 break;
             default:
@@ -269,6 +272,9 @@ module.exports = {
         }
         if (assessor_mode){
             if (c.isVisibleForAssessorOnly){
+                if (this.status_data.can_user_edit){
+                    _status.visible = false;
+                }
                 return _status;
             }
             else {

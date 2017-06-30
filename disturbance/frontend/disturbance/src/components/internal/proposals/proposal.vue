@@ -70,11 +70,11 @@
                                     <select v-show="isLoading" class="form-control">
                                         <option value="">Loading...</option>
                                     </select>
-                                    <select @change="assignTo" :disabled="isFinalised" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
+                                    <select @change="assignTo" :disabled="isFinalised || proposal.can_user_edit" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
                                         <option value="null"></option>
                                         <option v-for="member in members" :value="member.id">{{member.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised" @click.prevent="assignMyself()" class="actionBtn pull-right">Send</a>
+                                    <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="assignMyself()" class="actionBtn pull-right">Send</a>
                                 </div>
                                 <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
                             </div>
@@ -91,10 +91,10 @@
                                         <option value="null">Unassigned</option>
                                         <option v-for="member in members" :value="member.id">{{member.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
+                                    <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s">
+                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Action</strong><br/>
@@ -102,17 +102,17 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary" v-if="!isFinalised" @click.prevent="">Enter Requirements</button><br/>
+                                        <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="">Enter Requirements</button><br/>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" v-if="!isFinalised" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
+                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" v-if="!isFinalised" @click.prevent="proposedDecline()">Decline</button>
+                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="proposedDecline()">Decline</button>
                                     </div>
                                 </div>
                             </div>
@@ -233,7 +233,7 @@
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
-                                <div class="row" style="margin-bottom:20px;">
+                                <div v-if="!proposal.can_user_edit" class="row" style="margin-bottom:20px;">
                                   <div class="col-lg-12 pull-right">
                                     <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
                                   </div>

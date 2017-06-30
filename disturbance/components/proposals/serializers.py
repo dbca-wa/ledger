@@ -88,7 +88,35 @@ class ProposalSerializer(BaseProposalSerializer):
         return obj.can_user_view 
 
 class SaveProposalSerializer(BaseProposalSerializer):
-    pass
+    assessor_data = serializers.JSONField(required=False)
+
+    class Meta:
+        model = Proposal
+        fields = (
+                'id',
+                'activity',
+                'title',
+                'region',
+                'data',
+                'assessor_data',
+                'schema',
+                'customer_status',
+                'processing_status',
+                'review_status',
+                'hard_copy',
+                'applicant',
+                'proxy_applicant',
+                'submitter',
+                'assigned_officer',
+                'previous_application',
+                'lodgement_date',
+                'documents',
+                'requirements',
+                'readonly',
+                'can_user_edit',
+                'can_user_view',
+                )
+        read_only_fields=('documents',)
 
 class ApplicantSerializer(serializers.ModelSerializer):
     from disturbance.components.organisations.serializers import OrganisationAddressSerializer

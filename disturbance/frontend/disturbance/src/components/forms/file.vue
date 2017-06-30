@@ -1,7 +1,8 @@
 <template lang="html">
     <div class="form-group">
         <label>{{label}}</label>
-         <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>
+        <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
+        <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
         <div v-if="files">
             <div v-for="v in files">
                 <p>
@@ -23,6 +24,12 @@ export default {
         name:String,
         label:String,
         help_text:String,
+        help_text_assessor:String,
+        assessorMode:{
+            default:function(){
+                return false;
+            }
+        },
         value:{
             default:function () {
                 return null;

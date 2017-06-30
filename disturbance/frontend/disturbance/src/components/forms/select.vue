@@ -2,18 +2,24 @@
     <div>
         <div class="form-group">
             <label>{{ label }}</label>
-            <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text">&nbsp;</i>
+            <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
+            <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
         
             <template v-if="readonly">
                 <select v-if="!isMultiple" disabled ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
                     <option value="">Select...</option>
                     <option v-for="op in options"  :value="op.value" @change="handleChange" :selected="op.value == value">{{ op.label }}</option>
                 </select>
-                <select v-else disabled ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%">
+                <select v-else disabled ref="selectB" :id="selectid" class="form-control" multiple style="width:100%">
                     <option value="">Select...</option>
                     <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
                 </select>
-                <input type="hidden" :name="name" :value="value"/>
+                <template v-if="isMultiple">
+                    <input v-for="v in value" input type="hidden" :name="name" :value="v"/>
+                </template>
+                <template v-else>
+                    <input type="hidden" :name="name" :value="value"/>
+                </template>
             </template>
             <template v-else>
                 <select v-if="!isMultiple" ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
@@ -38,11 +44,17 @@ export default {
         'name':String,
         'label':String,
         'help_text':String,
+        'help_text_assessor':String,
         "value":[String,Array],
         "options":Array,
         "conditions":Object,
         "handleChange":null,
         "isMultiple":{
+            default:function () {
+                return false;
+            }
+        },
+        "assessorMode":{
             default:function () {
                 return false;
             }
@@ -60,7 +72,7 @@ export default {
     computed:{
         cons:function () {
             return JSON.stringify(this.conditions);
-        }
+        },
     },
     methods:{
         multipleSelection: function(val){
