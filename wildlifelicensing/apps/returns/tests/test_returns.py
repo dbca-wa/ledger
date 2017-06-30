@@ -12,6 +12,7 @@ from wildlifelicensing.apps.main.tests.helpers import SocialClient, get_or_creat
     get_or_create_licence_type, clear_mailbox
 from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.returns.tests.helpers import create_return, get_or_create_return_type
+from wildlifelicensing.apps.returns.utils import create_returns_due_dates
 
 TEST_SPREADSHEET_PATH = os.path.join('wildlifelicensing', 'apps', 'returns', 'test_data', 'regulation17.xlsx')
 
@@ -614,3 +615,72 @@ class TestLifeCycle(TestCase):
         expected_status = 'declined'
         self.assertEqual(ret.status, expected_status)
 
+
+class TestUtils(TestCase):
+
+    def test_create_returns_due_dates(self):
+        # one year with 1 month period
+        start_date = date(2017, 6, 30)
+        end_date = date(2018, 6, 30)
+        monthly_frequency = 1
+        due_dates = create_returns_due_dates(start_date, end_date, monthly_frequency)
+        expected_due_dates = [
+            date(2017, 7, 30),
+            date(2017, 8, 30),
+            date(2017, 9, 30),
+            date(2017, 10, 30),
+            date(2017, 11, 30),
+            date(2017, 12, 30),
+            date(2018, 1, 30),
+            date(2018, 2, 28),
+            date(2018, 3, 30),
+            date(2018, 4, 30),
+            date(2018, 5, 30),
+            date(2018, 6, 30)
+        ]
+        self.assertEqual(due_dates, expected_due_dates)
+
+        # one year with 4 months period
+        start_date = date(2017, 6, 30)
+        end_date = date(2018, 6, 30)
+        monthly_frequency = 4
+        due_dates = create_returns_due_dates(start_date, end_date, monthly_frequency)
+        expected_due_dates = [
+            date(2017, 10, 30),
+            date(2018, 2, 28),
+            date(2018, 6, 30)
+        ]
+        self.assertEqual(due_dates, expected_due_dates)
+
+        # two years with 6 months period
+        start_date = date(2017, 6, 30)
+        end_date = date(2019, 6, 30)
+        monthly_frequency = 6
+        due_dates = create_returns_due_dates(start_date, end_date, monthly_frequency)
+        expected_due_dates = [
+            date(2017, 12, 30),
+            date(2018, 6, 30),
+            date(2018, 12, 30),
+            date(2019, 6, 30)
+        ]
+        self.assertEqual(due_dates, expected_due_dates)
+
+        # case where monthly period exceed the end date, should return the end_date
+        start_date = date(2017, 6, 30)
+        end_date = date(2017, 7, 15)
+        monthly_frequency = 1
+        due_dates = create_returns_due_dates(start_date, end_date, monthly_frequency)
+        expected_due_dates = [
+            end_date,
+        ]
+        self.assertEqual(due_dates, expected_due_dates)
+
+        # negative monthly frequency = one off
+        start_date = date(2017, 6, 30)
+        end_date = date(2019, 6, 30)
+        monthly_frequency = -1
+        due_dates = create_returns_due_dates(start_date, end_date, monthly_frequency)
+        expected_due_dates = [
+            end_date
+        ]
+        self.assertEqual(due_dates, expected_due_dates)

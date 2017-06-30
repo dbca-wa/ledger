@@ -1,11 +1,12 @@
-import csv
+import unicodecsv as csv
+
 from collections import OrderedDict
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
-from django.utils import timezone
+from django.utils import timezone, six
 
 from wildlifelicensing.apps.returns.api.mixins import APIUserRequiredMixin
 from wildlifelicensing.apps.returns.models import ReturnType, ReturnRow
@@ -101,6 +102,6 @@ class ReturnsDataView(APIUserRequiredMixin, View):
         for ret_row in qs:
             row = []
             for field in schema.field_names:
-                row.append(unicode(ret_row.data.get(field, '')))
+                row.append(six.u(ret_row.data.get(field, '')))
             writer.writerow(row)
         return response
