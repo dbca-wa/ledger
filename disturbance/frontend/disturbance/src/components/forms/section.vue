@@ -2,7 +2,7 @@
     <div class="panel panel-default" >
       <div class="panel-heading">
         <h3 class="panel-title">{{label}}
-            <a :href="'#'+section_id" data-toggle="collapse" expanded="true" :aria-controls="section_id">
+            <a :href="'#'+section_id" class="panelClicker" data-toggle="collapse" expanded="true" :aria-controls="section_id">
                 <span class="glyphicon glyphicon-chevron-down pull-right "></span>
             </a>
         </h3>
@@ -19,7 +19,8 @@ export default {
     props:["label","Key"],
     data:function () {
         return {
-            title:"Section title"
+            title:"Section title",
+            eventInitialised: false
         }
     },
     computed:{
@@ -27,8 +28,19 @@ export default {
             return "section_"+this.Key
         }
     },
-    mounted:function () {
-        $("a[data-toggle]").on('click',function () {
+    updated:function () {
+        let vm = this;
+        vm.$nextTick(()=>{
+            if (!vm.eventInitialised){
+                console.log('here');
+                $('.panelClicker[data-toggle="collapse"]').on('click',function () {
+                    var chev = $(this).children()[0];
+                    window.setTimeout(function () {
+                        $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
+                    },100);
+                });
+                this.eventInitialised = true;
+            }
         });
     }
 }
