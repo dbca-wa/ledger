@@ -13,33 +13,41 @@ import TextArea from '../components/forms/text-area.vue'
 import AssessorText from '../components/forms/readonly_text.vue'
 
 module.exports = {
-    renderChildren(h,c,data=null,assessor_data=null,readonly=false,assessorMode=false,assessorLevel) {
-        assessorMode = true;
-        assessorLevel = 'assessor';
+    renderChildren(h,c,data=null,assessorData=null,_readonly) {
+        var is_readonly = this.status_data.readonly;
+        var assessorStatus = this.status_data.assessorStatus;
+        var assessorData = this.status_data.assessorData;
+        var assessorEmail = this.status_data.assessorEmail;
+        var assessorMode = false; 
+        var assessorLevel = '';
+        var readonly = false;
+        var _elements = [];
+        if (assessorStatus != null){
+            assessorMode = assessorStatus['assessor_mode'];
+            assessorLevel = assessorStatus['assessor_level'];
+        }
+
+        // Visibility 
+        var visibility = this.getVisibility(h,c,is_readonly,assessorMode)
+        if (!visibility.visible){ return "" }
+
+        // Editablility
+        readonly = !visibility.editable;
+
         var val = (data) ? (data[c.name]) ? data[c.name] : null : null;
         switch (c.type) {
             case 'text':
-                if (assessorMode && c.canBeEditedByAssessor){
-                    var proponent_field = <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
-                    var boxes = this.generateAssessorTextBoxes(h,c,val,assessorLevel,assessor_data);
-                    boxes.unshift(proponent_field);
-                    return (
-                        boxes
-                    )
-                }
-                else{
-                    return (
-                        <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
-                    )
-                }
+                _elements.push(
+                    <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
+                )
                 break;
             case 'number':
-                return (
+                _elements.push(
                     <TextField type="number" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
                 )
                 break;
             case 'email':
-                return (
+                _elements.push(
                     <TextField type="email" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={readonly}/>
                 )
                 break;
@@ -48,7 +56,7 @@ module.exports = {
                 if(data !== null && data !== undefined) {
                   value = ( data )? data : null ;
                 }
-                return (
+                _elements.push(
                     <div>
                         <Select readonly={readonly} name={c.name} label={c.label} value={c.value} options={c.options} help_text={c.help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions}/>
                         <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={data} readonly={readonly} />
@@ -56,17 +64,17 @@ module.exports = {
                 )
                 break;
             case 'multi-select':
-                return (
+                _elements.push(
                     <Select name={c.name} label={c.label} value={val} options={c.options} value={val} help_text={c.help_text} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} />
                 )
                 break;
             case 'text_area':
-                return (
+                _elements.push(
                     <TextArea readonly={readonly} name={c.name} value={val} label={c.label} help_text={c.help_text} />
                 )
                 break;
             case 'label':
-                return (
+                _elements.push(
                     <label>{c.label}</label>
                 )
                 break;
@@ -75,7 +83,7 @@ module.exports = {
                 if(data !== null && data !== undefined) {
                   value = ( data )? data : null ;
                 }
-                return (
+                _elements.push(
                     <div class="form-group">
                         <label>{c.label}</label>
                             {c.options.map(op =>{
@@ -92,12 +100,12 @@ module.exports = {
                 if(data !== null && data !== undefined) {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
-                return (
+                _elements.push(
                     <Group label={c.label} name={c.name} help_text={c.help_text} isRemovable={true}>
                         {c.children.map(c=>{
                             return (
                                 <div>
-                                    {this.renderChildren(h,c,value,assessor_data,readonly,assessorMode,assessorLevel)}
+                                    {this.renderChildren(h,c,value)}
                                 </div>
                             )
                         })}
@@ -110,12 +118,12 @@ module.exports = {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 this.sections.push({name:c.name,label:c.label});
-                return (
+                _elements.push(
                     <Section label={c.label} Key={c.name} id={c.name}>
                         {c.children.map(d=>{
                             return (
                                 <div>
-                                    {this.renderChildren(h,d,value,assessor_data,readonly,assessorMode,assessorLevel)}
+                                    {this.renderChildren(h,d,value)}
                                 </div>
                             )
                         })}
@@ -124,7 +132,7 @@ module.exports = {
                 break;
 
             case 'checkbox':
-                return (
+                _elements.push(
                     <div class="form-group">
                         <Checkbox name={c.name} label={c.label} help_text={c.help_text} value={val} handleChange={this.handleCheckBoxChange} conditions={c.conditions} readonly={readonly}/>
                         <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data}/>
@@ -136,7 +144,7 @@ module.exports = {
                 if(data !== null && data !== undefined) {
                   value = ( data[c.name] )? data[c.name] : null ;
                 }
-                return (
+                _elements.push(
                     <div class="form-group">
                         <label>{c.label}</label>
                         <Checkbox name={c.name} label={c.label} value={val} help_text={c.help_text} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
@@ -145,18 +153,24 @@ module.exports = {
                 )
                 break;
             case 'file':
-                return (
+                _elements.push(
                     <File name={c.name} label={c.label} value={val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly}/>
                 )
                 break;
             case 'date':
-                return (
+                _elements.push(
                     <DateField name={c.name} label={c.label} value={val}  handleChange={this.handleFileChange} readonly={readonly}/>
                 )
                 break;
             default:
             return "";
         }
+        if (assessorMode && c.canBeEditedByAssessor){
+            var boxes = this.generateAssessorTextBoxes(h,c,val,assessorLevel,assessorData,assessorEmail);
+            // Merge assessor boxes to _elements array
+            Array.prototype.push.apply(_elements,boxes);
+        }
+        return _elements;
     },
     handleRadioChange(e){
         var conditions = $(e.target).data('conditions');
@@ -202,96 +216,74 @@ module.exports = {
         return this.sections;
     },
     sections:[],
-    generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data=null,assessor_email){
+    generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data,assessor_email){
         var boxes = [];
 
-        if (assessor_data){
-            var _dt = assessor_data.find(at => at.name == c.name)
-            // Assessor Data
-            var assessor_name = `${c.name}-Assessor`;
-            var assessor_val = _dt.assessor == '' ? val : _dt.assessor;
-            var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
-            boxes.push(
-                <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
-            )
-            $.each(_dt.referrals,(i,v)=> {
-                var readonly = v.email != assessor_email ? true : false;
-                var referral_name = `${c.name}-Referral-${v.email}`;
-                boxes.push(
-                    <AssessorText type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
-                )
-            });
-        }
-        else{
-            if (assessor_mode == 'assessor'){
-                var name = `${c.name}-Assessor`;
+        if (!this.status_data.can_user_edit){
+            if (assessor_data){
+                var _dt = assessor_data.find(at => at.name == c.name)
+                // Assessor Data
+                var assessor_name = `${c.name}-Assessor`;
+                var assessor_val = _dt.assessor == '' ? val : _dt.assessor;
                 var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
                 boxes.push(
-                    <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+                    <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
                 )
+                $.each(_dt.referrals,(i,v)=> {
+                    var readonly = v.email != assessor_email ? true : false;
+                    var referral_name = `${c.name}-Referral-${v.email}`;
+                    boxes.push(
+                        <AssessorText type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
+                    )
+                });
+            }
+            else{
+                if (assessor_mode == 'assessor'){
+                    var name = `${c.name}-Assessor`;
+                    var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
+                    boxes.push(
+                        <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+                    )
+                }
             }
         }
-
-
-
-        if (assessor_mode == 'assessor'){
+        if (boxes.length > 0){
+            boxes = [<div class="row"> {boxes} </div>]
         }
-        else if (assessor_mode == 'referral'){
-            
-        }
-        boxes = [<div class="row"> {boxes} </div>]
         return boxes;
-        /* Visibility stuff
-        if (visibility.visible){
-            if (visibility.editable){
-                return (
-                    <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text}/>
-                )
-            }
-            else{
-                return (
-                    <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} readonly={!visibility.editable}/>
-                )
-            }
-        }*/
     },
-    getVisibility(c,readonly,assessor_mode,referral_mode){
-        var status = {
-            'visible': false,
-            'editable': false
-        };
-        if (c.isVisibleForAssessorOnly){
-            console.log(c.name);
-            if (assessor_mode || referral_mode){
-                if (assessor_mode){
-                    if (c.canBeEditedByAssessor){
-                        status['visible'] = true;
-                        status['editable'] = true;
-                    }
-                    else {
-                       status['visible'] = true;
-                    }
-                }
-                if (referral_mode){
-                    if (c.canBeEditedByAssessor){
-                        status['visible'] = true;
-                        status['editable'] = true;
-                    }
-                    else {
-                       status['visible'] = true;
-                    }
-                }
+    status_data : {},
+    store_status_data(readonly,assessorData,assessorEmail,assessorMode,can_user_edit){
+        this.status_data = {
+            'readonly': readonly,
+            'assessorData': assessorData,
+            'assessorEmail': assessorEmail,
+            'assessorStatus': assessorMode,
+            'can_user_edit': can_user_edit
+        }
+    },
+    getVisibility(h,c,readonly,assessor_mode){
+        var _status = {
+            'visible':true,
+            'editable':true
+        }
+        if (assessor_mode){
+            if (c.isVisibleForAssessorOnly){
+                return _status;
             }
-            else{
-                return status;
+            else {
+                _status.editable = readonly ? false : true;
             }
         }
         else{
-            status['visible'] = true;
-            if (!readonly){
-                status['editable'] = true;
+            if (c.isVisibleForAssessorOnly){
+                _status.visible = false;
+                _status.editable = false;
+            }
+            else{
+                _status.editable = readonly ? false : true;
             }
         }
-        return status;
+        return _status;
     }
 }

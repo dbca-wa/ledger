@@ -130,7 +130,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            print request.POST
             extracted_fields,special_fields = create_data_from_form(
                 instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
             instance.data = extracted_fields
@@ -161,15 +160,15 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            extracted_fields,special_fields = create_data_from_form(
-                instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
-            raise Exception()
+            extracted_fields,special_fields,assessor_data = create_data_from_form(
+                instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
             instance.data = extracted_fields
             data = {
                 'region': special_fields.get('isRegionColumnForDashboard',None),
                 'title': special_fields.get('isTitleColumnForDashboard',None),
                 'activity': special_fields.get('isActivityColumnForDashboard',None),
                 'data': extracted_fields,
+                'assessor_data': assessor_data,
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0],
                 'submitter': request.user.id,
             }

@@ -1,18 +1,32 @@
 <template lang="html">
     <div>
         <div class="form-group">
-          <label>{{ label }}</label>
-          <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text">&nbsp;</i>
-          <select v-if="!isMultiple" :disabled="readonly" ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
-              <option value="">Select...</option>
-              <option v-for="op in options"  :value="op.value" @change="handleChange" :selected="op.value == value">{{ op.label }}</option>
-          </select>
-          <select v-else :disabled="readonly" ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%">
-              <option value="">Select...</option>
-              <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
-          </select>
-      </div>
-  </div>
+            <label>{{ label }}</label>
+            <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text">&nbsp;</i>
+        
+            <template v-if="readonly">
+                <select v-if="!isMultiple" disabled ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
+                    <option value="">Select...</option>
+                    <option v-for="op in options"  :value="op.value" @change="handleChange" :selected="op.value == value">{{ op.label }}</option>
+                </select>
+                <select v-else disabled ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%">
+                    <option value="">Select...</option>
+                    <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
+                </select>
+                <input type="hidden" :name="name" :value="value"/>
+            </template>
+            <template v-else>
+                <select v-if="!isMultiple" ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
+                    <option value="">Select...</option>
+                    <option v-for="op in options"  :value="op.value" @change="handleChange" :selected="op.value == value">{{ op.label }}</option>
+                </select>
+                <select v-else ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%">
+                    <option value="">Select...</option>
+                    <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
+                </select>
+            </template>
+        </div>
+    </div>
 </template>
 
 <script>

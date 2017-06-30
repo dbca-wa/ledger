@@ -121,7 +121,10 @@ class InternalProposalSerializer(BaseProposalSerializer):
 
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
-        return not obj.can_user_edit
+        return {
+            'assessor_mode': True,
+            'assessor_level': 'assessor'
+        }
 
     def get_readonly(self,obj):
         return True
