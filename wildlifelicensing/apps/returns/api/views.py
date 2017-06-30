@@ -26,7 +26,7 @@ class ExplorerView(APIUserRequiredMixin, View):
     (@see ReturnsDataView view)
     """
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         queryset = ReturnType.objects.all()
         # for API purpose, increase the session timeout
         set_api_session_timeout(request)
