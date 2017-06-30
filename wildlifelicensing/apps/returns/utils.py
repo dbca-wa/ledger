@@ -10,16 +10,20 @@ def create_returns_due_dates(start_date, end_date, monthly_frequency):
     if monthly_frequency < 0:
         due_dates.append(end_date)
     else:
-        delta = relativedelta(months=monthly_frequency)
+        count = 1
+        delta = relativedelta(months=count*monthly_frequency)
         due_date = start_date + delta
         if due_date > end_date:
             # case where the first return due date is > end_date
             # treat it like a one off
             due_dates.append(end_date)
         else:
+            count += 1
             while due_date <= end_date:
                 due_dates.append(due_date)
-                due_date += delta
+                delta = relativedelta(months=count*monthly_frequency)
+                due_date = start_date + delta
+                count += 1
     return due_dates
 
 
