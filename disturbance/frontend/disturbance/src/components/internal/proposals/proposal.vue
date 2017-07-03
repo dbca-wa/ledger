@@ -67,12 +67,9 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Referrals</strong><br/>
                                 <div class="form-group">
-                                    <select v-show="isLoading" class="form-control">
-                                        <option value="">Loading...</option>
-                                    </select>
-                                    <select @change="assignTo" :disabled="isFinalised || proposal.can_user_edit" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
+                                    <select :disabled="isFinalised || proposal.can_user_edit" ref="department_users" class="form-control" v-model="proposal.assigned_officer">
                                         <option value="null"></option>
-                                        <option v-for="member in members" :value="member.id">{{member.name}}</option>
+                                        <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
                                     <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="assignMyself()" class="actionBtn pull-right">Send</a>
                                 </div>
@@ -273,7 +270,9 @@ export default {
             "loading": [],
             form: null,
             members: [],
+            department_users : [],
             contacts_table_initialised: false,
+            initialisedSelects: false,
             contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
                 language: {
@@ -557,6 +556,17 @@ export default {
                 vm.loading.splice('Loading Proposal Group Members',1);
             })
         },
+        fetchDeparmentUsers: function(){
+            let vm = this;
+            vm.loading.push('Loading Department Users');
+            vm.$http.get(api_endpoints.department_users).then((response) => {
+                vm.department_users = response.body
+                vm.loading.splice('Loading Department Users',1);
+            },(error) => {
+                console.log(error);
+                vm.loading.splice('Loading Department Users',1);
+            })
+        },
         initialisePopovers: function(){
             if (!this.popoversInitialised){
                 helpers.initialiseActionLogs(this._uid,this.$refs.showActionBtn,this.actionsDtOptions,this.actionsTable);
@@ -564,10 +574,23 @@ export default {
                 this.popoversInitialised = true;
             }
         },
+        initialiseSelects: function(){
+            let vm = this;
+            if (!vm.initialisedSelects){
+                $(vm.$refs.department_users).select2({
+                    "theme": "bootstrap",
+                    allowClear: true,
+                    placeholder:"Select Referral"
+                })
+                vm.initialisedSelects = true;
+            }
+        }
     },
     mounted: function() {
         let vm = this;
         vm.fetchProposalGroupMembers();
+        vm.fetchDeparmentUsers();
+        
     },
     updated: function(){
         let vm = this;
@@ -583,6 +606,7 @@ export default {
         this.$nextTick(() => {
             vm.initialisePopovers()
             vm.initialiseOrgContactTable();
+            vm.initialiseSelects();
             vm.form = document.forms.new_proposal;
         });
     },

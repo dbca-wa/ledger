@@ -36,6 +36,18 @@ from disturbance.components.users.serializers import   (
                                                 PersonalSerializer,
                                                 ContactSerializer,
                                             )
+from disturbance.components.main.utils import retrieve_department_users
+
+class DepartmentUserList(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    def get(self, request, format=None):
+        data = cache.get('department_users')
+        if not data:
+            retrieve_department_users()
+            data = cache.get('department_users')
+        return Response(data)
+        
+        serializer  = UserSerializer(request.user)
 
 class GetProfile(views.APIView):
     renderer_classes = [JSONRenderer,]

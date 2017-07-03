@@ -209,3 +209,4 @@ class SpecialFieldsSearch(object):
 
             item_data[item['name']] = item_data_list
         return item_data
+

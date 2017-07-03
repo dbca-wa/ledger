@@ -171,14 +171,32 @@ class Proposal(RevisionedMixin):
 
     def submit(self,request):
         with transaction.atomic():
-            self.processing_status = 'with_assessor'
-            self.customer_status = 'with_assessor'
-            self.lodgement_date = timezone.now().strftime('%Y-%m-%d') 
+            if self.can_user_edit:
+                self.processing_status = 'with_assessor'
+                self.customer_status = 'with_assessor'
+                self.lodgement_date = timezone.now().strftime('%Y-%m-%d') 
+                self.save()
+                # Create a log entry for the proposal
+                self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                # Create a log entry for the organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            else:
+                raise ValidationError('You can\'t edit this proposal at this moment')
+
+    def send_referral(self,request,referral_to):
+        with transaction.atomic():
+            self.processing_status = 'with_referral'
             self.save()
+            # Create Referral
+            Referral.objects.create(
+                proposal = self,
+                referral_email = referral_to['email'],
+                referral_name = referral_to['name'] 
+            )
             # Create a log entry for the proposal
-            self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            self.log_user_action(ProposalUserAction.ACTION_SEND_FOR_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(referral_to['full_name'],referral_to['email'])),request)
             # Create a log entry for the organisation
-            self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_FOR_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(referral_to['full_name'],referral_to['email'])),request)
 
 class ProposalLogEntry(CommunicationsLogEntry):
     proposal = models.ForeignKey(Proposal, related_name='comms_logs')
@@ -342,6 +360,8 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CONDITION_ = "Create requirement {}"
     ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
     ACTION_DISCARD_APPLICATION = "Discard proposal {}"
+    ACTION_SEND_FOR_REFERRAL_TO_ = "Send referral {} for proposal {} to {}"
+    ACTION_RESEND__REFERRAL_TO_ = "Resend referral {} for proposal {} to {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
@@ -359,6 +379,63 @@ class ProposalUserAction(UserAction):
 
     proposal = models.ForeignKey(Proposal, related_name='action_logs')
 
+
+class Referral(models.Model):
+    SENT_CHOICES = (
+        (1,'Sent From Assessor'),
+        (2,'Sent From Referral')
+    )
+    PROCESSING_STATUS_CHOICES = (
+                                 ('with_referral', 'With Referral'),
+                                 ('recalled', 'Recalled'),
+                                 ('completed', 'Completed'),
+                                 )
+    lodged_on = models.DateTimeField(auto_now_add=True)
+    proposal = models.ForeignKey(Proposal,related_name='referrals')
+    sent_by = models.ForeignKey(EmailUser,related_name='disturbance_assessor_referrals')
+    referral = models.ForeignKey(EmailUser,null=True,blank=True,related_name='disturbance_referalls')
+    referral_email = models.EmailField()
+    referral_name = models.CharField(max_length=255)
+    linked = models.BooleanField(default=False)
+    sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
+    processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
+                                         default=PROCESSING_STATUS_CHOICES[0][0]) 
+
+    class Meta:
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return 'Proposal {} - Referral {}'.format(self.proposal.id,self.id)
+    
+    # Methods
+
+    def send_email(self,request):
+        pass
+
+    def recall(self,request):
+        self.processing_status = 'recalled'
+        # TODO create action for recalling
+        #self.save()
+
+    def resend(self,request):
+        self.send_email()
+
+    # Properties
+    @property
+    def region(self):
+        return self.proposal.region
+
+    @property
+    def activity(self):
+        return self.proposal.activity
+
+    @property
+    def title(self):
+        return self.proposal.title
+
+    @property
+    def applicant(self):
+        return self.proposal.applicant.get_full_name()
 @receiver(pre_delete, sender=Proposal)
 def delete_documents(sender, instance, *args, **kwargs):
     for document in instance.documents.all():
