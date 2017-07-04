@@ -8,8 +8,10 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 
 from datetime import datetime, timedelta
 
-from disturbance.helpers import is_officer
+from disturbance.helpers import is_officer, is_departmentUser
 from disturbance.forms import *
+from disturbance.components.proposals.models import Referral
+from disturbance.components.proposals.mixins import ReferralOwnerMixin
 
 
 class InternalView(UserPassesTestMixin, TemplateView):
@@ -33,13 +35,17 @@ class ExternalView(LoginRequiredMixin, TemplateView):
         context['dev_url'] = settings.DEV_STATIC_URL
         return context
 
+class ReferralView(ReferralOwnerMixin, DetailView):
+    model = Referral
+    template_name = 'disturbance/dash/index.html'
+
 
 class DisturbanceRoutingView(TemplateView):
     template_name = 'disturbance/index.html'
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            if is_officer(self.request.user):
+            if is_officer(self.request.user) or is_departmentUser(self.request.user):
                 return redirect('internal')
             return redirect('external')
         kwargs['form'] = LoginForm

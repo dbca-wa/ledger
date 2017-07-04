@@ -15,6 +15,9 @@ def belongs_to(user, group_name):
 def is_officer(user):
     return user.is_authenticated() and (belongs_to(user, 'Disturbance Officers') or user.is_superuser)
 
+def is_departmentUser(user):
+    domain = user.email.split('@')[1]
+    return user.is_authenticated() and (domain == 'dpaw.wa.gov.au' or domain == 'dbca.wa.gov.au')
 
 def is_customer(user):
     """

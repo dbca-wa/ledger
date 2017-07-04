@@ -172,3 +172,6 @@ class ProposalLogEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProposalLogEntry
         fields = '__all__'
+
+class SendReferralSerializer(serializers.Serializer):
+    email = serializers.EmailField()

@@ -14,6 +14,8 @@ from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from ledger.licence.models import  Licence
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction
+from disturbance.components.main.utils import get_department_user
+from disturbance.components.proposals.email import send_referral_email_notification
 
 class ProposalType(models.Model):
     schema = JSONField()
@@ -183,20 +185,33 @@ class Proposal(RevisionedMixin):
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
-    def send_referral(self,request,referral_to):
+    def send_referral(self,request,referral_email):
         with transaction.atomic():
             self.processing_status = 'with_referral'
             self.save()
-            # Create Referral
-            Referral.objects.create(
-                proposal = self,
-                referral_email = referral_to['email'],
-                referral_name = referral_to['name'] 
-            )
+            referral = None
+            # Validate if it is a deparment user
+            department_user = get_department_user(referral_email)
+            if not department_user:
+                raise ValidationError('The user you want to send the referral to is not a member of the department')
+            # Check if the user is in ledger or create
+            user,created = EmailUser.objects.get_or_create(email=department_user['email'])
+            try:
+                Referral.objects.get(referral=user,proposal=self)
+                raise ValidationError('A referral has already been sent to this user')
+            except Referral.DoesNotExist:
+                # Create Referral
+                referral = Referral.objects.create(
+                    proposal = self,
+                    referral=user,
+                    sent_by=request.user 
+                )
             # Create a log entry for the proposal
-            self.log_user_action(ProposalUserAction.ACTION_SEND_FOR_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(referral_to['full_name'],referral_to['email'])),request)
+            self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
             # Create a log entry for the organisation
-            self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_FOR_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(referral_to['full_name'],referral_to['email'])),request)
+            self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
+            # send email
+            send_referral_email_notification(referral,request)
 
 class ProposalLogEntry(CommunicationsLogEntry):
     proposal = models.ForeignKey(Proposal, related_name='comms_logs')
@@ -360,8 +375,8 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CONDITION_ = "Create requirement {}"
     ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
     ACTION_DISCARD_APPLICATION = "Discard proposal {}"
-    ACTION_SEND_FOR_REFERRAL_TO_ = "Send referral {} for proposal {} to {}"
-    ACTION_RESEND__REFERRAL_TO_ = "Resend referral {} for proposal {} to {}"
+    ACTION_SEND_REFERRAL_TO = "Send referral {} for proposal {} to {}"
+    ACTION_RESEND_REFERRAL_TO = "Resend referral {} for proposal {} to {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
@@ -394,8 +409,6 @@ class Referral(models.Model):
     proposal = models.ForeignKey(Proposal,related_name='referrals')
     sent_by = models.ForeignKey(EmailUser,related_name='disturbance_assessor_referrals')
     referral = models.ForeignKey(EmailUser,null=True,blank=True,related_name='disturbance_referalls')
-    referral_email = models.EmailField()
-    referral_name = models.CharField(max_length=255)
     linked = models.BooleanField(default=False)
     sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,

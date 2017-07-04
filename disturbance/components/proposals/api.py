@@ -36,6 +36,7 @@ from disturbance.components.proposals.models import (
 )
 
 from disturbance.components.proposals.serializers import (
+    SendReferralSerializer,
     ProposalTypeSerializer,
     ProposalSerializer,
     InternalProposalSerializer,
@@ -123,6 +124,27 @@ class ProposalViewSet(viewsets.ModelViewSet):
         instance.submit(request)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    @detail_route(methods=['post'])
+    def assesor_send_referral(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = SendReferralSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance.send_referral(request,serializer.validated_data['email'])
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e.error_list))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))

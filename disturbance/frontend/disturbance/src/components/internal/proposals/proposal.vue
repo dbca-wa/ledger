@@ -67,11 +67,11 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Referrals</strong><br/>
                                 <div class="form-group">
-                                    <select :disabled="isFinalised || proposal.can_user_edit" ref="department_users" class="form-control" v-model="proposal.assigned_officer">
+                                    <select :disabled="isFinalised || proposal.can_user_edit" ref="department_users" class="form-control">
                                         <option value="null"></option>
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="assignMyself()" class="actionBtn pull-right">Send</a>
+                                    <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
                                 </div>
                                 <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
                             </div>
@@ -84,7 +84,7 @@
                                     <select v-show="isLoading" class="form-control">
                                         <option value="">Loading...</option>
                                     </select>
-                                    <select @change="assignTo" :disabled="isFinalised" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
+                                    <select @change="assignTo" ref="assigned_officer" :disabled="isFinalised" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
                                         <option value="null">Unassigned</option>
                                         <option v-for="member in members" :value="member.id">{{member.name}}</option>
                                     </select>
@@ -268,6 +268,7 @@ export default {
             contactsBody: 'contactsBody'+vm._uid,
             "proposal": null,
             "loading": [],
+            selected_referral: '',
             form: null,
             members: [],
             department_users : [],
@@ -581,9 +582,53 @@ export default {
                     "theme": "bootstrap",
                     allowClear: true,
                     placeholder:"Select Referral"
-                })
+                }).
+                on("select2:select",function (e) {
+                    var selected = $(e.currentTarget);
+                    vm.selected_referral = selected.val();
+               }).
+               on("select2:unselect",function (e) {
+                    var selected = $(e.currentTarget);
+                    vm.selected_referral = selected.val();
+               });
+                // Assigned officer select
+                $(vm.$refs.assigned_officer).select2({
+                    "theme": "bootstrap",
+                    allowClear: true,
+                    placeholder:"Select Officer"
+                }).
+                on("select2:select",function (e) {
+                   var selected = $(e.currentTarget);
+                   vm.$emit('input',selected[0])
+               }).
+               on("select2:unselect",function (e) {
+                    var selected = $(e.currentTarget);
+                    vm.$emit('input',selected[0])
+               });
                 vm.initialisedSelects = true;
             }
+        },
+        sendReferral: function(){
+            let vm = this;
+
+            let data = {'email':vm.selected_referral};
+            vm.sendingReferral = true;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
+                emulateJSON:true
+            }).then((response) => {
+                vm.sendingReferral = false;
+                vm.org = response.body;
+                if (vm.org.address == null){ vm.org.address = {}; }
+                swal(
+                    'Referral Sent',
+                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+                    'success'
+                )
+            }, (error) => {
+                console.log(error);
+                vm.sendingReferral = false;
+            });
+            
         }
     },
     mounted: function() {
