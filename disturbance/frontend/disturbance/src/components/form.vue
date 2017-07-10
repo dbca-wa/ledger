@@ -76,7 +76,7 @@
         render(h) {
             let vm =this;
             //Renderer.sections = [];
-            Renderer.store_status_data(vm.proposal.readonly,vm.proposal.assessor_data,vm.proposal.assessor,vm.proposal.assessor_mode,vm.proposal.can_user_edit);
+            Renderer.store_status_data(vm.proposal.readonly,vm.proposal.assessor_data,vm.proposal.current_assessor,vm.proposal.assessor_mode,vm.proposal.can_user_edit);
             if (vm.withSectionsSelector){
                 return (
                     <div>

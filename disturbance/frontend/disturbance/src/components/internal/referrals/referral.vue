@@ -1,5 +1,5 @@
 <template lang="html">
-    <div v-if="proposal" class="container" id="internalProposal">
+    <div v-if="proposal" class="container" id="internalReferral">
             <div class="row">
         <h3>Proposal: {{ proposal.id }}</h3>
         <div class="col-md-3">
@@ -78,19 +78,6 @@
                             <div class="col-sm-12">
                                 <div class="separator"></div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s">
-                                <strong>Currently assigned to</strong><br/>
-                                <div class="form-group">
-                                    <select v-show="isLoading" class="form-control">
-                                        <option value="">Loading...</option>
-                                    </select>
-                                    <select @change="assignTo" ref="assigned_officer" :disabled="isFinalised" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
-                                        <option value="null">Unassigned</option>
-                                        <option v-for="member in members" :value="member.id">{{member.name}}</option>
-                                    </select>
-                                    <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
-                                </div>
-                            </div>
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
                                 <div class="row">
                                     <div class="col-sm-12">
@@ -99,17 +86,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="">Enter Requirements</button><br/>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="proposedDecline()">Decline</button>
+                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="">Complete Referral</button>
                                     </div>
                                 </div>
                             </div>
@@ -242,15 +219,11 @@
             </div>
         </div>
         </div>
-        <ProposedDecline ref="proposed_decline" :proposal_id="proposal.id"></ProposedDecline>
-        <AmmendmentRequest ref="ammendment_request" :proposal_id="proposal.id"></AmmendmentRequest>
     </div>
 </template>
 <script>
 import Proposal from '../../form.vue'
 import Vue from 'vue'
-import ProposedDecline from './proposal_proposed_decline.vue'
-import AmmendmentRequest from './ammendment_request.vue'
 import datatable from '@vue-utils/datatable.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
@@ -259,7 +232,7 @@ import {
 }
 from '@/utils/hooks'
 export default {
-    name: 'InternalProposal',
+    name: 'Referral',
     data: function() {
         let vm = this;
         return {
@@ -465,8 +438,6 @@ export default {
     components: {
         Proposal,
         datatable,
-        ProposedDecline,
-        AmmendmentRequest
     },
     filters: {
         formatDate: function(data){
@@ -661,7 +632,7 @@ export default {
         });
     },
     beforeRouteEnter: function(to, from, next) {
-          Vue.http.get(`/api/proposal/${to.params.proposal_id}/internal_proposal.json`).then(res => {
+          Vue.http.get(`/api/proposal/${to.params.proposal_id}/referral_proposal.json`).then(res => {
               next(vm => {
                 vm.proposal = res.body;
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
@@ -672,7 +643,7 @@ export default {
             });
     },
     beforeRouteUpdate: function(to, from, next) {
-          Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
+          Vue.http.get(`/api/proposal/${to.params.proposal_id}/referall_proposal.json`).then(res => {
               next(vm => {
                 vm.proposal = res.body;
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};

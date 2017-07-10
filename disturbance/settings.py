@@ -45,6 +45,12 @@ BOOTSTRAP3 = {
     'required_css_class': 'required-form-field',
     'set_placeholder': False,
 }
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'disturbance', 'cache'),
+    }
+}
 STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'disturbance', 'static')))
 DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')

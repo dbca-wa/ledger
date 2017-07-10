@@ -18,7 +18,7 @@ module.exports = {
         var is_readonly = this.status_data.readonly;
         var assessorStatus = this.status_data.assessorStatus;
         var assessorData = this.status_data.assessorData;
-        var assessorEmail = this.status_data.assessorEmail;
+        var assessorInfo = this.status_data.assessorInfo;
         var assessorMode = false; 
         var assessorLevel = '';
         var readonly = false;
@@ -169,7 +169,7 @@ module.exports = {
             return "";
         }
         if (assessorMode && c.canBeEditedByAssessor){
-            var boxes = this.generateAssessorTextBoxes(h,c,val,assessorLevel,assessorData,assessorEmail);
+            var boxes = this.generateAssessorTextBoxes(h,c,val,assessorLevel,assessorData,assessorInfo);
             // Merge assessor boxes to _elements array
             Array.prototype.push.apply(_elements,boxes);
         }
@@ -219,9 +219,8 @@ module.exports = {
         return this.sections;
     },
     sections:[],
-    generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data,assessor_email){
+    generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data,assessor_info){
         var boxes = [];
-
         if (!this.status_data.can_user_edit){
             if (assessor_data){
                 var _dt = assessor_data.find(at => at.name == c.name)
@@ -232,13 +231,25 @@ module.exports = {
                 boxes.push(
                     <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
                 )
+                // Referral Data
+                var current_referral_present = false;
                 $.each(_dt.referrals,(i,v)=> {
-                    var readonly = v.email != assessor_email ? true : false;
+                    if (v.email == assessor_info.email){ current_referral_present = true; }
+                    var readonly = v.email == assessor_info.email && assessor_mode == 'referral' ? false : true;
                     var referral_name = `${c.name}-Referral-${v.email}`;
                     boxes.push(
                         <AssessorText type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
                     )
                 });
+                if (!current_referral_present){
+                    // Add Referral Box 
+                    var referral_name = `${c.name}-Referral-${assessor_info.email}`;
+                    var referral_visibility = assessor_mode != 'referral' ? true : false;
+                    var referral_label = `${assessor_info.name}`;
+                    boxes.push(
+                        <AssessorText type="text" name={referral_name} value={assessor_val} label={referral_label} readonly={referral_visibility}/>
+                    )
+                }
             }
             else{
                 if (assessor_mode == 'assessor'){
@@ -246,6 +257,21 @@ module.exports = {
                     var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
                     boxes.push(
                         <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+                    )
+                }
+                else if (assessor_mode == 'referral'){
+                    // Add Assessor Box
+                    var name = `${c.name}-Assessor`;
+                    var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
+                    boxes.push(
+                        <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+                    )
+                    // Add Referral Box
+                    var referral_name = `${c.name}-Referral-${assessor_info.email}`;
+                    var referral_visibility = assessor_mode != 'referral' ? true : false;
+                    var referral_label = `${assessor_info.name}`;
+                    boxes.push(
+                        <AssessorText type="text" name={referral_name} value={val} label={referral_label} readonly={referral_visiblity}/>
                     )
                 }
             }
@@ -260,7 +286,7 @@ module.exports = {
         this.status_data = {
             'readonly': readonly,
             'assessorData': assessorData,
-            'assessorEmail': assessorEmail,
+            'assessorInfo': assessorEmail,
             'assessorStatus': assessorMode,
             'can_user_edit': can_user_edit
         }

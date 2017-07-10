@@ -9,6 +9,7 @@ module.exports = {
     countries: "https://restcountries.eu/rest/v1/?fullText=true",
     proposal_type:"/api/proposal_type",
     proposals:"/api/proposal.json",
+    referrals:"/api/referrals.json",
     discard_proposal:function (id) {
       return `/api/proposal/${id}.json`;
     }

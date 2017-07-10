@@ -5,6 +5,7 @@ from disturbance.components.proposals.models import (
                                     Proposal,
                                     ProposalUserAction,
                                     ProposalLogEntry,
+                                    Referral
                                 )
 from disturbance.components.organisations.models import (
                                 Organisation
@@ -143,7 +144,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     def __init__(self,*args,**kwargs):
         super(InternalProposalSerializer, self).__init__(*args, **kwargs)
         self.fields['assessor_mode'] = serializers.SerializerMethodField()
-        self.fields['user_email'] = serializers.SerializerMethodField()
+        self.fields['current_assessor'] = serializers.SerializerMethodField()
         self.fields['assessor_data'] = serializers.SerializerMethodField()
         
 
@@ -157,11 +158,22 @@ class InternalProposalSerializer(BaseProposalSerializer):
     def get_readonly(self,obj):
         return True
     
-    def get_user_email(self,obj):
-        return self.context['request'].user.email
+    def get_current_assessor(self,obj):
+        return {
+            'name': self.context['request'].user.get_full_name(),
+            'email': self.context['request'].user.email
+        }
 
     def get_assessor_data(self,obj):
         return obj.assessor_data
+
+class ReferralProposalSerializer(InternalProposalSerializer):
+    def get_assessor_mode(self,obj):
+        # TODO check if the proposal has been accepted or declined
+        return {
+            'assessor_mode': True,
+            'assessor_level': 'referral'
+        }
 
 class ProposalUserActionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -175,3 +187,23 @@ class ProposalLogEntrySerializer(serializers.ModelSerializer):
 
 class SendReferralSerializer(serializers.Serializer):
     email = serializers.EmailField()
+
+class DTReferralSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Referral
+        fields = (
+            'id',
+            'region',
+            'activity',
+            'title',
+            'applicant',
+            'processing_status',
+            'lodged_on',
+            'proposal',
+            'can_be_processed'
+        ) 
+
+class ReferralSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Referral
+        fields = '__all__'

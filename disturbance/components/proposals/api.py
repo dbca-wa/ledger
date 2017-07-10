@@ -32,7 +32,8 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from disturbance.components.proposals.models import (
     ProposalType,
-    Proposal
+    Proposal,
+    Referral,
 )
 
 from disturbance.components.proposals.serializers import (
@@ -44,6 +45,9 @@ from disturbance.components.proposals.serializers import (
     DTProposalSerializer,
     ProposalUserActionSerializer,
     ProposalLogEntrySerializer,
+    DTReferralSerializer,
+    ReferralSerializer,
+    ReferralProposalSerializer,
 )
 
 
@@ -119,6 +123,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
+    def referral_proposal(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ReferralProposalSerializer(instance,context={'request':request})
+        return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
     def submit(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.submit(request)
@@ -141,7 +151,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
             if hasattr(e,'error_dict'):
                 raise serializers.ValidationError(repr(e.error_dict))
             else:
-                raise serializers.ValidationError(repr(e.error_list))
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -247,3 +258,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+class ReferralViewSet(viewsets.ModelViewSet):
+    queryset = Referral.objects.all()
+    serializer_class = ReferralSerializer
+
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        qs = self.get_queryset().filter(referral=request.user)
+        serializer = DTReferralSerializer(qs, many=True)
+        return Response(serializer.data)

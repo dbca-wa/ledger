@@ -159,6 +159,11 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <datatable ref="referral_datatable" id="referral_datatable" :dtOptions="referral_options" :dtHeaders="referral_headers"/>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -227,6 +232,34 @@ export default {
                   mRender:function (data,type,full) {
                         let links = '';
                         links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                        return links;
+                  }
+              }
+          ],
+          processing: true
+      },
+      referral_headers:["Number","Region","Activity","Title","Proponent","Status","Logded on","Action"],
+      referral_options:{
+          language: {
+              processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+          },
+          responsive: true,
+          ajax: {
+              "url": helpers.add_endpoint_json(api_endpoints.referrals,'user_list'),
+              "dataSrc": ''
+          },
+          columns: [
+              {data: "id"},
+              {data: "region"},
+              {data: "activity"},
+              {data: "title"},
+              {data: "applicant"},
+              {data: "processing_status"},
+              {data: "lodged_on"},
+              {
+                  mRender:function (data,type,full) {
+                        let links = '';
+                        links +=  full.can_be_processed ? `<a href='/internal/proposal/${full.proposal}/referral/${full.id}'>Process</a><br/>`: `<a href='/internal/proposal/${full.proposal}/referral/${full.id}'>View</a><br/>`;
                         return links;
                   }
               }

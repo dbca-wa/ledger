@@ -25,12 +25,9 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Region</label>
-                                <select v-show="isLoading" class="form-control">
-                                    <option value="">Loading...</option>
-                                </select>
-                                <select v-if="!isLoading" class="form-control" v-model="filterProposalRegion">
+                                <select class="form-control" v-model="filterProposalRegion">
                                     <option value="All">All</option>
-                                    <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
+                                    <option v-for="r in proposal_regions" :value="r">{{r}}</option>
                                 </select>
                             </div>
                         </div>
@@ -39,7 +36,7 @@
                                 <label for="">Activity</label>
                                 <select class="form-control" v-model="filterProposalActivity">
                                     <option value="All">All</option>
-                                    <option v-for="a in activityTitles" :value="a">{{a}}</option>
+                                    <option v-for="a in proposal_activityTitles" :value="a">{{a}}</option>
                                 </select>
                             </div>
                         </div>
@@ -59,7 +56,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <label for="">Expiry From</label>
-                            <div class="input-group date" id="booking-date-from">
+                            <div class="input-group date" ref="proposalDateFromPicker">
                                 <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
                                 <span class="input-group-addon">
                                     <span class="glyphicon glyphicon-calendar"></span>
@@ -68,7 +65,7 @@
                         </div>
                         <div class="col-md-3">
                             <label for="">Expiry To</label>
-                            <div class="input-group date" id="booking-date-from">
+                            <div class="input-group date" ref="proposalDateToPicker">
                                 <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
                                 <span class="input-group-addon">
                                     <span class="glyphicon glyphicon-calendar"></span>
@@ -80,7 +77,7 @@
                                 <label for="">Submitter</label>
                                 <select class="form-control" v-model="filterProposalSubmitter">
                                     <option value="">Select Submitter</option>
-                                    <option v-for="s in submitters" :value="s.search_term">{{s.search_term}}</option>
+                                    <option v-for="s in proposal_submitters" :value="s.search_term">{{s.search_term}}</option>
                                 </select>
                             </div>
                         </div>
@@ -191,9 +188,6 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Activity</label>
-                                <select v-show="isLoading" class="form-control" name="">
-                                    <option value="">Loading...</option>
-                                </select>
                                 <select v-if="!isLoading" class="form-control" v-model="filterComplianceActivity">
                                     <option value="All">All</option>
                                     <option v-for="region in regions" :value="region.id">{{region.name}}</option>
@@ -245,36 +239,44 @@ import {
 }
 from '@/utils/hooks'
 export default {
-  name: 'ExternalDashboard',
-  data() {
-    let vm = this;
-    return {
-      aBody: 'aBody' + vm._uid,
-      pBody: 'pBody' + vm._uid,
-      cBody: 'cBody' + vm._uid,
-      loading: [],
-      // Filters for Proposals
-      filterProposalRegion: '',
-      filterProposalActivity: 'All',
-      filterProposalStatus: 'All',
-      filterProposalLodgedFrom: '',
-      filterProposalLodgedTo: '',
-      filterProposalSubmitter: '',
-      // Filters for Approvals
-      filterApprovalRegion: '',
-      filterApprovalActivity: '',
-      filterApprovalStatus: 'All',
-      filterApprovalExpiryFrom: '',
-      filterApprovalExpiryTo: '',
-      // Filters for Compliance
-      filterComplianceRegion: '',
-      filterComplianceActivity: '',
-      filterComplianceStatus: 'All',
-      filterComplianceDueFrom: '',
-      filterComplianceDueTo: '',
-      //
-      activityTitles : [],
-      submitters: [],
+    name: 'ExternalDashboard',
+    data() {
+        let vm = this;
+        return {
+        aBody: 'aBody' + vm._uid,
+        pBody: 'pBody' + vm._uid,
+        cBody: 'cBody' + vm._uid,
+        loading: [],
+        // Filters for Proposals
+        filterProposalRegion: 'All',
+        filterProposalActivity: 'All',
+        filterProposalStatus: 'All',
+        filterProposalLodgedFrom: '',
+        filterProposalLodgedTo: '',
+        filterProposalSubmitter: '',
+        // Filters for Approvals
+        filterApprovalRegion: '',
+        filterApprovalActivity: '',
+        filterApprovalStatus: 'All',
+        filterApprovalExpiryFrom: '',
+        filterApprovalExpiryTo: '',
+        // Filters for Compliance
+        filterComplianceRegion: '',
+        filterComplianceActivity: '',
+        filterComplianceStatus: 'All',
+        filterComplianceDueFrom: '',
+        filterComplianceDueTo: '',
+        //
+        datepickerOptions:{
+            format: 'DD/MM/YYYY',
+            showClear:true,
+            useCurrent:false,
+            keepInvalid:true,
+            allowInputToggle:true
+        },
+      proposal_activityTitles : [],
+      proposal_regions: [],
+      proposal_submitters: [],
       proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
       proposal_options:{
           language: {
@@ -318,14 +320,28 @@ export default {
           ],
           processing: true,
           initComplete: function () {
-            // Grab Titles from the data in the table
+            // Grab Regions from the data in the table
+            var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
+            regionColumn.data().unique().sort().each( function ( d, j ) {
+                let regionTitles = [];
+                $.each(d,(index,a) => {
+                    // Split region string to array
+                    if (a != null){
+                        $.each(a.split(','),(i,r) => {
+                            r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
+                        });
+                    }
+                })
+                vm.proposal_regions = regionTitles;
+            });
+            // Grab Activity from the data in the table
             var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
             titleColumn.data().unique().sort().each( function ( d, j ) {
                 let activityTitles = [];
                 $.each(d,(index,a) => {
-                    a != null ? activityTitles.push(a): '';
+                    a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
                 })
-                vm.activityTitles = activityTitles;
+                vm.proposal_activityTitles = activityTitles;
             });
             // Grab submitters from the data in the table
             var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
@@ -339,7 +355,7 @@ export default {
                         });
                     }
                 });
-                vm.submitters = submitters;
+                vm.proposal_submitters = submitters;
             });
          }
       }
@@ -379,7 +395,31 @@ export default {
           },(error) => {
 
           });
-      }
+        },
+        addEventListeners: function(){
+            let vm = this;
+            // Initialise Proposal Date Filters
+            $(vm.$refs.proposalDateToPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.proposalDateToPicker).on('dp.change', function(e){
+                if ($(vm.$refs.proposalDateToPicker).data('DateTimePicker').date()) {
+                    vm.filterProposalLodgedTo =  e.date.format('DD/MM/YYYY');
+                }
+                else if ($(vm.$refs.proposalDateToPicker).data('date') === "") {
+                    vm.filterProposaLodgedTo = "";
+                }
+             });
+            $(vm.$refs.proposalDateFromPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.proposalDateFromPicker).on('dp.change',function (e) {
+                if ($(vm.$refs.proposalDateFromPicker).data('DateTimePicker').date()) {
+                    vm.filterProposalLodgedFrom = e.date.format('DD/MM/YYYY');
+                    $(vm.$refs.proposalDateToPicker).data("DateTimePicker").minDate(e.date);
+                }
+                else if ($(vm.$refs.proposalDateFromPicker).data('date') === "") {
+                    vm.filterProposalLodgedFrom = "";
+                }
+            });
+            // End Proposal Date Filters
+        }
   },
   mounted: function () {
       let vm =this;
@@ -398,6 +438,7 @@ export default {
             var id = $(this).attr('data-discard-proposal');
             vm.discardProposal(id);
         });
+        vm.addEventListeners();
   }
 }
 </script>
