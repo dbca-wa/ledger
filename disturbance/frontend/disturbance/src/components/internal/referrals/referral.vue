@@ -73,6 +73,19 @@
                                     </select>
                                     <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
                                 </div>
+                                <table class="table small-table">
+                                    <tr>
+                                        <th>Referral</th>
+                                        <th>Status/Action</th>
+                                    </tr>
+                                    <tr v-for="r in proposal.latest_referrals">
+                                        <td>
+                                            {{r.referral}}<br/>
+                                            {{r.lodged_on | formatDate}}
+                                        </td>
+                                        <td>{{r.processing_status}}</td>
+                                    </tr>
+                                </table>
                                 <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
                             </div>
                             <div class="col-sm-12">
