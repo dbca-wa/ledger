@@ -150,8 +150,11 @@ class InternalProposalSerializer(BaseProposalSerializer):
 
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
         return {
             'assessor_mode': True,
+            'assessor_can_assess': obj.can_assess(user), 
             'assessor_level': 'assessor'
         }
 

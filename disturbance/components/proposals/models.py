@@ -9,6 +9,7 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
 from taggit.managers import TaggableManager
+from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from ledger.licence.models import  Licence
@@ -21,6 +22,57 @@ class ProposalType(models.Model):
     schema = JSONField()
     activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
     site = models.OneToOneField(Site, default='1')
+
+    class Meta:
+        app_label = 'disturbance'
+
+
+class TaggedProposalAssessorGroupRegions(TaggedItemBase):
+    content_object = models.ForeignKey("ProposalAssessorGroup")
+
+    class Meta:
+        app_label = 'disturbance'
+
+class TaggedProposalAssessorGroupActivities(TaggedItemBase):
+    content_object = models.ForeignKey("ProposalAssessorGroup")
+
+    class Meta:
+        app_label = 'disturbance'
+
+class ProposalAssessorGroup(models.Model):
+    name = models.CharField(max_length=255)
+    members = models.ManyToManyField(EmailUser,blank=True)
+    regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalAssessorGroupRegions,related_name = "+",blank=True)
+    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalAssessorGroupActivities,related_name = "+",blank=True)
+    default = models.BooleanField(default=False)
+
+    class Meta:
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        try:
+            default = ProposalAssessorGroup.objects.get(default=True)
+        except ProposalAssessorGroup.DoesNotExist:
+            default = None
+
+        if self.pk:
+            if int(self.pk) != int(default.id):
+                if default and self.default:
+                    raise ValidationError('There can only be one default proposal assessor group')
+        else:
+            if default and self.default:
+                raise ValidationError('There can only be one default proposal assessor group')
+
+    @property
+    def all_members(self):
+        all_members = []
+        all_members.extend(self.members.all())
+        member_ids = [m.id for m in self.members.all()]
+        all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
+        return all_members
 
     class Meta:
         app_label = 'disturbance'
@@ -167,6 +219,14 @@ class Proposal(RevisionedMixin):
         :return:
         """
         return self.customer_status == 'draft' and not self.lodgement_number
+
+    def can_assess(self,user):
+        exists = False
+        default_group = ProposalAssessorGroup.objects.get(default=True)
+        if default_group in user.proposalassessorgroup_set.all():
+            exists = True
+ 
+        return exists
 
     def log_user_action(self, action, request):
         return ProposalUserAction.log_action(self, action, request.user)

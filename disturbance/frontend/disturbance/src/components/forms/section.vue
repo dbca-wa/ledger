@@ -32,7 +32,6 @@ export default {
         let vm = this;
         vm.$nextTick(()=>{
             if (!vm.eventInitialised){
-                console.log('here');
                 $('.panelClicker[data-toggle="collapse"]').on('click',function () {
                     var chev = $(this).children()[0];
                     window.setTimeout(function () {

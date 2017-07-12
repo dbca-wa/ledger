@@ -71,7 +71,7 @@
                                         <option value="null"></option>
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                    <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
                                 </div>
                                 <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
                             </div>
@@ -84,14 +84,14 @@
                                     <select v-show="isLoading" class="form-control">
                                         <option value="">Loading...</option>
                                     </select>
-                                    <select @change="assignTo" ref="assigned_officer" :disabled="isFinalised" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
+                                    <select @change="assignTo" ref="assigned_officer" :disabled="isFinalised || !canAssess" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
                                         <option value="null">Unassigned</option>
                                         <option v-for="member in members" :value="member.id">{{member.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
+                                    <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
+                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAssess">
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Action</strong><br/>
@@ -230,7 +230,7 @@
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
-                                <div v-if="!proposal.can_user_edit" class="row" style="margin-bottom:20px;">
+                                <div v-if="!proposal.can_user_edit && canAssess" class="row" style="margin-bottom:20px;">
                                   <div class="col-lg-12 pull-right">
                                     <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
                                   </div>
@@ -490,6 +490,9 @@ export default {
         },
         isFinalised: function(){
             return this.proposal.processing_status == 'Declined' || this.proposal.status == 'Approved';
+        },
+        canAssess: function(){
+            return this.proposal && this.proposal.assessor_mode.assessor_can_assess ? true : false;
         }
     },
     methods: {
@@ -529,17 +532,14 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.proposal.id+'/assign_to')),JSON.stringify(data),{
                     emulateJSON:true
                 }).then((response) => {
-                    console.log(response);
                     vm.proposal = response.body;
                 }, (error) => {
                     console.log(error);
                 });
-                console.log('there');
             }
             else{
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.proposal.id+'/unassign')))
                 .then((response) => {
-                    console.log(response);
                     vm.proposal = response.body;
                 }, (error) => {
                     console.log(error);
