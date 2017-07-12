@@ -67,7 +67,7 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Referrals</strong><br/>
                                 <div class="form-group">
-                                    <select :disabled="isFinalised || proposal.can_user_edit" ref="department_users" class="form-control">
+                                    <select :disabled="isFinalised || proposal.can_user_edit || !canAssess" ref="department_users" class="form-control">
                                         <option value="null"></option>
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
