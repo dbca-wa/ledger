@@ -276,7 +276,7 @@ module.exports = {
                     var referral_visibility = assessor_mode != 'referral' ? true : false;
                     var referral_label = `${assessor_info.name}`;
                     boxes.push(
-                        <AssessorText type="text" name={referral_name} value={val} label={referral_label} readonly={referral_visiblity}/>
+                        <AssessorText type="text" name={referral_name} value={val} label={referral_label} readonly={referral_visibility}/>
                     )
                 }
             }

@@ -187,6 +187,7 @@ class ReferralProposalSerializer(InternalProposalSerializer):
         # TODO check if the proposal has been accepted or declined
         return {
             'assessor_mode': True,
+            #'assessor_can_assess': obj.can_assess_referral(user), 
             'assessor_level': 'referral'
         }
 
