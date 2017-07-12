@@ -133,6 +133,18 @@ class ApplicantSerializer(serializers.ModelSerializer):
                     'phone_number',
                 )
 
+class ReferralSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Referral
+        fields = '__all__'
+
+class ProposalReferralSerializer(ReferralSerializer):
+    referral = serializers.CharField(source='referral.get_full_name')
+    processing_status = serializers.CharField(source='get_processing_status_display')
+    class Meta:
+        model = Referral
+        fields = '__all__'
+
 class InternalProposalSerializer(BaseProposalSerializer):
     applicant = ApplicantSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)
@@ -146,8 +158,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
         self.fields['assessor_mode'] = serializers.SerializerMethodField()
         self.fields['current_assessor'] = serializers.SerializerMethodField()
         self.fields['assessor_data'] = serializers.SerializerMethodField()
+        self.fields['latest_referrals'] = ProposalReferralSerializer(many=True) 
         
-
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
         request = self.context['request']
@@ -206,7 +218,3 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'can_be_processed'
         ) 
 
-class ReferralSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Referral
-        fields = '__all__'

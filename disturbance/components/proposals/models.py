@@ -220,6 +220,10 @@ class Proposal(RevisionedMixin):
         """
         return self.customer_status == 'draft' and not self.lodgement_number
 
+    @property
+    def latest_referrals(self):
+        return self.referrals.all()[:2]
+
     def can_assess(self,user):
         exists = False
         default_group = ProposalAssessorGroup.objects.get(default=True)
@@ -479,6 +483,7 @@ class Referral(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+        ordering = ('-lodged_on',)
 
     def __str__(self):
         return 'Proposal {} - Referral {}'.format(self.proposal.id,self.id)
