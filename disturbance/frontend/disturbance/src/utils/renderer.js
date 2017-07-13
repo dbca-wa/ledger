@@ -41,17 +41,17 @@ module.exports = {
         switch (c.type) {
             case 'text':
                 _elements.push(
-                    <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} readonly={readonly}/>
+                    <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly}/>
                 )
                 break;
             case 'number':
                 _elements.push(
-                    <TextField type="number" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} readonly={readonly}/>
+                    <TextField type="number" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly}/>
                 )
                 break;
             case 'email':
                 _elements.push(
-                    <TextField type="email" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} readonly={readonly}/>
+                    <TextField type="email" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly}/>
                 )
                 break;
             case 'select':
