@@ -81,22 +81,17 @@ class Proposal(RevisionedMixin):
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('under_review', 'Under Review'),
                                ('with_assessor', 'With Assesor'),
-                               ('id_required', 'Identification Required'),
-                               ('returns_required', 'Returns Completion Required'),
                                ('amendment_required', 'Amendment Required'),
-                               ('id_and_amendment_required', 'Identification/Amendments Required'),
-                               ('id_and_returns_required', 'Identification/Returns Required'),
-                               ('returns_and_amendment_required', 'Returns/Amendments Required'),
-                               ('id_and_returns_and_amendment_required', 'Identification/Returns/Amendments Required'),
                                ('approved', 'Approved'),
                                ('declined', 'Declined'),
                                ('discarded', 'Discarded'),
                                )
 
     # List of statuses from above that allow a customer to edit an application.
-    CUSTOMER_EDITABLE_STATE = ['temp', 'draft', 'amendment_required', 'id_and_amendment_required',
-                               'returns_and_amendment_required',
-                               'id_and_returns_and_amendment_required']
+    CUSTOMER_EDITABLE_STATE = ['temp',
+                                'draft',
+                                'amendment_required',
+                            ]
 
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['with_assessor', 'under_review', 'id_required', 'returns_required', 'approved', 'declined']

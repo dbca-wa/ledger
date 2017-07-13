@@ -193,93 +193,7 @@
                         </div>
                     </div> 
                     <div :id="oTab" class="tab-pane fade">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                    <div class="panel-heading">
-                                        <h3 class="panel-title">Proposals
-                                            <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
-                                                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                            </a>
-                                        </h3>
-                                    </div>
-                                    <div class="panel-body collapse in" :id="pBody">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Region</label>
-                                                    <select v-show="isLoading" class="form-control">
-                                                        <option value="">Loading...</option>
-                                                    </select>
-                                                    <select v-if="!isLoading" class="form-control" v-model="filterProposalRegion">
-                                                        <option value="All">All</option>
-                                                        <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Activity</label>
-                                                    <select v-show="isLoading" class="form-control" name="">
-                                                        <option value="">Loading...</option>
-                                                    </select>
-                                                    <select v-if="!isLoading" class="form-control" v-model="filterProposalActivity">
-                                                        <option value="All">All</option>
-                                                        <option v-for="region in regions" :value="region.id">{{region.name}}</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Status</label>
-                                                    <select class="form-control" v-model="filterProposalStatus">
-                                                        <option value="All">All</option>
-                                                        <option value="current">Current</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label for="">Expiry From</label>
-                                                <div class="input-group date" id="booking-date-from">
-                                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
-                                                    <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar"></span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="">Expiry To</label>
-                                                <div class="input-group date" id="booking-date-from">
-                                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
-                                                    <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar"></span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Submitter</label>
-                                                    <select class="form-control" v-model="filterProposalSubmitter">
-                                                        <option value="">Select Submitter</option>
-                                                        <option value="current">Current</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-lg-12">
-                                                <datatable ref="proposal_datatable" id="proposal_datatable" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <ProposalDashTable ref="proposals_table" level='internal' :url='proposals_url'/>
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="panel panel-default">
@@ -434,6 +348,7 @@
 import Vue from 'vue'
 import { api_endpoints, helpers } from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
+import ProposalDashTable from '@common-utils/proposals_dashboard.vue'
 import utils from '../utils'
 import api from '../api'
 export default {
@@ -622,50 +537,8 @@ export default {
             filterComplianceStatus: 'All',
             filterComplianceDueFrom: '',
             filterComplianceDueTo: '',
-            proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
-            proposal_options:{
-                  language: {
-                      processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-                  },
-                  responsive: true,
-                  ajax: {
-                      "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/proposals') ,
-                      "dataSrc": ''
-                  },
-                  columns: [
-                      {data: "id"},
-                      {data: "region"},
-                      {data: "activity"},
-                      {data: "title"},
-                      {
-                          data: "submitter",
-                          mRender:function (data,type,full) {
-                              if (data) {
-                                   return `${data.first_name} ${data.last_name}`;
-                              }
-                             return ''
-                          }
-                      },
-                      {data: "applicant"},
-                      {data: "processing_status"},
-                      {data: "lodgement_date"},
-                      {
-                          mRender:function (data,type,full) {
-                              let links = '';
-                              if (full.processing_status == 'draft') {
-                                 links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
-                                 links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
-                              }
-                              if (full.processing_status == 'accepted' || full.processing_status == 'under review') {
-                                 links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
-                              }
-                              return links;
-                          }
-                      }
-                  ],
-                  processing: true
-            },
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
+            proposals_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/proposals'),
             contacts_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -700,6 +573,7 @@ export default {
     },
     components: {
         datatable,
+        ProposalDashTable
     },
     computed: {
         isLoading: function () {
@@ -840,6 +714,7 @@ export default {
             this.eventListeners();
             helpers.initialiseActionLogs(this._uid,vm.$refs.showActionBtn,vm.logsDtOptions,vm.logsTable);
             helpers.initialiseCommLogs(this._uid,vm.$refs.showCommsBtn,vm.commsDtOptions,vm.commsTable);
+            this.$refs.proposals_table.$refs.proposal_datatable.vmDataTable.draw(true);
         });
     }
 }

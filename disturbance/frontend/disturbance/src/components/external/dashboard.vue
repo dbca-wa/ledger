@@ -10,87 +10,7 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Proposals <small>View existing proposals and lodge new ones</small>
-                        <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body collapse in" :id="pBody">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Region</label>
-                                <select class="form-control" v-model="filterProposalRegion">
-                                    <option value="All">All</option>
-                                    <option v-for="r in proposal_regions" :value="r">{{r}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Activity</label>
-                                <select class="form-control" v-model="filterProposalActivity">
-                                    <option value="All">All</option>
-                                    <option v-for="a in proposal_activityTitles" :value="a">{{a}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Status</label>
-                                <select class="form-control" v-model="filterProposalStatus">
-                                    <option value="All">All</option>
-                                    <option value="current">Current</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label for="">Expiry From</label>
-                            <div class="input-group date" ref="proposalDateFromPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="">Expiry To</label>
-                            <div class="input-group date" ref="proposalDateToPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Submitter</label>
-                                <select class="form-control" v-model="filterProposalSubmitter">
-                                    <option value="">Select Submitter</option>
-                                    <option v-for="s in proposal_submitters" :value="s.search_term">{{s.search_term}}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <datatable ref="proposal_datatable" id="proposal_datatable" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <ProposalDashTable level='external' :url='proposals_url'/>
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
@@ -233,6 +153,7 @@
 <script>
 
 import datatable from '@/utils/vue/datatable.vue'
+import ProposalDashTable from '@common-utils/proposals_dashboard.vue'
 import {
   api_endpoints,
   helpers
@@ -247,13 +168,7 @@ export default {
         pBody: 'pBody' + vm._uid,
         cBody: 'cBody' + vm._uid,
         loading: [],
-        // Filters for Proposals
-        filterProposalRegion: 'All',
-        filterProposalActivity: 'All',
-        filterProposalStatus: 'All',
-        filterProposalLodgedFrom: '',
-        filterProposalLodgedTo: '',
-        filterProposalSubmitter: '',
+        proposals_url: helpers.add_endpoint_json(api_endpoints.proposals,'user_list'),
         // Filters for Approvals
         filterApprovalRegion: '',
         filterApprovalActivity: '',
@@ -274,95 +189,11 @@ export default {
             keepInvalid:true,
             allowInputToggle:true
         },
-      proposal_activityTitles : [],
-      proposal_regions: [],
-      proposal_submitters: [],
-      proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
-      proposal_options:{
-          language: {
-              processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-          },
-          responsive: true,
-          ajax: {
-              "url": helpers.add_endpoint_json(api_endpoints.proposals,'user_list'),
-              "dataSrc": ''
-          },
-          columns: [
-              {data: "id"},
-              {data: "region"},
-              {data: "activity"},
-              {data: "title"},
-              {
-                  data: "submitter",
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data.first_name} ${data.last_name}`+'\n'+`(${data.email})`;
-                      }
-                     return ''
-                  }
-              },
-              {data: "applicant"},
-              {data: "processing_status"},
-              {data: "lodgement_date"},
-              {
-                  mRender:function (data,type,full) {
-                      let links = '';
-                      if (full.can_user_edit) {
-                         links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
-                         links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
-                      }
-                      else if (full.can_user_view) {
-                         links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
-                      }
-                      return links;
-                  }
-              }
-          ],
-          processing: true,
-          initComplete: function () {
-            // Grab Regions from the data in the table
-            var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
-            regionColumn.data().unique().sort().each( function ( d, j ) {
-                let regionTitles = [];
-                $.each(d,(index,a) => {
-                    // Split region string to array
-                    if (a != null){
-                        $.each(a.split(','),(i,r) => {
-                            r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                        });
-                    }
-                })
-                vm.proposal_regions = regionTitles;
-            });
-            // Grab Activity from the data in the table
-            var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
-            titleColumn.data().unique().sort().each( function ( d, j ) {
-                let activityTitles = [];
-                $.each(d,(index,a) => {
-                    a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
-                })
-                vm.proposal_activityTitles = activityTitles;
-            });
-            // Grab submitters from the data in the table
-            var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
-            submittersColumn.data().unique().sort().each( function ( d, j ) {
-                var submitters = [];
-                $.each(d,(index,s) => {
-                    if (!submitters.find(submitter => submitter.email == s.email) || submitters.length == 0){
-                        submitters.push({
-                            'email':s.email,
-                            'search_term': `${s.first_name} ${s.last_name} (${s.email})`
-                        });
-                    }
-                });
-                vm.proposal_submitters = submitters;
-            });
-         }
       }
-    }
   },
   components:{
-      datatable
+      datatable,
+        ProposalDashTable
   },
   watch: {},
   computed: {
@@ -396,30 +227,6 @@ export default {
 
           });
         },
-        addEventListeners: function(){
-            let vm = this;
-            // Initialise Proposal Date Filters
-            $(vm.$refs.proposalDateToPicker).datetimepicker(vm.datepickerOptions);
-            $(vm.$refs.proposalDateToPicker).on('dp.change', function(e){
-                if ($(vm.$refs.proposalDateToPicker).data('DateTimePicker').date()) {
-                    vm.filterProposalLodgedTo =  e.date.format('DD/MM/YYYY');
-                }
-                else if ($(vm.$refs.proposalDateToPicker).data('date') === "") {
-                    vm.filterProposaLodgedTo = "";
-                }
-             });
-            $(vm.$refs.proposalDateFromPicker).datetimepicker(vm.datepickerOptions);
-            $(vm.$refs.proposalDateFromPicker).on('dp.change',function (e) {
-                if ($(vm.$refs.proposalDateFromPicker).data('DateTimePicker').date()) {
-                    vm.filterProposalLodgedFrom = e.date.format('DD/MM/YYYY');
-                    $(vm.$refs.proposalDateToPicker).data("DateTimePicker").minDate(e.date);
-                }
-                else if ($(vm.$refs.proposalDateFromPicker).data('date') === "") {
-                    vm.filterProposalLodgedFrom = "";
-                }
-            });
-            // End Proposal Date Filters
-        }
   },
   mounted: function () {
       let vm =this;
@@ -433,12 +240,6 @@ export default {
         }, 100 );
       } );
 
-      vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-discard-proposal]', function(e) {
-            e.preventDefault();
-            var id = $(this).attr('data-discard-proposal');
-            vm.discardProposal(id);
-        });
-        vm.addEventListeners();
   }
 }
 </script>

@@ -1,5 +1,5 @@
 <template lang="html">
-   <div id="DataTable">
+   <div id="DataTable" class="table-responsive">
       <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%" :id="id">
             <thead>
                 <tr>
