@@ -62,6 +62,11 @@ class GetProposalType(views.APIView):
         else:
             return Response({'error': 'There is currently no proposal type.'}, status=status.HTTP_404_NOT_FOUND)
 
+class GetEmptyList(views.APIView):
+    renderer_classes = [JSONRenderer, ]
+
+    def get(self, request, format=None):
+        return Response([])
 
 class ProposalViewSet(viewsets.ModelViewSet):
     queryset = Proposal.objects.all()

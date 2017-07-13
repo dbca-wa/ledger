@@ -194,146 +194,8 @@
                     </div> 
                     <div :id="oTab" class="tab-pane fade">
                         <ProposalDashTable ref="proposals_table" level='internal' :url='proposals_url'/>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                    <div class="panel-heading">
-                                        <h3 class="panel-title">Approvals
-                                            <a class="panelClicker" :href="'#'+aBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="aBody">
-                                                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                            </a>
-                                        </h3>
-                                    </div>
-                                    <div class="panel-body collapse in" :id="aBody">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Region</label>
-                                                    <select v-show="isLoading" class="form-control">
-                                                        <option value="">Loading...</option>
-                                                    </select>
-                                                    <select v-if="!isLoading" class="form-control" v-model="filterApprovalRegion">
-                                                        <option value="All">All</option>
-                                                        <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Activity</label>
-                                                    <select v-show="isLoading" class="form-control" name="">
-                                                        <option value="">Loading...</option>
-                                                    </select>
-                                                    <select v-if="!isLoading" class="form-control" v-model="filterApprovalActivity">
-                                                        <option value="All">All</option>
-                                                        <option v-for="region in regions" :value="region.id">{{region.name}}</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Status</label>
-                                                    <select class="form-control" v-model="filterApprovalStatus">
-                                                        <option value="All">All</option>
-                                                        <option value="current">Current</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label for="">Expiry From</label>
-                                                <div class="input-group date" id="booking-date-from">
-                                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterApprovalExpiryFrom">
-                                                    <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar"></span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="">Expiry To</label>
-                                                <div class="input-group date" id="booking-date-from">
-                                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterApprovalExpiryTo">
-                                                    <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar"></span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                    <div class="panel-heading">
-                                        <h3 class="panel-title">Compliance with requirements
-                                            <a class="panelClicker" :href="'#'+cBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="cBody">
-                                                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                            </a>
-                                        </h3>
-                                    </div>
-                                    <div class="panel-body collapse in" :id="cBody">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Region</label>
-                                                    <select v-show="isLoading" class="form-control">
-                                                        <option value="">Loading...</option>
-                                                    </select>
-                                                    <select v-if="!isLoading" class="form-control" v-model="filterComplianceRegion">
-                                                        <option value="All">All</option>
-                                                        <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Activity</label>
-                                                    <select v-show="isLoading" class="form-control" name="">
-                                                        <option value="">Loading...</option>
-                                                    </select>
-                                                    <select v-if="!isLoading" class="form-control" v-model="filterComplianceActivity">
-                                                        <option value="All">All</option>
-                                                        <option v-for="region in regions" :value="region.id">{{region.name}}</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="">Status</label>
-                                                    <select class="form-control" v-model="filterComplianceStatus">
-                                                        <option value="All">All</option>
-                                                        <option value="current">Current</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label for="">Expiry From</label>
-                                                <div class="input-group date" id="booking-date-from">
-                                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterComplianceDueFrom">
-                                                    <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar"></span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="">Expiry To</label>
-                                                <div class="input-group date" id="booking-date-from">
-                                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterComplianceDueTo">
-                                                    <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar"></span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <ApprovalDashTable level='internal' :url='empty_list'/>
+                        <ComplianceDashTable level='internal' :url='empty_list'/>
                     </div>
                 </div>
             </div>
@@ -349,6 +211,8 @@ import Vue from 'vue'
 import { api_endpoints, helpers } from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
 import ProposalDashTable from '@common-utils/proposals_dashboard.vue'
+import ApprovalDashTable from '@common-utils/approvals_dashboard.vue'
+import ComplianceDashTable from '@common-utils/compliances_dashboard.vue'
 import utils from '../utils'
 import api from '../api'
 export default {
@@ -371,6 +235,7 @@ export default {
             updatingDetails: false,
             updatingAddress: false,
             updatingContact: false,
+            empty_list: '/api/empty_list',
             logsTable: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             logsDtOptions:{
@@ -518,25 +383,6 @@ export default {
                 ]
             },
             commsTable : null,
-            // Filters for Proposals
-            filterProposalRegion: '',
-            filterProposalActivity: '',
-            filterProposalStatus: 'All',
-            filterProposalLodgedFrom: '',
-            filterProposalLodgedTo: '',
-            filterProposalSubmitter: '',
-            // Filters for Approvals
-            filterApprovalRegion: '',
-            filterApprovalActivity: '',
-            filterApprovalStatus: 'All',
-            filterApprovalExpiryFrom: '',
-            filterApprovalExpiryTo: '',
-            // Filters for Compliance
-            filterComplianceRegion: '',
-            filterComplianceActivity: '',
-            filterComplianceStatus: 'All',
-            filterComplianceDueFrom: '',
-            filterComplianceDueTo: '',
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
             proposals_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/proposals'),
             contacts_options:{
@@ -573,7 +419,9 @@ export default {
     },
     components: {
         datatable,
-        ProposalDashTable
+        ProposalDashTable,
+        ApprovalDashTable,
+        ComplianceDashTable
     },
     computed: {
         isLoading: function () {

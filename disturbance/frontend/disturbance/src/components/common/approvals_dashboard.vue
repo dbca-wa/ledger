@@ -3,7 +3,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Proposals <small>View existing proposals and lodge new ones</small>
+                    <h3 class="panel-title">Approvals <small v-if="is_external">View existing approvals and ammed or renew them</small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -38,13 +38,10 @@
                                 </select>
                             </div>
                         </div>
-                        <div v-if="is_external" class="col-md-3">
-                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link>
-                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-3">
-                            <label for="">Lodged From</label>
+                            <label for="">Expiry From</label>
                             <div class="input-group date" ref="proposalDateFromPicker">
                                 <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
                                 <span class="input-group-addon">
@@ -53,21 +50,12 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <label for="">Lodged To</label>
+                            <label for="">Expiry To</label>
                             <div class="input-group date" ref="proposalDateToPicker">
                                 <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
                                 <span class="input-group-addon">
                                     <span class="glyphicon glyphicon-calendar"></span>
                                 </span>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Submitter</label>
-                                <select class="form-control" v-model="filterProposalSubmitter">
-                                    <option value="All">All</option>
-                                    <option v-for="s in proposal_submitters" :value="s.email">{{s.search_term}}</option>
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -141,10 +129,8 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
+            proposal_headers:["Number","Region","Activity","Title","Holder","Status","Expiry Date","Approval","Action"],
             proposal_options:{
-                customProposalSearch: true,
-                tableID: 'proposal-datatable-'+vm._uid,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
@@ -158,15 +144,6 @@ export default {
                     {data: "region"},
                     {data: "activity"},
                     {data: "title"},
-                    {
-                        data: "submitter",
-                        mRender:function (data,type,full) {
-                            if (data) {
-                                return `${data.first_name} ${data.last_name}`;
-                            }
-                            return ''
-                        }
-                    },
                     {data: "applicant"},
                     {data: "processing_status"},
                     {
@@ -175,6 +152,7 @@ export default {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
+                    {data: "approval"},
                     {
                         mRender:function (data,type,full) {
                             let links = '';
@@ -219,20 +197,6 @@ export default {
                         })
                         vm.proposal_activityTitles = activityTitles;
                     });
-                    // Grab submitters from the data in the table
-                    var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
-                    submittersColumn.data().unique().sort().each( function ( d, j ) {
-                        var submitters = [];
-                        $.each(d,(index,s) => {
-                            if (!submitters.find(submitter => submitter.email == s.email) || submitters.length == 0){
-                                submitters.push({
-                                    'email':s.email,
-                                    'search_term': `${s.first_name} ${s.last_name} (${s.email})`
-                                });
-                            }
-                        });
-                        vm.proposal_submitters = submitters;
-                    });
                 }
             }
         }
@@ -272,7 +236,8 @@ export default {
     },
     computed: {
         status: function(){
-            return this.is_external ? this.external_status : this.internal_status;
+            //return this.is_external ? this.external_status : this.internal_status;
+            return [];
         },
         is_external: function(){
             return this.level == 'external';
@@ -314,7 +279,6 @@ export default {
         },
         initialiseSearch:function(){
             this.regionSearch();
-            this.submitterSearch();
             this.dateSearch();
         },
         regionSearch:function(){
