@@ -110,7 +110,7 @@ class Organisation(models.Model):
                     exists = False
             if exists:
                 return {'exists': exists, 'id': org.id,'first_five':org.first_five}
-            return {'exists': exists, 'id': org.id}
+            return {'exists': exists }
             
         except:
             raise
