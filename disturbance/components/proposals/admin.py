@@ -15,6 +15,7 @@ class ProposalAdmin(admin.ModelAdmin):
 @admin.register(models.ProposalAssessorGroup)
 class ProposalAssessorGroupAdmin(admin.ModelAdmin):
     list_display = ['name','default']
+    filter_horizontal = ('members',)
     form = forms.ProposalAssessorGroupAdminForm
     readonly_fields = ['default']
 
