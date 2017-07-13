@@ -229,8 +229,8 @@ module.exports = {
                 // Assessor Data
                 var assessor_name = `${c.name}-Assessor`;
                 var assessor_val = _dt.assessor == '' ? val : _dt.assessor;
-                var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
-                assessor_visiblity = !assessor_visiblity && !this.status_data.assessorStatus.assessor_can_assess ? true : false;
+                var assessor_visiblity = assessor_mode == 'assessor' && this.status_data.assessorStatus.assessor_can_assess ? true : false;
+                assessor_visiblity = !assessor_visiblity;
                 boxes.push(
                     <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
                 )
