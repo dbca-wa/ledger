@@ -192,6 +192,7 @@ class ReferralProposalSerializer(InternalProposalSerializer):
         }
 
 class ProposalUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
     class Meta:
         model = ProposalUserAction
         fields = '__all__'
