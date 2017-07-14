@@ -176,8 +176,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'title': special_fields.get('isTitleColumnForDashboard',None),
                 'activity': special_fields.get('isActivityColumnForDashboard',None),
                 'data': extracted_fields,
-                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0],
-                'submitter': request.user.id,
+                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
             }
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -202,13 +201,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
             instance.data = extracted_fields
             data = {
-                'region': special_fields.get('isRegionColumnForDashboard',None),
-                'title': special_fields.get('isTitleColumnForDashboard',None),
-                'activity': special_fields.get('isActivityColumnForDashboard',None),
                 'data': extracted_fields,
                 'assessor_data': assessor_data,
-                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0],
-                'submitter': request.user.id,
             }
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)

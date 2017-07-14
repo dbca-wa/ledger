@@ -235,6 +235,7 @@ class Proposal(RevisionedMixin):
             if self.can_user_edit:
                 self.processing_status = 'with_assessor'
                 self.customer_status = 'with_assessor'
+                self.submitter = request.user
                 self.lodgement_date = timezone.now().strftime('%Y-%m-%d') 
                 self.save()
                 # Create a log entry for the proposal
