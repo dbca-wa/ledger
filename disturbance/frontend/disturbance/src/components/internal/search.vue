@@ -19,7 +19,7 @@
                                     <select v-if="organisations == null" class="form-control" name="organisation" v-model="selected_organisation">
                                         <option value="">Loading...</option>
                                     </select>
-                                    <select v-else class="form-control" name="organisation" v-model="selected_organisation">
+                                    <select v-else ref="searchOrg" class="form-control" name="organisation">
                                         <option value="">Select Organisation</option>
                                         <option v-for="o in organisations" :value="o.id">{{ o.name }}</option>
                                     </select>
@@ -155,36 +155,59 @@ export default {
     }
     
   },
-  watch: {},
-  components: {
-    datatable
-  },
-  beforeRouteEnter:function(to,from,next){
-    utils.fetchOrganisations().then((response)=>{
-        next(vm => {
-            vm.organisations = response;
+    watch: {},
+    components: {
+        datatable
+    },
+    beforeRouteEnter:function(to,from,next){
+        utils.fetchOrganisations().then((response)=>{
+            next(vm => {
+                vm.organisations = response;
+            });
+        },
+        (error) =>{
+            console.log(error);
         });
     },
-    (error) =>{
-        console.log(error);
-    });
-  },
-  computed: {
-    isLoading: function () {
-      return this.loading.length == 0;
+    computed: {
+        isLoading: function () {
+            return this.loading.length == 0;
+        }
+    },
+    methods: {
+        addListeners: function(){
+            let vm = this;
+            // Initialise select2 for region
+            $(vm.$refs.searchOrg).select2({
+                "theme": "bootstrap",
+                allowClear: true,
+                placeholder:"Select Organisation"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.selected_organisation = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.selected_organisation = selected.val();
+            });
+        }
+    },
+    mounted: function () {
+        let vm = this;
+        $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+            var chev = $( this ).children()[ 0 ];
+            window.setTimeout( function () {
+                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
+            }, 100 );
+        } );
+    },
+    updated: function(){
+        let vm = this;
+        this.$nextTick(() => {
+            vm.addListeners();
+        });
+        
     }
-  },
-  methods: {},
-  mounted: function () {
-    $( 'a[data-toggle="collapse"]' )
-      .on( 'click', function () {
-        var chev = $( this )
-          .children()[ 0 ];
-        window.setTimeout( function () {
-          $( chev )
-            .toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
-        }, 100 );
-      } );
-  }
 }
 </script>

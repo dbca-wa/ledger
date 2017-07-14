@@ -14,8 +14,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Region</label>
-                                <select class="form-control" v-model="filterProposalRegion">
-                                    <option value="All">All</option>
+                                <select style="width:100%" class="form-control input-sm" multiple ref="filterRegion" >
                                     <option v-for="r in proposal_regions" :value="r">{{r}}</option>
                                 </select>
                             </div>
@@ -83,6 +82,8 @@
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+require("select2/dist/css/select2.min.css");
+require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 import {
     api_endpoints,
     helpers
@@ -109,7 +110,7 @@ export default {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
             // Filters for Proposals
-            filterProposalRegion: 'All',
+            filterProposalRegion: [],
             filterProposalActivity: 'All',
             filterProposalStatus: 'All',
             filterProposalLodgedFrom: '',
@@ -336,6 +337,20 @@ export default {
                 var id = $(this).attr('data-discard-proposal');
                 vm.discardProposal(id);
             });
+            // Initialise select2 for region
+            $(vm.$refs.filterRegion).select2({
+                "theme": "bootstrap",
+                allowClear: true,
+                placeholder:"Select Region"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterProposalRegion = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterProposalRegion = selected.val();
+            });
         },
         initialiseSearch:function(){
             this.regionSearch();
@@ -347,8 +362,8 @@ export default {
             vm.$refs.proposal_datatable.table.dataTableExt.afnFiltering.push(
                 function(settings,data,dataIndex,original){
                     let found = false;
-                    let filtered_regions = vm.filterProposalRegion.split(',');
-                    if (filtered_regions == 'All'){ return true; } 
+                    let filtered_regions = vm.filterProposalRegion;
+                    if (filtered_regions.length == 0){ return true; } 
 
                     let regions = original.region != '' && original.region != null ? original.region.split(','): [];
 
@@ -420,8 +435,8 @@ export default {
             }, 100 );
         });
         this.$nextTick(() => {
-            vm.addEventListeners();
             vm.initialiseSearch();
+            vm.addEventListeners();
         });
     }
 }

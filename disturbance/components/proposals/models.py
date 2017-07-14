@@ -80,7 +80,7 @@ class ProposalAssessorGroup(models.Model):
 class Proposal(RevisionedMixin):
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('under_review', 'Under Review'),
-                               ('with_assessor', 'With Assesor'),
+                               ('with_assessor', 'With Assessor'),
                                ('amendment_required', 'Amendment Required'),
                                ('approved', 'Approved'),
                                ('declined', 'Declined'),
@@ -98,7 +98,7 @@ class Proposal(RevisionedMixin):
 
     PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), 
                                  ('draft', 'Draft'), 
-                                 ('with_assessor', 'With Assesor'),
+                                 ('with_assessor', 'With Assessor'),
                                  ('with_referral', 'With Referral'),
                                  ('ready_for_action', 'Ready for Action'),
                                  ('renewal', 'Renewal'),
