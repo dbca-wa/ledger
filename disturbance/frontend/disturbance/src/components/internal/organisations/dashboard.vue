@@ -91,7 +91,12 @@ export default {
                     {
                         data:"id",
                         mRender:function(data, type, full){
-                            var column = "<td ><a href='/internal/organisations/access/\__ID__\' >View </a><br/><a href='/internal/organisations/access/\__ID__\'> Process </a>";
+                            if (full.status == 'Approved' || full.status == 'Declined'){
+                                var column = "<a href='/internal/organisations/access/\__ID__\' >View </a>";
+                            }
+                            else{
+                                var column = "<a href='/internal/organisations/access/\__ID__\'> Process </a>";
+                            }
                             return column.replace(/__ID__/g, data);
                         }
                     },
