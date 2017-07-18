@@ -4,24 +4,18 @@
         <div class="col-md-3">
             <div class="form-group">
                 <label for="">Organisation</label>
-                <select v-show="isLoading" class="form-control">
-                    <option value="">Loading...</option>
-                </select>
-                <select v-if="!isLoading" class="form-control" v-model="filterOrganisation">
+                <select class="form-control" v-model="filterOrganisation">
                     <option value="All">All</option>
-                    <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
+                    <option v-for="o in organisationChoices" :value="o">{{o}}</option>
                 </select>
             </div>
         </div>
         <div class="col-md-3">
             <div class="form-group">
                 <label for="">Applicant</label>
-                <select v-show="isLoading" class="form-control" name="">
-                    <option value="">Loading...</option>
-                </select>
-                <select v-if="!isLoading" class="form-control" v-model="filterApplicant">
+                <select class="form-control" v-model="filterApplicant">
                     <option value="All">All</option>
-                    <option v-for="region in regions" :value="region.id">{{region.name}}</option>
+                    <option v-for="a  in applicantChoices" :value="a">{{a}}</option>
                 </select>
             </div>
         </div>
@@ -30,7 +24,7 @@
                 <label for="">Status</label>
                 <select class="form-control" v-model="filterStatus">
                     <option value="All">All</option>
-                    <option value="current">Current</option>
+                    <option v-for="s in statusChoices" :value="s">{{s}}</option>
                 </select>
             </div>
         </div>
@@ -51,11 +45,13 @@ export default {
   data() {
     let vm = this;
     return {
-      loading: [],
-      // Filters
-      filterOrganisation: '',
-      filterApplicant : '',
-      filterStatus: 'All',
+        // Filters
+        filterOrganisation: 'All',
+        filterApplicant : 'All',
+        filterStatus: 'All',
+        organisationChoices: [],
+        applicantChoices: [],
+        statusChoices: [],
         dtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -100,22 +96,76 @@ export default {
                             return column.replace(/__ID__/g, data);
                         }
                     },
-                ]
+                ],
+                initComplete: function(){
+                    // Grab Organisation from the data in the table
+                    var organisationColumn = vm.$refs.org_access_table.vmDataTable.columns(1);
+                    organisationColumn.data().unique().sort().each( function ( d, j ) {
+                        let organisationChoices = [];
+                        $.each(d,(index,a) => {
+                            a != null && organisationChoices.indexOf(a) < 0 ? organisationChoices.push(a): '';
+                        })
+                        vm.organisationChoices = organisationChoices;
+                    });
+                    // Grab Applicant from the data in the table
+                    var applicantColumn = vm.$refs.org_access_table.vmDataTable.columns(2);
+                    applicantColumn.data().unique().sort().each( function ( d, j ) {
+                        let applicationChoices = [];
+                        $.each(d,(index,a) => {
+                            a != null && applicationChoices.indexOf(a) < 0 ? applicationChoices.push(a): '';
+                        })
+                        vm.applicantChoices = applicationChoices;
+                    });
+                    // Grab Status from the data in the table
+                    var statusColumn = vm.$refs.org_access_table.vmDataTable.columns(3);
+                    statusColumn.data().unique().sort().each( function ( d, j ) {
+                        let statusChoices = [];
+                        $.each(d,(index,a) => {
+                            a != null && statusChoices.indexOf(a) < 0 ? statusChoices.push(a): '';
+                        })
+                        vm.statusChoices = statusChoices;
+                    });
+                }
             },
             dtHeaders:["Request Number","Organisation","Applicant","Status","Lodged on","Assigned To","Action"],
+        }
+    },
+    watch: {
+        filterOrganisation: function() {
+            let vm = this;
+            if (vm.filterOrganisation!= 'All') {
+                vm.$refs.org_access_table.vmDataTable.columns(1).search(vm.filterOrganisation).draw();
+            } else {
+                vm.$refs.org_access_table.vmDataTable.columns(1).search('').draw();
+            }
+        },
+        filterApplicant: function() {
+            let vm = this;
+            if (vm.filterApplicant != 'All') {
+                vm.$refs.org_access_table.vmDataTable.columns(2).search(vm.filterApplicant).draw();
+            } else {
+                vm.$refs.org_access_table.vmDataTable.columns(2).search('').draw();
+            }
+        },
+        filterStatus: function() {
+            let vm = this;
+            if (vm.filterStatus!= 'All') {
+                vm.$refs.org_access_table.vmDataTable.columns(3).search(vm.filterStatus).draw();
+            } else {
+                vm.$refs.org_access_table.vmDataTable.columns(3).search('').draw();
+            }
+        },
+    },
+    components: {
+        datatable
+    },
+    computed: {
+        isLoading: function () {
+            return this.loading.length == 0;
+        }
+    },
+    methods: {},
+    mounted: function () {
     }
-  },
-  watch: {},
-  components: {
-    datatable
-  },
-  computed: {
-    isLoading: function () {
-      return this.loading.length == 0;
-    }
-  },
-  methods: {},
-  mounted: function () {
-  }
 }
 </script>
