@@ -1,5 +1,5 @@
 <template lang="html">
-   <div id="DataTable" class="table-responsive">
+   <div id="DataTable" >
       <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%" :id="id">
             <thead>
                 <tr>
@@ -62,11 +62,12 @@ module.exports = {
                  responsiveHelper.respond();
              },
            }
-           var options = Object.assign(vm.dtOptions,responsiveOptions)
+           //var options = Object.assign(vm.dtOptions,responsiveOptions)
+           var options = Object.assign(vm.dtOptions)
            vm.vmDataTable = $(vm.table).DataTable(options);
-           $(vm.table).resize(function (e) {
+           /*$(vm.table).resize(function (e) {
                vm.vmDataTable.draw(true);
-           });
+           });*/
        }
    },
    mounted:function () {
