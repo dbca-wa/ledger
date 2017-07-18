@@ -256,7 +256,12 @@ class Proposal(RevisionedMixin):
                 if not department_user:
                     raise ValidationError('The user you want to send the referral to is not a member of the department')
                 # Check if the user is in ledger or create
-                user,created = EmailUser.objects.get_or_create(email=department_user['email'])
+                
+                user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
+                if created:
+                    user.first_name = department_user['given_name']
+                    user.last_name = department_user['surname']
+                    user.save()
                 try:
                     Referral.objects.get(referral=user,proposal=self)
                     raise ValidationError('A referral has already been sent to this user')

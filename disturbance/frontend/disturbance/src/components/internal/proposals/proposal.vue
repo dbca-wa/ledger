@@ -71,7 +71,15 @@
                                         <option value="null"></option>
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                    <template v-if='!sendingReferral'>
+                                        <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                    </template>
+                                    <template v-else>
+                                        <span v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
+                                            Sending Referral&nbsp;
+                                            <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+                                        </span>
+                                    </template>
                                 </div>
                                 <table class="table small-table">
                                     <tr>
@@ -473,6 +481,7 @@ export default {
             commsTable : null,
             popoversInitialised: false,
             panelClickersInitialised: false,
+            sendingReferral: false,
         }
     },
     components: {
@@ -630,13 +639,15 @@ export default {
                 emulateJSON:true
             }).then((response) => {
                 vm.sendingReferral = false;
-                vm.org = response.body;
-                if (vm.org.address == null){ vm.org.address = {}; }
+                vm.proposal = response.body;
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
                 swal(
                     'Referral Sent',
                     'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
                     'success'
                 )
+                $(vm.$refs.department_users).val(null).trigger("change");
+                vm.selected_referral = '';
             }, (error) => {
                 console.log(error);
                 swal(
