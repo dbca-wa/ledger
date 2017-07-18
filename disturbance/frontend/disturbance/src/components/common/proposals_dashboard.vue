@@ -144,8 +144,7 @@ export default {
             proposal_submitters: [],
             proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Action"],
             proposal_options:{
-                customProposalSearch: true,
-                tableID: 'proposal-datatable-'+vm._uid,
+                autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
