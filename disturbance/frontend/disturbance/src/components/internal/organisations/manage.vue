@@ -1,5 +1,5 @@
 <template>
-    <div class="container-fluid" v-if="org" id="internalOrgInfo">
+    <div class="container-fluid" id="internalOrgInfo">
     <div class="row">
     <div class="col-md-10 col-md-offset-1">
         <div class="row">
@@ -194,8 +194,8 @@
                     </div> 
                     <div :id="oTab" class="tab-pane fade">
                         <ProposalDashTable ref="proposals_table" level='internal' :url='proposals_url'/>
-                        <ApprovalDashTable level='internal' :url='empty_list'/>
-                        <ComplianceDashTable level='internal' :url='empty_list'/>
+                        <ApprovalDashTable ref="approvals_table" level='internal' :url='empty_list'/>
+                        <ComplianceDashTable ref="compliances_table" level='internal' :url='empty_list'/>
                     </div>
                 </div>
             </div>
@@ -229,7 +229,9 @@ export default {
             oBody: 'oBody'+vm._uid,
             dTab: 'dTab'+vm._uid,
             oTab: 'oTab'+vm._uid,
-            org: null,
+            org: {
+                address: {}
+            },
             loading: [],
             countries: [],
             updatingDetails: false,
@@ -238,6 +240,7 @@ export default {
             empty_list: '/api/empty_list',
             logsTable: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
+            activate_tables: false,
             logsDtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -477,6 +480,12 @@ export default {
                 },(error) => {
                 });
             });
+            // Fix the table responsiveness when tab is shown
+            $('a[href="#'+vm.oTab+'"]').on('shown.bs.tab', function (e) {
+                vm.$refs.proposals_table.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
+                //vm.$refs.approvals_datatable.$refs.proposals_table.vmDataTable.columns.adjust().responsive.recalc();
+                //vm.$refs.compliances_datatable.$refs.proposals_table.vmDataTable.columns.adjust().responsive.recalc();
+            });
         },
         updateDetails: function() {
             let vm = this;
@@ -546,24 +555,24 @@ export default {
                 vm.updatingAddress = false;
             });
         },
+        initialisePanels:function(){
+            let vm = this;
+            $('.panelClicker[data-toggle="collapse"]').on('click', function () {
+                var chev = $(this).children()[0];
+                window.setTimeout(function () {
+                    $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
+                },100);
+            }); 
+        }
     },
     mounted: function(){
-        this.personal_form = document.forms.personal_form;
-    },
-    updated: function(){
         let vm = this;
-        $('.panelClicker[data-toggle="collapse"]').on('click', function () {
-            var chev = $(this).children()[0];
-            window.setTimeout(function () {
-                $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
-            },100);
-        }); 
-        this.$nextTick(() => {
-            this.eventListeners();
-            helpers.initialiseActionLogs(this._uid,vm.$refs.showActionBtn,vm.logsDtOptions,vm.logsTable);
-            helpers.initialiseCommLogs(this._uid,vm.$refs.showCommsBtn,vm.commsDtOptions,vm.commsTable);
-            this.$refs.proposals_table.$refs.proposal_datatable.vmDataTable.draw(true);
-        });
+        this.personal_form = document.forms.personal_form;
+        this.eventListeners();
+        helpers.initialiseActionLogs(this._uid,vm.$refs.showActionBtn,vm.logsDtOptions,vm.logsTable);
+        helpers.initialiseCommLogs(this._uid,vm.$refs.showCommsBtn,vm.commsDtOptions,vm.commsTable);
+        vm.initialisePanels();
+        
     }
 }
 </script>
