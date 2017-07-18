@@ -127,7 +127,7 @@ export default {
             external_status:[
                 'Temporary',
                 'Draft',
-                'Submitted',
+                'Under Review',
                 'Approved',
                 'Declined'
             ],
@@ -168,7 +168,12 @@ export default {
                         }
                     },
                     {data: "applicant"},
-                    {data: "processing_status"},
+                    {
+                        data: "processing_status",
+                        mRender:function(data,type,full){
+                            return vm.level == 'external' ? full.customer_status: data;
+                        }
+                    },
                     {
                         data: "lodgement_date",
                         mRender:function (data,type,full) {

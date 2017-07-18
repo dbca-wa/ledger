@@ -79,8 +79,8 @@ class ProposalAssessorGroup(models.Model):
 
 class Proposal(RevisionedMixin):
 
-    CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'), ('under_review', 'Under Review'),
-                               ('with_assessor', 'With Assessor'),
+    CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
+                               ('with_assessor', 'Under Review'),
                                ('amendment_required', 'Amendment Required'),
                                ('approved', 'Approved'),
                                ('declined', 'Declined'),
@@ -464,7 +464,7 @@ class Referral(models.Model):
         (2,'Sent From Referral')
     )
     PROCESSING_STATUS_CHOICES = (
-                                 ('with_referral', 'With Referral'),
+                                 ('with_referral', 'Awaiting'),
                                  ('recalled', 'Recalled'),
                                  ('completed', 'Completed'),
                                  )
