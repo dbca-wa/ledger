@@ -555,15 +555,6 @@ export default {
                 vm.updatingAddress = false;
             });
         },
-        initialisePanels:function(){
-            let vm = this;
-            $('.panelClicker[data-toggle="collapse"]').on('click', function () {
-                var chev = $(this).children()[0];
-                window.setTimeout(function () {
-                    $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
-                },100);
-            }); 
-        }
     },
     mounted: function(){
         let vm = this;
@@ -571,9 +562,7 @@ export default {
         this.eventListeners();
         helpers.initialiseActionLogs(this._uid,vm.$refs.showActionBtn,vm.logsDtOptions,vm.logsTable);
         helpers.initialiseCommLogs(this._uid,vm.$refs.showCommsBtn,vm.commsDtOptions,vm.commsTable);
-        vm.initialisePanels();
-        
-    }
+    },
 }
 </script>
 
