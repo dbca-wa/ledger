@@ -133,12 +133,8 @@ class ApplicantSerializer(serializers.ModelSerializer):
                     'phone_number',
                 )
 
-class ReferralSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Referral
-        fields = '__all__'
 
-class ProposalReferralSerializer(ReferralSerializer):
+class ProposalReferralSerializer(serializers.ModelSerializer):
     referral = serializers.CharField(source='referral.get_full_name')
     processing_status = serializers.CharField(source='get_processing_status_display')
     class Meta:
@@ -190,6 +186,16 @@ class ReferralProposalSerializer(InternalProposalSerializer):
             #'assessor_can_assess': obj.can_assess_referral(user), 
             'assessor_level': 'referral'
         }
+
+class ReferralSerializer(serializers.ModelSerializer):
+    processing_status = serializers.CharField(source='get_processing_status_display')
+    class Meta:
+        model = Referral
+        fields = '__all__'
+
+    def __init__(self,*args,**kwargs):
+        super(ReferralSerializer, self).__init__(*args, **kwargs)
+        self.fields['proposal'] = ReferralProposalSerializer(context={'request':self.context['request']})
 
 class ProposalUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')

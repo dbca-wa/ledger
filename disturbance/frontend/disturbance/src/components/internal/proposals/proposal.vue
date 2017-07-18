@@ -72,7 +72,9 @@
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
                                     <template v-if='!sendingReferral'>
-                                        <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                        <template v-if="selected_referral">
+                                            <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                        </template>
                                     </template>
                                     <template v-else>
                                         <span v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
@@ -88,10 +90,13 @@
                                     </tr>
                                     <tr v-for="r in proposal.latest_referrals">
                                         <td>
-                                            {{r.referral}}<br/>
-                                            {{r.lodged_on | formatDate}}
+                                            <small><strong>{{r.referral}}</strong></small><br/>
+                                            <small><strong>{{r.lodged_on | formatDate}}</strong></small>
                                         </td>
-                                        <td>{{r.processing_status}}</td>
+                                        <td>
+                                            <small><strong>{{r.processing_status}}</strong></small><br/>
+                                            <small><a href="#">Remind</a> / <a href="#">Recall</a></small>
+                                        </td>
                                     </tr>
                                 </table>
                                 <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
@@ -112,7 +117,7 @@
                                     <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAssess">
+                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAssess && canAction">
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Action</strong><br/>
@@ -515,6 +520,9 @@ export default {
         },
         canAssess: function(){
             return this.proposal && this.proposal.assessor_mode.assessor_can_assess ? true : false;
+        },
+        canAction: function(){
+            return this.proposal && this.proposal.processing_status == 'With Assessor' ? true : false;
         }
     },
     methods: {
@@ -611,7 +619,7 @@ export default {
                }).
                on("select2:unselect",function (e) {
                     var selected = $(e.currentTarget);
-                    vm.selected_referral = selected.val();
+                    vm.selected_referral = '' 
                });
                 // Assigned officer select
                 $(vm.$refs.assigned_officer).select2({

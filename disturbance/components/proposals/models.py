@@ -13,6 +13,7 @@ from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from ledger.licence.models import  Licence
+from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction
 from disturbance.components.main.utils import get_department_user
@@ -443,11 +444,14 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CONDITION_ = "Create requirement {}"
     ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
     ACTION_DISCARD_APPLICATION = "Discard proposal {}"
-    ACTION_SEND_REFERRAL_TO = "Send referral {} for proposal {} to {}"
-    ACTION_RESEND_REFERRAL_TO = "Resend referral {} for proposal {} to {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
+    # Referrals
+    ACTION_SEND_REFERRAL_TO = "Send referral {} for proposal {} to {}"
+    ACTION_RESEND_REFERRAL_TO = "Resend referral {} for proposal {} to {}"
+    CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
+    
 
     class Meta:
         app_label = 'disturbance'
@@ -501,6 +505,20 @@ class Referral(models.Model):
 
     def resend(self,request):
         self.send_email()
+
+    def complete(self,request):
+        with transaction.atomic():
+            try:
+                if request.user != self.referral:
+                    raise exceptions.ReferralNotAuthorized()
+                self.processing_status = 'completed'
+                self.save()
+                # TODO Log proposal action
+                self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                # TODO log organisation action
+                self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            except:
+                raise
 
     # Properties
     @property

@@ -66,7 +66,7 @@
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Referrals</strong><br/>
-                                <div class="form-group">
+                                <div class="form-group" v-if="!isFinalised">
                                     <select :disabled="isFinalised || proposal.can_user_edit" ref="department_users" class="form-control">
                                         <option value="null"></option>
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
@@ -99,7 +99,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="">Complete Referral</button>
+                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="completeReferral">Complete Referral</button>
                                     </div>
                                 </div>
                             </div>
@@ -221,7 +221,7 @@
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
                                 <div v-if="!proposal.can_user_edit" class="row" style="margin-bottom:20px;">
-                                  <div class="col-lg-12 pull-right">
+                                  <div class="col-lg-12 pull-right" v-if="!isFinalised">
                                     <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
                                   </div>
                                 </div>
@@ -252,7 +252,8 @@ export default {
             detailsBody: 'detailsBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
             contactsBody: 'contactsBody'+vm._uid,
-            "proposal": null,
+            //"proposal": null,
+            referral: null,
             "loading": [],
             selected_referral: '',
             form: null,
@@ -446,6 +447,7 @@ export default {
             commsTable : null,
             popoversInitialised: false,
             panelClickersInitialised: false,
+            referral: {}
         }
     },
     components: {
@@ -460,6 +462,9 @@ export default {
     watch: {
     },
     computed: {
+        proposal: function(){
+            return this.referral != null && this.referall != 'undefined' ? this.referral.proposal : null;
+        },
         contactsURL: function(){
             return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
         },
@@ -473,7 +478,7 @@ export default {
           return (this.proposal) ? `/api/proposal/${this.proposal.id}/assessor_save.json` : '';
         },
         isFinalised: function(){
-            return this.proposal.processing_status == 'Declined' || this.proposal.status == 'Approved';
+            return !(this.referral != null  && this.referral.processing_status == 'Awaiting'); 
         }
     },
     methods: {
@@ -618,6 +623,26 @@ export default {
                 vm.sendingReferral = false;
             });
             
+        },
+        completeReferral:function(){
+            let vm = this;
+            
+            swal({
+                title: "Complete Referral",
+                text: "Are you sure you want to complete this referral?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Submit'
+            }).then(() => { 
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
+                    vm.referral = res.body;
+                    vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                },
+                err => {
+                    console.log(err);
+                });
+            },(error) => {
+            });
         }
     },
     mounted: function() {
@@ -645,10 +670,14 @@ export default {
         });
     },
     beforeRouteEnter: function(to, from, next) {
-          Vue.http.get(`/api/proposal/${to.params.proposal_id}/referral_proposal.json`).then(res => {
+          //Vue.http.get(`/api/proposal/${to.params.proposal_id}/referral_proposal.json`).then(res => {
+          Vue.http.get(helpers.add_endpoint_json(api_endpoints.referrals,to.params.referral_id)).then(res => {
               next(vm => {
-                vm.proposal = res.body;
+                /*vm.proposal = res.body;
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                */
+                vm.referral = res.body;
+                vm.referral.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
               });
             },
             err => {

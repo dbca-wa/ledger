@@ -251,7 +251,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = SaveProposalSerializer(instance,{'processing_status':'discarded'},partial=True)
             serializer.is_valid(raise_exception=True)
-            print serializer
             self.perform_update(serializer)
             return Response(serializer.data,status=http_status)
         except Exception as e:
@@ -262,8 +261,29 @@ class ReferralViewSet(viewsets.ModelViewSet):
     queryset = Referral.objects.all()
     serializer_class = ReferralSerializer
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, context={'request':request})
+        return Response(serializer.data) 
+
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
         qs = self.get_queryset().filter(referral=request.user)
         serializer = DTReferralSerializer(qs, many=True)
         return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def complete(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.complete(request)
+            serializer = self.get_serializer(instance, context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
