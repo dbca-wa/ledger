@@ -10,6 +10,7 @@ import Select from '../components/forms/select.vue'
 import DateField from '../components/forms/date-field.vue'
 import TextField from '../components/forms/text.vue'
 import TextArea from '../components/forms/text-area.vue'
+import Label from '../components/forms/label.vue'
 import AssessorText from '../components/forms/readonly_text.vue'
 import HelpText from '../components/forms/help_text.vue'
 
@@ -26,7 +27,7 @@ module.exports = {
         var _elements = [];
         if (assessorStatus != null){
             assessorMode = assessorStatus['assessor_mode'];
-            assessorCanAssess = assessorStatus['assessor_can_assess'];
+            assessorCanAssess = assessorStatus['has_assessor_mode'];
             assessorLevel = assessorStatus['assessor_level'];
         }
 
@@ -78,7 +79,7 @@ module.exports = {
                 break;
             case 'label':
                 _elements.push(
-                    <label>{c.label}</label>
+                    <Label value={c.label} />
                 )
                 break;
             case 'radiobuttons':
@@ -229,7 +230,7 @@ module.exports = {
                 // Assessor Data
                 var assessor_name = `${c.name}-Assessor`;
                 var assessor_val = _dt.assessor == '' ? val : _dt.assessor;
-                var assessor_visiblity = assessor_mode == 'assessor' && this.status_data.assessorStatus.assessor_can_assess ? true : false;
+                var assessor_visiblity = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
                 assessor_visiblity = !assessor_visiblity;
                 boxes.push(
                     <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
@@ -238,7 +239,7 @@ module.exports = {
                 var current_referral_present = false;
                 $.each(_dt.referrals,(i,v)=> {
                     if (v.email == assessor_info.email){ current_referral_present = true; }
-                    var readonly = v.email == assessor_info.email && assessor_mode == 'referral' ? false : true;
+                    var readonly = v.email == assessor_info.email && assessor_mode == 'referral' && this.status_data.assessorStatus.assessor_can_assess ? false : true;
                     var referral_name = `${c.name}-Referral-${v.email}`;
                     boxes.push(
                         <AssessorText type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
@@ -248,7 +249,7 @@ module.exports = {
                     if (!current_referral_present){
                         // Add Referral Box 
                         var referral_name = `${c.name}-Referral-${assessor_info.email}`;
-                        var referral_visibility = assessor_mode != 'referral' ? true : false;
+                        var referral_visibility = assessor_mode == 'referral' && this.status_data.assessorStatus.has_assessor_mode? false : true ;
                         var referral_label = `${assessor_info.name}`;
                         boxes.push(
                             <AssessorText type="text" name={referral_name} value={assessor_val} label={referral_label} readonly={referral_visibility}/>
