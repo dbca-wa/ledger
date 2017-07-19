@@ -128,17 +128,28 @@ class ProposalViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
-    def referral_proposal(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = ReferralProposalSerializer(instance,context={'request':request})
-        return Response(serializer.data)
-
-    @detail_route(methods=['GET',])
     def submit(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.submit(request)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def assign_request_user(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.assign_officer(request,request.user)
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'])
     def assesor_send_referral(self, request, *args, **kwargs):

@@ -155,6 +155,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
         self.fields['current_assessor'] = serializers.SerializerMethodField()
         self.fields['assessor_data'] = serializers.SerializerMethodField()
         self.fields['latest_referrals'] = ProposalReferralSerializer(many=True) 
+        self.fields['allowed_assessors'] = EmailUserSerializer(many=True)
         
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
@@ -162,6 +163,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
         user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
         return {
             'assessor_mode': True,
+            'has_assessor_mode': obj.has_assessor_mode(user),
             'assessor_can_assess': obj.can_assess(user), 
             'assessor_level': 'assessor'
         }
@@ -171,6 +173,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     
     def get_current_assessor(self,obj):
         return {
+            'id': self.context['request'].user.id,
             'name': self.context['request'].user.get_full_name(),
             'email': self.context['request'].user.email
         }
@@ -181,9 +184,12 @@ class InternalProposalSerializer(BaseProposalSerializer):
 class ReferralProposalSerializer(InternalProposalSerializer):
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+        referral = Referral.objects.get(proposal=obj,referral=user)
         return {
             'assessor_mode': True,
-            #'assessor_can_assess': obj.can_assess_referral(user), 
+            'assessor_can_assess': referral.can_assess_referral(user), 
             'assessor_level': 'referral'
         }
 

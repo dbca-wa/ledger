@@ -67,17 +67,17 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Referrals</strong><br/>
                                 <div class="form-group">
-                                    <select :disabled="isFinalised || proposal.can_user_edit || !canAssess" ref="department_users" class="form-control">
+                                    <select :disabled="!canAction" ref="department_users" class="form-control">
                                         <option value="null"></option>
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
                                     <template v-if='!sendingReferral'>
                                         <template v-if="selected_referral">
-                                            <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                            <a v-if="canAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
                                         </template>
                                     </template>
                                     <template v-else>
-                                        <span v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
+                                        <span v-if="canAction" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
                                             Sending Referral&nbsp;
                                             <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
                                         </span>
@@ -95,7 +95,12 @@
                                         </td>
                                         <td>
                                             <small><strong>{{r.processing_status}}</strong></small><br/>
-                                            <small><a href="#">Remind</a> / <a href="#">Recall</a></small>
+                                            <template v-if="r.processing_status == 'Awaiting'">
+                                                <small v-if="canAction"><a href="#">Remind</a> / <a href="#">Recall</a></small>
+                                            </template>
+                                            <template v-else>
+                                                <small v-if="canAction"><a href="#">Resend</a></small>
+                                            </template>
                                         </td>
                                     </tr>
                                 </table>
@@ -107,17 +112,14 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Currently assigned to</strong><br/>
                                 <div class="form-group">
-                                    <select v-show="isLoading" class="form-control">
-                                        <option value="">Loading...</option>
-                                    </select>
-                                    <select @change="assignTo" ref="assigned_officer" :disabled="isFinalised || !canAssess" v-if="!isLoading" class="form-control" v-model="proposal.assigned_officer">
+                                    <select @change="assignTo" ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="proposal.assigned_officer">
                                         <option value="null">Unassigned</option>
-                                        <option v-for="member in members" :value="member.id">{{member.name}}</option>
+                                        <option v-for="member in proposal.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised && !proposal.can_user_edit && canAssess" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
+                                    <a v-if="canAssess" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAssess && canAction">
+                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Action</strong><br/>
@@ -256,7 +258,7 @@
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
-                                <div v-if="!proposal.can_user_edit && canAssess" class="row" style="margin-bottom:20px;">
+                                <div v-if="canAction" class="row" style="margin-bottom:20px;">
                                   <div class="col-lg-12 pull-right">
                                     <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
                                   </div>
@@ -519,10 +521,11 @@ export default {
             return this.proposal.processing_status == 'Declined' || this.proposal.status == 'Approved';
         },
         canAssess: function(){
+            //!isFinalised && !proposal.can_user_edit && (proposal.current_assessor.id == proposal.assigned_officer || proposal.assigned_officer == null )
             return this.proposal && this.proposal.assessor_mode.assessor_can_assess ? true : false;
         },
         canAction: function(){
-            return this.proposal && this.proposal.processing_status == 'With Assessor' ? true : false;
+            return this.proposal && this.proposal.processing_status == 'With Assessor' && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
         }
     },
     methods: {
@@ -555,14 +558,29 @@ export default {
           },err=>{
           });
         },
+        assignRequestUser: function(){
+            let vm = this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_request_user')))
+            .then((response) => {
+                vm.proposal = response.body;
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
+                $(vm.$refs.assigned_officer).trigger('change');
+            }, (error) => {
+                console.log(error);
+            });
+        },
         assignTo: function(){
             let vm = this;
             if ( vm.proposal.assigned_officer != 'null'){
                 let data = {'user_id': vm.proposal.assigned_officer};
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.proposal.id+'/assign_to')),JSON.stringify(data),{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_to')),JSON.stringify(data),{
                     emulateJSON:true
                 }).then((response) => {
                     vm.proposal = response.body;
+                    vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
+                    $(vm.$refs.assigned_officer).trigger('change');
                 }, (error) => {
                     console.log(error);
                 });
@@ -575,17 +593,6 @@ export default {
                     console.log(error);
                 });
             }
-        },
-        fetchProposalGroupMembers: function(){
-            let vm = this;
-            vm.loading.push('Loading Proposal Group Members');
-            vm.$http.get(api_endpoints.organisation_access_group_members).then((response) => {
-                vm.members = response.body
-                vm.loading.splice('Loading Proposal Group Members',1);
-            },(error) => {
-                console.log(error);
-                vm.loading.splice('Loading Proposal Group Members',1);
-            })
         },
         fetchDeparmentUsers: function(){
             let vm = this;
@@ -670,7 +677,6 @@ export default {
     },
     mounted: function() {
         let vm = this;
-        vm.fetchProposalGroupMembers();
         vm.fetchDeparmentUsers();
         
     },

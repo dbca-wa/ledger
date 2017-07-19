@@ -1,5 +1,7 @@
-from django.db.models.signals import post_delete, pre_save, post_save
+from django.db.models.signals import post_delete, pre_save, post_save, m2m_changed
+from django.core.exceptions import ValidationError
 from django.dispatch import receiver
+from ledger.accounts.models import EmailUser
 from disturbance.components.proposals.models import (
     ProposalAssessorGroup,
     Referral
@@ -20,6 +22,14 @@ class ProposalAssessorGroupListener(object):
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         instance.full_clean()
+    
+    @staticmethod
+    @receiver(m2m_changed, sender=ProposalAssessorGroup.members.through)
+    def members_changed(sender,instance, action,**kwargs):
+        if action == 'pre_remove':
+            for o in EmailUser.objects.filter(id__in=kwargs.get('pk_set')):
+                if instance.member_is_assigned(o):
+                    raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email)) 
 
 class ReferralListener(object):
     """

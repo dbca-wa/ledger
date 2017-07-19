@@ -67,14 +67,18 @@ class ProposalAssessorGroup(models.Model):
             if default and self.default:
                 raise ValidationError('There can only be one default proposal assessor group')
 
-    @property
-    def all_members(self):
-        all_members = []
-        all_members.extend(self.members.all())
-        member_ids = [m.id for m in self.members.all()]
-        all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
-        return all_members
+    def member_is_assigned(self,member):
+        for p in self.current_proposals:
+            if p.assigned_officer == member:
+                return True
+        return False
 
+    @property
+    def current_proposals(self):
+        assessable_states = ['with_assessor','with_referral'] 
+        return Proposal.objects.filter(processing_status__in=assessable_states)
+        
+    
     class Meta:
         app_label = 'disturbance'
 
@@ -145,7 +149,7 @@ class Proposal(RevisionedMixin):
     proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proxy')
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals')
 
-    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='assignee')
+    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_assigned')
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
@@ -220,13 +224,43 @@ class Proposal(RevisionedMixin):
     def latest_referrals(self):
         return self.referrals.all()[:2]
 
-    def can_assess(self,user):
-        exists = False
+    @property
+    def regions_list(self):
+        return self.region.split(',') if self.region else []
+
+    @property
+    def allowed_assessors(self):
+        group = self.__assessor_group()
+        return group.members.all() if group else []
+
+    def __assessor_group(self):
+        # TODO get list of assessor groups based on region and activity
+        if self.region and self.activity:
+            try:
+                check_group = ProposalAssessorGroup.objects.filter(
+                    activities__name__in=[self.activity],
+                    regions__name__in=self.regions_list         
+                ).distinct()
+                if check_group:
+                    return check_group[0]
+            except ProposalAssessorGroup.DoesNotExist:
+                pass
         default_group = ProposalAssessorGroup.objects.get(default=True)
-        if default_group in user.proposalassessorgroup_set.all():
-            exists = True
  
-        return exists
+        return default_group
+
+    def can_assess(self,user):
+        return self.__assessor_group() in user.proposalassessorgroup_set.all()
+
+    def has_assessor_mode(self,user):
+        if self.assigned_officer: 
+            if self.assigned_officer == user:
+                return self.__assessor_group() in user.proposalassessorgroup_set.all()
+            else:
+                return False
+        else:
+            return self.__assessor_group() in user.proposalassessorgroup_set.all()
+        
 
     def log_user_action(self, action, request):
         return ProposalUserAction.log_action(self, action, request.user)
@@ -279,6 +313,21 @@ class Proposal(RevisionedMixin):
                 self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
                 # send email
                 send_referral_email_notification(referral,request)
+            except:
+                raise
+
+    def assign_officer(self,request,officer):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(officer):
+                    raise ValidationError('You are not authorised to perform this action')
+                if officer != self.assigned_officer:
+                    self.assigned_officer = officer
+                    self.save()
+                    # Create a log entry for the proposal
+                    self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_.format('{}({})'.format(officer.get_full_name(),officer.email)),request)
+                    # Create a log entry for the organisation
+                    self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_.format('{}({})'.format(officer.get_full_name(),officer.email)),request)
             except:
                 raise
 
@@ -539,6 +588,9 @@ class Referral(models.Model):
 
     @property
     def can_be_processed(self):
+        return self.processing_status == 'with_referral'
+
+    def can_assess_referral(self,user):
         return self.processing_status == 'with_referral'
 
 @receiver(pre_delete, sender=Proposal)
