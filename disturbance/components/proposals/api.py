@@ -244,9 +244,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                         document = instance.documents.get(input_name=f)
                     except ProposalDocument.DoesNotExist:
                         document = instance.documents.get_or_create(input_name=f)[0]
-
                     document.name = str(request.FILES[f])
-                    
                     if document._file and os.path.isfile(document._file.path):
                         os.remove(document._file.path)
                     document._file = request.FILES[f]

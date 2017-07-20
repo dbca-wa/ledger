@@ -106,6 +106,8 @@ export default {
         close:function () {
             this.isModalOpen = false;
             this.contact = {};
+            this.errors = false;
+            this.form.reset();
         },
         fetchContact: function(id){
             let vm = this;

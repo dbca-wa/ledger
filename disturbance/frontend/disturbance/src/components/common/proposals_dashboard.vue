@@ -72,7 +72,8 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
-                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
+                            <datatable v-if="level=='external'" ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
+                            <datatable v-else ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
                         </div>
                     </div>
                 </div>
@@ -142,6 +143,109 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
+            proposal_ex_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Action"],
+            proposal_ex_options:{
+                autoWidth: false,
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                ajax: {
+                    "url": vm.url,
+                    "dataSrc": ''
+                },
+                columns: [
+                    {
+                        data: "id",
+                        mRender:function(data,type,full){
+                            return 'P'+data;
+                        }
+                    },
+                    {data: "region"},
+                    {data: "activity"},
+                    {data: "title"},
+                    {
+                        data: "submitter",
+                        mRender:function (data,type,full) {
+                            if (data) {
+                                return `${data.first_name} ${data.last_name}`;
+                            }
+                            return ''
+                        }
+                    },
+                    {data: "applicant"},
+                    {
+                        data: "processing_status",
+                        mRender:function(data,type,full){
+                            return vm.level == 'external' ? full.customer_status: data;
+                        }
+                    },
+                    {
+                        data: "lodgement_date",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                        }
+                    },
+                    {
+                        mRender:function (data,type,full) {
+                            let links = '';
+                            if (!vm.is_external){
+                                links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                            }
+                            else{
+                                if (full.can_user_edit) {
+                                    links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
+                                    links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
+                                }
+                                else if (full.can_user_view) {
+                                    links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
+                                }
+                            }
+                            return links;
+                        }
+                    }
+                ],
+                processing: true,
+                initComplete: function () {
+                    // Grab Regions from the data in the table
+                    var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
+                    regionColumn.data().unique().sort().each( function ( d, j ) {
+                        let regionTitles = [];
+                        $.each(d,(index,a) => {
+                            // Split region string to array
+                            if (a != null){
+                                $.each(a.split(','),(i,r) => {
+                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
+                                });
+                            }
+                        })
+                        vm.proposal_regions = regionTitles;
+                    });
+                    // Grab Activity from the data in the table
+                    var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
+                    titleColumn.data().unique().sort().each( function ( d, j ) {
+                        let activityTitles = [];
+                        $.each(d,(index,a) => {
+                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
+                        })
+                        vm.proposal_activityTitles = activityTitles;
+                    });
+                    // Grab submitters from the data in the table
+                    var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
+                    submittersColumn.data().unique().sort().each( function ( d, j ) {
+                        var submitters = [];
+                        $.each(d,(index,s) => {
+                            if (!submitters.find(submitter => submitter.email == s.email) || submitters.length == 0){
+                                submitters.push({
+                                    'email':s.email,
+                                    'search_term': `${s.first_name} ${s.last_name} (${s.email})`
+                                });
+                            }
+                        });
+                        vm.proposal_submitters = submitters;
+                    });
+                }
+            },
             proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Assigned Officer","Action"],
             proposal_options:{
                 autoWidth: false,
