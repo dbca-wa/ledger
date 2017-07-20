@@ -202,6 +202,7 @@
         </div>
         </div>
         </div>
+        <AddContact ref="add_contact" :org_id="org.id" />
     </div>
 </template>
 
@@ -210,6 +211,7 @@
 import Vue from 'vue'
 import { api_endpoints, helpers } from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
+import AddContact from '@common-utils/add_contact.vue'
 import ProposalDashTable from '@common-utils/proposals_dashboard.vue'
 import ApprovalDashTable from '@common-utils/approvals_dashboard.vue'
 import ComplianceDashTable from '@common-utils/compliances_dashboard.vue'
@@ -424,7 +426,8 @@ export default {
         datatable,
         ProposalDashTable,
         ApprovalDashTable,
-        ComplianceDashTable
+        ComplianceDashTable,
+        AddContact
     },
     computed: {
         isLoading: function () {
@@ -518,7 +521,7 @@ export default {
         deleteContact: function(id){
             let vm = this;
             
-            vm.$http.delete(helpers.add_endpoint_json(api.organisation_contacts,id),{
+            vm.$http.delete(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id),{
                 emulateJSON:true
             }).then((response) => {
                 swal(
