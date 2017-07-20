@@ -129,7 +129,12 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
-                    {data: "proposal"},
+                    {
+                        data: "proposal",
+                        mRender:function(data,type,full){
+                            return 'P'+data;
+                        }
+                    },
                     {data: "region"},
                     {data: "activity"},
                     {data: "title"},

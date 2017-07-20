@@ -154,7 +154,12 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
-                    {data: "id"},
+                    {
+                        data: "id",
+                        mRender:function(data,type,full){
+                            return 'P'+data;
+                        }
+                    },
                     {data: "region"},
                     {data: "activity"},
                     {data: "title"},
