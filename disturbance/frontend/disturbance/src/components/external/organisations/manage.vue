@@ -131,7 +131,7 @@
                                         <h4>{{d.name}}</h4>
                                     </div>
                                     <div class="col-sm-6">
-                                        <h4><a :data-id="d.id"><i class="fa fa-chain-broken"></i>&nbsp;Unlink</a></h4>
+                                        <h4><a @click.prevent="unlinkUser(d)" href="#" :data-id="d.id"><i class="fa fa-chain-broken"></i>&nbsp;Unlink</a></h4>
                                     </div>
                                 </div>
                                 <div class="col-sm-12 top-buffer-s">
@@ -496,6 +496,38 @@ export default {
                 vm.updatingAddress = false;
             });
         },
+        unlinkUser: function(d){
+            let vm = this;
+            let org = vm.org;
+            let org_name = org.name;
+            let person = helpers.copyObject(d);
+            swal({
+                title: "Unlink From Organisation",
+                text: "Are you sure you want to unlink "+person.name+" "+person.id+" from "+org.name+" ?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then(() => {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),{'user':person.id},{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.org = response.body;
+                    if (vm.org.address == null){ vm.org.address = {}; }
+                    swal(
+                        'Unlink',
+                        'You have successfully unlinked '+person.name+' from '+org_name+'.',
+                        'success'
+                    )
+                }, (error) => {
+                    swal(
+                        'Unlink',
+                        'There was an error unlinking '+person.name+' from '+org_name+'.',
+                        'error'
+                    )
+                });
+            },(error) => {
+            }); 
+        }
     },
     mounted: function(){
         this.personal_form = document.forms.personal_form;

@@ -93,8 +93,8 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             except EmailUser.DoesNotExist:
                 raise serializers.ValidationError('You are not permitted to perform this operation since you are not a member of this organisation.')
             instance.unlink_user(serializer.validated_data['user_obj'],request)
-            data = {'unlinked': True}
-            return Response(data);
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data);
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
